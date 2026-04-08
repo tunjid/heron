@@ -46,6 +46,7 @@ import heron.ui.timeline.generated.resources.writable_reaction_removal
 import heron.ui.timeline.generated.resources.writable_record_deletion
 import heron.ui.timeline.generated.resources.writable_repost
 import heron.ui.timeline.generated.resources.writable_repost_removal
+import heron.ui.timeline.generated.resources.writable_subscribe_standard_publication
 import heron.ui.timeline.generated.resources.writable_thread_gate_update
 import heron.ui.timeline.generated.resources.writable_timeline_update
 import heron.ui.timeline.generated.resources.writable_unblock
@@ -167,6 +168,10 @@ fun Writable.writeStatusMessage(
             is Writable.FeedList.AddMember -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_add_list_member),
+            )
+            is Writable.StandardSite.Subscribe -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_subscribe_standard_publication),
             )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

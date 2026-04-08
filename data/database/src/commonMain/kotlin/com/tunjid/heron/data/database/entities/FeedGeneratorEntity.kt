@@ -96,5 +96,5 @@ fun PopulatedFeedGeneratorEntity.asExternalModel() =
         acceptsInteractions = entity.acceptsInteractions,
         contentMode = entity.contentMode,
         indexedAt = entity.indexedAt,
-        labels = labelEntities.map(LabelEntity::asExternalModel),
+        labels = labelEntities.asActiveExternalModels(),
     )

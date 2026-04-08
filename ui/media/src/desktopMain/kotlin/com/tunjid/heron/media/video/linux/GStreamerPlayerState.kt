@@ -101,6 +101,7 @@ internal class GStreamerPlayerState(
     private var stateChangedConnection: Bus.STATE_CHANGED? = null
     private var eosConnection: Bus.EOS? = null
     private var errorConnection: Bus.ERROR? = null
+    private var newSampleConnection: AppSink.NEW_SAMPLE? = null
 
     internal fun createPipeline(url: String) {
         val sink = buildAppSink()
@@ -119,7 +120,8 @@ internal class GStreamerPlayerState(
     private fun buildAppSink(): AppSink = AppSink("videosink").apply {
         set("emit-signals", true)
         caps = Caps.fromString("video/x-raw,format=BGRA")
-        connect(AppSink.NEW_SAMPLE { sink -> onNewSample(sink) })
+        newSampleConnection = AppSink.NEW_SAMPLE { sink -> onNewSample(sink) }
+            .also { connect(it) }
     }
 
     private fun connectBus(pb: PlayBin) {
@@ -283,6 +285,9 @@ internal class GStreamerPlayerState(
             pb.stop()
             pb.dispose()
         }
+
+        newSampleConnection?.let { appSink?.disconnect(it) }
+        newSampleConnection = null
 
         skiaBitmapA?.close()
         skiaBitmapB?.close()

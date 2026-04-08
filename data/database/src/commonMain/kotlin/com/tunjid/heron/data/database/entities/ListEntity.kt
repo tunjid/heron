@@ -129,5 +129,5 @@ fun ListEntity.asExternalModel(
 fun PopulatedListEntity.asExternalModel(): FeedList =
     entity.asExternalModel(
         creator = creator.asExternalModel(),
-        labels = labelEntities.map(LabelEntity::asExternalModel),
+        labels = labelEntities.asActiveExternalModels(),
     )

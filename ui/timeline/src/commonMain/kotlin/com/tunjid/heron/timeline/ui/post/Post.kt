@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -24,7 +26,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -39,7 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
@@ -89,7 +90,9 @@ import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_words_post_hidden
 import heron.ui.timeline.generated.resources.sensitive_media
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -197,8 +200,7 @@ private fun AttributionContent(
                     UpdatedMovableStickySharedElementOf(
                         modifier = Modifier
                             .size(UiTokens.avatarSize)
-                            .clip(data.avatarShape)
-                            .shapedClickable(CircleShape) {
+                            .shapedClickable(data.avatarShape) {
                                 data.postActions.onPostAction(
                                     PostAction.OfProfile(
                                         profile = data.post.author,
@@ -374,7 +376,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                    boundsTransform = data.delayedBoundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -424,7 +426,7 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                boundsTransform = data.delayedBoundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -501,7 +503,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                    boundsTransform = data.delayedBoundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )
@@ -790,6 +792,18 @@ private class PostData(
     var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
     var hasClickedThroughSensitiveMedia by mutableStateOf(hasClickedThroughSensitiveMedia)
 
+    // Stop bounds transform from running on first composition as it causes
+    // a jelly scroll.
+    private val createdTime = TimeSource.Monotonic.markNow()
+    val delayedBoundsTransform = BoundsTransform { initial, target ->
+        val elapsed = createdTime.elapsedNow()
+        if (elapsed < BoundsTransformDelay) BoundsSnapSpec
+        else paneTransitionScope.childBoundsTransform.createAnimationSpec(
+            initial,
+            target,
+        )
+    }
+
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
 
@@ -874,3 +888,6 @@ private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
 
 private val MutedWordShape = RoundedCornerShape(8.dp)
+
+private val BoundsTransformDelay = 200.milliseconds
+private val BoundsSnapSpec = SnapSpec<Rect>()

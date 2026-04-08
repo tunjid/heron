@@ -54,6 +54,7 @@ import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.NotificationFilteredOutException
 import com.tunjid.heron.data.core.types.PostUri
@@ -75,6 +76,7 @@ import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asGenericId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.distinctUntilChangedFlatMapLatest
@@ -470,10 +472,21 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         is ListMember,
                         is StarterPack,
                         is Block,
-                        is StandardDocument,
                         is StandardPublication,
                         is StandardSubscription,
                         -> throw UnknownNotificationException(query.recordUri)
+
+                        is StandardDocument -> Notification.DocumentPublished(
+                            uri = resolvedRecord.uri.asGenericUri(),
+                            cid = resolvedRecord.cid?.asGenericId()
+                                ?: Collections.stubbedId(::GenericId),
+                            author = authorEntity.asExternalModel(),
+                            reasonSubject = null,
+                            isRead = false,
+                            indexedAt = now,
+                            viewerState = viewerState,
+                            associatedDocument = resolvedRecord,
+                        )
                         // Reply, mention or Quote
                         is Post -> when {
                             resolvedRecord.viewerStats?.threadMuted == true ->

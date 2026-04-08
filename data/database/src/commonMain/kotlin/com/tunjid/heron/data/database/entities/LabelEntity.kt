@@ -22,6 +22,7 @@ import androidx.room.Index
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 @Entity(
@@ -53,6 +54,7 @@ data class LabelEntity(
     val value: String,
     val version: Long?,
     val createdAt: Instant,
+    val expiresAt: Instant?,
 )
 
 fun LabelEntity.asExternalModel() =
@@ -62,4 +64,14 @@ fun LabelEntity.asExternalModel() =
         value = Label.Value(value),
         version = version,
         createdAt = createdAt,
+        expiresAt = expiresAt,
     )
+
+fun List<LabelEntity>.asActiveExternalModels(): List<Label> {
+    val now = Clock.System.now()
+    return mapNotNull { entity ->
+        val expiresAt = entity.expiresAt
+        if (expiresAt != null && expiresAt <= now) null
+        else entity.asExternalModel()
+    }
+}

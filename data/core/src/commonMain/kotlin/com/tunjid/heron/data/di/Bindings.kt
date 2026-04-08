@@ -60,11 +60,11 @@ import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.OfflineFirstRecordRepository
 import com.tunjid.heron.data.repository.OfflineMessageRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
-import com.tunjid.heron.data.repository.OfflineRecordRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.OfflineUserDataRepository
@@ -76,6 +76,10 @@ import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
+import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
@@ -440,7 +444,19 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun provideBlueskyRecordOperations(
+        offlineFirstBlueskyRecordOperations: OfflineFirstBlueskyRecordOperations,
+    ): BlueskyRecordOperations = offlineFirstBlueskyRecordOperations
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideStandardSiteRecordOperations(
+        offlineFirstStandardSiteRecordOperations: OfflineFirstStandardSiteRecordOperations,
+    ): StandardSiteRecordOperations = offlineFirstStandardSiteRecordOperations
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideRecordRepository(
-        offlineRecordRepository: OfflineRecordRepository,
-    ): RecordRepository = offlineRecordRepository
+        offlineFirstRecordRepository: OfflineFirstRecordRepository,
+    ): RecordRepository = offlineFirstRecordRepository
 }

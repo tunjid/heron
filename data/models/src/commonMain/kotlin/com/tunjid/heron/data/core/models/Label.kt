@@ -36,6 +36,7 @@ data class Label(
     val value: Value,
     val version: Long?,
     val createdAt: Instant,
+    val expiresAt: Instant? = null,
 ) {
     @JvmInline
     @Serializable

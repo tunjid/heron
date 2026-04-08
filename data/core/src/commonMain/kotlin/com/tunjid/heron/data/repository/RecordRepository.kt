@@ -16,165 +16,52 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.feed.Generator as BskyFeed
-import app.bsky.feed.GetActorFeedsQueryParams
-import app.bsky.feed.GetActorFeedsResponse
-import app.bsky.graph.GetActorStarterPacksQueryParams
-import app.bsky.graph.GetActorStarterPacksResponse
-import app.bsky.graph.GetBlocksQueryParams
-import app.bsky.graph.GetBlocksResponse
-import app.bsky.graph.GetListQueryParams
-import app.bsky.graph.GetListResponse
-import app.bsky.graph.GetListsQueryParams
-import app.bsky.graph.GetListsResponse
-import app.bsky.graph.Listitem as BskyListMember
-import com.atproto.repo.CreateRecordRequest
-import com.atproto.repo.DeleteRecordRequest
-import com.atproto.repo.GetRecordQueryParams
-import com.atproto.repo.ListRecordsQueryParams
-import com.atproto.repo.ListRecordsResponse
-import com.atproto.repo.PutRecordRequest
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.DataQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.ListMember
-import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StarterPack
-import com.tunjid.heron.data.core.models.offset
-import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
-import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StandardDocumentId
-import com.tunjid.heron.data.core.types.StandardDocumentUri
-import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
-import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
-import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
-import com.tunjid.heron.data.database.entities.ListMemberEntity
-import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
-import com.tunjid.heron.data.database.entities.PopulatedListEntity
-import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
-import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
-import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
-import com.tunjid.heron.data.graze.GrazeDid
-import com.tunjid.heron.data.graze.GrazeFeed
-import com.tunjid.heron.data.network.FeedCreationService
-import com.tunjid.heron.data.network.GrazeResponse
-import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.PdsResolver
-import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
-import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
-import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.nextCursorFlow
-import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
-import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.plus
-import sh.christian.ozone.api.AtUri
-import sh.christian.ozone.api.Did
-import sh.christian.ozone.api.Nsid
-import sh.christian.ozone.api.RKey
-import site.standard.Document
 
-interface RecordRepository {
-
-    val subscribedLabelers: Flow<List<Labeler>>
-
-    val recentLists: Flow<List<FeedList>>
+interface RecordRepository :
+    BlueskyRecordOperations,
+    StandardSiteRecordOperations {
 
     fun embeddableRecord(
         uri: EmbeddableRecordUri,
     ): Flow<Record.Embeddable>
-
-    fun blocks(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
-
-    fun starterPacks(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StarterPack>>
-
-    fun lists(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedList>>
-
-    fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>>
-
-    fun feedGenerators(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>>
-
-    fun standardDocuments(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StandardDocument>>
-
-    suspend fun updateGrazeFeed(
-        update: GrazeFeed.Update,
-    ): Result<GrazeFeed>
-
-    suspend fun addListMember(
-        create: ListMember.Create,
-    ): Outcome
 
     suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome
 }
 
-internal class OfflineRecordRepository @Inject constructor(
-    @AppMainScope
-    appMainScope: CoroutineScope,
+internal class OfflineFirstRecordRepository @Inject constructor(
+    blueskyRecordOperations: BlueskyRecordOperations,
+    standardSiteRecordOperations: StandardSiteRecordOperations,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
@@ -182,33 +69,11 @@ internal class OfflineRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
-    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
-    private val feedCreationService: FeedCreationService,
-    private val profileLookup: ProfileLookup,
-    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
-    private val networkService: NetworkService,
-    private val pdsResolver: PdsResolver,
-) : RecordRepository {
-
-    override val subscribedLabelers: Flow<List<Labeler>> =
-        recordResolver.subscribedLabelers
-
-    override val recentLists: Flow<List<FeedList>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { profileId ->
-            listDao.profileLists(
-                creatorId = profileId.id,
-                limit = 30,
-                offset = 0,
-            ).distinctUntilChangedMap { it.map(PopulatedListEntity::asExternalModel) }
-        }
-            .flowOn(ioDispatcher)
-            .stateIn(
-                scope = appMainScope,
-                started = SharingStarted.WhileSubscribed(1_000),
-                initialValue = emptyList(),
-            )
+) : RecordRepository,
+    BlueskyRecordOperations by blueskyRecordOperations,
+    StandardSiteRecordOperations by standardSiteRecordOperations {
 
     override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {
@@ -251,364 +116,6 @@ internal class OfflineRecordRepository @Inject constructor(
             }
             .flowOn(ioDispatcher)
 
-    override fun blocks(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            profileLookup.profilesWithViewerState(
-                signedInProfileId = signedInProfileId,
-                cursor = cursor,
-                responseFetcher = {
-                    getBlocks(
-                        GetBlocksQueryParams(
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        ),
-                    )
-                },
-                responseProfileViews = GetBlocksResponse::blocks,
-                responseCursor = GetBlocksResponse::cursor,
-            )
-        }
-            .flowOn(ioDispatcher)
-
-    override fun starterPacks(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StarterPack>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                starterPackDao.profileStarterPacks(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedStarterPackEntities ->
-                        populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorStarterPacks(
-                            params = GetActorStarterPacksQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetActorStarterPacksResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            starterPacks.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-            .flowOn(ioDispatcher)
-
-    override fun lists(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedList>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                listDao.profileLists(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedListEntities ->
-                        populatedListEntities.map(PopulatedListEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getLists(
-                            params = GetListsQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetListsResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            lists.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-            .flowOn(ioDispatcher)
-
-    override fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            combine(
-                listDao.listMembers(
-                    listUri = query.listUri.uri,
-                    signedInUserId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap {
-                        it.map(PopulatedListMemberEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getList(
-                            GetListQueryParams(
-                                list = query.listUri.uri.let(::AtUri),
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetListResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(list)
-                            items.forEach { listItemView ->
-                                add(
-                                    listUri = list.uri.atUri.let(::ListUri),
-                                    listItemView = listItemView,
-                                )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-            .flowOn(ioDispatcher)
-
-    override fun feedGenerators(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                feedGeneratorDao.profileFeedGenerators(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedFeedGeneratorEntities ->
-                        populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorFeeds(
-                            params = GetActorFeedsQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetActorFeedsResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            feeds.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-            .flowOn(ioDispatcher)
-
-    override fun standardDocuments(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StandardDocument>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            val pdsUrl = pdsResolver.resolve(Did(profileDid.did))
-                ?.toString()
-                ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                standardSiteDao.authorDocuments(
-                    authorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
-                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        listRecords(
-                            params = ListRecordsQueryParams(
-                                repo = Did(profileDid.did),
-                                collection = Nsid(StandardDocumentUri.NAMESPACE),
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = ListRecordsResponse::cursor,
-                    onResponse = {
-                        val publicationUris = mutableSetOf<StandardPublicationUri>()
-                        multipleEntitySaverProvider.saveInTransaction {
-                            records.forEach { record ->
-                                val documentUri = record.uri.atUri.let(::StandardDocumentUri)
-                                val documentCid = record.cid.cid.let(::StandardDocumentId)
-                                val document = record.value.decodeAs<Document>()
-
-                                (document.site.uri.asRecordUriOrNull() as? StandardPublicationUri)?.let {
-                                    if (publicationUris.add(it)) recordResolver.resolve(it)
-                                }
-
-                                add(
-                                    documentUri = documentUri,
-                                    documentCid = documentCid,
-                                    document = document,
-                                    pdsUrl = pdsUrl,
-                                )
-                            }
-                        }
-                        coroutineScope {
-                            publicationUris.map {
-                                async { recordResolver.resolve(it) }
-                            }
-                        }.awaitAll()
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-            .flowOn(ioDispatcher)
-
-    override suspend fun updateGrazeFeed(
-        update: GrazeFeed.Update,
-    ): Result<GrazeFeed> = savedStateDataSource.inCurrentProfileSession { profileId ->
-        if (profileId == null) return@inCurrentProfileSession expiredSessionResult()
-
-        feedCreationService.updateGrazeFeed(
-            update = update,
-        ).mapCatchingUnlessCancelled { response ->
-            val put = update as? GrazeFeed.Update.Put
-            networkService.updateFeedRecord(
-                response = response,
-                profileId = profileId,
-                editableFeed = put?.feed,
-            )
-            when (response) {
-                is GrazeResponse.Read -> {
-                    GrazeFeed.Created(
-                        recordKey = update.recordKey,
-                        filter = response.algorithm.manifest.filter,
-                    )
-                }
-                is GrazeResponse.Created,
-                is GrazeResponse.Edited,
-                -> {
-                    check(update is GrazeFeed.Update.Put)
-                    GrazeFeed.Created(
-                        recordKey = update.recordKey,
-                        filter = update.feed.filter,
-                    )
-                }
-                is GrazeResponse.Deleted -> {
-                    GrazeFeed.Deleted(
-                        recordKey = update.recordKey,
-                    )
-                }
-            }
-        }
-    } ?: expiredSessionResult()
-
-    override suspend fun addListMember(
-        create: ListMember.Create,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-
-        val listOwnerId = create.listUri.profileId()
-
-        if (listOwnerId != signedInProfileId)
-            return@inCurrentProfileSession UnauthorizedException(
-                signedInProfileId = signedInProfileId,
-                profileId = listOwnerId,
-            ).asFailureOutcome()
-
-        val prospectiveMemberRefreshOutcome = profileLookup.refreshProfile(
-            signedInProfileId = signedInProfileId,
-            profileId = create.subjectId,
-        )
-        if (prospectiveMemberRefreshOutcome is Outcome.Failure)
-            return@inCurrentProfileSession prospectiveMemberRefreshOutcome
-
-        val createdAt = Clock.System.now()
-        val recordKey = RecordKey.generate()
-
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            createRecord(
-                CreateRecordRequest(
-                    repo = Did(listOwnerId.id),
-                    collection = Nsid(ListMemberUri.NAMESPACE),
-                    rkey = RKey(recordKey.value),
-                    record = BskyListMember(
-                        subject = Did(create.subjectId.id),
-                        list = AtUri(create.listUri.uri),
-                        createdAt = createdAt,
-                    ).asJsonContent(BskyListMember.serializer()),
-                ),
-            )
-        }.mapCatchingUnlessCancelled {
-            val listMemberUri = requireNotNull(
-                recordUriOrNull(
-                    profileId = listOwnerId,
-                    namespace = ListMemberUri.NAMESPACE,
-                    recordKey = recordKey,
-                ),
-            ) as ListMemberUri
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    ListMemberEntity(
-                        uri = listMemberUri,
-                        listUri = create.listUri,
-                        subjectId = create.subjectId,
-                        createdAt = createdAt,
-                    ),
-                )
-            }
-        }
-            .toOutcome()
-    } ?: expiredSessionOutcome()
-
     override suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
@@ -622,71 +129,4 @@ internal class OfflineRecordRepository @Inject constructor(
 
         recordResolver.deleteRecord(uri)
     } ?: expiredSessionOutcome()
-}
-
-private suspend fun NetworkService.updateFeedRecord(
-    editableFeed: GrazeFeed.Editable?,
-    response: GrazeResponse,
-    profileId: ProfileId,
-) {
-    runCatchingWithMonitoredNetworkRetry {
-        when (response) {
-            is GrazeResponse.Created -> createRecord(
-                CreateRecordRequest(
-                    repo = Did(profileId.id),
-                    collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                    rkey = RKey(response.rkey.value),
-                    record = BskyFeed(
-                        did = Did(GrazeDid.id),
-                        displayName = editableFeed?.displayName ?: "Graze Feed",
-                        description = editableFeed?.description
-                            ?: "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
-                        createdAt = Clock.System.now(),
-                        contentMode = response.contentMode,
-                    ).asJsonContent(BskyFeed.serializer()),
-                ),
-            )
-            is GrazeResponse.Edited,
-            is GrazeResponse.Read,
-            -> {
-                val currentRecordResponse = getRecord(
-                    GetRecordQueryParams(
-                        repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                        rkey = RKey(response.rkey.value),
-                    ),
-                ).requireResponse()
-
-                val currentRecord = currentRecordResponse
-                    .value
-                    .decodeAs<BskyFeed>()
-
-                putRecord(
-                    PutRecordRequest(
-                        repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                        rkey = RKey(response.rkey.value),
-                        record = currentRecord.copy(
-                            displayName = editableFeed?.displayName ?: currentRecord.displayName,
-                            description = editableFeed?.description ?: currentRecord.description,
-                            contentMode = when (response) {
-                                is GrazeResponse.Read -> response.contentMode
-                                is GrazeResponse.Edited -> response.contentMode
-                            },
-                        ).asJsonContent(BskyFeed.serializer()),
-                        swapRecord = currentRecordResponse.cid,
-                    ),
-                )
-            }
-            is GrazeResponse.Deleted -> {
-                deleteRecord(
-                    DeleteRecordRequest(
-                        repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                        rkey = RKey(response.rkey.value),
-                    ),
-                )
-            }
-        }
-    }
 }

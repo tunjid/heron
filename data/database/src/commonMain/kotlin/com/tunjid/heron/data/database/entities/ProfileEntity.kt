@@ -55,7 +55,7 @@ data class ProfileEntity(
     val indexedAt: Instant?,
     val createdAt: Instant?,
     @Embedded
-    val associated: Associated,
+    val associated: Associated?,
     @Embedded(prefix = "status_")
     val status: Status?,
 ) {
@@ -113,15 +113,15 @@ fun ProfileEntity?.asExternalModel(
         indexedAt = indexedAt,
         createdAt = createdAt,
         metadata = Profile.Metadata(
-            createdListCount = associated.createdListCount ?: 0,
-            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
-            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+            createdListCount = associated?.createdListCount ?: 0,
+            createdFeedGeneratorCount = associated?.createdFeedGeneratorCount ?: 0,
+            createdStarterPackCount = associated?.createdStarterPackCount ?: 0,
             chat = Profile.ChatInfo(
                 allowed = associated.allowedChat(),
             ),
         ),
         labels = labels,
-        isLabeler = associated.labeler ?: false,
+        isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
     )
 
@@ -152,15 +152,15 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         indexedAt = indexedAt,
         createdAt = createdAt,
         metadata = Profile.Metadata(
-            createdListCount = associated.createdListCount ?: 0,
-            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
-            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+            createdListCount = associated?.createdListCount ?: 0,
+            createdFeedGeneratorCount = associated?.createdFeedGeneratorCount ?: 0,
+            createdStarterPackCount = associated?.createdStarterPackCount ?: 0,
             chat = Profile.ChatInfo(
                 allowed = associated.allowedChat(),
             ),
         ),
-        labels = labelEntities.map(LabelEntity::asExternalModel),
-        isLabeler = associated.labeler ?: false,
+        labels = labelEntities.asActiveExternalModels(),
+        isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
     )
 }

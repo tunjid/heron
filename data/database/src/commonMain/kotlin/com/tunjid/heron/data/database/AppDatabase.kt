@@ -89,6 +89,7 @@ import com.tunjid.heron.data.database.migrations.Migration29To30PostBookmarkView
 import com.tunjid.heron.data.database.migrations.Migration30To31ThreadGateAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration32To33ItemSortOnTimelineEntity
 import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignKey
+import com.tunjid.heron.data.database.migrations.Migration37To38StandardSubscriptionViewerIds
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -97,7 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 36,
+    version = 38,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -214,6 +215,9 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 34, to = 35),
         // Add standard site tables (publications, documents, subscriptions)
         AutoMigration(from = 35, to = 36),
+        // Add expiresAt to LabelEntity for timed label support
+        AutoMigration(from = 36, to = 37),
+        // Migration 37 - 38 is a manual migration
     ],
     exportSchema = true,
 )
@@ -266,6 +270,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration29To30PostBookmarkViewingProfileId,
             Migration32To33ItemSortOnTimelineEntity,
             Migration33To34OnUpdateForeignKey,
+            Migration37To38StandardSubscriptionViewerIds,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

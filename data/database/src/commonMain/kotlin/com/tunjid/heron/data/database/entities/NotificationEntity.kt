@@ -221,6 +221,9 @@ fun PopulatedNotificationEntity.asExternalModel(
             viewerState = viewerState?.asExternalModel(),
         )
 
+    // Currently not persisted to disk, just delivered via push
+    Notification.Reason.DocumentPublished -> unknown()
+
     Notification.Reason.Verified -> Notification.Verified(
         cid = entity.cid,
         uri = entity.uri,

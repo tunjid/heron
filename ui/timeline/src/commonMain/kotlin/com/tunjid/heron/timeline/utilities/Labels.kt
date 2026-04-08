@@ -17,9 +17,7 @@
 package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
@@ -28,14 +26,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -43,21 +39,9 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.ui.NeutralDialogButton
-import com.tunjid.heron.ui.PrimaryDialogButton
-import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogText
-import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.text.CommonStrings
-import heron.ui.core.generated.resources.dismiss
-import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.label_source
-import heron.ui.timeline.generated.resources.view_labeler
-import org.jetbrains.compose.resources.stringResource
+import com.tunjid.heron.ui.modifiers.shapedClickable
 
 @Composable
 inline fun LabelFlowRow(
@@ -92,6 +76,9 @@ inline fun Label(
                 else Color.Transparent,
                 shape = CircleShape,
             )
+            .shapedClickable(CircleShape) {
+                onClick()
+            }
             .ifTrue(isElevated) {
                 // Add padding bc of the background
                 padding(
@@ -102,10 +89,6 @@ inline fun Label(
             .semantics {
                 this.role = Role.Button
                 this.contentDescription = contentDescription
-            }
-            .clip(CircleShape)
-            .clickable {
-                onClick()
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),

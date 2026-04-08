@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.notifications.ui.DocumentPublishedRow
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
@@ -420,6 +421,15 @@ internal fun NotificationsScreen(
                                 aggregatedProfiles = item.aggregatedProfiles,
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
+                            )
+                            is Notification.DocumentPublished -> DocumentPublishedRow(
+                                modifier = itemModifier,
+                                paneTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
                             )
                         }
                     }

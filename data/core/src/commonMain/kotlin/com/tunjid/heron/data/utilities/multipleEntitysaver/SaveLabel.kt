@@ -20,19 +20,31 @@ import com.atproto.label.Label
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelEntity
+import kotlin.time.Clock
 
 internal fun MultipleEntitySaver.add(
     label: Label,
 ) {
+    val entity = label.toLabelEntity()
+    val exp = label.exp
+
+    // Negation labels remove previously applied labels
+    // and expired labels should be deleted
+    if (label.neg == true || (exp != null && exp <= Clock.System.now())) {
+        remove(entity)
+        return
+    }
+
     stubProfileEntity(label.src).let(::add)
-    add(
-        LabelEntity(
-            cid = label.cid?.cid,
-            uri = label.uri.uri.let(::GenericUri),
-            creatorId = label.src.did.let(::ProfileId),
-            value = label.`val`,
-            version = label.ver,
-            createdAt = label.cts,
-        ),
-    )
+    add(entity)
 }
+
+private fun Label.toLabelEntity() = LabelEntity(
+    cid = cid?.cid,
+    uri = uri.uri.let(::GenericUri),
+    creatorId = src.did.let(::ProfileId),
+    value = `val`,
+    version = ver,
+    createdAt = cts,
+    expiresAt = exp,
+)

@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -25,8 +26,8 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
-import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -39,13 +40,62 @@ interface StandardSiteDao {
 
     @Query(
         """
-            SELECT * FROM standardPublications
-            WHERE uri IN (:uris)
+            SELECT
+                standardPublications.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardPublications
+            LEFT JOIN standardSubscriptions
+                ON standardPublications.uri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardPublications.uri = :publicationUri
         """,
     )
-    fun publications(
-        uris: Collection<StandardPublicationUri>,
-    ): Flow<List<StandardPublicationEntity>>
+    fun publication(
+        viewingProfileId: String?,
+        publicationUri: String,
+    ): Flow<PopulatedStandardPublicationEntity>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardPublications.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardPublications
+            LEFT JOIN standardSubscriptions
+                ON standardPublications.uri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardSubscriptions.viewingProfileId = :viewingProfileId
+            ORDER BY standardSubscriptions.sortedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun subscribedPublications(
+        viewingProfileId: String?,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedStandardPublicationEntity>>
 
     @Upsert
     suspend fun upsertPublications(
@@ -73,7 +123,25 @@ interface StandardSiteDao {
     @Transaction
     @Query(
         """
-            SELECT * FROM standardDocuments
+            SELECT
+                standardDocuments.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardDocuments
+            LEFT JOIN standardSubscriptions
+                ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
             WHERE authorId = :authorId
             ORDER BY publishedAt DESC
             LIMIT :limit
@@ -81,7 +149,43 @@ interface StandardSiteDao {
         """,
     )
     fun authorDocuments(
+        viewingProfileId: String?,
         authorId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedStandardDocumentEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardDocuments.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardDocuments
+            LEFT JOIN standardSubscriptions
+                ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardDocuments.publicationUri = :publicationUri
+            ORDER BY publishedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun publicationDocuments(
+        viewingProfileId: String?,
+        publicationUri: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedStandardDocumentEntity>>
@@ -103,19 +207,14 @@ interface StandardSiteDao {
 
     // --- Subscriptions ---
 
-    @Query(
-        """
-            SELECT * FROM standardSubscriptions
-            WHERE uri IN (:uris)
-        """,
-    )
-    fun subscriptions(
-        uris: Collection<StandardSubscriptionUri>,
-    ): Flow<List<StandardSubscriptionEntity>>
-
     @Upsert
     suspend fun upsertSubscriptions(
         entities: List<StandardSubscriptionEntity>,
+    )
+
+    @Delete(entity = StandardSubscriptionEntity::class)
+    suspend fun deleteSubscriptions(
+        entities: List<StandardSubscriptionEntity.Deletion>,
     )
 
     @Query(
