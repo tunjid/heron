@@ -25,6 +25,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -42,11 +45,15 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
+import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import heron.feature.standard_subscription.generated.resources.Res
+import heron.feature.standard_subscription.generated.resources.empty_subscriptions
+import heron.feature.standard_subscription.generated.resources.empty_subscriptions_description
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -100,7 +107,17 @@ internal fun StandardSubscriptionScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
-            items(
+            if (items.isEmpty()) item {
+                EmptyContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
+                    titleRes = Res.string.empty_subscriptions,
+                    descriptionRes = Res.string.empty_subscriptions_description,
+                    icon = Icons.Rounded.NotificationsOff,
+                )
+            }
+            else items(
                 items = items,
                 key = { it.uri.uri },
                 itemContent = { publication ->
