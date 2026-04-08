@@ -18,14 +18,17 @@ package com.tunjid.heron.standard.subscription
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.repository.RecordRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -57,9 +60,10 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualStandardSubscriptionViewModel(
     navActions: (NavigationMutation) -> Unit,
     recordRepository: RecordRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
-    @Assisted
+    @Suppress("unused") @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     StandardSubscriptionStateHolder by scope.actionStateFlowMutator(
@@ -78,6 +82,9 @@ class ActualStandardSubscriptionViewModel(
                         stateHolder = this@transform,
                         recordRepository = recordRepository,
                     )
+                    is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -92,12 +99,28 @@ private suspend fun Flow<Action.Tile>.subscriptionLoadMutations(
             currentState = { stateHolder.state() },
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = { query, cursor ->
-                recordRepository.subscribedPublications(query, cursor)
-            },
+            cursorListLoader = recordRepository::subscribedPublications,
             onNewItems = { items -> items.distinctBy(StandardPublication::uri) },
             onTilingDataUpdated = { copy(tilingData = it) },
         )
+
+private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        when (action) {
+            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
+                create = StandardSubscription.Create(publicationUri = action.publicationUri),
+            )
+            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
+                recordUri = action.subscriptionUri,
+            )
+        }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

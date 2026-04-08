@@ -123,8 +123,8 @@
     <string name="notifications_unknown">You have a new notification</string>
     <string name="notifications_create_post">Create Post</string>
 
-   <string name="subscription_subscribed">Subscribed</string>
-   <string name="subscription_unsubscribed">Unsubscribed</string>
+   <string name="standard_publication_subscribe_to">Subscribe to publication</string>
+   <string name="standard_publication_unsubscribe_from">Unsubscribe from publication</string>
 
     <string name="more_options">More Options</string>
     <string name="likes">Likes</string>

@@ -235,7 +235,10 @@ fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
 
 fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     currentQuery: Query,
-): Boolean { // Ignore results from stale queries
+): Boolean {
+    if (isEmpty()) return true
+
+    // Ignore results from stale queries
     var seenQuery = false
     val lastTileIndex = tileCount - 1
     for (index in 0..<tileCount) {

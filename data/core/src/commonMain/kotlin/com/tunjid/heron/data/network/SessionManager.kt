@@ -638,7 +638,7 @@ private val HeronProxyPaths = listOf(
     "site.standard.heron.getDocument",
     "site.standard.heron.getDocuments",
     "site.standard.heron.getPublications",
-    "site.standard.heron.getSubscriptions",
+    "site.standard.heron.getSubscribedPublications",
 )
 
 private val SignedOutPaths = listOf(

@@ -17,17 +17,21 @@
 package com.tunjid.heron.timeline.ui.standard
 
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.DocumentCollectionShape
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
+import com.tunjid.heron.ui.rememberLatchedState
 
 @Composable
 fun Publication(
@@ -35,7 +39,8 @@ fun Publication(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     publication: StandardPublication,
-) {
+    onSubscriptionToggled: (StandardPublication, StandardSubscription?) -> Unit,
+) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
         paneTransitionScope = paneTransitionScope,
@@ -47,18 +52,48 @@ fun Publication(
         sharedElementType = publication.uri,
         avatar = {
             publication.icon?.let { icon ->
-                AsyncImage(
+                PaneStickySharedElement(
                     modifier = Modifier.size(44.dp),
-                    args = remember(icon) {
-                        ImageArgs(
-                            url = icon.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = DocumentCollectionShape,
-                        )
-                    },
-                )
+                    sharedContentState = rememberSharedContentState(
+                        key = publication.avatarSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            creator = StandardPublication::publisher,
+                        ),
+                    ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap(),
+                        args = remember(icon) {
+                            ImageArgs(
+                                url = icon.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = null,
+                                shape = DocumentCollectionShape,
+                            )
+                        },
+                    )
+                }
             }
+        },
+        action = {
+            val subscribed = publication.subscription != null
+            val latchedSubscribedState = rememberLatchedState(subscribed)
+            IconButton(
+                onClick = {
+                    latchedSubscribedState.latch(!subscribed)
+                    onSubscriptionToggled(
+                        publication,
+                        publication.subscription,
+                    )
+                },
+                content = {
+                    PublicationSubscriptionIcon(
+                        subscribed = latchedSubscribedState.value,
+                        iconSize = 24.dp,
+                    )
+                },
+            )
         },
     )
 }

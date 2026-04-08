@@ -67,8 +67,8 @@ import sh.christian.ozone.api.RKey
 import site.standard.graph.Subscription
 import site.standard.heron.GetDocumentsQueryParams
 import site.standard.heron.GetDocumentsResponse
-import site.standard.heron.GetSubscriptionsQueryParams
-import site.standard.heron.GetSubscriptionsResponse
+import site.standard.heron.GetSubscribedPublicationsQueryParams
+import site.standard.heron.GetSubscribedPublicationsResponse
 
 @Serializable
 data class StandardPublicationDocumentsQuery(
@@ -239,14 +239,14 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                 networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        getSubscriptions(
-                            params = GetSubscriptionsQueryParams(
+                        getSubscribedPublications(
+                            params = GetSubscribedPublicationsQueryParams(
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                             ),
                         )
                     },
-                    nextCursor = GetSubscriptionsResponse::cursor,
+                    nextCursor = GetSubscribedPublicationsResponse::cursor,
                     onResponse = {
                         multipleEntitySaverProvider.saveInTransaction {
                             publications.forEach {
