@@ -34,6 +34,7 @@ val HeronIcons.Reply: ImageVector
             defaultHeight = 24.dp,
             viewportWidth = 24f,
             viewportHeight = 24f,
+            autoMirror = true,
         ).apply {
             path(fill = SolidColor(Color(0xFF000000))) {
                 moveTo(10f, 9f)
