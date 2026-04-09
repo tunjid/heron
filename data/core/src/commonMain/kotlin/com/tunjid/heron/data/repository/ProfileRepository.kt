@@ -29,6 +29,7 @@ import app.bsky.graph.GetFollowsQueryParams
 import app.bsky.graph.GetFollowsResponse
 import app.bsky.graph.GetMutesQueryParams
 import app.bsky.graph.GetMutesResponse
+import app.bsky.graph.Listitem
 import app.bsky.graph.MuteActorRequest
 import app.bsky.graph.UnmuteActorRequest
 import com.atproto.repo.CreateRecordRequest
@@ -40,6 +41,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -47,11 +49,14 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -79,6 +84,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -141,11 +147,16 @@ interface ProfileRepository {
     suspend fun updateProfileStatus(
         update: Profile.StatusUpdate,
     ): Outcome
+
+    suspend fun updateProfileList(
+        update: FeedList.UpdateProfileList,
+    ): Outcome
 }
 
 internal class OfflineProfileRepository @Inject constructor(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
+    private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
@@ -541,6 +552,57 @@ internal class OfflineProfileRepository @Inject constructor(
                     active = null,
                     disabled = null,
                 )
+            }
+        }
+    } ?: expiredSessionOutcome()
+
+    override suspend fun updateProfileList(
+        update: FeedList.UpdateProfileList,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        when (update) {
+            is FeedList.UpdateProfileList.Add -> networkService.runCatchingWithMonitoredNetworkRetry {
+                createRecord(
+                    CreateRecordRequest(
+                        repo = update.signedInProfileId.id.let(::Did),
+                        collection = Nsid(ListMemberUri.NAMESPACE),
+                        record = Listitem(
+                            subject = update.profileId.id.let(::Did),
+                            list = update.listUri.uri.let(::AtUri),
+                            createdAt = Clock.System.now(),
+                        ).asJsonContent(Listitem.serializer()),
+                    ),
+                )
+            }.toOutcome {
+                if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                    throw RecordCreationException(
+                        profileId = update.signedInProfileId,
+                        collection = ListMemberUri.NAMESPACE,
+                    )
+                }
+                listDao.upsertListItems(
+                    listOf(
+                        ListMemberEntity(
+                            uri = it.uri.atUri.let(::ListMemberUri),
+                            listUri = update.listUri,
+                            subjectId = update.profileId,
+                            createdAt = Clock.System.now(),
+                        ),
+                    ),
+                )
+            }
+
+            is FeedList.UpdateProfileList.Remove -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteRecord(
+                    DeleteRecordRequest(
+                        repo = update.signedInProfileId.id.let(::Did),
+                        collection = Nsid(ListMemberUri.NAMESPACE),
+                        rkey = update.listMemberUri.recordKey.value.let(::RKey),
+                    ),
+                )
+            }.toOutcome {
+                listDao.deleteListMember(update.listMemberUri)
             }
         }
     } ?: expiredSessionOutcome()
