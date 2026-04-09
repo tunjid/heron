@@ -36,10 +36,12 @@ import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlin.math.max
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -193,6 +195,10 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                             ),
                         )
                 }
+                    .debounce { items ->
+                        if (items.isEmpty()) 300.milliseconds
+                        else 0.milliseconds
+                    }
                     .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
                         // Ignore results from stale queries
                         if (items.isValidFor(currentQuery)) copy(
