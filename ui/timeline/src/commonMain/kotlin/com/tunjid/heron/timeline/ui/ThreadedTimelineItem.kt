@@ -16,9 +16,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Commit
-import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,6 +51,9 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.icons.Commit
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.LinearScale
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.ui.timeline.generated.resources.Res
@@ -270,7 +270,7 @@ private fun BrokenTimeline(
                     modifier = Modifier
                         .offset(x = -(7).dp)
                         .rotate(90f),
-                    imageVector = Icons.Rounded.Commit,
+                    imageVector = HeronIcons.Commit,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.surfaceContainerHighest,
                 )
@@ -321,7 +321,7 @@ private fun ShowMore(
                 modifier = Modifier
                     .offset(1.dp, y = (-3).dp)
                     .rotate(90f),
-                imageVector = Icons.Rounded.LinearScale,
+                imageVector = HeronIcons.LinearScale,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.surfaceContainerHighest,
             )

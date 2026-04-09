@@ -30,9 +30,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -58,6 +55,9 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.icons.Article
+import com.tunjid.heron.ui.icons.ContentCopy
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
@@ -136,7 +136,7 @@ internal fun ShareInPostCard(
                 .semantics {
                     contentDescription = shareInPostDescription
                 },
-            icon = Icons.AutoMirrored.Rounded.Article,
+            icon = HeronIcons.Article,
             text = shareInPostDescription,
         )
     }
@@ -163,7 +163,7 @@ internal fun CopyToClipboardCard(
                 .semantics {
                     contentDescription = copyToClipboardDescription
                 },
-            icon = Icons.Rounded.ContentCopy,
+            icon = HeronIcons.ContentCopy,
             text = copyToClipboardDescription,
         )
     }

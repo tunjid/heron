@@ -18,8 +18,6 @@ package com.tunjid.heron.editprofile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,6 +48,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Save
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
@@ -182,7 +182,7 @@ class EditProfileBindings(
                             if (state.submitting) Res.string.profile_updating
                             else Res.string.save,
                         ),
-                        icon = Icons.Rounded.Save,
+                        icon = HeronIcons.Save,
                         enabled = !state.submitting,
                         expanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset

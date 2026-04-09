@@ -18,8 +18,6 @@ package com.tunjid.heron.graze.editor.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -48,6 +46,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.icons.Add
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -249,7 +249,7 @@ class GrazeEditorBindings(
                 floatingActionButton = {
                     PaneFab(
                         text = stringResource(Res.string.add_filter),
-                        icon = Icons.Rounded.Add,
+                        icon = HeronIcons.Add,
                         expanded = true,
                         enabled = !state.isLoading,
                         onClick = addFilterSheetState::show,

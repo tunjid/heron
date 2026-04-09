@@ -45,7 +45,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.timeline.ui.icons.AtProtoServer
-import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.timeline.ui.icons.logo
 import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.heron.ui.NeutralDialogButton
@@ -53,6 +52,8 @@ import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.icons.Help
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.learn_more
@@ -83,7 +84,7 @@ fun NoAccountButton(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
-                    imageVector = AtmosphereIcons.Help,
+                    imageVector = HeronIcons.Atmospheric.Help,
                     contentDescription = null,
                 )
                 Text(stringResource(Res.string.no_account_help_button))

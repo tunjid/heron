@@ -20,8 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Reply
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.reply_to
@@ -48,7 +48,7 @@ internal fun PostReplyLine(
     ) {
         Icon(
             modifier = Modifier.size(12.dp),
-            imageVector = Icons.AutoMirrored.Rounded.Reply,
+            imageVector = HeronIcons.Reply,
             contentDescription = stringResource(Res.string.reply),
             tint = MaterialTheme.typography.bodySmall.color,
         )

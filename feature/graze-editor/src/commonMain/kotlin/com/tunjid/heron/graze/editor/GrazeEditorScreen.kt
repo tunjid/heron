@@ -29,9 +29,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -68,6 +65,9 @@ import com.tunjid.heron.scaffold.scaffold.NestedNavigation
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.Close
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.SwapHoriz
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
@@ -443,7 +443,7 @@ private fun RootFilterDescription(
                 },
                 content = {
                     Icon(
-                        imageVector = Icons.Rounded.SwapHoriz,
+                        imageVector = HeronIcons.SwapHoriz,
                         contentDescription = "Flip",
                     )
                 },
@@ -452,7 +452,7 @@ private fun RootFilterDescription(
                 onClick = onRemove,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Close,
+                    imageVector = HeronIcons.Close,
                     contentDescription = stringResource(Res.string.remove_filter),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

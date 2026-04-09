@@ -31,10 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -68,6 +64,11 @@ import com.tunjid.heron.data.core.models.allowsMentioned
 import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.icons.FormatQuote
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.InfoOutlined
+import com.tunjid.heron.ui.icons.KeyboardArrowDown
+import com.tunjid.heron.ui.icons.KeyboardArrowUp
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -313,9 +314,9 @@ private fun ThreadGateBottomSheet(
 
                     Icon(
                         imageVector = if (listsExpanded)
-                            Icons.Rounded.KeyboardArrowUp
+                            HeronIcons.KeyboardArrowUp
                         else
-                            Icons.Rounded.KeyboardArrowDown,
+                            HeronIcons.KeyboardArrowDown,
                         contentDescription = stringResource(
                             if (listsExpanded) CommonStrings.collapse_icon
                             else CommonStrings.expand_icon,
@@ -369,7 +370,7 @@ private fun ThreadGateBottomSheet(
              horizontalArrangement = Arrangement.spacedBy(12.dp),
              ) {
              Icon(
-             imageVector = Icons.Rounded.FormatQuote,
+             imageVector = HeronIcons.FormatQuote,
              contentDescription = null,
              modifier = Modifier.size(20.dp),
              )
@@ -423,7 +424,7 @@ private fun InfoBanner() {
         verticalAlignment = Alignment.Top,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Info,
+            imageVector = HeronIcons.InfoOutlined,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp),

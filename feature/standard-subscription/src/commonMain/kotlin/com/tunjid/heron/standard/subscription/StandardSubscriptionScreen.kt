@@ -25,8 +25,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -47,6 +45,8 @@ import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.NotificationsOff
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -113,7 +113,7 @@ internal fun StandardSubscriptionScreen(
                         .animateItem(),
                     titleRes = Res.string.empty_subscriptions,
                     descriptionRes = Res.string.empty_subscriptions_description,
-                    icon = Icons.Rounded.NotificationsOff,
+                    icon = HeronIcons.NotificationsOff,
                 )
             }
             else items(

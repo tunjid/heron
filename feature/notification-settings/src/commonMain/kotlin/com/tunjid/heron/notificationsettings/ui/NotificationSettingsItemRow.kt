@@ -39,8 +39,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +64,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.ui.icons.ExpandLess
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.notification_settings.generated.resources.Res
 import heron.feature.notification_settings.generated.resources.everyone
@@ -209,7 +209,7 @@ internal fun ExpandableSettingsItemRow(
                 modifier = Modifier.graphicsLayer {
                     rotationX = iconRotation.value
                 },
-                imageVector = Icons.Default.ExpandLess,
+                imageVector = HeronIcons.ExpandLess,
                 contentDescription = stringResource(
                     if (isExpanded) CommonStrings.collapse_icon
                     else CommonStrings.expand_icon,

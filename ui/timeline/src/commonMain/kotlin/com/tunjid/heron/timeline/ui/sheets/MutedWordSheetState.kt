@@ -18,13 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +46,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.ui.icons.BlockOutlined
+import com.tunjid.heron.ui.icons.Check
+import com.tunjid.heron.ui.icons.Close
+import com.tunjid.heron.ui.icons.ErrorOutline
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.RadioButtonChecked
+import com.tunjid.heron.ui.icons.RadioButtonUnchecked
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -205,7 +205,7 @@ private fun MutedWordsBottomSheet(
                         onClick = { state.hide() },
                         modifier = Modifier.size(40.dp),
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = null)
+                        Icon(HeronIcons.Close, contentDescription = null)
                     }
                 }
             }
@@ -268,7 +268,7 @@ private fun MutedWordsBottomSheet(
                             trailingIcon = {
                                 if (state.newWord.isNotBlank()) {
                                     IconButton(onClick = { state.newWord = "" }) {
-                                        Icon(Icons.Default.Close, contentDescription = null)
+                                        Icon(HeronIcons.Close, contentDescription = null)
                                     }
                                 }
                             },
@@ -497,7 +497,7 @@ private fun DurationChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
-                imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
+                imageVector = if (isSelected) HeronIcons.RadioButtonChecked else HeronIcons.RadioButtonUnchecked,
                 contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(14.dp),
@@ -549,7 +549,7 @@ private fun MuteTargetChip(
         ) {
             if (isSelected) {
                 Icon(
-                    Icons.Default.Check,
+                    HeronIcons.Check,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = contentColor,
@@ -615,7 +615,7 @@ private fun MutedWordItem(
                 ),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = HeronIcons.Close,
                     contentDescription = stringResource(Res.string.remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
@@ -636,7 +636,7 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Block,
+            imageVector = HeronIcons.BlockOutlined,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(56.dp),
@@ -674,7 +674,7 @@ private fun ErrorMessage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Default.ErrorOutline,
+                imageVector = HeronIcons.ErrorOutline,
                 contentDescription = stringResource(Res.string.error),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(18.dp),

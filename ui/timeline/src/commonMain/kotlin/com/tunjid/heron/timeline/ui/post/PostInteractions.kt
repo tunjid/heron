@@ -39,15 +39,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.BookmarkBorder
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -99,6 +90,15 @@ import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.heron.ui.UiTokens.RepostGreen
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.icons.ArrowCircleUp
+import com.tunjid.heron.ui.icons.Bookmark
+import com.tunjid.heron.ui.icons.BookmarkBorder
+import com.tunjid.heron.ui.icons.ChatBubbleOutline
+import com.tunjid.heron.ui.icons.Favorite
+import com.tunjid.heron.ui.icons.FavoriteBorder
+import com.tunjid.heron.ui.icons.FormatQuote
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Repeat
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -552,7 +552,7 @@ private fun PostInteractionsBottomSheet(
                                 else Res.string.remove_repost,
                             ),
                             enabled = true,
-                            icon = Icons.Rounded.Repeat,
+                            icon = HeronIcons.Repeat,
                             onClick = {
                                 onInteractionConfirmed(currentInteraction)
                                 state.hide()
@@ -561,7 +561,7 @@ private fun PostInteractionsBottomSheet(
                         Item(
                             contentDescription = stringResource(Res.string.quote),
                             enabled = action.viewerStats.canQuote,
-                            icon = Icons.Rounded.FormatQuote,
+                            icon = HeronIcons.FormatQuote,
                             onClick = {
                                 // TODO: Noted in the above, the only valuable part in the
                                 //  interaction is the PostUri weh removing a repost.
@@ -737,11 +737,11 @@ private sealed class PostInteractionButton {
         fun PostInteractionButton.icon(
             isChecked: Boolean,
         ) = when (this) {
-            Comment -> Icons.Rounded.ChatBubbleOutline
-            Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
-            Repost -> Icons.Rounded.Repeat
-            Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            MoreOptions -> Icons.Rounded.ArrowCircleUp
+            Comment -> HeronIcons.ChatBubbleOutline
+            Like -> if (isChecked) HeronIcons.Favorite else HeronIcons.FavoriteBorder
+            Repost -> HeronIcons.Repeat
+            Bookmark -> if (isChecked) HeronIcons.Bookmark else HeronIcons.BookmarkBorder
+            MoreOptions -> HeronIcons.ArrowCircleUp
         }
 
         val PostInteractionButton.stringResource

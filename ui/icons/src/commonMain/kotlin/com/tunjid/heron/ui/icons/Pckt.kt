@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
@@ -23,12 +23,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-internal val Pckt: ImageVector
+val HeronIcons.Atmospheric.Pckt: ImageVector
     get() {
-        if (_Pckt != null) {
-            return _Pckt!!
+        if (_pckt != null) {
+            return _pckt!!
         }
-        _Pckt = ImageVector.Builder(
+        _pckt = ImageVector.Builder(
             name = "Pckt",
             defaultWidth = 93.dp,
             defaultHeight = 107.dp,
@@ -142,8 +142,8 @@ internal val Pckt: ImageVector
             }
         }.build()
 
-        return _Pckt!!
+        return _pckt!!
     }
 
 @Suppress("ObjectPropertyName")
-private var _Pckt: ImageVector? = null
+private var _pckt: ImageVector? = null

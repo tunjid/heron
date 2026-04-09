@@ -17,12 +17,12 @@
 package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Palette
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
 import heron.feature.settings.generated.resources.autohide_bottom_navigation
@@ -53,7 +53,7 @@ fun AppearanceItem(
             .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.appearance),
-        icon = Icons.Rounded.Palette,
+        icon = HeronIcons.Palette,
     ) {
         SettingsToggleItem(
             modifier = Modifier

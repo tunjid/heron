@@ -19,9 +19,6 @@ package com.tunjid.heron.profile.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +45,9 @@ import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.forEach
+import com.tunjid.heron.ui.icons.Block
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.VolumeOff
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.post_author_label
@@ -86,12 +86,12 @@ internal fun ProfileLabels(
         modifier = modifier,
     ) {
         if (viewerState.isBlocked) IconLabel(
-            icon = Icons.Rounded.Block,
+            icon = HeronIcons.Block,
             contentDescription = stringResource(CommonStrings.viewer_state_blocked),
             onClick = {},
         )
         if (viewerState.isMuted) IconLabel(
-            icon = Icons.AutoMirrored.Rounded.VolumeOff,
+            icon = HeronIcons.VolumeOff,
             contentDescription = stringResource(CommonStrings.viewer_state_muted),
             onClick = { },
         )

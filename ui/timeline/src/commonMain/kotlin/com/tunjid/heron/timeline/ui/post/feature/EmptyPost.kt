@@ -16,23 +16,23 @@
 
 package com.tunjid.heron.timeline.ui.post.feature
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.automirrored.rounded.List
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.DynamicFeed
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Forum
-import androidx.compose.material.icons.rounded.Group
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.ModeComment
-import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.timeline.ui.EmptyContent
+import com.tunjid.heron.ui.icons.Article
+import com.tunjid.heron.ui.icons.Dashboard
+import com.tunjid.heron.ui.icons.DynamicFeed
+import com.tunjid.heron.ui.icons.Favorite
+import com.tunjid.heron.ui.icons.Forum
+import com.tunjid.heron.ui.icons.Group
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Image
+import com.tunjid.heron.ui.icons.List
+import com.tunjid.heron.ui.icons.ModeComment
+import com.tunjid.heron.ui.icons.Videocam
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.empty_timeline_feed
 import heron.ui.timeline.generated.resources.empty_timeline_feed_description
@@ -102,18 +102,18 @@ private fun TimelineItem.Empty.emptyDescriptionRes(): StringResource = when (thi
 }
 
 private fun TimelineItem.Empty.emptyIcon(): ImageVector = when (this) {
-    TimelineItem.Empty.Thread -> Icons.Rounded.ModeComment
+    TimelineItem.Empty.Thread -> HeronIcons.ModeComment
     is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
-        is Timeline.Home.Following -> Icons.Rounded.Dashboard
-        is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
-        is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
-        is Timeline.StarterPack -> Icons.Rounded.Group
+        is Timeline.Home.Following -> HeronIcons.Dashboard
+        is Timeline.Home.Feed -> HeronIcons.DynamicFeed
+        is Timeline.Home.List -> HeronIcons.List
+        is Timeline.StarterPack -> HeronIcons.Group
         is Timeline.Profile -> when (timeline.type) {
-            Timeline.Profile.Type.Posts -> Icons.AutoMirrored.Rounded.Article
-            Timeline.Profile.Type.Replies -> Icons.Rounded.Forum
-            Timeline.Profile.Type.Likes -> Icons.Rounded.Favorite
-            Timeline.Profile.Type.Media -> Icons.Rounded.Image
-            Timeline.Profile.Type.Videos -> Icons.Rounded.Videocam
+            Timeline.Profile.Type.Posts -> HeronIcons.Article
+            Timeline.Profile.Type.Replies -> HeronIcons.Forum
+            Timeline.Profile.Type.Likes -> HeronIcons.Favorite
+            Timeline.Profile.Type.Media -> HeronIcons.Image
+            Timeline.Profile.Type.Videos -> HeronIcons.Videocam
         }
     }
 }

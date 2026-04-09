@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -22,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Sort
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.timeline_thread_linear
 import heron.ui.core.generated.resources.timeline_thread_newest_first
@@ -46,7 +46,7 @@ fun ThreadDisplayOptions(
     ) {
         var expanded by remember { mutableStateOf(false) }
         AppBarButton(
-            icon = Icons.AutoMirrored.Rounded.Sort,
+            icon = HeronIcons.Sort,
             iconDescription = stringResource(CommonStrings.timeline_thread_order),
             onClick = { expanded = true },
         )

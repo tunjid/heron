@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 fun org.gradle.api.Project.configureUiModule(
     extension: KotlinMultiplatformExtension,
 ) = extension.apply {
+    val isIconsModule = path == ":ui:icons"
     sourceSets.apply {
         named("commonMain") {
             dependencies {
@@ -27,6 +28,9 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":data:models"))
                 implementation(project(":data:logging"))
                 implementation(project(":data:platform"))
+                if (!isIconsModule) {
+                    api(project(":ui:icons"))
+                }
 
                 api(libs.lifecycle.multiplatform.runtime)
                 api(libs.lifecycle.multiplatform.runtime.compose)
@@ -34,7 +38,6 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.compose.multiplatform.components.resources)
                 api(libs.compose.multiplatform.runtime)
                 api(libs.compose.multiplatform.animation)
-                api(libs.compose.multiplatform.material.icons.extended)
                 api(libs.compose.multiplatform.material3)
                 api(libs.compose.multiplatform.foundation.layout)
                 api(libs.compose.multiplatform.foundation.foundation)

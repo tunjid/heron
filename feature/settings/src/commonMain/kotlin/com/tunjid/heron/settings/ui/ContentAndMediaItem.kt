@@ -19,10 +19,6 @@ package com.tunjid.heron.settings.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.Forum
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.settings.Section
+import com.tunjid.heron.ui.icons.Article
+import com.tunjid.heron.ui.icons.Forum
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Home
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
@@ -55,7 +55,7 @@ fun ContentAndMediaItem(
             .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
-        icon = Icons.AutoMirrored.Rounded.Article,
+        icon = HeronIcons.Article,
     ) {
         SettingsItem(
             modifier = Modifier
@@ -68,7 +68,7 @@ fun ContentAndMediaItem(
                     )
                 }
                 .settingsItemPaddingAndMinHeight(),
-            icon = Icons.Rounded.Home,
+            icon = HeronIcons.Home,
             title = stringResource(Res.string.following_feed_preferences),
         )
         SettingsItem(
@@ -82,7 +82,7 @@ fun ContentAndMediaItem(
                     )
                 }
                 .settingsItemPaddingAndMinHeight(),
-            icon = Icons.Rounded.Forum,
+            icon = HeronIcons.Forum,
             title = stringResource(Res.string.thread_preferences),
         )
 

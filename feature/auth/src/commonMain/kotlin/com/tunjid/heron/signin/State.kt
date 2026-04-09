@@ -17,9 +17,6 @@
 package com.tunjid.heron.signin
 
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -34,6 +31,9 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.Status
+import com.tunjid.heron.ui.icons.AccountCircle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Lock
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
@@ -94,7 +94,7 @@ internal val InitialFields: List<FormField> = listOf(
         id = Username,
         value = "",
         maxLines = 1,
-        leadingIcon = Icons.Rounded.AccountCircle,
+        leadingIcon = HeronIcons.AccountCircle,
         transformation = VisualTransformation.None,
         contentType = ContentType.Username,
         keyboardOptions = KeyboardOptions(
@@ -118,7 +118,7 @@ internal val InitialFields: List<FormField> = listOf(
         id = Password,
         value = "",
         maxLines = 1,
-        leadingIcon = Icons.Rounded.Lock,
+        leadingIcon = HeronIcons.Lock,
         transformation = PasswordVisualTransformation(),
         contentType = ContentType.Password,
         keyboardOptions = KeyboardOptions(

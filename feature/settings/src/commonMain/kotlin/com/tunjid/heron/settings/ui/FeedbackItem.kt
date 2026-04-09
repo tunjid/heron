@@ -18,11 +18,11 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Feedback
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import com.tunjid.heron.ui.icons.Feedback
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.give_feedback
 import org.jetbrains.compose.resources.stringResource
@@ -41,7 +41,7 @@ fun FeedbackItem(
             }
             .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.give_feedback),
-        icon = Icons.Rounded.Feedback,
+        icon = HeronIcons.Feedback,
     )
 }
 

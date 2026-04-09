@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ForwardToInbox
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -67,6 +65,8 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.icons.ForwardToInbox
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -219,7 +219,7 @@ class MessagesBindings(
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(Res.string.write_new_dm),
-                        icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
+                        icon = HeronIcons.ForwardToInbox,
                         expanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                             else topAppBarNestedScrollConnection.offset * -1f

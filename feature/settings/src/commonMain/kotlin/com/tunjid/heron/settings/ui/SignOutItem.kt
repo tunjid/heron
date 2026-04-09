@@ -18,8 +18,6 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +30,8 @@ import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.icons.DirectionsWalk
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.cancel
 import heron.feature.settings.generated.resources.sign_out
@@ -54,7 +54,7 @@ fun SignOutItem(
             .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
-        icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
+        icon = HeronIcons.DirectionsWalk,
     )
 
     SignOutDialog(

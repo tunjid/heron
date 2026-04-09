@@ -4,12 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.EditAttributes
-import androidx.compose.material.icons.rounded.FilterAlt
-import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +29,12 @@ import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.icons.Delete
+import com.tunjid.heron.ui.icons.EditAttributes
+import com.tunjid.heron.ui.icons.FilterAlt
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.PersonOff
+import com.tunjid.heron.ui.icons.VolumeOff
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -217,7 +217,7 @@ private fun PostManagementMenuSection(
             BottomSheetItemCardRow(
                 modifier = Modifier
                     .fillMaxWidth(),
-                icon = Icons.Rounded.EditAttributes,
+                icon = HeronIcons.EditAttributes,
                 text = stringResource(Res.string.thread_gate_post_reply_settings),
                 onClick = {
                     onOptionClicked(PostOption.ThreadGate(post.uri))
@@ -229,7 +229,7 @@ private fun PostManagementMenuSection(
             BottomSheetItemCardRow(
                 modifier = Modifier
                     .fillMaxWidth(),
-                icon = Icons.Rounded.Delete,
+                icon = HeronIcons.Delete,
                 text = stringResource(Res.string.delete_post),
                 iconTint = MaterialTheme.colorScheme.error,
                 onClick = {
@@ -310,14 +310,14 @@ enum class PostModerationTools(
 ) {
     MuteWords(
         stringRes = Res.string.mute_words_tags,
-        icon = Icons.Rounded.FilterAlt,
+        icon = HeronIcons.FilterAlt,
     ),
     BlockAccount(
         stringRes = CommonStrings.viewer_state_block_account,
-        icon = Icons.Rounded.PersonOff,
+        icon = HeronIcons.PersonOff,
     ),
     MuteAccount(
         stringRes = CommonStrings.viewer_state_mute_account,
-        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+        icon = HeronIcons.VolumeOff,
     ),
 }

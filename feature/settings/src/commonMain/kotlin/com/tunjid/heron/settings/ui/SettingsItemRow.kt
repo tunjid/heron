@@ -36,8 +36,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -59,6 +57,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.ExpandLess
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
@@ -153,7 +153,7 @@ fun ExpandableSettingsItemRow(
                 modifier = Modifier.graphicsLayer {
                     rotationX = iconRotation.value
                 },
-                imageVector = Icons.Default.ExpandLess,
+                imageVector = HeronIcons.ExpandLess,
                 contentDescription = stringResource(
                     if (isExpanded) CommonStrings.collapse_icon
                     else CommonStrings.expand_icon,
