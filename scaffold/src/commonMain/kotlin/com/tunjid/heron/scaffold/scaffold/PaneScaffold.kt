@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -265,6 +266,7 @@ fun PaneScaffoldState.PaneScaffold(
                                 atStart = paneState.pane == ThreePane.Secondary,
                             ),
                     ) {
+                        PersistentSharedElement()
                         content(paddingValues)
                     }
                 },
@@ -340,6 +342,24 @@ private inline fun PaneNavigationRailScaffold(
 fun Modifier.paneClip() =
     then(PaneClipModifier)
 
+/**
+ * A workaround for https://issuetracker.google.com/issues/498497888
+ * Sticky shared elements which use Modifier.sharedElementWithUserManagedVisibility
+ * need an accompanying Modifier.sharedElement match to animate if the shared element
+ * transition is sought. Tte bug does not affect the transition if it is not seeking.
+ */
+@Composable
+private fun PaneScaffoldState.PersistentSharedElement() {
+    if (paneState.pane == ThreePane.Primary) Box(
+        Modifier
+            .sharedElement(
+                sharedContentState = rememberSharedContentState(PersistentSharedElementKey),
+                animatedVisibilityScope = this,
+            )
+            .size(1.dp),
+    )
+}
+
 private val PaneClipModifier = Modifier.clip(
     shape = RoundedCornerShape(
         topStart = 16.dp,
@@ -352,3 +372,5 @@ private val BoundsTransformSpring = spring(
     stiffness = Spring.StiffnessMediumLow,
     visibilityThreshold = Rect.VisibilityThreshold,
 )
+
+private object PersistentSharedElementKey

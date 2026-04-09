@@ -45,23 +45,6 @@ val testDataLayer by tasks.registering {
 }
 
 allprojects {
-    configurations.all {
-        resolutionStrategy.eachDependency {
-            val navigation3ComposeAnimationBug = """
-                Shared element seekable transition bug compounded in Nav 3 predictive back
-            """.trimIndent()
-            when (requested.group) {
-                "androidx.navigation3" if requested.name == "navigation3-ui" -> {
-                    useVersion("1.1.0-alpha05")
-                    because(navigation3ComposeAnimationBug)
-                }
-                "androidx.compose.animation" if requested.name == "animation" -> {
-                    useVersion("1.11.0-alpha06")
-                    because(navigation3ComposeAnimationBug)
-                }
-            }
-        }
-    }
     plugins.apply(rootProject.libs.plugins.spotless.get().pluginId)
     extensions.configure<SpotlessExtension> {
         kotlin {
