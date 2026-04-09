@@ -29,10 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -76,6 +72,10 @@ import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.icons.Close
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.VolumeOff
+import com.tunjid.heron.ui.icons.VolumeUp
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -196,7 +196,7 @@ internal fun MediaActions(
                     shape = CircleShape,
                     onClick = onCloseClicked,
                 ),
-            imageVector = Icons.Rounded.Close,
+            imageVector = HeronIcons.Close,
             tint = MaterialTheme.colorScheme.outline,
             contentDescription = stringResource(CommonStrings.close),
         )
@@ -448,8 +448,8 @@ private fun VideoPlayerController.MuteButton(
 ) {
     Icon(
         imageVector =
-        if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-        else Icons.AutoMirrored.Rounded.VolumeUp,
+        if (isMuted) HeronIcons.VolumeOff
+        else HeronIcons.VolumeUp,
         contentDescription = stringResource(
             if (isMuted) Res.string.mute_video
             else Res.string.unmute_video,

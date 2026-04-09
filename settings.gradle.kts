@@ -86,8 +86,13 @@ include(
     ":feature:standard-subscription",
     ":feature:template",
     ":ui:core",
+    ":ui:icons",
     ":ui:media",
     ":ui:profile",
     ":ui:tiling",
     ":ui:timeline",
 )
+
+if (file("tools/icon-generator").exists()) {
+    include(":tools:icon-generator")
+}

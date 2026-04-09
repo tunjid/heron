@@ -34,12 +34,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ShowChart
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.JoinFull
-import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -71,6 +65,12 @@ import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.icons.AccountCircle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.JoinFull
+import com.tunjid.heron.ui.icons.LocalFireDepartmentOutlined
+import com.tunjid.heron.ui.icons.RssFeed
+import com.tunjid.heron.ui.icons.ShowChart
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.search.generated.resources.Res
@@ -116,7 +116,7 @@ internal fun SuggestedContent(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .animateItem(),
-                icon = Icons.AutoMirrored.Rounded.ShowChart,
+                icon = HeronIcons.ShowChart,
                 title = stringResource(Res.string.trending_title),
             )
         }
@@ -142,7 +142,7 @@ internal fun SuggestedContent(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .animateItem(),
-                icon = Icons.Rounded.AccountCircle,
+                icon = HeronIcons.AccountCircle,
                 title = stringResource(Res.string.suggested_accounts),
             )
         }
@@ -182,7 +182,7 @@ internal fun SuggestedContent(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .animateItem(),
-                icon = Icons.Rounded.JoinFull,
+                icon = HeronIcons.JoinFull,
                 title = stringResource(Res.string.starter_packs),
             )
         }
@@ -206,7 +206,7 @@ internal fun SuggestedContent(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .animateItem(),
-                icon = Icons.Rounded.RssFeed,
+                icon = HeronIcons.RssFeed,
                 title = stringResource(Res.string.discover_feeds),
             )
         }
@@ -341,7 +341,7 @@ internal fun Trend(
                 when (trend.status) {
                     Trend.Status.Hot -> Icon(
                         modifier = Modifier.size(20.dp),
-                        imageVector = Icons.Outlined.LocalFireDepartment,
+                        imageVector = HeronIcons.LocalFireDepartmentOutlined,
                         contentDescription = "",
                     )
 

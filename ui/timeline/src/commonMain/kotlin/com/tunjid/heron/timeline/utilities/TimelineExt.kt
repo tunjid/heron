@@ -23,10 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkAdd
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +49,10 @@ import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.Bookmark
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.NotSelectedBookmark
+import com.tunjid.heron.ui.icons.Star
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
@@ -250,9 +250,9 @@ private fun Timeline.Home.Status.textResource(): StringResource =
 
 private val Timeline.Home.Status.icon: ImageVector
     get() = when (this) {
-        Timeline.Home.Status.Pinned -> Icons.Rounded.Star
-        Timeline.Home.Status.Saved -> Icons.Rounded.Bookmark
-        Timeline.Home.Status.None -> Icons.Outlined.BookmarkAdd
+        Timeline.Home.Status.Pinned -> HeronIcons.Star
+        Timeline.Home.Status.Saved -> HeronIcons.Bookmark
+        Timeline.Home.Status.None -> HeronIcons.NotSelectedBookmark
     }
 
 private val Timeline.avatar: ImageUri

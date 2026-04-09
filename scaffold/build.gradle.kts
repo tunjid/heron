@@ -43,6 +43,7 @@ kotlin {
                 implementation(project(":data:logging"))
                 implementation(project(":data:core"))
                 implementation(project(":ui:core"))
+                implementation(project(":ui:icons"))
                 implementation(project(":ui:profile"))
                 implementation(project(":ui:media"))
 
@@ -52,8 +53,6 @@ kotlin {
                 implementation(libs.compose.multiplatform.foundation.layout)
                 implementation(libs.compose.multiplatform.runtime)
                 implementation(libs.compose.multiplatform.material)
-                implementation(libs.compose.multiplatform.material.icons)
-                implementation(libs.compose.multiplatform.material.icons.extended)
                 implementation(libs.compose.multiplatform.material3)
 
                 implementation(libs.kotlinx.coroutines.core)

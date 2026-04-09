@@ -30,6 +30,7 @@ fun Project.configureFeatureModule(
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
                 implementation(project(":ui:core"))
+                implementation(project(":ui:icons"))
                 implementation(project(":ui:media"))
                 implementation(project(":ui:tiling"))
                 implementation(project(":ui:timeline"))

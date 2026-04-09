@@ -24,9 +24,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -48,6 +45,9 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Movie
+import com.tunjid.heron.ui.icons.Photo
 import de.cketti.codepoints.codePointCount
 import kotlin.math.max
 import kotlin.math.min
@@ -175,6 +175,6 @@ private const val PostTextLimit = 300
 private const val PhotoUploadLimit = 4
 
 private val TabIcons = listOf(
-    Icons.Rounded.Photo,
-    Icons.Rounded.Movie,
+    HeronIcons.Photo,
+    HeronIcons.Movie,
 )

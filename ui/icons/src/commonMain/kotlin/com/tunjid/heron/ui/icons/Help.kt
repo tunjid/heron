@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -22,12 +22,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-internal val Help: ImageVector
+val HeronIcons.Atmospheric.Help: ImageVector
     get() {
-        if (_Help != null) {
-            return _Help!!
+        if (_help != null) {
+            return _help!!
         }
-        _Help = ImageVector.Builder(
+        _help = ImageVector.Builder(
             name = "Help",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
@@ -98,8 +98,8 @@ internal val Help: ImageVector
             }
         }.build()
 
-        return _Help!!
+        return _help!!
     }
 
 @Suppress("ObjectPropertyName")
-private var _Help: ImageVector? = null
+private var _help: ImageVector? = null

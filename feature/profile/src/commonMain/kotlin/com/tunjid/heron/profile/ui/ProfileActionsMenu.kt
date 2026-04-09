@@ -8,12 +8,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.rounded.PersonOff
-import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -35,6 +29,12 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.MoreVert
+import com.tunjid.heron.ui.icons.PersonOff
+import com.tunjid.heron.ui.icons.Videocam
+import com.tunjid.heron.ui.icons.VolumeOff
+import com.tunjid.heron.ui.icons.VolumeUp
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
@@ -63,7 +63,7 @@ internal fun ProfileActionsMenu(
             label = {}, // keep empty
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = HeronIcons.MoreVert,
                     contentDescription = stringResource(CommonStrings.more_options),
                 )
             },
@@ -153,11 +153,11 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             when {
                 isLive -> ProfileActionMenu.Item(
                     title = CommonStrings.action_edit_live_status,
-                    icon = Icons.Rounded.Videocam,
+                    icon = HeronIcons.Videocam,
                 )
                 else -> ProfileActionMenu.Item(
                     title = CommonStrings.action_go_live,
-                    icon = Icons.Rounded.Videocam,
+                    icon = HeronIcons.Videocam,
                 )
             },
         )
@@ -165,18 +165,18 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             if (!isBlocked) add(
                 ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_block_account,
-                    icon = Icons.Rounded.PersonOff,
+                    icon = HeronIcons.PersonOff,
                     isDestructive = true,
                 ),
             )
             add(
                 if (isMuted) ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_unmute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                    icon = HeronIcons.VolumeUp,
                 )
                 else ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_mute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                    icon = HeronIcons.VolumeOff,
                 ),
             )
         }

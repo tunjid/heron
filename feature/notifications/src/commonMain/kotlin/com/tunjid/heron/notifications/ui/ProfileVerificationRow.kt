@@ -19,8 +19,6 @@ package com.tunjid.heron.notifications.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +30,8 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Person
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
@@ -61,7 +61,7 @@ fun ProfileVerificationRow(
         onProfileClicked = onProfileClicked,
         icon = {
             Icon(
-                painter = rememberVectorPainter(Icons.Rounded.Person),
+                painter = rememberVectorPainter(HeronIcons.Person),
                 tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(
                     if (isVerified) CommonStrings.notifications_account_verified

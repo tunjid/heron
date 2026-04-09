@@ -27,8 +27,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Copyright
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +46,8 @@ import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.icons.Copyright
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.close
 import heron.feature.settings.generated.resources.open_source_licenses
@@ -64,7 +64,7 @@ fun OpenSourceLibrariesItem(
             .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.open_source_licenses),
-        icon = Icons.Rounded.Copyright,
+        icon = HeronIcons.Copyright,
     ) {
         LibrariesHorizontalGrid(
             libraries = libraries,

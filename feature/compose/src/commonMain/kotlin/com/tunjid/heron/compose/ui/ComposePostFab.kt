@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +36,8 @@ import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Send
 import com.tunjid.heron.ui.text.links
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post
@@ -122,7 +122,7 @@ private fun PaneScaffoldState.ComposePostFab(
             )
             .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
         text = stringResource(Res.string.post),
-        icon = Icons.AutoMirrored.Rounded.Send,
+        icon = HeronIcons.Send,
         expanded = state.fabExpanded,
         onClick = onClick@{
             state.createPostAction()?.let(onCreatePost)

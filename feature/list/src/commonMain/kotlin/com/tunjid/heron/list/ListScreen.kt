@@ -34,8 +34,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.RemoveCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -126,6 +124,8 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.RemoveCircle
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -397,7 +397,7 @@ private fun ListMembers(
                             },
                             content = {
                                 Icon(
-                                    imageVector = Icons.Rounded.RemoveCircle,
+                                    imageVector = HeronIcons.RemoveCircle,
                                     contentDescription = stringResource(Res.string.remove_list_member),
                                     tint = MaterialTheme.colorScheme.error,
                                 )

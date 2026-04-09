@@ -18,10 +18,6 @@ package com.tunjid.heron.timeline.ui.profile
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -32,6 +28,10 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isBlockedBy
 import com.tunjid.heron.data.core.models.isFollowing
+import com.tunjid.heron.ui.icons.Add
+import com.tunjid.heron.ui.icons.Check
+import com.tunjid.heron.ui.icons.Edit
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.viewer_state_follow
@@ -75,9 +75,9 @@ fun ProfileViewerState(
         leadingIcon = {
             Icon(
                 imageVector = when (latchedStatus.value) {
-                    FollowStatus.Edit -> Icons.Rounded.Edit
-                    FollowStatus.Following -> Icons.Rounded.Check
-                    FollowStatus.NotFollowing -> Icons.Rounded.Add
+                    FollowStatus.Edit -> HeronIcons.Edit
+                    FollowStatus.Following -> HeronIcons.Check
+                    FollowStatus.NotFollowing -> HeronIcons.Add
                 },
                 contentDescription = followStatusText,
             )

@@ -27,11 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Forward5
-import androidx.compose.material.icons.rounded.PauseCircle
-import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.Replay5
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -58,6 +53,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.Forward5
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.PauseCircle
+import com.tunjid.heron.ui.icons.PlayCircle
+import com.tunjid.heron.ui.icons.Replay5
 import heron.ui.media.generated.resources.Res
 import heron.ui.media.generated.resources.pause
 import heron.ui.media.generated.resources.play
@@ -182,9 +182,9 @@ class PlayerControlsUiState(
     var interactionCount by mutableLongStateOf(0)
 
     internal val playerControlStates = mutableStateListOf(
-        PlayerControlState(Icons.Rounded.Replay5, 30.dp),
-        PlayerControlState(Icons.Rounded.PlayCircle, 30.dp),
-        PlayerControlState(Icons.Rounded.Forward5, 30.dp),
+        PlayerControlState(HeronIcons.Replay5, 30.dp),
+        PlayerControlState(HeronIcons.PlayCircle, 30.dp),
+        PlayerControlState(HeronIcons.Forward5, 30.dp),
     )
 
     fun toggleVisibility() {
@@ -195,8 +195,8 @@ class PlayerControlsUiState(
         status: PlayerStatus,
     ) {
         playerControlStates[1].icon = when (status) {
-            is PlayerStatus.Play -> Icons.Rounded.PauseCircle
-            else -> Icons.Rounded.PlayCircle
+            is PlayerStatus.Play -> HeronIcons.PauseCircle
+            else -> HeronIcons.PlayCircle
         }
     }
 
@@ -229,14 +229,14 @@ private fun PlayerControlsUiState.interactWith(
     videoPlayerState: VideoPlayerState,
 ) {
     when (playerControlState.icon) {
-        Icons.Rounded.PlayCircle,
-        Icons.Rounded.PauseCircle,
+        HeronIcons.PlayCircle,
+        HeronIcons.PauseCircle,
         -> when (videoPlayerState.status) {
             is PlayerStatus.Play -> videoPlayerController.pauseActiveVideo()
             else -> videoPlayerController.play(videoPlayerState.videoId)
         }
 
-        Icons.Rounded.Forward5 -> videoPlayerController.play(
+        HeronIcons.Forward5 -> videoPlayerController.play(
             videoId = videoPlayerState.videoId,
             seekToMs = min(
                 a = videoPlayerState.totalDuration,
@@ -244,7 +244,7 @@ private fun PlayerControlsUiState.interactWith(
             ),
         )
 
-        Icons.Rounded.Replay5 -> videoPlayerController.play(
+        HeronIcons.Replay5 -> videoPlayerController.play(
             videoId = videoPlayerState.videoId,
             seekToMs = max(
                 a = 0,
@@ -267,10 +267,10 @@ internal class PlayerControlState(
 
 private val PlayerControlState.stringRes
     get() = when (icon) {
-        Icons.Rounded.PlayCircle -> Res.string.play
-        Icons.Rounded.PauseCircle -> Res.string.pause
-        Icons.Rounded.Forward5 -> Res.string.skip_5
-        Icons.Rounded.Replay5 -> Res.string.rewind_5
+        HeronIcons.PlayCircle -> Res.string.play
+        HeronIcons.PauseCircle -> Res.string.pause
+        HeronIcons.Forward5 -> Res.string.skip_5
+        HeronIcons.Replay5 -> Res.string.rewind_5
         else -> Res.string.play
     }
 

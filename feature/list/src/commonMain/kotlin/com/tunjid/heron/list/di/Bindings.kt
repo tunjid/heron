@@ -22,8 +22,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +72,8 @@ import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.Add
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -396,7 +396,7 @@ class ListBindings(
                     ) {
                         PaneFab(
                             text = stringResource(Res.string.add_list_member),
-                            icon = Icons.Rounded.Add,
+                            icon = HeronIcons.Add,
                             expanded = isFabExpanded {
                                 fabExpansionNestedScrollConnection.offset
                             },

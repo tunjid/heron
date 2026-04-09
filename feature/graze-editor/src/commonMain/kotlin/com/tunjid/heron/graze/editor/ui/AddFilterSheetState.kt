@@ -27,35 +27,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.CallSplit
-import androidx.compose.material.icons.automirrored.rounded.CompareArrows
-import androidx.compose.material.icons.automirrored.rounded.ManageSearch
-import androidx.compose.material.icons.rounded.AccountTree
-import androidx.compose.material.icons.rounded.Analytics
-import androidx.compose.material.icons.rounded.AttachMoney
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Diversity3
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.Face
-import androidx.compose.material.icons.rounded.Gavel
-import androidx.compose.material.icons.rounded.Group
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.Mood
-import androidx.compose.material.icons.rounded.PermMedia
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Tag
-import androidx.compose.material.icons.rounded.Topic
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -75,6 +46,35 @@ import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.icons.AccountTree
+import com.tunjid.heron.ui.icons.Analytics
+import com.tunjid.heron.ui.icons.AttachMoney
+import com.tunjid.heron.ui.icons.Block
+import com.tunjid.heron.ui.icons.CallSplit
+import com.tunjid.heron.ui.icons.CompareArrows
+import com.tunjid.heron.ui.icons.Diversity3
+import com.tunjid.heron.ui.icons.ExpandLess
+import com.tunjid.heron.ui.icons.ExpandMore
+import com.tunjid.heron.ui.icons.Face
+import com.tunjid.heron.ui.icons.Gavel
+import com.tunjid.heron.ui.icons.Group
+import com.tunjid.heron.ui.icons.Groups
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Image
+import com.tunjid.heron.ui.icons.Language
+import com.tunjid.heron.ui.icons.ManageSearch
+import com.tunjid.heron.ui.icons.Mood
+import com.tunjid.heron.ui.icons.PermMedia
+import com.tunjid.heron.ui.icons.Person
+import com.tunjid.heron.ui.icons.Psychology
+import com.tunjid.heron.ui.icons.Search
+import com.tunjid.heron.ui.icons.SelectAll
+import com.tunjid.heron.ui.icons.Share
+import com.tunjid.heron.ui.icons.Tag
+import com.tunjid.heron.ui.icons.Topic
+import com.tunjid.heron.ui.icons.Tune
+import com.tunjid.heron.ui.icons.VisibilityOff
+import com.tunjid.heron.ui.icons.Warning
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -306,8 +306,8 @@ private fun FilterGroupItem(
             trailingContent = {
                 Icon(
                     imageVector =
-                    if (isExpanded) Icons.Rounded.ExpandLess
-                    else Icons.Rounded.ExpandMore,
+                    if (isExpanded) HeronIcons.ExpandLess
+                    else HeronIcons.ExpandMore,
                     contentDescription = null,
                 )
             },
@@ -361,7 +361,7 @@ private class FilterOption(
 private val SimpleFilterOptions: List<FilterOption> = listOf(
     FilterOption(
         titleRes = Res.string.images_only,
-        icon = Icons.Rounded.Image,
+        icon = HeronIcons.Image,
         factory = {
             Filter.Attribute.Embed(
                 embedType = Filter.Attribute.Embed.Kind.Image,
@@ -371,7 +371,7 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.images_and_videos_only,
-        icon = Icons.Rounded.PermMedia,
+        icon = HeronIcons.PermMedia,
         factory = {
             Filter.Or(
                 filters = listOf(
@@ -389,12 +389,12 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.posts_from_profiles,
-        icon = Icons.Rounded.Person,
+        icon = HeronIcons.Person,
         factory = Filter.Social.UserList::empty,
     ),
     FilterOption(
         titleRes = Res.string.posts_with_hashtags,
-        icon = Icons.Rounded.Tag,
+        icon = HeronIcons.Tag,
         factory = Filter.Entity.Matches::empty,
     ),
 )
@@ -402,48 +402,48 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
 private val AllFilterGroups: List<FilterGroup> = listOf(
     FilterGroup(
         nameRes = Res.string.filter_group_logic,
-        icon = Icons.Rounded.AccountTree,
+        icon = HeronIcons.AccountTree,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.all_of_these_and,
-                icon = Icons.Rounded.SelectAll,
+                icon = HeronIcons.SelectAll,
                 factory = Filter.And::empty,
             ),
             FilterOption(
                 titleRes = Res.string.any_of_these_or,
-                icon = Icons.AutoMirrored.Rounded.CallSplit,
+                icon = HeronIcons.CallSplit,
                 factory = Filter.Or::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_entity,
-        icon = Icons.AutoMirrored.Rounded.ManageSearch,
+        icon = HeronIcons.ManageSearch,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
-                icon = Icons.Rounded.Search,
+                icon = HeronIcons.Search,
                 factory = Filter.Entity.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
-                icon = Icons.Rounded.Block,
+                icon = HeronIcons.Block,
                 factory = Filter.Entity.Excludes::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_attribute,
-        icon = Icons.Rounded.Tune,
+        icon = HeronIcons.Tune,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.attribute_compare,
-                icon = Icons.AutoMirrored.Rounded.CompareArrows,
+                icon = HeronIcons.CompareArrows,
                 factory = Filter.Attribute.Compare::empty,
             ),
             FilterOption(
                 titleRes = Res.string.embed_type,
-                icon = Icons.Rounded.PermMedia,
+                icon = HeronIcons.PermMedia,
                 factory = Filter.Attribute.Embed::empty,
             ),
         ),
@@ -451,7 +451,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     // No regular expression support for now
 //    FilterGroup(
 //        nameRes = Res.string.filter_group_regex,
-//        icon = Icons.Rounded.RegularExpression,
+//        icon = HeronIcons.RegularExpression,
 //        options = listOf(
 //            FilterOption(
 //                titleRes = Res.string.regex_matches,
@@ -473,16 +473,16 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //    ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
-        icon = Icons.Rounded.Diversity3,
+        icon = HeronIcons.Diversity3,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
-                icon = Icons.Rounded.Share,
+                icon = HeronIcons.Share,
                 factory = Filter.Social.Graph::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_user_list,
-                icon = Icons.Rounded.Group,
+                icon = HeronIcons.Group,
                 factory = Filter.Social.UserList::empty,
             ),
 //            FilterOption(
@@ -491,7 +491,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.social_list_member,
-                icon = Icons.Rounded.Groups,
+                icon = HeronIcons.Groups,
                 factory = Filter.Social.ListMember::empty,
             ),
 //            FilterOption(
@@ -502,7 +502,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_ml,
-        icon = Icons.Rounded.Psychology,
+        icon = HeronIcons.Psychology,
         options = listOf(
             // Unsupported for now
 //            FilterOption(
@@ -515,43 +515,43 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.content_moderation,
-                icon = Icons.Rounded.Gavel,
+                icon = HeronIcons.Gavel,
                 factory = Filter.ML.Moderation::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_analysis,
-        icon = Icons.Rounded.Analytics,
+        icon = HeronIcons.Analytics,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.language_analysis,
-                icon = Icons.Rounded.Language,
+                icon = HeronIcons.Language,
                 factory = Filter.Analysis.Language::empty,
             ),
             FilterOption(
                 titleRes = Res.string.sentiment_analysis,
-                icon = Icons.Rounded.Mood,
+                icon = HeronIcons.Mood,
                 factory = Filter.Analysis.Sentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.financial_sentiment,
-                icon = Icons.Rounded.AttachMoney,
+                icon = HeronIcons.AttachMoney,
                 factory = Filter.Analysis.FinancialSentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.emotion_analysis,
-                icon = Icons.Rounded.Face,
+                icon = HeronIcons.Face,
                 factory = Filter.Analysis.Emotion::empty,
             ),
             FilterOption(
                 titleRes = Res.string.toxicity_analysis,
-                icon = Icons.Rounded.Warning,
+                icon = HeronIcons.Warning,
                 factory = Filter.Analysis.Toxicity::empty,
             ),
             FilterOption(
                 titleRes = Res.string.topic_analysis,
-                icon = Icons.Rounded.Topic,
+                icon = HeronIcons.Topic,
                 factory = Filter.Analysis.Topic::empty,
             ),
             // Unsupported for now
@@ -561,7 +561,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
-                icon = Icons.Rounded.VisibilityOff,
+                icon = HeronIcons.VisibilityOff,
                 factory = Filter.Analysis.ImageNsfw::empty,
             ),
             // Unsupported for now

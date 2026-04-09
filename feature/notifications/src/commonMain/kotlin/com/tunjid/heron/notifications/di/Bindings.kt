@@ -20,9 +20,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -58,6 +55,9 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.icons.Edit
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Settings
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -187,7 +187,7 @@ class NotificationsBindings(
                                     )
                                 }
                                 AppBarButton(
-                                    icon = Icons.Rounded.Settings,
+                                    icon = HeronIcons.Settings,
                                     iconDescription = stringResource(CommonStrings.notification_settings),
                                     onClick = {
                                         viewModel.accept(
@@ -206,7 +206,7 @@ class NotificationsBindings(
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
+                        icon = HeronIcons.Edit,
                         expanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                             else topAppBarNestedScrollConnection.offset * -1f

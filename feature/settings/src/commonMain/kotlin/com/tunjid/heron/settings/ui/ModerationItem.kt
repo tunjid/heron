@@ -18,10 +18,10 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Shield
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.moderation
 import org.jetbrains.compose.resources.stringResource
@@ -39,6 +39,6 @@ fun ModerationItem(
             }
             .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.moderation),
-        icon = Icons.Rounded.Shield,
+        icon = HeronIcons.Shield,
     )
 }

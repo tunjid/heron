@@ -20,10 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.DownloadDone
-import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +34,10 @@ import com.tunjid.heron.gallery.GalleryItem
 import com.tunjid.heron.images.DownloadStatus
 import com.tunjid.heron.images.ImageRequest
 import com.tunjid.heron.images.LocalImageLoader
+import com.tunjid.heron.ui.icons.Download
+import com.tunjid.heron.ui.icons.DownloadDone
+import com.tunjid.heron.ui.icons.Error
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.download
 import heron.feature.gallery.generated.resources.download_complete
@@ -77,7 +77,7 @@ internal fun ImageDownloadState.DownloadButton(
         ) { status ->
             when (status) {
                 DownloadStatus.Complete -> Icon(
-                    imageVector = Icons.Rounded.DownloadDone,
+                    imageVector = HeronIcons.DownloadDone,
                     contentDescription = stringResource(Res.string.download_complete),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = contentModifier,
@@ -87,7 +87,7 @@ internal fun ImageDownloadState.DownloadButton(
                     onClick = { updateStateFor(item, null) },
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Error,
+                        imageVector = HeronIcons.Error,
                         contentDescription = stringResource(Res.string.download_failed),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = contentModifier,
@@ -108,7 +108,7 @@ internal fun ImageDownloadState.DownloadButton(
                     onClick = onDownloadClicked,
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Download,
+                        imageVector = HeronIcons.Download,
                         contentDescription = stringResource(Res.string.download),
                         tint = MaterialTheme.colorScheme.outline,
                         modifier = contentModifier,

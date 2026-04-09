@@ -16,11 +16,15 @@
 
 package com.tunjid.heron.timeline.ui.icons
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Public
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.ui.icons.AlternateEmail
+import com.tunjid.heron.ui.icons.Blacksky
+import com.tunjid.heron.ui.icons.Bluesky
+import com.tunjid.heron.ui.icons.Eurosky
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Pckt
+import com.tunjid.heron.ui.icons.Public
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.at_proto
 import heron.ui.timeline.generated.resources.blacksky_server
@@ -30,15 +34,6 @@ import heron.ui.timeline.generated.resources.eurosky_server
 import heron.ui.timeline.generated.resources.pckt_server
 import org.jetbrains.compose.resources.StringResource
 
-data object AtmosphereIcons {
-    val Bluesky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Bluesky
-    val Blacksky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Blacksky
-    val Eurosky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Eurosky
-    val Leaflet: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Leaflet
-    val Pckt: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Pckt
-    val Help: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Help
-}
-
 val AtProtoServer = Server(
     endpoint = "https://atproto.com/",
     supportsOauth = false,
@@ -46,12 +41,12 @@ val AtProtoServer = Server(
 
 val Server.logo: ImageVector
     get() = when (endpoint) {
-        Server.BlueSky.endpoint -> AtmosphereIcons.Bluesky
-        Server.BlackSky.endpoint -> AtmosphereIcons.Blacksky
-        Server.EuroSky.endpoint -> AtmosphereIcons.Eurosky
-        Server.Pckt.endpoint -> AtmosphereIcons.Pckt
-        AtProtoServer.endpoint -> Icons.Rounded.AlternateEmail
-        else -> Icons.Rounded.Public
+        Server.BlueSky.endpoint -> HeronIcons.Atmospheric.Bluesky
+        Server.BlackSky.endpoint -> HeronIcons.Atmospheric.Blacksky
+        Server.EuroSky.endpoint -> HeronIcons.Atmospheric.Eurosky
+        Server.Pckt.endpoint -> HeronIcons.Atmospheric.Pckt
+        AtProtoServer.endpoint -> HeronIcons.AlternateEmail
+        else -> HeronIcons.Public
     }
 
 val Server.stringResource: StringResource

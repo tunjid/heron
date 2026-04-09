@@ -16,13 +16,6 @@
 
 package com.tunjid.heron.scaffold.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Mail
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -48,6 +41,13 @@ import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Home
+import com.tunjid.heron.ui.icons.Lock
+import com.tunjid.heron.ui.icons.Mail
+import com.tunjid.heron.ui.icons.Notifications
+import com.tunjid.heron.ui.icons.Search
+import com.tunjid.heron.ui.icons.Start
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -678,37 +678,37 @@ enum class AppStack(
     Home(
         stackName = "home-stack",
         titleRes = Res.string.home,
-        icon = Icons.Rounded.Home,
+        icon = HeronIcons.Home,
         rootRoute = routeOf("/home"),
     ),
     Search(
         stackName = "search-stack",
         titleRes = Res.string.search,
-        icon = Icons.Rounded.Search,
+        icon = HeronIcons.Search,
         rootRoute = routeOf("/search"),
     ),
     Messages(
         stackName = "messages-stack",
         titleRes = Res.string.messages,
-        icon = Icons.Rounded.Mail,
+        icon = HeronIcons.Mail,
         rootRoute = routeOf("/messages"),
     ),
     Notifications(
         stackName = "notifications-stack",
         titleRes = Res.string.notifications,
-        icon = Icons.Rounded.Notifications,
+        icon = HeronIcons.Notifications,
         rootRoute = routeOf("/notifications"),
     ),
     Auth(
         stackName = "auth-stack",
         titleRes = Res.string.auth,
-        icon = Icons.Rounded.Lock,
+        icon = HeronIcons.Lock,
         rootRoute = routeOf("/auth"),
     ),
     Splash(
         stackName = "splash-stack",
         titleRes = Res.string.splash,
-        icon = Icons.Rounded.Start,
+        icon = HeronIcons.Start,
         rootRoute = routeOf("/splash"),
     ),
 }

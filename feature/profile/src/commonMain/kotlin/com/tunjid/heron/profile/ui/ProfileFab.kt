@@ -26,12 +26,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,7 +45,14 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
+import com.tunjid.heron.ui.icons.Add
+import com.tunjid.heron.ui.icons.AlternateEmail
+import com.tunjid.heron.ui.icons.Edit
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Leaflet
+import com.tunjid.heron.ui.icons.Login
+import com.tunjid.heron.ui.icons.Pckt
+import com.tunjid.heron.ui.icons.RssFeed
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.profile.generated.resources.Res
@@ -73,7 +74,7 @@ sealed class ProfileFabState(
 
     data object SignedOut : ProfileFabState(
         text = CommonStrings.sign_in,
-        icon = Icons.AutoMirrored.Rounded.Login,
+        icon = HeronIcons.Login,
     )
 
     sealed class SignedIn(
@@ -83,22 +84,22 @@ sealed class ProfileFabState(
 
         data object Feed : SignedIn(
             text = CommonStrings.feed_generator_create,
-            icon = Icons.Rounded.Add,
+            icon = HeronIcons.Add,
         )
 
         data object Edit : SignedIn(
             text = Res.string.post,
-            icon = Icons.Rounded.Edit,
+            icon = HeronIcons.Edit,
         )
 
         data object Mention : SignedIn(
             text = Res.string.mention,
-            icon = Icons.Rounded.AlternateEmail,
+            icon = HeronIcons.AlternateEmail,
         )
 
         data object Writing : SignedIn(
             text = Res.string.write_something,
-            icon = Icons.Rounded.Edit,
+            icon = HeronIcons.Edit,
         )
     }
 }
@@ -112,19 +113,19 @@ private data class WritingItem(
     companion object {
         val items = listOf(
             WritingItem(
-                icon = Icons.Rounded.RssFeed,
+                icon = HeronIcons.RssFeed,
                 stringRes = Res.string.import_rss_blog,
                 url = HeronImportBlog,
                 matchesParentWidth = false,
             ),
             WritingItem(
-                icon = AtmosphereIcons.Leaflet,
+                icon = HeronIcons.Atmospheric.Leaflet,
                 stringRes = Res.string.publish_with_leaflet,
                 url = LeafletPage,
                 matchesParentWidth = true,
             ),
             WritingItem(
-                icon = AtmosphereIcons.Pckt,
+                icon = HeronIcons.Atmospheric.Pckt,
                 stringRes = Res.string.publish_with_pckt,
                 url = PcktPage,
                 matchesParentWidth = true,

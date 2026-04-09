@@ -20,9 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Repeat
+import com.tunjid.heron.ui.icons.Star
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.repost
 import heron.ui.timeline.generated.resources.repost_by
@@ -73,7 +73,7 @@ private fun PostRepostReasonLine(
 ) {
     PostReasonLine(
         modifier = modifier.clickable { onProfileClicked(repostBy) },
-        imageVector = Icons.Rounded.Repeat,
+        imageVector = HeronIcons.Repeat,
         iconContentDescription = stringResource(Res.string.repost),
         text = stringResource(
             Res.string.repost_by,
@@ -88,7 +88,7 @@ private fun PostPinnedReasonLine(
 ) {
     PostReasonLine(
         modifier = modifier,
-        imageVector = Icons.Rounded.Star,
+        imageVector = HeronIcons.Star,
         iconContentDescription = "Pinned",
         text = "Pinned",
     )

@@ -19,8 +19,6 @@ package com.tunjid.heron.notifications.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +35,8 @@ import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.BookmarkBlue
+import com.tunjid.heron.ui.icons.Description
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_document_published
@@ -72,7 +72,7 @@ fun DocumentPublishedRow(
         onProfileClicked = onProfileClicked,
         icon = {
             Icon(
-                painter = rememberVectorPainter(Icons.Rounded.Description),
+                painter = rememberVectorPainter(HeronIcons.Description),
                 tint = BookmarkBlue,
                 contentDescription = stringResource(CommonStrings.notifications_document_published_description),
             )

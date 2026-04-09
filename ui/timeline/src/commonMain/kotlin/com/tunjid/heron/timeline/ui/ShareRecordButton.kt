@@ -3,14 +3,14 @@ package com.tunjid.heron.timeline.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.ArrowCircleUp
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.more_options
 import org.jetbrains.compose.resources.stringResource
@@ -29,7 +29,7 @@ fun ShareRecordButton(
                 .size(40.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.ArrowCircleUp,
+                imageVector = HeronIcons.ArrowCircleUp,
                 contentDescription = stringResource(Res.string.more_options),
                 tint = MaterialTheme.colorScheme.primary,
             )

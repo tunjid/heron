@@ -37,8 +37,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +71,8 @@ import com.tunjid.heron.profile.withProfileAvatarHaloSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.icons.Edit
+import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -296,7 +296,7 @@ fun ProfileAvatarEditableImage(
                 .size(28.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Edit,
+                imageVector = HeronIcons.Edit,
                 contentDescription = stringResource(Res.string.edit_avatar_icon),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
@@ -349,7 +349,7 @@ fun ProfileBannerEditableImage(
                 .size(30.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Edit,
+                imageVector = HeronIcons.Edit,
                 contentDescription = stringResource(Res.string.edit_banner_icon),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(19.dp),

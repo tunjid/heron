@@ -20,8 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -68,6 +66,8 @@ import com.tunjid.heron.timeline.ui.EmbeddableRecordOptionsSheetState.Companion.
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Straight
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -321,7 +321,7 @@ class FeedBindings(
                 floatingActionButton = {
                     PaneFab(
                         text = stringResource(Res.string.scroll_to_top),
-                        icon = Icons.Rounded.Straight,
+                        icon = HeronIcons.Straight,
                         expanded = isFabExpanded {
                             topAppBarNestedScrollConnection.offset * -1f
                         },

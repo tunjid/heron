@@ -23,12 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.SwitchAccount
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -63,6 +57,12 @@ import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.Check
+import com.tunjid.heron.ui.icons.CheckCircle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.KeyboardArrowDown
+import com.tunjid.heron.ui.icons.PersonAdd
+import com.tunjid.heron.ui.icons.SwitchAccount
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -87,7 +87,7 @@ fun AccountSwitchingItem(
         sessionSummaries.size <= 1 -> {
             SettingsItem(
                 title = stringResource(Res.string.add_another_account),
-                icon = Icons.Default.PersonAdd,
+                icon = HeronIcons.PersonAdd,
                 modifier = modifier
                     .shapedClickable(onClick = onAddAccountClick)
                     .settingsItemPaddingAndMinHeight(),
@@ -153,7 +153,7 @@ private fun MultiSessionLayout(
                     modifier = modifier
                         .settingsItemMinHeight(),
                     title = stringResource(Res.string.switch_account),
-                    icon = Icons.Default.SwitchAccount,
+                    icon = HeronIcons.SwitchAccount,
                 )
             }
         }
@@ -206,7 +206,7 @@ private fun MultiSessionLayout(
         ) {
             SettingsItem(
                 title = stringResource(Res.string.add_or_reauthenticate_account),
-                icon = Icons.Default.PersonAdd,
+                icon = HeronIcons.PersonAdd,
                 modifier = Modifier
                     .clickable(onClick = onAddAccountClick)
                     .settingsItemPaddingAndMinHeight(),
@@ -305,7 +305,7 @@ private fun PaneTransitionScope.ExpandButton(
             .graphicsLayer {
                 rotationZ = rotation.value
             },
-        imageVector = Icons.Rounded.KeyboardArrowDown,
+        imageVector = HeronIcons.KeyboardArrowDown,
         contentDescription = null,
     )
 }
@@ -374,7 +374,7 @@ private fun PaneTransitionScope.SessionSummaries(
                     )
                     if (isActive) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            imageVector = HeronIcons.Check,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp),
@@ -496,7 +496,7 @@ private fun SuccessCheckmarkOverlay(
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Icon(
-            imageVector = Icons.Default.CheckCircle,
+            imageVector = HeronIcons.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier

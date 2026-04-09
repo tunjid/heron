@@ -27,8 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -41,6 +39,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.Cancel
+import com.tunjid.heron.ui.icons.HeronIcons
 import heron.ui.core.generated.resources.Res
 import heron.ui.core.generated.resources.clear_search
 import heron.ui.core.generated.resources.search
@@ -83,7 +83,7 @@ fun SearchBar(
                             .clickable {
                                 onQueryChanged("")
                             },
-                        imageVector = Icons.Rounded.Cancel,
+                        imageVector = HeronIcons.Cancel,
                         contentDescription = stringResource(Res.string.clear_search),
                     )
                 }

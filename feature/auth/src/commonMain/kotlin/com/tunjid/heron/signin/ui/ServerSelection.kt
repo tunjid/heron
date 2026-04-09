@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -53,6 +51,8 @@ import com.tunjid.heron.timeline.ui.icons.logo
 import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.Status
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.Public
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -241,7 +241,7 @@ private val CustomServerFormField = FormField(
     id = FormField.Id("custom_server"),
     value = "",
     maxLines = 1,
-    leadingIcon = Icons.Rounded.Public,
+    leadingIcon = HeronIcons.Public,
     transformation = VisualTransformation.None,
     keyboardOptions = KeyboardOptions(
         capitalization = KeyboardCapitalization.None,
