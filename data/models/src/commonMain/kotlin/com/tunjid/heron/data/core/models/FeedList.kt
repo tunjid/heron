@@ -19,7 +19,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -46,4 +48,25 @@ data class FeedList(
 
     override val embeddableRecordUri: EmbeddableRecordUri
         get() = uri
+
+    @Serializable
+    sealed class UpdateProfileList {
+
+        abstract val signedInProfileId: ProfileId
+        abstract val listUri: ListUri
+
+        @Serializable
+        data class Add(
+            override val signedInProfileId: ProfileId,
+            override val listUri: ListUri,
+            val profileId: ProfileId,
+        ) : UpdateProfileList()
+
+        @Serializable
+        data class Remove(
+            override val signedInProfileId: ProfileId,
+            override val listUri: ListUri,
+            val listMemberUri: ListMemberUri,
+        ) : UpdateProfileList()
+    }
 }
