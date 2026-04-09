@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
+import com.tunjid.heron.data.core.models.FeedList as FeedListModel
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
@@ -159,6 +160,21 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateRestriction(restriction)
+    }
+
+    @Serializable
+    data class ProfileListUpdate(
+        val update: FeedListModel.UpdateProfileList,
+    ) : Writable {
+
+        override val queueId: String
+            get() = when (update) {
+                is FeedListModel.UpdateProfileList.Add -> "add-profile-list-${update.listUri}"
+                is FeedListModel.UpdateProfileList.Remove -> "remove-profile-list-${update.listUri}"
+            }
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.updateProfileList(update)
     }
 
     @Serializable
