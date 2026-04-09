@@ -346,7 +346,7 @@ fun Modifier.paneClip() =
  * A workaround for https://issuetracker.google.com/issues/498497888
  * Sticky shared elements which use Modifier.sharedElementWithUserManagedVisibility
  * need an accompanying Modifier.sharedElement match to animate if the shared element
- * transition is sought. Tte bug does not affect the transition if it is not seeking.
+ * transition is sought. The bug does not affect the transition if it is not seeking.
  */
 @Composable
 private fun PaneScaffoldState.PersistentSharedElement() {
