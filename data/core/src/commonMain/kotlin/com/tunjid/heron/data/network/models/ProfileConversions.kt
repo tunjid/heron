@@ -133,6 +133,29 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
         status = null,
     )
 
+internal fun stubProfileEntity(
+    profileId: ProfileId,
+) = ProfileEntity(
+    did = profileId,
+    handle = Constants.unknownAuthorHandle,
+    displayName = null,
+    description = null,
+    avatar = null,
+    banner = null,
+    followersCount = null,
+    followsCount = null,
+    postsCount = null,
+    joinedViaStarterPack = null,
+    indexedAt = null,
+    createdAt = null,
+    associated = ProfileEntity.Associated(
+        createdListCount = 0,
+        createdFeedGeneratorCount = 0,
+        createdStarterPackCount = 0,
+    ),
+    status = null,
+)
+
 internal fun ProfileViewBasic.profileViewerStateEntity(
     viewingProfileId: ProfileId,
 ): ProfileViewerStateEntity? =
