@@ -78,13 +78,10 @@ sealed class NotificationAction(
             ?.let(::ProfileId)
 
         val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
-            ?.let { "${Uri.Host.AtProto.prefix}$it" }
             ?.asRecordUriOrNull()
 
         val reason: Notification.Reason? = payload[NotificationAtProtoReason]
-            ?.let { reasonString ->
-                Notification.Reason.entries.find { it.name.equals(reasonString, ignoreCase = true) }
-            }
+            ?.let(Notification.Reason::fromIdOrNull)
     }
 
     data class NotificationProcessedOrDropped(
