@@ -29,6 +29,7 @@ import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postView
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.stubProfileEntity
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -36,6 +37,8 @@ internal fun MultipleEntitySaver.add(
     source: Timeline.Source,
     feedViewPosts: List<FeedViewPost>,
 ) {
+    if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
+
     for (index in feedViewPosts.indices) {
         val feedView = feedViewPosts[index]
         // Extract data from feed
