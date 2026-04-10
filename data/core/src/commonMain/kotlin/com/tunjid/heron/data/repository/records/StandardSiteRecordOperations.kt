@@ -42,6 +42,10 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.authorDocumentsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.publicationDocumentsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.subscribedPublicationsIdentity
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -111,6 +115,7 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val recordResolver: RecordResolver,
+    private val cursorQueryRefreshTracker: CursorQueryRefreshTracker,
 ) : StandardSiteRecordOperations {
 
     override fun publication(
@@ -160,7 +165,15 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                     },
                     nextCursor = GetDocumentsResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::authorDocumentsIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                standardSiteDao.deleteDocumentsForAuthor(profileDid.did)
+                            }
                             documents.forEach {
                                 add(
                                     documentView = it,
@@ -204,7 +217,17 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                     },
                     nextCursor = GetDocumentsResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::publicationDocumentsIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                standardSiteDao.deleteDocumentsForPublication(
+                                    query.publicationUri.uri,
+                                )
+                            }
                             documents.forEach {
                                 add(
                                     documentView = it,
@@ -248,7 +271,17 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                     },
                     nextCursor = GetSubscribedPublicationsResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::subscribedPublicationsIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                standardSiteDao.deleteSubscriptionsForViewer(
+                                    signedInProfileId.id,
+                                )
+                            }
                             publications.forEach {
                                 add(
                                     publicationView = it,

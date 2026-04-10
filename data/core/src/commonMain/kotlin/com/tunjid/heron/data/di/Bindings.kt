@@ -81,6 +81,8 @@ import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperati
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.TidGenerator
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
@@ -441,6 +443,12 @@ class DataBindings(
     internal fun provideOfflineUserDataRepository(
         offlineUserDataRepository: OfflineUserDataRepository,
     ): UserDataRepository = offlineUserDataRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideCursorQueryRefreshTracker(
+        inMemoryCursorQueryRefreshTracker: InMemoryCursorQueryRefreshTracker,
+    ): CursorQueryRefreshTracker = inMemoryCursorQueryRefreshTracker
 
     @SingleIn(AppScope::class)
     @Provides

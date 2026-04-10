@@ -145,4 +145,24 @@ interface ListDao {
     suspend fun deleteListMember(
         uri: ListMemberUri,
     )
+
+    @Query(
+        """
+            DELETE FROM lists
+            WHERE creatorId = :creatorId
+        """,
+    )
+    suspend fun deleteListsForCreator(
+        creatorId: String,
+    )
+
+    @Query(
+        """
+            DELETE FROM listMembers
+            WHERE listUri = :listUri
+        """,
+    )
+    suspend fun deleteListMembersForList(
+        listUri: String,
+    )
 }
