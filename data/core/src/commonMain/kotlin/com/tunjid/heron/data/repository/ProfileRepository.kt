@@ -148,8 +148,8 @@ interface ProfileRepository {
         update: Profile.StatusUpdate,
     ): Outcome
 
-    suspend fun updateProfileList(
-        update: FeedList.UpdateProfileList,
+    suspend fun addProfileList(
+        create: FeedList.AddProfileList,
     ): Outcome
 }
 
@@ -556,54 +556,40 @@ internal class OfflineProfileRepository @Inject constructor(
         }
     } ?: expiredSessionOutcome()
 
-    override suspend fun updateProfileList(
-        update: FeedList.UpdateProfileList,
+    override suspend fun addProfileList(
+        create: FeedList.AddProfileList,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        when (update) {
-            is FeedList.UpdateProfileList.Add -> networkService.runCatchingWithMonitoredNetworkRetry {
-                createRecord(
-                    CreateRecordRequest(
-                        repo = update.signedInProfileId.id.let(::Did),
-                        collection = Nsid(ListMemberUri.NAMESPACE),
-                        record = Listitem(
-                            subject = update.profileId.id.let(::Did),
-                            list = update.listUri.uri.let(::AtUri),
-                            createdAt = Clock.System.now(),
-                        ).asJsonContent(Listitem.serializer()),
-                    ),
-                )
-            }.toOutcome {
-                if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
-                    throw RecordCreationException(
-                        profileId = update.signedInProfileId,
-                        collection = ListMemberUri.NAMESPACE,
-                    )
-                }
-                listDao.upsertListItems(
-                    listOf(
-                        ListMemberEntity(
-                            uri = it.uri.atUri.let(::ListMemberUri),
-                            listUri = update.listUri,
-                            subjectId = update.profileId,
-                            createdAt = Clock.System.now(),
-                        ),
-                    ),
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = create.signedInProfileId.id.let(::Did),
+                    collection = Nsid(ListMemberUri.NAMESPACE),
+                    record = Listitem(
+                        subject = create.subjectId.id.let(::Did),
+                        list = create.listUri.uri.let(::AtUri),
+                        createdAt = Clock.System.now(),
+                    ).asJsonContent(Listitem.serializer()),
+                ),
+            )
+        }.toOutcome {
+            if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                throw RecordCreationException(
+                    profileId = create.signedInProfileId,
+                    collection = ListMemberUri.NAMESPACE,
                 )
             }
-
-            is FeedList.UpdateProfileList.Remove -> networkService.runCatchingWithMonitoredNetworkRetry {
-                deleteRecord(
-                    DeleteRecordRequest(
-                        repo = update.signedInProfileId.id.let(::Did),
-                        collection = Nsid(ListMemberUri.NAMESPACE),
-                        rkey = update.listMemberUri.recordKey.value.let(::RKey),
+            listDao.upsertListItems(
+                listOf(
+                    ListMemberEntity(
+                        uri = it.uri.atUri.let(::ListMemberUri),
+                        listUri = create.listUri,
+                        subjectId = create.subjectId,
+                        createdAt = Clock.System.now(),
                     ),
-                )
-            }.toOutcome {
-                listDao.deleteListMember(update.listMemberUri)
-            }
+                ),
+            )
         }
     } ?: expiredSessionOutcome()
 }
