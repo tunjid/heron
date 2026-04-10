@@ -191,21 +191,30 @@ sealed class Notification {
         override val viewerState: ProfileViewerState?,
     ) : Notification()
 
-    enum class Reason {
-        Unknown,
-        Like,
-        Repost,
-        Follow,
-        Mention,
-        Reply,
-        Quote,
-        JoinedStarterPack,
-        Verified,
-        Unverified,
-        LikeViaRepost,
-        RepostViaRepost,
-        SubscribedPost,
-        DocumentPublished,
+    enum class Reason(
+        val id: String,
+    ) {
+        Unknown("unknown"),
+        Like("like"),
+        Repost("repost"),
+        Follow("follow"),
+        Mention("mention"),
+        Reply("reply"),
+        Quote("quote"),
+        JoinedStarterPack("starterpack-joined"),
+        Verified("verified"),
+        Unverified("unverified"),
+        LikeViaRepost("like-via-repost"),
+        RepostViaRepost("repost-via-repost"),
+        SubscribedPost("subscribed-post"),
+        DocumentPublished("document-published"),
+        ;
+
+        companion object {
+            fun fromIdOrNull(
+                id: String,
+            ) = Reason.entries.find { it.id.equals(id, ignoreCase = true) }
+        }
     }
 }
 

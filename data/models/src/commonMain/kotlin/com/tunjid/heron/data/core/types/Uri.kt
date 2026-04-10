@@ -346,35 +346,41 @@ fun Uri.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = uri.asEmbeddableRe
  * if parsing is successful, or `null` if the string is not a valid AT URI.
  */
 fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRange, _ ->
+    val normalized = withAtProtoPrefix()
     when (substring(collectionRange.start, collectionRange.endExclusive)) {
-        PostUri.NAMESPACE -> PostUri(this)
-        FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
-        ListUri.NAMESPACE -> ListUri(this)
-        StarterPackUri.NAMESPACE -> StarterPackUri(this)
-        LabelerUri.NAMESPACE -> LabelerUri(this)
-        LikeUri.NAMESPACE -> LikeUri(this)
-        RepostUri.NAMESPACE -> RepostUri(this)
-        FollowUri.NAMESPACE -> FollowUri(this)
-        ListMemberUri.NAMESPACE -> ListMemberUri(this)
-        BlockUri.NAMESPACE -> BlockUri(this)
-        StandardPublicationUri.NAMESPACE -> StandardPublicationUri(this)
-        StandardDocumentUri.NAMESPACE -> StandardDocumentUri(this)
-        StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(this)
-        else -> UnknownRecordUri(this)
+        PostUri.NAMESPACE -> PostUri(normalized)
+        FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(normalized)
+        ListUri.NAMESPACE -> ListUri(normalized)
+        StarterPackUri.NAMESPACE -> StarterPackUri(normalized)
+        LabelerUri.NAMESPACE -> LabelerUri(normalized)
+        LikeUri.NAMESPACE -> LikeUri(normalized)
+        RepostUri.NAMESPACE -> RepostUri(normalized)
+        FollowUri.NAMESPACE -> FollowUri(normalized)
+        ListMemberUri.NAMESPACE -> ListMemberUri(normalized)
+        BlockUri.NAMESPACE -> BlockUri(normalized)
+        StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
+        StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
+        StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(normalized)
+        else -> UnknownRecordUri(normalized)
     }
 }
 
 fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
     atUriComponents { _, collectionRange, _ ->
+        val normalized = withAtProtoPrefix()
         when (substring(collectionRange.start, collectionRange.endExclusive)) {
-            PostUri.NAMESPACE -> PostUri(this)
-            FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
-            ListUri.NAMESPACE -> ListUri(this)
-            StarterPackUri.NAMESPACE -> StarterPackUri(this)
-            LabelerUri.NAMESPACE -> LabelerUri(this)
+            PostUri.NAMESPACE -> PostUri(normalized)
+            FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(normalized)
+            ListUri.NAMESPACE -> ListUri(normalized)
+            StarterPackUri.NAMESPACE -> StarterPackUri(normalized)
+            LabelerUri.NAMESPACE -> LabelerUri(normalized)
             else -> null
         }
     }
+
+private fun String.withAtProtoPrefix(): String =
+    if (startsWith(Uri.Host.AtProto.prefix)) this
+    else "${Uri.Host.AtProto.prefix}$this"
 
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.
@@ -388,10 +394,10 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
 private inline fun <T> String.atUriComponents(
     action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T,
 ): T? {
-    // 1. Validate Prefix "at://"
-    if (!this.startsWith(Uri.Host.AtProto.prefix)) return null
-
-    val authorityStart = 5
+    // 1. Prefix "at://" is optional; start parsing after it if present.
+    val authorityStart =
+        if (this.startsWith(Uri.Host.AtProto.prefix)) Uri.Host.AtProto.prefix.length
+        else 0
     val length = this.length
 
     // 2. Find the first separator '/' after authority

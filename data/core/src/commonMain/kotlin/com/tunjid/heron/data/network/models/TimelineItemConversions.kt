@@ -30,6 +30,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.entities.FeedReplyEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -114,7 +116,12 @@ internal fun FeedViewPost.feedItemEntity(
 internal fun ReplyRefRootUnion.profileEntity() = when (this) {
     is ReplyRefRootUnion.PostView -> value.profileEntity()
     is ReplyRefRootUnion.BlockedPost -> value.author.profileEntity()
-    is ReplyRefRootUnion.NotFoundPost,
+    is ReplyRefRootUnion.NotFoundPost ->
+        value.uri
+            .atUri
+            .asRecordUriOrNull()
+            ?.profileId()
+            ?.let(::stubProfileEntity)
     is ReplyRefRootUnion.Unknown,
     -> null
 }
@@ -122,7 +129,12 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.PostView -> value.profileEntity()
     is ReplyRefParentUnion.BlockedPost -> value.author.profileEntity()
-    is ReplyRefParentUnion.NotFoundPost,
+    is ReplyRefParentUnion.NotFoundPost ->
+        value.uri
+            .atUri
+            .asRecordUriOrNull()
+            ?.profileId()
+            ?.let(::stubProfileEntity)
     is ReplyRefParentUnion.Unknown,
     -> null
 }
@@ -150,11 +162,14 @@ internal fun ReplyRefRootUnion.postEntity() = when (val ref = this) {
         authorId = ref.value.author.did.did.let(::ProfileId),
     )
 
-    is ReplyRefRootUnion.NotFoundPost -> stubPostEntity(
-        id = Constants.notFoundPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = Constants.unknownAuthorId,
-    )
+    is ReplyRefRootUnion.NotFoundPost -> ref.value.uri.atUri.let(::PostUri)
+        .let {
+            stubPostEntity(
+                id = Constants.notFoundPostId,
+                uri = it,
+                authorId = it.profileId(),
+            )
+        }
 
     is ReplyRefRootUnion.PostView -> ref.value.postEntity()
 
@@ -172,11 +187,13 @@ internal fun ReplyRefParentUnion.postEntity() = when (val ref = this) {
         authorId = ref.value.author.did.did.let(::ProfileId),
     )
 
-    is ReplyRefParentUnion.NotFoundPost -> stubPostEntity(
-        id = Constants.notFoundPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = Constants.unknownAuthorId,
-    )
+    is ReplyRefParentUnion.NotFoundPost -> ref.value.uri.atUri.let(::PostUri).let {
+        stubPostEntity(
+            id = Constants.notFoundPostId,
+            uri = it,
+            authorId = it.profileId(),
+        )
+    }
 
     is ReplyRefParentUnion.PostView -> ref.value.postEntity()
 
