@@ -163,21 +163,6 @@ sealed interface Writable {
     }
 
     @Serializable
-    data class ProfileListUpdate(
-        val update: FeedListModel.UpdateProfileList,
-    ) : Writable {
-
-        override val queueId: String
-            get() = when (update) {
-                is FeedListModel.UpdateProfileList.Add -> "add-profile-list-${update.listUri}"
-                is FeedListModel.UpdateProfileList.Remove -> "remove-profile-list-${update.listUri}"
-            }
-
-        override suspend fun WriteQueue.write(): Outcome =
-            profileRepository.updateProfileList(update)
-    }
-
-    @Serializable
     data class StatusUpdate(
         val update: Profile.StatusUpdate,
     ) : Writable {
@@ -237,6 +222,18 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             notificationRepository.updateNotificationPreferences(updates)
+    }
+
+    @Serializable
+    data class AddProfileList(
+        val create: FeedListModel.AddProfileList,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "add-profile-list-$create"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.addProfileList(create)
     }
 
     @Serializable

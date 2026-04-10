@@ -140,7 +140,7 @@
     <string name="writable_subscribe_standard_publication">publication subscription</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
-    <string name="writable_profile_list_update">profile list update</string>
+    <string name="writable_profile_list_create">profile list create</string>
 
     <string name="empty_timeline_thread">There are no replies to this post.</string>
     <string name="empty_timeline_thread_description">Join the conversation by adding a post of your own.</string>

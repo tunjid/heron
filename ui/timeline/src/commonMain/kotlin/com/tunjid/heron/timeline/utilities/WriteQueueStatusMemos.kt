@@ -39,7 +39,7 @@ import heron.ui.timeline.generated.resources.writable_message
 import heron.ui.timeline.generated.resources.writable_mute
 import heron.ui.timeline.generated.resources.writable_notification_update
 import heron.ui.timeline.generated.resources.writable_post
-import heron.ui.timeline.generated.resources.writable_profile_list_update
+import heron.ui.timeline.generated.resources.writable_profile_list_create
 import heron.ui.timeline.generated.resources.writable_profile_status_update
 import heron.ui.timeline.generated.resources.writable_profile_update
 import heron.ui.timeline.generated.resources.writable_reaction
@@ -178,9 +178,9 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_status_update),
             )
-            is Writable.ProfileListUpdate -> Memo.Resource(
+            is Writable.AddProfileList -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_profile_list_update),
+                args = listOf(Res.string.writable_profile_list_create),
             )
         }
     }
