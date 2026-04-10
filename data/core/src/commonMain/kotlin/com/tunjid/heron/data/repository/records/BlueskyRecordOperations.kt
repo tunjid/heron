@@ -78,6 +78,11 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.feedGeneratorsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.listMembersIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.listsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.starterPacksIdentity
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -156,6 +161,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val cursorQueryRefreshTracker: CursorQueryRefreshTracker,
 ) : BlueskyRecordOperations {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -229,7 +235,15 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                     },
                     nextCursor = GetActorStarterPacksResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::starterPacksIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                starterPackDao.deleteStarterPacksForCreator(profileDid.did)
+                            }
                             starterPacks.forEach(::add)
                         }
                     },
@@ -271,7 +285,15 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                     },
                     nextCursor = GetListsResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::listsIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                listDao.deleteListsForCreator(profileDid.did)
+                            }
                             lists.forEach(::add)
                         }
                     },
@@ -310,7 +332,15 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                     },
                     nextCursor = GetListResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::listMembersIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                listDao.deleteListMembersForList(query.listUri.uri)
+                            }
                             add(list)
                             items.forEach { listItemView ->
                                 add(
@@ -358,7 +388,15 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                     },
                     nextCursor = GetActorFeedsResponse::cursor,
                     onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::feedGeneratorsIdentity,
+                            )
                         multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                feedGeneratorDao.deleteFeedGeneratorsForCreator(profileDid.did)
+                            }
                             feeds.forEach(::add)
                         }
                     },
