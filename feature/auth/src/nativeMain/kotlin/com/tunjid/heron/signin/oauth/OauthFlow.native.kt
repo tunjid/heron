@@ -72,7 +72,8 @@ private class AsWebAuthOauthFlowState(
 
     override fun launch(uri: GenericUri) {
         session?.cancel()
-        val url = NSURL(string = uri.uri)
+        val url = NSURL.URLWithString(uri.uri)
+            ?: return onResult(OauthFlowResult.Failure)
         val callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(
             host = OauthCallbackHost,
             path = OauthCallbackPath,
@@ -130,5 +131,8 @@ private class PresentationProvider :
             .flatMap { scene ->
                 scene.windows.asSequence().mapNotNull { it as? UIWindow }
             }
-            .first(UIWindow::isKeyWindow)
+            .firstOrNull(UIWindow::isKeyWindow)
+            ?: throw IllegalStateException(
+                "Could not find a key window to anchor the web authentication session",
+            )
 }
