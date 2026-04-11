@@ -102,8 +102,11 @@ private class AsWebAuthOauthFlowState(
 @OptIn(ExperimentalForeignApi::class)
 private fun parseResult(callbackUrl: NSURL?, error: NSError?): OauthFlowResult {
     if (error != null || callbackUrl == null) return OauthFlowResult.Failure
-    val components = NSURLComponents(uRL = callbackUrl, resolvingAgainstBaseURL = false)
-    val issuer = components.queryItems
+    val components = NSURLComponents.componentsWithURL(
+        url = callbackUrl,
+        resolvingAgainstBaseURL = false,
+    )
+    val issuer = components?.queryItems
         ?.asSequence()
         ?.mapNotNull { it as? NSURLQueryItem }
         ?.firstOrNull { it.name == OauthIssuerKey }
