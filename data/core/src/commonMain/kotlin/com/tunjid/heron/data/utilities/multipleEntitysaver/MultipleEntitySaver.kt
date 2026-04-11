@@ -95,23 +95,24 @@ class MultipleEntitySaverProvider @Inject constructor(
 ) {
     internal suspend fun saveInTransaction(
         block: suspend MultipleEntitySaver.() -> Unit,
-    ) = MultipleEntitySaver(
-        postDao = postDao,
-        labelDao = labelDao,
-        listDao = listDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        timelineDao = timelineDao,
-        feedGeneratorDao = feedGeneratorDao,
-        notificationsDao = notificationsDao,
-        starterPackDao = starterPackDao,
-        messageDao = messageDao,
-        threadGateDao = threadGateDao,
-        standardSiteDao = standardSiteDao,
-        transactionWriter = transactionWriter,
-    ).apply {
-        block()
-        saveInTransaction()
+    ) = transactionWriter.inTransaction {
+        MultipleEntitySaver(
+            postDao = postDao,
+            labelDao = labelDao,
+            listDao = listDao,
+            embedDao = embedDao,
+            profileDao = profileDao,
+            timelineDao = timelineDao,
+            feedGeneratorDao = feedGeneratorDao,
+            notificationsDao = notificationsDao,
+            starterPackDao = starterPackDao,
+            messageDao = messageDao,
+            threadGateDao = threadGateDao,
+            standardSiteDao = standardSiteDao,
+        ).apply {
+            block()
+            flushPendingOperations()
+        }
     }
 }
 
@@ -131,7 +132,6 @@ internal class MultipleEntitySaver(
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
-    private val transactionWriter: TransactionWriter,
 ) {
     private val timelineItemEntities = LazyList<TimelineItemEntity>()
 
@@ -203,10 +203,14 @@ internal class MultipleEntitySaver(
     private val standardSubscriptionDeletions = LazyList<StandardSubscriptionEntity.Deletion>()
 
     /**
-     * Saves all entities added to this [MultipleEntitySaver] in a single transaction
-     * and clears the saved models for the next transaction.
+     * Flushes all queued entities to the database.
+     *
+     * This must be called from within a [TransactionWriter.inTransaction] block; the
+     * owning [MultipleEntitySaverProvider.saveInTransaction] opens the transaction so
+     * that any direct DAO calls made inside the caller's block participate in the same
+     * atomic unit as the batched writes performed here.
      */
-    suspend fun saveInTransaction() = transactionWriter.inTransaction {
+    internal suspend fun flushPendingOperations() {
         // Order matters to satisfy foreign key constraints
         if (profileEntities.isNotEmpty) {
             val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(

@@ -20,7 +20,9 @@ import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
+import app.bsky.feed.GetFeedGeneratorResponse
 import app.bsky.graph.GetListQueryParams
+import app.bsky.graph.GetListResponse
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Server
@@ -65,12 +67,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.supervisorScope
@@ -372,9 +370,17 @@ internal class AuthTokenRepository(
         } ?: emptyList()
 
         saveTimelinePreferences.await()
+
+        // Await the network results before opening the DB transaction so the
+        // writer connection is not held during I/O.
+        val resolvedFeeds = feeds.awaitAll()
+            .mapNotNull(Result<GetFeedGeneratorResponse>::getOrNull)
+        val resolvedLists = lists.awaitAll()
+            .mapNotNull(Result<GetListResponse>::getOrNull)
+
         multipleEntitySaverProvider.saveInTransaction {
-            feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
-            lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
+            resolvedFeeds.forEach { add(it.view) }
+            resolvedLists.forEach { add(it.list) }
         }
     }
 
