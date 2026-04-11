@@ -71,6 +71,7 @@ private class AsWebAuthOauthFlowState(
     override val supportsOauth: Boolean = true
 
     override fun launch(uri: GenericUri) {
+        session?.cancel()
         val url = NSURL(string = uri.uri)
         val callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(
             host = OauthCallbackHost,
@@ -80,7 +81,10 @@ private class AsWebAuthOauthFlowState(
             uRL = url,
             callback = callback,
             completionHandler = { callbackUrl, error ->
-                onResult(parseResult(callbackUrl, error))
+                val result = parseResult(callbackUrl, error)
+                platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+                    onResult(result)
+                }
             },
         )
         newSession.presentationContextProvider = presentationContextProvider
@@ -118,15 +122,13 @@ private class PresentationProvider :
 
     override fun presentationAnchorForWebAuthenticationSession(
         session: ASWebAuthenticationSession,
-    ): ASPresentationAnchor {
-        val window = UIApplication.sharedApplication
+    ): ASPresentationAnchor =
+        UIApplication.sharedApplication
             .connectedScenes
             .asSequence()
             .mapNotNull { it as? UIWindowScene }
             .flatMap { scene ->
                 scene.windows.asSequence().mapNotNull { it as? UIWindow }
             }
-            .firstOrNull { it.isKeyWindow() }
-        return window ?: UIWindow()
-    }
+            .first(UIWindow::isKeyWindow)
 }
