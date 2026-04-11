@@ -17,17 +17,125 @@
 package com.tunjid.heron.signin.oauth
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import com.tunjid.heron.data.core.types.GenericUri
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.AuthenticationServices.ASPresentationAnchor
+import platform.AuthenticationServices.ASWebAuthenticationPresentationContextProvidingProtocol
+import platform.AuthenticationServices.ASWebAuthenticationSession
+import platform.AuthenticationServices.ASWebAuthenticationSessionCallback
+import platform.Foundation.NSError
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLComponents
+import platform.Foundation.NSURLQueryItem
+import platform.UIKit.UIApplication
+import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
+import platform.darwin.NSObject
 
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 @Composable
-actual fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState =
-    NoOpOauthFlowState
+actual fun rememberOauthFlowState(
+    onResult: (OauthFlowResult) -> Unit,
+): OauthFlowState {
+    val currentOnResult by rememberUpdatedState(onResult)
+    val provider = remember { PresentationProvider() }
+    val state = remember(provider) {
+        AsWebAuthOauthFlowState(
+            presentationContextProvider = provider,
+            onResult = { currentOnResult(it) },
+        )
+    }
+    DisposableEffect(state) {
+        onDispose { state.cancel() }
+    }
+    return state
+}
 
-private object NoOpOauthFlowState : OauthFlowState {
+private const val OauthIssuerKey = "iss"
+private const val OauthCallbackHost = "heron.tunji.dev"
+private const val OauthCallbackPath = "/oauth/callback"
 
-    override val supportsOauth: Boolean
-        get() = false
+@OptIn(ExperimentalForeignApi::class)
+private class AsWebAuthOauthFlowState(
+    private val presentationContextProvider: ASWebAuthenticationPresentationContextProvidingProtocol,
+    private val onResult: (OauthFlowResult) -> Unit,
+) : OauthFlowState {
 
-    override fun launch(uri: GenericUri) =
-        throw UnsupportedOperationException("Oauth flow is not supported")
+    private var session: ASWebAuthenticationSession? = null
+
+    override val supportsOauth: Boolean = true
+
+    override fun launch(uri: GenericUri) {
+        session?.cancel()
+        val url = NSURL.URLWithString(uri.uri)
+            ?: return onResult(OauthFlowResult.Failure)
+        val callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(
+            host = OauthCallbackHost,
+            path = OauthCallbackPath,
+        )
+        val newSession = ASWebAuthenticationSession(
+            uRL = url,
+            callback = callback,
+            completionHandler = { callbackUrl, error ->
+                val result = parseResult(callbackUrl, error)
+                platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+                    onResult(result)
+                }
+            },
+        )
+        newSession.presentationContextProvider = presentationContextProvider
+        session = newSession
+        newSession.start()
+    }
+
+    fun cancel() {
+        session?.cancel()
+        session = null
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun parseResult(callbackUrl: NSURL?, error: NSError?): OauthFlowResult {
+    if (error != null || callbackUrl == null) return OauthFlowResult.Failure
+    val components = NSURLComponents.componentsWithURL(
+        url = callbackUrl,
+        resolvingAgainstBaseURL = false,
+    )
+    val issuer = components?.queryItems
+        ?.asSequence()
+        ?.mapNotNull { it as? NSURLQueryItem }
+        ?.firstOrNull { it.name == OauthIssuerKey }
+        ?.value
+        ?: return OauthFlowResult.Failure
+    val absolute = callbackUrl.absoluteString ?: return OauthFlowResult.Failure
+    return OauthFlowResult.Success(
+        callbackUri = GenericUri(absolute),
+        issuer = issuer,
+    )
+}
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+private class PresentationProvider :
+    NSObject(),
+    ASWebAuthenticationPresentationContextProvidingProtocol {
+
+    override fun presentationAnchorForWebAuthenticationSession(
+        session: ASWebAuthenticationSession,
+    ): ASPresentationAnchor =
+        UIApplication.sharedApplication
+            .connectedScenes
+            .asSequence()
+            .mapNotNull { it as? UIWindowScene }
+            .flatMap { scene ->
+                scene.windows.asSequence().mapNotNull { it as? UIWindow }
+            }
+            .firstOrNull(UIWindow::isKeyWindow)
+            ?: throw IllegalStateException(
+                "Could not find a key window to anchor the web authentication session",
+            )
 }
