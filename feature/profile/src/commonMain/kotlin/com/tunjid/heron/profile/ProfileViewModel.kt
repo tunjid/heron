@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
@@ -89,6 +90,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -208,6 +210,9 @@ class ActualProfileViewModel(
                         is Action.UpdateLiveStatus -> action.flow.liveStatusMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.AddListMember -> action.flow.addListMemberMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -277,7 +282,15 @@ private fun loadProfileMutations(
         ::Pair,
     )
         .distinctUntilChanged()
-        .mapToManyMutations { (profile, signedInProfile) ->
+        .flatMapLatest { (profile, signedInProfile) ->
+            combine(
+                profileRepository.membershipsByProfile(profile.did),
+                flowOf(profile),
+                flowOf<Profile?>(signedInProfile),
+                ::Triple,
+            )
+        }
+        .mapToManyMutations { (memberships, profile, signedInProfile) ->
             val isSignedIn = signedInProfile != null
             val isSignedInProfile = signedInProfile?.let {
                 it.did.id == profileId.id || it.handle.id == profileId.id
@@ -288,6 +301,7 @@ private fun loadProfileMutations(
                     profile = profile,
                     signedInProfileId = signedInProfile?.did,
                     isSignedInProfile = isSignedInProfile,
+                    profileListMemberships = memberships,
                 )
             }
 
@@ -297,6 +311,17 @@ private fun loadProfileMutations(
             // TODO: This logic assumes that the tabs for the profile are static.
             // Revisit this.
             if (hasProfileStateHolders) return@mapToManyMutations
+
+            if (signedInProfile != null && state.signedInProfileListsHolder == null) {
+                emit {
+                    copy(
+                        signedInProfileListsHolder = scope.signedInProfileListsHolder(
+                            signedInProfileId = signedInProfile.did,
+                            recordRepository = recordRepository,
+                        ),
+                    )
+                }
+            }
 
             emitAll(
                 Timeline.Profile.Type.entries
@@ -518,6 +543,22 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     if (memo != null) emit { copy(messages = messages + memo) }
 }
 
+private fun Flow<Action.AddListMember>.addListMemberMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.FeedList.AddMember(
+            create = ListMember.Create(
+                subjectId = it.subjectId,
+                listUri = it.listUri,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
+
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -624,6 +665,26 @@ private fun CoroutineScope.recordStateHolders(
                 itemId = FeedList::cid,
                 cursorListLoader = recordRepository::lists,
             ),
+        ),
+    )
+
+private fun CoroutineScope.signedInProfileListsHolder(
+    signedInProfileId: Id.Profile,
+    recordRepository: RecordRepository,
+): ProfileScreenStateHolders.Records.Lists =
+    ProfileScreenStateHolders.Records.Lists(
+        mutator = recordStateHolder(
+            initialState = RecordState(
+                stringResource = Res.string.lists,
+                tilingData = TilingState.Data(
+                    currentQuery = ProfilesQuery(
+                        profileId = signedInProfileId,
+                        data = defaultQueryData(),
+                    ),
+                ),
+            ),
+            itemId = FeedList::cid,
+            cursorListLoader = recordRepository::lists,
         ),
     )
 
