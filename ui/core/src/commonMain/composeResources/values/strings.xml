@@ -179,4 +179,8 @@
     <string name="twitch_live_platform">Twitch</string>
     <string name="streamplace_live_platform">Streamplace</string>
     <string name="bluecast_live_platform">Bluecast</string>
+
+    <string name="add_to_list">Add to List</string>
+    <string name="action_add">Add</string>
+    <string name="action_remove">Remove</string>
 </resources>

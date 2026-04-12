@@ -95,6 +95,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -106,6 +107,8 @@ import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.ListMemberUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
@@ -120,6 +123,7 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
+import com.tunjid.heron.profile.ui.ListMemberPickerSheetState.Companion.rememberListMemberPickerSheetState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.ProfileLabels
@@ -179,6 +183,7 @@ import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -203,6 +208,7 @@ import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
+import heron.ui.core.generated.resources.add_to_list
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -322,6 +328,8 @@ internal fun ProfileScreen(
                 ) {
                     state.isSubscribedToLabeler
                 },
+                memberShips = state.profileListMemberships,
+                listsStateHolder = state.signedInProfileListsHolder,
                 viewerState = state.viewerState,
                 timelineStateHolders = remember(updatedStateHolders) {
                     updatedStateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
@@ -386,6 +394,21 @@ internal fun ProfileScreen(
                 },
                 onModerationAction = actions,
                 onUpdateProfileLiveStatus = profileUpdateLiveStatusSheetState::show,
+                onAddListMember = { profileId, listUri ->
+                    actions(
+                        Action.AddListMember(
+                            subjectId = profileId,
+                            listUri = listUri,
+                        ),
+                    )
+                },
+                onRemoveListMember = { listMemberUri ->
+                    actions(
+                        Action.DeleteRecord(
+                            recordUri = listMemberUri,
+                        ),
+                    )
+                },
             )
         },
         body = {
@@ -614,6 +637,7 @@ private fun ProfileHeader(
     commonFollowerCount: Long?,
     commonFollowers: List<Profile>,
     subscribedLabelers: List<Labeler>,
+    memberShips: List<ListMember>,
     preferences: Preferences,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
@@ -621,6 +645,7 @@ private fun ProfileHeader(
     signedInProfileId: ProfileId?,
     viewerState: ProfileViewerState?,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
+    listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
@@ -631,6 +656,8 @@ private fun ProfileHeader(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onAddListMember: (ProfileId, ListUri) -> Unit,
+    onRemoveListMember: (ListMemberUri) -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -692,16 +719,21 @@ private fun ProfileHeader(
                 Spacer(Modifier.height(24.dp))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
+                    paneTransitionScope = paneScaffoldState,
+                    listsStateHolder = listsStateHolder,
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
                     isSubscribedToLabeler = isSubscribedToLabeler,
                     viewerState = viewerState,
+                    memberShips = memberShips,
                     signedInProfileId = signedInProfileId,
                     onViewerStateClicked = onViewerStateClicked,
                     onEditClick = onEditClick,
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
+                    onAddListMember = onAddListMember,
+                    onRemoveListMember = onRemoveListMember,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -936,19 +968,32 @@ private fun ProfileAvatar(
 @Composable
 private fun ProfileHeadline(
     modifier: Modifier = Modifier,
+    paneTransitionScope: PaneTransitionScope,
+    listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
     profile: Profile,
     signedInProfileId: ProfileId?,
     isSignedInProfile: Boolean,
     isSubscribedToLabeler: Boolean,
     viewerState: ProfileViewerState?,
+    memberShips: List<ListMember>,
     onEditClick: () -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onAddListMember: (ProfileId, ListUri) -> Unit,
+    onRemoveListMember: (ListMemberUri) -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
+    )
+    val profileListPickerSheetState = rememberListMemberPickerSheetState(
+        paneTransitionScope = paneTransitionScope,
+        listsStateHolder = listsStateHolder,
+        memberships = memberShips,
+        profile = profile,
+        onAddListMember = onAddListMember,
+        onRemoveListMember = onRemoveListMember,
     )
     AttributionLayout(
         modifier = modifier,
@@ -1050,6 +1095,8 @@ private fun ProfileHeadline(
                                                         profileId = profile.did,
                                                     ),
                                                 )
+                                            CommonStrings.add_to_list ->
+                                                profileListPickerSheetState.show()
                                         }
                                     },
                                 )
