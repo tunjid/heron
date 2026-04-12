@@ -283,12 +283,10 @@ private fun loadProfileMutations(
     )
         .distinctUntilChanged()
         .flatMapLatest { (profile, signedInProfile) ->
-            combine(
-                profileRepository.membershipsByProfile(profile.did),
-                flowOf(profile),
-                flowOf<Profile?>(signedInProfile),
-                ::Triple,
-            )
+            profileRepository.membershipsByProfile(profile.did)
+                .map { memberships ->
+                    Triple(memberships, profile, signedInProfile)
+                }
         }
         .mapToManyMutations { (memberships, profile, signedInProfile) ->
             val isSignedIn = signedInProfile != null
@@ -308,11 +306,7 @@ private fun loadProfileMutations(
             val state = currentState()
             val hasProfileStateHolders = state.stateHolders.isNotEmpty()
 
-            // TODO: This logic assumes that the tabs for the profile are static.
-            // Revisit this.
-            if (hasProfileStateHolders) return@mapToManyMutations
-
-            if (signedInProfile != null && state.signedInProfileListsHolder == null) {
+            if (signedInProfile != null && (state.signedInProfileListsHolder == null || state.signedInProfileId != signedInProfile.did)) {
                 emit {
                     copy(
                         signedInProfileListsHolder = scope.signedInProfileListsHolder(
@@ -322,6 +316,10 @@ private fun loadProfileMutations(
                     )
                 }
             }
+
+            // TODO: This logic assumes that the tabs for the profile are static.
+            // Revisit this.
+            if (hasProfileStateHolders) return@mapToManyMutations
 
             emitAll(
                 Timeline.Profile.Type.entries
