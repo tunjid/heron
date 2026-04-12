@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +30,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.no_lists
+import heron.feature.profile.generated.resources.update_profile_in_lists
 import org.jetbrains.compose.resources.stringResource
 
 class ListMemberPickerSheetState(
@@ -84,7 +84,10 @@ fun ListMemberPickerBottomSheet(
 
     state.ModalBottomSheet {
         Text(
-            text = "Update ${profile.displayName ?: profile.handle.id} in Lists",
+            text = stringResource(
+                Res.string.update_profile_in_lists,
+                profile.displayName ?: profile.handle.id,
+            ),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp),

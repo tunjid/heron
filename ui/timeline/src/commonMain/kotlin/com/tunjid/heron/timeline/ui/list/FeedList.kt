@@ -51,6 +51,7 @@ import heron.ui.core.generated.resources.action_add
 import heron.ui.core.generated.resources.action_remove
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.list_by
+import heron.ui.timeline.generated.resources.list_by_you
 import heron.ui.timeline.generated.resources.starter_pack_by
 import org.jetbrains.compose.resources.stringResource
 
@@ -125,10 +126,7 @@ fun ListMemberPickerItem(
         modifier = modifier,
         paneTransitionScope = paneTransitionScope,
         title = list.name,
-        subtitle = stringResource(
-            Res.string.list_by,
-            list.creator.handle.id,
-        ),
+        subtitle = stringResource(Res.string.list_by_you),
         description = list.description,
         blurb = null,
         sharedElementPrefix = sharedElementPrefix,
