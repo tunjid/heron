@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -47,10 +48,12 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -111,6 +114,10 @@ interface ProfileRepository {
         limit: Long,
     ): Flow<List<Profile>>
 
+    fun membershipsByProfile(
+        profileId: ProfileId,
+    ): Flow<List<ListMember>>
+
     fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -146,6 +153,7 @@ interface ProfileRepository {
 internal class OfflineProfileRepository @Inject constructor(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
+    private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
@@ -211,6 +219,21 @@ internal class OfflineProfileRepository @Inject constructor(
             )
                 .distinctUntilChangedMap { profileEntities ->
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
+                }
+        }
+            .flowOn(ioDispatcher)
+
+    override fun membershipsByProfile(
+        profileId: ProfileId,
+    ): Flow<List<ListMember>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { _ ->
+            if (profileId.id.isEmpty()) return@singleAuthorizedSessionFlow emptyFlow<List<ListMember>>()
+
+            listDao.membershipsByProfile(
+                profileId = profileId.id,
+            )
+                .distinctUntilChangedMap { entities ->
+                    entities.map { it.asExternalModel() }
                 }
         }
             .flowOn(ioDispatcher)

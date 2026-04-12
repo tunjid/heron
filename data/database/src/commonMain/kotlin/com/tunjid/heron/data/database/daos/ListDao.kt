@@ -107,6 +107,17 @@ interface ListDao {
     @Transaction
     @Query(
         """
+        SELECT * FROM listMembers
+        WHERE subjectId = :profileId
+    """,
+    )
+    fun membershipsByProfile(
+        profileId: String,
+    ): Flow<List<PopulatedListMemberEntity>>
+
+    @Transaction
+    @Query(
+        """
             SELECT * FROM lists
 	        WHERE creatorId = :creatorId
             ORDER BY indexedAt
