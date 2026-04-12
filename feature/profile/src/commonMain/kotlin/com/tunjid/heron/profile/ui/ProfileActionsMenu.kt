@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -38,6 +39,7 @@ import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
+import heron.ui.core.generated.resources.add_to_list
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
@@ -181,4 +183,12 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             )
         }
     }
+
+    add(ProfileActionMenu.Divider)
+    add(
+        ProfileActionMenu.Item(
+            title = CommonStrings.add_to_list,
+            icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
+        ),
+    )
 }
