@@ -226,11 +226,12 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun membershipsByProfile(
         profileId: ProfileId,
     ): Flow<List<ListMember>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { _ ->
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             if (profileId.id.isEmpty()) return@singleAuthorizedSessionFlow emptyFlow<List<ListMember>>()
 
             listDao.membershipsByProfile(
                 profileId = profileId.id,
+                signedInUserId = signedInProfileId.id,
             )
                 .distinctUntilChangedMap { entities ->
                     entities.map { it.asExternalModel() }
