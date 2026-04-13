@@ -54,7 +54,7 @@ interface StandardSiteDao {
             FROM standardPublications
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
-                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
             LEFT JOIN profiles
                 ON standardPublications.publisherId = profiles.did
             WHERE standardPublications.uri = :publicationUri
@@ -82,10 +82,10 @@ interface StandardSiteDao {
             FROM standardPublications
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
-                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
             LEFT JOIN profiles
                 ON standardPublications.publisherId = profiles.did
-            WHERE standardSubscriptions.viewingProfileId = :viewingProfileId
+            WHERE standardSubscriptions.viewingProfileId IS :viewingProfileId
             ORDER BY standardSubscriptions.sortedAt DESC
             LIMIT :limit
             OFFSET :offset
@@ -137,7 +137,7 @@ interface StandardSiteDao {
             FROM standardDocuments
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
-                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
             LEFT JOIN standardPublications
                 ON standardPublications.uri = standardDocuments.publicationUri
             LEFT JOIN profiles
@@ -172,7 +172,7 @@ interface StandardSiteDao {
             FROM standardDocuments
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
-                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
             LEFT JOIN standardPublications
                 ON standardPublications.uri = standardDocuments.publicationUri
             LEFT JOIN profiles

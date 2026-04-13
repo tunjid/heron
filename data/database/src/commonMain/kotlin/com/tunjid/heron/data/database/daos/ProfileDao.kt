@@ -43,7 +43,7 @@ interface ProfileDao {
         """
             SELECT * FROM profiles
             LEFT JOIN profileViewerStates
-                ON profileViewerStates.profileId = :signedInProfiledId
+                ON profileViewerStates.profileId IS :signedInProfiledId
                 AND profiles.did = profileViewerStates.otherProfileId
             WHERE did IN (:ids)
             OR handle IN (:ids)
