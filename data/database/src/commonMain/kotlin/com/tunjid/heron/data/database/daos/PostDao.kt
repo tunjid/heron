@@ -115,7 +115,7 @@ interface PostDao {
             LEFT JOIN postViewerStatistics
                 ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId IS :viewingProfileId
             LEFT JOIN profileViewerStates
-                ON profileViewerStates.profileId IS :viewingProfileId
+                ON profileViewerStates.profileId = :viewingProfileId
                 AND posts.authorId = profileViewerStates.otherProfileId
                 AND :viewingProfileId IS NOT NULL
             WHERE uri IN (:postUris)
