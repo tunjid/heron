@@ -316,7 +316,7 @@ private fun listTabs(
             )
         }
 
-        this[1].hasUpdate != hasUpdate -> this[1] = Tab(
+        this[0].hasUpdate != hasUpdate -> this[0] = Tab(
             title = stringResource(Res.string.posts),
             hasUpdate = hasUpdate,
         )
