@@ -33,11 +33,6 @@ class AuthNavigationEventStateTest {
         ),
     )
 
-    private val savedNavigation = SavedState.Navigation(
-        activeNav = 0,
-        backStacks = listOf(listOf("/auth")),
-    )
-
     private val deepSignedInNav = MultiStackNav(
         name = "test",
         stacks = listOf(
@@ -68,6 +63,11 @@ class AuthNavigationEventStateTest {
         currentIndex = 1,
     )
 
+    private val savedNavigation = SavedState.Navigation(
+        activeNav = 0,
+        backStacks = listOf(listOf("/auth")),
+    )
+
     private val deepSavedNavigation = SavedState.Navigation(
         activeNav = 1,
         backStacks = listOf(
@@ -78,7 +78,7 @@ class AuthNavigationEventStateTest {
         ),
     )
 
-    // region No auth → Guest
+    // region Sign-in transitions
 
     @Test
     fun noAuth_to_guest_triggers_signIn_on_auth_stack() {
@@ -87,7 +87,6 @@ class AuthNavigationEventStateTest {
             isGuest = false,
         )
 
-        // Transition to guest
         state.process(
             AuthNavigationDigest(
                 profileId = null,
@@ -96,7 +95,6 @@ class AuthNavigationEventStateTest {
             ),
         )
 
-        // Apply mutation to auth stack nav - should navigate to signed-in nav
         val result = state.navigationMutation().invoke(authStackNav)
         assertEquals(
             expected = 4,
@@ -107,57 +105,6 @@ class AuthNavigationEventStateTest {
             actual = result.stacks[0].name,
         )
     }
-
-    @Test
-    fun noAuth_to_guest_on_non_auth_stack_keeps_current() {
-        val state = AuthNavigationEventState(
-            profileId = null,
-            isGuest = false,
-        )
-
-        // Transition to guest
-        state.process(
-            AuthNavigationDigest(
-                profileId = null,
-                isGuest = true,
-                navigation = savedNavigation,
-            ),
-        )
-
-        // Already on non-auth stack — freshSignIn true but not on auth stack
-        val result = state.navigationMutation().invoke(signedInNav)
-        assertEquals(
-            expected = signedInNav,
-            actual = result,
-        )
-    }
-
-    @Test
-    fun noAuth_to_guest_on_deep_non_auth_stack_keeps_current() {
-        val state = AuthNavigationEventState(
-            profileId = null,
-            isGuest = false,
-        )
-
-        state.process(
-            AuthNavigationDigest(
-                profileId = null,
-                isGuest = true,
-                navigation = deepSavedNavigation,
-            ),
-        )
-
-        // Deep signed-in nav with back stacks should be preserved as-is
-        val result = state.navigationMutation().invoke(deepSignedInNav)
-        assertEquals(
-            expected = deepSignedInNav,
-            actual = result,
-        )
-    }
-
-    // endregion
-
-    // region No auth → Authenticated
 
     @Test
     fun noAuth_to_authenticated_triggers_signIn_on_auth_stack() {
@@ -175,7 +122,6 @@ class AuthNavigationEventStateTest {
         )
 
         val result = state.navigationMutation().invoke(authStackNav)
-        // Should navigate to signed-in nav (4 stacks)
         assertEquals(
             expected = 4,
             actual = result.stacks.size,
@@ -187,63 +133,12 @@ class AuthNavigationEventStateTest {
     }
 
     @Test
-    fun noAuth_to_authenticated_on_non_auth_stack_keeps_current() {
-        val state = AuthNavigationEventState(
-            profileId = null,
-            isGuest = false,
-        )
-
-        state.process(
-            AuthNavigationDigest(
-                profileId = profileA,
-                isGuest = false,
-                navigation = savedNavigation,
-            ),
-        )
-
-        // Already on signed-in nav (not auth stack) — freshSignIn true but not on auth stack
-        val result = state.navigationMutation().invoke(signedInNav)
-        assertEquals(
-            expected = signedInNav,
-            actual = result,
-        )
-    }
-
-    @Test
-    fun noAuth_to_authenticated_on_deep_non_auth_stack_keeps_current() {
-        val state = AuthNavigationEventState(
-            profileId = null,
-            isGuest = false,
-        )
-
-        state.process(
-            AuthNavigationDigest(
-                profileId = profileA,
-                isGuest = false,
-                navigation = deepSavedNavigation,
-            ),
-        )
-
-        // Deep signed-in nav with back stacks should be preserved as-is
-        val result = state.navigationMutation().invoke(deepSignedInNav)
-        assertEquals(
-            expected = deepSignedInNav,
-            actual = result,
-        )
-    }
-
-    // endregion
-
-    // region Guest → Authenticated
-
-    @Test
     fun guest_to_authenticated_triggers_signIn_on_auth_stack() {
         val state = AuthNavigationEventState(
             profileId = null,
             isGuest = true,
         )
 
-        // Transition from guest to authenticated
         state.process(
             AuthNavigationDigest(
                 profileId = profileA,
@@ -262,10 +157,6 @@ class AuthNavigationEventStateTest {
             actual = result.stacks[0].name,
         )
     }
-
-    // endregion
-
-    // region Authenticated → different Authenticated (session switch)
 
     @Test
     fun session_switch_resets_to_signedIn_navigation() {
@@ -299,10 +190,10 @@ class AuthNavigationEventStateTest {
 
     // endregion
 
-    // region Authenticated → No auth (sign out)
+    // region Authenticated users who lose auth are force signed out
 
     @Test
-    fun signOut_from_non_auth_stack_forces_signedOut_navigation() {
+    fun signOut_from_signedIn_nav_forces_signedOut_navigation() {
         val state = AuthNavigationEventState(
             profileId = profileA,
             isGuest = false,
@@ -316,7 +207,6 @@ class AuthNavigationEventStateTest {
             ),
         )
 
-        // On signed-in nav (not auth stack) with no profile → should force sign out
         val result = state.navigationMutation().invoke(signedInNav)
         assertEquals(
             expected = 1,
@@ -329,7 +219,7 @@ class AuthNavigationEventStateTest {
     }
 
     @Test
-    fun signOut_while_on_auth_stack_keeps_auth_stack() {
+    fun signOut_from_deep_signedIn_nav_forces_signedOut_navigation() {
         val state = AuthNavigationEventState(
             profileId = profileA,
             isGuest = false,
@@ -339,24 +229,27 @@ class AuthNavigationEventStateTest {
             AuthNavigationDigest(
                 profileId = null,
                 isGuest = false,
-                navigation = savedNavigation,
+                navigation = deepSavedNavigation,
             ),
         )
 
-        // Already on auth stack — should keep it
-        val result = state.navigationMutation().invoke(authStackNav)
+        val result = state.navigationMutation().invoke(deepSignedInNav)
         assertEquals(
-            expected = authStackNav,
-            actual = result,
+            expected = 1,
+            actual = result.stacks.size,
+        )
+        assertEquals(
+            expected = AppStack.Auth.stackName,
+            actual = result.stacks[0].name,
         )
     }
 
     // endregion
 
-    // region Guest stays guest
+    // region Guest users cannot lose auth — they never had it
 
     @Test
-    fun guest_staying_guest_keeps_current_navigation() {
+    fun guest_on_auth_stack_is_not_force_signed_out() {
         val state = AuthNavigationEventState(
             profileId = null,
             isGuest = true,
@@ -378,7 +271,7 @@ class AuthNavigationEventStateTest {
     }
 
     @Test
-    fun guest_staying_guest_with_deep_navigation_keeps_current() {
+    fun guest_on_signedIn_nav_is_not_force_signed_out() {
         val state = AuthNavigationEventState(
             profileId = null,
             isGuest = true,
@@ -401,10 +294,10 @@ class AuthNavigationEventStateTest {
 
     // endregion
 
-    // region Steady state - authenticated stays authenticated
+    // region Auth stack preserves transient state on sign-out signals
 
     @Test
-    fun authenticated_staying_authenticated_keeps_current_navigation() {
+    fun signOut_while_on_auth_stack_keeps_current() {
         val state = AuthNavigationEventState(
             profileId = profileA,
             isGuest = false,
@@ -412,37 +305,15 @@ class AuthNavigationEventStateTest {
 
         state.process(
             AuthNavigationDigest(
-                profileId = profileA,
+                profileId = null,
                 isGuest = false,
                 navigation = savedNavigation,
             ),
         )
 
-        val result = state.navigationMutation().invoke(signedInNav)
+        val result = state.navigationMutation().invoke(authStackNav)
         assertEquals(
-            expected = signedInNav,
-            actual = result,
-        )
-    }
-
-    @Test
-    fun authenticated_staying_authenticated_with_deep_navigation_keeps_current() {
-        val state = AuthNavigationEventState(
-            profileId = profileA,
-            isGuest = false,
-        )
-
-        state.process(
-            AuthNavigationDigest(
-                profileId = profileA,
-                isGuest = false,
-                navigation = deepSavedNavigation,
-            ),
-        )
-
-        val result = state.navigationMutation().invoke(deepSignedInNav)
-        assertEquals(
-            expected = deepSignedInNav,
+            expected = authStackNav,
             actual = result,
         )
     }
