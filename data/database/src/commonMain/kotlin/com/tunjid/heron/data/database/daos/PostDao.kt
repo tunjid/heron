@@ -113,7 +113,7 @@ interface PostDao {
         """
             SELECT * FROM posts
             LEFT JOIN postViewerStatistics
-                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId IS :viewingProfileId
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             LEFT JOIN profileViewerStates
                 ON profileViewerStates.profileId = :viewingProfileId
                 AND posts.authorId = profileViewerStates.otherProfileId
@@ -131,7 +131,7 @@ interface PostDao {
         """
             SELECT * FROM posts
             LEFT JOIN postViewerStatistics
-                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId IS :viewingProfileId
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
 	        WHERE uri IN (:postUris)
         """,
     )
@@ -150,9 +150,9 @@ interface PostDao {
                 postPosts.embeddedPostUri AS embeddedPostUri
             FROM posts AS posts
             LEFT JOIN postViewerStatistics
-                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId IS :viewingProfileId
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             LEFT JOIN profileViewerStates
-                ON profileViewerStates.profileId IS :viewingProfileId
+                ON profileViewerStates.profileId = :viewingProfileId
                 AND posts.authorId = profileViewerStates.otherProfileId
                 AND :viewingProfileId IS NOT NULL
             INNER JOIN postPosts AS postPosts
@@ -208,7 +208,7 @@ interface PostDao {
             INNER JOIN postLikes
                 ON did = authorId
             LEFT JOIN profileViewerStates
-                ON profileViewerStates.profileId IS :viewingProfileId
+                ON profileViewerStates.profileId = :viewingProfileId
                 AND profileViewerStates.otherProfileId = authorId
 	        WHERE postUri = :postUri
             ORDER BY indexedAt
@@ -271,7 +271,7 @@ interface PostDao {
             INNER JOIN postReposts
                 ON did = authorId
             LEFT JOIN profileViewerStates
-                ON profileViewerStates.profileId IS :viewingProfileId
+                ON profileViewerStates.profileId = :viewingProfileId
                 AND profileViewerStates.otherProfileId = authorId
 	        WHERE postUri = :postUri
             ORDER BY indexedAt
