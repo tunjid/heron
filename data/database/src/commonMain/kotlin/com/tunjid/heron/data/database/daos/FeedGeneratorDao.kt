@@ -71,4 +71,14 @@ interface FeedGeneratorDao {
     suspend fun deleteFeedGenerator(
         uri: FeedGeneratorUri,
     )
+
+    @Query(
+        """
+            DELETE FROM feedGenerators
+            WHERE creatorId = :creatorId
+        """,
+    )
+    suspend fun deleteFeedGeneratorsForCreator(
+        creatorId: String,
+    )
 }

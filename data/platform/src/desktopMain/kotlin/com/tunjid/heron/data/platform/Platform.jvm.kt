@@ -26,7 +26,7 @@ enum class JvmVariant {
 class JVMPlatform internal constructor() : Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
     override val isDesktop: Boolean = true
-
+    override val supportsComposeDiagnosticStackTraces: Boolean = false
     val variant: JvmVariant = System.getProperty("os.name").lowercase().let { osName ->
         when {
             osName.startsWith("mac") -> JvmVariant.Mac

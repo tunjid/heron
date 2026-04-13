@@ -205,6 +205,26 @@ interface StandardSiteDao {
         uri: StandardDocumentUri,
     )
 
+    @Query(
+        """
+            DELETE FROM standardDocuments
+            WHERE authorId = :authorId
+        """,
+    )
+    suspend fun deleteDocumentsForAuthor(
+        authorId: String,
+    )
+
+    @Query(
+        """
+            DELETE FROM standardDocuments
+            WHERE publicationUri = :publicationUri
+        """,
+    )
+    suspend fun deleteDocumentsForPublication(
+        publicationUri: String,
+    )
+
     // --- Subscriptions ---
 
     @Upsert
@@ -225,5 +245,15 @@ interface StandardSiteDao {
     )
     suspend fun deleteSubscription(
         uri: StandardSubscriptionUri,
+    )
+
+    @Query(
+        """
+            DELETE FROM standardSubscriptions
+            WHERE viewingProfileId = :viewingProfileId
+        """,
+    )
+    suspend fun deleteSubscriptionsForViewer(
+        viewingProfileId: String,
     )
 }

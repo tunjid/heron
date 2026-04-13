@@ -37,6 +37,12 @@ kotlin {
                 implementation(libs.lifecycle.android.process)
             }
         }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
         commonMain {
             dependencies {
                 implementation(project(":data:models"))

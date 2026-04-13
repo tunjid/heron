@@ -45,7 +45,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -299,29 +298,16 @@ internal fun ListScreen(
 @Composable
 private fun listTabs(
     hasUpdate: Boolean,
-): List<Tab> = remember { mutableStateListOf<Tab>() }.apply {
-    when {
-        isEmpty() -> {
-            add(
-                Tab(
-                    title = stringResource(Res.string.posts),
-                    hasUpdate = hasUpdate,
-                ),
-            )
-            add(
-                Tab(
-                    title = stringResource(Res.string.people),
-                    hasUpdate = false,
-                ),
-            )
-        }
-
-        this[1].hasUpdate != hasUpdate -> this[1] = Tab(
-            title = stringResource(Res.string.posts),
-            hasUpdate = hasUpdate,
-        )
-    }
-}
+): List<Tab> = listOf(
+    Tab(
+        title = stringResource(Res.string.posts),
+        hasUpdate = hasUpdate,
+    ),
+    Tab(
+        title = stringResource(Res.string.people),
+        hasUpdate = false,
+    ),
+)
 
 @Composable
 private fun ListMembers(

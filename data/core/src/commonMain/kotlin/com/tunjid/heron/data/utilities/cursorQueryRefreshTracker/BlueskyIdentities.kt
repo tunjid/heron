@@ -14,16 +14,19 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.platform
+package com.tunjid.heron.data.utilities.cursorQueryRefreshTracker
 
-interface Platform {
-    val name: String
-    val isDesktop: Boolean
-    val isRelease: Boolean
-        get() = Build.isRelease
-    val supportsComposeDiagnosticStackTraces: Boolean
+import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.ProfilesQuery
 
-    companion object
-}
+internal fun ProfilesQuery.starterPacksIdentity(): String =
+    "bsky.starterPacks:${profileId.id}"
 
-expect val Platform.Companion.current: Platform
+internal fun ProfilesQuery.listsIdentity(): String =
+    "bsky.lists:${profileId.id}"
+
+internal fun ListMemberQuery.listMembersIdentity(): String =
+    "bsky.listMembers:${listUri.uri}"
+
+internal fun ProfilesQuery.feedGeneratorsIdentity(): String =
+    "bsky.feedGenerators:${profileId.id}"

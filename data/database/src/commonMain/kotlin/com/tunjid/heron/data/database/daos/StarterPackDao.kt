@@ -80,4 +80,14 @@ interface StarterPackDao {
     suspend fun deleteStarterPack(
         uri: StarterPackUri,
     )
+
+    @Query(
+        """
+            DELETE FROM starterPacks
+            WHERE creatorId = :creatorId
+        """,
+    )
+    suspend fun deleteStarterPacksForCreator(
+        creatorId: String,
+    )
 }
