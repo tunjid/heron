@@ -1,7 +1,8 @@
 package com.tunjid.heron.scaffold.navigation
 
+import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.repository.EmptyNavigation
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.scaffold.navigation.fakes.FakeAuthRepository
 import com.tunjid.heron.scaffold.navigation.fakes.FakeUserDataRepository
@@ -10,9 +11,15 @@ import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.strings.routeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthNavigationMutationsTest {
 
     private val profileA = ProfileId("did:plc:user-a")
@@ -43,97 +50,145 @@ class AuthNavigationMutationsTest {
     )
 
     @Test
-    fun emptyNavigation_is_filtered_out() = runTest {
-        val authRepo = FakeAuthRepository()
-        val userDataRepo = FakeUserDataRepository()
+    fun noAuth_on_auth_stack_keeps_current_navigation() =
+        runTest(UnconfinedTestDispatcher()) {
+            val authRepo = FakeAuthRepository()
+            val userDataRepo = FakeUserDataRepository()
 
-        authRepo.guestState.value = false
-        authRepo.signedInUserState.value = null
-        userDataRepo.navigationState.value = EmptyNavigation
+            authRepo.guestState.value = false
+            authRepo.signedInUserState.value = null
+            userDataRepo.navigationState.value = validNavigation
 
-        val mutations = authNavigationMutations(
-            initialProfileId = null,
-            initialIsGuest = false,
-            authRepository = authRepo,
-            userDataRepository = userDataRepo,
-        )
+            val result = async {
+                authNavigationMutations(
+                    initialProfileId = null,
+                    initialIsGuest = false,
+                    authRepository = authRepo,
+                    userDataRepository = userDataRepo,
+                )
+                    .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
+                    .drop(1) // skip runningFold initial
+                    .first { it == authStackNav }
+            }
 
-        // Transition to non-empty navigation so we get an emission
-        userDataRepo.navigationState.value = validNavigation
-
-        val mutation = mutations.first()
-        // With no profile and not guest, should force sign out from non-auth stack
-        val result = mutation(signedInNav)
-        assertEquals(
-            expected = 1,
-            actual = result.stacks.size,
-        )
-        assertEquals(
-            expected = AppStack.Auth.stackName,
-            actual = result.stacks[0].name,
-        )
-    }
+            assertEquals(
+                expected = authStackNav,
+                actual = result.await(),
+            )
+        }
 
     @Test
-    fun noAuth_on_auth_stack_keeps_current_navigation() = runTest {
-        val authRepo = FakeAuthRepository()
-        val userDataRepo = FakeUserDataRepository()
+    fun noAuth_to_guest_navigates_to_signedIn() =
+        runTest(UnconfinedTestDispatcher()) {
+            val authRepo = FakeAuthRepository()
+            val userDataRepo = FakeUserDataRepository()
 
-        // Start as no auth, not guest
-        authRepo.guestState.value = false
-        authRepo.signedInUserState.value = null
-        userDataRepo.navigationState.value = validNavigation
+            authRepo.guestState.value = false
+            authRepo.signedInUserState.value = null
+            userDataRepo.navigationState.value = validNavigation
 
-        val mutations = authNavigationMutations(
-            initialProfileId = null,
-            initialIsGuest = false,
-            authRepository = authRepo,
-            userDataRepository = userDataRepo,
-        )
+            val result = async {
+                authNavigationMutations(
+                    initialProfileId = null,
+                    initialIsGuest = false,
+                    authRepository = authRepo,
+                    userDataRepository = userDataRepo,
+                )
+                    .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
+                    .drop(1)
+                    .first { it.stacks.size == 4 }
+            }
 
-        // First emission: steady state (no auth, no guest)
-        val firstMutation = mutations.first()
-        // On auth stack with no auth and no guest → should keep auth stack
-        val result = firstMutation(authStackNav)
-        assertEquals(
-            expected = authStackNav,
-            actual = result,
-        )
-    }
+            // Transition to guest
+            authRepo.guestState.value = true
+
+            val nav = result.await()
+            assertEquals(
+                expected = 4,
+                actual = nav.stacks.size,
+            )
+            assertEquals(
+                expected = AppStack.Home.stackName,
+                actual = nav.stacks[0].name,
+            )
+        }
 
     @Test
-    fun guest_to_authenticated_triggers_signedIn_navigation() = runTest {
-        val authRepo = FakeAuthRepository()
-        val userDataRepo = FakeUserDataRepository()
+    fun guest_to_authenticated_navigates_to_signedIn() =
+        runTest(UnconfinedTestDispatcher()) {
+            val authRepo = FakeAuthRepository()
+            val userDataRepo = FakeUserDataRepository()
 
-        // Start as guest
-        authRepo.guestState.value = true
-        authRepo.signedInUserState.value = null
-        userDataRepo.navigationState.value = validNavigation
+            authRepo.guestState.value = true
+            authRepo.signedInUserState.value = null
+            userDataRepo.navigationState.value = validNavigation
 
-        val mutations = authNavigationMutations(
-            initialProfileId = null,
-            initialIsGuest = true,
-            authRepository = authRepo,
-            userDataRepository = userDataRepo,
-        )
+            val result = async {
+                authNavigationMutations(
+                    initialProfileId = null,
+                    initialIsGuest = true,
+                    authRepository = authRepo,
+                    userDataRepository = userDataRepo,
+                )
+                    .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
+                    .drop(1)
+                    .first { it.stacks.size == 4 }
+            }
 
-        // Collect: first emission is steady state (guest)
-        val items = mutableListOf<MultiStackNav>()
+            // Guest becomes authenticated
+            authRepo.guestState.value = false
+            authRepo.signedInUserState.value = stubProfile(
+                did = profileA,
+                handle = ProfileHandle("alice.bsky.social"),
+            )
 
-        // Get first emission (guest steady state)
-        val firstMutation = mutations.first()
-        items.add(firstMutation(authStackNav))
+            val nav = result.await()
+            assertEquals(
+                expected = 4,
+                actual = nav.stacks.size,
+            )
+            assertEquals(
+                expected = AppStack.Home.stackName,
+                actual = nav.stacks[0].name,
+            )
+        }
 
-        // Transition to authenticated
-        authRepo.guestState.value = false
-        authRepo.signedInUserState.value = null // signedInUser updates separately
+    @Test
+    fun signOut_forces_signedOut_navigation() =
+        runTest(UnconfinedTestDispatcher()) {
+            val authRepo = FakeAuthRepository()
+            val userDataRepo = FakeUserDataRepository()
 
-        // Now also set the profile
-        authRepo.signedInUserState.value = null // In real usage, signedInUser emits the profile
+            authRepo.guestState.value = false
+            authRepo.signedInUserState.value = stubProfile(
+                did = profileA,
+                handle = ProfileHandle("alice.bsky.social"),
+            )
+            userDataRepo.navigationState.value = validNavigation
 
-        // The combine will fire with (null, false, validNavigation)
-        // Since we went from guest=true to guest=false without a profile, this isn't a sign-in
-        // The actual sign-in happens when profileId becomes non-null
-    }
+            val result = async {
+                authNavigationMutations(
+                    initialProfileId = profileA,
+                    initialIsGuest = false,
+                    authRepository = authRepo,
+                    userDataRepository = userDataRepo,
+                )
+                    .runningFold(signedInNav) { nav, mutation -> mutation(nav) }
+                    .drop(1)
+                    .first { it.stacks[0].name == AppStack.Auth.stackName }
+            }
+
+            // Sign out
+            authRepo.signedInUserState.value = null
+
+            val nav = result.await()
+            assertEquals(
+                expected = 1,
+                actual = nav.stacks.size,
+            )
+            assertEquals(
+                expected = AppStack.Auth.stackName,
+                actual = nav.stacks[0].name,
+            )
+        }
 }
