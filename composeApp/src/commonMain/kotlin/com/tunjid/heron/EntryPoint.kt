@@ -16,6 +16,8 @@
 
 package com.tunjid.heron
 
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.tooling.ComposeStackTraceMode
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
@@ -23,6 +25,8 @@ import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.logging.Logger
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
@@ -86,6 +90,13 @@ fun createAppState(
     videoPlayerController: (appMainScope: CoroutineScope) -> VideoPlayerController,
     args: (appMainScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
+    with(Platform.current) {
+        if (supportsComposeDiagnosticStackTraces) Composer.setDiagnosticStackTraceMode(
+            if (isRelease) ComposeStackTraceMode.Auto
+            else ComposeStackTraceMode.SourceInformation,
+        )
+    }
+
     logger().install()
 
     val appMainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

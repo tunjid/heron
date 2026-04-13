@@ -21,6 +21,7 @@ interface Platform {
     val isDesktop: Boolean
     val isRelease: Boolean
         get() = Build.isRelease
+    val supportsComposeDiagnosticStackTraces: Boolean
 
     companion object
 }
