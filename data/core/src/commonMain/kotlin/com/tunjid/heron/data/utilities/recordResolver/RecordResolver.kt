@@ -51,7 +51,6 @@ import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
-import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -104,6 +103,7 @@ import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
+import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
@@ -334,7 +334,6 @@ internal class OfflineRecordResolver @Inject constructor(
     ): Result<Record> = runCatchingUnlessCancelled {
         currentSessionContext()?.tokens
             ?.authProfileId
-            ?: throw ExpiredSessionException()
     }.mapToResult { viewingProfileId ->
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -510,7 +509,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     }
 
                     standardSiteDao.publication(
-                        viewingProfileId = viewingProfileId.id,
+                        viewingProfileId = viewingProfileId?.id,
                         publicationUri = uri.uri,
                     )
                         .first()
@@ -559,7 +558,7 @@ internal class OfflineRecordResolver @Inject constructor(
                             ?.atUri
                             ?.let {
                                 standardSiteDao.publication(
-                                    viewingProfileId = viewingProfileId.id,
+                                    viewingProfileId = viewingProfileId?.id,
                                     publicationUri = it,
                                 )
                             }
@@ -568,29 +567,33 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
 
-            is StandardSubscriptionUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
-                .mapCatchingUnlessCancelled { response ->
-                    val subscription = response.value.decodeAs<Subscription>()
-                    val cid = response.cid?.cid?.let(::StandardSubscriptionId)
-                    val sortedAt = uri.recordKey.tidInstant ?: Instant.DISTANT_PAST
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            subscriptionUri = uri,
-                            subscriptionCid = cid,
-                            subscription = subscription,
+            is StandardSubscriptionUri -> if (viewingProfileId != null) {
+                fetchRecordAndSaveCreator(uri, viewingProfileId)
+                    .mapCatchingUnlessCancelled { response ->
+                        val subscription = response.value.decodeAs<Subscription>()
+                        val cid = response.cid?.cid?.let(::StandardSubscriptionId)
+                        val sortedAt = uri.recordKey.tidInstant ?: Instant.DISTANT_PAST
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(
+                                subscriptionUri = uri,
+                                subscriptionCid = cid,
+                                subscription = subscription,
+                                sortedAt = sortedAt,
+                                viewingProfileId = viewingProfileId,
+                            )
+                        }
+                        StandardSubscription(
+                            uri = uri,
+                            cid = cid,
                             sortedAt = sortedAt,
-                            viewingProfileId = viewingProfileId,
+                            publicationUri = StandardPublicationUri(
+                                subscription.publication.atUri,
+                            ),
                         )
                     }
-                    StandardSubscription(
-                        uri = uri,
-                        cid = cid,
-                        sortedAt = sortedAt,
-                        publicationUri = StandardPublicationUri(
-                            subscription.publication.atUri,
-                        ),
-                    )
-                }
+            } else {
+                expiredSessionResult()
+            }
 
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
