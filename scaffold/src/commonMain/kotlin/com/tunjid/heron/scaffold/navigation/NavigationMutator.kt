@@ -496,10 +496,16 @@ class PersistedNavigationStateHolder(
                     .first { it != InitialNavigation }
 
                 val signedInProfile = authRepository.signedInUser.first()
+                val isGuest = authRepository.isGuest.first()
 
                 val multiStackNav = when {
                     savedNavigation == EmptyNavigation -> SignedOutNavigationState
-                    signedInProfile == null -> SignedOutNavigationState
+                    signedInProfile == null && !isGuest -> SignedOutNavigationState
+                    isGuest -> routeParser.parseMultiStackNav(
+                        navigation = savedNavigation,
+                        isSignedIn = false,
+                        isGuest = true,
+                    )
                     else -> routeParser.parseMultiStackNav(
                         navigation = savedNavigation,
                         isSignedIn = true,
@@ -526,6 +532,7 @@ class PersistedNavigationStateHolder(
                         },
                         authNavigationMutations(
                             initialProfileId = signedInProfile?.did,
+                            initialIsGuest = isGuest,
                             authRepository = authRepository,
                             userDataRepository = userDataRepository,
                         ),
@@ -556,8 +563,9 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun authNavigationMutations(
+internal fun authNavigationMutations(
     initialProfileId: ProfileId?,
+    initialIsGuest: Boolean,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MultiStackNav>> =
@@ -567,13 +575,14 @@ private fun authNavigationMutations(
             .distinctUntilChanged(),
         authRepository.isGuest,
         userDataRepository.navigation,
-        ::Triple,
+        ::AuthNavigationDigest,
     )
-        .filter { (_, isGuest, navigation) ->
-            !isGuest && navigation != EmptyNavigation
-        }
+        .filter { it.navigation != EmptyNavigation }
         .scan(
-            initial = AuthNavigationEventState(initialProfileId),
+            initial = AuthNavigationEventState(
+                profileId = initialProfileId,
+                isGuest = initialIsGuest,
+            ),
             operation = AuthNavigationEventState::process,
         )
         .map(
@@ -589,25 +598,26 @@ private fun CoroutineScope.persistNavigationState(
     )
 }
 
-private fun RouteParser.parseMultiStackNav(
+internal fun RouteParser.parseMultiStackNav(
     navigation: SavedState.Navigation,
     isSignedIn: Boolean,
+    isGuest: Boolean = false,
 ): MultiStackNav {
+    val templateNav = when {
+        isSignedIn || isGuest -> SignedInNavigationState
+        else -> SignedOutNavigationState
+    }
     val restored = navigation.backStacks
         .foldIndexed(
             initial = MultiStackNav(
-                name = if (isSignedIn) SignedInNavigationState.name
-                else SignedOutNavigationState.name,
+                name = templateNav.name,
             ),
             operation = { index, multiStackNav, routesForStack ->
                 multiStackNav.copy(
                     stacks = multiStackNav.stacks +
                         routesForStack.fold(
                             initial = StackNav(
-                                name = when {
-                                    isSignedIn -> SignedInNavigationState
-                                    else -> SignedOutNavigationState
-                                }.stacks.getOrNull(index)?.name ?: "Unknown",
+                                name = templateNav.stacks.getOrNull(index)?.name ?: "Unknown",
                             ),
                             operation = innerFold@{ stackNav, route ->
                                 val resolvedRoute =
@@ -624,7 +634,7 @@ private fun RouteParser.parseMultiStackNav(
             currentIndex = navigation.activeNav,
         )
 
-    // Don't put a signed in user on the sign in screen
+    // Don't put a signed in or guest user on the sign in screen
     return if (restored.current?.id == AppStack.Auth.rootRoute.id) SignedInNavigationState
     else restored
 }
@@ -718,27 +728,45 @@ private fun AppStack.toStackNav() = StackNav(
     children = listOf(rootRoute),
 )
 
-private class AuthNavigationEventState(
+internal data class AuthNavigationDigest(
+    val profileId: ProfileId?,
+    val isGuest: Boolean,
+    val navigation: SavedState.Navigation,
+)
+
+internal class AuthNavigationEventState(
     private var profileId: ProfileId?,
+    private var isGuest: Boolean,
 ) {
 
     private var navigationSavedState: SavedState.Navigation = SavedState.Navigation()
     private val events = mutableSetOf<Event>()
 
     fun process(
-        digest: Triple<ProfileId?, Boolean, SavedState.Navigation>,
+        digest: AuthNavigationDigest,
     ): AuthNavigationEventState {
-        val (currentProfileId, _, currentNavigation) = digest
+        val (currentProfileId, currentIsGuest, currentNavigation) = digest
         when {
-            profileId == null && currentProfileId != null -> {
+            // Guest → Authenticated: treat as sign-in
+            isGuest && !currentIsGuest && currentProfileId != null -> {
                 events.add(Event.SignIn)
             }
+            // Not guest → Guest: treat as sign-in so guest navigates off auth screen
+            !isGuest && currentIsGuest -> {
+                events.add(Event.SignIn)
+            }
+            // No auth, not guest → Authenticated: treat as sign-in
+            profileId == null && !isGuest && currentProfileId != null -> {
+                events.add(Event.SignIn)
+            }
+            // Authenticated → different Authenticated: session switch
             profileId != null && currentProfileId != null && currentProfileId != profileId -> {
                 events.add(Event.SessionSwitch(currentNavigation.hashCode()))
             }
         }
 
         profileId = currentProfileId
+        isGuest = currentIsGuest
         navigationSavedState = currentNavigation
 
         return this
@@ -762,8 +790,8 @@ private class AuthNavigationEventState(
         when {
             // Session switch or a fresh sign-in on the auth stack, reset to signed-in navigation
             sessionSwitched || (freshSignIn && isOnAuthStack) -> SignedInNavigationState
-            // If signed in or already on the auth stack, keep navigation as is
-            isSignedIn || isOnAuthStack -> this
+            // If signed in, guest, or already on the auth stack, keep navigation as is
+            isSignedIn || isOnAuthStack || isGuest -> this
             // Otherwise, the user is not signed in and not on the auth stack, so force sign out
             else -> SignedOutNavigationState
         }
