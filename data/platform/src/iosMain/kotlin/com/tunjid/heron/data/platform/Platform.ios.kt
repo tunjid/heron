@@ -22,6 +22,7 @@ class IOSPlatform internal constructor() : Platform {
     override val name: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
     override val isDesktop: Boolean = false
+    override val supportsComposeDiagnosticStackTraces: Boolean = false
 }
 
 actual val Platform.Companion.current: Platform by lazy(::IOSPlatform)
