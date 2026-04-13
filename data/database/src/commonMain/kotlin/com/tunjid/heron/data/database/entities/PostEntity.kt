@@ -220,7 +220,7 @@ fun PopulatedPostEntity.asExternalModel(
     quoteCount = entity.quoteCount.orZero(),
     indexedAt = entity.indexedAt,
     author = author.asExternalModel(
-        labels = authorLabelEntities.map(LabelEntity::asExternalModel),
+        labels = authorLabelEntities.asActiveExternalModels(),
     ),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
