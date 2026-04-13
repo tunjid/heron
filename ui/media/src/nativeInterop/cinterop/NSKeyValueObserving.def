@@ -1,0 +1,13 @@
+language = Objective-C
+package = com.tunjid.heron.media.video.cinterop
+
+---
+
+#import <Foundation/Foundation.h>
+
+@protocol NSKeyValueObserving
+- (void)observeValueForKeyPath:(NSString * _Nullable)keyPath
+                      ofObject:(id _Nullable)object
+                        change:(NSDictionary<NSKeyValueChangeKey, id> * _Nullable)change
+                       context:(void * _Nullable)context;
+@end

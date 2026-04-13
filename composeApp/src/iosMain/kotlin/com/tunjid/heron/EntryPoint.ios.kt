@@ -21,7 +21,7 @@ import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
-import com.tunjid.heron.media.video.StubVideoPlayerController
+import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
@@ -43,8 +43,10 @@ fun createAppState(): AppState =
         logger = {
             IOSLogger()
         },
-        videoPlayerController = {
-            StubVideoPlayerController
+        videoPlayerController = { appMainScope ->
+            AVFoundationPlayerController(
+                appMainScope = appMainScope,
+            )
         },
         args = { appMainScope ->
             DataBindingArgs(
