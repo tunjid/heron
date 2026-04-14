@@ -49,7 +49,6 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
-import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
@@ -219,7 +218,6 @@ class AppState(
             }
         }
 
-        val videoPlayerController = LocalVideoPlayerController.current
         LifecycleResumeEffect(videoPlayerController) {
             onPauseOrDispose { videoPlayerController.pauseActiveVideo() }
         }
