@@ -19,6 +19,8 @@ package com.tunjid.heron.timeline.ui.post
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.SnapSpec
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -281,10 +283,23 @@ private fun LabelContent(
         Timeline.Presentation.Media.Expanded,
         -> LabelFlowRow(
             modifier = Modifier
+                .fillMaxWidth()
                 .contentPresentationPadding(
                     content = PostContent.Labels,
                     presentation = data.presentation,
-                ),
+                )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    data.postActions.onPostAction(
+                        PostAction.OfPost(
+                            post = data.post,
+                            isMainPost = data.isMainPost,
+                            warnedAppliedLabels = data.appliedLabels.warned(),
+                        ),
+                    )
+                },
             content = {
                 data.appliedLabels.forEach(
                     languageTag = data.languageTag,
