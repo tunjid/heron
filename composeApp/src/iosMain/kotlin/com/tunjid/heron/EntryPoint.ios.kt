@@ -16,16 +16,23 @@
 
 package com.tunjid.heron
 
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.IOSLogger
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.NoOpNotifier
+import com.tunjid.heron.scaffold.notifications.IosNotifier
+import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -38,7 +45,7 @@ fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
         notifier = {
-            NoOpNotifier
+            IosNotifier()
         },
         logger = {
             IOSLogger()
@@ -59,6 +66,56 @@ fun createAppState(): AppState =
             )
         },
     )
+
+/**
+ * Called from Swift when Firebase provides a new FCM token.
+ */
+fun onNewFcmToken(appState: AppState, token: String) {
+    appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
+}
+
+/**
+ * Called from Swift when a notification is tapped to deep link into the app.
+ */
+fun onNotificationTapped(appState: AppState, scheme: String, path: String) {
+    appState.onDeepLink(GenericUri("$scheme$path"))
+}
+
+/**
+ * Called from Swift when a data push notification arrives.
+ */
+fun onPushNotificationReceived(appState: AppState, payload: Map<String, String>) {
+    IosNotificationBridge.handlePushNotification(appState, payload)
+}
+
+private object IosNotificationBridge {
+    fun handlePushNotification(appState: AppState, payload: Map<String, String>) {
+        val action = NotificationAction.HandleNotification(payload = payload)
+        action.senderDid ?: return
+        val recordUri = action.recordUri ?: return
+
+        logcat(LogPriority.DEBUG) {
+            "Received push notification for $recordUri. Payload: $payload"
+        }
+        appState.onNotificationAction(action)
+
+        try {
+            runBlocking {
+                withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                    appState.awaitNotificationProcessing(recordUri)
+                }
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN) {
+                "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
+            }
+        } finally {
+            appState.onNotificationAction(
+                NotificationAction.NotificationProcessedOrDropped(recordUri),
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {
