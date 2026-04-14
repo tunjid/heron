@@ -16,16 +16,28 @@
 
 package com.tunjid.heron
 
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.IOSLogger
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.NoOpNotifier
+import com.tunjid.heron.scaffold.notifications.IosNotifier
+import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -38,7 +50,7 @@ fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
         notifier = {
-            NoOpNotifier
+            IosNotifier()
         },
         logger = {
             IOSLogger()
@@ -59,6 +71,70 @@ fun createAppState(): AppState =
             )
         },
     )
+
+/**
+ * Called from Swift when Firebase provides a new FCM token.
+ */
+fun onNewFcmToken(appState: AppState, token: String) {
+    appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
+}
+
+/**
+ * Called from Swift when a notification is tapped to deep link into the app.
+ */
+fun onNotificationTapped(appState: AppState, scheme: String, path: String) {
+    appState.onDeepLink(GenericUri("$scheme$path"))
+}
+
+/**
+ * Called from Swift when a data push notification arrives.
+ * Processing runs on a background thread to avoid blocking the main thread.
+ * The [onComplete] callback is invoked when processing finishes, and should be
+ * used to call the iOS background fetch completion handler.
+ */
+fun onPushNotificationReceived(
+    appState: AppState,
+    payload: Map<String, String>,
+    onComplete: () -> Unit,
+) {
+    IosNotificationBridge.handlePushNotification(appState, payload, onComplete)
+}
+
+private object IosNotificationBridge {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun handlePushNotification(
+        appState: AppState,
+        payload: Map<String, String>,
+        onComplete: () -> Unit,
+    ) {
+        val action = NotificationAction.HandleNotification(payload = payload)
+        action.senderDid ?: return onComplete()
+        val recordUri = action.recordUri ?: return onComplete()
+
+        logcat(LogPriority.DEBUG) {
+            "Received push notification for $recordUri. Payload: $payload"
+        }
+        appState.onNotificationAction(action)
+
+        scope.launch {
+            try {
+                withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                    appState.awaitNotificationProcessing(recordUri)
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN) {
+                    "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
+                }
+            } finally {
+                appState.onNotificationAction(
+                    NotificationAction.NotificationProcessedOrDropped(recordUri),
+                )
+                onComplete()
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {

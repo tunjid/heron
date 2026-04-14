@@ -120,6 +120,40 @@ persisted across app restarts.
 
 ## Building
 
+### iOS Push Notifications
+
+iOS push notifications are powered by Firebase Cloud Messaging (FCM) via Apple Push Notification
+service (APNs). The following setup is required:
+
+1. **Firebase iOS SDK** - Added via Swift Package Manager in `iosApp/iosApp.xcodeproj`.
+   The `FirebaseMessaging` package is required.
+
+2. **`GoogleService-Info.plist`** - Download from Firebase Console > Project Settings > your iOS app
+   and place at `iosApp/iosApp/GoogleService-Info.plist`. This file is `.gitignore`d; in CI, decode
+   it from a base64 secret:
+   ```bash
+   echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+   ```
+
+3. **Push Notifications capability** - Enabled in Xcode under Signing & Capabilities. This adds
+   `aps-environment` to `iosApp.entitlements`.
+
+4. **Background Modes capability** - Enabled in Xcode with **Remote notifications** checked. This
+   adds `remote-notification` to `UIBackgroundModes` in `Info.plist`, which is required for
+   data-only/silent push delivery.
+
+5. **APNs Authentication Key** - Create a `.p8` key in the
+   [Apple Developer Portal](https://developer.apple.com/account/resources/authkeys/list)
+   under Keys with Apple Push Notifications enabled. Note the Key ID and Team ID.
+
+6. **Upload APNs key to Firebase** - In Firebase Console > Project Settings > Cloud Messaging >
+   iOS app, upload the `.p8` key along with the Key ID and Team ID.
+
+7. **Backend payload format** - FCM payloads targeting iOS must include `content-available: 1`
+   in `apns.payload.aps` for data-only push delivery. Without this, iOS silently drops the
+   notification. Note that iOS throttles silent pushes and does not deliver them to
+   force-quit apps.
+
 ### Gradle Properties
 
 The following properties can be set in `~/.gradle/gradle.properties` or passed via `-P` flags.

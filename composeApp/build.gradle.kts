@@ -38,6 +38,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            export(project(":scaffold"))
         }
     }
 
@@ -105,6 +106,7 @@ kotlin {
             implementation(libs.tink)
         }
         iosMain.dependencies {
+            api(project(":scaffold"))
             implementation(libs.connectivity.device)
         }
     }
