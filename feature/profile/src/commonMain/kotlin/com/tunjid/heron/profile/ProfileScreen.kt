@@ -183,7 +183,6 @@ import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
-import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -719,7 +718,6 @@ private fun ProfileHeader(
                 Spacer(Modifier.height(24.dp))
                 ProfileHeadline(
                     modifier = Modifier.fillMaxWidth(),
-                    paneTransitionScope = paneScaffoldState,
                     listsStateHolder = listsStateHolder,
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
@@ -968,7 +966,6 @@ private fun ProfileAvatar(
 @Composable
 private fun ProfileHeadline(
     modifier: Modifier = Modifier,
-    paneTransitionScope: PaneTransitionScope,
     listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
     profile: Profile,
     signedInProfileId: ProfileId?,
@@ -988,7 +985,6 @@ private fun ProfileHeadline(
         onApproved = onModerationAction,
     )
     val profileListPickerSheetState = rememberListMemberPickerSheetState(
-        paneTransitionScope = paneTransitionScope,
         listsStateHolder = listsStateHolder,
         memberships = memberShips,
         profile = profile,

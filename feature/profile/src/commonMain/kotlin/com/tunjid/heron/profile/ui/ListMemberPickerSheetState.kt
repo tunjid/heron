@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.timeline.ui.list.ListMemberPickerItem
-import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -42,7 +41,6 @@ class ListMemberPickerSheetState(
     companion object {
         @Composable
         fun rememberListMemberPickerSheetState(
-            paneTransitionScope: PaneTransitionScope,
             listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
             memberships: List<ListMember>,
             profile: Profile,
@@ -55,7 +53,6 @@ class ListMemberPickerSheetState(
                 ListMemberPickerSheetState(scope = scope)
             }
             ListMemberPickerBottomSheet(
-                paneTransitionScope = paneTransitionScope,
                 state = state,
                 listsStateHolder = listsStateHolder,
                 memberships = memberships,
@@ -70,7 +67,6 @@ class ListMemberPickerSheetState(
 
 @Composable
 fun ListMemberPickerBottomSheet(
-    paneTransitionScope: PaneTransitionScope,
     state: ListMemberPickerSheetState,
     profile: Profile,
     listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
@@ -121,11 +117,9 @@ fun ListMemberPickerBottomSheet(
                 itemKey = { it.cid.id },
                 itemContent = { feedList ->
                     ListMemberPickerItem(
-                        paneTransitionScope = paneTransitionScope,
                         list = feedList,
                         membership = membershipByListUri[feedList.uri],
                         profileId = profile.did,
-                        sharedElementPrefix = "list-member-picker",
                         onAddListMember = onAddListMember,
                         onRemoveListMember = onRemoveListMember,
                     )
