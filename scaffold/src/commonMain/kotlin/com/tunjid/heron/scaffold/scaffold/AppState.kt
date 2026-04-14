@@ -218,8 +218,8 @@ class AppState(
             }
         }
 
-        LifecycleResumeEffect(videoPlayerController) {
-            onPauseOrDispose { videoPlayerController.pauseActiveVideo() }
+        LifecycleStartEffect(videoPlayerController) {
+            onStopOrDispose { videoPlayerController.pauseActiveVideo() }
         }
 
         val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
