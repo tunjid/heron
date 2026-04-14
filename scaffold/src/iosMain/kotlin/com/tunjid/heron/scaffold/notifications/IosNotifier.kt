@@ -65,6 +65,7 @@ private suspend fun getDeliveredNotificationIds(
     center: UNUserNotificationCenter,
 ): Set<String> = suspendCancellableCoroutine { continuation ->
     center.getDeliveredNotificationsWithCompletionHandler { delivered ->
+        if (!continuation.isActive) return@getDeliveredNotificationsWithCompletionHandler
         val ids = delivered
             ?.mapNotNullTo(mutableSetOf()) {
                 (it as? platform.UserNotifications.UNNotification)

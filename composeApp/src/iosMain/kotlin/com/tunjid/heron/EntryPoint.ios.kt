@@ -34,6 +34,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -100,6 +101,8 @@ fun onPushNotificationReceived(
 }
 
 private object IosNotificationBridge {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     fun handlePushNotification(
         appState: AppState,
         payload: Map<String, String>,
@@ -114,7 +117,6 @@ private object IosNotificationBridge {
         }
         appState.onNotificationAction(action)
 
-        val scope = CoroutineScope(Dispatchers.IO)
         scope.launch {
             try {
                 withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
@@ -129,7 +131,6 @@ private object IosNotificationBridge {
                     NotificationAction.NotificationProcessedOrDropped(recordUri),
                 )
                 onComplete()
-                scope.cancel()
             }
         }
     }

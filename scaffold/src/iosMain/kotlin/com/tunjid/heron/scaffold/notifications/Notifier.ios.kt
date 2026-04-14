@@ -110,6 +110,7 @@ private suspend fun getNotificationAuthorizationStatus(): Long =
     suspendCancellableCoroutine { continuation ->
         UNUserNotificationCenter.currentNotificationCenter()
             .getNotificationSettingsWithCompletionHandler { settings ->
+                if (!continuation.isActive) return@getNotificationSettingsWithCompletionHandler
                 continuation.resume(settings?.authorizationStatus ?: 0L)
             }
     }
