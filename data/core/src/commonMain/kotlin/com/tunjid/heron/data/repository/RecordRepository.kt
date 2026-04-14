@@ -111,7 +111,7 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                     // reuses createdListMembers which saves into listMembers table
                     createdListMembers(
                         query = CreatedListMembersQuery(
-                            profileId = signedInProfileId,
+                            profileId = profileId,
                             data = CursorQuery.Data(
                                 page = 0,
                                 cursorAnchor = Clock.System.now(),

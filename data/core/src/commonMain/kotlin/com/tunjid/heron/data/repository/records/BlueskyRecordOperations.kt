@@ -383,7 +383,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                         listRecords(
                             ListRecordsQueryParams(
                                 repo = Did(signedInProfileId.id),
-                                collection = Nsid("app.bsky.graph.listitem"),
+                                collection = Nsid(ListMemberUri.NAMESPACE),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                             ),
