@@ -90,7 +90,6 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -283,7 +282,7 @@ private fun loadProfileMutations(
     )
         .distinctUntilChanged()
         .flatMapLatest { (profile, signedInProfile) ->
-            profileRepository.membershipsByProfile(profile.did)
+            recordRepository.listMembersByProfile(profile.did)
                 .map { memberships ->
                     Triple(memberships, profile, signedInProfile)
                 }

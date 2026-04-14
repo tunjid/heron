@@ -113,7 +113,7 @@ interface ListDao {
         AND l.creatorId = :signedInUserId
     """,
     )
-    fun membershipsByProfile(
+    fun listMembersByProfile(
         profileId: String,
         signedInUserId: String,
     ): Flow<List<PopulatedListMemberEntity>>

@@ -31,6 +31,8 @@ import app.bsky.graph.Listitem
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -69,6 +71,7 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.repository.CreatedListMembersQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
@@ -133,6 +136,10 @@ interface BlueskyRecordOperations {
         cursor: Cursor,
     ): Flow<CursorList<ListMember>>
 
+    fun createdListMembers(
+        query: CreatedListMembersQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>>
     fun feedGenerators(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -346,6 +353,50 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                                 add(
                                     listUri = list.uri.atUri.let(::ListUri),
                                     listItemView = listItemView,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+            .flowOn(ioDispatcher)
+
+    override fun createdListMembers(
+        query: CreatedListMembersQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                listDao.listMembersByProfile(
+                    profileId = query.profileId.id,
+                    signedInUserId = signedInProfileId.id,
+                )
+                    .distinctUntilChangedMap { entities ->
+                        entities.map(PopulatedListMemberEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        listRecords(
+                            ListRecordsQueryParams(
+                                repo = Did(signedInProfileId.id),
+                                collection = Nsid("app.bsky.graph.listitem"),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = ListRecordsResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            records.forEach { record ->
+                                val listItem = record.value.decodeAs<Listitem>()
+                                add(
+                                    listMemberUri = ListMemberUri(record.uri.atUri),
+                                    listItem = listItem,
                                 )
                             }
                         }
