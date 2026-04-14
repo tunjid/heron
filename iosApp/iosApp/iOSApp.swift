@@ -49,8 +49,9 @@ class AppDelegate: NSObject, UIApplicationDelegate,
                 payload[k] = v
             }
         }
-        EntryPoint_iosKt.onPushNotificationReceived(appState: appState, payload: payload)
-        completionHandler(.newData)
+        EntryPoint_iosKt.onPushNotificationReceived(appState: appState, payload: payload) {
+            completionHandler(.newData)
+        }
     }
 
     // Show notification banner when app is in foreground

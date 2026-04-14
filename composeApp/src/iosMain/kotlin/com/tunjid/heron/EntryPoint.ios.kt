@@ -31,7 +31,11 @@ import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -83,36 +87,50 @@ fun onNotificationTapped(appState: AppState, scheme: String, path: String) {
 
 /**
  * Called from Swift when a data push notification arrives.
+ * Processing runs on a background thread to avoid blocking the main thread.
+ * The [onComplete] callback is invoked when processing finishes, and should be
+ * used to call the iOS background fetch completion handler.
  */
-fun onPushNotificationReceived(appState: AppState, payload: Map<String, String>) {
-    IosNotificationBridge.handlePushNotification(appState, payload)
+fun onPushNotificationReceived(
+    appState: AppState,
+    payload: Map<String, String>,
+    onComplete: () -> Unit,
+) {
+    IosNotificationBridge.handlePushNotification(appState, payload, onComplete)
 }
 
 private object IosNotificationBridge {
-    fun handlePushNotification(appState: AppState, payload: Map<String, String>) {
+    fun handlePushNotification(
+        appState: AppState,
+        payload: Map<String, String>,
+        onComplete: () -> Unit,
+    ) {
         val action = NotificationAction.HandleNotification(payload = payload)
-        action.senderDid ?: return
-        val recordUri = action.recordUri ?: return
+        action.senderDid ?: return onComplete()
+        val recordUri = action.recordUri ?: return onComplete()
 
         logcat(LogPriority.DEBUG) {
             "Received push notification for $recordUri. Payload: $payload"
         }
         appState.onNotificationAction(action)
 
-        try {
-            runBlocking {
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            try {
                 withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                     appState.awaitNotificationProcessing(recordUri)
                 }
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN) {
+                    "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
+                }
+            } finally {
+                appState.onNotificationAction(
+                    NotificationAction.NotificationProcessedOrDropped(recordUri),
+                )
+                onComplete()
+                scope.cancel()
             }
-        } catch (e: Exception) {
-            logcat(LogPriority.WARN) {
-                "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
-            }
-        } finally {
-            appState.onNotificationAction(
-                NotificationAction.NotificationProcessedOrDropped(recordUri),
-            )
         }
     }
 }

@@ -19,6 +19,7 @@ package com.tunjid.heron.scaffold.notifications
 import com.tunjid.heron.data.core.models.Notification
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNUserNotificationCenter
@@ -62,7 +63,7 @@ class IosNotifier : Notifier {
 
 private suspend fun getDeliveredNotificationIds(
     center: UNUserNotificationCenter,
-): Set<String> = suspendCoroutine { continuation ->
+): Set<String> = suspendCancellableCoroutine { continuation ->
     center.getDeliveredNotificationsWithCompletionHandler { delivered ->
         val ids = delivered
             ?.mapNotNullTo(mutableSetOf()) {
