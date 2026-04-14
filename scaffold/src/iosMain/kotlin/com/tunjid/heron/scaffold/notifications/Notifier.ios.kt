@@ -17,16 +17,17 @@
 package com.tunjid.heron.scaffold.notifications
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tunjid.heron.scaffold.scaffold.LocalAppState
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
@@ -41,18 +42,12 @@ import platform.UserNotifications.UNUserNotificationCenter
 actual fun hasNotificationPermissions(): Boolean {
     var hasPermissions by remember { mutableStateOf(false) }
 
-    suspend fun checkPermissions() {
-        hasPermissions = getNotificationAuthorizationStatus() == UNAuthorizationStatusAuthorized
-    }
-
-    LaunchedEffect(Unit) {
-        checkPermissions()
-    }
-
-    LifecycleResumeEffect(Unit) {
-        // Re-check on resume in case user toggled permissions in Settings
-        hasPermissions = getNotificationAuthorizationStatusBlocking() == UNAuthorizationStatusAuthorized
-        onPauseOrDispose { }
+    val scope = rememberCoroutineScope()
+    LifecycleResumeEffect(scope) {
+        val job = scope.launch {
+            hasPermissions = getNotificationAuthorizationStatus() == UNAuthorizationStatusAuthorized
+        }
+        onPauseOrDispose { job.cancel() }
     }
 
     return hasPermissions
@@ -83,22 +78,26 @@ actual fun notificationPermissionsLauncher(
         }
     }
 
-    return remember(appState) {
+    val scope = rememberCoroutineScope()
+
+    return remember(appState, scope) {
         {
-            val status = getNotificationAuthorizationStatusBlocking()
-            when (status) {
-                UNAuthorizationStatusDenied -> {
-                    rationale = NotificationDialogRationale.GoToSettings
-                }
-                UNAuthorizationStatusAuthorized -> {
-                    onPermissionResult(true)
-                }
-                else -> {
-                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
-                    requestNotificationPermission { granted ->
-                        onPermissionResult(granted)
-                        if (!granted) {
-                            rationale = NotificationDialogRationale.GoToSettings
+            scope.launch {
+                val status = getNotificationAuthorizationStatus()
+                when (status) {
+                    UNAuthorizationStatusDenied -> {
+                        rationale = NotificationDialogRationale.GoToSettings
+                    }
+                    UNAuthorizationStatusAuthorized -> {
+                        onPermissionResult(true)
+                    }
+                    else -> {
+                        appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                        requestNotificationPermission { granted ->
+                            onPermissionResult(granted)
+                            if (!granted) {
+                                rationale = NotificationDialogRationale.GoToSettings
+                            }
                         }
                     }
                 }
@@ -108,26 +107,12 @@ actual fun notificationPermissionsLauncher(
 }
 
 private suspend fun getNotificationAuthorizationStatus(): Long =
-    suspendCoroutine { continuation ->
+    suspendCancellableCoroutine { continuation ->
         UNUserNotificationCenter.currentNotificationCenter()
             .getNotificationSettingsWithCompletionHandler { settings ->
                 continuation.resume(settings?.authorizationStatus ?: 0L)
             }
     }
-
-private fun getNotificationAuthorizationStatusBlocking(): Long {
-    // UNUserNotificationCenter settings are cached and return quickly.
-    // For the synchronous composable path, use a blocking approach.
-    var status: Long = 0L
-    val semaphore = platform.darwin.dispatch_semaphore_create(0)
-    UNUserNotificationCenter.currentNotificationCenter()
-        .getNotificationSettingsWithCompletionHandler { settings ->
-            status = settings?.authorizationStatus ?: 0L
-            platform.darwin.dispatch_semaphore_signal(semaphore)
-        }
-    platform.darwin.dispatch_semaphore_wait(semaphore, platform.darwin.DISPATCH_TIME_FOREVER)
-    return status
-}
 
 @OptIn(ExperimentalForeignApi::class)
 private fun requestNotificationPermission(onResult: (Boolean) -> Unit) {
