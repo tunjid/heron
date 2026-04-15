@@ -40,13 +40,14 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             export(project(":scaffold"))
-            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
-            // (>100k LOC) codebases during the release link. Disabling it
-            // trades a marginally larger binary / slightly slower startup
-            // for reliable release builds. Revisit after Kotlin 2.4.0 stable
-            // (see KT-80367) and a Compose Multiplatform release targeting it.
+            // Kotlin/Native's DevirtualizationAnalysis phase and its dependent
+            // phases (BuildDFG, DCEPhase) OOM on large (>100k LOC) codebases
+            // during the release link. Disabling them trades a marginally
+            // larger binary / slightly slower startup for reliable release
+            // builds. Revisit after Kotlin 2.4.0 stable (see KT-80367) and a
+            // Compose Multiplatform release targeting it.
             if (buildType == NativeBuildType.RELEASE) {
-                freeCompilerArgs += "-Xdisable-phases=Devirtualization"
+                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,BuildDFG,DCEPhase"
             }
         }
     }
