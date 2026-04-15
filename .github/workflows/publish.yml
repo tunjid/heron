@@ -2,9 +2,21 @@ name: Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Which platform(s) to publish'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+          - mac
 
 jobs:
   publish-android-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'android' }}
     runs-on: ubuntu-latest
     permissions:
       contents: 'write'
@@ -94,6 +106,7 @@ jobs:
           allow_updates: true
 
   publish-ios-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'ios' }}
     runs-on: macos-latest
     permissions:
       contents: 'write'
@@ -188,8 +201,17 @@ jobs:
 
       - name: Set version and build number
         run: |
-          VERSION=$(./gradlew -q currentVersion)
-          VERSION=${VERSION%%-*}
+          # Axion's currentVersion task prints "Project version: X.Y.Z", not
+          # just the version — grab the version number with a regex to match
+          # what Android uses via scmVersion.version, stripping any suffix
+          # like -SNAPSHOT.
+          RAW=$(./gradlew -q currentVersion)
+          VERSION=$(printf '%s\n' "$RAW" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1)
+          if [ -z "$VERSION" ]; then
+            echo "Failed to parse version from: $RAW" >&2
+            exit 1
+          fi
+          echo "Extracted version: $VERSION"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" \
             iosApp/iosApp/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" \
@@ -280,6 +302,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
   publish-mac-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'mac' }}
     runs-on: macos-latest
     permissions:
       contents: 'write'
