@@ -143,6 +143,22 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
+      - name: Inspect downloaded provisioning profiles
+        run: |
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "Profiles directory: $PROFILE_DIR"
+          ls -la "$PROFILE_DIR" || { echo "No profiles directory!"; exit 1; }
+          for p in "$PROFILE_DIR"/*.mobileprovision; do
+            echo ""
+            echo "=== $(basename "$p") ==="
+            DECODED=$(security cms -D -i "$p")
+            echo "Name:     $(echo "$DECODED" | plutil -extract Name raw -)"
+            echo "UUID:     $(echo "$DECODED" | plutil -extract UUID raw -)"
+            echo "TeamID:   $(echo "$DECODED" | plutil -extract TeamIdentifier.0 raw -)"
+            echo "AppID:    $(echo "$DECODED" | plutil -extract Entitlements.application-identifier raw -)"
+            echo "Type:     $(echo "$DECODED" | plutil -extract ProvisionedDevices raw - 2>/dev/null && echo 'Development' || echo 'Distribution/AdHoc')"
+          done
+
       - name: Set version and build number
         run: |
           VERSION=$(./gradlew -q currentVersion)
