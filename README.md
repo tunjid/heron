@@ -186,10 +186,17 @@ xcrun stapler staple <path-to-dmg>
 ### Publishing
 
 Publishing is triggered manually via the `Publish` GitHub Actions workflow (`workflow_dispatch`).
-It runs two jobs in parallel:
+A `platform` input selects which jobs run — `all` (default), `android`, `ios`, or `mac` — so
+you can push a single platform without burning CI minutes on the others.
 
 **Android** (`publish-android-app`) builds a release AAB, signs it, uploads to the Play Store
 internal track, extracts a universal APK, and attaches it to a draft GitHub Release.
+
+**iOS** (`publish-ios-app`) imports the distribution certificate, downloads the provisioning
+profile via the App Store Connect API, patches `iosApp.xcodeproj` for manual signing, stamps
+the version and build number into `Info.plist`, archives and exports a signed `.ipa`, and
+uploads it to App Store Connect for TestFlight. See [iOS publishing notes](#ios-publishing-notes)
+below for the tricky bits.
 
 **macOS** (`publish-mac-app`) imports a signing certificate, builds a signed DMG
 via `packageReleaseDmg`, notarizes it with `xcrun notarytool`, staples the ticket,
@@ -199,7 +206,7 @@ The following repository secrets are required for CI publishing:
 
 | Secret | Used by |
 |---|---|
-| `HERON_ENDPOINT` | Both jobs |
+| `HERON_ENDPOINT` | All jobs |
 | `GOOGLE_SERVICES_BASE_64` | Android |
 | `SIGNING_KEY_BASE_64` | Android |
 | `ALIAS` | Android |
@@ -211,3 +218,69 @@ The following repository secrets are required for CI publishing:
 | `MACOS_NOTARIZATION_APPLE_ID` | macOS - Apple ID email |
 | `MACOS_NOTARIZATION_PASSWORD` | macOS - app-specific password |
 | `MACOS_NOTARIZATION_TEAM_ID` | macOS - Apple Developer Team ID |
+| `IOS_CERTIFICATES_P12` | iOS - base64-encoded Apple Distribution `.p12` file (must contain the private key) |
+| `IOS_CERTIFICATES_PASSWORD` | iOS - password for the `.p12` file |
+| `IOS_DIST_PROVISIONING_PROFILE_NAME` | iOS - exact display name of the App Store Connect provisioning profile |
+| `APPSTORE_ISSUER_ID` | iOS - App Store Connect API issuer ID |
+| `APPSTORE_KEY_ID` | iOS - App Store Connect API key ID |
+| `APPSTORE_PRIVATE_KEY` | iOS - raw contents of the `.p8` private key (PEM text, **not** base64) |
+| `APPSTORE_TEAM_ID` | iOS - Apple Developer Team ID |
+| `FIREBASE_IOS_PLIST` | iOS - base64-encoded `GoogleService-Info.plist` |
+
+### iOS publishing notes
+
+Getting a Kotlin Multiplatform iOS build onto TestFlight via GitHub Actions has several
+non-obvious failure modes. The fixes are already in the workflow and `composeApp/build.gradle.kts`,
+but the reasoning is worth preserving.
+
+**Signing must be patched into `project.pbxproj`, not passed via `xcodebuild` overrides.**
+The Xcode project uses `CODE_SIGN_STYLE = Automatic` with `CODE_SIGN_IDENTITY = "Apple Development"`
+for local development. `xcodebuild`'s pre-flight signing check validates the project's
+baked-in settings *before* applying command-line build-setting overrides, so passing
+`CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER=...`
+positionally fails with `No "iOS Development" signing certificate found`. Using the `-xcconfig`
+flag (which wins over positional args) fixes signing for the main target, but then cascades to
+SPM dependencies (Firebase, GoogleUtilities, etc.) that don't support provisioning profiles and
+error out. The CI uses `sed` on `project.pbxproj` to switch only the iosApp target's settings
+(`CODE_SIGN_STYLE`, `CODE_SIGN_IDENTITY`, `PROVISIONING_PROFILE_SPECIFIER`), leaving SPM targets
+untouched. This only affects CI's checked-out copy of the project file.
+
+**Kotlin/Native devirtualization is disabled for release iOS framework builds.**
+See the `freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"` block
+in `composeApp/build.gradle.kts`. At ~115k LOC, the K/N linker's `DevirtualizationAnalysis` phase
+OOMs on GitHub's `macos-latest` runner (14 GB RAM) regardless of how high `org.gradle.jvmargs` is
+set — the memory consumed by `ConstraintGraphBuilder` scales past the runner's physical RAM
+ceiling. Two gotchas to know if you ever need to touch this:
+- The flag name is `-Xdisable-phases=<PhaseName>`, not `-Xbinary=...`. Phase names come from
+  the `name =` parameter of `createSimpleNamedCompilerPhase` in Kotlin/Native's `LTO.kt`. Unknown
+  phase names are silently ignored (no error, no warning — the flag just does nothing).
+- Don't disable `BuildDFG`. Other phases (`EscapeAnalysis`, `DCEPhase`, etc.) read from the
+  symbol table it populates and crash with `IllegalArgumentException: The symbol table has been
+  sealed` if it's skipped. Disable only `DevirtualizationAnalysis` (the memory hog) and
+  `Devirtualization` (the downstream phase that applies its results).
+- Revisit once Kotlin 2.4.0 stable ships with [KT-80367](https://youtrack.jetbrains.com/issue/KT-80367)
+  (memory reduction for DevirtualizationAnalysis) and a Compose Multiplatform release targets it.
+
+**Version string parsing.** The workflow reads the user-facing version from Axion Release's
+`currentVersion` task, same source Android and macOS use. That task prints
+`Project version: X.Y.Z`, not just `X.Y.Z`, so the workflow runs it through a regex
+(`grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?'`) before writing it to `CFBundleShortVersionString`.
+Apple rejects the upload with `-19239` if the value isn't one to three period-separated integers.
+
+**Apple-side prerequisites** (one-time setup, not done by CI):
+1. Register an App ID for `com.tunjid.heron` at developer.apple.com with the capabilities
+   listed in `iosApp/iosApp/iosApp.entitlements` (currently Push Notifications, Associated Domains).
+2. Create an **Apple Distribution** certificate, export the cert + private key from Keychain
+   as a `.p12` file, and base64-encode it for `IOS_CERTIFICATES_P12`.
+3. Create an **App Store Connect**-type provisioning profile tied to the App ID and that cert.
+   Its display name goes into `IOS_DIST_PROVISIONING_PROFILE_NAME`. No device registration
+   is required since distribution profiles have no device list.
+4. Create an App Store Connect API key with **App Manager** role. The issuer ID, key ID, and
+   `.p8` private key contents go into the three `APPSTORE_*` secrets. The `.p8` is PEM text —
+   copy it verbatim, do **not** base64-encode.
+5. Create the app record in App Store Connect (My Apps > + > New App) with bundle ID
+   `com.tunjid.heron` before the first CI upload.
+
+After upload, the build appears in App Store Connect > TestFlight within ~15 minutes. Internal
+testing (up to 100 team members, no review) can be enabled immediately. External testing
+requires a brief Beta App Review.
