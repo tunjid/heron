@@ -195,16 +195,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" \
             iosApp/iosApp/Info.plist
 
-      - name: Generate signing override xcconfig
+      - name: Patch project for manual signing
+        env:
+          PROFILE_NAME: ${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}
         run: |
-          cat <<EOF > "${RUNNER_TEMP}/SigningOverride.xcconfig"
-          CODE_SIGN_STYLE = Manual
-          CODE_SIGN_IDENTITY = Apple Distribution
-          CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
-          DEVELOPMENT_TEAM = ${{ secrets.APPSTORE_TEAM_ID }}
-          PROVISIONING_PROFILE_SPECIFIER = ${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}
-          PRODUCT_BUNDLE_IDENTIFIER = com.tunjid.heron
-          EOF
+          PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
+          # Scope manual signing to the iosApp target only (SPM deps keep their
+          # automatic/no-profile defaults). Escape the profile name for sed.
+          ESCAPED_PROFILE=$(printf '%s\n' "$PROFILE_NAME" | sed 's|[&/\]|\\&|g')
+          sed -i '' \
+            -e 's|CODE_SIGN_STYLE = Automatic;|CODE_SIGN_STYLE = Manual;|g' \
+            -e 's|CODE_SIGN_IDENTITY = "Apple Development";|CODE_SIGN_IDENTITY = "Apple Distribution";|g' \
+            -e "s|PROVISIONING_PROFILE_SPECIFIER = \"\";|PROVISIONING_PROFILE_SPECIFIER = \"$ESCAPED_PROFILE\";|g" \
+            "$PBXPROJ"
 
       - name: Build archive
         env:
@@ -224,7 +227,6 @@ jobs:
             -archivePath "${RUNNER_TEMP}/Build/Archives/heron.xcarchive" \
             -resultBundlePath "${RUNNER_TEMP}/Build/Artifacts/heron.xcresult" \
             -destination "generic/platform=iOS" \
-            -xcconfig "${RUNNER_TEMP}/SigningOverride.xcconfig" \
             archive
 
       - name: Generate ExportOptions.plist
