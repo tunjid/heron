@@ -40,14 +40,17 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             export(project(":scaffold"))
-            // Kotlin/Native's DevirtualizationAnalysis phase and its dependent
-            // phases (BuildDFG, DCEPhase) OOM on large (>100k LOC) codebases
-            // during the release link. Disabling them trades a marginally
-            // larger binary / slightly slower startup for reliable release
-            // builds. Revisit after Kotlin 2.4.0 stable (see KT-80367) and a
-            // Compose Multiplatform release targeting it.
+            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
+            // (>100k LOC) codebases during the release link — the memory is
+            // consumed by ConstraintGraphBuilder. We also disable the
+            // downstream Devirtualization phase which would otherwise crash
+            // trying to apply missing analysis results. BuildDFG, DCEPhase,
+            // EscapeAnalysis and the rest still run normally, so we only
+            // lose devirtualization as an optimization (minor perf cost,
+            // marginally larger binary). Revisit after Kotlin 2.4.0 stable
+            // (see KT-80367) and a Compose Multiplatform release targeting it.
             if (buildType == NativeBuildType.RELEASE) {
-                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,BuildDFG,DCEPhase"
+                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"
             }
         }
     }
