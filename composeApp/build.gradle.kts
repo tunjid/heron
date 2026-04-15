@@ -15,6 +15,7 @@
  */
 
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
     id("kotlin-library-convention")
@@ -39,6 +40,14 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             export(project(":scaffold"))
+            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
+            // (>100k LOC) codebases during the release link. Disabling it
+            // trades a marginally larger binary / slightly slower startup
+            // for reliable release builds. Revisit after Kotlin 2.4.0 stable
+            // (see KT-80367) and a Compose Multiplatform release targeting it.
+            if (buildType == NativeBuildType.RELEASE) {
+                freeCompilerArgs += "-Xbinary=devirtualization=false"
+            }
         }
     }
 
