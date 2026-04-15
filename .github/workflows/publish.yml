@@ -156,49 +156,6 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
-      - name: Inspect signing identities and provisioning profiles
-        shell: bash
-        run: |
-          echo "=============================================="
-          echo "Installed code signing identities:"
-          echo "=============================================="
-          security find-identity -v -p codesigning 2>&1 \
-            | sed -E 's/"(Apple [A-Za-z]+): [^(]*\(/"\1: [REDACTED] (/g' \
-            || true
-
-          echo ""
-          echo "=============================================="
-          echo "Downloaded provisioning profiles:"
-          echo "=============================================="
-          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "Profiles directory: $PROFILE_DIR"
-          if [ ! -d "$PROFILE_DIR" ]; then
-            echo "Directory does not exist — no profiles were downloaded!"
-            exit 0
-          fi
-          ls -la "$PROFILE_DIR" || true
-          shopt -s nullglob
-          count=0
-          for p in "$PROFILE_DIR"/*.mobileprovision; do
-            count=$((count+1))
-            echo ""
-            echo "--- Profile $count: $(basename "$p") ---"
-            DECODED=$(security cms -D -i "$p" 2>/dev/null || true)
-            if [ -z "$DECODED" ]; then
-              echo "(failed to decode)"
-              continue
-            fi
-            TMP=$(mktemp)
-            echo "$DECODED" > "$TMP"
-            echo "Name:   $(/usr/libexec/PlistBuddy -c 'Print :Name' "$TMP" 2>/dev/null || echo '?')"
-            echo "UUID:   $(/usr/libexec/PlistBuddy -c 'Print :UUID' "$TMP" 2>/dev/null || echo '?')"
-            echo "TeamID: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$TMP" 2>/dev/null || echo '?')"
-            echo "AppID:  $(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$TMP" 2>/dev/null || echo '?')"
-            rm -f "$TMP"
-          done
-          echo ""
-          echo "Total profiles: $count"
-
       - name: Set version and build number
         run: |
           # Axion's currentVersion task prints "Project version: X.Y.Z", not
