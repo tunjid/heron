@@ -46,7 +46,7 @@ kotlin {
             // for reliable release builds. Revisit after Kotlin 2.4.0 stable
             // (see KT-80367) and a Compose Multiplatform release targeting it.
             if (buildType == NativeBuildType.RELEASE) {
-                freeCompilerArgs += "-Xbinary=devirtualization=false"
+                freeCompilerArgs += "-Xdisable-phases=Devirtualization"
             }
         }
     }
