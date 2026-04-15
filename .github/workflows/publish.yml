@@ -143,21 +143,48 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
-      - name: Inspect downloaded provisioning profiles
+      - name: Inspect signing identities and provisioning profiles
+        shell: bash
         run: |
+          echo "=============================================="
+          echo "Installed code signing identities:"
+          echo "=============================================="
+          security find-identity -v -p codesigning 2>&1 \
+            | sed -E 's/"(Apple [A-Za-z]+): [^(]*\(/"\1: [REDACTED] (/g' \
+            || true
+
+          echo ""
+          echo "=============================================="
+          echo "Downloaded provisioning profiles:"
+          echo "=============================================="
           PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
           echo "Profiles directory: $PROFILE_DIR"
-          ls -la "$PROFILE_DIR" || { echo "No profiles directory!"; exit 1; }
+          if [ ! -d "$PROFILE_DIR" ]; then
+            echo "Directory does not exist — no profiles were downloaded!"
+            exit 0
+          fi
+          ls -la "$PROFILE_DIR" || true
+          shopt -s nullglob
+          count=0
           for p in "$PROFILE_DIR"/*.mobileprovision; do
+            count=$((count+1))
             echo ""
-            echo "=== $(basename "$p") ==="
-            DECODED=$(security cms -D -i "$p")
-            echo "Name:     $(echo "$DECODED" | plutil -extract Name raw -)"
-            echo "UUID:     $(echo "$DECODED" | plutil -extract UUID raw -)"
-            echo "TeamID:   $(echo "$DECODED" | plutil -extract TeamIdentifier.0 raw -)"
-            echo "AppID:    $(echo "$DECODED" | plutil -extract Entitlements.application-identifier raw -)"
-            echo "Type:     $(echo "$DECODED" | plutil -extract ProvisionedDevices raw - 2>/dev/null && echo 'Development' || echo 'Distribution/AdHoc')"
+            echo "--- Profile $count: $(basename "$p") ---"
+            DECODED=$(security cms -D -i "$p" 2>/dev/null || true)
+            if [ -z "$DECODED" ]; then
+              echo "(failed to decode)"
+              continue
+            fi
+            TMP=$(mktemp)
+            echo "$DECODED" > "$TMP"
+            echo "Name:   $(/usr/libexec/PlistBuddy -c 'Print :Name' "$TMP" 2>/dev/null || echo '?')"
+            echo "UUID:   $(/usr/libexec/PlistBuddy -c 'Print :UUID' "$TMP" 2>/dev/null || echo '?')"
+            echo "TeamID: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$TMP" 2>/dev/null || echo '?')"
+            echo "AppID:  $(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$TMP" 2>/dev/null || echo '?')"
+            rm -f "$TMP"
           done
+          echo ""
+          echo "Total profiles: $count"
 
       - name: Set version and build number
         run: |
@@ -189,6 +216,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPSTORE_TEAM_ID }}" \
             PRODUCT_BUNDLE_IDENTIFIER="com.tunjid.heron" \
             CODE_SIGN_STYLE="Manual" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}" \
             archive
 
