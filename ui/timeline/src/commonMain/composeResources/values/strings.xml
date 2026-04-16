@@ -138,6 +138,7 @@
     <string name="writable_repost">repost</string>
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_add_list_member">list member addition</string>
+    <string name="writable_update_created_list_members">created list member update</string>
     <string name="writable_subscribe_standard_publication">publication subscription</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
