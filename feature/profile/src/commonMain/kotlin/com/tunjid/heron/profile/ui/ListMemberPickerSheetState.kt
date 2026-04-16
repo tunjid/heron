@@ -12,7 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,23 +34,31 @@ import org.jetbrains.compose.resources.stringResource
 
 class ListMemberPickerSheetState(
     scope: BottomSheetScope,
+    private val onDismiss: () -> Unit,
 ) : BottomSheetState(scope) {
 
-    override fun onHidden() {}
+    override fun onHidden() {
+        onDismiss()
+    }
 
     companion object {
         @Composable
         fun rememberListMemberPickerSheetState(
             listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
-            memberships: List<ListMember>,
+            memberships: Map<ListUri, ListMember>,
             profile: Profile,
             onAddListMember: (ProfileId, ListUri) -> Unit,
             onRemoveListMember: (ListMemberUri) -> Unit,
+            onShown: () -> Unit,
+            onDismiss: () -> Unit,
         ): ListMemberPickerSheetState {
             val state = rememberBottomSheetState(
                 skipPartiallyExpanded = false,
             ) { scope ->
-                ListMemberPickerSheetState(scope = scope)
+                ListMemberPickerSheetState(
+                    scope = scope,
+                    onDismiss = onDismiss,
+                )
             }
             ListMemberPickerBottomSheet(
                 state = state,
@@ -59,6 +67,7 @@ class ListMemberPickerSheetState(
                 profile = profile,
                 onAddListMember = onAddListMember,
                 onRemoveListMember = onRemoveListMember,
+                onShown = onShown,
             )
             return state
         }
@@ -70,15 +79,16 @@ fun ListMemberPickerBottomSheet(
     state: ListMemberPickerSheetState,
     profile: Profile,
     listsStateHolder: ProfileScreenStateHolders.Records.Lists?,
-    memberships: List<ListMember>,
+    memberships: Map<ListUri, ListMember>,
     onAddListMember: (ProfileId, ListUri) -> Unit,
     onRemoveListMember: (ListMemberUri) -> Unit,
+    onShown: () -> Unit,
 ) {
-    val membershipByListUri = remember(memberships) {
-        memberships.associateBy { it.listUri }
-    }
-
     state.ModalBottomSheet {
+        LaunchedEffect(Unit) {
+            onShown()
+        }
+
         Text(
             text = stringResource(
                 Res.string.update_profile_in_lists,
@@ -118,7 +128,7 @@ fun ListMemberPickerBottomSheet(
                 itemContent = { feedList ->
                     ListMemberPickerItem(
                         list = feedList,
-                        membership = membershipByListUri[feedList.uri],
+                        membership = memberships[feedList.uri],
                         profileId = profile.did,
                         onAddListMember = onAddListMember,
                         onRemoveListMember = onRemoveListMember,

@@ -327,7 +327,7 @@ internal fun ProfileScreen(
                 ) {
                     state.isSubscribedToLabeler
                 },
-                memberShips = state.profileListMemberships,
+                memberships = state.profileListMembershipsMap,
                 listsStateHolder = state.signedInProfileListsHolder,
                 viewerState = state.viewerState,
                 timelineStateHolders = remember(updatedStateHolders) {
@@ -407,6 +407,16 @@ internal fun ProfileScreen(
                             recordUri = listMemberUri,
                         ),
                     )
+                },
+                onUpdateCreatedListMembers = { signedInProfileId ->
+                    actions(
+                        Action.UpdateCreatedListMembers(
+                            signedInProfileId = signedInProfileId,
+                        ),
+                    )
+                },
+                onDismissListPicker = {
+                    actions(Action.DismissListPickerSheet)
                 },
             )
         },
@@ -636,7 +646,7 @@ private fun ProfileHeader(
     commonFollowerCount: Long?,
     commonFollowers: List<Profile>,
     subscribedLabelers: List<Labeler>,
-    memberShips: List<ListMember>,
+    memberships: Map<ListUri, ListMember>,
     preferences: Preferences,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
@@ -657,6 +667,8 @@ private fun ProfileHeader(
     onUpdateProfileLiveStatus: () -> Unit,
     onAddListMember: (ProfileId, ListUri) -> Unit,
     onRemoveListMember: (ListMemberUri) -> Unit,
+    onUpdateCreatedListMembers: (ProfileId) -> Unit,
+    onDismissListPicker: () -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -723,7 +735,7 @@ private fun ProfileHeader(
                     isSignedInProfile = isSignedInProfile,
                     isSubscribedToLabeler = isSubscribedToLabeler,
                     viewerState = viewerState,
-                    memberShips = memberShips,
+                    memberships = memberships,
                     signedInProfileId = signedInProfileId,
                     onViewerStateClicked = onViewerStateClicked,
                     onEditClick = onEditClick,
@@ -732,6 +744,8 @@ private fun ProfileHeader(
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
                     onAddListMember = onAddListMember,
                     onRemoveListMember = onRemoveListMember,
+                    onUpdateCreatedListMembers = onUpdateCreatedListMembers,
+                    onDismissListPickerSheet = onDismissListPicker,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -972,7 +986,7 @@ private fun ProfileHeadline(
     isSignedInProfile: Boolean,
     isSubscribedToLabeler: Boolean,
     viewerState: ProfileViewerState?,
-    memberShips: List<ListMember>,
+    memberships: Map<ListUri, ListMember>,
     onEditClick: () -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
@@ -980,16 +994,22 @@ private fun ProfileHeadline(
     onUpdateProfileLiveStatus: () -> Unit,
     onAddListMember: (ProfileId, ListUri) -> Unit,
     onRemoveListMember: (ListMemberUri) -> Unit,
+    onUpdateCreatedListMembers: (ProfileId) -> Unit,
+    onDismissListPickerSheet: () -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
     )
     val profileListPickerSheetState = rememberListMemberPickerSheetState(
         listsStateHolder = listsStateHolder,
-        memberships = memberShips,
+        memberships = memberships,
         profile = profile,
         onAddListMember = onAddListMember,
         onRemoveListMember = onRemoveListMember,
+        onShown = {
+            signedInProfileId?.let { onUpdateCreatedListMembers(it) }
+        },
+        onDismiss = onDismissListPickerSheet,
     )
     AttributionLayout(
         modifier = modifier,
