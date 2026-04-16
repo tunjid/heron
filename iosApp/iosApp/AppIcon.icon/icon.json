@@ -5,20 +5,6 @@
   "groups" : [
     {
       "layers" : [
-
-      ],
-      "lighting" : "individual",
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
         {
           "image-name" : "crane_head.svg",
           "name" : "crane_head",
