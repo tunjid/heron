@@ -109,6 +109,18 @@ interface ListDao {
         """
         SELECT lm.* FROM listMembers lm
         JOIN lists l ON lm.listUri = l.uri
+        WHERE l.creatorId = :signedInUserId
+    """,
+    )
+    fun listMembersCreatedByProfile(
+        signedInUserId: String,
+    ): Flow<List<PopulatedListMemberEntity>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT lm.* FROM listMembers lm
+        JOIN lists l ON lm.listUri = l.uri
         WHERE lm.subjectId = :profileId
         AND l.creatorId = :signedInUserId
     """,
