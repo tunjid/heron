@@ -45,11 +45,12 @@ internal fun MultipleEntitySaver.add(
     listMemberUri: ListMemberUri,
     listItem: Listitem,
 ) {
+    add(stubProfileEntity(listItem.subject))
     add(
         ListMemberEntity(
             uri = listMemberUri,
-            listUri = ListUri(listItem.list.atUri),
-            subjectId = ProfileId(listItem.subject.did),
+            listUri = listItem.list.atUri.let(::ListUri),
+            subjectId = listItem.subject.did.let(::ProfileId),
             createdAt = listItem.createdAt,
         ),
     )
