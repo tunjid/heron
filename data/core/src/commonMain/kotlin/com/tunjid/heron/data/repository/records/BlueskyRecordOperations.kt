@@ -370,8 +370,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
     ): Flow<CursorList<ListMember>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             combine(
-                listDao.listMembersByProfile(
-                    profileId = query.profileId.id,
+                listDao.listMembersCreatedByProfile(
                     signedInUserId = signedInProfileId.id,
                 )
                     .distinctUntilChangedMap { entities ->
