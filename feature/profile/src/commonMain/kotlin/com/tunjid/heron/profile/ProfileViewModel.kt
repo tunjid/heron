@@ -212,6 +212,10 @@ class ActualProfileViewModel(
                         is Action.AddListMember -> action.flow.addListMemberMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.UpdateCreatedListMembers -> action.flow.updateCreatedListMembersMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DismissListPickerSheet -> action.flow.dismissListPickerSheet()
                     }
                 },
             )
@@ -284,10 +288,11 @@ private fun loadProfileMutations(
         .flatMapLatest { (profile, signedInProfile) ->
             recordRepository.listMembersByProfile(profile.did)
                 .map { memberships ->
-                    Triple(memberships, profile, signedInProfile)
+                    val membershipMap = memberships.associateBy { it.listUri }
+                    Triple(membershipMap, profile, signedInProfile)
                 }
         }
-        .mapToManyMutations { (memberships, profile, signedInProfile) ->
+        .mapToManyMutations { (membershipMap, profile, signedInProfile) ->
             val isSignedIn = signedInProfile != null
             val isSignedInProfile = signedInProfile?.let {
                 it.did.id == profileId.id || it.handle.id == profileId.id
@@ -298,7 +303,7 @@ private fun loadProfileMutations(
                     profile = profile,
                     signedInProfileId = signedInProfile?.did,
                     isSignedInProfile = isSignedInProfile,
-                    profileListMemberships = memberships,
+                    profileListMembershipsMap = membershipMap,
                 )
             }
 
@@ -556,6 +561,19 @@ private fun Flow<Action.AddListMember>.addListMemberMutations(
     if (memo != null) emit { copy(messages = messages + memo) }
 }
 
+private fun Flow<Action.UpdateCreatedListMembers>.updateCreatedListMembersMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.FeedList.UpdateCreatedListMembers(
+            signedInProfileId = action.signedInProfileId,
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
+
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -596,6 +614,11 @@ private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
 private fun Flow<Action.PageChanged>.pageChangeMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(currentPage = action.page)
+    }
+
+private fun Flow<Action.DismissListPickerSheet>.dismissListPickerSheet(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(signedInProfileListsHolder = null)
     }
 
 private fun CoroutineScope.recordStateHolders(

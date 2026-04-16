@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Record
@@ -45,18 +44,15 @@ import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreatedListMembersQuery(
-    val profileId: ProfileId,
     override val data: CursorQuery.Data,
 ) : CursorQuery
 
@@ -105,21 +101,6 @@ internal class OfflineFirstRecordRepository @Inject constructor(
             )
                 .distinctUntilChangedMap { entities ->
                     entities.map { it.asExternalModel() }
-                }
-                .withRefresh {
-                    // Trigger a network fetch to populate the DB
-                    // reuses createdListMembers which saves into listMembers table
-                    createdListMembers(
-                        query = CreatedListMembersQuery(
-                            profileId = profileId,
-                            data = CursorQuery.Data(
-                                page = 0,
-                                cursorAnchor = Clock.System.now(),
-                                limit = 15,
-                            ),
-                        ),
-                        cursor = Cursor.Initial,
-                    ).first()
                 }
         }
             .flowOn(ioDispatcher)

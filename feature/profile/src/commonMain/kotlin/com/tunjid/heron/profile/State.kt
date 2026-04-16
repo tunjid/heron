@@ -93,9 +93,9 @@ data class State(
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
     @Transient
-    val signedInProfileListsHolder: Records.Lists? = null,
+    val profileListMembershipsMap: Map<ListUri, ListMember> = emptyMap(),
     @Transient
-    val profileListMemberships: List<ListMember> = emptyList(),
+    val signedInProfileListsHolder: Records.Lists? = null,
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -281,6 +281,12 @@ sealed class Action(val key: String) {
         val subjectId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
+
+    data class UpdateCreatedListMembers(
+        val signedInProfileId: ProfileId,
+    ) : Action(key = "UpdateCreatedListMember")
+
+    data object DismissListPickerSheet : Action(key = "DismissListPickerSheet")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,
