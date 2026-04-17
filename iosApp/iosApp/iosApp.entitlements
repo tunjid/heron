@@ -7,6 +7,7 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:heron.tunji.dev</string>
+		<string>webcredentials:heron.tunji.dev</string>
 	</array>
 </dict>
 </plist>
