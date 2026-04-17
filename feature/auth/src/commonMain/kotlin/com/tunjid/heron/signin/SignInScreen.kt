@@ -220,7 +220,7 @@ private fun LoadingIcon(
 
         val isAvatarForField = field.id == Username &&
             sessionAvatar != null &&
-            mostRecentSession.profileHandle.id == field.value
+            mostRecentSession.profileHandle.id == field.value.trim().removePrefix("@")
 
         if (isAvatarForField) {
             val avatarDescription = stringResource(CommonStrings.profile_avatar)

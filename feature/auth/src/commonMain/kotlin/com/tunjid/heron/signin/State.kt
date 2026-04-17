@@ -164,7 +164,11 @@ val State.canSwitchAccount: Boolean
     get() = isSignedIn && pastSessions.isNotEmpty()
 
 val State.profileHandle: ProfileHandle
-    get() = ProfileHandle(id = fields.valueFor(Username))
+    get() = ProfileHandle(
+        id = fields.valueFor(Username)
+            .trim()
+            .removePrefix("@"),
+    )
 
 val State.canSignInLater: Boolean
     get() = fields.all { field ->
