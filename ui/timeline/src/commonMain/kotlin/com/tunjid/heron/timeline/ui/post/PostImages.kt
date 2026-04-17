@@ -66,7 +66,7 @@ internal fun PostImages(
 
     val imagesSize = feature.images.size
     val overlayClip = remember(imagesSize) {
-        if (imagesSize > 1 && !Platform.current.isDesktop) TrackingOverlayClip() else null
+        if (imagesSize > 1 && Platform.current.isNativeCompose) TrackingOverlayClip() else null
     }
 
     LazyRow(
