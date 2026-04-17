@@ -21,10 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
@@ -41,6 +44,7 @@ import com.tunjid.heron.ui.text.valueFor
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_handle
+import heron.feature.auth.generated.resources.missing_domain
 import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.username
 import kotlinx.serialization.Serializable
@@ -52,6 +56,19 @@ internal val Password = FormField.Id("password")
 internal val DomainRegex = Regex(
     pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+(?!-)[A-Za-z0-9-]{2,63}(?<!-)\$",
 )
+
+private val LeadingAtSignHandleTransformation = VisualTransformation { text ->
+    if (!text.text.startsWith("@")) {
+        TransformedText(text, OffsetMapping.Identity)
+    } else {
+        val transformed = AnnotatedString(text.text.drop(1))
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = (offset - 1).coerceAtLeast(0)
+            override fun transformedToOriginal(offset: Int): Int = (offset + 1).coerceAtMost(text.length)
+        }
+        TransformedText(transformed, offsetMapping)
+    }
+}
 
 internal val StartingServers = Server.KnownServers.toList() +
     Server(
@@ -95,7 +112,7 @@ internal val InitialFields: List<FormField> = listOf(
         value = "",
         maxLines = 1,
         leadingIcon = Icons.Rounded.AccountCircle,
-        transformation = VisualTransformation.None,
+        transformation = LeadingAtSignHandleTransformation,
         contentType = ContentType.Username,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
@@ -105,11 +122,14 @@ internal val InitialFields: List<FormField> = listOf(
         ),
         contentDescription = Memo.Resource(Res.string.username),
         validator = Validator(
-            String::isNotBlank to Memo.Resource(
+            { raw: String -> raw.trim().removePrefix("@").isNotBlank() } to Memo.Resource(
                 Res.string.empty_form,
                 listOf(Res.string.username),
             ),
-            DomainRegex::matches to Memo.Resource(
+            { raw: String -> raw.trim().removePrefix("@").contains('.') } to Memo.Resource(
+                Res.string.missing_domain,
+            ),
+            { raw: String -> raw.trim().removePrefix("@").let(DomainRegex::matches) } to Memo.Resource(
                 Res.string.invalid_handle,
             ),
         ),
