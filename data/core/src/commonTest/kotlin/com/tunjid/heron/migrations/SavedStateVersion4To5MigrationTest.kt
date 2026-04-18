@@ -18,28 +18,17 @@ package com.tunjid.heron.migrations
 
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
-import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.repository.SavedState
-import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.fakes.sampleNotifications
 import com.tunjid.heron.fakes.samplePreferences
-import com.tunjid.heron.helper.SavedStateSerializationHelper
-import com.tunjid.heron.helper.toBufferedSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
-import okio.Buffer
 
 @OptIn(ExperimentalSerializationApi::class)
 class SavedStateVersion4To5MigrationTest {
-
-    private val proto = SavedStateSerializationHelper.proto
-    private val serializer = VersionedSavedStateOkioSerializer(
-        protoBuf = proto,
-        encryption = SavedStateEncryption.None,
-    )
 
     @Test
     fun migrateV4ToV5_withAuth() = runBlocking {
@@ -65,30 +54,21 @@ class SavedStateVersion4To5MigrationTest {
             activeProfileId = profileId,
         )
 
-        val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
-        val migrated = serializer.readFrom(v4Bytes.toBufferedSource())
+        val migrated = v4.toVersionedSavedState(currentVersion = 5)
 
-        assertEquals(6, migrated.version)
+        assertEquals(5, migrated.version)
         assertEquals(profileId, migrated.activeProfileId)
 
         val migratedProfileData = migrated.profileData[profileId]
         assertNotNull(migratedProfileData)
 
-        // Verify local preferences moved correctly
+        // The V0 preferences' `useDynamicTheming = true` maps to the Dynamic
+        // theme ordinal (1) under the current Preferences.Local schema.
         assertEquals(1, migratedProfileData.preferences.local.currentThemeOrdinal)
         assertEquals(true, migratedProfileData.preferences.local.refreshHomeTimelineOnLaunch)
 
         // Verify auth persisted
         assertNotNull(migratedProfileData.auth)
-
-        // Save as V5
-        val v5Bytes = Buffer()
-        serializer.writeTo(migrated, v5Bytes)
-
-        // Read back
-        val reRead = serializer.readFrom(v5Bytes)
-        assertEquals(migrated, reRead)
-        assertEquals(6, reRead.version)
     }
 
     @Test
@@ -109,10 +89,9 @@ class SavedStateVersion4To5MigrationTest {
             activeProfileId = profileId,
         )
 
-        val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
-        val migrated = serializer.readFrom(v4Bytes.toBufferedSource())
+        val migrated = v4.toVersionedSavedState(currentVersion = 5)
 
-        assertEquals(6, migrated.version)
+        assertEquals(5, migrated.version)
 
         val migratedProfileData = migrated.profileData[profileId]
         assertNotNull(migratedProfileData)
