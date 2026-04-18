@@ -72,19 +72,20 @@ fun AppearanceSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    SettingsToggleItem(
+    if (isCompactNavigationSupported) SettingsToggleItem(
         modifier = Modifier
             .fillMaxWidth(),
         text = stringResource(Res.string.use_compact_navigation),
-        enabled = isCompactNavigationSupported,
+        enabled = true,
         checked = signedInProfilePreferences.local.useCompactNavigation,
         onCheckedChange = setCompactNavigation,
     )
+
     SettingsToggleItem(
         modifier = Modifier
             .fillMaxWidth(),
         text = stringResource(Res.string.autohide_bottom_navigation),
-        enabled = isCompactNavigationSupported,
+        enabled = true,
         checked = signedInProfilePreferences.local.autoHideBottomNavigation,
         onCheckedChange = setAutoHideBottomNavigation,
     )
