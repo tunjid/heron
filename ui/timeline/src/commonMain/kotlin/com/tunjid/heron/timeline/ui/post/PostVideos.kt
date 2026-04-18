@@ -64,6 +64,7 @@ import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.ScrimmedContent
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -276,23 +277,25 @@ private fun PlayerControlBackground(
     content: @Composable () -> Unit,
 ) {
     val color = Color.Black.copy(alpha = 0.6f)
-    Box(
-        modifier = Modifier
-            .clip(CircleShape)
-            .clickable {
-                onClicked()
-            }
-            .padding(all = 8.dp)
-            .background(
-                color = color,
-                shape = CircleShape,
-            )
-            .height(24.dp),
-    ) {
+    ScrimmedContent {
         Box(
-            modifier = Modifier.align(Alignment.Center),
-            content = { content() },
-        )
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable {
+                    onClicked()
+                }
+                .padding(all = 8.dp)
+                .background(
+                    color = color,
+                    shape = CircleShape,
+                )
+                .height(24.dp),
+        ) {
+            Box(
+                modifier = Modifier.align(Alignment.Center),
+                content = { content() },
+            )
+        }
     }
 }
 
