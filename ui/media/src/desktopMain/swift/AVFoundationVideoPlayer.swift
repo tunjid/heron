@@ -638,8 +638,6 @@ class SharedVideoPlayer {
 
     /// Directly copies the content of the pixelBuffer into the shared buffer without conversion.
     private func updateLatestFrameData(from pixelBuffer: CVPixelBuffer) {
-        guard let destBuffer = frameBuffer else { return }
-
         CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
 
@@ -654,8 +652,10 @@ class SharedVideoPlayer {
             frameWidth = width
             frameHeight = height
             setupFrameBuffer()
-            guard frameBuffer != nil else { return }
         }
+
+        // Re-read frameBuffer after the potential reallocation above — the old pointer is freed.
+        guard let destBuffer = frameBuffer else { return }
 
         if srcBytesPerRow == width * 4 {
             memcpy(destBuffer, srcBaseAddress, height * srcBytesPerRow)
