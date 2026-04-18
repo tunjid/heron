@@ -68,14 +68,14 @@ class SavedStateVersion4To5MigrationTest {
         val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
         val migrated = serializer.readFrom(v4Bytes.toBufferedSource())
 
-        assertEquals(5, migrated.version)
+        assertEquals(6, migrated.version)
         assertEquals(profileId, migrated.activeProfileId)
 
         val migratedProfileData = migrated.profileData[profileId]
         assertNotNull(migratedProfileData)
 
         // Verify local preferences moved correctly
-        assertEquals(true, migratedProfileData.preferences.local.useDynamicTheming)
+        assertEquals(1, migratedProfileData.preferences.local.currentThemeOrdinal)
         assertEquals(true, migratedProfileData.preferences.local.refreshHomeTimelineOnLaunch)
 
         // Verify auth persisted
@@ -88,7 +88,7 @@ class SavedStateVersion4To5MigrationTest {
         // Read back
         val reRead = serializer.readFrom(v5Bytes)
         assertEquals(migrated, reRead)
-        assertEquals(5, reRead.version)
+        assertEquals(6, reRead.version)
     }
 
     @Test
@@ -112,7 +112,7 @@ class SavedStateVersion4To5MigrationTest {
         val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
         val migrated = serializer.readFrom(v4Bytes.toBufferedSource())
 
-        assertEquals(5, migrated.version)
+        assertEquals(6, migrated.version)
 
         val migratedProfileData = migrated.profileData[profileId]
         assertNotNull(migratedProfileData)

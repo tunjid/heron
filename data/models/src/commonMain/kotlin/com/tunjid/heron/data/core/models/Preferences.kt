@@ -64,7 +64,7 @@ data class Preferences(
         @ProtoNumber(2)
         val refreshHomeTimelineOnLaunch: Boolean = false,
         @ProtoNumber(3)
-        val useDynamicTheming: Boolean = false,
+        val currentThemeOrdinal: Int = 0,
         @ProtoNumber(4)
         val useCompactNavigation: Boolean = false,
         @ProtoNumber(5)

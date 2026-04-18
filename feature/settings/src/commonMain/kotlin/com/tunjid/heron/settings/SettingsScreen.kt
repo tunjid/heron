@@ -35,6 +35,7 @@ import com.tunjid.heron.scaffold.scaffold.NestedNavigation
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
 import com.tunjid.heron.settings.ui.AppearanceItem
+import com.tunjid.heron.settings.ui.AppearanceSection
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedPreferencesSection
 import com.tunjid.heron.settings.ui.FeedbackItem
@@ -88,6 +89,20 @@ internal fun SettingsScreen(
                             actions(Action.UpdateThreadViewPreference(it))
                         },
                     )
+                    Section.Appearance -> state.signedInProfilePreferences?.let { preferences ->
+                        AppearanceSection(
+                            signedInProfilePreferences = preferences,
+                            setCurrentThemeOrdinal = {
+                                actions(Action.SetCurrentThemeOrdinal(it))
+                            },
+                            setCompactNavigation = {
+                                actions(Action.SetCompactNavigation(it))
+                            },
+                            setAutoHideBottomNavigation = {
+                                actions(Action.SetAutoHideBottomNavigation(it))
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -172,15 +187,8 @@ private fun MainSection(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
                     ),
-                signedInProfilePreferences = signedInProfilePreferences,
-                setDynamicThemingPreference = {
-                    actions(Action.SetDynamicThemingPreference(it))
-                },
-                setCompactNavigation = {
-                    actions(Action.SetCompactNavigation(it))
-                },
-                setAutoHideBottomNavigation = {
-                    actions(Action.SetAutoHideBottomNavigation(it))
+                onAppearanceClicked = {
+                    actions(Action.UpdateSection(Section.Appearance))
                 },
             )
             FeedbackItem(

@@ -11,6 +11,7 @@ import com.tunjid.heron.data.datastore.migrations.SavedStateVersion2
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion3
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion5
+import com.tunjid.heron.data.datastore.migrations.SavedStateVersion6
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
@@ -37,6 +38,7 @@ internal class SavedStateVersionMigrationTest(
         sampleVersion3BearerAuth(),
         sampleVersion4(),
         sampleVersion5(),
+        sampleVersion6(),
     ),
 ) {
 
@@ -55,15 +57,16 @@ internal class SavedStateVersionMigrationTest(
             is SavedStateVersion3 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion3.serializer())
             is SavedStateVersion4 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion4.serializer())
             is SavedStateVersion5 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion5.serializer())
+            is SavedStateVersion6 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion6.serializer())
         }
 
         val migrated = serializer.readFrom(encoded.toBufferedSource())
-        val expected = oldVersion.toVersionedSavedState(currentVersion = 5)
+        val expected = oldVersion.toVersionedSavedState(currentVersion = 6)
 
         assertEquals(expected.auth, migrated.auth)
         assertEquals(expected.navigation, migrated.navigation)
         assertEquals(expected.profileData, migrated.profileData)
-        assertEquals(5, migrated.version)
+        assertEquals(6, migrated.version)
     }
 }
 
@@ -188,4 +191,16 @@ private fun sampleVersion5() = SavedStateVersion5(
         ),
     ),
     activeProfileId = ProfileId("p5"),
+)
+
+private fun sampleVersion6() = SavedStateVersion6(
+    version = 6,
+    navigation = SavedState.Navigation(activeNav = 6),
+    profileData = mapOf(
+        ProfileId("p6") to SavedState.ProfileData(
+            preferences = samplePreferences(),
+            notifications = sampleNotifications(),
+        ),
+    ),
+    activeProfileId = ProfileId("p6"),
 )

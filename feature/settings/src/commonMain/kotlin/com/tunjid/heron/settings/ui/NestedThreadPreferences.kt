@@ -16,10 +16,7 @@
 
 package com.tunjid.heron.settings.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,33 +29,23 @@ import heron.ui.core.generated.resources.timeline_thread_oldest_first
 import heron.ui.core.generated.resources.timeline_thread_order
 import heron.ui.core.generated.resources.timeline_thread_top_first
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ThreadPreferencesSection(
-    modifier: Modifier = Modifier,
     threadViewPreference: ThreadViewPreference?,
     onPreferenceUpdated: (ThreadViewPreference) -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .padding(
-                horizontal = 16.dp,
-            ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = stringResource(CommonStrings.timeline_thread_order),
-        )
-        SettingsRadioButtons(
-            selectedItem = threadViewPreference.order(),
-            items = TimelineItem.Threaded.Order.entries,
-            itemStringResource = TimelineItem.Threaded.Order::stringResource,
-            onItemClicked = {
-                onPreferenceUpdated(ThreadViewPreference(sort = it.value))
-            },
-        )
-    }
+    SettingsRadioButtons(
+        modifier = Modifier
+            .padding(horizontal = 16.dp),
+        title = CommonStrings.timeline_thread_order,
+        selectedItem = threadViewPreference.order(),
+        items = TimelineItem.Threaded.Order.entries,
+        itemStringResource = TimelineItem.Threaded.Order::stringResource,
+        onItemClicked = {
+            onPreferenceUpdated(ThreadViewPreference(sort = it.value))
+        },
+    )
 }
 
 private fun TimelineItem.Threaded.Order.stringResource(): StringResource =
