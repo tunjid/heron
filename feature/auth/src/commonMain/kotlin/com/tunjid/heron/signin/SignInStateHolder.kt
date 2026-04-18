@@ -177,15 +177,11 @@ private fun Flow<Action.FieldChanged>.formEditMutations(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         replay = 1,
     )
-
     return merge(
-        // Preserve the user's input exactly as typed.
         shared.mapToMutation { (id, text) ->
             copy(fields = fields.copyWithValidation(id, text))
         },
-        shared.filter { action ->
-            action.id == Username && DomainRegex.matches(action.text)
-        }
+        shared.filter { it.id == Username && DomainRegex.matches(it.text) }
             .debounce(HandleResolutionDebounceMs)
             .mapLatestToManyMutations { (_, text) ->
                 val server = authRepository.resolveServer(ProfileHandle(text))
