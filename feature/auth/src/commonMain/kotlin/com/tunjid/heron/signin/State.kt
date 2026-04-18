@@ -56,7 +56,7 @@ internal val DomainRegex = Regex(
 )
 
 private fun String.hasNoAtSign() = !contains('@')
-private fun String.hasDomainPart() = contains('.')
+private fun String.hasDomain() = contains('.')
 
 internal val StartingServers = Server.KnownServers.toList() +
     Server(
@@ -120,7 +120,7 @@ internal val InitialFields: List<FormField> = listOf(
             String::hasNoAtSign to Memo.Resource(
                 Res.string.at_sign_not_allowed,
             ),
-            String::hasDomainPart to Memo.Resource(
+            String::hasDomain to Memo.Resource(
                 Res.string.missing_domain,
             ),
         ),
