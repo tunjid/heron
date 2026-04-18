@@ -77,7 +77,7 @@ fun formatTextPost(
     append(text)
 
     val newlineIndices = text.indices.filter { text[it] == '\n' }
-    if (!Platform.current.isDesktop) newlineIndices.forEach { index ->
+    if (Platform.current.isNativeCompose) newlineIndices.forEach { index ->
         addStyle(
             style = ParagraphStyle(lineHeight = 0.1.em),
             start = index,

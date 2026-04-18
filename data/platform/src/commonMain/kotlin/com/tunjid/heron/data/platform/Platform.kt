@@ -18,7 +18,7 @@ package com.tunjid.heron.data.platform
 
 interface Platform {
     val name: String
-    val isDesktop: Boolean
+    val isNativeCompose: Boolean
     val isRelease: Boolean
         get() = Build.isRelease
     val supportsComposeDiagnosticStackTraces: Boolean

@@ -27,6 +27,16 @@ kotlin {
 }
 
 kotlin {
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    ).forEach { target ->
+        target.compilations.getByName("main") {
+            cinterops.create("NSKeyValueObserving") {
+                definitionFile = file("src/nativeInterop/cinterop/NSKeyValueObserving.def")
+            }
+        }
+    }
     applyDefaultHierarchyTemplate {
         common {
             group("nonAndroid") {

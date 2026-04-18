@@ -14,17 +14,24 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.scaffold.notifications
+package com.tunjid.heron.ui
 
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 
 @Composable
-actual fun notificationPermissionsLauncher(
-    onPermissionResult: (Boolean) -> Unit,
-): () -> Unit = {
-    // No op for now, native is not the current priority
+fun ScrimmedContent(
+    content: @Composable () -> Unit,
+) {
+    val colorScheme = remember { darkColorScheme() }
+    MaterialTheme(colorScheme = colorScheme) {
+        CompositionLocalProvider(
+            LocalContentColor provides colorScheme.onSurface,
+            content = content,
+        )
+    }
 }
-
-// Always false, not the priority
-@Composable
-actual fun hasNotificationPermissions(): Boolean = false

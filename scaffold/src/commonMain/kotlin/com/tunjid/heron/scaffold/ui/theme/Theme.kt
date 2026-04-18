@@ -101,7 +101,37 @@ sealed interface Theme {
                 get() = TricoloredHeronDarkScheme
         }
     }
+
+    companion object {
+        val entries: List<Theme> = listOf(
+            Default,
+            Dynamic,
+            Herons.Agami,
+            Herons.Black,
+            Herons.Blue,
+            Herons.Capped,
+            Herons.Green,
+            Herons.Reddish,
+            Herons.Tricolored,
+        )
+
+        fun fromOrdinal(ordinal: Int): Theme =
+            entries.getOrElse(ordinal) { Default }
+    }
 }
+
+val Theme.ordinal: Int
+    get() = when (this) {
+        Theme.Default -> 0
+        Theme.Dynamic -> 1
+        Theme.Herons.Agami -> 2
+        Theme.Herons.Black -> 3
+        Theme.Herons.Blue -> 4
+        Theme.Herons.Capped -> 5
+        Theme.Herons.Green -> 6
+        Theme.Herons.Reddish -> 7
+        Theme.Herons.Tricolored -> 8
+    }
 
 internal val lightScheme = lightColorScheme(
     primary = primaryLight,

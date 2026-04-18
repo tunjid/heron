@@ -31,8 +31,8 @@ interface UserDataRepository {
         refreshOnLaunch: Boolean,
     ): Outcome
 
-    suspend fun setDynamicTheming(
-        dynamicTheming: Boolean,
+    suspend fun setCurrentThemeOrdinal(
+        themeOrdinal: Int,
     ): Outcome
 
     suspend fun setCompactNavigation(
@@ -95,10 +95,10 @@ internal class OfflineUserDataRepository @Inject constructor(
         copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
     }
 
-    override suspend fun setDynamicTheming(
-        dynamicTheming: Boolean,
+    override suspend fun setCurrentThemeOrdinal(
+        themeOrdinal: Int,
     ): Outcome = updatePreferences {
-        copy(local = local.copy(useDynamicTheming = dynamicTheming))
+        copy(local = local.copy(currentThemeOrdinal = themeOrdinal))
     }
 
     override suspend fun setCompactNavigation(

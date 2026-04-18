@@ -71,10 +71,16 @@ sealed class Section {
         }
     }
 
+    data object Appearance : Section(), Key {
+        override val isRoot: Boolean
+            get() = false
+    }
+
     val key: PaneScaffoldState.NestedNavigationKey
         get() = when (this) {
             is FeedPreferences -> FeedPreferences
             is ThreadPreferences -> ThreadPreferences
+            Appearance -> Appearance
             Main -> Main
         }
 }
@@ -100,9 +106,9 @@ sealed class Action(val key: String) {
         val autoPlayTimelineVideos: Boolean,
     ) : Action(key = "SetAutoPlayTimelineVideos")
 
-    data class SetDynamicThemingPreference(
-        val dynamicTheming: Boolean,
-    ) : Action(key = "SetDynamicThemingPreference")
+    data class SetCurrentThemeOrdinal(
+        val themeOrdinal: Int,
+    ) : Action(key = "SetCurrentThemeOrdinal")
 
     data class SetCompactNavigation(
         val compactNavigation: Boolean,

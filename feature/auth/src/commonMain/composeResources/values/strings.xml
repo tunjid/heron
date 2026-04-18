@@ -25,6 +25,8 @@
     <string name="oauth_flow_failed">Authorization failed</string>
     <string name="oauth_start_error">There was an error starting the authorization flow. Please check your username and try again.</string>
     <string name="cancel">Cancel</string>
+    <string name="at_sign_not_allowed">Enter your username without the '@'</string>
+    <string name="missing_domain">Include the domain in your username, eg. heron.bsky.social</string>
     <string name="invalid_handle">Invalid handle</string>
     <string name="invalid_domain">Invalid domain</string>
     <string name="empty_form">%1$s should not be empty</string>

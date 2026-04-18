@@ -15,6 +15,7 @@
  */
 
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
     id("kotlin-library-convention")
@@ -38,6 +39,19 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            export(project(":scaffold"))
+            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
+            // (>100k LOC) codebases during the release link — the memory is
+            // consumed by ConstraintGraphBuilder. We also disable the
+            // downstream Devirtualization phase which would otherwise crash
+            // trying to apply missing analysis results. BuildDFG, DCEPhase,
+            // EscapeAnalysis and the rest still run normally, so we only
+            // lose devirtualization as an optimization (minor perf cost,
+            // marginally larger binary). Revisit after Kotlin 2.4.0 stable
+            // (see KT-80367) and a Compose Multiplatform release targeting it.
+            if (buildType == NativeBuildType.RELEASE) {
+                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"
+            }
         }
     }
 
@@ -105,6 +119,7 @@ kotlin {
             implementation(libs.tink)
         }
         iosMain.dependencies {
+            api(project(":scaffold"))
             implementation(libs.connectivity.device)
         }
     }

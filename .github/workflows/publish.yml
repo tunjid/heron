@@ -2,9 +2,21 @@ name: Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Which platform(s) to publish'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+          - mac
 
 jobs:
   publish-android-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'android' }}
     runs-on: ubuntu-latest
     permissions:
       contents: 'write'
@@ -93,7 +105,169 @@ jobs:
           draft: true
           allow_updates: true
 
+  publish-ios-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'ios' }}
+    runs-on: macos-latest
+    permissions:
+      contents: 'write'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache KMP tooling
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-v1-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Create Firebase Plist
+        env:
+          FIREBASE_IOS_PLIST: ${{ secrets.FIREBASE_IOS_PLIST }}
+        run: |
+          echo "$FIREBASE_IOS_PLIST" | base64 -d \
+            > iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERTIFICATES_P12 }}
+          p12-password: ${{ secrets.IOS_CERTIFICATES_PASSWORD }}
+
+      - name: Download provisioning profiles
+        uses: apple-actions/download-provisioning-profiles@v2
+        with:
+          bundle-id: com.tunjid.heron
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+      - name: Set version and build number
+        run: |
+          # Axion's currentVersion task prints "Project version: X.Y.Z", not
+          # just the version — grab the version number with a regex to match
+          # what Android uses via scmVersion.version, stripping any suffix
+          # like -SNAPSHOT.
+          RAW=$(./gradlew -q currentVersion)
+          VERSION=$(printf '%s\n' "$RAW" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1)
+          if [ -z "$VERSION" ]; then
+            echo "Failed to parse version from: $RAW" >&2
+            exit 1
+          fi
+          echo "Extracted version: $VERSION"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" \
+            iosApp/iosApp/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" \
+            iosApp/iosApp/Info.plist
+
+      - name: Patch project for manual signing
+        env:
+          PROFILE_NAME: ${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}
+        run: |
+          PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
+          # Scope manual signing to the iosApp target only (SPM deps keep their
+          # automatic/no-profile defaults). Escape the profile name for sed.
+          ESCAPED_PROFILE=$(printf '%s\n' "$PROFILE_NAME" | sed 's|[&/\]|\\&|g')
+          sed -i '' \
+            -e 's|CODE_SIGN_STYLE = Automatic;|CODE_SIGN_STYLE = Manual;|g' \
+            -e 's|CODE_SIGN_IDENTITY = "Apple Development";|CODE_SIGN_IDENTITY = "Apple Distribution";|g' \
+            -e "s|PROVISIONING_PROFILE_SPECIFIER = \"\";|PROVISIONING_PROFILE_SPECIFIER = \"$ESCAPED_PROFILE\";|g" \
+            "$PBXPROJ"
+
+      - name: Patch entitlements for production APNs
+        run: |
+          # Local dev keeps aps-environment=development so running from Xcode
+          # hits the sandbox APNs gateway. TestFlight / App Store builds need
+          # production APNs, so we flip the entitlement at CI time only.
+          /usr/libexec/PlistBuddy -c "Set :aps-environment production" \
+            iosApp/iosApp/iosApp.entitlements
+
+      - name: Build archive
+        env:
+          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
+          ORG_GRADLE_PROJECT_heron.isRelease: "true"
+          ORG_GRADLE_PROJECT_heron.versionCode: ${{ github.run_number }}
+        run: |
+          cd iosApp
+
+          xcrun xcodebuild \
+            -scheme "iosApp" \
+            -configuration "Release" \
+            -sdk "iphoneos" \
+            -parallelizeTargets \
+            -showBuildTimingSummary \
+            -derivedDataPath "${RUNNER_TEMP}/Build/DerivedData" \
+            -archivePath "${RUNNER_TEMP}/Build/Archives/heron.xcarchive" \
+            -resultBundlePath "${RUNNER_TEMP}/Build/Artifacts/heron.xcresult" \
+            -destination "generic/platform=iOS" \
+            archive
+
+      - name: Generate ExportOptions.plist
+        run: |
+          cat <<EOF > ${RUNNER_TEMP}/Build/ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+            <dict>
+              <key>destination</key>
+              <string>export</string>
+              <key>method</key>
+              <string>app-store</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>generateAppStoreInformation</key>
+              <true/>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string>${{ secrets.APPSTORE_TEAM_ID }}</string>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>provisioningProfiles</key>
+              <dict>
+                <key>com.tunjid.heron</key>
+                <string>${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}</string>
+              </dict>
+            </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        run: |
+          xcrun xcodebuild \
+            -exportArchive \
+            -exportOptionsPlist "${RUNNER_TEMP}/Build/ExportOptions.plist" \
+            -archivePath "${RUNNER_TEMP}/Build/Archives/heron.xcarchive" \
+            -exportPath "${RUNNER_TEMP}/Build/Archives/heron.xcarchive" \
+            PRODUCT_BUNDLE_IDENTIFIER="com.tunjid.heron"
+
+          echo "IPA_PATH=${RUNNER_TEMP}/Build/Archives/heron.xcarchive/heron.ipa" >> $GITHUB_ENV
+
+      - name: Upload to TestFlight
+        uses: Apple-Actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ env.IPA_PATH }}
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
   publish-mac-app:
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'mac' }}
     runs-on: macos-latest
     permissions:
       contents: 'write'

@@ -54,7 +54,11 @@ fun PostText(
 
     if (text.isBlank()) Spacer(Modifier.height(0.dp))
     else PaneStickySharedElement(
-        modifier = modifier,
+        modifier = modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { onClick() },
         sharedContentState = rememberSharedContentState(
             key = post.textSharedElementKey(
                 prefix = sharedElementPrefix,
@@ -63,11 +67,6 @@ fun PostText(
     ) {
         SelectionContainer {
             Text(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onClick() },
                 text = rememberFormattedTextPost(
                     text = text,
                     textLinks = post.record?.links ?: emptyList(),

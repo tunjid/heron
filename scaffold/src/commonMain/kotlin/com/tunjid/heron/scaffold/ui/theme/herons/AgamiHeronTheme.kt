@@ -62,6 +62,10 @@ val AgamiHeronLightScheme = lightColorScheme(
     onTertiaryContainer = AgamiHeronOnTertiaryContainerLight,
     surface = Color(0xFFF0FDFB),
     onSurface = Color(0xFF191C20),
+    surfaceContainerLow = Color(0xFFE0F2ED),
+    surfaceContainer = Color(0xFFCFEAE2),
+    surfaceContainerHigh = Color(0xFFBEE0D6),
+    surfaceContainerHighest = Color(0xFFADD6CA),
 )
 
 val AgamiHeronDarkScheme = darkColorScheme(
@@ -79,4 +83,9 @@ val AgamiHeronDarkScheme = darkColorScheme(
     onTertiaryContainer = AgamiHeronOnTertiaryContainerDark,
     surface = Color(0xFF00201C),
     onSurface = Color(0xFFE1E2E8),
+    surfaceContainerLowest = Color(0xFF00130F),
+    surfaceContainerLow = Color(0xFF08332B),
+    surfaceContainer = Color(0xFF0B3D33),
+    surfaceContainerHigh = Color(0xFF124A3E),
+    surfaceContainerHighest = Color(0xFF1B5A4B),
 )
