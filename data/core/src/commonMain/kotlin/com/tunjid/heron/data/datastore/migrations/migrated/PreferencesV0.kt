@@ -62,7 +62,7 @@ internal data class PreferencesV0(
         local = Preferences.Local(
             lastViewedHomeTimelineUri = lastViewedHomeTimelineUri,
             refreshHomeTimelineOnLaunch = refreshHomeTimelineOnLaunch,
-            useDynamicTheming = useDynamicTheming,
+            currentThemeOrdinal = if (useDynamicTheming) 1 else 0,
             useCompactNavigation = useCompactNavigation,
         ),
     )

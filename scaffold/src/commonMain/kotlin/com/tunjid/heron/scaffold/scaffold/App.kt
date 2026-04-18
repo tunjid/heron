@@ -55,10 +55,9 @@ fun App(
     appState: AppState,
 ) {
     AppTheme(
-        theme = when (appState.preferences?.local?.useDynamicTheming) {
-            true -> Theme.Dynamic
-            else -> Theme.Default
-        },
+        theme = Theme.fromOrdinal(
+            appState.preferences?.local?.currentThemeOrdinal ?: 0,
+        ),
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,

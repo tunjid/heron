@@ -111,7 +111,7 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetDynamicThemingPreference -> action.flow.toggleDynamicTheming(
+                    is Action.SetCurrentThemeOrdinal -> action.flow.setCurrentThemeOrdinal(
                         userDataRepository = userDataRepository,
                     )
 
@@ -284,11 +284,11 @@ private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutation
         userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
     }
 
-private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
+private fun Flow<Action.SetCurrentThemeOrdinal>.setCurrentThemeOrdinal(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { (dynamicTheming) ->
-        userDataRepository.setDynamicTheming(dynamicTheming)
+    mapToManyMutations { (themeOrdinal) ->
+        userDataRepository.setCurrentThemeOrdinal(themeOrdinal)
     }
 
 private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(

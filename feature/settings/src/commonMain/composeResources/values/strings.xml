@@ -37,7 +37,16 @@
     <string name="moderation">Moderation</string>
     <string name="publication_subscriptions">Publication subscriptions</string>
     <string name="appearance">Appearance</string>
-    <string name="use_dynamic_theming">Use device theme from wallpaper color</string>
+    <string name="theme">Theme</string>
+    <string name="theme_default">Default</string>
+    <string name="theme_dynamic">Wallpaper (Dynamic)</string>
+    <string name="theme_agami">Agami Heron</string>
+    <string name="theme_black">Black Heron</string>
+    <string name="theme_blue">Blue Heron</string>
+    <string name="theme_capped">Capped Heron</string>
+    <string name="theme_green">Green Heron</string>
+    <string name="theme_reddish">Reddish Egret</string>
+    <string name="theme_tricolored">Tricolored Heron</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
     <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>

@@ -233,6 +233,7 @@ fun SettingsToggleItem(
 @Composable
 fun <T> SettingsRadioButtons(
     modifier: Modifier = Modifier,
+    title: StringResource,
     selectedItem: T,
     items: List<T>,
     itemStringResource: (T) -> StringResource,
@@ -244,6 +245,16 @@ fun <T> SettingsRadioButtons(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        Text(
+            modifier = Modifier
+                .padding(
+                    horizontal = 4.dp,
+                    vertical = 4.dp,
+                ),
+            text = stringResource(title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         items.forEach { item ->
             Row(
                 modifier = Modifier

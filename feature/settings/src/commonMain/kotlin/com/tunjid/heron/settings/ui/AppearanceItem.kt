@@ -16,19 +16,15 @@
 
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
-import heron.feature.settings.generated.resources.autohide_bottom_navigation
-import heron.feature.settings.generated.resources.show_post_engagement_metrics
-import heron.feature.settings.generated.resources.use_compact_navigation
-import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -40,44 +36,16 @@ expect fun isCompactNavigationSupported(): Boolean
 @Composable
 fun AppearanceItem(
     modifier: Modifier = Modifier,
-    signedInProfilePreferences: Preferences,
-    setDynamicThemingPreference: (Boolean) -> Unit,
-    setCompactNavigation: (Boolean) -> Unit,
-    setAutoHideBottomNavigation: (Boolean) -> Unit,
+    onAppearanceClicked: () -> Unit,
 ) {
-    val isDynamicThemingSupported = isDynamicThemingSupported()
-    val isCompactNavigationSupported = isCompactNavigationSupported()
-
-    ExpandableSettingsItemRow(
+    SettingsItem(
         modifier = modifier
-            .settingsItemPaddingAndMinHeight()
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable {
+                onAppearanceClicked()
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
-    ) {
-        SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
-            text = stringResource(Res.string.use_dynamic_theming),
-            enabled = isDynamicThemingSupported,
-            checked = signedInProfilePreferences.local.useDynamicTheming,
-            onCheckedChange = setDynamicThemingPreference,
-        )
-        SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
-            text = stringResource(Res.string.use_compact_navigation),
-            enabled = isCompactNavigationSupported,
-            checked = signedInProfilePreferences.local.useCompactNavigation,
-            onCheckedChange = setCompactNavigation,
-        )
-        SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
-            text = stringResource(Res.string.autohide_bottom_navigation),
-            enabled = isCompactNavigationSupported,
-            checked = signedInProfilePreferences.local.autoHideBottomNavigation,
-            onCheckedChange = setAutoHideBottomNavigation,
-        )
-    }
+    )
 }

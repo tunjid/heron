@@ -28,6 +28,6 @@ internal fun Preferences.asV0() = PreferencesV0(
     allowAdultContent = allowAdultContent,
     hiddenPostPreferences = hiddenPostPreferences,
     mutedWordPreferences = mutedWordPreferences,
-    useDynamicTheming = local.useDynamicTheming,
+    useDynamicTheming = local.currentThemeOrdinal == 1,
     useCompactNavigation = local.useCompactNavigation,
 )
