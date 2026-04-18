@@ -37,6 +37,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -127,10 +128,12 @@ private object IosNotificationBridge {
                     "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
                 }
             } finally {
-                appState.onNotificationAction(
-                    NotificationAction.NotificationProcessedOrDropped(recordUri),
-                )
-                onComplete()
+                withContext(Dispatchers.Main) {
+                    appState.onNotificationAction(
+                        NotificationAction.NotificationProcessedOrDropped(recordUri),
+                    )
+                    onComplete()
+                }
             }
         }
     }
