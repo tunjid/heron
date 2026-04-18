@@ -233,7 +233,7 @@ fun SettingsToggleItem(
 @Composable
 fun <T> SettingsRadioButtons(
     modifier: Modifier = Modifier,
-    title: StringResource? = null,
+    title: StringResource,
     selectedItem: T,
     items: List<T>,
     itemStringResource: (T) -> StringResource,
@@ -245,10 +245,10 @@ fun <T> SettingsRadioButtons(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        if (title != null) Text(
+        Text(
             modifier = Modifier
                 .padding(
-                    horizontal = 8.dp,
+                    horizontal = 4.dp,
                     vertical = 4.dp,
                 ),
             text = stringResource(title),
