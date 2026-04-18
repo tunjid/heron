@@ -178,21 +178,17 @@ private fun Flow<Action.FieldChanged>.formEditMutations(
         replay = 1,
     )
 
-    fun normalizeHandleInput(text: String) = text.trim().removePrefix("@")
-
     return merge(
         // Preserve the user's input exactly as typed.
         shared.mapToMutation { (id, text) ->
             copy(fields = fields.copyWithValidation(id, text))
         },
-        // Normalize only for server resolution (accept leading '@' and surrounding whitespace).
         shared.filter { action ->
-            action.id == Username && DomainRegex.matches(normalizeHandleInput(action.text))
+            action.id == Username && DomainRegex.matches(action.text)
         }
             .debounce(HandleResolutionDebounceMs)
             .mapLatestToManyMutations { (_, text) ->
-                val normalized = normalizeHandleInput(text)
-                val server = authRepository.resolveServer(ProfileHandle(normalized))
+                val server = authRepository.resolveServer(ProfileHandle(text))
                     .getOrNull()
                     ?.normalized()
 

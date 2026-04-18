@@ -27,12 +27,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,18 +115,6 @@ internal fun SignInScreen(
                                     field = field,
                                     mostRecentSession = state.mostRecentSession,
                                 )
-
-                                if (field.id == Username) {
-                                    // Always show '@' in the same spot; user-typed leading '@' is
-                                    // hidden via a visual transformation.
-                                    Text(
-                                        text = "@",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterEnd)
-                                            .offset(x = 16.dp),
-                                    )
-                                }
                             }
                         },
                         onValueChange = { field, newValue ->
@@ -220,7 +206,7 @@ private fun LoadingIcon(
 
         val isAvatarForField = field.id == Username &&
             sessionAvatar != null &&
-            mostRecentSession.profileHandle.id == field.value.trim().removePrefix("@")
+            mostRecentSession.profileHandle.id == field.value
 
         if (isAvatarForField) {
             val avatarDescription = stringResource(CommonStrings.profile_avatar)
