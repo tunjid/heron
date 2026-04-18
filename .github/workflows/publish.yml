@@ -188,6 +188,14 @@ jobs:
             -e "s|PROVISIONING_PROFILE_SPECIFIER = \"\";|PROVISIONING_PROFILE_SPECIFIER = \"$ESCAPED_PROFILE\";|g" \
             "$PBXPROJ"
 
+      - name: Patch entitlements for production APNs
+        run: |
+          # Local dev keeps aps-environment=development so running from Xcode
+          # hits the sandbox APNs gateway. TestFlight / App Store builds need
+          # production APNs, so we flip the entitlement at CI time only.
+          /usr/libexec/PlistBuddy -c "Set :aps-environment production" \
+            iosApp/iosApp/iosApp.entitlements
+
       - name: Build archive
         env:
           HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}

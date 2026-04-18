@@ -130,9 +130,9 @@ service (APNs). The following setup is required:
 
 2. **`GoogleService-Info.plist`** - Download from Firebase Console > Project Settings > your iOS app
    and place at `iosApp/iosApp/GoogleService-Info.plist`. This file is `.gitignore`d; in CI, decode
-   it from a base64 secret:
+   it from the `FIREBASE_IOS_PLIST` base64 secret:
    ```bash
-   echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+   echo "$FIREBASE_IOS_PLIST" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
    ```
 
 3. **Push Notifications capability** - Enabled in Xcode under Signing & Capabilities. This adds
@@ -266,6 +266,14 @@ ceiling. Two gotchas to know if you ever need to touch this:
 `Project version: X.Y.Z`, not just `X.Y.Z`, so the workflow runs it through a regex
 (`grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?'`) before writing it to `CFBundleShortVersionString`.
 Apple rejects the upload with `-19239` if the value isn't one to three period-separated integers.
+
+**APNs environment is flipped for CI builds.** `iosApp/iosApp/iosApp.entitlements` has
+`aps-environment = development` so local Xcode builds against a connected iPhone use the
+sandbox APNs gateway (which is what development provisioning profiles require). TestFlight
+and App Store builds need `production`, so CI runs `PlistBuddy` on the entitlements file
+to flip the value before archiving. The committed entitlements file stays on `development`
+so dev workflow is unaffected. Without this patch, Firebase-sent push notifications won't
+arrive on TestFlight devices — iOS rejects the registration token mismatch silently.
 
 **Apple-side prerequisites** (one-time setup, not done by CI):
 1. Register an App ID for `com.tunjid.heron` at developer.apple.com with the capabilities
