@@ -43,116 +43,122 @@ class SavedStateVersion5To6MigrationTest {
     )
 
     @Test
-    fun migrateV5ToV6_preservesThemeOrdinal() = runBlocking {
-        val profileId = ProfileId("p1")
-        val v5 = SavedStateVersion5(
-            version = 5,
-            navigation = SavedState.Navigation(activeNav = 1),
-            profileData = mapOf(
-                profileId to SavedState.ProfileData(
-                    preferences = samplePreferences().copy(
-                        local = Preferences.Local(
-                            // Theme.Default
-                            currentThemeOrdinal = 0,
-                            refreshHomeTimelineOnLaunch = true,
+    fun migrateV5ToV6_preservesThemeOrdinal() {
+        runBlocking {
+            val profileId = ProfileId("p1")
+            val v5 = SavedStateVersion5(
+                version = 5,
+                navigation = SavedState.Navigation(activeNav = 1),
+                profileData = mapOf(
+                    profileId to SavedState.ProfileData(
+                        preferences = samplePreferences().copy(
+                            local = Preferences.Local(
+                                // Theme.Default
+                                currentThemeOrdinal = 0,
+                                refreshHomeTimelineOnLaunch = true,
+                            ),
+                        ),
+                        notifications = sampleNotifications(),
+                        auth = SavedState.AuthTokens.Authenticated.Bearer(
+                            authProfileId = profileId,
+                            auth = "auth",
+                            refresh = "refresh",
+                            authEndpoint = "https://example.com",
                         ),
                     ),
-                    notifications = sampleNotifications(),
-                    auth = SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = profileId,
-                        auth = "auth",
-                        refresh = "refresh",
-                        authEndpoint = "https://example.com",
-                    ),
                 ),
-            ),
-            activeProfileId = profileId,
-        )
+                activeProfileId = profileId,
+            )
 
-        val migrated = v5.toVersionedSavedState(currentVersion = 6)
+            val migrated = v5.toVersionedSavedState(currentVersion = 6)
 
-        assertEquals(6, migrated.version)
-        assertEquals(profileId, migrated.activeProfileId)
+            assertEquals(6, migrated.version)
+            assertEquals(profileId, migrated.activeProfileId)
 
-        val migratedProfileData = migrated.profileData[profileId]
-        assertNotNull(migratedProfileData)
+            val migratedProfileData = migrated.profileData[profileId]
+            assertNotNull(migratedProfileData)
 
-        // Theme ordinal carried over unchanged.
-        assertEquals(0, migratedProfileData.preferences.local.currentThemeOrdinal)
-        assertEquals(true, migratedProfileData.preferences.local.refreshHomeTimelineOnLaunch)
+            // Theme ordinal carried over unchanged.
+            assertEquals(0, migratedProfileData.preferences.local.currentThemeOrdinal)
+            assertEquals(true, migratedProfileData.preferences.local.refreshHomeTimelineOnLaunch)
 
-        // Auth preserved.
-        assertNotNull(migratedProfileData.auth)
+            // Auth preserved.
+            assertNotNull(migratedProfileData.auth)
+        }
     }
 
     @Test
-    fun migrateV5BooleanThemeBytes_decodesAsOrdinal() = runBlocking {
-        // The V5 schema used to store theme as a Boolean `useDynamicTheming`
-        // at @ProtoNumber(3). The V6 schema replaces that field with an Int
-        // `currentThemeOrdinal` at the same @ProtoNumber(3). Protobuf encodes
-        // both Boolean and Int32 as varint, so `true` -> 1 and `false` -> 0 on
-        // the wire. This test asserts that a V5-encoded `useDynamicTheming = true`
-        // reads back as `currentThemeOrdinal == 1` (Dynamic) under the V6 schema.
-        val profileId = ProfileId("p1")
-        val v5WithDynamicTheming = SavedStateVersion5(
-            version = 5,
-            navigation = SavedState.Navigation(activeNav = 1),
-            profileData = mapOf(
-                profileId to SavedState.ProfileData(
-                    preferences = samplePreferences().copy(
-                        local = Preferences.Local(
-                            currentThemeOrdinal = 1,
+    fun migrateV5BooleanThemeBytes_decodesAsOrdinal() {
+        runBlocking {
+            // The V5 schema used to store theme as a Boolean `useDynamicTheming`
+            // at @ProtoNumber(3). The V6 schema replaces that field with an Int
+            // `currentThemeOrdinal` at the same @ProtoNumber(3). Protobuf encodes
+            // both Boolean and Int32 as varint, so `true` -> 1 and `false` -> 0 on
+            // the wire. This test asserts that a V5-encoded `useDynamicTheming = true`
+            // reads back as `currentThemeOrdinal == 1` (Dynamic) under the V6 schema.
+            val profileId = ProfileId("p1")
+            val v5WithDynamicTheming = SavedStateVersion5(
+                version = 5,
+                navigation = SavedState.Navigation(activeNav = 1),
+                profileData = mapOf(
+                    profileId to SavedState.ProfileData(
+                        preferences = samplePreferences().copy(
+                            local = Preferences.Local(
+                                currentThemeOrdinal = 1,
+                            ),
                         ),
+                        notifications = sampleNotifications(),
+                        auth = null,
                     ),
-                    notifications = sampleNotifications(),
-                    auth = null,
                 ),
-            ),
-            activeProfileId = profileId,
-        )
+                activeProfileId = profileId,
+            )
 
-        val v5Bytes = SavedStateSerializationHelper.encode(
-            v5WithDynamicTheming,
-            SavedStateVersion5.serializer(),
-        )
-        val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
+            val v5Bytes = SavedStateSerializationHelper.encode(
+                v5WithDynamicTheming,
+                SavedStateVersion5.serializer(),
+            )
+            val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
 
-        assertEquals(6, migrated.version)
-        assertEquals(
-            1,
-            migrated.profileData[profileId]?.preferences?.local?.currentThemeOrdinal,
-        )
+            assertEquals(6, migrated.version)
+            assertEquals(
+                1,
+                migrated.profileData[profileId]?.preferences?.local?.currentThemeOrdinal,
+            )
+        }
     }
 
     @Test
-    fun v6Bytes_roundTrip() = runBlocking {
-        val profileId = ProfileId("p1")
-        val v5 = SavedStateVersion5(
-            version = 5,
-            navigation = SavedState.Navigation(activeNav = 1),
-            profileData = mapOf(
-                profileId to SavedState.ProfileData(
-                    preferences = samplePreferences().copy(
-                        local = Preferences.Local(
-                            currentThemeOrdinal = 5,
-                            useCompactNavigation = true,
+    fun v6Bytes_roundTrip() {
+        runBlocking {
+            val profileId = ProfileId("p1")
+            val v5 = SavedStateVersion5(
+                version = 5,
+                navigation = SavedState.Navigation(activeNav = 1),
+                profileData = mapOf(
+                    profileId to SavedState.ProfileData(
+                        preferences = samplePreferences().copy(
+                            local = Preferences.Local(
+                                currentThemeOrdinal = 5,
+                                useCompactNavigation = true,
+                            ),
                         ),
+                        notifications = sampleNotifications(),
+                        auth = null,
                     ),
-                    notifications = sampleNotifications(),
-                    auth = null,
                 ),
-            ),
-            activeProfileId = profileId,
-        )
-        val v5Bytes = SavedStateSerializationHelper.encode(v5, SavedStateVersion5.serializer())
-        val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
+                activeProfileId = profileId,
+            )
+            val v5Bytes = SavedStateSerializationHelper.encode(v5, SavedStateVersion5.serializer())
+            val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
 
-        // Round-trip V6 bytes through the serializer and assert equivalence.
-        val outBytes = Buffer()
-        serializer.writeTo(migrated, outBytes)
+            // Round-trip V6 bytes through the serializer and assert equivalence.
+            val outBytes = Buffer()
+            serializer.writeTo(migrated, outBytes)
 
-        val reRead = serializer.readFrom(outBytes)
-        assertEquals(migrated, reRead)
-        assertEquals(6, reRead.version)
+            val reRead = serializer.readFrom(outBytes)
+            assertEquals(migrated, reRead)
+            assertEquals(6, reRead.version)
+        }
     }
 }
