@@ -61,6 +61,8 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.profile.ProfileLiveChip
@@ -389,10 +391,7 @@ private fun TextContent(
                     content = PostContent.Text,
                     presentation = data.presentation,
                 )
-                .animateBounds(
-                    lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.delayedBoundsTransform,
-                )
+                .animateContentBounds(data)
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
                 Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
@@ -439,10 +438,7 @@ private fun EmbedContent(
                 content = data.post.embed.asPostContent(),
                 presentation = data.presentation,
             )
-            .animateBounds(
-                lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.delayedBoundsTransform,
-            )
+            .animateContentBounds(data)
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
@@ -516,10 +512,7 @@ private fun ActionsContent(
                     content = PostContent.Actions,
                     presentation = data.presentation,
                 )
-                .animateBounds(
-                    lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.delayedBoundsTransform,
-                ),
+                .animateContentBounds(data),
             onInteraction = data.postActions::onPostAction,
         )
 
@@ -558,6 +551,15 @@ private fun Modifier.contentPresentationPadding(
     start = presentation.postContentStartPadding(content),
     end = presentation.postContentEndPadding(content),
 )
+
+private fun Modifier.animateContentBounds(
+    data: PostData,
+) = ifTrue(Platform.current.isNativeCompose) {
+    animateBounds(
+        lookaheadScope = data.presentationLookaheadScope,
+        boundsTransform = data.delayedBoundsTransform,
+    )
+}
 
 /**
  * Vertical content padding for the post composable
