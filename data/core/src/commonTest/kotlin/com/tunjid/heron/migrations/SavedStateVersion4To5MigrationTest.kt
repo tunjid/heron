@@ -69,6 +69,8 @@ class SavedStateVersion4To5MigrationTest {
 
         // Verify auth persisted
         assertNotNull(migratedProfileData.auth)
+
+        Unit
     }
 
     @Test
