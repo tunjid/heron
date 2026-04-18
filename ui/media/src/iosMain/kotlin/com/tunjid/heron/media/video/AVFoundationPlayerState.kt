@@ -128,7 +128,7 @@ internal class AVFoundationPlayerState(
             totalDuration != 0L &&
             !isLooping
 
-    internal var player = AVPlayer()
+    internal var player by mutableStateOf(AVPlayer())
         private set
 
     internal var mediaOpenCalled: Boolean = false
@@ -274,6 +274,7 @@ internal class AVFoundationPlayerState(
                     preferredTimescale = 600,
                 )
                 player.seekToTime(startTime)
+                player.play()
             } else {
                 status = PlayerStatus.Pause.Confirmed
             }
