@@ -114,14 +114,14 @@ internal val InitialFields: List<FormField> = listOf(
                 Res.string.empty_form,
                 listOf(Res.string.username),
             ),
-            DomainRegex::matches to Memo.Resource(
-                Res.string.invalid_handle,
-            ),
             String::hasNoAtSign to Memo.Resource(
                 Res.string.at_sign_not_allowed,
             ),
             String::hasDomain to Memo.Resource(
                 Res.string.missing_domain,
+            ),
+            DomainRegex::matches to Memo.Resource(
+                Res.string.invalid_handle,
             ),
         ),
     ),
