@@ -18,7 +18,7 @@ package com.tunjid.heron.signin
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.ImeAction
@@ -39,8 +39,10 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
 import com.tunjid.heron.ui.text.valueFor
 import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.at_sign_not_allowed
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_handle
+import heron.feature.auth.generated.resources.missing_domain
 import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.username
 import kotlinx.serialization.Serializable
@@ -52,6 +54,9 @@ internal val Password = FormField.Id("password")
 internal val DomainRegex = Regex(
     pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+(?!-)[A-Za-z0-9-]{2,63}(?<!-)\$",
 )
+
+private fun String.hasNoAtSign() = !contains('@')
+private fun String.hasDomain() = contains('.')
 
 internal val StartingServers = Server.KnownServers.toList() +
     Server(
@@ -94,7 +99,7 @@ internal val InitialFields: List<FormField> = listOf(
         id = Username,
         value = "",
         maxLines = 1,
-        leadingIcon = Icons.Rounded.AccountCircle,
+        leadingIcon = Icons.Rounded.AlternateEmail,
         transformation = VisualTransformation.None,
         contentType = ContentType.Username,
         keyboardOptions = KeyboardOptions(
@@ -108,6 +113,12 @@ internal val InitialFields: List<FormField> = listOf(
             String::isNotBlank to Memo.Resource(
                 Res.string.empty_form,
                 listOf(Res.string.username),
+            ),
+            String::hasNoAtSign to Memo.Resource(
+                Res.string.at_sign_not_allowed,
+            ),
+            String::hasDomain to Memo.Resource(
+                Res.string.missing_domain,
             ),
             DomainRegex::matches to Memo.Resource(
                 Res.string.invalid_handle,
