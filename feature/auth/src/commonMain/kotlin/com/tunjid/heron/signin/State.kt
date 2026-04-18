@@ -18,7 +18,7 @@ package com.tunjid.heron.signin
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.ImeAction
@@ -99,7 +99,7 @@ internal val InitialFields: List<FormField> = listOf(
         id = Username,
         value = "",
         maxLines = 1,
-        leadingIcon = Icons.Rounded.AccountCircle,
+        leadingIcon = Icons.Rounded.AlternateEmail,
         transformation = VisualTransformation.None,
         contentType = ContentType.Username,
         keyboardOptions = KeyboardOptions(
