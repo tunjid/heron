@@ -67,7 +67,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.ui.theme.Theme
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
@@ -76,6 +75,7 @@ import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.ScrimmedContent
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -279,12 +279,7 @@ internal fun MediaOverlayBox(
     isVisible: Boolean,
     content: @Composable BoxScope.(item: GalleryItem.Media) -> Unit,
 ) {
-    val currentTheme = MaterialTheme
-    MaterialTheme(
-        colorScheme = Theme.Default.dark,
-        shapes = currentTheme.shapes,
-        typography = currentTheme.typography,
-    ) {
+    ScrimmedContent {
         val visible by rememberUpdatedState(media != null && isVisible)
         val alphaState = animateFloatAsState(
             targetValue = if (visible) 1f else 0f,
