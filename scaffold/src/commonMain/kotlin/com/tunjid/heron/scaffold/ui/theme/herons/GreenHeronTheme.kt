@@ -62,6 +62,10 @@ val GreenHeronLightScheme = lightColorScheme(
     onTertiaryContainer = GreenHeronOnTertiaryContainerLight,
     surface = Color(0xFFF0FDF4),
     onSurface = Color(0xFF191C20),
+    surfaceContainerLow = Color(0xFFDEF2E4),
+    surfaceContainer = Color(0xFFCCEAD4),
+    surfaceContainerHigh = Color(0xFFBADFC3),
+    surfaceContainerHighest = Color(0xFFA9D5B3),
 )
 
 val GreenHeronDarkScheme = darkColorScheme(
@@ -79,4 +83,9 @@ val GreenHeronDarkScheme = darkColorScheme(
     onTertiaryContainer = GreenHeronOnTertiaryContainerDark,
     surface = Color(0xFF002109),
     onSurface = Color(0xFFE1E2E8),
+    surfaceContainerLowest = Color(0xFF001404),
+    surfaceContainerLow = Color(0xFF083316),
+    surfaceContainer = Color(0xFF0B3E1B),
+    surfaceContainerHigh = Color(0xFF124C25),
+    surfaceContainerHighest = Color(0xFF1B5C30),
 )

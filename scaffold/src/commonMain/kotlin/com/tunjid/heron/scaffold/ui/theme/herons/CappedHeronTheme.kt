@@ -62,6 +62,10 @@ val CappedHeronLightScheme = lightColorScheme(
     onTertiaryContainer = CappedHeronOnTertiaryContainerLight,
     surface = Color(0xFFF8FAFF),
     onSurface = Color(0xFF191C20),
+    surfaceContainerLow = Color(0xFFE8EEFB),
+    surfaceContainer = Color(0xFFD6E0F3),
+    surfaceContainerHigh = Color(0xFFC4D2EA),
+    surfaceContainerHighest = Color(0xFFB3C4E1),
 )
 
 val CappedHeronDarkScheme = darkColorScheme(
@@ -79,4 +83,9 @@ val CappedHeronDarkScheme = darkColorScheme(
     onTertiaryContainer = CappedHeronOnTertiaryContainerDark,
     surface = Color(0xFF001C3B),
     onSurface = Color(0xFFE1E2E8),
+    surfaceContainerLowest = Color(0xFF001129),
+    surfaceContainerLow = Color(0xFF072F56),
+    surfaceContainer = Color(0xFF0B3764),
+    surfaceContainerHigh = Color(0xFF144578),
+    surfaceContainerHighest = Color(0xFF1E548C),
 )
