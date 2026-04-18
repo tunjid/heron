@@ -109,10 +109,10 @@ internal fun SignInScreen(
                             .fillMaxRestrictedWidth(),
                         field = field,
                         leadingIcon = {
-                                LoadingIcon(
-                                    field = field,
-                                    mostRecentSession = state.mostRecentSession,
-                                )
+                            LoadingIcon(
+                                field = field,
+                                mostRecentSession = state.mostRecentSession,
+                            )
                         },
                         onValueChange = { field, newValue ->
                             actions(
