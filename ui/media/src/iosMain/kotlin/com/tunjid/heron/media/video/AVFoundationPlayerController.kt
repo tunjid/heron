@@ -39,27 +39,24 @@ class AVFoundationPlayerController(
         onEvicted = AVFoundationPlayerState::dispose,
     )
 
+    @OptIn(ExperimentalForeignApi::class)
+    private val audioSession by lazy {
+        AVAudioSession.sharedInstance().apply {
+            try {
+                setCategory(AVAudioSessionCategoryPlayback, null)
+                setActive(true, null)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR) { "configureAudioSession failed: ${e.loggableText()}" }
+            }
+        }
+    }
+
     override var isMuted: Boolean by states::isMuted
 
     init {
-        configureAudioSession()
         snapshotFlow { isMuted }
             .onEach { states.activeState?.applyVolume() }
             .launchIn(appMainScope)
-    }
-
-    // The default AVAudioSession category is `soloAmbient`, which silences AVPlayer
-    // audio when the hardware ring/silent switch is on. Simulators have no such
-    // switch, so the bug only surfaces on real devices. `playback` ignores it.
-    @OptIn(ExperimentalForeignApi::class)
-    private fun configureAudioSession() {
-        try {
-            val audioSession = AVAudioSession.sharedInstance()
-            audioSession.setCategory(AVAudioSessionCategoryPlayback, null)
-            audioSession.setActive(true, null)
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR) { "configureAudioSession failed: ${e.loggableText()}" }
-        }
     }
 
     override fun registerVideo(
@@ -86,6 +83,8 @@ class AVFoundationPlayerController(
         videoId: String?,
         seekToMs: Long?,
     ) {
+        // Read audio session to lazily initialize if necessary
+        audioSession
         val playerIdToPlay = videoId ?: states.activeVideoId
         val stateToPlay = states[playerIdToPlay] ?: return
 
