@@ -79,11 +79,10 @@ class AVFoundationPlayerController(
         videoId: String?,
         seekToMs: Long?,
     ) {
-        activateAudioSession()
-
         val playerIdToPlay = videoId ?: states.activeVideoId
         val stateToPlay = states[playerIdToPlay] ?: return
 
+        activateAudioSession()
         setActiveVideo(playerIdToPlay)
 
         // Open media if not yet called
