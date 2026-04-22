@@ -42,7 +42,6 @@ import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.at_sign_not_allowed
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_handle
-import heron.feature.auth.generated.resources.missing_domain
 import heron.feature.auth.generated.resources.password
 import heron.feature.auth.generated.resources.username
 import kotlinx.serialization.Serializable
@@ -51,12 +50,15 @@ import kotlinx.serialization.Transient
 internal val Username = FormField.Id("username")
 internal val Password = FormField.Id("password")
 
+internal val HandleLabelRegex = Regex(
+    pattern = "^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$",
+)
+
 internal val DomainRegex = Regex(
     pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+(?!-)[A-Za-z0-9-]{2,63}(?<!-)\$",
 )
 
 private fun String.hasNoAtSign() = !contains('@')
-private fun String.hasDomain() = contains('.')
 
 internal val StartingServers = Server.KnownServers.toList() +
     Server(
@@ -117,10 +119,7 @@ internal val InitialFields: List<FormField> = listOf(
             String::hasNoAtSign to Memo.Resource(
                 Res.string.at_sign_not_allowed,
             ),
-            String::hasDomain to Memo.Resource(
-                Res.string.missing_domain,
-            ),
-            DomainRegex::matches to Memo.Resource(
+            ::isValidHandleInput to Memo.Resource(
                 Res.string.invalid_handle,
             ),
         ),
@@ -155,7 +154,16 @@ val State.canSwitchAccount: Boolean
     get() = isSignedIn && pastSessions.isNotEmpty()
 
 val State.profileHandle: ProfileHandle
-    get() = ProfileHandle(id = fields.valueFor(Username))
+    get() = fields.valueFor(Username)
+        .normalizedProfileHandle(server = selectedServer)
+
+val State.profileHandleSuffix: String?
+    get() = fields
+        .valueFor(Username)
+        ?.takeIf { it.isNotBlank() }
+        ?.takeUnless { '.' in it }
+        ?.let { selectedServer.defaultHandleDomain }
+        ?.let { ".$it" }
 
 val State.canSignInLater: Boolean
     get() = fields.all { field ->
@@ -206,6 +214,7 @@ sealed class Action(val key: String) {
     data class FieldChanged(
         val id: FormField.Id,
         val text: String,
+        val selectedServer: Server,
     ) : Action("FieldChanged")
 
     data class OauthAvailabilityChanged(
@@ -240,3 +249,31 @@ sealed class Action(val key: String) {
         Action(key = "Navigate"),
         NavigationAction
 }
+
+internal fun isValidHandleInput(input: String): Boolean = when {
+    input.isBlank() -> false
+    '.' in input -> DomainRegex.matches(input)
+    else -> HandleLabelRegex.matches(input)
+}
+
+internal fun String.normalizedProfileHandle(
+    server: Server,
+): ProfileHandle = ProfileHandle(
+    id = if ('.' in this) this
+    else server.defaultHandleDomain
+        ?.let { "$this.$it" }
+        ?: this,
+)
+
+private val Server.defaultHandleDomain: String?
+    get() = endpoint
+        .takeIf {
+            it in setOf(
+                Server.BlueSky.endpoint,
+                Server.BlackSky.endpoint,
+                Server.EuroSky.endpoint,
+                Server.Pckt.endpoint,
+            )
+        }
+        ?.removePrefix("https://")
+        ?.removePrefix("http://")

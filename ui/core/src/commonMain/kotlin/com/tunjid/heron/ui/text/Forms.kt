@@ -129,6 +129,7 @@ inline fun FormField(
     crossinline leadingIcon: @Composable () -> Unit = {
         field.LeadingIcon()
     },
+    noinline suffix: @Composable (() -> Unit)? = null,
     crossinline onValueChange: (field: FormField, newValue: String) -> Unit,
     crossinline keyboardActions: KeyboardActionScope.(FormField) -> Unit,
 ) {
@@ -161,6 +162,7 @@ inline fun FormField(
         leadingIcon = {
             leadingIcon()
         },
+        suffix = suffix,
         supportingText = if (showError) field.errorMessage.let {
             {
                 Text(
