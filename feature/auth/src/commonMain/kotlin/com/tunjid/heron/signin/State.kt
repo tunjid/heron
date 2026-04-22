@@ -275,5 +275,5 @@ private val Server.defaultHandleDomain: String?
                 Server.Pckt.endpoint,
             )
         }
-        ?.removePrefix("https://")
-        ?.removePrefix("http://")
+        ?.substringAfter("://")
+        ?.removeSuffix("/")
