@@ -91,6 +91,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.toOutcome
+import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
@@ -174,6 +175,21 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                 limit = 30,
                 offset = 0,
             ).distinctUntilChangedMap { it.map(PopulatedListEntity::asExternalModel) }
+                .withRefresh {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getLists(
+                            params = GetListsQueryParams(
+                                actor = profileId.id.let(::Did),
+                                limit = 30,
+                                cursor = null,
+                            ),
+                        )
+                    }.mapCatchingUnlessCancelled { response ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            response.lists.forEach(::add)
+                        }
+                    }
+                }
         }
             .flowOn(ioDispatcher)
             .stateIn(
