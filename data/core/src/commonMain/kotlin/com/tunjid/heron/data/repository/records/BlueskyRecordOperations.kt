@@ -180,12 +180,13 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                         getLists(
                             params = GetListsQueryParams(
                                 actor = profileId.id.let(::Did),
-                                limit = 30,
+                                limit = 50,
                                 cursor = null,
                             ),
                         )
                     }.mapCatchingUnlessCancelled { response ->
                         multipleEntitySaverProvider.saveInTransaction {
+                            listDao.deleteListsForCreator(profileId.id)
                             response.lists.forEach(::add)
                         }
                     }
