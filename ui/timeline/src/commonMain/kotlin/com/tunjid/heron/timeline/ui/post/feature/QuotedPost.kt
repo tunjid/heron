@@ -27,15 +27,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -49,11 +55,16 @@ import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostImages
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.PostVideo
+import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.sensitive_media
 import kotlin.time.Clock
 import kotlin.time.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun QuotedPost(
@@ -61,7 +72,7 @@ fun QuotedPost(
     now: Instant,
     quotedPost: Post,
     sharedElementPrefix: String,
-    isBlurred: Boolean,
+    appliedLabels: AppliedLabels,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
@@ -69,6 +80,9 @@ fun QuotedPost(
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
 ) = with(paneTransitionScope) {
     val author = quotedPost.author
+    var hasClickedThroughSensitiveMedia by rememberSaveable { mutableStateOf(false) }
+    val mediaBlurred = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
+    val canUnblurMedia = appliedLabels.blurredMediaSeverity != Label.Severity.None
     Box(
         modifier = modifier,
     ) {
@@ -128,56 +142,67 @@ fun QuotedPost(
             Spacer(Modifier.height(8.dp))
 
             val uriHandler = LocalUriHandler.current
-            when (val embed = quotedPost.embed) {
-                is ExternalEmbed -> PostExternal(
-                    feature = embed,
-                    postUri = quotedPost.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    paneTransitionScope = paneTransitionScope,
-                    // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                    onClick = {
-                        uriHandler.openUri(embed.uri.uri)
-                    },
-                )
+            SensitiveContentBox(
+                modifier = Modifier,
+                isBlurred = mediaBlurred,
+                canUnblur = canUnblurMedia,
+                label = stringResource(Res.string.sensitive_media),
+                icon = appliedLabels.blurredMediaSeverity.icon(),
+                onUnblurClicked = {
+                    hasClickedThroughSensitiveMedia = true
+                },
+            ) {
+                when (val embed = quotedPost.embed) {
+                    is ExternalEmbed -> PostExternal(
+                        feature = embed,
+                        postUri = quotedPost.uri,
+                        sharedElementPrefix = sharedElementPrefix,
+                        isBlurred = mediaBlurred,
+                        paneTransitionScope = paneTransitionScope,
+                        // Quotes are exclusively in blog view types
+                        presentation = Timeline.Presentation.Text.WithEmbed,
+                        onClick = {
+                            uriHandler.openUri(embed.uri.uri)
+                        },
+                    )
 
-                is ImageList -> PostImages(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .heightIn(max = 140.dp),
-                    feature = embed,
-                    postUri = quotedPost.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = true,
-                    paneTransitionScope = paneTransitionScope,
-                    onImageClicked = { index ->
-                        onPostMediaClicked(embed, index, quotedPost)
-                    },
-                    // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                )
+                    is ImageList -> PostImages(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .heightIn(max = 140.dp),
+                        feature = embed,
+                        postUri = quotedPost.uri,
+                        sharedElementPrefix = sharedElementPrefix,
+                        isBlurred = mediaBlurred,
+                        matchHeightConstraintsFirst = true,
+                        paneTransitionScope = paneTransitionScope,
+                        onImageClicked = { index ->
+                            onPostMediaClicked(embed, index, quotedPost)
+                        },
+                        // Quotes are exclusively in blog view types
+                        presentation = Timeline.Presentation.Text.WithEmbed,
+                    )
 
-                UnknownEmbed -> UnknownPostPost(onClick = {})
-                is Video -> PostVideo(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .heightIn(max = 140.dp),
-                    video = embed,
-                    postUri = quotedPost.uri,
-                    paneTransitionScope = paneTransitionScope,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = true,
-                    // Quote videos only show in text and embeds
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                    onClicked = {
-                        onPostMediaClicked(embed, 0, quotedPost)
-                    },
-                )
+                    UnknownEmbed -> UnknownPostPost(onClick = {})
+                    is Video -> PostVideo(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .heightIn(max = 140.dp),
+                        video = embed,
+                        postUri = quotedPost.uri,
+                        paneTransitionScope = paneTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix,
+                        isBlurred = mediaBlurred,
+                        matchHeightConstraintsFirst = true,
+                        // Quote videos only show in text and embeds
+                        presentation = Timeline.Presentation.Text.WithEmbed,
+                        onClicked = {
+                            onPostMediaClicked(embed, 0, quotedPost)
+                        },
+                    )
 
-                null -> Unit
+                    null -> Unit
+                }
             }
         }
     }

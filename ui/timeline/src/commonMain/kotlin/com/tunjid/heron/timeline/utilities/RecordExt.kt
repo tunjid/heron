@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -61,6 +62,7 @@ import kotlin.time.Clock
 fun EmbeddedRecord(
     modifier: Modifier = Modifier,
     record: Record.Embeddable,
+    appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
     paneTransitionScope: PaneTransitionScope,
     postActions: PostActions,
@@ -80,7 +82,7 @@ fun EmbeddedRecord(
                 paneTransitionScope = paneTransitionScope,
                 now = now,
                 quotedPost = record,
-                isBlurred = false,
+                appliedLabels = appliedLabels,
                 sharedElementPrefix = sharedElementPrefix,
                 onClick = {
                     postActions.onPostAction(
