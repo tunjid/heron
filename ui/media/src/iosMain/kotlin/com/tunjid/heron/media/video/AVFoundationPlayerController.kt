@@ -19,9 +19,16 @@ package com.tunjid.heron.media.video
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.setActive
 
 @Stable
 class AVFoundationPlayerController(
@@ -35,9 +42,24 @@ class AVFoundationPlayerController(
     override var isMuted: Boolean by states::isMuted
 
     init {
+        configureAudioSession()
         snapshotFlow { isMuted }
             .onEach { states.activeState?.applyVolume() }
             .launchIn(appMainScope)
+    }
+
+    // The default AVAudioSession category is `soloAmbient`, which silences AVPlayer
+    // audio when the hardware ring/silent switch is on. Simulators have no such
+    // switch, so the bug only surfaces on real devices. `playback` ignores it.
+    @OptIn(ExperimentalForeignApi::class)
+    private fun configureAudioSession() {
+        try {
+            val audioSession = AVAudioSession.sharedInstance()
+            audioSession.setCategory(AVAudioSessionCategoryPlayback, null)
+            audioSession.setActive(true, null)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) { "configureAudioSession failed: ${e.loggableText()}" }
+        }
     }
 
     override fun registerVideo(
