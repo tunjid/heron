@@ -126,8 +126,7 @@ internal fun SignInScreen(
                                     )
                                 }
                             }
-                        }
-                        else null,
+                        } else null,
                         onValueChange = { field, newValue ->
                             actions(
                                 Action.FieldChanged(
