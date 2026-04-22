@@ -21,7 +21,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
-import com.tunjid.heron.data.logging.loggableText
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
@@ -42,11 +41,8 @@ class AVFoundationPlayerController(
     @OptIn(ExperimentalForeignApi::class)
     private val audioSession by lazy {
         AVAudioSession.sharedInstance().apply {
-            try {
-                setCategory(AVAudioSessionCategoryPlayback, null)
-                setActive(true, null)
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR) { "configureAudioSession failed: ${e.loggableText()}" }
+            if (!setCategory(AVAudioSessionCategoryPlayback, null)) {
+                logcat(LogPriority.ERROR) { "audioSession.setCategory failed" }
             }
         }
     }
@@ -83,8 +79,8 @@ class AVFoundationPlayerController(
         videoId: String?,
         seekToMs: Long?,
     ) {
-        // Read audio session to lazily initialize if necessary
-        audioSession
+        activateAudioSession()
+
         val playerIdToPlay = videoId ?: states.activeVideoId
         val stateToPlay = states[playerIdToPlay] ?: return
 
@@ -154,6 +150,13 @@ class AVFoundationPlayerController(
         states[previousId]?.let { previousState ->
             previousState.status = PlayerStatus.Pause.Requested
             previousState.pauseNative()
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun activateAudioSession() {
+        if (!audioSession.setActive(true, null)) {
+            logcat(LogPriority.ERROR) { "setActive failed" }
         }
     }
 }
