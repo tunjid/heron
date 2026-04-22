@@ -19,9 +19,15 @@ package com.tunjid.heron.media.video
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.setActive
 
 @Stable
 class AVFoundationPlayerController(
@@ -31,6 +37,15 @@ class AVFoundationPlayerController(
     private val states = VideoPlayerStates(
         onEvicted = AVFoundationPlayerState::dispose,
     )
+
+    @OptIn(ExperimentalForeignApi::class)
+    private val audioSession by lazy {
+        AVAudioSession.sharedInstance().apply {
+            if (!setCategory(AVAudioSessionCategoryPlayback, null)) {
+                logcat(LogPriority.ERROR) { "audioSession.setCategory failed" }
+            }
+        }
+    }
 
     override var isMuted: Boolean by states::isMuted
 
@@ -67,6 +82,7 @@ class AVFoundationPlayerController(
         val playerIdToPlay = videoId ?: states.activeVideoId
         val stateToPlay = states[playerIdToPlay] ?: return
 
+        activateAudioSession()
         setActiveVideo(playerIdToPlay)
 
         // Open media if not yet called
@@ -133,6 +149,13 @@ class AVFoundationPlayerController(
         states[previousId]?.let { previousState ->
             previousState.status = PlayerStatus.Pause.Requested
             previousState.pauseNative()
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun activateAudioSession() {
+        if (!audioSession.setActive(true, null)) {
+            logcat(LogPriority.ERROR) { "setActive failed" }
         }
     }
 }
