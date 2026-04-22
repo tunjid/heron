@@ -57,13 +57,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
-import com.tunjid.heron.ui.text.formatTextPost
-import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.conversation.generated.resources.Res
 import heron.feature.conversation.generated.resources.textfield_desc
@@ -101,6 +100,7 @@ fun PaneScaffoldState.UserInput(
                     modifier = Modifier
                         .weight(1f),
                     record = record,
+                    appliedLabels = AppliedLabels.Empty,
                     sharedElementPrefix = SharedRecordPrefix,
                     paneTransitionScope = this@UserInput,
                     postActions = PostActions.NoOp,

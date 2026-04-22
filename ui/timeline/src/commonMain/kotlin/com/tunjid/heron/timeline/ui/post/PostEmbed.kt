@@ -22,11 +22,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.AppliedLabels.Companion.withLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -150,7 +152,15 @@ internal fun PostEmbed(
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            isBlurred = appliedLabels.shouldBlurMedia,
+                            appliedLabels = remember(
+                                appliedLabels,
+                                embeddedRecord.labels,
+                                embeddedRecord.author.labels,
+                            ) {
+                                appliedLabels.withLabels(
+                                    embeddedRecord.labels + embeddedRecord.author.labels,
+                                )
+                            },
                             paneTransitionScope = paneTransitionScope,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onQuotedProfileClicked,

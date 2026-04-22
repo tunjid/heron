@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
@@ -471,6 +472,7 @@ private fun MessageRecord(
             )
             .widthIn(max = 200.dp),
         record = record,
+        appliedLabels = AppliedLabels.Empty,
         sharedElementPrefix = item.id,
         paneTransitionScope = paneScaffoldState,
         postActions = remember(item.id, actions) {
