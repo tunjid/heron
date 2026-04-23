@@ -20,6 +20,14 @@ class AppDelegate: NSObject, UIApplicationDelegate,
         return true
     }
 
+    // Re-sync notification permission state and FCM token on every foreground
+    func applicationDidBecomeActive(_ application: UIApplication) {
+      Messaging.messaging().token { [self] token, _ in
+            guard let token = token else { return }
+            onNewToken(fcmToken: token)
+        }
+    }
+
     // Forward APNs device token to Firebase
     func application(
         _ application: UIApplication,
@@ -34,7 +42,7 @@ class AppDelegate: NSObject, UIApplicationDelegate,
         didReceiveRegistrationToken fcmToken: String?
     ) {
         guard let token = fcmToken else { return }
-        EntryPoint_iosKt.onNewFcmToken(appState: appState, token: token)
+        onNewToken(fcmToken: token)
     }
 
     // Data-only / silent push notifications (background delivery)
@@ -51,6 +59,25 @@ class AppDelegate: NSObject, UIApplicationDelegate,
         }
         EntryPoint_iosKt.onPushNotificationReceived(appState: appState, payload: payload) {
             completionHandler(.newData)
+        }
+    }
+
+    func onNewToken(
+        fcmToken: String,
+    ) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            let hasPermissions =
+                settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+
+            DispatchQueue.main.async {
+                EntryPoint_iosKt.onNotificationPermissionsUpdated(
+                    appState: self.appState,
+                    hasPermissions: hasPermissions
+                )
+
+                EntryPoint_iosKt.onNewFcmToken(appState: self.appState, token: fcmToken)
+            }
         }
     }
 
