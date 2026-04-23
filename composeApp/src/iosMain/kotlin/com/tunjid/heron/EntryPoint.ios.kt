@@ -81,6 +81,16 @@ fun onNewFcmToken(appState: AppState, token: String) {
 }
 
 /**
+ * Called from Swift when the app foregrounds, to re-sync the system notification
+ * permission state into appState.
+ */
+fun onNotificationPermissionsUpdated(appState: AppState, hasPermissions: Boolean) {
+    appState.onNotificationAction(
+        NotificationAction.UpdatePermissions(hasNotificationPermissions = hasPermissions),
+    )
+}
+
+/**
  * Called from Swift when a notification is tapped to deep link into the app.
  */
 fun onNotificationTapped(appState: AppState, scheme: String, path: String) {
