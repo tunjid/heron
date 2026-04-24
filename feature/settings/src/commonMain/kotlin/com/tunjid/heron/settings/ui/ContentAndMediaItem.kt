@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefa
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.settings.Section
 import heron.feature.settings.generated.resources.Res
+import heron.feature.settings.generated.resources.allow_all_timeline_presentations
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
@@ -48,6 +49,7 @@ fun ContentAndMediaItem(
     setAutoplayTimelineVideos: (Boolean) -> Unit,
     setShowPostEngagementMetrics: (Boolean) -> Unit,
     setShowTrendingTopics: (Boolean) -> Unit,
+    setAllowAllTimelinePresentations: (Boolean) -> Unit,
     onSectionSelected: (Section) -> Unit,
 ) {
     ExpandableSettingsItemRow(
@@ -122,6 +124,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.showTrendingTopics,
             onCheckedChange = setShowTrendingTopics,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.allow_all_timeline_presentations),
+            enabled = true,
+            checked = signedInProfilePreferences.local.allowAllTimelinePresentations,
+            onCheckedChange = setAllowAllTimelinePresentations,
         )
     }
 }

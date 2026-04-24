@@ -153,6 +153,9 @@ private fun MainSection(
                 setShowTrendingTopics = {
                     actions(Action.SetShowTrendingTopics(it))
                 },
+                setAllowAllTimelinePresentations = {
+                    actions(Action.SetAllowAllTimelinePresentations(it))
+                },
             )
             ModerationItem(
                 modifier = Modifier

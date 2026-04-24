@@ -126,6 +126,10 @@ sealed class Action(val key: String) {
         val showTrendingTopics: Boolean,
     ) : Action(key = "SetShowTrendingTopics")
 
+    data class SetAllowAllTimelinePresentations(
+        val allowAllTimelinePresentations: Boolean,
+    ) : Action(key = "SetAllowAllTimelinePresentations")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")

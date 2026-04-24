@@ -95,6 +95,7 @@
     <string name="send_via_direct_message">Send via Direct Message</string>
     <string name="share_in_post">Share in a post</string>
     <string name="send_icon">Send icon</string>
+    <string name="no_media">No media</string>
     <string name="label_source">Label by: %1$s</string>
     <string name="view_labeler">View Labeler</string>
     <string name="standard_site_published_in">Published in %1$s</string>

@@ -16,13 +16,19 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.HideImage
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
@@ -57,7 +63,10 @@ import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.ui.PaneTransitionScope
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.no_media
 import kotlin.time.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PostEmbed(
@@ -137,7 +146,24 @@ internal fun PostEmbed(
                     },
                 )
 
-                null -> Unit
+                null -> when (presentation) {
+                    // Users may opt to use media only presentations
+                    // for content that may not contain media
+                    is Timeline.Presentation.Media -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(16 / 9f),
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .align(Alignment.Center),
+                            imageVector = Icons.Rounded.HideImage,
+                            contentDescription = stringResource(Res.string.no_media),
+                        )
+                    }
+
+                    Timeline.Presentation.Text.WithEmbed -> Unit
+                }
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
                 if (embeddedRecord != null) Spacer(Modifier.height(16.dp))
