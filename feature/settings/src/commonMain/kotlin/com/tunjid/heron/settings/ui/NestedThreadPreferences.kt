@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -37,7 +38,8 @@ fun ThreadPreferencesSection(
 ) {
     SettingsRadioButtons(
         modifier = Modifier
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
         title = CommonStrings.timeline_thread_order,
         selectedItem = threadViewPreference.order(),
         items = TimelineItem.Threaded.Order.entries,
