@@ -45,4 +45,7 @@ class FakeUserDataRepository : UserDataRepository {
 
     override suspend fun setShowTrendingTopics(showTrendingTopics: Boolean): Outcome =
         Outcome.Success
+
+    override suspend fun setAllowAllTimelinePresentations(allowAllTimelinePresentations: Boolean): Outcome =
+        Outcome.Success
 }

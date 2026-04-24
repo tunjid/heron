@@ -372,6 +372,12 @@ sealed interface Timeline {
                 key = "presentation-grid-media",
             )
         }
+
+        companion object {
+            val All: List<Presentation> get() = AllPresentations
+
+            val TextOnly: List<Presentation> get() = TextOnlyPresentations
+        }
     }
 }
 

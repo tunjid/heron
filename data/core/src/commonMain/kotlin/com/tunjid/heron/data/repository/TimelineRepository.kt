@@ -1117,21 +1117,12 @@ internal class OfflineTimelineRepository(
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
-                        supportedPresentations = listOfNotNull(
-                            Timeline.Presentation.Text.WithEmbed,
-                            Timeline.Presentation.Media.Expanded.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation() ||
-                                    allowAllPresentations
-                            },
-                            Timeline.Presentation.Media.Condensed.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation() ||
-                                    allowAllPresentations
-                            },
-                            Timeline.Presentation.Media.Grid.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation() ||
-                                    allowAllPresentations
-                            },
-                        ),
+                        supportedPresentations = when {
+                            populatedFeedGeneratorEntity.entity.supportsMediaPresentation() ||
+                                allowAllPresentations
+                            -> Timeline.Presentation.All
+                            else -> Timeline.Presentation.TextOnly
+                        },
                         isPinned = isPinned,
                     )
                 }
