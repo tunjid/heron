@@ -75,6 +75,8 @@ data class Preferences(
         val showPostEngagementMetrics: Boolean = true,
         @ProtoNumber(8)
         val showTrendingTopics: Boolean = true,
+        @ProtoNumber(9)
+        val allowAllTimelinePresentations: Boolean = false,
     )
 
     companion object {
