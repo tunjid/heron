@@ -31,6 +31,8 @@ import app.bsky.graph.Listitem
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -69,6 +71,7 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.repository.CreatedListMembersQuery
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
@@ -133,7 +136,6 @@ interface BlueskyRecordOperations {
         query: ListMemberQuery,
         cursor: Cursor,
     ): Flow<CursorList<ListMember>>
-
     fun feedGenerators(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -145,6 +147,10 @@ interface BlueskyRecordOperations {
 
     suspend fun addListMember(
         create: ListMember.Create,
+    ): Outcome
+
+    suspend fun updateCreatedListMembers(
+        signedInProfileId: ProfileId,
     ): Outcome
 }
 
@@ -520,6 +526,46 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
         }
             .toOutcome()
     } ?: expiredSessionOutcome()
+
+    override suspend fun updateCreatedListMembers(
+        signedInProfileId: ProfileId,
+    ): Outcome = try {
+        var currentCursor: Cursor = Cursor.Initial
+
+        networkService.nextCursorFlow(
+            currentCursor = currentCursor,
+            currentRequestWithNextCursor = {
+                listRecords(
+                    ListRecordsQueryParams(
+                        repo = Did(signedInProfileId.id),
+                        collection = Nsid(ListMemberUri.NAMESPACE),
+                        limit = 100,
+                        cursor = currentCursor.value,
+                    ),
+                )
+            },
+            nextCursor = ListRecordsResponse::cursor,
+            onResponse = {
+                multipleEntitySaverProvider.saveInTransaction {
+                    records.forEach { record ->
+                        val listItem = record.value.decodeAs<Listitem>()
+                        add(
+                            listMemberUri = ListMemberUri(record.uri.atUri),
+                            listItem = listItem,
+                        )
+                    }
+                }
+            },
+        ).collect { next ->
+            // Update the cursor for the next iteration if needed
+            currentCursor = next
+            // If the flow emits Cursor.Final or we've reached the end, the flow finishes.
+        }
+
+        Outcome.Success
+    } catch (e: Exception) {
+        e.asFailureOutcome()
+    }
 }
 
 private suspend fun NetworkService.updateFeedRecord(

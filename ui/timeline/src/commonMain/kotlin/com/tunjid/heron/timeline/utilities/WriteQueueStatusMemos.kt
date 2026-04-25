@@ -53,6 +53,7 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import heron.ui.timeline.generated.resources.writable_update_created_list_members
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.compose.resources.StringResource
@@ -165,10 +166,6 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_record_deletion),
             )
-            is Writable.FeedList.AddMember -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_add_list_member),
-            )
             is Writable.StandardSite.Subscribe -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_subscribe_standard_publication),
@@ -177,6 +174,16 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_status_update),
             )
+            is Writable.FeedList -> {
+                val stringResource = when (this) {
+                    is Writable.FeedList.AddMember -> Res.string.writable_add_list_member
+                    is Writable.FeedList.UpdateCreatedListMembers -> Res.string.writable_update_created_list_members
+                }
+                Memo.Resource(
+                    stringResource = genericDroppedOrDuplicateResource(isDropped),
+                    args = listOf(stringResource),
+                )
+            }
         }
     }
 }

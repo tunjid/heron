@@ -16,12 +16,15 @@
 
 package com.tunjid.heron.data.repository
 
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
@@ -43,12 +46,23 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class CreatedListMembersQuery(
+    override val data: CursorQuery.Data,
+) : CursorQuery
 
 interface RecordRepository :
     BlueskyRecordOperations,
     StandardSiteRecordOperations {
+
+    fun listMembersByProfile(
+        profileId: ProfileId,
+    ): Flow<List<ListMember>>
 
     fun embeddableRecord(
         uri: EmbeddableRecordUri,
@@ -74,6 +88,22 @@ internal class OfflineFirstRecordRepository @Inject constructor(
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
+
+    override fun listMembersByProfile(
+        profileId: ProfileId,
+    ): Flow<List<ListMember>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            if (profileId.id.isEmpty()) return@singleAuthorizedSessionFlow emptyFlow<List<ListMember>>()
+
+            listDao.listMembersByProfile(
+                profileId = profileId.id,
+                signedInUserId = signedInProfileId.id,
+            )
+                .distinctUntilChangedMap { entities ->
+                    entities.map { it.asExternalModel() }
+                }
+        }
+            .flowOn(ioDispatcher)
 
     override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {

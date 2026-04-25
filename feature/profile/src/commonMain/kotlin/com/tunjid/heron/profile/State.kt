@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -36,6 +37,7 @@ import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -90,6 +92,10 @@ data class State(
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
+    @Transient
+    val profileListMembershipsMap: Map<ListUri, ListMember> = emptyMap(),
+    @Transient
+    val signedInProfileListsHolder: Records.Lists? = null,
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -270,6 +276,17 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
+
+    data class AddListMember(
+        val subjectId: ProfileId,
+        val listUri: ListUri,
+    ) : Action(key = "AddListMember")
+
+    data class UpdateCreatedListMembers(
+        val signedInProfileId: ProfileId,
+    ) : Action(key = "UpdateCreatedListMember")
+
+    data object DismissListPickerSheet : Action(key = "DismissListPickerSheet")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

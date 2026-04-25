@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
@@ -208,6 +209,13 @@ class ActualProfileViewModel(
                         is Action.UpdateLiveStatus -> action.flow.liveStatusMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.AddListMember -> action.flow.addListMemberMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateCreatedListMembers -> action.flow.updateCreatedListMembersMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DismissListPickerSheet -> action.flow.dismissListPickerSheet()
                     }
                 },
             )
@@ -277,7 +285,14 @@ private fun loadProfileMutations(
         ::Pair,
     )
         .distinctUntilChanged()
-        .mapToManyMutations { (profile, signedInProfile) ->
+        .flatMapLatest { (profile, signedInProfile) ->
+            recordRepository.listMembersByProfile(profile.did)
+                .map { memberships ->
+                    val membershipMap = memberships.associateBy { it.listUri }
+                    Triple(membershipMap, profile, signedInProfile)
+                }
+        }
+        .mapToManyMutations { (membershipMap, profile, signedInProfile) ->
             val isSignedIn = signedInProfile != null
             val isSignedInProfile = signedInProfile?.let {
                 it.did.id == profileId.id || it.handle.id == profileId.id
@@ -288,11 +303,23 @@ private fun loadProfileMutations(
                     profile = profile,
                     signedInProfileId = signedInProfile?.did,
                     isSignedInProfile = isSignedInProfile,
+                    profileListMembershipsMap = membershipMap,
                 )
             }
 
             val state = currentState()
             val hasProfileStateHolders = state.stateHolders.isNotEmpty()
+
+            if (signedInProfile != null && (state.signedInProfileListsHolder == null || state.signedInProfileId != signedInProfile.did)) {
+                emit {
+                    copy(
+                        signedInProfileListsHolder = scope.signedInProfileListsHolder(
+                            signedInProfileId = signedInProfile.did,
+                            recordRepository = recordRepository,
+                        ),
+                    )
+                }
+            }
 
             // TODO: This logic assumes that the tabs for the profile are static.
             // Revisit this.
@@ -518,6 +545,35 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     if (memo != null) emit { copy(messages = messages + memo) }
 }
 
+private fun Flow<Action.AddListMember>.addListMemberMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.FeedList.AddMember(
+            create = ListMember.Create(
+                subjectId = it.subjectId,
+                listUri = it.listUri,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
+
+private fun Flow<Action.UpdateCreatedListMembers>.updateCreatedListMembersMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.FeedList.UpdateCreatedListMembers(
+            signedInProfileId = action.signedInProfileId,
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
+
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -558,6 +614,11 @@ private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
 private fun Flow<Action.PageChanged>.pageChangeMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(currentPage = action.page)
+    }
+
+private fun Flow<Action.DismissListPickerSheet>.dismissListPickerSheet(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(signedInProfileListsHolder = null)
     }
 
 private fun CoroutineScope.recordStateHolders(
@@ -624,6 +685,26 @@ private fun CoroutineScope.recordStateHolders(
                 itemId = FeedList::cid,
                 cursorListLoader = recordRepository::lists,
             ),
+        ),
+    )
+
+private fun CoroutineScope.signedInProfileListsHolder(
+    signedInProfileId: Id.Profile,
+    recordRepository: RecordRepository,
+): ProfileScreenStateHolders.Records.Lists =
+    ProfileScreenStateHolders.Records.Lists(
+        mutator = recordStateHolder(
+            initialState = RecordState(
+                stringResource = Res.string.lists,
+                tilingData = TilingState.Data(
+                    currentQuery = ProfilesQuery(
+                        profileId = signedInProfileId,
+                        data = defaultQueryData(),
+                    ),
+                ),
+            ),
+            itemId = FeedList::cid,
+            cursorListLoader = recordRepository::lists,
         ),
     )
 

@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import kotlin.time.Instant
@@ -126,6 +127,18 @@ sealed interface Writable {
 
             override suspend fun WriteQueue.write(): Outcome =
                 recordRepository.addListMember(create)
+        }
+
+        @Serializable
+        data class UpdateCreatedListMembers(
+            val signedInProfileId: ProfileId,
+        ) : FeedList,
+            Writable {
+            override val queueId: String
+                get() = "update-list-members-${signedInProfileId.id}"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.updateCreatedListMembers(signedInProfileId)
         }
     }
 

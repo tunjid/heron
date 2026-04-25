@@ -48,6 +48,7 @@
     <string name="starter_pack_by">Starter Pack by %1$s</string>
     <string name="labeling_service_by">Labeling Service by %1$s</string>
     <string name="list_by">List by %1$s</string>
+    <string name="list_by_you">List by you</string>
     <string name="show_more">Show More</string>
     <string name="sign_in">Sign In</string>
     <string name="pin_feed">Pin</string>
@@ -138,6 +139,7 @@
     <string name="writable_repost">repost</string>
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_add_list_member">list member addition</string>
+    <string name="writable_update_created_list_members">created list member update</string>
     <string name="writable_subscribe_standard_publication">publication subscription</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
