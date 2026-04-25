@@ -97,7 +97,7 @@ fun List<ProfileTab>.profileTabsEntity(
 operator fun ProfileTabsEntity.plus(tab: String) = when (tab.asProfileTabOrNull()) {
     null -> this
     else -> copy(
-        delimitedTabs = if (delimitedTabs.isBlank()) tab else "$delimitedTabs$TabDelimiter$tab"
+        delimitedTabs = if (delimitedTabs.isBlank()) tab else "$delimitedTabs$TabDelimiter$tab",
     )
 }
 
