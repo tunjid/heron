@@ -1,0 +1,60 @@
+{
+  "lexicon": 1,
+  "id": "dev.tunjid.heron.actor.tabs",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Public declaration of the tabs a user wants surfaced on their Heron profile. Singleton per actor (rkey 'self'). Anyone can read; only the owning actor can write.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Ordered list of tabs to display, in the order shown.",
+            "items": {
+              "type": "union",
+              "refs": ["#profileTab", "#collectionTab"]
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "profileTab": {
+      "type": "object",
+      "description": "A canonical profile tab. Maps 1:1 to Timeline.Profile.Type in the Heron data models.",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "knownValues": ["posts", "replies", "likes", "media", "videos"]
+        }
+      }
+    },
+    "collectionTab": {
+      "type": "object",
+      "description": "A profile tab that surfaces records of a given collection NSID owned by the actor.",
+      "required": ["collection"],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "format": "nsid",
+          "description": "NSID of the collection to render as a profile tab.",
+          "knownValues": [
+            "app.bsky.feed.generator",
+            "app.bsky.graph.list",
+            "app.bsky.graph.starterpack",
+            "site.standard.document",
+            "site.standard.publication",
+            "site.standard.graph.subscription"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "lexicon": 1,
+  "id": "dev.tunjid.heron.actor.getTabs",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get the profile tabs declared by the given actor. Public — does not require auth on the caller.",
+      "parameters": {
+        "type": "params",
+        "required": ["actor"],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "DID or handle of the account whose tabs to fetch."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["items"],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "union",
+                "refs": [
+                  "dev.tunjid.heron.actor.tabs#profileTab",
+                  "dev.tunjid.heron.actor.tabs#collectionTab"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "NotFound",
+          "description": "The actor has no tabs record."
+        }
+      ]
+    }
+  }
+}
