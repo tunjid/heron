@@ -478,24 +478,23 @@ internal class OfflineProfileRepository @Inject constructor(
                 }
             }.awaitAll()
 
-            val tabUpdate = if (update.tabs.isNotEmpty()) async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putTabs(
-                        PutTabsRequest(
-                            update.tabs.map {
-                                it.asNetworkTab()
-                            },
-                        ),
-                    )
-                }
-                    .mapCatchingUnlessCancelled {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(update.tabs.profileTabsEntity(signedInProfileId))
-                        }
+            val tabsUpdate = update.tabs?.let { newTabs ->
+                async {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        putTabs(
+                            PutTabsRequest(
+                                newTabs.map(ProfileTab::asNetworkTab),
+                            ),
+                        )
                     }
-                    .toOutcome()
+                        .mapCatchingUnlessCancelled {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(newTabs.profileTabsEntity(signedInProfileId))
+                            }
+                        }
+                        .toOutcome()
+                }
             }
-            else null
 
             val profileUpdate = async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
@@ -535,7 +534,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     .toOutcome()
             }
 
-            val tabOutcome = tabUpdate?.await()
+            val tabOutcome = tabsUpdate?.await()
             if (tabOutcome is Outcome.Failure) return@coroutineScope tabOutcome
 
             profileUpdate.await()
