@@ -166,6 +166,9 @@ data class Profile(
         val avatarFile: File.Media.Photo?,
         @ProtoNumber(7)
         val bannerFile: File.Media.Photo?,
+        // Newly added fields should have defaults
+        @ProtoNumber(8)
+        val tabs: List<ProfileTab> = emptyList(),
     )
 
     @Serializable

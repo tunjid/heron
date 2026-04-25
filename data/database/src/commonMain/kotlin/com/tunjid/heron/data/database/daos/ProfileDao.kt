@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
+import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
 import kotlin.time.Instant
@@ -69,6 +70,20 @@ interface ProfileDao {
         profileId: String,
         otherProfileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerStateEntity>>
+
+    @Query(
+        """
+            SELECT profileTabs.* FROM profiles
+            LEFT JOIN profileTabs
+                ON profiles.did = profileTabs.profileId
+            WHERE did IS :profileIdOrHandle
+            OR handle IS :profileIdOrHandle
+        """,
+    )
+    fun tabs(
+        signedInProfiledId: String?,
+        profileIdOrHandle: String,
+    ): Flow<ProfileTabsEntity?>
 
     @Query(
         """
@@ -120,6 +135,11 @@ interface ProfileDao {
     @Upsert
     suspend fun upsertProfileViewers(
         entities: List<ProfileViewerStateEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertProfileTabs(
+        entities: List<ProfileTabsEntity>,
     )
 
     @Transaction

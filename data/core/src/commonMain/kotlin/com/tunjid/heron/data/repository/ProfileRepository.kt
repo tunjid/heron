@@ -41,12 +41,14 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
@@ -54,8 +56,11 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.asExternalModels
+import com.tunjid.heron.data.database.entities.profile.profileTabsEntity
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
@@ -64,9 +69,18 @@ import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
+import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
+import dev.tunjid.heron.actor.GetTabsQueryParams
+import dev.tunjid.heron.actor.PutTabsRequest
+import dev.tunjid.heron.actor.PutTabsRequestItemUnion
+import dev.tunjid.heron.actor.TabsCollectionTab
+import dev.tunjid.heron.actor.TabsCollectionTabCollection
+import dev.tunjid.heron.actor.TabsProfileTab
+import dev.tunjid.heron.actor.TabsProfileTabKind
 import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
@@ -101,6 +115,8 @@ interface ProfileRepository {
     fun signedInProfile(): Flow<Profile>
 
     fun profile(profileId: Id.Profile): Flow<Profile>
+
+    fun tabs(profileId: Id.Profile): Flow<List<ProfileTab>>
 
     fun profileRelationships(
         profileIds: Set<Id.Profile>,
@@ -151,6 +167,7 @@ internal class OfflineProfileRepository @Inject constructor(
     private val networkService: NetworkService,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : ProfileRepository {
 
     override fun signedInProfile(): Flow<Profile> =
@@ -177,6 +194,33 @@ internal class OfflineProfileRepository @Inject constructor(
                         signedInProfileId = signedInProfileId,
                         profileId = profileId,
                     )
+                }
+        }
+            .flowOn(ioDispatcher)
+
+    override fun tabs(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileTab>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileDao.tabs(
+                signedInProfiledId = signedInProfileId?.id,
+                profileIdOrHandle = profileId.id,
+            )
+                .distinctUntilChangedMapNotNull(ProfileTabsEntity?::asExternalModels)
+                .withRefresh {
+                    val did = profileLookup.lookupProfileDid(profileId) ?: return@withRefresh
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getTabs(
+                            GetTabsQueryParams(did),
+                        )
+                    }.toOutcome { response ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(
+                                profileId = ProfileId(did.did),
+                                tabs = response.items,
+                            )
+                        }
+                    }
                 }
         }
             .flowOn(ioDispatcher)
@@ -437,41 +481,67 @@ internal class OfflineProfileRepository @Inject constructor(
                 }
             }.awaitAll()
 
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getRecord(
-                    GetRecordQueryParams(
-                        repo = update.profileId.id.let(::Did),
-                        collection = Nsid(Collections.Profile),
-                        rkey = Collections.SelfRecordKey,
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    val existingProfile = it.value.decodeAs<BskyProfile>()
-
-                    val request = PutRecordRequest(
-                        repo = update.profileId.id.let(::Did),
-                        collection = Nsid(Collections.Profile),
-                        rkey = Collections.SelfRecordKey,
-                        record = existingProfile.copy(
-                            displayName = update.displayName,
-                            description = update.description,
-                            avatar = avatarBlob ?: existingProfile.avatar,
-                            banner = bannerBlob ?: existingProfile.banner,
-                        )
-                            .asJsonContent(BskyProfile.serializer()),
-                    )
-
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        putRecord(request)
-                    }.getOrThrow()
-
-                    profileLookup.refreshProfile(
-                        signedInProfileId = signedInProfileId,
-                        profileId = update.profileId,
+            val tabUpdate = if (update.tabs.isNotEmpty()) async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    putTabs(
+                        PutTabsRequest(
+                            update.tabs.map {
+                                it.asNetworkTab()
+                            },
+                        ),
                     )
                 }
-                .toOutcome()
+                    .mapCatchingUnlessCancelled {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(update.tabs.profileTabsEntity(signedInProfileId))
+                        }
+                    }
+                    .toOutcome()
+            }
+            else null
+
+            val profileUpdate = async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getRecord(
+                        GetRecordQueryParams(
+                            repo = update.profileId.id.let(::Did),
+                            collection = Nsid(Collections.Profile),
+                            rkey = Collections.SelfRecordKey,
+                        ),
+                    )
+                }
+                    .mapCatchingUnlessCancelled {
+                        val existingProfile = it.value.decodeAs<BskyProfile>()
+
+                        val request = PutRecordRequest(
+                            repo = update.profileId.id.let(::Did),
+                            collection = Nsid(Collections.Profile),
+                            rkey = Collections.SelfRecordKey,
+                            record = existingProfile.copy(
+                                displayName = update.displayName,
+                                description = update.description,
+                                avatar = avatarBlob ?: existingProfile.avatar,
+                                banner = bannerBlob ?: existingProfile.banner,
+                            )
+                                .asJsonContent(BskyProfile.serializer()),
+                        )
+
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            putRecord(request)
+                        }.getOrThrow()
+
+                        profileLookup.refreshProfile(
+                            signedInProfileId = signedInProfileId,
+                            profileId = update.profileId,
+                        )
+                    }
+                    .toOutcome()
+            }
+
+            val tabOutcome = tabUpdate?.await()
+            if (tabOutcome is Outcome.Failure) return@coroutineScope tabOutcome
+
+            profileUpdate.await()
         }
     } ?: expiredSessionOutcome()
 
@@ -544,4 +614,37 @@ internal class OfflineProfileRepository @Inject constructor(
             }
         }
     } ?: expiredSessionOutcome()
+}
+
+private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
+    ProfileTab.Bluesky.FeedGenerators -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyFeedGenerator),
+    )
+    ProfileTab.Bluesky.Likes -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Likes),
+    )
+    ProfileTab.Bluesky.Lists -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphList),
+    )
+    ProfileTab.Bluesky.Media -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Media),
+    )
+    ProfileTab.Bluesky.Posts -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Posts),
+    )
+    ProfileTab.Bluesky.Replies -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Replies),
+    )
+    ProfileTab.Bluesky.StarterPacks -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphStarterpack),
+    )
+    ProfileTab.Bluesky.Videos -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Videos),
+    )
+    ProfileTab.StandardSite.Documents -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardDocument),
+    )
+    ProfileTab.StandardSite.Publications -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardPublication),
+    )
 }

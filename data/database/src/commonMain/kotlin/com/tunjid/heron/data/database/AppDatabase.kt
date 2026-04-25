@@ -76,6 +76,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCreatedAt
 import com.tunjid.heron.data.database.migrations.Migration17To18TimelineViewer
@@ -98,7 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 38,
+    version = 39,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -112,6 +113,7 @@ import kotlinx.coroutines.IO
         PostAuthorsEntity::class,
         PostThreadEntity::class,
         PostViewerStatisticsEntity::class,
+        ProfileTabsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
         PostLikeEntity::class,
@@ -218,6 +220,8 @@ import kotlinx.coroutines.IO
         // Add expiresAt to LabelEntity for timed label support
         AutoMigration(from = 36, to = 37),
         // Migration 37 - 38 is a manual migration
+        // Add ProfileTabsEntity
+        AutoMigration(from = 38, to = 39),
     ],
     exportSchema = true,
 )
