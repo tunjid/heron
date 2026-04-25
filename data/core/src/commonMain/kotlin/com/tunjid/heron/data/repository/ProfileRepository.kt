@@ -201,11 +201,8 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun tabs(
         profileId: Id.Profile,
     ): Flow<List<ProfileTab>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            profileDao.tabs(
-                signedInProfiledId = signedInProfileId?.id,
-                profileIdOrHandle = profileId.id,
-            )
+        savedStateDataSource.singleSessionFlow {
+            profileDao.tabs(profileIdOrHandle = profileId.id)
                 .distinctUntilChangedMapNotNull(ProfileTabsEntity?::asExternalModels)
                 .withRefresh {
                     val did = profileLookup.lookupProfileDid(profileId) ?: return@withRefresh

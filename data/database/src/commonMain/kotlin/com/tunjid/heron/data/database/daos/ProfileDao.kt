@@ -81,7 +81,6 @@ interface ProfileDao {
         """,
     )
     fun tabs(
-        signedInProfiledId: String?,
         profileIdOrHandle: String,
     ): Flow<ProfileTabsEntity?>
 
