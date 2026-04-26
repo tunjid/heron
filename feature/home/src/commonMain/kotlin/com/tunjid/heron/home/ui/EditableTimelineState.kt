@@ -86,7 +86,7 @@ internal class EditableTimelineState private constructor(
             sourceId: String,
         ) = selectorDragAndDrop(
             state = state.dragAndDropSelectorState,
-            sourceId = sourceId,
+            id = sourceId,
         )
 
         fun Modifier.timelineEditDropTarget(
