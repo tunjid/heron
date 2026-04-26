@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
@@ -78,11 +79,11 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.feeds
 import heron.feature.profile.generated.resources.lists
+import heron.feature.profile.generated.resources.publications
 import heron.feature.profile.generated.resources.starter_packs
 import heron.feature.profile.generated.resources.writing
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -604,46 +605,44 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
     )
     ProfileTab.Bluesky.FeedGenerators.All -> ProfileScreenStateHolders.Records.Feeds(
         mutator = recordStateHolder(
-            initialState = recordTilingState(
-                profileId = profileId,
-                stringResource = Res.string.feeds,
-            ),
+            profileId = profileId,
+            stringResource = Res.string.feeds,
             itemId = FeedGenerator::cid,
             cursorListLoader = recordRepository::feedGenerators,
         ),
     )
     ProfileTab.Bluesky.StarterPacks -> ProfileScreenStateHolders.Records.StarterPacks(
         mutator = recordStateHolder(
-            initialState = recordTilingState(
-                profileId = profileId,
-                stringResource = Res.string.starter_packs,
-            ),
+            profileId = profileId,
+            stringResource = Res.string.starter_packs,
             itemId = StarterPack::cid,
             cursorListLoader = recordRepository::starterPacks,
         ),
     )
     ProfileTab.Bluesky.Lists.All -> ProfileScreenStateHolders.Records.Lists(
         mutator = recordStateHolder(
-            initialState = recordTilingState(
-                profileId = profileId,
-                stringResource = Res.string.lists,
-            ),
+            profileId = profileId,
+            stringResource = Res.string.lists,
             itemId = FeedList::cid,
             cursorListLoader = recordRepository::lists,
         ),
     )
     ProfileTab.StandardSite.Documents -> ProfileScreenStateHolders.Records.Documents(
         mutator = recordStateHolder(
-            initialState = recordTilingState(
-                profileId = profileId,
-                stringResource = Res.string.writing,
-            ),
+            profileId = profileId,
+            stringResource = Res.string.writing,
             itemId = StandardDocument::uri,
             cursorListLoader = recordRepository::authorDocuments,
         ),
     )
-    // TODO: Publications to be added in a future PR
-    ProfileTab.StandardSite.Publications -> null
+    ProfileTab.StandardSite.Publications -> ProfileScreenStateHolders.Records.Publications(
+        mutator = recordStateHolder(
+            profileId = profileId,
+            stringResource = Res.string.publications,
+            itemId = StandardPublication::uri,
+            cursorListLoader = recordRepository::authorPublications,
+        ),
+    )
 }
 
 private fun CoroutineScope.labelerSettingsStateHolder(
@@ -708,11 +707,20 @@ private fun defaultQueryData() = CursorQuery.Data(
 )
 
 private fun <T : Record> CoroutineScope.recordStateHolder(
-    initialState: RecordState<T>,
+    profileId: ProfileId,
+    stringResource: StringResource,
     itemId: (T) -> Any,
     cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
 ): RecordStateHolder<T> = actionStateFlowMutator(
-    initialState = initialState,
+    initialState = RecordState(
+        stringResource = stringResource,
+        tilingData = TilingState.Data(
+            currentQuery = ProfilesQuery(
+                profileId = profileId,
+                data = defaultQueryData(),
+            ),
+        ),
+    ),
     actionTransform = transform@{ actions ->
         actions.toMutationStream {
             type().flow
@@ -729,20 +737,6 @@ private fun <T : Record> CoroutineScope.recordStateHolder(
         }
     },
 )
-
-private fun <T : Record> recordTilingState(
-    profileId: ProfileId,
-    stringResource: StringResource,
-): RecordState<T> =
-    RecordState(
-        stringResource = stringResource,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = defaultQueryData(),
-            ),
-        ),
-    )
 
 private fun ProfileTab.shouldShow(
     isSignedIn: Boolean,
