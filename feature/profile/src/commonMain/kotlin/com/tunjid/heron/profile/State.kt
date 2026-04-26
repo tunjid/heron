@@ -26,9 +26,11 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -128,6 +130,10 @@ sealed class ProfileScreenStateHolders {
         class Documents(
             mutator: RecordStateHolder<StandardDocument>,
         ) : Records<StandardDocument>(mutator)
+
+        class Publications(
+            mutator: RecordStateHolder<StandardPublication>,
+        ) : Records<StandardPublication>(mutator)
     }
 
     class Timeline(
@@ -157,8 +163,36 @@ sealed class ProfileScreenStateHolders {
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
             is Records.Documents -> "Documents"
+            is Records.Publications -> "Publications"
             is Timeline -> state.value.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
+        }
+
+    val tab
+        get() = when (this) {
+            is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
+            is Records.Lists -> ProfileTab.Bluesky.Lists.All
+            is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
+            is Records.Documents -> ProfileTab.StandardSite.Documents
+            is Records.Publications -> ProfileTab.StandardSite.Publications
+            is Timeline -> when (val timeline = state.value.timeline) {
+                is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
+                    timeline.feedGenerator.uri,
+                )
+
+                is com.tunjid.heron.data.core.models.Timeline.Profile -> when (timeline.type) {
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Posts -> ProfileTab.Bluesky.Posts.Standard
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Replies -> ProfileTab.Bluesky.Posts.Replies
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Likes -> ProfileTab.Bluesky.Posts.Likes
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Media -> ProfileTab.Bluesky.Posts.Media
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Videos -> ProfileTab.Bluesky.Posts.Videos
+                }
+                is com.tunjid.heron.data.core.models.Timeline.Home.Following,
+                is com.tunjid.heron.data.core.models.Timeline.Home.List,
+                is com.tunjid.heron.data.core.models.Timeline.StarterPack,
+                -> null
+            }
+            is LabelerSettings -> null
         }
 
     fun refresh() = when (this) {
