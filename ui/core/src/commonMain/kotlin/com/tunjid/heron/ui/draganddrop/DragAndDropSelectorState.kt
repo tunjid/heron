@@ -116,24 +116,24 @@ class DragAndDropSelectorState<T>(
         id: String,
     ) : DragAndDropTarget {
 
-        var sourceId by mutableStateOf(id)
+        var id by mutableStateOf(id)
 
         override fun onStarted(event: DragAndDropEvent) {
             draggedId = event.draggedId()
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            hoveredId = sourceId
+            hoveredId = id
         }
 
         override fun onExited(event: DragAndDropEvent) {
-            if (isHoveredId(sourceId)) hoveredId = null
+            if (isHoveredId(id)) hoveredId = null
         }
 
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val draggedIndex = event.draggedIndex()
             val droppedIndex = items.indexOfFirst {
-                it.id() == sourceId
+                it.id() == id
             }
 
             val acceptedDrop =
@@ -197,15 +197,15 @@ class DragAndDropSelectorState<T>(
     companion object {
         fun <T> Modifier.selectorDragAndDrop(
             state: DragAndDropSelectorState<T>,
-            sourceId: String,
-        ) = selectorDragAndDropSource(sourceId)
+            id: String,
+        ) = selectorDragAndDropSource(id)
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event.draggedId() != null
                 },
-                target = state.tabTargets.getOrPut(sourceId) {
-                    state.TabTarget(sourceId)
-                }.also { it.sourceId = sourceId },
+                target = state.tabTargets.getOrPut(id) {
+                    state.TabTarget(id)
+                }.also { it.id = id },
             )
 
         fun <T> Modifier.selectorDropTarget(
