@@ -71,6 +71,8 @@ import sh.christian.ozone.api.RKey
 import site.standard.graph.Subscription
 import site.standard.heron.GetDocumentsQueryParams
 import site.standard.heron.GetDocumentsResponse
+import site.standard.heron.GetPublicationsQueryParams
+import site.standard.heron.GetPublicationsResponse
 import site.standard.heron.GetSubscribedPublicationsQueryParams
 import site.standard.heron.GetSubscribedPublicationsResponse
 
@@ -95,6 +97,11 @@ interface StandardSiteRecordOperations {
         query: StandardPublicationDocumentsQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardDocument>>
+
+    fun authorPublications(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardPublication>>
 
     fun subscribedPublications(
         query: CursorQuery,
@@ -231,6 +238,59 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                             documents.forEach {
                                 add(
                                     documentView = it,
+                                    viewingProfileId = signedInProfileId,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+            .flowOn(ioDispatcher)
+
+    override fun authorPublications(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardPublication>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
+
+            combine(
+                standardSiteDao.authorPublications(
+                    viewingProfileId = signedInProfileId?.id,
+                    publisherId = profileDid.did,
+                    limit = query.data.limit,
+                    offset = query.data.offset,
+                )
+                    .distinctUntilChangedMap { populatedStandardPublicationEntities ->
+                        populatedStandardPublicationEntities.map(
+                            PopulatedStandardPublicationEntity::asExternalModel,
+                        )
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getPublications(
+                            params = GetPublicationsQueryParams(
+                                author = profileDid,
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetPublicationsResponse::cursor,
+                    onResponse = {
+                        // Notably, this does not delete on refresh as
+                        // subscriptions for non-signed in users may accidentally
+                        // be deleted and not restored causing them to miss notifications
+                        multipleEntitySaverProvider.saveInTransaction {
+                            publications.forEach {
+                                add(
+                                    publicationView = it,
                                     viewingProfileId = signedInProfileId,
                                 )
                             }
