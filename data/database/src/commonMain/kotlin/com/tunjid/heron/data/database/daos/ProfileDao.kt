@@ -74,7 +74,7 @@ interface ProfileDao {
     @Query(
         """
             SELECT profileTabs.* FROM profiles
-            LEFT JOIN profileTabs
+            INNER JOIN profileTabs
                 ON profiles.did = profileTabs.profileId
             WHERE did IS :profileIdOrHandle
             OR handle IS :profileIdOrHandle
