@@ -615,32 +615,32 @@ internal class OfflineProfileRepository @Inject constructor(
 }
 
 private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
-    ProfileTab.Bluesky.FeedGenerators -> PutTabsRequestItemUnion.CollectionTab(
-        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyFeedGenerator),
-    )
-    is ProfileTab.Bluesky.FeedGenerator -> PutTabsRequestItemUnion.FeedGeneratorTab(
-        value = TabsFeedGeneratorTab(feedGeneratorUri = AtUri(uri.uri)),
-    )
-    ProfileTab.Bluesky.Likes -> PutTabsRequestItemUnion.ProfileTab(
-        value = TabsProfileTab(kind = TabsProfileTabKind.Likes),
-    )
-    ProfileTab.Bluesky.Lists -> PutTabsRequestItemUnion.CollectionTab(
-        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphList),
-    )
-    ProfileTab.Bluesky.Media -> PutTabsRequestItemUnion.ProfileTab(
-        value = TabsProfileTab(kind = TabsProfileTabKind.Media),
-    )
-    ProfileTab.Bluesky.Posts -> PutTabsRequestItemUnion.ProfileTab(
+    ProfileTab.Bluesky.Posts.Standard -> PutTabsRequestItemUnion.ProfileTab(
         value = TabsProfileTab(kind = TabsProfileTabKind.Posts),
     )
-    ProfileTab.Bluesky.Replies -> PutTabsRequestItemUnion.ProfileTab(
+    ProfileTab.Bluesky.Posts.Replies -> PutTabsRequestItemUnion.ProfileTab(
         value = TabsProfileTab(kind = TabsProfileTabKind.Replies),
+    )
+    ProfileTab.Bluesky.Posts.Likes -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Likes),
+    )
+    ProfileTab.Bluesky.Posts.Media -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Media),
+    )
+    ProfileTab.Bluesky.Posts.Videos -> PutTabsRequestItemUnion.ProfileTab(
+        value = TabsProfileTab(kind = TabsProfileTabKind.Videos),
+    )
+    ProfileTab.Bluesky.FeedGenerators.All -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyFeedGenerator),
+    )
+    is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> PutTabsRequestItemUnion.FeedGeneratorTab(
+        value = TabsFeedGeneratorTab(feedGeneratorUri = AtUri(uri.uri)),
+    )
+    ProfileTab.Bluesky.Lists.All -> PutTabsRequestItemUnion.CollectionTab(
+        value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphList),
     )
     ProfileTab.Bluesky.StarterPacks -> PutTabsRequestItemUnion.CollectionTab(
         value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyGraphStarterpack),
-    )
-    ProfileTab.Bluesky.Videos -> PutTabsRequestItemUnion.ProfileTab(
-        value = TabsProfileTab(kind = TabsProfileTabKind.Videos),
     )
     ProfileTab.StandardSite.Documents -> PutTabsRequestItemUnion.CollectionTab(
         value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardDocument),

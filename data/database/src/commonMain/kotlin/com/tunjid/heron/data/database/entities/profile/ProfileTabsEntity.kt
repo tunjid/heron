@@ -60,18 +60,18 @@ fun ProfileTabsEntity?.asExternalModels(): List<ProfileTab> =
     }
 
 private fun String.asProfileTabOrNull(): ProfileTab? = when (this) {
-    Timeline.Profile.Type.Posts.suffix -> ProfileTab.Bluesky.Posts
-    Timeline.Profile.Type.Replies.suffix -> ProfileTab.Bluesky.Replies
-    Timeline.Profile.Type.Likes.suffix -> ProfileTab.Bluesky.Likes
-    Timeline.Profile.Type.Media.suffix -> ProfileTab.Bluesky.Media
-    Timeline.Profile.Type.Videos.suffix -> ProfileTab.Bluesky.Videos
-    FeedGeneratorUri.NAMESPACE -> ProfileTab.Bluesky.FeedGenerators
-    ListUri.NAMESPACE -> ProfileTab.Bluesky.Lists
+    Timeline.Profile.Type.Posts.suffix -> ProfileTab.Bluesky.Posts.Standard
+    Timeline.Profile.Type.Replies.suffix -> ProfileTab.Bluesky.Posts.Replies
+    Timeline.Profile.Type.Likes.suffix -> ProfileTab.Bluesky.Posts.Likes
+    Timeline.Profile.Type.Media.suffix -> ProfileTab.Bluesky.Posts.Media
+    Timeline.Profile.Type.Videos.suffix -> ProfileTab.Bluesky.Posts.Videos
+    FeedGeneratorUri.NAMESPACE -> ProfileTab.Bluesky.FeedGenerators.All
+    ListUri.NAMESPACE -> ProfileTab.Bluesky.Lists.All
     StarterPackUri.NAMESPACE -> ProfileTab.Bluesky.StarterPacks
     StandardPublicationUri.NAMESPACE -> ProfileTab.StandardSite.Publications
     StandardDocumentUri.NAMESPACE -> ProfileTab.StandardSite.Documents
     else -> when (val uri = asRecordUriOrNull()) {
-        is FeedGeneratorUri -> ProfileTab.Bluesky.FeedGenerator(uri)
+        is FeedGeneratorUri -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(uri)
         else -> null
     }
 }
@@ -84,14 +84,14 @@ fun List<ProfileTab>.profileTabsEntity(
         separator = TabDelimiter,
         transform = { profileTab ->
             when (profileTab) {
-                ProfileTab.Bluesky.Posts -> Timeline.Profile.Type.Posts.suffix
-                ProfileTab.Bluesky.Replies -> Timeline.Profile.Type.Replies.suffix
-                ProfileTab.Bluesky.Likes -> Timeline.Profile.Type.Likes.suffix
-                ProfileTab.Bluesky.Media -> Timeline.Profile.Type.Media.suffix
-                ProfileTab.Bluesky.Videos -> Timeline.Profile.Type.Videos.suffix
-                ProfileTab.Bluesky.FeedGenerators -> FeedGeneratorUri.NAMESPACE
-                is ProfileTab.Bluesky.FeedGenerator -> profileTab.uri.uri
-                ProfileTab.Bluesky.Lists -> ListUri.NAMESPACE
+                ProfileTab.Bluesky.Posts.Standard -> Timeline.Profile.Type.Posts.suffix
+                ProfileTab.Bluesky.Posts.Replies -> Timeline.Profile.Type.Replies.suffix
+                ProfileTab.Bluesky.Posts.Likes -> Timeline.Profile.Type.Likes.suffix
+                ProfileTab.Bluesky.Posts.Media -> Timeline.Profile.Type.Media.suffix
+                ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos.suffix
+                ProfileTab.Bluesky.FeedGenerators.All -> FeedGeneratorUri.NAMESPACE
+                is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> profileTab.uri.uri
+                ProfileTab.Bluesky.Lists.All -> ListUri.NAMESPACE
                 ProfileTab.Bluesky.StarterPacks -> StarterPackUri.NAMESPACE
                 ProfileTab.StandardSite.Documents -> StandardDocumentUri.NAMESPACE
                 ProfileTab.StandardSite.Publications -> StandardPublicationUri.NAMESPACE
@@ -106,16 +106,16 @@ operator fun ProfileTabsEntity.plus(tab: String) = when (tab.asProfileTabOrNull(
     )
 }
 
-private val Default = listOf(
-    ProfileTab.Bluesky.Posts,
-    ProfileTab.Bluesky.Replies,
-    ProfileTab.Bluesky.Likes,
-    ProfileTab.Bluesky.Media,
-    ProfileTab.Bluesky.Videos,
-    ProfileTab.Bluesky.FeedGenerators,
+private val Default: List<ProfileTab> = listOf(
+    ProfileTab.Bluesky.Posts.Standard,
+    ProfileTab.Bluesky.Posts.Replies,
+    ProfileTab.Bluesky.Posts.Likes,
+    ProfileTab.Bluesky.Posts.Media,
+    ProfileTab.Bluesky.Posts.Videos,
+    ProfileTab.Bluesky.FeedGenerators.All,
     ProfileTab.StandardSite.Documents,
     ProfileTab.Bluesky.StarterPacks,
-    ProfileTab.Bluesky.Lists,
+    ProfileTab.Bluesky.Lists.All,
 )
 
 private const val TabDelimiter = "@@@"

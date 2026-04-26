@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ListUri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -25,30 +26,40 @@ sealed class ProfileTab : UrlEncodableModel {
     @Serializable
     sealed class Bluesky : ProfileTab() {
         @Serializable
-        data object Posts : Bluesky()
+        sealed class Posts : Bluesky() {
+            @Serializable
+            data object Standard : Posts()
+
+            @Serializable
+            data object Replies : Posts()
+
+            @Serializable
+            data object Likes : Posts()
+
+            @Serializable
+            data object Media : Posts()
+
+            @Serializable
+            data object Videos : Posts()
+        }
 
         @Serializable
-        data object Replies : Bluesky()
+        sealed class Lists : Bluesky() {
+            @Serializable
+            data object All : Lists()
+        }
 
         @Serializable
-        data object Likes : Bluesky()
+        sealed class FeedGenerators : Bluesky() {
 
-        @Serializable
-        data object Media : Bluesky()
+            @Serializable
+            data object All : FeedGenerators()
 
-        @Serializable
-        data object Videos : Bluesky()
-
-        @Serializable
-        data object Lists : Bluesky()
-
-        @Serializable
-        data object FeedGenerators : Bluesky()
-
-        @Serializable
-        data class FeedGenerator(
-            val uri: FeedGeneratorUri,
-        ) : Bluesky()
+            @Serializable
+            data class FeedGenerator(
+                val uri: FeedGeneratorUri,
+            ) : FeedGenerators()
+        }
 
         @Serializable
         data object StarterPacks : Bluesky()
@@ -63,3 +74,12 @@ sealed class ProfileTab : UrlEncodableModel {
         data object Documents : StandardSite()
     }
 }
+
+val ProfileTab.Bluesky.Posts.profileTimelineType: Timeline.Profile.Type
+    get() = when (this) {
+        ProfileTab.Bluesky.Posts.Standard -> Timeline.Profile.Type.Posts
+        ProfileTab.Bluesky.Posts.Replies -> Timeline.Profile.Type.Replies
+        ProfileTab.Bluesky.Posts.Likes -> Timeline.Profile.Type.Likes
+        ProfileTab.Bluesky.Posts.Media -> Timeline.Profile.Type.Media
+        ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos
+    }
