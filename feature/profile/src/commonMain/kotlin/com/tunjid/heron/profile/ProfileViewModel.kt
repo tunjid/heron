@@ -328,7 +328,7 @@ private fun loadProfileMutations(
                 val tabsToHolders = stateHolders
                     .associateBy(ProfileScreenStateHolders::tab)
 
-                val deferredHolders: List<Deferred<ProfileScreenStateHolders?>> = coroutineScope {
+                val holders = coroutineScope {
                     tabs
                         .filter { tab ->
                             tab.shouldShow(
@@ -349,9 +349,8 @@ private fun loadProfileMutations(
                                 )
                             }
                         }
+                        .awaitAll()
                 }
-
-                val holders = deferredHolders.awaitAll()
                     .filterNotNull()
                     .toMutableList()
 
