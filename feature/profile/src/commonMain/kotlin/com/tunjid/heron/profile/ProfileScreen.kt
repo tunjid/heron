@@ -165,6 +165,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
+import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -533,6 +534,44 @@ internal fun ProfileScreen(
                                                 ),
                                             )
                                         },
+                                        onSubscriptionToggled = { publication, subscription ->
+                                            actions(
+                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                    subscriptionUri = subscription.uri,
+                                                )
+                                                else Action.TogglePublicationSubscription.Subscribe(
+                                                    publicationUri = publication.uri,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+                            is ProfileScreenStateHolders.Records.Publications -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { publication ->
+                                    Publication(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .animateItem()
+                                            .shapedClickable {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = publication.uri.path,
+                                                            models = listOf(publication),
+                                                            sharedElementPrefix = publication.uri.uri,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
+                                            .recordPadding(),
+                                        paneTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = publication.uri.uri,
+                                        publication = publication,
                                         onSubscriptionToggled = { publication, subscription ->
                                             actions(
                                                 if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
