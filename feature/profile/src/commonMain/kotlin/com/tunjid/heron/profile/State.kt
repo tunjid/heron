@@ -170,8 +170,8 @@ sealed class ProfileScreenStateHolders {
 
     val tab
         get() = when (this) {
-            is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators
-            is Records.Lists -> ProfileTab.Bluesky.Lists
+            is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
+            is Records.Lists -> ProfileTab.Bluesky.Lists.All
             is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
             is Records.Documents -> ProfileTab.StandardSite.Documents
             is Records.Publications -> ProfileTab.StandardSite.Publications

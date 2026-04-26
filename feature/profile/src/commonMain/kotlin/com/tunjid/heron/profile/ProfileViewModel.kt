@@ -339,6 +339,8 @@ private fun loadProfileMutations(
                         }
                         .map { tab ->
                             async {
+                                // Make sure the ViewModel CoroutineScope is used
+                                // for the state holder
                                 tabsToHolders[tab] ?: scope.profileScreenStateHolder(
                                     tab = tab,
                                     profileId = profileId,
@@ -754,8 +756,7 @@ private fun ProfileTab.shouldShow(
     ProfileTab.Bluesky.Posts.Media,
     ProfileTab.Bluesky.Posts.Videos,
     is ProfileTab.Bluesky.FeedGenerators,
-    ProfileTab.Bluesky.FeedGenerators,
-    ProfileTab.Bluesky.Lists.All,
+    is ProfileTab.Bluesky.Lists,
     ProfileTab.Bluesky.StarterPacks,
     ProfileTab.StandardSite.Documents,
     ProfileTab.StandardSite.Publications,
