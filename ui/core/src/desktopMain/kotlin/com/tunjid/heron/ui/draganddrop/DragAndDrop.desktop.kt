@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.home
+package com.tunjid.heron.ui.draganddrop
 
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.ui.Modifier
@@ -26,7 +26,7 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
-actual fun timelineEditDragAndDropTransferData(
+actual fun selectorDragAndDropTransferData(
     title: String,
 ): DragAndDropTransferData = DragAndDropTransferData(
     transferable = DragAndDropTransferable(
@@ -41,8 +41,8 @@ actual fun DragAndDropEvent.draggedId(): String? {
     return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
 }
 
-actual fun Modifier.timelineEditDragAndDropSource(
-    sourceId: String,
+actual fun Modifier.selectorDragAndDropSource(
+    id: String,
 ): Modifier = this.dragAndDropSource {
-    timelineEditDragAndDropTransferData(sourceId)
+    selectorDragAndDropTransferData(id)
 }

@@ -76,8 +76,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
@@ -131,12 +129,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
-
-expect fun timelineEditDragAndDropTransferData(title: String): DragAndDropTransferData
-
-expect fun DragAndDropEvent.draggedId(): String?
-
-expect fun Modifier.timelineEditDragAndDropSource(sourceId: String): Modifier
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

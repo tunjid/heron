@@ -14,31 +14,18 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.home
+package com.tunjid.heron.ui.draganddrop
 
-import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
-import platform.Foundation.NSItemProvider
-import platform.UIKit.UIDragItem
 
-actual fun timelineEditDragAndDropTransferData(
+expect fun selectorDragAndDropTransferData(
     title: String,
-): DragAndDropTransferData =
-    DragAndDropTransferData(
-        items = listOf(
-            UIDragItem(
-                itemProvider = NSItemProvider(),
-            ).apply { localObject = title },
-        ),
-    )
+): DragAndDropTransferData
 
-actual fun DragAndDropEvent.draggedId(): String? =
-    items.firstOrNull()?.localObject as? String
+expect fun DragAndDropEvent.draggedId(): String?
 
-actual fun Modifier.timelineEditDragAndDropSource(
-    sourceId: String,
-): Modifier = this.dragAndDropSource {
-    timelineEditDragAndDropTransferData(sourceId)
-}
+expect fun Modifier.selectorDragAndDropSource(
+    id: String,
+): Modifier

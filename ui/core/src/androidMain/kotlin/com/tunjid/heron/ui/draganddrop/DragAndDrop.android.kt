@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.home
+package com.tunjid.heron.ui.draganddrop
 
 import android.content.ClipData
 import androidx.compose.foundation.draganddrop.dragAndDropSource
@@ -24,7 +24,7 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
-actual fun timelineEditDragAndDropTransferData(
+actual fun selectorDragAndDropTransferData(
     title: String,
 ): DragAndDropTransferData =
     DragAndDropTransferData(
@@ -35,15 +35,18 @@ actual fun timelineEditDragAndDropTransferData(
 actual fun DragAndDropEvent.draggedId(): String? =
     toAndroidDragEvent().localState as? String
 
+// The non deprecated overload of dragAndDropSource does
+// not allow for defining the start trigger for the drag
+// and drop operation
 @Suppress("DEPRECATION")
-actual fun Modifier.timelineEditDragAndDropSource(
-    sourceId: String,
+actual fun Modifier.selectorDragAndDropSource(
+    id: String,
 ): Modifier = dragAndDropSource(
     block = {
         detectDragGesturesAfterLongPress(
             onDragStart = {
                 startTransfer(
-                    timelineEditDragAndDropTransferData(sourceId),
+                    selectorDragAndDropTransferData(id),
                 )
             },
             onDrag = { _, _ -> },
