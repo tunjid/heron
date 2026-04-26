@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
@@ -69,7 +70,10 @@ private fun String.asProfileTabOrNull(): ProfileTab? = when (this) {
     StarterPackUri.NAMESPACE -> ProfileTab.Bluesky.StarterPacks
     StandardPublicationUri.NAMESPACE -> ProfileTab.StandardSite.Publications
     StandardDocumentUri.NAMESPACE -> ProfileTab.StandardSite.Documents
-    else -> null
+    else -> when (val uri = asRecordUriOrNull()) {
+        is FeedGeneratorUri -> ProfileTab.Bluesky.FeedGenerator(uri)
+        else -> null
+    }
 }
 
 fun List<ProfileTab>.profileTabsEntity(
@@ -86,6 +90,7 @@ fun List<ProfileTab>.profileTabsEntity(
                 ProfileTab.Bluesky.Media -> Timeline.Profile.Type.Media.suffix
                 ProfileTab.Bluesky.Videos -> Timeline.Profile.Type.Videos.suffix
                 ProfileTab.Bluesky.FeedGenerators -> FeedGeneratorUri.NAMESPACE
+                is ProfileTab.Bluesky.FeedGenerator -> profileTab.uri.uri
                 ProfileTab.Bluesky.Lists -> ListUri.NAMESPACE
                 ProfileTab.Bluesky.StarterPacks -> StarterPackUri.NAMESPACE
                 ProfileTab.StandardSite.Documents -> StandardDocumentUri.NAMESPACE

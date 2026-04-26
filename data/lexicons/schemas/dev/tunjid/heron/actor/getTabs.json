@@ -28,7 +28,8 @@
                 "type": "union",
                 "refs": [
                   "dev.tunjid.heron.actor.tabs#profileTab",
-                  "dev.tunjid.heron.actor.tabs#collectionTab"
+                  "dev.tunjid.heron.actor.tabs#collectionTab",
+                  "dev.tunjid.heron.actor.tabs#feedGeneratorTab"
                 ]
               }
             }

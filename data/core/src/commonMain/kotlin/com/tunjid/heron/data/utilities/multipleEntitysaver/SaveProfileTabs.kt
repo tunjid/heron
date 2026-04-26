@@ -37,6 +37,7 @@ internal fun MultipleEntitySaver.add(
             when (item) {
                 is GetTabsResponseItemUnion.CollectionTab -> entity + item.value.collection.value
                 is GetTabsResponseItemUnion.ProfileTab -> entity + item.value.kind.value
+                is GetTabsResponseItemUnion.FeedGeneratorTab -> entity + item.value.feedGeneratorUri.atUri
                 is GetTabsResponseItemUnion.Unknown -> entity
             }
         },

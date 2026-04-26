@@ -79,6 +79,7 @@ import dev.tunjid.heron.actor.PutTabsRequest
 import dev.tunjid.heron.actor.PutTabsRequestItemUnion
 import dev.tunjid.heron.actor.TabsCollectionTab
 import dev.tunjid.heron.actor.TabsCollectionTabCollection
+import dev.tunjid.heron.actor.TabsFeedGeneratorTab
 import dev.tunjid.heron.actor.TabsProfileTab
 import dev.tunjid.heron.actor.TabsProfileTabKind
 import dev.zacsweers.metro.Inject
@@ -93,6 +94,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -615,6 +617,9 @@ internal class OfflineProfileRepository @Inject constructor(
 private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
     ProfileTab.Bluesky.FeedGenerators -> PutTabsRequestItemUnion.CollectionTab(
         value = TabsCollectionTab(collection = TabsCollectionTabCollection.AppBskyFeedGenerator),
+    )
+    is ProfileTab.Bluesky.FeedGenerator -> PutTabsRequestItemUnion.FeedGeneratorTab(
+        value = TabsFeedGeneratorTab(feedGeneratorUri = AtUri(uri.uri)),
     )
     ProfileTab.Bluesky.Likes -> PutTabsRequestItemUnion.ProfileTab(
         value = TabsProfileTab(kind = TabsProfileTabKind.Likes),

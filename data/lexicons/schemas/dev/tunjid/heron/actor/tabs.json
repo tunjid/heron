@@ -15,7 +15,7 @@
             "description": "Ordered list of tabs to display, in the order shown.",
             "items": {
               "type": "union",
-              "refs": ["#profileTab", "#collectionTab"]
+              "refs": ["#profileTab", "#collectionTab", "#feedGeneratorTab"]
             }
           },
           "createdAt": {
@@ -53,6 +53,18 @@
             "site.standard.publication",
             "site.standard.graph.subscription"
           ]
+        }
+      }
+    },
+    "feedGeneratorTab": {
+      "type": "object",
+      "description": "A profile tab that shows the timeline of a bluesky feed generator uri.",
+      "required": ["feedGeneratorUri"],
+      "properties": {
+        "feedGeneratorUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "at-uri of the feed generator to render as a profile tab."
         }
       }
     }

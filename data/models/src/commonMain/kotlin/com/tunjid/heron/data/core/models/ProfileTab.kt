@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -43,6 +44,11 @@ sealed class ProfileTab : UrlEncodableModel {
 
         @Serializable
         data object FeedGenerators : Bluesky()
+
+        @Serializable
+        data class FeedGenerator(
+            val uri: FeedGeneratorUri,
+        ) : Bluesky()
 
         @Serializable
         data object StarterPacks : Bluesky()
