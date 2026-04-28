@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.ListUri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -73,6 +72,10 @@ sealed class ProfileTab : UrlEncodableModel {
         @Serializable
         data object Documents : StandardSite()
     }
+
+    companion object {
+        val Static get() = StaticTabs
+    }
 }
 
 val ProfileTab.Bluesky.Posts.profileTimelineType: Timeline.Profile.Type
@@ -83,3 +86,16 @@ val ProfileTab.Bluesky.Posts.profileTimelineType: Timeline.Profile.Type
         ProfileTab.Bluesky.Posts.Media -> Timeline.Profile.Type.Media
         ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos
     }
+
+private val StaticTabs = listOf(
+    ProfileTab.Bluesky.Posts.Standard,
+    ProfileTab.Bluesky.Posts.Replies,
+    ProfileTab.Bluesky.Posts.Likes,
+    ProfileTab.Bluesky.Posts.Media,
+    ProfileTab.Bluesky.Posts.Videos,
+    ProfileTab.Bluesky.FeedGenerators.All,
+    ProfileTab.Bluesky.Lists.All,
+    ProfileTab.Bluesky.StarterPacks,
+    ProfileTab.StandardSite.Documents,
+    ProfileTab.StandardSite.Publications,
+)

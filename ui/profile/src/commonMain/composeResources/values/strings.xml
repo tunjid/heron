@@ -15,4 +15,14 @@
   -->
 
 <resources>
+  <string name="tab_posts">Posts</string>
+  <string name="tab_replies">Replies</string>
+  <string name="tab_likes">Likes</string>
+  <string name="tab_media">Media</string>
+  <string name="tab_video">Video</string>
+  <string name="tab_feeds">Feeds</string>
+  <string name="tab_lists">Lists</string>
+  <string name="tab_starter_packs">Starter Packs</string>
+  <string name="tab_documents">Writing</string>
+  <string name="tab_publications">Publications</string>
 </resources>

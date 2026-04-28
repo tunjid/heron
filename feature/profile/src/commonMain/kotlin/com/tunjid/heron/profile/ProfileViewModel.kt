@@ -18,16 +18,12 @@ package com.tunjid.heron.profile
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.ContentLabelPreference
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
-import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -44,7 +40,6 @@ import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
@@ -54,12 +49,11 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.profile.ProfileScreenStateHolders.Records.Documents
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
@@ -69,20 +63,12 @@ import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
-import heron.feature.profile.generated.resources.Res
-import heron.feature.profile.generated.resources.feeds
-import heron.feature.profile.generated.resources.lists
-import heron.feature.profile.generated.resources.publications
-import heron.feature.profile.generated.resources.starter_packs
-import heron.feature.profile.generated.resources.writing
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -99,7 +85,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
-import org.jetbrains.compose.resources.StringResource
 
 internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -606,7 +591,7 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
     ProfileTab.Bluesky.FeedGenerators.All -> ProfileScreenStateHolders.Records.Feeds(
         mutator = recordStateHolder(
             profileId = profileId,
-            stringResource = Res.string.feeds,
+            stringResource = tab.stringResource,
             itemId = FeedGenerator::cid,
             cursorListLoader = recordRepository::feedGenerators,
         ),
@@ -614,7 +599,7 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
     ProfileTab.Bluesky.StarterPacks -> ProfileScreenStateHolders.Records.StarterPacks(
         mutator = recordStateHolder(
             profileId = profileId,
-            stringResource = Res.string.starter_packs,
+            stringResource = tab.stringResource,
             itemId = StarterPack::cid,
             cursorListLoader = recordRepository::starterPacks,
         ),
@@ -622,15 +607,15 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
     ProfileTab.Bluesky.Lists.All -> ProfileScreenStateHolders.Records.Lists(
         mutator = recordStateHolder(
             profileId = profileId,
-            stringResource = Res.string.lists,
+            stringResource = tab.stringResource,
             itemId = FeedList::cid,
             cursorListLoader = recordRepository::lists,
         ),
     )
-    ProfileTab.StandardSite.Documents -> ProfileScreenStateHolders.Records.Documents(
+    ProfileTab.StandardSite.Documents -> Documents(
         mutator = recordStateHolder(
             profileId = profileId,
-            stringResource = Res.string.writing,
+            stringResource = tab.stringResource,
             itemId = StandardDocument::uri,
             cursorListLoader = recordRepository::authorDocuments,
         ),
@@ -638,7 +623,7 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
     ProfileTab.StandardSite.Publications -> ProfileScreenStateHolders.Records.Publications(
         mutator = recordStateHolder(
             profileId = profileId,
-            stringResource = Res.string.publications,
+            stringResource = tab.stringResource,
             itemId = StandardPublication::uri,
             cursorListLoader = recordRepository::authorPublications,
         ),
@@ -699,44 +684,6 @@ private fun CoroutineScope.labelerSettingsStateHolder(
             ),
         ),
     )
-
-private fun defaultQueryData() = CursorQuery.Data(
-    page = 0,
-    cursorAnchor = Clock.System.now(),
-    limit = 15,
-)
-
-private fun <T : Record> CoroutineScope.recordStateHolder(
-    profileId: ProfileId,
-    stringResource: StringResource,
-    itemId: (T) -> Any,
-    cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
-): RecordStateHolder<T> = actionStateFlowMutator(
-    initialState = RecordState(
-        stringResource = stringResource,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = defaultQueryData(),
-            ),
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream {
-            type().flow
-                .tilingMutations(
-                    currentState = { state() },
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = cursorListLoader,
-                    onNewItems = { items ->
-                        items.distinctBy(itemId)
-                    },
-                    onTilingDataUpdated = { copy(tilingData = it) },
-                )
-        }
-    },
-)
 
 private fun ProfileTab.shouldShow(
     isSignedIn: Boolean,

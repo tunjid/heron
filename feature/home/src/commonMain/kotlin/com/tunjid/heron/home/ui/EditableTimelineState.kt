@@ -38,9 +38,9 @@ internal class EditableTimelineState private constructor(
         selected = Timeline.Home::isPinned,
     )
 
-    val firstUnpinnedIndex get() = dragAndDropSelectorState.firstUnselectedIndex
     val isHintHovered get() = dragAndDropSelectorState.isHintHovered
     val shouldShowHint get() = dragAndDropSelectorState.firstUnselectedIndex == timelines.size
+    val partitioned get() = dragAndDropSelectorState.partitioned
 
     @Stable
     fun isHoveredId(

@@ -114,8 +114,6 @@ data class ListMemberQuery(
 
 interface ProfileRepository {
 
-    fun signedInProfile(): Flow<Profile>
-
     fun profile(profileId: Id.Profile): Flow<Profile>
 
     fun tabs(profileId: Id.Profile): Flow<List<ProfileTab>>
@@ -171,16 +169,6 @@ internal class OfflineProfileRepository @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : ProfileRepository {
-
-    override fun signedInProfile(): Flow<Profile> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            profileDao.profiles(
-                signedInProfiledId = signedInProfileId.id,
-                ids = listOf(signedInProfileId),
-            )
-                .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
-        }
-            .flowOn(ioDispatcher)
 
     override fun profile(
         profileId: Id.Profile,

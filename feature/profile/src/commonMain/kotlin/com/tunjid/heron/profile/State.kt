@@ -43,7 +43,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
-import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
@@ -57,6 +56,7 @@ import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
+import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
@@ -69,7 +69,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jetbrains.compose.resources.StringResource
 
 @Serializable
 data class State(
@@ -228,13 +227,7 @@ val ProfileScreenStateHolders?.canRefresh
         -> false
     }
 
-typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
 typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
-
-data class RecordState<T : Record>(
-    val stringResource: StringResource,
-    override val tilingData: TilingState.Data<ProfilesQuery, T>,
-) : TilingState<ProfilesQuery, T>
 
 sealed class Action(val key: String) {
 

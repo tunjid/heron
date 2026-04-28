@@ -25,6 +25,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.ProfileTab
+import heron.ui.profile.generated.resources.Res
+import heron.ui.profile.generated.resources.tab_documents
+import heron.ui.profile.generated.resources.tab_feeds
+import heron.ui.profile.generated.resources.tab_likes
+import heron.ui.profile.generated.resources.tab_lists
+import heron.ui.profile.generated.resources.tab_media
+import heron.ui.profile.generated.resources.tab_posts
+import heron.ui.profile.generated.resources.tab_publications
+import heron.ui.profile.generated.resources.tab_replies
+import heron.ui.profile.generated.resources.tab_starter_packs
+import heron.ui.profile.generated.resources.tab_video
 
 fun Modifier.profileBioTabBackground(
     color: () -> Color,
@@ -34,6 +46,20 @@ fun Modifier.profileBioTabBackground(
 )
     .fillMaxWidth()
     .height(ProfileBioTabHeight)
+
+val ProfileTab.stringResource
+    get() = when (this) {
+        ProfileTab.Bluesky.Posts.Likes -> Res.string.tab_likes
+        ProfileTab.Bluesky.Posts.Media -> Res.string.tab_media
+        ProfileTab.Bluesky.Posts.Replies -> Res.string.tab_replies
+        ProfileTab.Bluesky.Posts.Standard -> Res.string.tab_posts
+        ProfileTab.Bluesky.Posts.Videos -> Res.string.tab_video
+        is ProfileTab.Bluesky.FeedGenerators -> Res.string.tab_feeds
+        is ProfileTab.Bluesky.Lists -> Res.string.tab_lists
+        ProfileTab.Bluesky.StarterPacks -> Res.string.tab_starter_packs
+        ProfileTab.StandardSite.Documents -> Res.string.tab_documents
+        ProfileTab.StandardSite.Publications -> Res.string.tab_publications
+    }
 
 fun String.withProfileBannerSharedElementPrefix() = "banner-$this"
 fun String.withProfileBioTabSharedElementPrefix() = "bio-tab-$this"

@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.profile.ui
+package com.tunjid.heron.timeline.ui.record
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,16 +28,18 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-internal fun <T : Record> RecordList(
-    collectionStateHolder: ProfileScreenStateHolders.Records<T>,
+fun <T : Record, State : TilingState<out CursorQuery, T>> RecordList(
+    collectionStateHolder: ActionStateMutator<TilingState.Action, StateFlow<State>>,
     prefersCompactBottomNav: Boolean,
     itemKey: (T) -> Any,
     itemContent: @Composable (LazyItemScope.(T) -> Unit),
@@ -74,5 +76,3 @@ internal fun <T : Record> RecordList(
         },
     )
 }
-
-internal const val ProfileCollectionSharedElementPrefix = "profile-collection"
