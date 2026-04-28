@@ -78,12 +78,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -100,12 +95,12 @@ import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDrag
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
 import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
-import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.JiggleBox
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -113,6 +108,8 @@ import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
+import com.tunjid.heron.ui.modifiers.chipBackground
+import com.tunjid.heron.ui.modifiers.roundedBorder
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
@@ -363,19 +360,7 @@ private fun ExpandedTabs(
                 ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            val (pinned, saved) = remember(
-                editableTimelineState.firstUnpinnedIndex,
-                editableTimelineState.timelines.toList(),
-            ) {
-                val allTimelines = editableTimelineState.timelines
-                val index = editableTimelineState.firstUnpinnedIndex
-
-                if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
-                else allTimelines.subList(0, index) to allTimelines.subList(
-                    index,
-                    allTimelines.size,
-                )
-            }
+            val (pinned, saved) = editableTimelineState.partitioned
 
             key(Res.string.pinned) {
                 SectionTitle(
@@ -558,7 +543,7 @@ private fun TabsState.ExpandedTab(
                     animateColorAsState(
                         if (isHovered) TabsState.TabBackgroundColor
                         else Color.Transparent,
-                    ).let { it::value },
+                    )::value,
                 )
                 .skipToLookaheadSize()
                 .timelineEditDragAndDrop(
@@ -731,46 +716,6 @@ private fun TimelinePresentationSelector(
     }
 }
 
-private fun Modifier.roundedBorder(
-    isStroked: Boolean,
-    borderColor: () -> Color,
-    cornerRadius: () -> Dp,
-    strokeWidth: () -> Dp,
-) = drawWithCache {
-    val style = Stroke(
-        width = strokeWidth().toPx(),
-        pathEffect =
-        if (isStroked) PathEffect.dashPathEffect(
-            intervals = floatArrayOf(10f, 10f), // Dash length and gap length
-            phase = 0f, // Optional: offset for the dash pattern
-        )
-        else null,
-    )
-    onDrawBehind {
-        val radius = cornerRadius()
-        drawRoundRect(
-            cornerRadius = CornerRadius(
-                x = radius.toPx(),
-                y = radius.toPx(),
-            ),
-            color = borderColor(),
-            style = style,
-        )
-    }
-}
-
-private fun Modifier.chipBackground(
-    backgroundColor: () -> Color,
-) = drawBehind {
-    val chipHeight = ChipHeight.toPx()
-    drawRoundRect(
-        color = backgroundColor(),
-        topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-        size = size.copy(height = chipHeight),
-        cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-    )
-}
-
 private val ExpandableTabsBoundsTransform = BoundsTransform { _, _ ->
     spring(stiffness = Spring.StiffnessLow)
 }
@@ -806,8 +751,6 @@ private val TabButtonPaddingAnimationSpec = tween<Dp>(
 )
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
-
-private val ChipHeight = 32.dp
 
 private val TabButtonColors
     @Composable

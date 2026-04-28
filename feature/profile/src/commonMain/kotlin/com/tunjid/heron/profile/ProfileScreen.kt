@@ -121,10 +121,8 @@ import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUp
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
-import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
-import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -163,6 +161,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
@@ -1707,3 +1706,5 @@ private fun Modifier.recordPadding() =
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 36.dp
 private val BannerBlurRadius = 40.dp
+
+private const val ProfileCollectionSharedElementPrefix = "profile-collection"

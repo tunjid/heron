@@ -18,6 +18,7 @@ package com.tunjid.heron.ui.draganddrop
 
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +50,17 @@ class DragAndDropSelectorState<T>(
 
     var isHintHovered by mutableStateOf(false)
         private set
+
+    val partitioned: Pair<List<T>, List<T>> by derivedStateOf {
+        val items = items
+        val index = firstUnselectedIndex
+
+        if (index < 0) items.toList() to emptyList()
+        else items.subList(0, index) to items.subList(
+            index,
+            items.size,
+        )
+    }
 
     private val tabTargets = mutableStateMapOf<String, TabTarget>()
     private val hintTarget = HintTarget()

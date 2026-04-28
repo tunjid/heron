@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
-import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 
 internal typealias EditProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -63,7 +64,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @AssistedInject
 class ActualEditProfileViewModel(
-    profileRepository: ProfileRepository,
+    authRepository: AuthRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -77,7 +78,7 @@ class ActualEditProfileViewModel(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
             loadProfileMutations(
-                profileRepository = profileRepository,
+                authRepository = authRepository,
             ),
             pendingUpdateSubmissionMutations(
                 writeQueue = writeQueue,
@@ -106,9 +107,10 @@ class ActualEditProfileViewModel(
     )
 
 private fun loadProfileMutations(
-    profileRepository: ProfileRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    profileRepository.signedInProfile()
+    authRepository.signedInUser
+        .filterNotNull()
         .mapToMutation { signedInProfile ->
             copy(
                 profile = signedInProfile,
