@@ -52,13 +52,13 @@ class DragAndDropSelectorState<T>(
         private set
 
     val partitioned: Pair<List<T>, List<T>> by derivedStateOf {
-        val items = items
-        val index = firstUnselectedIndex
+        val snapshot = items.toList()
+        val index = firstUnselectedIndex.coerceIn(0, snapshot.size)
 
-        if (index < 0) items.toList() to emptyList()
-        else items.subList(0, index) to items.subList(
+        if (index < 0) snapshot to emptyList()
+        else snapshot.subList(0, index) to snapshot.subList(
             index,
-            items.size,
+            snapshot.size,
         )
     }
 
