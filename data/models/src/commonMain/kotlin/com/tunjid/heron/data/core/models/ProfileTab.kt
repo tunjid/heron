@@ -74,7 +74,7 @@ sealed class ProfileTab : UrlEncodableModel {
     }
 
     companion object {
-        val Static get() = StaticTabs
+        val Static: List<ProfileTab> get() = StaticTabs
     }
 }
 
@@ -87,7 +87,7 @@ val ProfileTab.Bluesky.Posts.profileTimelineType: Timeline.Profile.Type
         ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos
     }
 
-private val StaticTabs = listOf(
+private val StaticTabs: List<ProfileTab> = listOf(
     ProfileTab.Bluesky.Posts.Standard,
     ProfileTab.Bluesky.Posts.Replies,
     ProfileTab.Bluesky.Posts.Likes,
