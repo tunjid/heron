@@ -906,5 +906,5 @@ private const val TextContentZIndex = 1f
 
 private val MutedWordShape = RoundedCornerShape(8.dp)
 
-private val BoundsTransformDelay = 200.milliseconds
+private val BoundsTransformDelay = 800.milliseconds
 private val BoundsSnapSpec = SnapSpec<Rect>()
