@@ -84,7 +84,7 @@ class DragAndDropSelectorState<T>(
 
     private fun DragAndDropEvent.draggedIndex() =
         draggedId()?.let { draggedId ->
-            items.indexOfFirst { it.id() == draggedId }
+            this@DragAndDropSelectorState.items.indexOfFirst { it.id() == draggedId }
         } ?: -1
 
     private fun dropItem(
