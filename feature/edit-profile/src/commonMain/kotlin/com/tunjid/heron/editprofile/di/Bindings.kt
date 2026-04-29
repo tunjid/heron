@@ -18,11 +18,13 @@ package com.tunjid.heron.editprofile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,6 +35,7 @@ import com.tunjid.heron.editprofile.ActualEditProfileViewModel
 import com.tunjid.heron.editprofile.EditProfileScreen
 import com.tunjid.heron.editprofile.RouteViewModelInitializer
 import com.tunjid.heron.editprofile.saveProfileAction
+import com.tunjid.heron.editprofile.ui.EditButton
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -163,6 +166,12 @@ class EditProfileBindings(
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        actions = {
+                            EditButton(
+                                modifier = Modifier
+                                    .padding(8.dp),
+                            )
+                        },
                     )
                 },
                 navigationBar = {

@@ -20,8 +20,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.files.RestrictedFile
@@ -29,6 +32,7 @@ import com.tunjid.heron.editprofile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
@@ -38,10 +42,14 @@ import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.character_limit
 import heron.feature.edit_profile.generated.resources.description
 import heron.feature.edit_profile.generated.resources.display_name
+import heron.feature.edit_profile.generated.resources.tab_bio
+import heron.feature.edit_profile.generated.resources.tab_profile_feeds
+import heron.feature.edit_profile.generated.resources.tab_profile_tabs
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.compose.resources.StringResource
 
 internal val DisplayName = FormField.Id("displayName")
 internal val Description = FormField.Id("description")
@@ -50,9 +58,25 @@ internal val Description = FormField.Id("description")
 data class State(
     val profile: Profile,
     val avatarSharedElementKey: String,
-    @Transient val submitting: Boolean = false,
-    @Transient val updatedAvatar: RestrictedFile.Media.Photo? = null,
-    @Transient val updatedBanner: RestrictedFile.Media.Photo? = null,
+    @Transient
+    val tabs: List<EditProfileScreenTabs> = listOf(
+        EditProfileScreenTabs.Bio,
+        EditProfileScreenTabs.Editor,
+    ),
+    @Transient
+    val feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator> = emptyMap(),
+    @Transient
+    val currentProfileTabs: Set<ProfileTab> = emptySet(),
+    @Transient
+    val editableTabs: List<ProfileTab> = emptyList(),
+    @Transient
+    val tabsToSave: List<ProfileTab> = emptyList(),
+    @Transient
+    val submitting: Boolean = false,
+    @Transient
+    val updatedAvatar: RestrictedFile.Media.Photo? = null,
+    @Transient
+    val updatedBanner: RestrictedFile.Media.Photo? = null,
     @Transient
     val fields: List<FormField> = listOf(
         FormField(
@@ -112,7 +136,27 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
     description = fields.valueFor(Description),
     avatar = updatedAvatar,
     banner = updatedBanner,
+    selectedProfileTabs = tabsToSave.takeUnless(List<ProfileTab>::isEmpty),
 )
+
+sealed class EditProfileScreenTabs(
+    val stringResource: StringResource,
+) {
+    data object Bio : EditProfileScreenTabs(
+        stringResource = Res.string.tab_bio,
+    )
+
+    data object Editor : EditProfileScreenTabs(
+        stringResource = Res.string.tab_profile_tabs,
+    )
+
+    class Feeds(
+        val mutator: RecordStateHolder<FeedGenerator>,
+    ) : EditProfileScreenTabs(
+        stringResource = Res.string.tab_profile_feeds,
+    ),
+        RecordStateHolder<FeedGenerator> by mutator
+}
 
 sealed class Action(val key: String) {
     data class AvatarPicked(
@@ -129,7 +173,16 @@ sealed class Action(val key: String) {
         val description: String,
         val avatar: RestrictedFile.Media.Photo?,
         val banner: RestrictedFile.Media.Photo?,
+        val selectedProfileTabs: List<ProfileTab>?,
     ) : Action(key = "SaveProfile")
+
+    data class ToggleFeed(
+        val feedGenerator: FeedGenerator,
+    ) : Action(key = "ToggleFeed")
+
+    data class UpdateTabsToSave(
+        val tabs: List<ProfileTab>,
+    ) : Action(key = "UpdateTabsToSave")
 
     data class FieldChanged(
         val id: FormField.Id,

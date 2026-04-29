@@ -28,4 +28,10 @@
     <string name="failed_profile_update">Cannot update your profile right now.</string>
     <string name="profile_background_update">Updating your profile in the background…</string>
     <string name="profile_updating">Updating…</string>
+    <string name="tab_bio">Edit bio</string>
+    <string name="tab_profile_tabs">Edit profile tabs</string>
+    <string name="tab_profile_feeds">Pinnable profile feeds</string>
+    <string name="shown_tabs">Pinned profile tabs</string>
+    <string name="other_tabs">Unpinned profile tabs</string>
+    <string name="tab_drop_target_hint">Drop tabs here to customize what tabs show up on your profile.</string>
 </resources>

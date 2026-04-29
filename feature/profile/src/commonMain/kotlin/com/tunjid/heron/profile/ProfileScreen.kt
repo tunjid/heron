@@ -625,16 +625,19 @@ private fun timelineTabs(
 ): List<Tab> = updatedStateHolders.map { holder ->
     when (holder) {
         is ProfileScreenStateHolders.Records<*> -> Tab(
-            title = stringResource(remember(holder.state.value::stringResource)),
+            title = stringResource(holder.state.value.stringResource),
+            id = holder.key,
             hasUpdate = false,
         )
 
         is ProfileScreenStateHolders.Timeline -> Tab(
             title = holder.state.value.timeline.displayName(),
+            id = holder.key,
             hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
+            id = holder.key,
             hasUpdate = false,
         )
     }
