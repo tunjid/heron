@@ -230,7 +230,6 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
     mapLatestToManyMutations { action ->
         emit { copy(submitting = true) }
 
-        println("OUT: ${action.selectedProfileTabs}")
         val updateWrite = Writable.ProfileUpdate(
             update = Profile.Update(
                 profileId = action.profileId,
