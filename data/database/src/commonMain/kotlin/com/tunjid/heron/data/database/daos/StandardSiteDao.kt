@@ -97,6 +97,39 @@ interface StandardSiteDao {
         offset: Long,
     ): Flow<List<PopulatedStandardPublicationEntity>>
 
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardPublications.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardPublications
+            LEFT JOIN standardSubscriptions
+                ON standardPublications.uri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardPublications.publisherId IS :publisherId
+            ORDER BY standardPublications.sortedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun authorPublications(
+        viewingProfileId: String?,
+        publisherId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedStandardPublicationEntity>>
+
     @Upsert
     suspend fun upsertPublications(
         entities: List<StandardPublicationEntity>,

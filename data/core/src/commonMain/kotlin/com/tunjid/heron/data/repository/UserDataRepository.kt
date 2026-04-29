@@ -54,6 +54,10 @@ interface UserDataRepository {
     suspend fun setShowTrendingTopics(
         showTrendingTopics: Boolean,
     ): Outcome
+
+    suspend fun setAllowAllTimelinePresentations(
+        allowAllTimelinePresentations: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -129,6 +133,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         showTrendingTopics: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(showTrendingTopics = showTrendingTopics))
+    }
+
+    override suspend fun setAllowAllTimelinePresentations(
+        allowAllTimelinePresentations: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(allowAllTimelinePresentations = allowAllTimelinePresentations))
     }
 
     private suspend inline fun updatePreferences(

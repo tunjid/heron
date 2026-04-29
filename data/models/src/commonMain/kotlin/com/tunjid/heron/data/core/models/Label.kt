@@ -213,6 +213,14 @@ sealed interface AppliedLabels {
     }
 
     companion object {
+
+        val Empty = AppliedLabels(
+            adultContentEnabled = false,
+            labels = emptyList(),
+            labelers = emptyList(),
+            preferenceLabelsVisibilityMap = emptyMap(),
+        )
+
         operator fun invoke(
             adultContentEnabled: Boolean,
             labels: Collection<Label>,
@@ -239,6 +247,19 @@ sealed interface AppliedLabels {
                 valueTransform = ContentLabelPreference::visibility,
             ),
         )
+
+        /**
+         * Returns an [AppliedLabels] evaluating [labels] against the same moderation
+         * context (labelers, adult-content flag, visibility preferences) as this one.
+         * Useful for applying the viewer's policy to a quoted post's labels.
+         */
+        fun AppliedLabels.withLabels(
+            labels: Collection<Label>,
+        ): AppliedLabels = when (this) {
+            // Filtered, no moderation context to apply, return as is.
+            is Filtered -> this
+            is AppliedLabelsImpl -> copy(labels = labels)
+        }
 
         fun AppliedLabels.warned(): Filtered {
             val visibleDefinitions = mutableListOf<Label.Definition>()

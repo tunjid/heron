@@ -39,6 +39,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.tunjid.tiler.tiler)
+                implementation(libs.tunjid.tiler.compose)
             }
         }
     }

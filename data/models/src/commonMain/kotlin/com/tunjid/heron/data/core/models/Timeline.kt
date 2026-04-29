@@ -99,13 +99,19 @@ sealed interface Timeline {
             override val presentation: Presentation,
             override val isPinned: Boolean,
             val feedList: FeedList,
+            // This needs a default argument as
+            // it may have been previously serialized.
+            val allowAllPresentations: Boolean = false,
         ) : Home(
             source = Source.Record.List(feedList.uri),
         ) {
             override val name: String
                 get() = feedList.name
 
-            override val supportedPresentations get() = TextOnlyPresentations
+            override val supportedPresentations
+                get() =
+                    if (allowAllPresentations) AllPresentations
+                    else TextOnlyPresentations
 
             companion object {
                 fun stub(
@@ -365,6 +371,12 @@ sealed interface Timeline {
             data object Grid : Media(
                 key = "presentation-grid-media",
             )
+        }
+
+        companion object {
+            val All: List<Presentation> get() = AllPresentations
+
+            val TextOnly: List<Presentation> get() = TextOnlyPresentations
         }
     }
 }

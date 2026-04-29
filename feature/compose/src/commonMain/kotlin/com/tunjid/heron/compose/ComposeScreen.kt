@@ -53,6 +53,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -217,6 +218,7 @@ private fun Post(
                     modifier = Modifier
                         .weight(1f),
                     record = it,
+                    appliedLabels = AppliedLabels.Empty,
                     sharedElementPrefix = NeverMatchedSharedElementPrefix,
                     paneTransitionScope = paneTransitionScope,
                     postActions = PostActions.NoOp,

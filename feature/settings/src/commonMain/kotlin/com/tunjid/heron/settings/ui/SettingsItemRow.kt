@@ -262,7 +262,8 @@ fun <T> SettingsRadioButtons(
                         latchedCheckedState.latch(item)
                         onItemClicked(item)
                     }
-                    .settingsItemPaddingAndMinHeight(),
+                    .settingsItemPaddingAndMinHeight()
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

@@ -121,10 +121,8 @@ import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUp
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
-import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
-import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -163,8 +161,10 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
+import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -546,6 +546,44 @@ internal fun ProfileScreen(
                                     )
                                 },
                             )
+                            is ProfileScreenStateHolders.Records.Publications -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { publication ->
+                                    Publication(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .animateItem()
+                                            .shapedClickable {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = publication.uri.path,
+                                                            models = listOf(publication),
+                                                            sharedElementPrefix = publication.uri.uri,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
+                                            .recordPadding(),
+                                        paneTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = publication.uri.uri,
+                                        publication = publication,
+                                        onSubscriptionToggled = { publication, subscription ->
+                                            actions(
+                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                    subscriptionUri = subscription.uri,
+                                                )
+                                                else Action.TogglePublicationSubscription.Subscribe(
+                                                    publicationUri = publication.uri,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
+                            )
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 bottomPadding = collapsedHeight,
@@ -587,16 +625,19 @@ private fun timelineTabs(
 ): List<Tab> = updatedStateHolders.map { holder ->
     when (holder) {
         is ProfileScreenStateHolders.Records<*> -> Tab(
-            title = stringResource(remember(holder.state.value::stringResource)),
+            title = stringResource(holder.state.value.stringResource),
+            id = holder.key,
             hasUpdate = false,
         )
 
         is ProfileScreenStateHolders.Timeline -> Tab(
             title = holder.state.value.timeline.displayName(),
+            id = holder.key,
             hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
+            id = holder.key,
             hasUpdate = false,
         )
     }
@@ -1668,3 +1709,5 @@ private fun Modifier.recordPadding() =
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 36.dp
 private val BannerBlurRadius = 40.dp
+
+private const val ProfileCollectionSharedElementPrefix = "profile-collection"

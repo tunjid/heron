@@ -26,9 +26,11 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -41,7 +43,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
-import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
@@ -55,6 +56,7 @@ import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
+import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
@@ -67,7 +69,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jetbrains.compose.resources.StringResource
 
 @Serializable
 data class State(
@@ -128,6 +129,10 @@ sealed class ProfileScreenStateHolders {
         class Documents(
             mutator: RecordStateHolder<StandardDocument>,
         ) : Records<StandardDocument>(mutator)
+
+        class Publications(
+            mutator: RecordStateHolder<StandardPublication>,
+        ) : Records<StandardPublication>(mutator)
     }
 
     class Timeline(
@@ -157,8 +162,36 @@ sealed class ProfileScreenStateHolders {
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
             is Records.Documents -> "Documents"
+            is Records.Publications -> "Publications"
             is Timeline -> state.value.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
+        }
+
+    val tab
+        get() = when (this) {
+            is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
+            is Records.Lists -> ProfileTab.Bluesky.Lists.All
+            is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
+            is Records.Documents -> ProfileTab.StandardSite.Documents
+            is Records.Publications -> ProfileTab.StandardSite.Publications
+            is Timeline -> when (val timeline = state.value.timeline) {
+                is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
+                    timeline.feedGenerator.uri,
+                )
+
+                is com.tunjid.heron.data.core.models.Timeline.Profile -> when (timeline.type) {
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Posts -> ProfileTab.Bluesky.Posts.Standard
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Replies -> ProfileTab.Bluesky.Posts.Replies
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Likes -> ProfileTab.Bluesky.Posts.Likes
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Media -> ProfileTab.Bluesky.Posts.Media
+                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Videos -> ProfileTab.Bluesky.Posts.Videos
+                }
+                is com.tunjid.heron.data.core.models.Timeline.Home.Following,
+                is com.tunjid.heron.data.core.models.Timeline.Home.List,
+                is com.tunjid.heron.data.core.models.Timeline.StarterPack,
+                -> null
+            }
+            is LabelerSettings -> null
         }
 
     fun refresh() = when (this) {
@@ -194,13 +227,7 @@ val ProfileScreenStateHolders?.canRefresh
         -> false
     }
 
-typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
 typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
-
-data class RecordState<T : Record>(
-    val stringResource: StringResource,
-    override val tilingData: TilingState.Data<ProfilesQuery, T>,
-) : TilingState<ProfilesQuery, T>
 
 sealed class Action(val key: String) {
 

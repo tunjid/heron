@@ -52,6 +52,7 @@
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>
     <string name="show_post_engagement_metrics">Show post engagement metrics</string>
     <string name="show_trending_topics">Show trending topics</string>
+    <string name="allow_all_timeline_presentations">Allow all presentations types for timelines</string>
     <string name="following_feed_preferences">Following Feed Preferences</string>
     <string name="thread_preferences">Thread Preferences</string>
     <string name="timeline_preferences_replies">Hide replies</string>

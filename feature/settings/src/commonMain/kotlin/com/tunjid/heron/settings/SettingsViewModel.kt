@@ -131,6 +131,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetAllowAllTimelinePresentations -> action.flow.toggleAllowAllTimelinePresentations(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -317,6 +321,13 @@ private fun Flow<Action.SetShowTrendingTopics>.toggleShowTrendingTopics(
 ): Flow<Mutation<State>> =
     mapToManyMutations { (showTrendingTopics) ->
         userDataRepository.setShowTrendingTopics(showTrendingTopics)
+    }
+
+private fun Flow<Action.SetAllowAllTimelinePresentations>.toggleAllowAllTimelinePresentations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (allowAllTimelinePresentations) ->
+        userDataRepository.setAllowAllTimelinePresentations(allowAllTimelinePresentations)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

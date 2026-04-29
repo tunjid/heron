@@ -47,6 +47,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.uri
@@ -581,9 +582,9 @@ internal class OfflineTimelineRepository(
     override val homeTimelines: Flow<List<Timeline.Home>>
         get() = savedStateDataSource.singleSessionFlow { signedInProfileId ->
             savedStateDataSource.savedState
-                .map { it.signedProfilePreferencesOrDefault().timelinePreferences }
+                .map(SavedState::timelineInfo)
                 .distinctUntilChanged()
-                .flatMapLatest { timelinePreferences ->
+                .flatMapLatest { (timelinePreferences, allowAllTimelinePresentations) ->
                     timelinePreferences.mapIndexed { index, preference ->
                         when (SavedFeedType.safeValueOf(preference.type)) {
                             SavedFeedType.Feed -> feedGeneratorTimeline(
@@ -591,6 +592,7 @@ internal class OfflineTimelineRepository(
                                 uri = FeedGeneratorUri(preference.value),
                                 position = index,
                                 isPinned = preference.pinned,
+                                allowAllPresentations = allowAllTimelinePresentations,
                             )
 
                             SavedFeedType.List -> listTimeline(
@@ -598,6 +600,7 @@ internal class OfflineTimelineRepository(
                                 uri = ListUri(preference.value),
                                 position = index,
                                 isPinned = preference.pinned,
+                                allowAllPresentations = allowAllTimelinePresentations,
                             )
 
                             SavedFeedType.Timeline -> followingTimeline(
@@ -638,9 +641,9 @@ internal class OfflineTimelineRepository(
         request: TimelineRequest,
     ): Flow<Timeline> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         savedStateDataSource.savedState
-            .map { it.signedProfilePreferencesOrDefault().timelinePreferences }
+            .map(SavedState::timelineInfo)
             .distinctUntilChanged()
-            .flatMapLatest { preferences ->
+            .flatMapLatest { (timelinePreferences, allowAllTimelinePresentations) ->
                 flow {
                     when (request) {
                         is TimelineRequest.OfFeed.WithUri -> emitAll(
@@ -648,9 +651,10 @@ internal class OfflineTimelineRepository(
                                 signedInProfileId = signedInProfileId,
                                 uri = request.uri,
                                 position = 0,
-                                isPinned = preferences.firstOrNull {
+                                isPinned = timelinePreferences.firstOrNull {
                                     it.value == request.uri.uri
                                 }?.pinned ?: false,
+                                allowAllPresentations = allowAllTimelinePresentations,
                             ),
                         )
 
@@ -659,9 +663,10 @@ internal class OfflineTimelineRepository(
                                 signedInProfileId = signedInProfileId,
                                 uri = request.uri,
                                 position = 0,
-                                isPinned = preferences.firstOrNull {
+                                isPinned = timelinePreferences.firstOrNull {
                                     it.value == request.uri.uri
                                 }?.pinned ?: false,
+                                allowAllPresentations = allowAllTimelinePresentations,
                             ),
                         )
 
@@ -677,9 +682,10 @@ internal class OfflineTimelineRepository(
                                     signedInProfileId = signedInProfileId,
                                     uri = uri,
                                     position = 0,
-                                    isPinned = preferences.firstOrNull {
+                                    isPinned = timelinePreferences.firstOrNull {
                                         it.value == uri.uri
                                     }?.pinned ?: false,
+                                    allowAllPresentations = allowAllTimelinePresentations,
                                 ),
                             )
                         }
@@ -696,9 +702,10 @@ internal class OfflineTimelineRepository(
                                     signedInProfileId = signedInProfileId,
                                     uri = uri,
                                     position = 0,
-                                    isPinned = preferences.firstOrNull {
+                                    isPinned = timelinePreferences.firstOrNull {
                                         it.value == uri.uri
                                     }?.pinned ?: false,
+                                    allowAllPresentations = allowAllTimelinePresentations,
                                 ),
                             )
                         }
@@ -722,6 +729,7 @@ internal class OfflineTimelineRepository(
                                 starterPackTimeline(
                                     signedInProfileId = signedInProfileId,
                                     uri = uri,
+                                    allowAllPresentations = allowAllTimelinePresentations,
                                 ),
                             )
                         }
@@ -730,6 +738,7 @@ internal class OfflineTimelineRepository(
                             starterPackTimeline(
                                 signedInProfileId = signedInProfileId,
                                 uri = request.uri,
+                                allowAllPresentations = allowAllTimelinePresentations,
                             ),
                         )
 
@@ -739,7 +748,7 @@ internal class OfflineTimelineRepository(
                                 name = "",
                                 signedInProfileId = signedInProfileId,
                                 position = 0,
-                                isPinned = preferences.firstOrNull {
+                                isPinned = timelinePreferences.firstOrNull {
                                     SavedFeedType.safeValueOf(it.type) is SavedFeedType.Timeline
                                 }?.pinned ?: false,
                             ),
@@ -1091,6 +1100,7 @@ internal class OfflineTimelineRepository(
         uri: FeedGeneratorUri,
         position: Int,
         isPinned: Boolean,
+        allowAllPresentations: Boolean,
     ): Flow<Timeline.Home.Feed> = feedGeneratorDao.feedGenerators(listOf(uri))
         .map(List<PopulatedFeedGeneratorEntity>::firstOrNull)
         .filterNotNull()
@@ -1107,18 +1117,12 @@ internal class OfflineTimelineRepository(
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
-                        supportedPresentations = listOfNotNull(
-                            Timeline.Presentation.Text.WithEmbed,
-                            Timeline.Presentation.Media.Expanded.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
-                            },
-                            Timeline.Presentation.Media.Condensed.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
-                            },
-                            Timeline.Presentation.Media.Grid.takeIf {
-                                populatedFeedGeneratorEntity.entity.supportsMediaPresentation()
-                            },
-                        ),
+                        supportedPresentations = when {
+                            populatedFeedGeneratorEntity.entity.supportsMediaPresentation() ||
+                                allowAllPresentations
+                            -> Timeline.Presentation.All
+                            else -> Timeline.Presentation.TextOnly
+                        },
                         isPinned = isPinned,
                     )
                 }
@@ -1134,6 +1138,7 @@ internal class OfflineTimelineRepository(
         uri: ListUri,
         position: Int,
         isPinned: Boolean,
+        allowAllPresentations: Boolean,
     ): Flow<Timeline.Home.List> = listDao.list(uri.uri)
         .filterNotNull()
         .distinctUntilChangedBy(PopulatedListEntity::entity)
@@ -1151,6 +1156,7 @@ internal class OfflineTimelineRepository(
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         isPinned = isPinned,
+                        allowAllPresentations = allowAllPresentations,
                     )
                 }
         }
@@ -1163,6 +1169,7 @@ internal class OfflineTimelineRepository(
     private fun starterPackTimeline(
         signedInProfileId: ProfileId?,
         uri: StarterPackUri,
+        allowAllPresentations: Boolean,
     ): Flow<Timeline.StarterPack> = starterPackDao.starterPack(uri.uri)
         .mapNotNull { populatedStarterPackEntity ->
             populatedStarterPackEntity?.list?.let { populatedStarterPackEntity to it }
@@ -1175,6 +1182,7 @@ internal class OfflineTimelineRepository(
                 uri = listEntity.uri,
                 position = 0,
                 isPinned = false,
+                allowAllPresentations = allowAllPresentations,
             ).map { listTimeline ->
                 Timeline.StarterPack(
                     starterPack = populatedStarterPackEntity.asExternalModel(),
@@ -1332,6 +1340,11 @@ internal class OfflineTimelineRepository(
             )
         }
     }
+}
+
+private fun SavedState.timelineInfo(): Pair<List<TimelinePreference>, Boolean> {
+    val preferences = signedProfilePreferencesOrDefault()
+    return preferences.timelinePreferences to preferences.local.allowAllTimelinePresentations
 }
 
 private fun SavedStateDataSource.timelineFeedPreference(

@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "dev.tunjid.heron.actor.putTabs",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Replace the authenticated actor's profile tabs record (rkey 'self'). Requires auth.",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["items"],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "union",
+                "refs": [
+                  "dev.tunjid.heron.actor.tabs#profileTab",
+                  "dev.tunjid.heron.actor.tabs#collectionTab",
+                  "dev.tunjid.heron.actor.tabs#feedGeneratorTab"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
