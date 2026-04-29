@@ -74,7 +74,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
-import dev.tunjid.heron.actor.GetTabsQueryParams
+import dev.tunjid.heron.actor.GetTabsResponse
 import dev.tunjid.heron.actor.PutTabsRequest
 import dev.tunjid.heron.actor.PutTabsRequestItemUnion
 import dev.tunjid.heron.actor.TabsCollectionTab
@@ -197,17 +197,24 @@ internal class OfflineProfileRepository @Inject constructor(
                 .withRefresh {
                     val did = profileLookup.lookupProfileDid(profileId) ?: return@withRefresh
                     networkService.runCatchingWithMonitoredNetworkRetry {
-                        getTabs(
-                            GetTabsQueryParams(did),
+                        getRecord(
+                            GetRecordQueryParams(
+                                repo = did,
+                                collection = Nsid(Collections.ProfileTabs),
+                                rkey = Collections.SelfRecordKey,
+                            ),
                         )
-                    }.toOutcome { response ->
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(
-                                profileId = ProfileId(did.did),
-                                tabs = response.items,
-                            )
-                        }
+                    }.mapCatchingUnlessCancelled {
+                        it.value.decodeAs<GetTabsResponse>()
                     }
+                        .toOutcome { response ->
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(
+                                    profileId = ProfileId(did.did),
+                                    tabs = response.items.distinct(),
+                                )
+                            }
+                        }
                 }
         }
             .flowOn(ioDispatcher)
@@ -471,9 +478,14 @@ internal class OfflineProfileRepository @Inject constructor(
             val tabsUpdate = update.tabs?.let { newTabs ->
                 async {
                     networkService.runCatchingWithMonitoredNetworkRetry {
-                        putTabs(
-                            PutTabsRequest(
-                                newTabs.map(ProfileTab::asNetworkTab),
+                        putRecord(
+                            PutRecordRequest(
+                                repo = update.profileId.id.let(::Did),
+                                collection = Nsid(Collections.ProfileTabs),
+                                rkey = Collections.SelfRecordKey,
+                                record = PutTabsRequest(
+                                    newTabs.map(ProfileTab::asNetworkTab),
+                                ).asJsonContent(PutTabsRequest.serializer()),
                             ),
                         )
                     }

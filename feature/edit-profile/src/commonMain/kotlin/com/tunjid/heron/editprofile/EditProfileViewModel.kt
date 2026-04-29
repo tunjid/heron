@@ -17,21 +17,29 @@
 package com.tunjid.heron.editprofile
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.editprofile.di.profileHandleOrId
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.profile.stringResource
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
@@ -48,9 +56,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.merge
 
 internal typealias EditProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -65,6 +77,8 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualEditProfileViewModel(
     authRepository: AuthRepository,
+    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -83,26 +97,40 @@ class ActualEditProfileViewModel(
             pendingUpdateSubmissionMutations(
                 writeQueue = writeQueue,
             ),
+            profileTabMutations(
+                route = route,
+                profileRepository = profileRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.AvatarPicked -> action.flow.avatarPickedMutations()
-                    is Action.BannerPicked -> action.flow.bannerPickedMutations()
-                    is Action.FieldChanged -> action.flow.formEditMutations()
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.SaveProfile -> action.flow.saveProfileMutations(
-                        navActions = navActions,
-                        writeQueue = writeQueue,
-                        fileManager = fileManager,
-                    )
-                }
-            }
+            merge(
+                screenTabMutations(
+                    scope = scope,
+                    stateHolder = this,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                        is Action.AvatarPicked -> action.flow.avatarPickedMutations()
+                        is Action.BannerPicked -> action.flow.bannerPickedMutations()
+                        is Action.FieldChanged -> action.flow.formEditMutations()
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.UpdateTabsToSave -> action.flow.pinnedTabMutations()
+                        is Action.ToggleFeed -> action.flow.toggleFeedMutations()
+                        is Action.SaveProfile -> action.flow.saveProfileMutations(
+                            navActions = navActions,
+                            writeQueue = writeQueue,
+                            fileManager = fileManager,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -111,19 +139,21 @@ private fun loadProfileMutations(
 ): Flow<Mutation<State>> =
     authRepository.signedInUser
         .filterNotNull()
-        .mapToMutation { signedInProfile ->
-            copy(
-                profile = signedInProfile,
-                fields = fields
-                    .copyWithValidation(
-                        id = DisplayName,
-                        text = signedInProfile.displayName ?: "",
-                    )
-                    .copyWithValidation(
-                        id = Description,
-                        text = signedInProfile.description ?: "",
-                    ),
-            )
+        .mapLatestToManyMutations { signedInProfile ->
+            emit {
+                copy(
+                    profile = signedInProfile,
+                    fields = fields
+                        .copyWithValidation(
+                            id = DisplayName,
+                            text = signedInProfile.displayName ?: "",
+                        )
+                        .copyWithValidation(
+                            id = Description,
+                            text = signedInProfile.description ?: "",
+                        ),
+                )
+            }
         }
 
 private fun pendingUpdateSubmissionMutations(
@@ -132,6 +162,45 @@ private fun pendingUpdateSubmissionMutations(
     writeQueue.queueChanges.mapToMutation { writes ->
         copy(submitting = writes.any { it is Writable.ProfileUpdate })
     }
+
+private fun profileTabMutations(
+    route: Route,
+    profileRepository: ProfileRepository,
+): Flow<Mutation<State>> =
+    profileRepository.tabs(route.profileHandleOrId)
+        .distinctUntilChanged()
+        .mapToMutation { tabs ->
+            val tabsSet = tabs.toSet()
+            val missingTabs = ProfileTab.Static.minus(tabsSet)
+
+            copy(
+                currentProfileTabs = tabsSet,
+                editableTabs = tabs + missingTabs,
+            )
+        }
+
+private fun screenTabMutations(
+    scope: CoroutineScope,
+    stateHolder: SuspendingStateHolder<State>,
+    authRepository: AuthRepository,
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> = flow {
+    if (stateHolder.state().tabs.none { it is EditProfileScreenTabs.Feeds }) {
+        val profileId = authRepository.signedInUser.filterNotNull().first().did
+        emit {
+            copy(
+                tabs = tabs + EditProfileScreenTabs.Feeds(
+                    mutator = scope.recordStateHolder(
+                        profileId = profileId,
+                        stringResource = ProfileTab.Bluesky.FeedGenerators.All.stringResource,
+                        itemId = FeedGenerator::uri,
+                        cursorListLoader = recordRepository::feedGenerators,
+                    ),
+                ),
+            )
+        }
+    }
+}
 
 private fun Flow<Action.AvatarPicked>.avatarPickedMutations(): Flow<Mutation<State>> =
     mapToMutation {
@@ -172,6 +241,7 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
                 bannerFile = action.banner?.let {
                     fileManager.toUnrestrictedPhotoFile(it)
                 },
+                tabs = action.selectedProfileTabs,
             ),
         )
 
@@ -201,6 +271,27 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
                 navigationMutationConsumer = navActions,
             ),
+        )
+    }
+
+private fun Flow<Action.UpdateTabsToSave>.pinnedTabMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            tabsToSave = action.tabs,
+        )
+    }
+
+private fun Flow<Action.ToggleFeed>.toggleFeedMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            feedUrisToFeeds =
+            if (feedUrisToFeeds.contains(action.feedGenerator.uri)) feedUrisToFeeds - action.feedGenerator.uri
+            else feedUrisToFeeds + (action.feedGenerator.uri to action.feedGenerator),
+            editableTabs = ProfileTab.Bluesky.FeedGenerators.FeedGenerator(action.feedGenerator.uri)
+                .let {
+                    if (it in editableTabs) editableTabs - it
+                    else editableTabs + it
+                },
         )
     }
 
