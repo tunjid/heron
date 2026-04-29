@@ -93,7 +93,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run iOS compilation
-        run: ./gradlew :compileKotlinIosArm64
+        run: ./gradlew compileKotlinIosArm64
 
   build-android-app:
     runs-on: ubuntu-latest
