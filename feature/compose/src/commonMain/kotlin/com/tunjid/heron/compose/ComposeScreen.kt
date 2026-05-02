@@ -40,8 +40,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,6 +104,7 @@ internal fun ComposeScreen(
     actions: (Action) -> Unit,
 ) {
     val scrollState = rememberScrollState()
+    var lastDetectedEmbedUrl by remember { mutableStateOf<String?>(null) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -122,11 +126,12 @@ internal fun ComposeScreen(
                 actions(Action.SearchProfiles(it))
             },
             onRemoveEmbeddedRecordClicked = {
-                actions(Action.RemoveEmbeddedRecord)
+                actions(Action.RemoveEmbeddedRecord(lastDetectedEmbedUrl))
             },
-            onExternalLinkDetected = {
-                if (state.embeddedRecord == null) {
-                    actions(Action.EmbedUrl(it))
+            onExternalLinkDetected = { url ->
+                lastDetectedEmbedUrl = url
+                if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
+                    actions(Action.EmbedUrl(url))
                 }
             },
         )
