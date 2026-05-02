@@ -398,8 +398,10 @@ private val bskyPathSegmentToNamespace = mapOf(
 fun String.bskyHttpsUrlToAtUri(): String? {
     if (!startsWith(Uri.Host.Https.prefix)) return null
     val segments = removePrefix(Uri.Host.Https.prefix)
+        .removePrefix("www.")
         .removePrefix("bsky.app/")
         .split("/")
+        .filter { it.isNotEmpty() }
 
     val (handle, type, rkey) = when (segments.size) {
         4 -> when (segments[0]) {
@@ -415,7 +417,8 @@ fun String.bskyHttpsUrlToAtUri(): String? {
     }
 
     val namespace = bskyPathSegmentToNamespace[type] ?: return null
-    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$rkey"
+    val cleanRkey = rkey.substringBefore('?').substringBefore('#')
+    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$cleanRkey"
 }
 
 /**
