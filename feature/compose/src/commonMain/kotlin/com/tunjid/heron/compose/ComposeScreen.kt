@@ -124,6 +124,11 @@ internal fun ComposeScreen(
             onRemoveEmbeddedRecordClicked = {
                 actions(Action.RemoveEmbeddedRecord)
             },
+            onExternalLinkDetected = {
+                if (state.embeddedRecord == null) {
+                    actions(Action.EmbedUrl(it))
+                }
+            },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
             ProfileSearchResults(
@@ -176,6 +181,7 @@ private fun Post(
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
     onRemoveEmbeddedRecordClicked: () -> Unit,
+    onExternalLinkDetected: (String) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -203,6 +209,7 @@ private fun Post(
                     postText = postText,
                     onPostTextChanged = onPostTextChanged,
                     onMentionDetected = onMentionDetected,
+                    onExternalLinkDetected = onExternalLinkDetected,
                 )
             },
         )
@@ -328,6 +335,7 @@ private fun PostComposition(
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
+    onExternalLinkDetected: (String) -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -349,6 +357,7 @@ private fun PostComposition(
             )
             when (val target = links.detectActiveLink(it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
+                is LinkTarget.ExternalLink -> onExternalLinkDetected(target.uri.uri)
                 is LinkTarget.Hashtag -> {
                     // TODO: Implement hashtag search
                 }

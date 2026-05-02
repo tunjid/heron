@@ -44,6 +44,7 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -139,6 +140,9 @@ class ActualComposeViewModel(
                     is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                         recordRepository = recordRepository,
                     )
+                    is Action.EmbedUrl -> action.flow.embedUrlMutations(
+                        recordRepository = recordRepository,
+                    )
                 }
             }
         },
@@ -168,6 +172,19 @@ private fun embeddedRecordMutations(
         }
     }
         ?: emptyFlow()
+
+private fun Flow<Action.EmbedUrl>.embedUrlMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
+        emitAll(
+            embeddedRecordMutations(
+                embeddedRecordUri = uri,
+                recordRepository = recordRepository,
+            ),
+        )
+    }
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

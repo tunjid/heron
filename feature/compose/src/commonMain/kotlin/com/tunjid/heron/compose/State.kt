@@ -100,6 +100,10 @@ sealed class Action(val key: String) {
         val textFieldValue: TextFieldValue,
     ) : Action("PostTextChanged")
 
+    data class EmbedUrl(
+        val url: String,
+    ) : Action("EmbedUrl")
+
     data class CreatePost(
         val postType: Post.Create?,
         val authorId: ProfileId,
