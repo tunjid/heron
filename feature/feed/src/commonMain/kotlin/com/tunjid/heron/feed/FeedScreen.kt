@@ -251,7 +251,10 @@ private fun FeedTimeline(
             )
             .fillMaxSize()
             .paneClip()
-            .gridColumnCount(density) { numColumns ->
+            .gridColumnCount(
+                density = density,
+                maxColumnWidth = presentation.cardSize,
+            ) { numColumns ->
                 timelineStateHolder.accept(
                     TimelineState.Action.Tile(
                         tilingAction = TilingState.Action.GridSize(
