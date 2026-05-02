@@ -365,10 +365,14 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
     }
 }
 
-fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
-    atUriComponents { _, collectionRange, _ ->
-        val normalized = withAtProtoPrefix()
-        when (substring(collectionRange.start, collectionRange.endExclusive)) {
+fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
+    val atUri = when {
+        startsWith(Uri.Host.Https.prefix) -> bskyHttpsUrlToAtUri() ?: return null
+        else -> this
+    }
+    return atUri.atUriComponents { _, collectionRange, _ ->
+        val normalized = atUri.withAtProtoPrefix()
+        when (atUri.substring(collectionRange.start, collectionRange.endExclusive)) {
             PostUri.NAMESPACE -> PostUri(normalized)
             FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(normalized)
             ListUri.NAMESPACE -> ListUri(normalized)
@@ -377,10 +381,42 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
             else -> null
         }
     }
+}
 
 private fun String.withAtProtoPrefix(): String =
     if (startsWith(Uri.Host.AtProto.prefix)) this
     else "${Uri.Host.AtProto.prefix}$this"
+
+private val bskyPathSegmentToNamespace = mapOf(
+    "post" to PostUri.NAMESPACE,
+    "feed" to FeedGeneratorUri.NAMESPACE,
+    "lists" to ListUri.NAMESPACE,
+    "starter-pack" to StarterPackUri.NAMESPACE,
+    "labeler" to LabelerUri.NAMESPACE,
+)
+
+fun String.bskyHttpsUrlToAtUri(): String? {
+    if (!startsWith(Uri.Host.Https.prefix)) return null
+    val segments = removePrefix(Uri.Host.Https.prefix)
+        .removePrefix("bsky.app/")
+        .split("/")
+
+    val (handle, type, rkey) = when (segments.size) {
+        4 -> when (segments[0]) {
+            "profile" -> Triple(segments[1], segments[2], segments[3])
+            else -> return null
+        }
+        3 -> when (segments[0]) {
+            "starter-pack" -> Triple(segments[1], segments[0], segments[2])
+            "profile" -> Triple(segments[1], segments[2], "self") // labeler
+            else -> return null
+        }
+        else -> return null
+    }
+
+    val namespace = bskyPathSegmentToNamespace[type] ?: return null
+    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$rkey"
+}
 
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.
