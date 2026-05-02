@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
@@ -116,6 +115,7 @@ import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -463,14 +463,11 @@ private fun HomeTimeline(
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
                     .fillMaxSize()
-                    .onSizeChanged {
-                        val itemWidth = with(density) {
-                            presentation.cardSize.toPx()
-                        }
+                    .gridColumnCount(density) { numColumns ->
                         timelineStateHolder.accept(
                             TimelineState.Action.Tile(
                                 tilingAction = TilingState.Action.GridSize(
-                                    numColumns = floor(it.width / itemWidth).roundToInt(),
+                                    numColumns = numColumns,
                                 ),
                             ),
                         )

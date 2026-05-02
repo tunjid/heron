@@ -56,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -125,6 +124,7 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -564,14 +564,11 @@ private fun ListTimeline(
                 )
                 .fillMaxSize()
                 .paneClip()
-                .onSizeChanged {
-                    val itemWidth = with(density) {
-                        presentation.cardSize.toPx()
-                    }
+                .gridColumnCount(density) { numColumns ->
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
                             tilingAction = TilingState.Action.GridSize(
-                                floor(it.width / itemWidth).roundToInt(),
+                                numColumns = numColumns,
                             ),
                         ),
                     )
