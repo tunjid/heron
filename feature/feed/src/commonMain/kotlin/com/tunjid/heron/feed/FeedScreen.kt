@@ -91,6 +91,7 @@ import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
@@ -250,14 +251,14 @@ private fun FeedTimeline(
             )
             .fillMaxSize()
             .paneClip()
-            .onSizeChanged {
-                val itemWidth = with(density) {
-                    presentation.cardSize.toPx()
-                }
+            .gridColumnCount(
+                density = density,
+                maxColumnWidth = presentation.cardSize,
+            ) { numColumns ->
                 timelineStateHolder.accept(
                     TimelineState.Action.Tile(
                         tilingAction = TilingState.Action.GridSize(
-                            numColumns = floor(it.width / itemWidth).roundToInt(),
+                            numColumns = numColumns,
                         ),
                     ),
                 )
