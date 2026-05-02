@@ -176,15 +176,16 @@ private fun embeddedRecordMutations(
 private fun Flow<Action.EmbedUrl>.embedUrlMutations(
     recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
-        emitAll(
-            embeddedRecordMutations(
-                embeddedRecordUri = uri,
-                recordRepository = recordRepository,
-            ),
-        )
-    }
+    debounce(400.milliseconds)
+        .mapLatestToManyMutations { action ->
+            val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
+            emitAll(
+                embeddedRecordMutations(
+                    embeddedRecordUri = uri,
+                    recordRepository = recordRepository,
+                ),
+            )
+        }
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -203,7 +204,10 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 
 private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mutation<State>> =
     mapToMutation {
-        copy(embeddedRecord = null)
+        copy(
+            embeddedRecord = null,
+            dismissedEmbedUrl = it.url,
+        )
     }
 
 private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
