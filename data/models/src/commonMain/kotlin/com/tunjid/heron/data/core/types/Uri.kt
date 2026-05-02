@@ -397,28 +397,51 @@ private val bskyPathSegmentToNamespace = mapOf(
 
 fun String.bskyHttpsUrlToAtUri(): String? {
     if (!startsWith(Uri.Host.Https.prefix)) return null
-    val segments = removePrefix(Uri.Host.Https.prefix)
-        .removePrefix("www.")
-        .removePrefix("bsky.app/")
-        .split("/")
-        .filter { it.isNotEmpty() }
 
-    val (handle, type, rkey) = when (segments.size) {
-        4 -> when (segments[0]) {
-            "profile" -> Triple(segments[1], segments[2], segments[3])
-            else -> return null
-        }
-        3 -> when (segments[0]) {
-            "starter-pack" -> Triple(segments[1], segments[0], segments[2])
-            "profile" -> Triple(segments[1], segments[2], "self") // labeler
-            else -> return null
-        }
+    // Skip past "https://" and optional "www."
+    var cursor = Uri.Host.Https.prefix.length
+    if (startsWith("www.", cursor)) cursor += 4
+
+    // Must start with "bsky.app/"
+    if (!startsWith("bsky.app/", cursor)) return null
+    cursor += "bsky.app/".length
+
+    // Find first segment
+    val seg0End = indexOf('/', cursor).takeIf { it != -1 } ?: return null
+    val seg0 = substring(cursor, seg0End)
+
+    // Find second segment
+    val seg1Start = seg0End + 1
+    val seg1End = indexOf('/', seg1Start).takeIf { it != -1 } ?: return null
+    val seg1 = substring(seg1Start, seg1End)
+
+    // Find third segment — stop at '?', '#' or end of string
+    val seg2Start = seg1End + 1
+    val seg2End = indexOfFirst(seg2Start) { it == '/' || it == '?' || it == '#' }
+        .takeIf { it != -1 } ?: length
+    val seg2 = substring(seg2Start, seg2End)
+
+    // Find optional fourth segment
+    val seg3End = if (seg2End < length && this[seg2End] == '/') {
+        indexOfFirst(seg2End + 1) { it == '?' || it == '#' }
+            .takeIf { it != -1 } ?: length
+    } else -1
+    val seg3 = if (seg3End != -1) substring(seg2End + 1, seg3End) else null
+
+    val (handle, type, rkey) = when {
+        seg0 == "profile" && seg3 != null -> Triple(seg1, seg2, seg3)
+        seg0 == "starter-pack" -> Triple(seg1, seg0, seg2)
+        seg0 == "profile" -> Triple(seg1, seg2, "self") // labeler
         else -> return null
     }
 
     val namespace = bskyPathSegmentToNamespace[type] ?: return null
-    val cleanRkey = rkey.substringBefore('?').substringBefore('#')
-    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$cleanRkey"
+    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$rkey"
+}
+
+private inline fun String.indexOfFirst(startIndex: Int, predicate: (Char) -> Boolean): Int {
+    for (i in startIndex until length) if (predicate(this[i])) return i
+    return -1
 }
 
 /**
