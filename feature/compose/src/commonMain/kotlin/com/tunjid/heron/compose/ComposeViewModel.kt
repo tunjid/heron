@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 
 internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -180,10 +181,9 @@ private fun Flow<Action.EmbedUrl>.embedUrlMutations(
         .mapLatestToManyMutations { action ->
             val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
             emitAll(
-                embeddedRecordMutations(
-                    embeddedRecordUri = uri,
-                    recordRepository = recordRepository,
-                ),
+                recordRepository.embeddableRecord(uri)
+                    .take(1)
+                    .mapToMutation { copy(embeddedRecord = it) },
             )
         }
 
