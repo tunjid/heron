@@ -44,6 +44,7 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -68,6 +69,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 
 internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -139,6 +141,9 @@ class ActualComposeViewModel(
                     is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                         recordRepository = recordRepository,
                     )
+                    is Action.EmbedUrl -> action.flow.embedUrlMutations(
+                        recordRepository = recordRepository,
+                    )
                 }
             }
         },
@@ -169,6 +174,19 @@ private fun embeddedRecordMutations(
     }
         ?: emptyFlow()
 
+private fun Flow<Action.EmbedUrl>.embedUrlMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    debounce(400.milliseconds)
+        .mapLatestToManyMutations { action ->
+            val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
+            emitAll(
+                recordRepository.embeddableRecord(uri)
+                    .take(1)
+                    .mapToMutation { copy(embeddedRecord = it) },
+            )
+        }
+
 private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(postText = action.textFieldValue)
@@ -186,7 +204,10 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 
 private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mutation<State>> =
     mapToMutation {
-        copy(embeddedRecord = null)
+        copy(
+            embeddedRecord = null,
+            dismissedEmbedUrl = it.url,
+        )
     }
 
 private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
