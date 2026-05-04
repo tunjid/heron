@@ -49,5 +49,8 @@ fun Project.configureKotlinMultiplatform(
             }
         }
         configureKotlinJvm()
+        compilerOptions {
+            freeCompilerArgs.add("-Xcontext-parameters")
+        }
     }
 }
