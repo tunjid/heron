@@ -36,6 +36,7 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.aboutLibraries) apply false
     alias(libs.plugins.burst) apply false
+    alias(libs.plugins.tunjid.snapshottable) apply false
 }
 
 // 1. Register the lifecycle task (Lazy)
