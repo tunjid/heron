@@ -27,6 +27,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.tiling.withRefreshedStatus
+import com.tunjid.heron.tiling.updateItems
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -84,7 +85,7 @@ fun CoroutineScope.timelineStateHolder(
             cursorAnchor = when (timeline) {
                 is Timeline.Home,
                 is Timeline.StarterPack,
-                ->
+                    ->
                     timeline.lastRefreshed
                         .takeUnless { refreshOnStart }
                         ?: Clock.System.now()
@@ -99,8 +100,8 @@ fun CoroutineScope.timelineStateHolder(
             hasUpdates = false,
             tilingData = TilingState.Data(
                 items =
-                if (initialItems.isEmpty()) emptyTiledList()
-                else buildTiledList { addAll(initialQuery, initialItems) },
+                    if (initialItems.isEmpty()) emptyTiledList()
+                    else buildTiledList { addAll(initialQuery, initialItems) },
                 numColumns = startNumColumns,
                 currentQuery = initialQuery,
             ),
@@ -186,18 +187,15 @@ private fun timelineUpdateMutations(
             if (newTimeline.isEmpty()) {
                 delay(EMPTY_STATE_DELAY)
                 emit {
-                    if (this@emit.timeline.isEmpty()) {
-                        copy(
-                            tilingData = this@emit.tilingData.copy(
-                                items = buildTiledList {
-                                    add(
-                                        query = tilingData.currentQuery,
-                                        item = TimelineItem.Empty.Timeline(this@emit.timeline),
-                                    )
-                                },
-                            ),
-                        )
-                    } else this@emit
+                    if (this@emit.timeline.isEmpty()) updateItems {
+                        buildTiledList {
+                            add(
+                                query = tilingData.currentQuery,
+                                item = TimelineItem.Empty.Timeline(this@emit.timeline),
+                            )
+                        }
+                    }
+                    else this@emit
                 }
             }
         }
@@ -239,14 +237,14 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
         when (item) {
             is TimelineItem.Pinned -> true
             is TimelineItem.Threaded.Linear,
-            -> threadRootIds.add(item.nodes.first().post.uri)
+                -> threadRootIds.add(item.nodes.first().post.uri)
             is TimelineItem.Repost,
             is TimelineItem.Single,
-            -> threadRootIds.add(item.post.uri)
+                -> threadRootIds.add(item.post.uri)
             is TimelineItem.Placeholder,
-            // Threaded trees show up in post details, not regular timelines
+                // Threaded trees show up in post details, not regular timelines
             is TimelineItem.Threaded.Tree,
-            -> false
+                -> false
         }
     }
         .distinctBy(TimelineItem::id)

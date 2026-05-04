@@ -169,17 +169,16 @@ fun lastRefreshedMutations(
     notificationsRepository.lastRefreshed.mapToMutation { refreshedAt ->
         copy(
             lastRefreshed = refreshedAt,
-            tilingData = tilingData.copy(
-                status = when (val currentStatus = tilingData.status) {
-                    is TilingState.Status.Initial -> currentStatus
-                    is TilingState.Status.Refreshed -> currentStatus
-                    is TilingState.Status.Refreshing -> {
-                        if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
-                        else tilingData.refreshedStatus()
-                    }
-                },
-            ),
-        )
+        ).apply {
+            when (val currentStatus = tilingData.status) {
+                is TilingState.Status.Initial -> currentStatus
+                is TilingState.Status.Refreshed -> currentStatus
+                is TilingState.Status.Refreshing -> {
+                    if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
+                    else tilingData.refreshedStatus()
+                }
+            }
+        }
     }
 
 fun canShowRequestPermissionsButtonMutations(
