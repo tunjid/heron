@@ -58,7 +58,7 @@ jna = "5.18.1"
 gstreamer-java = "1.4.0"
 tink = "1.21.0"
 aboutLibraries = "14.0.0"
-snapshottable = "0.1.1"
+snapshottable = "0.1.3"
 
 
 [libraries]

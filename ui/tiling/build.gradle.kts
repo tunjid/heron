@@ -17,6 +17,7 @@
 plugins {
     id("kotlin-library-convention")
     id("ui-module-convention")
+    id("com.tunjid.snapshottable")
 }
 kotlin {
     androidLibrary {
