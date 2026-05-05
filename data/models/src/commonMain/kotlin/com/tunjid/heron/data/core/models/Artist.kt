@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Artist(
-    val id: ArtistId,
+    val cid: ArtistId,
     val name: String,
     val picture: ImageUri?,
     val uri: ArtistUri,
@@ -18,7 +18,7 @@ data class Artist(
 
     override val reference: Record.Reference =
         Record.Reference(
-            id = id,
+            id = cid,
             uri = uri,
         )
 }

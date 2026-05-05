@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Track(
-    val id: TrackId,
+    val cid: TrackId,
     val title: String,
     val artist: String,
     val albumArtist: String?,
@@ -29,7 +29,7 @@ data class Track(
 
     override val reference: Record.Reference =
         Record.Reference(
-            id = id,
+            id = cid,
             uri = uri,
         )
 }

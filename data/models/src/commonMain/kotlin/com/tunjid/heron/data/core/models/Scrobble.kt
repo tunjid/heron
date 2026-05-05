@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Scrobble(
-    val id: ScrobbleId,
+    val cid: ScrobbleId,
     val trackId: TrackId,
     val title: String,
     val artist: String,
@@ -33,7 +33,7 @@ data class Scrobble(
 
     override val reference: Record.Reference =
         Record.Reference(
-            id = id,
+            id = cid,
             uri = uri,
         )
 }
