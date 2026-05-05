@@ -21,12 +21,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
@@ -55,6 +53,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -138,7 +137,7 @@ class EditProfileBindings(
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state = viewModel.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =

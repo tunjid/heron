@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Conversation
@@ -51,6 +52,8 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.tiledListOf
@@ -59,35 +62,41 @@ import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val sharedElementPrefix: String,
-    val viewedProfileId: ProfileId,
-    val signedInProfileId: ProfileId? = null,
-    val canScrollVertically: Boolean = false,
-    val cursorData: CursorQuery.Data?,
-    val commentsPost: Post? = null,
-    @Serializable(with = TextFieldValueSerializer::class)
-    val inputText: TextFieldValue = TextFieldValue(),
-    @Transient
-    val order: TimelineItem.Threaded.Order? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
-    @Transient
-    val comments: List<TimelineItem> = emptyList(),
-    @Transient
-    val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val sharedElementPrefix: String,
+        val viewedProfileId: ProfileId,
+        val signedInProfileId: ProfileId? = null,
+        val canScrollVertically: Boolean = false,
+        val cursorData: CursorQuery.Data?,
+        val commentsPost: Post? = null,
+        @Serializable(with = TextFieldValueSerializer::class)
+        val inputText: TextFieldValue = TextFieldValue(),
+        @Transient
+        val order: TimelineItem.Threaded.Order? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
+        @Transient
+        val comments: List<TimelineItem> = emptyList(),
+        @Transient
+        val timelineStateHolder: TimelineStateHolder? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 fun State(
     route: Route,
-) = State(
+): State.Immutable = State.Immutable(
     viewedProfileId = route.profileId,
     sharedElementPrefix = route.sharedElementPrefix,
     cursorData = route.model<CursorQuery.Data>(),

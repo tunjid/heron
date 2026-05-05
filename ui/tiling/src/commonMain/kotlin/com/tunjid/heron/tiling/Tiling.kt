@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -158,7 +157,12 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
     )
 
 /**
- * Feed mutations as a function of the user's scroll position
+ * Feed mutations as a function of the user's scroll position.
+ *
+ * The function mutates `currentState().tilingData` (which must be a
+ * [TilingState.Data.SnapshotMutable]) directly via Compose snapshot writes; the returned flow
+ * is intentionally empty and exists only so legacy `actionStateFlowMutator`-based callers keep
+ * type-checking. New callers should use `actionSuspendingStateMutator` and ignore the result.
  */
 suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
     isRefreshedOnNewItems: Boolean = true,
@@ -167,7 +171,8 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
     crossinline refreshQuery: Query.() -> Query,
     noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     crossinline onNewItems: (TiledList<Query, Item>) -> TiledList<Query, Item>,
-    crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State,
+    @Suppress("UNUSED_PARAMETER")
+    crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State = { this },
     noinline queryRefreshBy: (Query) -> Any = { it.data.cursorAnchor },
 ): Flow<Mutation<State>> {
     // Read the starting state at the time of subscription
@@ -219,7 +224,8 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
             // Only emit once
             .distinctUntilChanged()
             .collectLatest { (queries, numColumns) ->
-                val backgroundDispatcher = currentCoroutineContext().requireStateProducingBackgroundDispatcher()
+                val backgroundDispatcher =
+                    currentCoroutineContext().requireStateProducingBackgroundDispatcher()
                 coroutineScope {
                     // Refreshes need tear down the tiling pipeline all over
                     val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
@@ -403,7 +409,6 @@ object DataSerializer : KSerializer<TilingState.Data<*, *>> {
             is TilingState.Data.SnapshotMutable<*, *> -> value.toSnapshotSpec()
         }
         delegate.serialize(encoder, immutable)
-
     }
 
     override fun deserialize(decoder: Decoder): TilingState.Data<*, *> {

@@ -184,7 +184,7 @@ private fun sharedRecordMutations(
         val shouldFetch = when (state().sharedRecord) {
             SharedRecord.Consumed,
             is SharedRecord.Pending,
-                -> overrideExisting
+            -> overrideExisting
             SharedRecord.None -> true
         }
         if (!shouldFetch) return@flow

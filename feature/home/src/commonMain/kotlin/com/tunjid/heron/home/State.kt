@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.home
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
@@ -30,34 +31,44 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val currentTabUri: Uri? = null,
-    val tabLayout: TabLayout = TabLayout.Collapsed.All,
-    @Transient
-    val trends: List<Trend> = emptyList(),
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val timelinePreferenceSaveRequestId: String? = null,
-    @Transient
-    val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
-    @Transient
-    val timelines: List<Timeline.Home> = emptyList(),
-    @Transient
-    val timelineStateHolders: List<HomeScreenStateHolders> = emptyList(),
-    @Transient
-    val signedInProfile: Profile? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val currentTabUri: Uri? = null,
+        val tabLayout: TabLayout = TabLayout.Collapsed.All,
+        @Transient
+        val trends: List<Trend> = emptyList(),
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val timelinePreferenceSaveRequestId: String? = null,
+        @Transient
+        val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
+        @Transient
+        val timelines: List<Timeline.Home> = emptyList(),
+        @Transient
+        val timelineStateHolders: List<HomeScreenStateHolders> = emptyList(),
+        @Transient
+        val signedInProfile: Profile? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
+
+fun State(): State.Immutable = State.Immutable()
 
 @Serializable
 sealed class TabLayout {

@@ -37,6 +37,8 @@ import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
 import com.tunjid.heron.ui.text.valueFor
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.character_limit
@@ -54,74 +56,78 @@ import org.jetbrains.compose.resources.StringResource
 internal val DisplayName = FormField.Id("displayName")
 internal val Description = FormField.Id("description")
 
-@Serializable
-data class State(
-    val profile: Profile,
-    val avatarSharedElementKey: String,
-    @Transient
-    val tabs: List<EditProfileScreenTabs> = listOf(
-        EditProfileScreenTabs.Bio,
-        EditProfileScreenTabs.Editor,
-    ),
-    @Transient
-    val feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator> = emptyMap(),
-    @Transient
-    val currentProfileTabs: Set<ProfileTab> = emptySet(),
-    @Transient
-    val editableTabs: List<ProfileTab> = emptyList(),
-    @Transient
-    val tabsToSave: List<ProfileTab> = emptyList(),
-    @Transient
-    val submitting: Boolean = false,
-    @Transient
-    val updatedAvatar: RestrictedFile.Media.Photo? = null,
-    @Transient
-    val updatedBanner: RestrictedFile.Media.Photo? = null,
-    @Transient
-    val fields: List<FormField> = listOf(
-        FormField(
-            id = DisplayName,
-            value = "",
-            maxLines = 1,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next,
+@Snapshottable
+interface State {
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val profile: Profile,
+        val avatarSharedElementKey: String,
+        @Transient
+        val tabs: List<EditProfileScreenTabs> = listOf(
+            EditProfileScreenTabs.Bio,
+            EditProfileScreenTabs.Editor,
+        ),
+        @Transient
+        val feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator> = emptyMap(),
+        @Transient
+        val currentProfileTabs: Set<ProfileTab> = emptySet(),
+        @Transient
+        val editableTabs: List<ProfileTab> = emptyList(),
+        @Transient
+        val tabsToSave: List<ProfileTab> = emptyList(),
+        @Transient
+        val submitting: Boolean = false,
+        @Transient
+        val updatedAvatar: RestrictedFile.Media.Photo? = null,
+        @Transient
+        val updatedBanner: RestrictedFile.Media.Photo? = null,
+        @Transient
+        val fields: List<FormField> = listOf(
+            FormField(
+                id = DisplayName,
+                value = "",
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+                contentDescription = Memo.Resource(Res.string.display_name),
+                validator = Validator(
+                    String::isMaxDisplayName to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.display_name),
+                    ),
+                ),
             ),
-            contentDescription = Memo.Resource(Res.string.display_name),
-            validator = Validator(
-                String::isMaxDisplayName to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.display_name),
+            FormField(
+                id = Description,
+                value = "",
+                maxLines = Int.MAX_VALUE,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done,
+                ),
+                contentDescription = Memo.Resource(Res.string.description),
+                validator = Validator(
+                    String::isMaxDescription to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.description),
+                    ),
                 ),
             ),
         ),
-        FormField(
-            id = Description,
-            value = "",
-            maxLines = Int.MAX_VALUE,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done,
-            ),
-            contentDescription = Memo.Resource(Res.string.description),
-            validator = Validator(
-                String::isMaxDescription to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.description),
-                ),
-            ),
-        ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 @OptIn(ExperimentalUuidApi::class)
-fun State(route: Route) = State(
+fun State(route: Route): State.Immutable = State.Immutable(
     profile = route.model<Profile>() ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
         handle = ProfileHandle(route.profileHandleOrId.id),

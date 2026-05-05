@@ -31,17 +31,14 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -92,10 +89,10 @@ import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
-import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
@@ -143,8 +140,8 @@ private fun FeedTimeline(
     showEngagementMetrics: Boolean,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.tiledItems)
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
+    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current

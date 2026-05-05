@@ -23,30 +23,27 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.compose.produceStateWithLifecycle
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun <T : Record, State : TilingState<out CursorQuery, T>> RecordList(
-    collectionStateHolder: ActionStateMutator<TilingState.Action, StateFlow<State>>,
+    collectionStateHolder: ActionSuspendingStateMutator<TilingState.Action, State>,
     prefersCompactBottomNav: Boolean,
     itemKey: (T) -> Any,
     itemContent: @Composable (LazyItemScope.(T) -> Unit),
 ) {
     val listState = rememberLazyListState()
-    val collectionState by collectionStateHolder.state.collectAsStateWithLifecycle()
-    val updatedItems by rememberUpdatedState(collectionState.tiledItems)
+    val collectionState = collectionStateHolder.produceStateWithLifecycle()
+    val updatedItems = collectionState.tiledItems
 
     LazyColumn(
         modifier = Modifier
