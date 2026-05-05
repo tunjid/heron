@@ -35,6 +35,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.refreshedStatus
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -170,13 +171,12 @@ fun lastRefreshedMutations(
         copy(
             lastRefreshed = refreshedAt,
         ).apply {
-            when (val currentStatus = tilingData.status) {
-                is TilingState.Status.Initial -> currentStatus
-                is TilingState.Status.Refreshed -> currentStatus
-                is TilingState.Status.Refreshing -> {
-                    if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
-                    else tilingData.refreshedStatus()
-                }
+            val currentStatus = tilingData.status
+            if (currentStatus is TilingState.Status.Refreshing &&
+                refreshedAt != null &&
+                refreshedAt >= tilingData.currentQuery.data.cursorAnchor
+            ) {
+                tilingData.withRefreshedStatus()
             }
         }
     }
