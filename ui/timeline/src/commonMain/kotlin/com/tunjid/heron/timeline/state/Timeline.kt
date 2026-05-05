@@ -30,7 +30,6 @@ import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -188,16 +187,16 @@ private fun timelineUpdateMutations(
     timelineRepository: TimelineRepository,
 ) {
     timelineRepository.timeline(request = timeline.toTimelineRequest())
-        .launchAndCollectLatestWithState(state) { newTimeline ->
+        .launchAndCollectLatest { newTimeline ->
             state.timeline = newTimeline
 
             if (newTimeline.isEmpty()) {
                 delay(EMPTY_STATE_DELAY)
-                if (this@launchAndFoldLatestMutations.timeline.isEmpty()) updateItems {
+                if (state.timeline.isEmpty()) state.updateItems {
                     buildTiledList {
                         add(
-                            query = tilingData.currentQuery,
-                            item = TimelineItem.Empty.Timeline(this@launchAndFoldLatestMutations.timeline),
+                            query = state.tilingData.currentQuery,
+                            item = TimelineItem.Empty.Timeline(state.timeline),
                         )
                     }
                 }
