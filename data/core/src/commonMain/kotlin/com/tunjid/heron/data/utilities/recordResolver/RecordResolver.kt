@@ -42,12 +42,15 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Record.Reference
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.types.AlbumUri
+import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
@@ -64,12 +67,14 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
 import com.tunjid.heron.data.core.types.profileId
@@ -547,7 +552,7 @@ internal class OfflineRecordResolver @Inject constructor(
                         updatedAt = document.updatedAt,
                         coverImage = documentView.coverImageUrl?.uri?.let(::ImageUri),
                         bskyPostRef = document.bskyPostRef?.let { ref ->
-                            Record.Reference(
+                            Reference(
                                 id = ref.cid.cid.let(::PostId),
                                 uri = PostUri(ref.uri.atUri),
                             )
@@ -594,7 +599,10 @@ internal class OfflineRecordResolver @Inject constructor(
             } else {
                 expiredSessionResult()
             }
-
+            is AlbumUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+            is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+            is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+            is TrackUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
     }.onFailure { throwable ->
@@ -639,6 +647,10 @@ internal class OfflineRecordResolver @Inject constructor(
             is StandardPublicationUri -> standardSiteDao.deletePublication(uri)
             is StandardDocumentUri -> standardSiteDao.deleteDocument(uri)
             is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
+            is AlbumUri -> Unit // TODO
+            is ArtistUri -> Unit // TODO
+            is ScrobbleUri -> Unit // TODO
+            is TrackUri -> Unit // TODO
             is UnknownRecordUri -> Unit
         }
     }

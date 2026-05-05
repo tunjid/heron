@@ -65,6 +65,10 @@ fun RecordUri.requireCollection(): String =
         is StandardPublicationUri -> StandardPublicationUri.NAMESPACE
         is StandardDocumentUri -> StandardDocumentUri.NAMESPACE
         is StandardSubscriptionUri -> StandardSubscriptionUri.NAMESPACE
+        is AlbumUri -> AlbumUri.NAMESPACE
+        is TrackUri -> TrackUri.NAMESPACE
+        is ArtistUri -> ArtistUri.NAMESPACE
+        is ScrobbleUri -> ScrobbleUri.NAMESPACE
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
@@ -247,6 +251,58 @@ value class StandardDocumentUri(
 
 @Serializable
 @JvmInline
+value class AlbumUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.album"
+    }
+}
+
+@Serializable
+@JvmInline
+value class TrackUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.song"
+    }
+}
+
+@Serializable
+@JvmInline
+value class ArtistUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.artist"
+    }
+}
+
+@Serializable
+@JvmInline
+value class ScrobbleUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.scrobble"
+    }
+}
+
+@Serializable
+@JvmInline
 value class StandardSubscriptionUri(
     override val uri: String,
 ) : Uri,
@@ -361,6 +417,10 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
         StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
         StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(normalized)
+        AlbumUri.NAMESPACE -> AlbumUri(normalized)
+        ArtistUri.NAMESPACE -> ArtistUri(normalized)
+        TrackUri.NAMESPACE -> TrackUri(normalized)
+        ScrobbleUri.NAMESPACE -> ScrobbleUri(normalized)
         else -> UnknownRecordUri(normalized)
     }
 }
@@ -395,7 +455,7 @@ private val bskyPathSegmentToNamespace = mapOf(
     "labeler" to LabelerUri.NAMESPACE,
 )
 
-fun String.bskyHttpsUrlToAtUri(): String? {
+private fun String.bskyHttpsUrlToAtUri(): String? {
     if (!startsWith(Uri.Host.Https.prefix)) return null
 
     // Skip past "https://" and optional "www."
