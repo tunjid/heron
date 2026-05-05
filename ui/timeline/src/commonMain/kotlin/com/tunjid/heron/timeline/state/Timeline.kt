@@ -30,7 +30,7 @@ import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
-import com.tunjid.heron.ui.coroutines.launchAndFoldLatestMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -188,7 +188,7 @@ private fun timelineUpdateMutations(
     timelineRepository: TimelineRepository,
 ) {
     timelineRepository.timeline(request = timeline.toTimelineRequest())
-        .launchAndFoldLatestMutations(state) { newTimeline ->
+        .launchAndCollectLatestWithState(state) { newTimeline ->
             state.timeline = newTimeline
 
             if (newTimeline.isEmpty()) {

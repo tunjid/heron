@@ -20,8 +20,8 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.mapCursorList
-import com.tunjid.heron.ui.coroutines.launchAndFoldLatestMutations
-import com.tunjid.heron.ui.coroutines.launchAndFoldMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
+import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.coroutines.requireStateProducingBackgroundDispatcher
 import com.tunjid.mutator.Mutation
 import com.tunjid.snapshottable.SnapshotSpec
@@ -229,8 +229,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                 coroutineScope {
                     // Refreshes need tear down the tiling pipeline all over
                     val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
-                    queries.launchAndFoldMutations(startingState) { newQuery ->
-                        currentQuery = newQuery
+                    queries.launchAndCollectWithState(startingState) { newQuery ->
                         status = when {
                             currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
                                 cursorAnchor = newQuery.data.cursorAnchor,
@@ -238,8 +237,9 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
 
                             else -> status
                         }
+                        currentQuery = newQuery
                     }
-                    numColumns.launchAndFoldMutations(startingState) {
+                    numColumns.launchAndCollectWithState(startingState) {
                         update(numColumns = it)
                     }
                     refreshes.flatMapLatest { refreshedQuery ->
@@ -261,7 +261,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                             else 0.milliseconds
                         }
                         .flowOn(backgroundDispatcher)
-                        .launchAndFoldLatestMutations(startingState) { items ->
+                        .launchAndCollectLatestWithState(startingState) { items ->
                             // Ignore results from stale queries
                             if (items.isValidFor(currentQuery)) {
                                 // Evaluate this in the background

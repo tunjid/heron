@@ -18,16 +18,16 @@ inline fun <T> Flow<T>.launchAndCollect(
 }
 
 context(scope: CoroutineScope)
-inline fun <T, S> Flow<T>.launchAndFoldMutations(
+inline fun <T, S> Flow<T>.launchAndCollectWithState(
     state: S,
     crossinline block: suspend S.(T) -> Unit,
 ) {
     scope.launch {
-        foldMutations(state, block)
+        collectWithState(state, block)
     }
 }
 
-suspend inline fun <T, S> Flow<T>.foldMutations(
+suspend inline fun <T, S> Flow<T>.collectWithState(
     state: S,
     crossinline block: suspend S.(T) -> Unit,
 ) {
@@ -50,16 +50,16 @@ inline fun <T> Flow<T>.launchAndCollectLatest(
 }
 
 context(scope: CoroutineScope)
-inline fun <T, S> Flow<T>.launchAndFoldLatestMutations(
+inline fun <T, S> Flow<T>.launchAndCollectLatestWithState(
     state: S,
     crossinline block: suspend S.(T) -> Unit,
 ) {
     scope.launch {
-        foldLatestMutations(state, block)
+        collectLatestWithState(state, block)
     }
 }
 
-suspend inline fun <T, S> Flow<T>.foldLatestMutations(
+suspend inline fun <T, S> Flow<T>.collectLatestWithState(
     state: S,
     crossinline block: suspend S.(T) -> Unit,
 ) {

@@ -34,11 +34,11 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
-import com.tunjid.heron.ui.coroutines.foldLatestMutations
-import com.tunjid.heron.ui.coroutines.foldMutations
+import com.tunjid.heron.ui.coroutines.collectLatestWithState
+import com.tunjid.heron.ui.coroutines.collectWithState
 import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndFoldLatestMutations
-import com.tunjid.heron.ui.coroutines.launchAndFoldMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
+import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -136,7 +136,7 @@ private fun loadProfileMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .filterNotNull()
-    .launchAndFoldLatestMutations(state) { signedInProfile ->
+    .launchAndCollectLatestWithState(state) { signedInProfile ->
         profile = signedInProfile
         fields = fields
             .copyWithValidation(
@@ -164,7 +164,7 @@ private fun profileTabMutations(
     profileRepository: ProfileRepository,
 ) = profileRepository.tabs(route.profileHandleOrId)
     .distinctUntilChanged()
-    .launchAndFoldMutations(state) { tabs ->
+    .launchAndCollectWithState(state) { tabs ->
         val tabsSet = tabs.toSet()
         val missingTabs = ProfileTab.Static.minus(tabsSet)
         currentProfileTabs = tabsSet
@@ -192,19 +192,19 @@ private suspend fun screenTabMutations(
 
 private suspend fun Flow<Action.AvatarPicked>.avatarPickedMutations(
     state: State.SnapshotMutable,
-) = foldMutations(state) { action ->
+) = collectWithState(state) { action ->
     updatedAvatar = action.item
 }
 
 private suspend fun Flow<Action.BannerPicked>.bannerPickedMutations(
     state: State.SnapshotMutable,
-) = foldMutations(state) { action ->
+) = collectWithState(state) { action ->
     updatedBanner = action.item
 }
 
 private suspend fun Flow<Action.FieldChanged>.formEditMutations(
     state: State.SnapshotMutable,
-) = foldMutations(state) { action ->
+) = collectWithState(state) { action ->
     fields = fields.copyWithValidation(action.id, action.text)
 }
 
@@ -219,7 +219,7 @@ private suspend fun Flow<Action.SaveProfile>.saveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
-) = foldLatestMutations(state) { action ->
+) = collectLatestWithState(state) { action ->
     submitting = true
 
     val updateWrite = Writable.ProfileUpdate(
@@ -256,13 +256,13 @@ private suspend fun Flow<Action.SaveProfile>.saveProfileMutations(
 
 private suspend fun Flow<Action.UpdateTabsToSave>.pinnedTabMutations(
     state: State.SnapshotMutable,
-) = foldMutations(state) { action ->
+) = collectWithState(state) { action ->
     tabsToSave = action.tabs
 }
 
 private suspend fun Flow<Action.ToggleFeed>.toggleFeedMutations(
     state: State.SnapshotMutable,
-) = foldMutations(state) { action ->
+) = collectWithState(state) { action ->
     feedUrisToFeeds =
         if (feedUrisToFeeds.contains(action.feedGenerator.uri)) feedUrisToFeeds - action.feedGenerator.uri
         else feedUrisToFeeds + (action.feedGenerator.uri to action.feedGenerator)
