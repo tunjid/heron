@@ -94,7 +94,7 @@ private fun Flow<Action.Tile>.subscriptionLoadMutations(
     recordRepository: RecordRepository,
 ) = map { it.tilingAction }
     .tilingMutations(
-        currentState = { state },
+        state = state,
         updateQueryData = { copy(data = it) },
         refreshQuery = { copy(data = data.reset()) },
         cursorListLoader = recordRepository::subscribedPublications,

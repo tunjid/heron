@@ -45,7 +45,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Transient
 
@@ -142,7 +141,7 @@ fun CoroutineScope.timelineStateHolder(
                             .map { it.tilingAction }
                             .tilingMutations(
                                 isRefreshedOnNewItems = false,
-                                currentState = { state },
+                                state = state,
                                 updateQueryData = TimelineQuery::updateData,
                                 refreshQuery = TimelineQuery::refresh,
                                 cursorListLoader = timelineRepository::timelineItems,

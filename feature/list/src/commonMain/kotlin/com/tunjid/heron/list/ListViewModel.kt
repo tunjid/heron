@@ -303,7 +303,7 @@ private suspend fun listMemberStateHolderMutations(
                     memberState.signedInProfileId = it?.did
                 }
                 actions.tilingMutations(
-                    currentState = { memberState },
+                    state = memberState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
                     cursorListLoader = recordRepository::listMembers,

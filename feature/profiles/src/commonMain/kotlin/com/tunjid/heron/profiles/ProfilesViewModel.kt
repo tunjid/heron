@@ -121,7 +121,7 @@ internal fun Flow<Action.Tile>.profilesLoadMutations(
     recordRepository: RecordRepository,
 ) = map { it.tilingAction }
     .tilingMutations(
-        currentState = { state },
+        state = state,
         updateQueryData = {
             when (this) {
                 is PostDataQuery -> copy(data = it)

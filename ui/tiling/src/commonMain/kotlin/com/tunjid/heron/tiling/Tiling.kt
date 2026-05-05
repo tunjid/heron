@@ -174,7 +174,7 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
 context(productionScope: CoroutineScope)
 inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
     isRefreshedOnNewItems: Boolean = true,
-    crossinline currentState: suspend () -> State,
+    state: State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
     crossinline refreshQuery: Query.() -> Query,
     noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
@@ -184,7 +184,7 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
 ) {
     productionScope.launch {
         // Read the starting state at the time of subscription
-        val startingState: TilingState.Data<Query, Item> = currentState().tilingData
+        val startingState: TilingState.Data<Query, Item> = state.tilingData
         check(startingState is TilingState.Data.SnapshotMutable) {
             "Tiling state must be snapshot mutable"
         }
@@ -278,7 +278,7 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                                 // Final transform on the production dispatcher with State as
                                 // receiver, so callers can read live snapshot-state fields
                                 // race-free with other producer-scope writers.
-                                val toCommit = with(currentState()) { onWriteItems(deduped) }
+                                val toCommit = with(state) { onWriteItems(deduped) }
                                 update(
                                     items = toCommit,
                                     status = when {

@@ -302,7 +302,7 @@ private fun Flow<Action.Tile>.messagingTilingMutations(
     messagesRepository: MessageRepository,
 ) = map { it.tilingAction }
     .tilingMutations(
-        currentState = { state },
+        state = state,
         updateQueryData = { copy(data = it) },
         refreshQuery = { copy(data = data.reset()) },
         cursorListLoader = messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(

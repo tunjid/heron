@@ -621,7 +621,7 @@ private fun CoroutineScope.searchStateHolder(
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
                 .tilingMutations(
-                    currentState = { holderState },
+                    state = holderState,
                     updateQueryData = {
                         when (this) {
                             is SearchQuery.OfPosts.Latest -> copy(data = it)
@@ -657,7 +657,7 @@ private fun CoroutineScope.searchStateHolder(
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
                 .tilingMutations(
-                    currentState = { holderState },
+                    state = holderState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
                     cursorListLoader = searchRepository::profileSearch
@@ -678,7 +678,7 @@ private fun CoroutineScope.searchStateHolder(
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
                 .tilingMutations(
-                    currentState = { holderState },
+                    state = holderState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
                     cursorListLoader = searchRepository::feedGeneratorSearch

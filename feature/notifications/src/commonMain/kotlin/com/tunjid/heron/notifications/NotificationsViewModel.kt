@@ -295,7 +295,7 @@ private fun Flow<Action.Tile>.notificationsMutations(
     .tilingMutations(
         // This is determined by State.lastRefreshed
         isRefreshedOnNewItems = false,
-        currentState = { state },
+        state = state,
         updateQueryData = { copy(data = it) },
         refreshQuery = { copy(data = data.reset()) },
         cursorListLoader = notificationsRepository::notifications,

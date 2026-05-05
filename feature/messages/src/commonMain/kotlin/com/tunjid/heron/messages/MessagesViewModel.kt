@@ -114,7 +114,7 @@ class ActualMessagesViewModel(
                         action.flow
                             .map { it.tilingAction }
                             .tilingMutations(
-                                currentState = { state },
+                                state = state,
                                 updateQueryData = { copy(data = it) },
                                 refreshQuery = { copy(data = data.reset()) },
                                 cursorListLoader = messagesRepository::conversations,

@@ -166,7 +166,7 @@ private fun CoroutineScope.documentsStateHolder(
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     producer = { state, actions ->
         actions.tilingMutations(
-            currentState = { state },
+            state = state,
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },
             cursorListLoader = recordRepository::publicationDocuments,

@@ -137,7 +137,7 @@ private fun Flow<Action.Tile>.postsLoadMutations(
     postsRepository: PostRepository,
 ) = map { it.tilingAction }
     .tilingMutations(
-        currentState = { state },
+        state = state,
         updateQueryData = PostDataQuery::updateData,
         refreshQuery = PostDataQuery::refresh,
         cursorListLoader = { query, cursor ->
