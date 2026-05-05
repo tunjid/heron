@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.messages
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -24,32 +25,47 @@ import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    @Transient
-    val signedInProfile: Profile? = null,
-    override val tilingData: TilingState.Data<ConversationQuery, Conversation> = TilingState.Data(
-        currentQuery = ConversationQuery(
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15,
+@Stable
+@Snapshottable
+interface State : TilingState<ConversationQuery, Conversation> {
+    val signedInProfile: Profile?
+    val isSearching: Boolean
+    val searchQuery: String
+    val messages: List<Memo>
+    val autoCompletedProfiles: List<ProfileWithViewerState>
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        @Transient
+        override val signedInProfile: Profile? = null,
+        override val tilingData: TilingState.Data<ConversationQuery, Conversation> = TilingState.Data(
+            currentQuery = ConversationQuery(
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                    limit = 15,
+                ),
             ),
         ),
-    ),
-    @Transient
-    val isSearching: Boolean = false,
-    @Transient
-    val searchQuery: String = "",
-    @Transient
-    val messages: List<Memo> = emptyList(),
-    @Transient
-    val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
-) : TilingState<ConversationQuery, Conversation>
+        @Transient
+        override val isSearching: Boolean = false,
+        @Transient
+        override val searchQuery: String = "",
+        @Transient
+        override val messages: List<Memo> = emptyList(),
+        @Transient
+        override val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
+    ) : State
+}
+
+fun State(): State.Immutable = State.Immutable()
 
 sealed class Action(val key: String) {
 

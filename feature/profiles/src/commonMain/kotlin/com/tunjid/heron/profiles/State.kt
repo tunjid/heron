@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profiles
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -29,20 +30,31 @@ import com.tunjid.heron.profiles.di.load
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val signedInProfileId: ProfileId? = null,
-    val load: Load,
-    override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) : TilingState<CursorQuery, ProfileWithViewerState>
+@Stable
+@Snapshottable
+interface State : TilingState<CursorQuery, ProfileWithViewerState> {
+    val signedInProfileId: ProfileId?
+    val load: Load
+    val messages: List<Memo>
 
-fun State(route: Route) = State(
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        override val signedInProfileId: ProfileId? = null,
+        override val load: Load,
+        override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
+        @Transient
+        override val messages: List<Memo> = emptyList(),
+    ) : State
+}
+
+fun State(route: Route): State.Immutable = State.Immutable(
     load = route.load,
     tilingData = TilingState.Data(
         currentQuery = when (val load = route.load) {

@@ -78,7 +78,7 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
                 onNewItems = { items ->
                     items.distinctBy(itemId)
                 },
-            ).collect()
+            )
         },
     )
 }

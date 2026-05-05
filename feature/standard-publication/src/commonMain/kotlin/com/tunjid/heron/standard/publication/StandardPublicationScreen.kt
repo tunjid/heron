@@ -41,7 +41,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.data.core.models.link
@@ -59,6 +58,7 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.roundToInt
 
@@ -167,7 +167,7 @@ private fun Documents(
     holder: DocumentsStateHolder,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val state by holder.state.collectAsStateWithLifecycle()
+    val state = holder.produceStateWithLifecycle()
     val items by rememberUpdatedState(state.tilingData.items)
     val gridState = rememberLazyStaggeredGridState()
 

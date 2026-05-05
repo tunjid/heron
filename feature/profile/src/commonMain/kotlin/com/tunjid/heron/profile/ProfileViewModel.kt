@@ -499,9 +499,10 @@ private fun Flow<Action.UpdateLiveStatus>.liveStatusMutations(
     },
 )
 
-private suspend fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = collect { event ->
+) = launchAndCollect { event ->
     state.messages -= event.message
 }
 

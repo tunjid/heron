@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
 import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.coroutines.requireStateProducingBackgroundDispatcher
-import com.tunjid.mutator.Mutation
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.ListTiler
@@ -41,6 +40,7 @@ import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -50,12 +50,12 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PolymorphicSerializer
@@ -159,29 +159,36 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
 /**
  * Feed mutations as a function of the user's scroll position.
  *
- * The function mutates `currentState().tilingData` (which must be a
- * [TilingState.Data.SnapshotMutable]) directly via Compose snapshot writes; the returned flow
- * is intentionally empty and exists only so legacy `actionStateFlowMutator`-based callers keep
- * type-checking. New callers should use `actionSuspendingStateMutator` and ignore the result.
+ * The function launches a coroutine in [productionScope] that mutates
+ * `currentState().tilingData` (which must be a [TilingState.Data.SnapshotMutable]) directly via
+ * Compose snapshot writes. The call returns immediately so the caller's producer block does not
+ * stall.
+ *
+ * Two transform hooks are provided:
+ * - [onNewItems] runs on a background dispatcher; use it for CPU-heavy work that does not need to
+ *   read mutable state (dedupe, sort, group).
+ * - [onWriteItems] runs on [productionScope]'s dispatcher with the live [State] as receiver,
+ *   immediately before the snapshot write. Use it to read other snapshot-state fields race-free
+ *   and produce the final [TiledList] that gets committed.
  */
-suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+context(productionScope: CoroutineScope)
+inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
     isRefreshedOnNewItems: Boolean = true,
     crossinline currentState: suspend () -> State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
     crossinline refreshQuery: Query.() -> Query,
     noinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
     crossinline onNewItems: (TiledList<Query, Item>) -> TiledList<Query, Item>,
-    @Suppress("UNUSED_PARAMETER")
-    crossinline onTilingDataUpdated: State.(TilingState.Data<Query, Item>) -> State = { this },
+    crossinline onWriteItems: State.(TiledList<Query, Item>) -> TiledList<Query, Item> = { it },
     noinline queryRefreshBy: (Query) -> Any = { it.data.cursorAnchor },
-): Flow<Mutation<State>> {
-    // Read the starting state at the time of subscription
-    val startingState: TilingState.Data<Query, Item> = currentState().tilingData
-    check(startingState is TilingState.Data.SnapshotMutable) {
-        "Tiling state must be snapshot mutable"
-    }
+) {
+    productionScope.launch {
+        // Read the starting state at the time of subscription
+        val startingState: TilingState.Data<Query, Item> = currentState().tilingData
+        check(startingState is TilingState.Data.SnapshotMutable) {
+            "Tiling state must be snapshot mutable"
+        }
 
-    return flow {
         scan(
             initial = Pair(
                 MutableStateFlow(startingState.currentQuery),
@@ -264,12 +271,16 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                         .launchAndCollectLatestWithState(startingState) { items ->
                             // Ignore results from stale queries
                             if (items.isValidFor(currentQuery)) {
-                                // Evaluate this in the background
-                                val newItems = withContext(backgroundDispatcher) {
+                                // Heavy work on the background dispatcher
+                                val deduped = withContext(backgroundDispatcher) {
                                     onNewItems(items)
                                 }
+                                // Final transform on the production dispatcher with State as
+                                // receiver, so callers can read live snapshot-state fields
+                                // race-free with other producer-scope writers.
+                                val toCommit = with(currentState()) { onWriteItems(deduped) }
                                 update(
-                                    items = newItems,
+                                    items = toCommit,
                                     status = when {
                                         isRefreshedOnNewItems && items.isNotEmpty() -> {
                                             val fetchedQuery = items.queryAt(0)

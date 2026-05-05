@@ -29,19 +29,15 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.standard.publication.di.PublicationRequest
 import com.tunjid.heron.standard.publication.di.publicationRequest
-import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.utilities.enqueueMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.SuspendingStateHolder
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -50,13 +46,9 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
 
-internal typealias StandardPublicationStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias StandardPublicationStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
@@ -77,43 +69,43 @@ class ActualStandardPublicationViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
-    StandardPublicationStateHolder by scope.actionStateFlowMutator(
-        initialState = State(route),
+    StandardPublicationStateHolder by scope.actionSuspendingStateMutator(
+        initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        actionTransform = transform@{ actions ->
-            merge(
-                publicationMutations(
-                    route = route,
-                    scope = scope,
-                    stateHolder = this,
-                    profileRepository = profileRepository,
-                    recordRepository = recordRepository,
-                ),
-                actions.toMutationStream(
-                    keySelector = Action::key,
-                ) {
-                    when (val action = type()) {
-                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                        is Action.Navigate -> action.flow.consumeNavigationActions(
-                            navigationMutationConsumer = navActions,
-                        )
-                        is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
-                            writeQueue = writeQueue,
-                        )
-                    }
-                },
+        producer = { state, actions ->
+            publicationMutations(
+                state = state,
+                route = route,
+                viewModelScope = scope,
+                profileRepository = profileRepository,
+                recordRepository = recordRepository,
             )
+            actions.launchMutationsIn(
+                productionScope = this,
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
+                    is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
+                }
+            }
         },
     )
 
-private fun publicationMutations(
+context(productionScope: CoroutineScope)
+private suspend fun publicationMutations(
+    state: State.SnapshotMutable,
     route: Route,
-    scope: CoroutineScope,
-    stateHolder: SuspendingStateHolder<State>,
+    viewModelScope: CoroutineScope,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> = flow {
-    val state = stateHolder.state()
+) {
     val publicationUri = state.publication?.uri ?: when (val request = route.publicationRequest) {
         is PublicationRequest.WithUri -> request.uri
         is PublicationRequest.WithProfile ->
@@ -124,29 +116,26 @@ private fun publicationMutations(
                 namespace = StandardPublicationUri.NAMESPACE,
                 recordKey = RecordKey(request.publicationUriSuffix),
             ) as? StandardPublicationUri
-    } ?: return@flow
+    } ?: return
 
     if (state.documentsTilingStateHolder == null) {
-        emit {
-            copy(
-                documentsTilingStateHolder = scope.documentsStateHolder(
-                    publicationUri = publicationUri,
-                    recordRepository = recordRepository,
-                ),
-            )
-        }
+        state.documentsTilingStateHolder = viewModelScope.documentsStateHolder(
+            publicationUri = publicationUri,
+            recordRepository = recordRepository,
+        )
     }
 
-    emitAll(
-        recordRepository.publication(publicationUri)
-            .mapToMutation { copy(publication = it) },
-    )
+    recordRepository.publication(publicationUri).launchAndCollect {
+        state.publication = it
+    }
 }
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         when (action) {
             is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
@@ -157,35 +146,31 @@ private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscrip
             )
         }
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.messages -= event.message
+}
 
 private fun CoroutineScope.documentsStateHolder(
     publicationUri: StandardPublicationUri,
     recordRepository: RecordRepository,
-) = actionStateFlowMutator<TilingState.Action, DocumentsTilingState>(
-    initialState = DocumentsTilingState(
-        publicationUri = publicationUri,
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream {
-            type().flow
-                .tilingMutations(
-                    currentState = { state() },
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = recordRepository::publicationDocuments,
-                    onNewItems = { items ->
-                        items.distinctBy(StandardDocument::uri)
-                    },
-                    onTilingDataUpdated = { copy(tilingData = it) },
-                )
-        }
+): DocumentsStateHolder = actionSuspendingStateMutator(
+    initialState = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
+    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+    producer = { state, actions ->
+        actions.tilingMutations(
+            currentState = { state },
+            updateQueryData = { copy(data = it) },
+            refreshQuery = { copy(data = data.reset()) },
+            cursorListLoader = recordRepository::publicationDocuments,
+            onNewItems = { items -> items.distinctBy(StandardDocument::uri) },
+        )
     },
 )

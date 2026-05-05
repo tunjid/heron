@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.conversation.di.conversationId
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -32,32 +33,48 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    @Transient
-    val signedInProfile: Profile? = null,
-    val sharedElementPrefix: String,
-    val id: ConversationId,
-    val members: List<Profile> = emptyList(),
-    val pendingItems: List<MessageItem.Pending> = emptyList(),
-    override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
-    @Serializable(with = TextFieldValueSerializer::class)
-    val inputText: TextFieldValue = TextFieldValue(),
-    @Transient
-    val sharedRecord: SharedRecord = SharedRecord.None,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) : TilingState<MessageQuery, MessageItem>
+@Stable
+@Snapshottable
+interface State : TilingState<MessageQuery, MessageItem> {
+    val signedInProfile: Profile?
+    val sharedElementPrefix: String
+    val id: ConversationId
+    val members: List<Profile>
+    val pendingItems: List<MessageItem.Pending>
+    val inputText: TextFieldValue
+    val sharedRecord: SharedRecord
+    val messages: List<Memo>
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        @Transient
+        override val signedInProfile: Profile? = null,
+        override val sharedElementPrefix: String,
+        override val id: ConversationId,
+        override val members: List<Profile> = emptyList(),
+        override val pendingItems: List<MessageItem.Pending> = emptyList(),
+        override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
+        @Serializable(with = TextFieldValueSerializer::class)
+        override val inputText: TextFieldValue = TextFieldValue(),
+        @Transient
+        override val sharedRecord: SharedRecord = SharedRecord.None,
+        @Transient
+        override val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 fun State(
     route: Route,
-) = State(
+): State.Immutable = State.Immutable(
     id = route.conversationId,
     sharedElementPrefix = route.sharedElementPrefix,
     members = route.models.filterIsInstance<Profile>(),
