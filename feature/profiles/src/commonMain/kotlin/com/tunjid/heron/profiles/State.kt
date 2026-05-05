@@ -39,18 +39,15 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<CursorQuery, ProfileWithViewerState> {
-    val signedInProfileId: ProfileId?
-    val load: Load
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val signedInProfileId: ProfileId? = null,
-        override val load: Load,
+        val signedInProfileId: ProfileId? = null,
+        val load: Load,
         override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

@@ -34,17 +34,12 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<ConversationQuery, Conversation> {
-    val signedInProfile: Profile?
-    val isSearching: Boolean
-    val searchQuery: String
-    val messages: List<Memo>
-    val autoCompletedProfiles: List<ProfileWithViewerState>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
         @Transient
-        override val signedInProfile: Profile? = null,
+        val signedInProfile: Profile? = null,
         override val tilingData: TilingState.Data<ConversationQuery, Conversation> = TilingState.Data(
             currentQuery = ConversationQuery(
                 data = CursorQuery.Data(
@@ -55,13 +50,13 @@ interface State : TilingState<ConversationQuery, Conversation> {
             ),
         ),
         @Transient
-        override val isSearching: Boolean = false,
+        val isSearching: Boolean = false,
         @Transient
-        override val searchQuery: String = "",
+        val searchQuery: String = "",
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
         @Transient
-        override val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
+        val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
     ) : State
 }
 

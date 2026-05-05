@@ -42,22 +42,17 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<PostDataQuery, TimelineItem> {
-    val signedInProfileId: ProfileId?
-    val preferences: Preferences
-    val recentConversations: List<Conversation>
-    val recentLists: List<FeedList>
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val signedInProfileId: ProfileId? = null,
+        val signedInProfileId: ProfileId? = null,
         @Transient
-        override val preferences: Preferences = Preferences.EmptyPreferences,
+        val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        override val recentConversations: List<Conversation> = emptyList(),
+        val recentConversations: List<Conversation> = emptyList(),
         @Transient
-        override val recentLists: List<FeedList> = emptyList(),
+        val recentLists: List<FeedList> = emptyList(),
         @Transient
         override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
             currentQuery = PostDataQuery(
@@ -70,7 +65,7 @@ interface State : TilingState<PostDataQuery, TimelineItem> {
             ),
         ),
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

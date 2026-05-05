@@ -43,25 +43,19 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<NotificationsQuery, Notification> {
-    val lastRefreshed: Instant?
-    val preferences: Preferences
-    val recentConversations: List<Conversation>
-    val signedInProfile: Profile?
-    val canAnimateRequestPermissionsButton: Boolean
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val lastRefreshed: Instant? = null,
+        val lastRefreshed: Instant? = null,
         @Transient
-        override val preferences: Preferences = Preferences.EmptyPreferences,
+        val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        override val recentConversations: List<Conversation> = emptyList(),
+        val recentConversations: List<Conversation> = emptyList(),
         @Transient
-        override val signedInProfile: Profile? = null,
+        val signedInProfile: Profile? = null,
         @Transient
-        override val canAnimateRequestPermissionsButton: Boolean = false,
+        val canAnimateRequestPermissionsButton: Boolean = false,
         override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
             currentQuery = NotificationsQuery(
                 data = CursorQuery.Data(
@@ -72,7 +66,7 @@ interface State : TilingState<NotificationsQuery, Notification> {
             ),
         ),
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

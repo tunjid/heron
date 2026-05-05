@@ -34,7 +34,6 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<DataQuery, StandardPublication> {
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
@@ -49,7 +48,7 @@ interface State : TilingState<DataQuery, StandardPublication> {
             ),
         ),
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

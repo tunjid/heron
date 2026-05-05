@@ -64,7 +64,6 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
@@ -302,17 +301,16 @@ private fun feedGeneratorUrisToStatusMutations(
             )
     }
 
-private suspend fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = flatMapLatest { action ->
+) = launchAndCollectLatest { action ->
     searchRepository.suggestedProfiles(
         category = action.category,
-    ).mapLatest { suggestedProfiles ->
-        action.category to suggestedProfiles
+    ).collect { suggestedProfiles ->
+        state.categoriesToSuggestedProfiles += (action.category to suggestedProfiles)
     }
-}.collect { categoryToProfiles ->
-    state.categoriesToSuggestedProfiles += categoryToProfiles
 }
 
 context(productionScope: CoroutineScope)

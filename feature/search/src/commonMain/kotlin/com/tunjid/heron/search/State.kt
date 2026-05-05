@@ -109,51 +109,35 @@ val SearchState.sharedElementPrefix
 @Stable
 @Snapshottable
 interface State {
-    val currentQuery: String
-    val layout: ScreenLayout
-    val signedInProfile: Profile?
-    val trends: List<Trend>
-    val suggestedProfileCategory: String?
-    val isQueryEditable: Boolean
-    val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean>
-    val preferences: Preferences
-    val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>>
-    val recentConversations: List<Conversation>
-    val recentLists: List<FeedList>
-    val starterPacksWithMembers: List<SuggestedStarterPack>
-    val feedGenerators: List<FeedGenerator>
-    val searchStateHolders: List<SearchResultStateHolder>
-    val autoCompletedProfiles: List<SearchResult.OfProfile>
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val currentQuery: String = "",
-        override val layout: ScreenLayout = ScreenLayout.Suggested,
-        override val signedInProfile: Profile? = null,
-        override val trends: List<Trend> = emptyList(),
-        override val suggestedProfileCategory: String? = null,
-        override val isQueryEditable: Boolean = true,
-        override val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
+        val currentQuery: String = "",
+        val layout: ScreenLayout = ScreenLayout.Suggested,
+        val signedInProfile: Profile? = null,
+        val trends: List<Trend> = emptyList(),
+        val suggestedProfileCategory: String? = null,
+        val isQueryEditable: Boolean = true,
+        val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
         @Transient
-        override val preferences: Preferences = Preferences.EmptyPreferences,
+        val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        override val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
+        val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
         @Transient
-        override val recentConversations: List<Conversation> = emptyList(),
+        val recentConversations: List<Conversation> = emptyList(),
         @Transient
-        override val recentLists: List<FeedList> = emptyList(),
+        val recentLists: List<FeedList> = emptyList(),
         @Transient
-        override val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
+        val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
         @Transient
-        override val feedGenerators: List<FeedGenerator> = emptyList(),
+        val feedGenerators: List<FeedGenerator> = emptyList(),
         @Transient
-        override val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
+        val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
         @Transient
-        override val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
+        val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

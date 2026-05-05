@@ -44,31 +44,23 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State : TilingState<MessageQuery, MessageItem> {
-    val signedInProfile: Profile?
-    val sharedElementPrefix: String
-    val id: ConversationId
-    val members: List<Profile>
-    val pendingItems: List<MessageItem.Pending>
-    val inputText: TextFieldValue
-    val sharedRecord: SharedRecord
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
         @Transient
-        override val signedInProfile: Profile? = null,
-        override val sharedElementPrefix: String,
-        override val id: ConversationId,
-        override val members: List<Profile> = emptyList(),
-        override val pendingItems: List<MessageItem.Pending> = emptyList(),
+        val signedInProfile: Profile? = null,
+        val sharedElementPrefix: String,
+        val id: ConversationId,
+        val members: List<Profile> = emptyList(),
+        val pendingItems: List<MessageItem.Pending> = emptyList(),
         override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
         @Serializable(with = TextFieldValueSerializer::class)
-        override val inputText: TextFieldValue = TextFieldValue(),
+        val inputText: TextFieldValue = TextFieldValue(),
         @Transient
-        override val sharedRecord: SharedRecord = SharedRecord.None,
+        val sharedRecord: SharedRecord = SharedRecord.None,
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 

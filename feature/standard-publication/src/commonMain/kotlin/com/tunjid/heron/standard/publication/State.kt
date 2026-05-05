@@ -39,21 +39,17 @@ import kotlinx.serialization.Transient
 @Stable
 @Snapshottable
 interface State {
-    val sharedElementPrefix: String?
-    val publication: StandardPublication?
-    val documentsTilingStateHolder: DocumentsStateHolder?
-    val messages: List<Memo>
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val sharedElementPrefix: String? = null,
+        val sharedElementPrefix: String? = null,
         @Transient
-        override val publication: StandardPublication? = null,
+        val publication: StandardPublication? = null,
         @Transient
-        override val documentsTilingStateHolder: DocumentsStateHolder? = null,
+        val documentsTilingStateHolder: DocumentsStateHolder? = null,
         @Transient
-        override val messages: List<Memo> = emptyList(),
+        val messages: List<Memo> = emptyList(),
     ) : State
 }
 
@@ -75,12 +71,11 @@ typealias DocumentsStateHolder = ActionSuspendingStateMutator<TilingState.Action
 @Stable
 @Snapshottable
 interface DocumentsTilingState : TilingState<StandardPublicationDocumentsQuery, StandardDocument> {
-    val publicationUri: StandardPublicationUri
 
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        override val publicationUri: StandardPublicationUri,
+        val publicationUri: StandardPublicationUri,
         @Transient
         override val tilingData: TilingState.Data<StandardPublicationDocumentsQuery, StandardDocument> = TilingState.Data(
             currentQuery = StandardPublicationDocumentsQuery(
