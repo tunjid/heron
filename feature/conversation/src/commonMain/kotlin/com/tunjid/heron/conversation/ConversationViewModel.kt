@@ -261,13 +261,6 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
 ) = launchAndCollect { action ->
-    // Add the pending item to the chat
-    val currentItems = state.tilingData.items
-    val tileCount = currentItems.tileCount
-    val lastQuery = when {
-        tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
-        else -> state.tilingData.currentQuery
-    }
     val pendingItem = MessageItem.Pending(
         sender = state.signedInProfile ?: stubProfile(
             did = ProfileId(""),
@@ -284,6 +277,13 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
     state.inputText = TextFieldValue()
     state.pendingItems += pendingItem
     state.tilingData.updateItems {
+        // Add the pending item to the chat
+        val currentItems = items
+        val tileCount = currentItems.tileCount
+        val lastQuery = when {
+            tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
+            else -> state.tilingData.currentQuery
+        }
         currentItems + tiledListOf(lastQuery to pendingItem)
     }
 
