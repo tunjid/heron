@@ -3,28 +3,32 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ScrobbleId
+import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Track(
-    val cid: TrackId,
+data class RockSkyScrobble(
+    val cid: ScrobbleId,
+    val trackId: TrackId,
     val title: String,
     val artist: String,
     val albumArtist: String?,
     val album: String?,
     val albumArt: ImageUri?,
-    val trackNumber: Int?,
-    val discNumber: Int?,
-    val duration: Long?,
-    val uri: TrackUri,
-    val albumUri: AlbumUri?,
+    val handle: ProfileHandle?,
+    val did: ProfileId?,
+    val avatar: ImageUri?,
+    val uri: ScrobbleUri,
+    val trackUri: TrackUri?,
     val artistUri: ArtistUri?,
-    val createdAt: Instant?,
-    val playCount: Long? = null,
-    val uniqueListeners: Long? = null,
+    val albumUri: AlbumUri?,
+    val createdAt: Instant,
 ) : Record {
 
     override val reference: Record.Reference =

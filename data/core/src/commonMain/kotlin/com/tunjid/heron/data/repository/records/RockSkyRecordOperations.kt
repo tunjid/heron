@@ -1,11 +1,11 @@
 package com.tunjid.heron.data.repository.records
 
-import com.tunjid.heron.data.core.models.Album
-import com.tunjid.heron.data.core.models.Artist
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
-import com.tunjid.heron.data.core.models.Scrobble
-import com.tunjid.heron.data.core.models.Track
+import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockSkyArtist
+import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockSkyTrack
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import dev.zacsweers.metro.Inject
@@ -16,22 +16,22 @@ interface RockSkyRecordOperations {
     fun albums(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Album>>
+    ): Flow<CursorList<RockSkyAlbum>>
 
     fun tracks(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Track>>
+    ): Flow<CursorList<RockSkyTrack>>
 
     fun artists(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Artist>>
+    ): Flow<CursorList<RockSkyArtist>>
 
     fun scrobbles(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Scrobble>>
+    ): Flow<CursorList<RockSkyScrobble>>
 }
 
 internal class OfflineFirstRockSkyRecordOperations @Inject constructor(
@@ -41,28 +41,28 @@ internal class OfflineFirstRockSkyRecordOperations @Inject constructor(
     override fun albums(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Album>> {
+    ): Flow<CursorList<RockSkyAlbum>> {
         TODO("Not yet implemented")
     }
 
     override fun tracks(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Track>> {
+    ): Flow<CursorList<RockSkyTrack>> {
         TODO("Not yet implemented")
     }
 
     override fun artists(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Artist>> {
+    ): Flow<CursorList<RockSkyArtist>> {
         TODO("Not yet implemented")
     }
 
     override fun scrobbles(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Scrobble>> {
+    ): Flow<CursorList<RockSkyScrobble>> {
         TODO("Not yet implemented")
     }
 }

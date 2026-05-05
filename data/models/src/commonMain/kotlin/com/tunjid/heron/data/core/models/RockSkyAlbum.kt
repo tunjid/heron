@@ -7,7 +7,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Album(
+data class RockSkyAlbum(
     val cid: AlbumId,
     val uri: AlbumUri,
     val title: String,
@@ -18,7 +18,7 @@ data class Album(
     val artistUri: ArtistUri?,
     val playCount: Long?,
     val uniqueListeners: Long?,
-    val tracks: List<Track> = emptyList(),
+    val tracks: List<RockSkyTrack> = emptyList(),
     val appleMusicLink: String? = null,
     val spotifyLink: String? = null,
     val tidalLink: String? = null,

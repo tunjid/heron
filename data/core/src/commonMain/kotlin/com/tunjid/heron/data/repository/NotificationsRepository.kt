@@ -30,8 +30,6 @@ import app.bsky.notification.PutPreferencesV2Request
 import app.bsky.notification.UpdateSeenRequest
 import com.atproto.server.GetServiceAuthQueryParams
 import com.tunjid.heron.data.InternalEndpoints
-import com.tunjid.heron.data.core.models.Album
-import com.tunjid.heron.data.core.models.Artist
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -47,12 +45,14 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Repost
-import com.tunjid.heron.data.core.models.Scrobble
+import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockSkyArtist
+import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockSkyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
-import com.tunjid.heron.data.core.models.Track
 import com.tunjid.heron.data.core.models.isFollowing
 import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.models.offset
@@ -478,10 +478,10 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         is Block,
                         is StandardPublication,
                         is StandardSubscription,
-                        is Album,
-                        is Artist,
-                        is Scrobble,
-                        is Track,
+                        is RockSkyAlbum,
+                        is RockSkyArtist,
+                        is RockSkyScrobble,
+                        is RockSkyTrack,
                         -> throw UnknownNotificationException(query.recordUri)
 
                         is StandardDocument -> Notification.DocumentPublished(
