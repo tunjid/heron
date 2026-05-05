@@ -31,17 +31,15 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -56,18 +54,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
-internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias MessagesStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
@@ -89,140 +83,138 @@ class ActualMessagesViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
-    MessagesStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+    MessagesStateHolder by scope.actionSuspendingStateMutator(
+        initialState = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
+        producer = { state, actions ->
             loadProfileMutations(
-                authRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+                state = state,
+                authRepository = authRepository,
+            )
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SetIsSearching -> action.flow.setIsSearchingMutations()
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
+                    is Action.SetIsSearching -> action.flow.setIsSearchingMutations(state)
                     is Action.SearchQueryChanged -> action.flow.searchQueryChangeMutations(
+                        state = state,
                         searchRepository = searchRepository,
                     )
                     is Action.ResolveConversation -> action.flow.resolveConversationMutations(
+                        state = state,
                         navActions = navActions,
                         messagesRepository = messagesRepository,
                     )
-
                     is Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
                             .tilingMutations(
-                                currentState = { state() },
+                                currentState = { state },
                                 updateQueryData = { copy(data = it) },
                                 refreshQuery = { copy(data = data.reset()) },
                                 cursorListLoader = messagesRepository::conversations,
                                 onNewItems = { items ->
                                     items.distinctBy(Conversation::id)
                                 },
-                                onTilingDataUpdated = { copy(tilingData = it) },
                             )
                 }
             }
         },
     )
 
+context(productionScope: CoroutineScope)
 private fun loadProfileMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
-    }
+) = authRepository.signedInUser.launchAndCollect {
+    state.signedInProfile = it
+}
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.messages -= event.message
+}
 
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.isSearching = event.isSearching
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.ResolveConversation>.resolveConversationMutations(
+    state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        try {
-            withTimeout(2.seconds) {
-                messagesRepository.resolveConversation(
-                    with = action.with.did,
-                )
-            }
-        } catch (e: TimeoutCancellationException) {
-            Result.failure(e)
+) = launchAndCollectLatest { action ->
+    try {
+        withTimeout(2.seconds) {
+            messagesRepository.resolveConversation(
+                with = action.with.did,
+            )
         }
-            .onSuccess { conversationId ->
-                navActions(
-                    conversationDestination(
-                        id = conversationId,
-                        members = listOf(action.with),
-                        sharedElementPrefix = ConversationSearchResult,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ).navigationMutation,
-                )
-            }
-            .onFailure {
-                emit {
-                    copy(
-                        messages = messages + Memo.Resource(
-                            Res.string.error_conversation_not_found,
-                            listOf(action.with.contentDescription),
-                        ),
-                    )
-                }
-            }
+    } catch (e: TimeoutCancellationException) {
+        Result.failure(e)
     }
+        .onSuccess { conversationId ->
+            navActions(
+                conversationDestination(
+                    id = conversationId,
+                    members = listOf(action.with),
+                    sharedElementPrefix = ConversationSearchResult,
+                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                ).navigationMutation,
+            )
+        }
+        .onFailure {
+            state.messages += Memo.Resource(
+                Res.string.error_conversation_not_found,
+                listOf(action.with.contentDescription),
+            )
+        }
+}
 
-private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(): Flow<Mutation<State>> =
-    mapToMutation { copy(isSearching = it.isSearching) }
-
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
+    state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-): Flow<Mutation<State>> = channelFlow {
+) {
     val sharedActions = shareIn(
-        scope = this,
+        scope = productionScope,
         started = SharingStarted.WhileSubscribed(),
         replay = 1,
     )
-    launch {
-        sharedActions.collectLatest {
-            send { copy(searchQuery = it.query) }
+    sharedActions.launchAndCollectLatest {
+        state.searchQuery = it.query
+    }
+    sharedActions
+        .debounce {
+            if (it.query.isBlank()) 0.milliseconds
+            else 300.milliseconds
         }
-    }
-    launch {
-        sharedActions
-            .debounce {
-                if (it.query.isBlank()) 0.milliseconds
-                else 300.milliseconds
-            }
-            .flatMapLatest { action ->
-                if (action.query.isBlank()) flowOf(emptyList())
-                else searchRepository.autoCompleteProfileSearch(
-                    query = SearchQuery.OfProfiles(
-                        query = action.query,
-                        isLocalOnly = false,
-                        data = chatSearchData(),
-                    ),
-                    cursor = Cursor.Initial,
-                )
-            }.collect {
-                send {
-                    copy(
-                        autoCompletedProfiles = it.sortedByDescending(
-                            ProfileWithViewerState::canBeMessaged,
-                        ),
-                    )
-                }
-            }
-    }
+        .flatMapLatest { action ->
+            if (action.query.isBlank()) flowOf(emptyList())
+            else searchRepository.autoCompleteProfileSearch(
+                query = SearchQuery.OfProfiles(
+                    query = action.query,
+                    isLocalOnly = false,
+                    data = chatSearchData(),
+                ),
+                cursor = Cursor.Initial,
+            )
+        }.launchAndCollect {
+            state.autoCompletedProfiles = it.sortedByDescending(
+                ProfileWithViewerState::canBeMessaged,
+            )
+        }
 }
 
 fun ProfileWithViewerState.canBeMessaged() =

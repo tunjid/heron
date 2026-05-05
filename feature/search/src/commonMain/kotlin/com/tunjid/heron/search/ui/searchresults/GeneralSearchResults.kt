@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -78,6 +77,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.feeds
 import heron.feature.search.generated.resources.latest
@@ -187,11 +187,11 @@ internal fun GeneralSearchResults(
                 ),
             state = pagerState,
             key = { page ->
-                updatedSearchStateHolders[page].state.value.key
+                updatedSearchStateHolders[page].state.key
             },
             pageContent = { page ->
                 val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
-                val searchResultState by searchResultStateHolder.state.collectAsStateWithLifecycle()
+                val searchResultState = searchResultStateHolder.produceStateWithLifecycle()
                 val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
 
                 when (val resultState = searchResultState) {

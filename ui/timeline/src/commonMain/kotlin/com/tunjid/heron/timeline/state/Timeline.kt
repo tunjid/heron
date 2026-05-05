@@ -140,15 +140,14 @@ fun CoroutineScope.timelineStateHolder(
                     is TimelineState.Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
-                            .tilingMutations<TimelineQuery, TimelineItem, TimelineState.Immutable>(
+                            .tilingMutations(
                                 isRefreshedOnNewItems = false,
-                                currentState = { state.toSnapshotSpec() },
+                                currentState = { state },
                                 updateQueryData = TimelineQuery::updateData,
                                 refreshQuery = TimelineQuery::refresh,
                                 cursorListLoader = timelineRepository::timelineItems,
                                 onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
                             )
-                            .collect()
 
                     is TimelineState.Action.UpdatePreferredPresentation ->
                         action.flow.updatePreferredPresentationMutations(

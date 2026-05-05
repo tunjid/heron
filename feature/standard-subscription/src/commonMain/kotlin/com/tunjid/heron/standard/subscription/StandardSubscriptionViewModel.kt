@@ -25,16 +25,13 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.utilities.enqueueMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.SuspendingStateHolder
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -43,10 +40,9 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 
-internal typealias StandardSubscriptionStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias StandardSubscriptionStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
@@ -66,23 +62,25 @@ class ActualStandardSubscriptionViewModel(
     @Suppress("unused") @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
-    StandardSubscriptionStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+    StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
+        initialState = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+        producer = { state, actions ->
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
                     is Action.Tile -> action.flow.subscriptionLoadMutations(
-                        stateHolder = this@transform,
+                        state = state,
                         recordRepository = recordRepository,
                     )
                     is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                 }
@@ -90,24 +88,25 @@ class ActualStandardSubscriptionViewModel(
         },
     )
 
-private suspend fun Flow<Action.Tile>.subscriptionLoadMutations(
-    stateHolder: SuspendingStateHolder<State>,
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Tile>.subscriptionLoadMutations(
+    state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    map { it.tilingAction }
-        .tilingMutations(
-            currentState = { stateHolder.state() },
-            updateQueryData = { copy(data = it) },
-            refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = recordRepository::subscribedPublications,
-            onNewItems = { items -> items.distinctBy(StandardPublication::uri) },
-            onTilingDataUpdated = { copy(tilingData = it) },
-        )
+) = map { it.tilingAction }
+    .tilingMutations(
+        currentState = { state },
+        updateQueryData = { copy(data = it) },
+        refreshQuery = { copy(data = data.reset()) },
+        cursorListLoader = recordRepository::subscribedPublications,
+        onNewItems = { items -> items.distinctBy(StandardPublication::uri) },
+    )
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         when (action) {
             is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
@@ -118,11 +117,14 @@ private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscrip
             )
         }
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.messages -= event.message
+}

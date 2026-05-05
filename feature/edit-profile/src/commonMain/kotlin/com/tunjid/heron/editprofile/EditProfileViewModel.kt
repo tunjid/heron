@@ -34,8 +34,6 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
-import com.tunjid.heron.ui.coroutines.collectLatestWithState
-import com.tunjid.heron.ui.coroutines.collectWithState
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
 import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
@@ -190,36 +188,41 @@ private suspend fun screenTabMutations(
     }
 }
 
-private suspend fun Flow<Action.AvatarPicked>.avatarPickedMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.AvatarPicked>.avatarPickedMutations(
     state: State.SnapshotMutable,
-) = collectWithState(state) { action ->
+) = launchAndCollectWithState(state) { action ->
     updatedAvatar = action.item
 }
 
-private suspend fun Flow<Action.BannerPicked>.bannerPickedMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.BannerPicked>.bannerPickedMutations(
     state: State.SnapshotMutable,
-) = collectWithState(state) { action ->
+) = launchAndCollectWithState(state) { action ->
     updatedBanner = action.item
 }
 
-private suspend fun Flow<Action.FieldChanged>.formEditMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.FieldChanged>.formEditMutations(
     state: State.SnapshotMutable,
-) = collectWithState(state) { action ->
+) = launchAndCollectWithState(state) { action ->
     fields = fields.copyWithValidation(action.id, action.text)
 }
 
-private suspend fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = collect { event ->
+) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
-private suspend fun Flow<Action.SaveProfile>.saveProfileMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SaveProfile>.saveProfileMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
-) = collectLatestWithState(state) { action ->
+) = launchAndCollectLatestWithState(state) { action ->
     submitting = true
 
     val updateWrite = Writable.ProfileUpdate(
@@ -254,15 +257,17 @@ private suspend fun Flow<Action.SaveProfile>.saveProfileMutations(
     }
 }
 
-private suspend fun Flow<Action.UpdateTabsToSave>.pinnedTabMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateTabsToSave>.pinnedTabMutations(
     state: State.SnapshotMutable,
-) = collectWithState(state) { action ->
+) = launchAndCollectWithState(state) { action ->
     tabsToSave = action.tabs
 }
 
-private suspend fun Flow<Action.ToggleFeed>.toggleFeedMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.ToggleFeed>.toggleFeedMutations(
     state: State.SnapshotMutable,
-) = collectWithState(state) { action ->
+) = launchAndCollectWithState(state) { action ->
     feedUrisToFeeds =
         if (feedUrisToFeeds.contains(action.feedGenerator.uri)) feedUrisToFeeds - action.feedGenerator.uri
         else feedUrisToFeeds + (action.feedGenerator.uri to action.feedGenerator)
