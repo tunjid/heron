@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.posts
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
@@ -28,39 +29,73 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.PostDataQuery
+import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
-        currentQuery = PostDataQuery(
-            profileId = ProfileHandle(""),
-            postRecordKey = RecordKey(""),
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
+@Stable
+@Snapshottable
+interface State : TilingState<PostDataQuery, TimelineItem> {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val signedInProfileId: ProfileId? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
+            currentQuery = PostDataQuery(
+                profileId = ProfileHandle(""),
+                postRecordKey = RecordKey(""),
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
             ),
         ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) : TilingState<PostDataQuery, TimelineItem> {
-    val isRefreshing: Boolean
-        get() = tilingData.status is TilingState.Status.Refreshing
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
 }
+
+internal fun State(
+    request: PostsRequest,
+): State.Immutable = State.Immutable(
+    tilingData = TilingState.Data(
+        currentQuery = when (request) {
+            is PostsRequest.Quotes -> PostDataQuery(
+                profileId = request.profileHandleOrId,
+                postRecordKey = request.postRecordKey,
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
+            )
+            PostsRequest.Saved -> PostDataQuery(
+                profileId = ProfileHandle(""),
+                postRecordKey = RecordKey(""),
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
+            )
+        },
+    ),
+)
+
+val State.isRefreshing: Boolean
+    get() = tilingData.status is TilingState.Status.Refreshing
 
 sealed class Action(val key: String) {
 

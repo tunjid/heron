@@ -33,7 +33,6 @@ import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.distinctBy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
@@ -69,7 +68,7 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
         initialState = state,
         producer = { state, actions ->
             actions.tilingMutations<ProfilesQuery, T, RecordState<T>>(
-                currentState = { state },
+                state = state,
                 updateQueryData = { copy(data = it) },
                 refreshQuery = { copy(data = data.reset()) },
                 cursorListLoader = { query, cursor ->
@@ -78,7 +77,7 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
                 onNewItems = { items ->
                     items.distinctBy(itemId)
                 },
-            ).collect()
+            )
         },
     )
 }

@@ -30,20 +30,16 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.refreshedStatus
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.tiling.withRefreshedStatus
-import com.tunjid.heron.timeline.utilities.enqueueMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.SuspendingStateHolder
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -52,11 +48,9 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
-internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias NotificationsStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
@@ -80,58 +74,64 @@ class ActualNotificationsViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
-    NotificationsStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+    NotificationsStateHolder by scope.actionSuspendingStateMutator(
+        initialState = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
+        producer = { state, actions ->
             lastRefreshedMutations(
-                notificationsRepository,
-            ),
+                state = state,
+                notificationsRepository = notificationsRepository,
+            )
             loadProfileMutations(
-                authRepository,
-            ),
+                state = state,
+                authRepository = authRepository,
+            )
             canShowRequestPermissionsButtonMutations(
-                notificationsRepository,
-            ),
+                state = state,
+                notificationsRepository = notificationsRepository,
+            )
             loadPreferencesMutations(
+                state = state,
                 userDataRepository = userDataRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+            )
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
                     is Action.Tile -> action.flow.notificationsMutations(
-                        stateHolder = this@transform,
+                        state = state,
                         notificationsRepository = notificationsRepository,
                     )
-
                     is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
                     is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
                         notificationsRepository = notificationsRepository,
                     )
-
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
                     is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.BlockAccount -> action.flow.blockAccountMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                        state = state,
                         messageRepository = messageRepository,
                     )
                     is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                 }
@@ -139,60 +139,62 @@ class ActualNotificationsViewModel(
         },
     )
 
+context(productionScope: CoroutineScope)
 private fun loadProfileMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
-    }
+) = authRepository.signedInUser.launchAndCollect {
+    state.signedInProfile = it
+}
 
-fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+    state: State.SnapshotMutable,
     messageRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        messageRepository.recentConversations()
-            .mapToMutation { conversations ->
-                copy(recentConversations = conversations)
-            }
+) = launchAndCollectLatest {
+    messageRepository.recentConversations().collect { conversations ->
+        state.recentConversations = conversations
     }
+}
 
-fun loadPreferencesMutations(
+context(productionScope: CoroutineScope)
+private fun loadPreferencesMutations(
+    state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
+) = userDataRepository.preferences.launchAndCollect {
+    state.preferences = it
+}
 
-fun lastRefreshedMutations(
+context(productionScope: CoroutineScope)
+private fun lastRefreshedMutations(
+    state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    notificationsRepository.lastRefreshed.mapToMutation { refreshedAt ->
-        copy(
-            lastRefreshed = refreshedAt,
-        ).apply {
-            val currentStatus = tilingData.status
-            if (currentStatus is TilingState.Status.Refreshing &&
-                refreshedAt != null &&
-                refreshedAt >= tilingData.currentQuery.data.cursorAnchor
-            ) {
-                tilingData.withRefreshedStatus()
-            }
-        }
+) = notificationsRepository.lastRefreshed.launchAndCollect { refreshedAt ->
+    state.lastRefreshed = refreshedAt
+    val currentStatus = state.tilingData.status
+    if (currentStatus is TilingState.Status.Refreshing &&
+        refreshedAt != null &&
+        refreshedAt >= state.tilingData.currentQuery.data.cursorAnchor
+    ) {
+        state.tilingData.withRefreshedStatus()
+    }
+}
+
+context(productionScope: CoroutineScope)
+private fun canShowRequestPermissionsButtonMutations(
+    state: State.SnapshotMutable,
+    notificationsRepository: NotificationsRepository,
+) = notificationsRepository.hasPreviouslyRequestedNotificationPermissions
+    .launchAndCollect { hasPreviouslyRequestedNotificationPermissions ->
+        state.canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions
     }
 
-fun canShowRequestPermissionsButtonMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    notificationsRepository.hasPreviouslyRequestedNotificationPermissions
-        .mapToMutation { hasPreviouslyRequestedNotificationPermissions ->
-            copy(canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions)
-        }
-
+context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = {
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
@@ -200,14 +202,17 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         Writable.Restriction(
             Profile.Restriction.Block.Add(
@@ -216,14 +221,17 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         Writable.Restriction(
             Profile.Restriction.Mute.Add(
@@ -232,60 +240,66 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         Writable.RecordDeletion(
             recordUri = action.recordUri,
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action -> Writable.Interaction(action.interaction) },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.messages -= event.message
 }
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
-
+context(productionScope: CoroutineScope)
 private fun Flow<Action.MarkNotificationsRead>.markNotificationsReadMutations(
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations {
-        notificationsRepository.markRead(it.at)
-    }
+) = launchAndCollect { action ->
+    notificationsRepository.markRead(action.at)
+}
 
-suspend fun Flow<Action.Tile>.notificationsMutations(
-    stateHolder: SuspendingStateHolder<State>,
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Tile>.notificationsMutations(
+    state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    map { it.tilingAction }
-        .tilingMutations(
-            // This is determined by State.lastRefreshed
-            isRefreshedOnNewItems = false,
-            currentState = { stateHolder.state() },
-            updateQueryData = { copy(data = it) },
-            refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = notificationsRepository::notifications,
-            onNewItems = { notifications ->
-                notifications.distinctBy(Notification::cid)
-            },
-            onTilingDataUpdated = {
-                copy(tilingData = it)
-            },
-        )
+) = map { it.tilingAction }
+    .tilingMutations(
+        // This is determined by State.lastRefreshed
+        isRefreshedOnNewItems = false,
+        state = state,
+        updateQueryData = { copy(data = it) },
+        refreshQuery = { copy(data = data.reset()) },
+        cursorListLoader = notificationsRepository::notifications,
+        onNewItems = { notifications ->
+            notifications.distinctBy(Notification::cid)
+        },
+    )

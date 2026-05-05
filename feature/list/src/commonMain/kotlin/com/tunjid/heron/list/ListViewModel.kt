@@ -62,7 +62,6 @@ import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
@@ -303,15 +302,15 @@ private suspend fun listMemberStateHolderMutations(
                 authRepository.signedInUser.launchAndCollect {
                     memberState.signedInProfileId = it?.did
                 }
-                actions.tilingMutations<ListMemberQuery, ListMember, MemberState.Immutable>(
-                    currentState = { memberState.toSnapshotSpec() },
+                actions.tilingMutations(
+                    state = memberState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
                     cursorListLoader = recordRepository::listMembers,
                     onNewItems = { items ->
                         items.distinctBy(ListMember::uri)
                     },
-                ).collect()
+                )
             },
         ),
     )
@@ -442,9 +441,10 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
     }
 }
 
-private suspend fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = collect { event ->
+) = launchAndCollect { event ->
     state.messages -= event.message
 }
 

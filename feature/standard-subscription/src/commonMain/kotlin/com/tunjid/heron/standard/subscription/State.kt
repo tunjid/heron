@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.standard.subscription
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -24,27 +25,37 @@ import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    @Transient
-    override val tilingData: TilingState.Data<DataQuery, StandardPublication> = TilingState.Data(
-        currentQuery = DataQuery(
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
+@Stable
+@Snapshottable
+interface State : TilingState<DataQuery, StandardPublication> {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        @Transient
+        override val tilingData: TilingState.Data<DataQuery, StandardPublication> = TilingState.Data(
+            currentQuery = DataQuery(
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
             ),
         ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) : TilingState<DataQuery, StandardPublication> {
-    val isRefreshing: Boolean
-        get() = tilingData.status is TilingState.Status.Refreshing
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
 }
+
+fun State(): State.Immutable = State.Immutable()
+
+val State.isRefreshing: Boolean
+    get() = tilingData.status is TilingState.Status.Refreshing
 
 sealed class Action(val key: String) {
 

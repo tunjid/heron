@@ -45,7 +45,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Transient
 
@@ -140,15 +139,14 @@ fun CoroutineScope.timelineStateHolder(
                     is TimelineState.Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
-                            .tilingMutations<TimelineQuery, TimelineItem, TimelineState.Immutable>(
+                            .tilingMutations(
                                 isRefreshedOnNewItems = false,
-                                currentState = { state.toSnapshotSpec() },
+                                state = state,
                                 updateQueryData = TimelineQuery::updateData,
                                 refreshQuery = TimelineQuery::refresh,
                                 cursorListLoader = timelineRepository::timelineItems,
                                 onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
                             )
-                            .collect()
 
                     is TimelineState.Action.UpdatePreferredPresentation ->
                         action.flow.updatePreferredPresentationMutations(

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -36,8 +37,9 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import kotlinx.coroutines.flow.StateFlow
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -47,7 +49,7 @@ enum class ScreenLayout {
     GeneralSearchResults,
 }
 
-internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.Tile, out StateFlow<SearchState>>
+internal typealias SearchResultStateHolder = ActionSuspendingStateMutator<SearchState.Tile, SearchState>
 
 sealed interface SearchResult {
 
@@ -104,34 +106,40 @@ val SearchState.key
 val SearchState.sharedElementPrefix
     get() = key
 
-@Serializable
-data class State(
-    val currentQuery: String = "",
-    val layout: ScreenLayout = ScreenLayout.Suggested,
-    val signedInProfile: Profile? = null,
-    val trends: List<Trend> = emptyList(),
-    val suggestedProfileCategory: String? = null,
-    val isQueryEditable: Boolean = true,
-    val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
-    @Transient
-    val feedGenerators: List<FeedGenerator> = emptyList(),
-    @Transient
-    val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
-    @Transient
-    val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val currentQuery: String = "",
+        val layout: ScreenLayout = ScreenLayout.Suggested,
+        val signedInProfile: Profile? = null,
+        val trends: List<Trend> = emptyList(),
+        val suggestedProfileCategory: String? = null,
+        val isQueryEditable: Boolean = true,
+        val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
+        @Transient
+        val feedGenerators: List<FeedGenerator> = emptyList(),
+        @Transient
+        val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
+        @Transient
+        val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 sealed class Action(val key: String) {
 
