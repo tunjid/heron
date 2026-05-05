@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -34,56 +35,70 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val creator: Profile? = null,
-    val sharedElementPrefix: String? = null,
-    val scrollToTopRequestId: String? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
-    @Transient
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val timelineState: TimelineState? = null,
-    @Transient
-    val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val creator: Profile? = null,
+        val sharedElementPrefix: String? = null,
+        val scrollToTopRequestId: String? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+        @Transient
+        val signedInProfileId: ProfileId? = null,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val timelineStateHolder: TimelineStateHolder? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 fun State(
     route: Route,
-) = State(
+): State.Immutable = State.Immutable(
     sharedElementPrefix = route.sharedElementPrefix,
-    timelineState = route.model<FeedGenerator>()?.let { model ->
-        val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
-        TimelineState(
-            timeline = timeline,
-            hasUpdates = false,
-            tilingData = TilingState.Data(
-                currentQuery = TimelineQuery(
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
+    timelineStateHolder = route.model<FeedGenerator>()
+        ?.let { model ->
+            val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
+            noOpActionSuspendingStateMutator(
+                TimelineState(
+                    timeline = timeline,
+                    hasUpdates = false,
+                    tilingData = TilingState.Data(
+                        currentQuery = TimelineQuery(
+                            data = CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                            ),
+                            source = timeline.source,
+                        ),
                     ),
-                    source = timeline.source,
                 ),
-            ),
-        )
-    },
+            )
+        },
 )
+
+val State.timelineState
+    get() = timelineStateHolder
+        ?.state
 
 sealed class Action(val key: String) {
 

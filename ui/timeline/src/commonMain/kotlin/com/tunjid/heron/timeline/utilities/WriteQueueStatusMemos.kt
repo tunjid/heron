@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.mapToManyMutations
@@ -53,6 +54,7 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.compose.resources.StringResource
@@ -78,6 +80,20 @@ inline fun <T, S> Flow<T>.enqueueMutations(
         val memo = writable.writeStatusMessage(status)
         postEnqueue(action, memo)
     }
+
+context(scope: CoroutineScope)
+inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
+    writeQueue: WriteQueue,
+    crossinline toWritable: (T) -> Writable,
+    crossinline postEnqueue: suspend (T, Memo?) -> Unit = { _, _ -> },
+) {
+    launchAndCollect { action ->
+        val writable = toWritable(action)
+        val status = writeQueue.enqueue(writable)
+        val memo = writable.writeStatusMessage(status)
+        postEnqueue(action, memo)
+    }
+}
 
 fun Writable.writeStatusMessage(
     status: WriteQueue.Status,

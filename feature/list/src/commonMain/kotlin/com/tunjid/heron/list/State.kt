@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.list
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
@@ -36,63 +38,75 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val creator: Profile? = null,
-    val sharedElementPrefix: String? = null,
-    @Transient
-    val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
-    @Transient
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val timelineState: TimelineState? = null,
-    @Transient
-    val stateHolders: List<ListScreenStateHolders> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val isOnProfilesTab: Boolean = false,
-    @Transient
-    val suggestedProfiles: List<Profile> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val creator: Profile? = null,
+        val sharedElementPrefix: String? = null,
+        @Transient
+        val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+        @Transient
+        val signedInProfileId: ProfileId? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val stateHolders: List<ListScreenStateHolders> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val isOnProfilesTab: Boolean = false,
+        @Transient
+        val suggestedProfiles: List<Profile> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 fun State(
     route: Route,
-) = State(
+): State.Immutable = State.Immutable(
     sharedElementPrefix = route.sharedElementPrefix,
-    timelineState = route.model<FeedList>()?.let { model ->
-        val timeline = Timeline.Home.List.stub(list = model)
-        TimelineState(
-            timeline = timeline,
-            hasUpdates = false,
-            tilingData = TilingState.Data(
-                currentQuery = TimelineQuery(
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
+    stateHolders = listOfNotNull(
+        route.model<FeedList>()?.let { model ->
+            val timeline = Timeline.Home.List.stub(list = model)
+            TimelineState(
+                timeline = timeline,
+                hasUpdates = false,
+                tilingData = TilingState.Data(
+                    currentQuery = TimelineQuery(
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
+                        source = timeline.source,
                     ),
-                    source = timeline.source,
                 ),
-            ),
-        )
-    }
-        ?: route.model<StarterPack>()?.let { model ->
+            )
+        },
+        route.model<StarterPack>()?.let { model ->
             val starterPackList = model.list ?: return@let null
             val timeline = Timeline.StarterPack.stub(
                 starterPack = model,
@@ -112,7 +126,19 @@ fun State(
                 ),
             )
         },
+    ).map {
+        ListScreenStateHolders.Timeline(
+            noOpActionSuspendingStateMutator(it),
+        )
+    }
+        .take(1),
 )
+
+val State.timelineState
+    get() = stateHolders
+        .filterIsInstance<ListScreenStateHolders.Timeline>()
+        .firstOrNull()
+        ?.state
 
 sealed class ListScreenStateHolders {
 
@@ -132,10 +158,10 @@ sealed class ListScreenStateHolders {
             is Timeline -> "Timeline"
         }
 
-    val tilingState: StateFlow<TilingState<*, *>>
+    val isRefreshing: Boolean
         get() = when (this) {
-            is Members -> state
-            is Timeline -> state
+            is Members -> state.isRefreshing
+            is Timeline -> state.isRefreshing
         }
 
     fun refresh() = when (this) {
@@ -151,13 +177,30 @@ sealed class ListScreenStateHolders {
     }
 }
 
-data class MemberState(
-    val signedInProfileId: ProfileId?,
-    val listUri: ListUri,
-    override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
-) : TilingState<ListMemberQuery, ListMember>
+@Stable
+@Snapshottable
+interface MemberState : TilingState<ListMemberQuery, ListMember> {
 
-typealias MembersStateHolder = ActionStateMutator<TilingState.Action, StateFlow<MemberState>>
+    @SnapshotSpec
+    data class Immutable(
+        val signedInProfileId: ProfileId?,
+        val listUri: ListUri,
+        @Transient
+        override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
+    ) : MemberState
+}
+
+fun MemberState(
+    signedInProfileId: ProfileId?,
+    listUri: ListUri,
+    tilingData: TilingState.Data<ListMemberQuery, ListMember>,
+): MemberState.Immutable = MemberState.Immutable(
+    signedInProfileId = signedInProfileId,
+    listUri = listUri,
+    tilingData = tilingData,
+)
+
+typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, MemberState.SnapshotMutable>
 
 sealed class Action(val key: String) {
 

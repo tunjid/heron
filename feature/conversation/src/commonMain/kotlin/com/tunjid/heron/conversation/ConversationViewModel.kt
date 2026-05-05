@@ -41,6 +41,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
@@ -288,12 +289,11 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
                 },
                 inputText = TextFieldValue(),
                 pendingItems = pendingItems + pendingItem,
-                tilingData = tilingData.copy(
-                    items = currentItems + tiledListOf(
-                        lastQuery to pendingItem,
-                    ),
-                ),
-            )
+            ).updateItems {
+                currentItems + tiledListOf(
+                    lastQuery to pendingItem,
+                )
+            }
         }
         if (action.message.recordReference != null) navActions(ConsumeSharedUriQueryParam)
 
@@ -332,33 +332,32 @@ private suspend fun Flow<Action.Tile>.messagingTilingMutations(
 
 private fun TilingState.Data<MessageQuery, MessageItem>.updatePendingMessages(
     pendingItems: List<MessageItem.Pending>,
-): TilingState.Data<MessageQuery, MessageItem> =
-    copy(
-        items = when {
-            items.isEmpty() -> buildTiledList {
-                addAll(
-                    query = currentQuery,
-                    items = pendingItems,
+): TilingState.Data<MessageQuery, MessageItem> = updateItems {
+    when {
+        items.isEmpty() -> buildTiledList {
+            addAll(
+                query = currentQuery,
+                items = pendingItems,
+            )
+        }
+
+        else -> buildTiledList {
+            (0..<items.tileCount).forEach { tileIndex ->
+                val tile = items.tileAt(tileIndex)
+                val lastTileIndex = items.tileCount - 1
+                val tileSublist = items.subList(tile.start, tile.end)
+                if (tileIndex == lastTileIndex) addAll(
+                    query = items.queryAtTile(tileIndex),
+                    // Add pending items to the last chunk and sort
+                    items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
+                )
+                else addAll(
+                    query = items.queryAtTile(tileIndex),
+                    items = tileSublist,
                 )
             }
-
-            else -> buildTiledList {
-                (0..<items.tileCount).forEach { tileIndex ->
-                    val tile = items.tileAt(tileIndex)
-                    val lastTileIndex = items.tileCount - 1
-                    val tileSublist = items.subList(tile.start, tile.end)
-                    if (tileIndex == lastTileIndex) addAll(
-                        query = items.queryAtTile(tileIndex),
-                        // Add pending items to the last chunk and sort
-                        items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
-                    )
-                    else addAll(
-                        query = items.queryAtTile(tileIndex),
-                        items = tileSublist,
-                    )
-                }
-            }
-        },
-    )
+        }
+    }
+}
 
 private val ConsumeSharedUriQueryParam = removeQueryParamsFromCurrentRoute(setOf("sharedUri"))

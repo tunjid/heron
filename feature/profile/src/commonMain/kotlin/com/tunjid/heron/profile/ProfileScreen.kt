@@ -59,10 +59,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -86,7 +84,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
@@ -192,6 +189,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -239,23 +237,16 @@ internal fun ProfileScreen(
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
     }
-    val updatedStateHolders by rememberUpdatedState(state.stateHolders)
+    val updatedStateHolders = state.stateHolders
 
     val pagerState = rememberPagerState {
         updatedStateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val isRefreshing by produceState(
-        initialValue = false,
-        key1 = pagerState.currentPage,
-        key2 = updatedStateHolders.size,
-    ) {
-        updatedStateHolders
-            .getOrNull(pagerState.currentPage)
-            .isRefreshing
-            .collect { value = it }
-    }
+    val isRefreshing = updatedStateHolders
+        .getOrNull(pagerState.currentPage)
+        .isRefreshing
 
     val profileUpdateLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
         profile = state.profile,
@@ -625,15 +616,15 @@ private fun timelineTabs(
 ): List<Tab> = updatedStateHolders.map { holder ->
     when (holder) {
         is ProfileScreenStateHolders.Records<*> -> Tab(
-            title = stringResource(holder.state.value.stringResource),
+            title = stringResource(holder.state.stringResource),
             id = holder.key,
             hasUpdate = false,
         )
 
         is ProfileScreenStateHolders.Timeline -> Tab(
-            title = holder.state.value.timeline.displayName(),
+            title = holder.state.timeline.displayName(),
             id = holder.key,
-            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
+            hasUpdate = sourceIdsToHasUpdates[holder.state.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
@@ -1300,8 +1291,8 @@ private fun ProfileTimeline(
     showEngagementMetrics: Boolean,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.tiledItems)
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
+    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current
@@ -1610,33 +1601,29 @@ private fun TimelinePresentationSelector(
     page: Int,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
 ) {
-    val timeline = produceState(
-        initialValue = timelineStateHolders.getOrNull(page)?.state?.value?.timeline,
-        key1 = page,
-        key2 = timelineStateHolders,
-    ) {
-        val holder = timelineStateHolders.getOrNull(page) ?: return@produceState
-        value = holder.state.value.timeline
-        holder.state.collect {
-            value = it.timeline
+    val timeline by remember(page, timelineStateHolders) {
+        derivedStateOf {
+            timelineStateHolders.getOrNull(page)?.state?.timeline
         }
-    }.value
+    }
 
-    if (timeline != null) TimelinePresentationSelector(
-        modifier = modifier,
-        selected = timeline.presentation,
-        available = timeline.supportedPresentations,
-        onPresentationSelected = { presentation ->
-            timelineStateHolders.getOrNull(page)
-                ?.accept
-                ?.invoke(
-                    TimelineState.Action.UpdatePreferredPresentation(
-                        timeline = timeline,
-                        presentation = presentation,
-                    ),
-                )
-        },
-    )
+    timeline?.let { currentTimeline ->
+        TimelinePresentationSelector(
+            modifier = modifier,
+            selected = currentTimeline.presentation,
+            available = currentTimeline.supportedPresentations,
+            onPresentationSelected = { presentation ->
+                timelineStateHolders.getOrNull(page)
+                    ?.accept
+                    ?.invoke(
+                        TimelineState.Action.UpdatePreferredPresentation(
+                            timeline = currentTimeline,
+                            presentation = presentation,
+                        ),
+                    )
+            },
+        )
+    }
 }
 
 private fun Map<RecordUri?, Boolean>.status(

@@ -16,38 +16,47 @@
 
 package com.tunjid.heron.timeline.state
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Record as HeronRecord
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.distinctBy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
-typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
+typealias RecordStateHolder<T> = ActionSuspendingStateMutator<TilingState.Action, RecordState<T>>
 
-data class RecordState<T : Record>(
-    val stringResource: StringResource,
-    override val tilingData: TilingState.Data<ProfilesQuery, T>,
-) : TilingState<ProfilesQuery, T>
+@Stable
+@Snapshottable
+interface RecordState<T : HeronRecord> : TilingState<ProfilesQuery, T> {
+    @SnapshotSpec
+    data class Immutable<T : HeronRecord>(
+        val stringResource: StringResource,
+        @Transient
+        override val tilingData: TilingState.Data<ProfilesQuery, T>,
+    ) : RecordState<T>
+}
 
-fun <T : Record> CoroutineScope.recordStateHolder(
+inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
     profileId: ProfileId,
     stringResource: StringResource,
-    itemId: (T) -> Any,
-    cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
-): RecordStateHolder<T> = actionStateFlowMutator(
-    initialState = RecordState(
+    crossinline itemId: (T) -> Any,
+    crossinline cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
+): RecordStateHolder<T> {
+    val state: RecordState<T> = RecordState.SnapshotMutable<T>(
         stringResource = stringResource,
         tilingData = TilingState.Data(
             currentQuery = ProfilesQuery(
@@ -55,20 +64,21 @@ fun <T : Record> CoroutineScope.recordStateHolder(
                 data = CursorQuery.defaultStartData(),
             ),
         ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream {
-            type().flow
-                .tilingMutations(
-                    currentState = { state() },
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = cursorListLoader,
-                    onNewItems = { items ->
-                        items.distinctBy(itemId)
-                    },
-                    onTilingDataUpdated = { copy(tilingData = it) },
-                )
-        }
-    },
-)
+    )
+    return actionSuspendingStateMutator<TilingState.Action, RecordState<T>>(
+        initialState = state,
+        producer = { state, actions ->
+            actions.tilingMutations<ProfilesQuery, T, RecordState<T>>(
+                currentState = { state },
+                updateQueryData = { copy(data = it) },
+                refreshQuery = { copy(data = data.reset()) },
+                cursorListLoader = { query, cursor ->
+                    cursorListLoader(query, cursor)
+                },
+                onNewItems = { items ->
+                    items.distinctBy(itemId)
+                },
+            ).collect()
+        },
+    )
+}
