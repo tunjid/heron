@@ -60,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -101,16 +102,23 @@ class SearchViewModel(
                 route.query.isBlank() -> ScreenLayout.Suggested
                 else -> ScreenLayout.GeneralSearchResults
             },
-            searchStateHolders = scope.searchStateHolders(
-                initialQuery = route.query,
-                searchRepository = searchRepository,
-            ),
+            searchStateHolders = route.searchStates()
+                .mapNotNull { searchState ->
+                    scope.searchStateHolder(searchState, searchRepository)
+                },
         ).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             loadProfileMutations(
                 state = state,
                 authRepository = authRepository,
+            )
+            searchStateHolderMutations(
+                state = state,
+                routeScope = scope,
+                availableSearchStates = route.searchStates(),
+                authRepository = authRepository,
+                searchRepository = searchRepository,
             )
             trendsMutations(
                 state = state,
@@ -197,16 +205,43 @@ private fun loadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
-    val isSignedIn = signedInProfile != null
     state.signedInProfile = signedInProfile
-    state.searchStateHolders = state.searchStateHolders.filter { mutator ->
-        when (mutator.state) {
-            is SearchState.OfFeedGenerators -> true
-            is SearchState.OfPosts -> isSignedIn
-            is SearchState.OfProfiles -> true
+}
+
+context(productionScope: CoroutineScope)
+private fun searchStateHolderMutations(
+    state: State.SnapshotMutable,
+    availableSearchStates: List<SearchState>,
+    routeScope: CoroutineScope,
+    authRepository: AuthRepository,
+    searchRepository: SearchRepository,
+) = authRepository.signedInUser
+    .map { it != null }
+    .distinctUntilChanged()
+    .launchAndCollect { isSignedIn ->
+        val existingHolders = state.searchStateHolders
+            .associateBy { it.state.key }
+
+        state.searchStateHolders = availableSearchStates.mapNotNull { searchState ->
+            when (searchState) {
+                is SearchState.OfPosts -> when {
+                    isSignedIn -> existingHolders[searchState.key]
+                        ?: routeScope.searchStateHolder(
+                            searchState = searchState,
+                            searchRepository = searchRepository,
+                        )
+                    else -> null
+                }
+                is SearchState.OfFeedGenerators,
+                is SearchState.OfProfiles,
+                -> existingHolders[searchState.key]
+                    ?: routeScope.searchStateHolder(
+                        searchState = searchState,
+                        searchRepository = searchRepository,
+                    )
+            }
         }
     }
-}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
@@ -527,15 +562,12 @@ private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
     }
 }
 
-private fun CoroutineScope.searchStateHolders(
-    initialQuery: String,
-    searchRepository: SearchRepository,
-): List<SearchResultStateHolder> = buildList {
+private fun Route.searchStates(): List<SearchState> = buildList {
     add(
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Top(
-                    query = initialQuery,
+                    query = query,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
@@ -546,115 +578,120 @@ private fun CoroutineScope.searchStateHolders(
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Latest(
-                    query = initialQuery,
+                    query = query,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
             ),
         ),
     )
-    if (initialQuery.isBlank()) add(
-        SearchState.OfProfiles(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfProfiles(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
+    if (query.isNotBlank()) {
+        add(
+            SearchState.OfProfiles(
+                tilingData = TilingState.Data(
+                    currentQuery = SearchQuery.OfProfiles(
+                        query = query,
+                        isLocalOnly = false,
+                        data = defaultSearchQueryData(),
+                    ),
                 ),
             ),
-        ),
-    )
-    if (initialQuery.isBlank()) add(
-        SearchState.OfFeedGenerators(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfFeedGenerators(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
-            ),
-        ),
-    )
-}.map { searchState: SearchState ->
-    when (searchState) {
-        is SearchState.OfPosts -> actionSuspendingStateMutator(
-            initialState = searchState,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            producer = { holderState, actions ->
-                actions.map { it.tilingAction }
-                    .tilingMutations(
-                        currentState = { holderState },
-                        updateQueryData = {
-                            when (this) {
-                                is SearchQuery.OfPosts.Latest -> copy(data = it)
-                                is SearchQuery.OfPosts.Top -> copy(data = it)
-                            }
-                        },
-                        refreshQuery = {
-                            when (this) {
-                                is SearchQuery.OfPosts.Latest -> copy(data = data.reset())
-                                is SearchQuery.OfPosts.Top -> copy(data = data.reset())
-                            }
-                        },
-                        cursorListLoader = { query, cursor ->
-                            searchRepository::postSearch.mapCursorList { post ->
-                                SearchResult.OfPost(
-                                    timelineItem = post,
-                                )
-                            }.invoke(query, cursor)
-                        },
-                        onNewItems = { items ->
-                            items.distinctBy { it.timelineItem.id }
-                        },
-                        queryRefreshBy = {
-                            it.query to it.data.cursorAnchor
-                        },
-                    )
-            },
         )
-
-        is SearchState.OfProfiles -> actionSuspendingStateMutator(
-            initialState = searchState,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            producer = { holderState, actions ->
-                actions.map { it.tilingAction }
-                    .tilingMutations(
-                        currentState = { holderState },
-                        updateQueryData = { copy(data = it) },
-                        refreshQuery = { copy(data = data.reset()) },
-                        cursorListLoader = searchRepository::profileSearch
-                            .mapCursorList(SearchResult::OfProfile),
-                        onNewItems = { items ->
-                            items.distinctBy { it.profileWithViewerState.profile.did }
-                        },
-                        queryRefreshBy = {
-                            it.query to it.data.cursorAnchor
-                        },
-                    )
-            },
-        )
-
-        is SearchState.OfFeedGenerators -> actionSuspendingStateMutator(
-            initialState = searchState,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            producer = { holderState, actions ->
-                actions.map { it.tilingAction }
-                    .tilingMutations(
-                        currentState = { holderState },
-                        updateQueryData = { copy(data = it) },
-                        refreshQuery = { copy(data = data.reset()) },
-                        cursorListLoader = searchRepository::feedGeneratorSearch
-                            .mapCursorList(SearchResult::OfFeedGenerator),
-                        onNewItems = { items ->
-                            items.distinctBy { it.feedGenerator.cid }
-                        },
-                        queryRefreshBy = {
-                            it.query to it.data.cursorAnchor
-                        },
-                    )
-            },
+        add(
+            SearchState.OfFeedGenerators(
+                tilingData = TilingState.Data(
+                    currentQuery = SearchQuery.OfFeedGenerators(
+                        query = query,
+                        isLocalOnly = false,
+                        data = defaultSearchQueryData(),
+                    ),
+                ),
+            ),
         )
     }
+}
+
+private fun CoroutineScope.searchStateHolder(
+    searchState: SearchState,
+    searchRepository: SearchRepository,
+): SearchResultStateHolder? = when (searchState) {
+    is SearchState.OfPosts -> actionSuspendingStateMutator(
+        initialState = searchState,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        producer = { holderState, actions ->
+            actions.map { it.tilingAction }
+                .tilingMutations(
+                    currentState = { holderState },
+                    updateQueryData = {
+                        when (this) {
+                            is SearchQuery.OfPosts.Latest -> copy(data = it)
+                            is SearchQuery.OfPosts.Top -> copy(data = it)
+                        }
+                    },
+                    refreshQuery = {
+                        when (this) {
+                            is SearchQuery.OfPosts.Latest -> copy(data = data.reset())
+                            is SearchQuery.OfPosts.Top -> copy(data = data.reset())
+                        }
+                    },
+                    cursorListLoader = { query, cursor ->
+                        searchRepository::postSearch.mapCursorList { post ->
+                            SearchResult.OfPost(
+                                timelineItem = post,
+                            )
+                        }.invoke(query, cursor)
+                    },
+                    onNewItems = { items ->
+                        items.distinctBy { it.timelineItem.id }
+                    },
+                    queryRefreshBy = {
+                        it.query to it.data.cursorAnchor
+                    },
+                )
+        },
+    )
+
+    is SearchState.OfProfiles -> actionSuspendingStateMutator(
+        initialState = searchState,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        producer = { holderState, actions ->
+            actions.map { it.tilingAction }
+                .tilingMutations(
+                    currentState = { holderState },
+                    updateQueryData = { copy(data = it) },
+                    refreshQuery = { copy(data = data.reset()) },
+                    cursorListLoader = searchRepository::profileSearch
+                        .mapCursorList(SearchResult::OfProfile),
+                    onNewItems = { items ->
+                        items.distinctBy { it.profileWithViewerState.profile.did }
+                    },
+                    queryRefreshBy = {
+                        it.query to it.data.cursorAnchor
+                    },
+                )
+        },
+    )
+
+    is SearchState.OfFeedGenerators -> actionSuspendingStateMutator(
+        initialState = searchState,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        producer = { holderState, actions ->
+            actions.map { it.tilingAction }
+                .tilingMutations(
+                    currentState = { holderState },
+                    updateQueryData = { copy(data = it) },
+                    refreshQuery = { copy(data = data.reset()) },
+                    cursorListLoader = searchRepository::feedGeneratorSearch
+                        .mapCursorList(SearchResult::OfFeedGenerator),
+                    onNewItems = { items ->
+                        items.distinctBy { it.feedGenerator.cid }
+                    },
+                    queryRefreshBy = {
+                        it.query to it.data.cursorAnchor
+                    },
+                )
+        },
+    )
 }
 
 private fun defaultSearchQueryData() = CursorQuery.Data(
