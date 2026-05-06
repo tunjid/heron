@@ -142,6 +142,10 @@ private fun loadProfileMutations(
                 text = signedInProfile.displayName ?: "",
             )
             .copyWithValidation(
+                id = Pronouns,
+                text = signedInProfile.pronouns ?: "",
+            )
+            .copyWithValidation(
                 id = Description,
                 text = signedInProfile.description ?: "",
             )
@@ -230,6 +234,7 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
             profileId = action.profileId,
             displayName = action.displayName,
             description = action.description,
+            pronouns = action.pronouns,
             avatarFile = action.avatar?.let {
                 fileManager.toUnrestrictedPhotoFile(it)
             },

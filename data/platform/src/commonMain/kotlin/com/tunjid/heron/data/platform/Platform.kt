@@ -18,6 +18,7 @@ package com.tunjid.heron.data.platform
 
 interface Platform {
     val name: String
+    val description: String
     val isNativeCompose: Boolean
     val isRelease: Boolean
         get() = Build.isRelease
