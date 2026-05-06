@@ -201,8 +201,7 @@ internal fun GalleryScreen(
             }
         },
     )
-    val updatedItems = state.items
-    val pagerState = rememberPagerState(pageCount = updatedItems::size)
+    val pagerState = rememberPagerState(pageCount = { state.items.size })
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
     val commentsState = rememberCommentsState()
 
@@ -226,7 +225,7 @@ internal fun GalleryScreen(
                 // Vertical scroll already begun
                 if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
 
-                val item = updatedItems.getOrNull(pagerState.currentPage)
+                val item = state.items.getOrNull(pagerState.currentPage)
                     ?: return@canPop true
 
                 // No items to scroll horizontally
@@ -266,10 +265,10 @@ internal fun GalleryScreen(
             beyondViewportPageCount = PagerPrefetchCount,
             userScrollEnabled = state.canScrollVertically,
             key = { page ->
-                updatedItems[page].post.uri.uri
+                state.items[page].post.uri.uri
             },
             pageContent = { page ->
-                val item = updatedItems[page]
+                val item = state.items[page]
 
                 HorizontalItems(
                     item = item,
@@ -280,7 +279,7 @@ internal fun GalleryScreen(
                     commentsState = commentsState,
                     focusedItem = {
                         val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                        updatedItems.getOrNull(page.fastRoundToInt())
+                        state.items.getOrNull(page.fastRoundToInt())
                     },
                     isDraggingToPop = dragToPopState::isDraggingToPop,
                     actions = actions,

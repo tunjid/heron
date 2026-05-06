@@ -130,10 +130,8 @@ internal fun HomeScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val updatedTimelineStateHolders = state.timelineStateHolders
-
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
+        state.timelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
@@ -176,14 +174,14 @@ internal fun HomeScreen(
                 .paneClip(),
             state = pagerState,
             key = { page ->
-                updatedTimelineStateHolders[page]
+                state.timelineStateHolders[page]
                     .state
                     .timeline
                     .sourceId
             },
             pageContent = { page ->
                 val gridState = rememberLazyStaggeredGridState()
-                val timelineStateHolder = updatedTimelineStateHolders[page]
+                val timelineStateHolder = state.timelineStateHolders[page]
                 HomeTimeline(
                     gridState = gridState,
                     paneScaffoldState = paneScaffoldState,
@@ -233,7 +231,7 @@ internal fun HomeScreen(
                 }
             },
             onCollapsedTabReselected = { page ->
-                updatedTimelineStateHolders
+                state.timelineStateHolders
                     .getOrNull(page)
                     ?.accept
                     ?.invoke(
@@ -243,7 +241,7 @@ internal fun HomeScreen(
                     )
             },
             onExpandedTabSelected = { page ->
-                when (val holder = updatedTimelineStateHolders.getOrNull(page)) {
+                when (val holder = state.timelineStateHolders.getOrNull(page)) {
                     is HomeScreenStateHolders.Pinned -> holder.state.timeline.uri?.path?.let {
                         actions(Action.Navigate.To(pathDestination(it)))
                     }
@@ -257,7 +255,7 @@ internal fun HomeScreen(
             },
             onLayoutChanged = onLayoutChanged,
             onTimelinePresentationUpdated = click@{ index, presentation ->
-                val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
+                val timelineStateHolder = state.timelineStateHolders.getOrNull(index)
                     ?: return@click
                 timelineStateHolder.accept(
                     TimelineState.Action.UpdatePreferredPresentation(
@@ -296,7 +294,8 @@ internal fun HomeScreen(
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
-                    val holder = updatedTimelineStateHolders.getOrNull(page) ?: return@collect
+                    val holder = state.timelineStateHolders
+                        .getOrNull(page) ?: return@collect
                     val currentTabUri = holder
                         .state
                         .timeline
