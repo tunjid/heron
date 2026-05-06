@@ -13,10 +13,10 @@ import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
 
 @Entity(
-    tableName = "rockSkyAlbums",
+    tableName = "rockskyAlbums",
     foreignKeys = [
         ForeignKey(
-            entity = RockSkyArtistEntity::class,
+            entity = RockskyArtistEntity::class,
             parentColumns = ["uri"],
             childColumns = ["artistUri"],
             onDelete = ForeignKey.CASCADE,
@@ -28,7 +28,7 @@ import com.tunjid.heron.data.core.types.ImageUri
         Index(value = ["artistUri"]),
     ],
 )
-data class RockSkyAlbumEntity(
+data class RockskyAlbumEntity(
     @PrimaryKey
     val uri: AlbumUri,
     val cid: AlbumId,
@@ -37,7 +37,7 @@ data class RockSkyAlbumEntity(
     val releaseDate: String?,
     val year: Int?,
     val albumArt: ImageUri?,
-    val artistUri: ArtistUri?,
+    val artistUri: ArtistUri,
     val playCount: Long?,
     val uniqueListeners: Long?,
     val appleMusicLink: String? = null,
@@ -48,12 +48,12 @@ data class RockSkyAlbumEntity(
 
 data class PopulatedRockSkyAlbumEntity(
     @Embedded
-    val entity: RockSkyAlbumEntity,
+    val entity: RockskyAlbumEntity,
     @Relation(
         parentColumn = "uri",
         entityColumn = "albumUri",
     )
-    val tracks: List<RockSkyTrackEntity>,
+    val tracks: List<RockskyTrackEntity>,
 )
 
 fun PopulatedRockSkyAlbumEntity.asExternalModel() = RockSkyAlbum(
@@ -67,7 +67,7 @@ fun PopulatedRockSkyAlbumEntity.asExternalModel() = RockSkyAlbum(
     artistUri = entity.artistUri,
     playCount = entity.playCount,
     uniqueListeners = entity.uniqueListeners,
-    tracks = tracks.map(RockSkyTrackEntity::asExternalModel),
+    tracks = tracks.map(RockskyTrackEntity::asExternalModel),
     appleMusicLink = entity.appleMusicLink,
     spotifyLink = entity.spotifyLink,
     tidalLink = entity.tidalLink,

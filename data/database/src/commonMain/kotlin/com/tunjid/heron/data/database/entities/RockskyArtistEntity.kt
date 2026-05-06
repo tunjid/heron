@@ -9,12 +9,12 @@ import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
 
 @Entity(
-    tableName = "rockSkyArtists",
+    tableName = "rockskyArtists",
     indices = [
         Index(value = ["uri"]),
     ],
 )
-data class RockSkyArtistEntity(
+data class RockskyArtistEntity(
     @PrimaryKey
     val uri: ArtistUri,
     val cid: ArtistId,
@@ -25,7 +25,7 @@ data class RockSkyArtistEntity(
     val tags: String?,
 )
 
-fun RockSkyArtistEntity.asExternalModel() = RockSkyArtist(
+fun RockskyArtistEntity.asExternalModel() = RockSkyArtist(
     cid = cid,
     name = name,
     picture = picture,

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 41,
-    "identityHash": "77ee2a29d229b33d2505f40b30a38075",
+    "identityHash": "ef444877b2af6f3185e2b2ceebefd1e6",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -3755,8 +3755,8 @@
         ]
       },
       {
-        "tableName": "rockSkyTracks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `trackNumber` INTEGER, `discNumber` INTEGER, `duration` INTEGER, `albumUri` TEXT, `artistUri` TEXT, `createdAt` INTEGER, `playCount` INTEGER, `uniqueListeners` INTEGER, PRIMARY KEY(`uri`), FOREIGN KEY(`albumUri`) REFERENCES `rockSkyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`artistUri`) REFERENCES `rockSkyArtists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "rockskyTracks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `trackNumber` INTEGER, `discNumber` INTEGER, `duration` INTEGER, `albumUri` TEXT, `artistUri` TEXT, `createdAt` INTEGER, `playCount` INTEGER, `uniqueListeners` INTEGER, PRIMARY KEY(`uri`), FOREIGN KEY(`albumUri`) REFERENCES `rockskyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`artistUri`) REFERENCES `rockskyArtists`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "uri",
@@ -3846,46 +3846,46 @@
         },
         "indices": [
           {
-            "name": "index_rockSkyTracks_uri",
+            "name": "index_rockskyTracks_uri",
             "unique": false,
             "columnNames": [
               "uri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyTracks_uri` ON `${TABLE_NAME}` (`uri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyTracks_uri` ON `${TABLE_NAME}` (`uri`)"
           },
           {
-            "name": "index_rockSkyTracks_albumUri",
+            "name": "index_rockskyTracks_albumUri",
             "unique": false,
             "columnNames": [
               "albumUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyTracks_albumUri` ON `${TABLE_NAME}` (`albumUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyTracks_albumUri` ON `${TABLE_NAME}` (`albumUri`)"
           },
           {
-            "name": "index_rockSkyTracks_artistUri",
+            "name": "index_rockskyTracks_artistUri",
             "unique": false,
             "columnNames": [
               "artistUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyTracks_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyTracks_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
           },
           {
-            "name": "index_rockSkyTracks_createdAt",
+            "name": "index_rockskyTracks_createdAt",
             "unique": false,
             "columnNames": [
               "createdAt"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyTracks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyTracks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
           }
         ],
         "foreignKeys": [
           {
-            "table": "rockSkyAlbums",
-            "onDelete": "CASCADE",
+            "table": "rockskyAlbums",
+            "onDelete": "SET NULL",
             "onUpdate": "CASCADE",
             "columns": [
               "albumUri"
@@ -3895,8 +3895,8 @@
             ]
           },
           {
-            "table": "rockSkyArtists",
-            "onDelete": "CASCADE",
+            "table": "rockskyArtists",
+            "onDelete": "SET NULL",
             "onUpdate": "CASCADE",
             "columns": [
               "artistUri"
@@ -3908,12 +3908,18 @@
         ]
       },
       {
-        "tableName": "rockSkyScrobbles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `trackId` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `handle` TEXT, `did` TEXT, `avatar` TEXT, `trackUri` TEXT, `artistUri` TEXT, `albumUri` TEXT, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`uri`), FOREIGN KEY(`did`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`trackUri`) REFERENCES `rockSkyTracks`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`artistUri`) REFERENCES `rockSkyArtists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`albumUri`) REFERENCES `rockSkyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "rockskyScrobbles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `viewerDid` TEXT NOT NULL, `cid` TEXT NOT NULL, `trackId` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `handle` TEXT, `did` TEXT NOT NULL, `avatar` TEXT, `trackUri` TEXT, `artistUri` TEXT, `albumUri` TEXT, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`uri`, `viewerDid`), FOREIGN KEY(`did`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`trackUri`) REFERENCES `rockskyTracks`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`artistUri`) REFERENCES `rockskyArtists`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`albumUri`) REFERENCES `rockskyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "uri",
             "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viewerDid",
+            "columnName": "viewerDid",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -3964,7 +3970,8 @@
           {
             "fieldPath": "did",
             "columnName": "did",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "avatar",
@@ -3996,63 +4003,64 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "uri"
+            "uri",
+            "viewerDid"
           ]
         },
         "indices": [
           {
-            "name": "index_rockSkyScrobbles_uri",
+            "name": "index_rockskyScrobbles_uri",
             "unique": false,
             "columnNames": [
               "uri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_uri` ON `${TABLE_NAME}` (`uri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_uri` ON `${TABLE_NAME}` (`uri`)"
           },
           {
-            "name": "index_rockSkyScrobbles_did",
+            "name": "index_rockskyScrobbles_did",
             "unique": false,
             "columnNames": [
               "did"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_did` ON `${TABLE_NAME}` (`did`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_did` ON `${TABLE_NAME}` (`did`)"
           },
           {
-            "name": "index_rockSkyScrobbles_trackUri",
+            "name": "index_rockskyScrobbles_trackUri",
             "unique": false,
             "columnNames": [
               "trackUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_trackUri` ON `${TABLE_NAME}` (`trackUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_trackUri` ON `${TABLE_NAME}` (`trackUri`)"
           },
           {
-            "name": "index_rockSkyScrobbles_artistUri",
+            "name": "index_rockskyScrobbles_artistUri",
             "unique": false,
             "columnNames": [
               "artistUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
           },
           {
-            "name": "index_rockSkyScrobbles_albumUri",
+            "name": "index_rockskyScrobbles_albumUri",
             "unique": false,
             "columnNames": [
               "albumUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_albumUri` ON `${TABLE_NAME}` (`albumUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_albumUri` ON `${TABLE_NAME}` (`albumUri`)"
           },
           {
-            "name": "index_rockSkyScrobbles_createdAt",
+            "name": "index_rockskyScrobbles_createdAt",
             "unique": false,
             "columnNames": [
               "createdAt"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyScrobbles_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyScrobbles_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
           }
         ],
         "foreignKeys": [
@@ -4068,8 +4076,8 @@
             ]
           },
           {
-            "table": "rockSkyTracks",
-            "onDelete": "CASCADE",
+            "table": "rockskyTracks",
+            "onDelete": "SET NULL",
             "onUpdate": "CASCADE",
             "columns": [
               "trackUri"
@@ -4079,8 +4087,8 @@
             ]
           },
           {
-            "table": "rockSkyArtists",
-            "onDelete": "CASCADE",
+            "table": "rockskyArtists",
+            "onDelete": "SET NULL",
             "onUpdate": "CASCADE",
             "columns": [
               "artistUri"
@@ -4090,8 +4098,8 @@
             ]
           },
           {
-            "table": "rockSkyAlbums",
-            "onDelete": "CASCADE",
+            "table": "rockskyAlbums",
+            "onDelete": "SET NULL",
             "onUpdate": "CASCADE",
             "columns": [
               "albumUri"
@@ -4103,8 +4111,8 @@
         ]
       },
       {
-        "tableName": "rockSkyAlbums",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `releaseDate` TEXT, `year` INTEGER, `albumArt` TEXT, `artistUri` TEXT, `playCount` INTEGER, `uniqueListeners` INTEGER, `appleMusicLink` TEXT, `spotifyLink` TEXT, `tidalLink` TEXT, `youtubeLink` TEXT, PRIMARY KEY(`uri`), FOREIGN KEY(`artistUri`) REFERENCES `rockSkyArtists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "rockskyAlbums",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `releaseDate` TEXT, `year` INTEGER, `albumArt` TEXT, `artistUri` TEXT NOT NULL, `playCount` INTEGER, `uniqueListeners` INTEGER, `appleMusicLink` TEXT, `spotifyLink` TEXT, `tidalLink` TEXT, `youtubeLink` TEXT, PRIMARY KEY(`uri`), FOREIGN KEY(`artistUri`) REFERENCES `rockskyArtists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "uri",
@@ -4148,7 +4156,8 @@
           {
             "fieldPath": "artistUri",
             "columnName": "artistUri",
-            "affinity": "TEXT"
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "playCount",
@@ -4189,27 +4198,27 @@
         },
         "indices": [
           {
-            "name": "index_rockSkyAlbums_uri",
+            "name": "index_rockskyAlbums_uri",
             "unique": false,
             "columnNames": [
               "uri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyAlbums_uri` ON `${TABLE_NAME}` (`uri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyAlbums_uri` ON `${TABLE_NAME}` (`uri`)"
           },
           {
-            "name": "index_rockSkyAlbums_artistUri",
+            "name": "index_rockskyAlbums_artistUri",
             "unique": false,
             "columnNames": [
               "artistUri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyAlbums_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyAlbums_artistUri` ON `${TABLE_NAME}` (`artistUri`)"
           }
         ],
         "foreignKeys": [
           {
-            "table": "rockSkyArtists",
+            "table": "rockskyArtists",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
@@ -4222,7 +4231,7 @@
         ]
       },
       {
-        "tableName": "rockSkyArtists",
+        "tableName": "rockskyArtists",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `name` TEXT NOT NULL, `picture` TEXT, `playCount` INTEGER, `uniqueListeners` INTEGER, `tags` TEXT, PRIMARY KEY(`uri`))",
         "fields": [
           {
@@ -4272,20 +4281,20 @@
         },
         "indices": [
           {
-            "name": "index_rockSkyArtists_uri",
+            "name": "index_rockskyArtists_uri",
             "unique": false,
             "columnNames": [
               "uri"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockSkyArtists_uri` ON `${TABLE_NAME}` (`uri`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rockskyArtists_uri` ON `${TABLE_NAME}` (`uri`)"
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '77ee2a29d229b33d2505f40b30a38075')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ef444877b2af6f3185e2b2ceebefd1e6')"
     ]
   }
 }

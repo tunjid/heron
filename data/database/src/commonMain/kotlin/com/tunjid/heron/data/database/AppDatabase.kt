@@ -55,10 +55,10 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
-import com.tunjid.heron.data.database.entities.RockSkyAlbumEntity
-import com.tunjid.heron.data.database.entities.RockSkyArtistEntity
-import com.tunjid.heron.data.database.entities.RockSkyScrobbleEntity
-import com.tunjid.heron.data.database.entities.RockSkyTrackEntity
+import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
+import com.tunjid.heron.data.database.entities.RockskyArtistEntity
+import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
+import com.tunjid.heron.data.database.entities.RockskyTrackEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -146,10 +146,10 @@ import kotlinx.coroutines.IO
         StandardPublicationEntity::class,
         StandardDocumentEntity::class,
         StandardSubscriptionEntity::class,
-        RockSkyTrackEntity::class,
-        RockSkyScrobbleEntity::class,
-        RockSkyAlbumEntity::class,
-        RockSkyArtistEntity::class,
+        RockskyTrackEntity::class,
+        RockskyScrobbleEntity::class,
+        RockskyAlbumEntity::class,
+        RockskyArtistEntity::class,
     ],
     autoMigrations = [
         // firstMigration

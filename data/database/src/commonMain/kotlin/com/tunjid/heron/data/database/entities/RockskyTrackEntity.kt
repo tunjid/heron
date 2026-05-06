@@ -13,17 +13,17 @@ import com.tunjid.heron.data.core.types.TrackUri
 import kotlin.time.Instant
 
 @Entity(
-    tableName = "rockSkyTracks",
+    tableName = "rockskyTracks",
     foreignKeys = [
         ForeignKey(
-            entity = RockSkyAlbumEntity::class,
+            entity = RockskyAlbumEntity::class,
             parentColumns = ["uri"],
             childColumns = ["albumUri"],
             onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = RockSkyArtistEntity::class,
+            entity = RockskyArtistEntity::class,
             parentColumns = ["uri"],
             childColumns = ["artistUri"],
             onDelete = ForeignKey.SET_NULL,
@@ -37,7 +37,7 @@ import kotlin.time.Instant
         Index(value = ["createdAt"]),
     ],
 )
-data class RockSkyTrackEntity(
+data class RockskyTrackEntity(
     @PrimaryKey
     val uri: TrackUri,
     val cid: TrackId,
@@ -56,7 +56,7 @@ data class RockSkyTrackEntity(
     val uniqueListeners: Long?,
 )
 
-fun RockSkyTrackEntity.asExternalModel() = RockSkyTrack(
+fun RockskyTrackEntity.asExternalModel() = RockSkyTrack(
     cid = cid,
     title = title,
     artist = artist,

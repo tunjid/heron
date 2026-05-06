@@ -3,7 +3,6 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.RockSkyScrobble
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
@@ -17,7 +16,8 @@ import com.tunjid.heron.data.core.types.TrackUri
 import kotlin.time.Instant
 
 @Entity(
-    tableName = "rockSkyScrobbles",
+    tableName = "rockskyScrobbles",
+    primaryKeys = ["uri", "viewerDid"],
     foreignKeys = [
         ForeignKey(
             entity = ProfileEntity::class,
@@ -27,21 +27,21 @@ import kotlin.time.Instant
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = RockSkyTrackEntity::class,
+            entity = RockskyTrackEntity::class,
             parentColumns = ["uri"],
             childColumns = ["trackUri"],
             onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = RockSkyArtistEntity::class,
+            entity = RockskyArtistEntity::class,
             parentColumns = ["uri"],
             childColumns = ["artistUri"],
             onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = RockSkyAlbumEntity::class,
+            entity = RockskyAlbumEntity::class,
             parentColumns = ["uri"],
             childColumns = ["albumUri"],
             onDelete = ForeignKey.SET_NULL,
@@ -57,9 +57,9 @@ import kotlin.time.Instant
         Index(value = ["createdAt"]),
     ],
 )
-data class RockSkyScrobbleEntity(
-    @PrimaryKey
+data class RockskyScrobbleEntity(
     val uri: ScrobbleUri,
+    val viewerDid: ProfileId,
     val cid: ScrobbleId,
     val trackId: TrackId,
     val title: String,
@@ -68,7 +68,7 @@ data class RockSkyScrobbleEntity(
     val album: String?,
     val albumArt: ImageUri?,
     val handle: ProfileHandle?,
-    val did: ProfileId?,
+    val did: ProfileId,
     val avatar: ImageUri?,
     val trackUri: TrackUri?,
     val artistUri: ArtistUri?,
@@ -76,7 +76,7 @@ data class RockSkyScrobbleEntity(
     val createdAt: Instant,
 )
 
-fun RockSkyScrobbleEntity.asExternalModel() = RockSkyScrobble(
+fun RockskyScrobbleEntity.asExternalModel() = RockSkyScrobble(
     cid = cid,
     trackId = trackId,
     title = title,
