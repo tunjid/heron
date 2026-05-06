@@ -23,12 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.material3.ripple
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
@@ -45,6 +43,7 @@ import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.RouteViewModelInitializer
+import com.tunjid.heron.feed.timelineState
 import com.tunjid.heron.feed.withFeedTimelineOrNull
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -70,6 +69,7 @@ import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -198,7 +198,7 @@ class FeedBindings(
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state = viewModel.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val editFeedText = stringResource(Res.string.edit_feed)

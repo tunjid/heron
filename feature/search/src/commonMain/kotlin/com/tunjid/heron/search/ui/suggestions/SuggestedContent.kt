@@ -109,6 +109,7 @@ internal fun SuggestedContent(
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
+            horizontal = 8.dp,
         ),
     ) {
         if (showTrendingTopics) item {
@@ -140,7 +141,7 @@ internal fun SuggestedContent(
         if (suggestedProfiles.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 8.dp)
                     .animateItem(),
                 icon = Icons.Rounded.AccountCircle,
                 title = stringResource(Res.string.suggested_accounts),
@@ -180,7 +181,7 @@ internal fun SuggestedContent(
         if (starterPacksWithMembers.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 8.dp)
                     .animateItem(),
                 icon = Icons.Rounded.JoinFull,
                 title = stringResource(Res.string.starter_packs),
@@ -204,7 +205,7 @@ internal fun SuggestedContent(
         if (feedGenerators.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 8.dp)
                     .animateItem(),
                 icon = Icons.Rounded.RssFeed,
                 title = stringResource(Res.string.discover_feeds),
@@ -230,7 +231,7 @@ internal fun SuggestedContent(
                             }
                             .padding(
                                 vertical = 4.dp,
-                                horizontal = 16.dp,
+                                horizontal = 8.dp,
                             )
                             .animateItem(),
                         paneTransitionScope = paneScaffoldState,

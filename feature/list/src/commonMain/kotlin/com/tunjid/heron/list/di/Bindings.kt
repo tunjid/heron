@@ -26,13 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.uri
@@ -51,6 +49,7 @@ import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
 import com.tunjid.heron.list.ListScreenStateHolders
 import com.tunjid.heron.list.RouteViewModelInitializer
+import com.tunjid.heron.list.timelineState
 import com.tunjid.heron.list.withListTimelineOrNull
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -74,6 +73,7 @@ import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -260,7 +260,7 @@ class ListBindings(
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state = viewModel.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(

@@ -330,6 +330,7 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
             base64EncodedRecord = bskyPost.toPostRecord().toUrlEncodedBase64(),
             createdAt = bskyPost.createdAt,
             embeddedRecordUri = embeddedUri,
+            via = bskyPost.via,
         )
     } catch (_: Exception) {
         null
@@ -348,6 +349,7 @@ private fun BskyPost.toPostRecord() =
                 parentUri = it.parent.uri.atUri.let(::PostUri),
             )
         },
+        via = via,
     )
 
 private fun PostView.nonPostEmbeddedRecord(): Record.Embeddable? {

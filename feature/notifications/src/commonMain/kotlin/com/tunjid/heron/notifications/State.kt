@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.notifications
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.MutedWordPreference
@@ -31,35 +32,45 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.buildTiledList
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val lastRefreshed: Instant? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val signedInProfile: Profile? = null,
-    @Transient
-    val canAnimateRequestPermissionsButton: Boolean = false,
-    override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
-        currentQuery = NotificationsQuery(
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 18,
+@Stable
+@Snapshottable
+interface State : TilingState<NotificationsQuery, Notification> {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val lastRefreshed: Instant? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val signedInProfile: Profile? = null,
+        @Transient
+        val canAnimateRequestPermissionsButton: Boolean = false,
+        override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
+            currentQuery = NotificationsQuery(
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                    limit = 18,
+                ),
             ),
         ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) : TilingState<NotificationsQuery, Notification>
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
+
+fun State(): State.Immutable = State.Immutable()
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
     tiledItems.forEachIndexed { index, notification ->

@@ -18,36 +18,36 @@ androidx-espresso-core = "3.7.0"
 axion-release = "1.21.1"
 buildConfig = "6.0.9"
 coreSplashscreen = "1.2.0"
-burst = "2.12.0"
+burst = "2.13.0-beta1"
 androidx-material = "1.13.0"
 androidx-test-junit = "1.3.0"
 coil = "3.4.0"
 connectivity = "2.4.1"
-compose-multiplatform = "1.11.0-beta02"
+compose-multiplatform = "1.11.0-beta03"
 crypto = "0.6.0"
-compose-multiplatform-material3 = "1.11.0-alpha06"
+compose-multiplatform-material3 = "1.11.0-alpha07"
 compose-material-icons = "1.7.3"
 firebase-bom-version = "34.12.0"
 google-services = "4.4.4"
 junit = "4.13.2"
-kotlin = "2.3.20"
+kotlin = "2.4.0-Beta2"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.10.0"
 ksp = "2.3.6"
 ktlint-cli = "1.8.0"
 ktor = "3.4.2"
-lifecycle-android = "2.11.0-alpha03"
+lifecycle-android = "2.11.0-beta01"
 lifecycle-multiplatform = "2.11.0-alpha03"
 logcat = "0.4"
-metro = "1.0.0-RC1"
-navigationEventCompose = "1.1.0-alpha01"
-navigation3Multiplatform = "1.1.0-rc01"
+metro = "1.0.0"
+navigationEventCompose = "1.1.0-beta01"
+navigation3Multiplatform = "1.1.0"
 okio = "3.17.0"
 ozone-atproto = "0.3.7"
 savedstate-multiplatform = "1.4.0"
 spotless = "8.4.0"
-tunjid-state-holder = "1.2.0"
+tunjid-state-holder = "1.2.1"
 tunjid-tiler = "1.2.3"
 tunjid-tree-nav = "0.0.54"
 tunjid-composables = "0.0.29"
@@ -58,6 +58,7 @@ jna = "5.18.1"
 gstreamer-java = "1.4.0"
 tink = "1.21.0"
 aboutLibraries = "14.0.0"
+snapshottable = "0.1.3"
 
 
 [libraries]
@@ -183,6 +184,7 @@ tunjid-treenav-compose = { group = "com.tunjid.treenav", name = "compose", versi
 tunjid-treenav-compose-threepane = { group = "com.tunjid.treenav", name = "compose-threepane", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-core = { group = "com.tunjid.treenav", name = "treenav", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", version.ref = "tunjid-tree-nav" }
+tunjid-snapshottablePlugin = { group = "com.tunjid.snapshottable", name = "gradle-plugin", version.ref = "snapshottable" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
 jna-platform = { group = "net.java.dev.jna", name = "jna-platform", version.ref = "jna" }
 javafx-base = { group = "org.openjfx", name = "javafx-base", version.ref = "javafx" }
@@ -210,3 +212,4 @@ aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "abo
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
 axionRelease = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
+tunjid-snapshottable = { id = "com.tunjid.snapshottable", version.ref = "snapshottable" }

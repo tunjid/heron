@@ -65,6 +65,10 @@ fun RecordUri.requireCollection(): String =
         is StandardPublicationUri -> StandardPublicationUri.NAMESPACE
         is StandardDocumentUri -> StandardDocumentUri.NAMESPACE
         is StandardSubscriptionUri -> StandardSubscriptionUri.NAMESPACE
+        is AlbumUri -> AlbumUri.NAMESPACE
+        is TrackUri -> TrackUri.NAMESPACE
+        is ArtistUri -> ArtistUri.NAMESPACE
+        is ScrobbleUri -> ScrobbleUri.NAMESPACE
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
@@ -247,6 +251,58 @@ value class StandardDocumentUri(
 
 @Serializable
 @JvmInline
+value class AlbumUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.album"
+    }
+}
+
+@Serializable
+@JvmInline
+value class TrackUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.song"
+    }
+}
+
+@Serializable
+@JvmInline
+value class ArtistUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.artist"
+    }
+}
+
+@Serializable
+@JvmInline
+value class ScrobbleUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.rocksky.scrobble"
+    }
+}
+
+@Serializable
+@JvmInline
 value class StandardSubscriptionUri(
     override val uri: String,
 ) : Uri,
@@ -361,14 +417,22 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
         StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
         StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(normalized)
+        AlbumUri.NAMESPACE -> AlbumUri(normalized)
+        ArtistUri.NAMESPACE -> ArtistUri(normalized)
+        TrackUri.NAMESPACE -> TrackUri(normalized)
+        ScrobbleUri.NAMESPACE -> ScrobbleUri(normalized)
         else -> UnknownRecordUri(normalized)
     }
 }
 
-fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
-    atUriComponents { _, collectionRange, _ ->
-        val normalized = withAtProtoPrefix()
-        when (substring(collectionRange.start, collectionRange.endExclusive)) {
+fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
+    val atUri = when {
+        startsWith(Uri.Host.Https.prefix) -> bskyHttpsUrlToAtUri() ?: return null
+        else -> this
+    }
+    return atUri.atUriComponents { _, collectionRange, _ ->
+        val normalized = atUri.withAtProtoPrefix()
+        when (atUri.substring(collectionRange.start, collectionRange.endExclusive)) {
             PostUri.NAMESPACE -> PostUri(normalized)
             FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(normalized)
             ListUri.NAMESPACE -> ListUri(normalized)
@@ -377,10 +441,68 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
             else -> null
         }
     }
+}
 
 private fun String.withAtProtoPrefix(): String =
     if (startsWith(Uri.Host.AtProto.prefix)) this
     else "${Uri.Host.AtProto.prefix}$this"
+
+private val bskyPathSegmentToNamespace = mapOf(
+    "post" to PostUri.NAMESPACE,
+    "feed" to FeedGeneratorUri.NAMESPACE,
+    "lists" to ListUri.NAMESPACE,
+    "starter-pack" to StarterPackUri.NAMESPACE,
+    "labeler" to LabelerUri.NAMESPACE,
+)
+
+private fun String.bskyHttpsUrlToAtUri(): String? {
+    if (!startsWith(Uri.Host.Https.prefix)) return null
+
+    // Skip past "https://" and optional "www."
+    var cursor = Uri.Host.Https.prefix.length
+    if (startsWith("www.", cursor)) cursor += 4
+
+    // Must start with "bsky.app/"
+    if (!startsWith("bsky.app/", cursor)) return null
+    cursor += "bsky.app/".length
+
+    // Find first segment
+    val seg0End = indexOf('/', cursor).takeIf { it != -1 } ?: return null
+    val seg0 = substring(cursor, seg0End)
+
+    // Find second segment
+    val seg1Start = seg0End + 1
+    val seg1End = indexOf('/', seg1Start).takeIf { it != -1 } ?: return null
+    val seg1 = substring(seg1Start, seg1End)
+
+    // Find third segment — stop at '?', '#' or end of string
+    val seg2Start = seg1End + 1
+    val seg2End = indexOfFirst(seg2Start) { it == '/' || it == '?' || it == '#' }
+        .takeIf { it != -1 } ?: length
+    val seg2 = substring(seg2Start, seg2End)
+
+    // Find optional fourth segment
+    val seg3End = if (seg2End < length && this[seg2End] == '/') {
+        indexOfFirst(seg2End + 1) { it == '?' || it == '#' }
+            .takeIf { it != -1 } ?: length
+    } else -1
+    val seg3 = if (seg3End != -1) substring(seg2End + 1, seg3End) else null
+
+    val (handle, type, rkey) = when {
+        seg0 == "profile" && seg3 != null -> Triple(seg1, seg2, seg3)
+        seg0 == "starter-pack" -> Triple(seg1, seg0, seg2)
+        seg0 == "profile" -> Triple(seg1, seg2, "self") // labeler
+        else -> return null
+    }
+
+    val namespace = bskyPathSegmentToNamespace[type] ?: return null
+    return "${Uri.Host.AtProto.prefix}$handle/$namespace/$rkey"
+}
+
+private inline fun String.indexOfFirst(startIndex: Int, predicate: (Char) -> Boolean): Int {
+    for (i in startIndex until length) if (predicate(this[i])) return i
+    return -1
+}
 
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.

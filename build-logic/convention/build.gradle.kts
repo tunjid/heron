@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.google.devtools.kspPlugin)
     implementation(libs.metro.gradlePlugin)
     implementation(libs.axion.release.gradlePlugin)
+    implementation(libs.tunjid.snapshottablePlugin)
 
     // TODO: https://github.com/gradle/gradle/issues/15383
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))

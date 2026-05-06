@@ -41,6 +41,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
@@ -595,5 +596,6 @@ internal fun expiredSessionOutcome() = ExpiredSessionException().asFailureOutcom
 
 internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
 
+@OptIn(ExperimentalStdlibApi::class)
 private suspend fun contextWithExistingDispatcher() =
     currentCoroutineContext()[CoroutineDispatcher] ?: EmptyCoroutineContext

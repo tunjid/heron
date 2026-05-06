@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.standard.publication
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -27,54 +28,72 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val sharedElementPrefix: String? = null,
-    @Transient
-    val publication: StandardPublication? = null,
-    @Transient
-    val documentsTilingStateHolder: DocumentsStateHolder? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
 
-val State.isRefreshing
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val sharedElementPrefix: String? = null,
+        @Transient
+        val publication: StandardPublication? = null,
+        @Transient
+        val documentsTilingStateHolder: DocumentsStateHolder? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
+
+val State.isRefreshing: Boolean
     get() = documentsTilingStateHolder
         ?.state
-        ?.value
         ?.tilingData
         ?.status is TilingState.Status.Refreshing
 
 fun State(
     route: Route,
-): State = State(
+): State.Immutable = State.Immutable(
     publication = route.model<StandardPublication>(),
     sharedElementPrefix = route.sharedElementPrefix,
 )
 
-typealias DocumentsStateHolder = ActionStateMutator<TilingState.Action, StateFlow<DocumentsTilingState>>
+typealias DocumentsStateHolder = ActionSuspendingStateMutator<TilingState.Action, DocumentsTilingState>
 
-@Serializable
-data class DocumentsTilingState(
-    val publicationUri: StandardPublicationUri,
-    @Transient
-    override val tilingData: TilingState.Data<StandardPublicationDocumentsQuery, StandardDocument> = TilingState.Data(
-        currentQuery = StandardPublicationDocumentsQuery(
-            publicationUri = publicationUri,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
+@Stable
+@Snapshottable
+interface DocumentsTilingState : TilingState<StandardPublicationDocumentsQuery, StandardDocument> {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val publicationUri: StandardPublicationUri,
+        @Transient
+        override val tilingData: TilingState.Data<StandardPublicationDocumentsQuery, StandardDocument> = TilingState.Data(
+            currentQuery = StandardPublicationDocumentsQuery(
+                publicationUri = publicationUri,
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                ),
             ),
         ),
-    ),
-) : TilingState<StandardPublicationDocumentsQuery, StandardDocument>
+    ) : DocumentsTilingState
+}
+
+fun DocumentsTilingState(
+    publicationUri: StandardPublicationUri,
+): DocumentsTilingState.Immutable = DocumentsTilingState.Immutable(
+    publicationUri = publicationUri,
+)
 
 sealed class Action(val key: String) {
 

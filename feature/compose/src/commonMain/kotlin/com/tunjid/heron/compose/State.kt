@@ -44,6 +44,8 @@ data class State(
     val fabExpanded: Boolean = true,
     val embeddedRecord: Record.Embeddable? = null,
     @Transient
+    val dismissedEmbedUrl: String? = null,
+    @Transient
     val recentLists: List<FeedList> = emptyList(),
     @Transient
     val interactionsPreference: PostInteractionSettingsPreference? = null,
@@ -100,6 +102,10 @@ sealed class Action(val key: String) {
         val textFieldValue: TextFieldValue,
     ) : Action("PostTextChanged")
 
+    data class EmbedUrl(
+        val url: String,
+    ) : Action("EmbedUrl")
+
     data class CreatePost(
         val postType: Post.Create?,
         val authorId: ProfileId,
@@ -150,7 +156,9 @@ sealed class Action(val key: String) {
 
     data object ClearSuggestions : Action("ClearSuggestions")
 
-    data object RemoveEmbeddedRecord : Action("RemoveEmbeddedRecord")
+    data class RemoveEmbeddedRecord(
+        val url: String? = null,
+    ) : Action("RemoveEmbeddedRecord")
 
     data object UpdateRecentLists : Action("UpdateRecentLists")
 }

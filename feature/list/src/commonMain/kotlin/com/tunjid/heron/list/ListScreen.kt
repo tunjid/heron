@@ -46,21 +46,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.data.core.models.Conversation
@@ -89,7 +85,6 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -125,8 +120,10 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.list.generated.resources.Res
@@ -150,8 +147,7 @@ internal fun ListScreen(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val updatedStateHolders by rememberUpdatedState(state.stateHolders)
-    val pagerState = rememberPagerState { updatedStateHolders.size }
+    val pagerState = rememberPagerState { state.stateHolders.size }
     val scope = rememberCoroutineScope()
 
     val collapsedHeight = with(density) {
@@ -163,17 +159,8 @@ internal fun ListScreen(
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
-    val isRefreshing by produceState(
-        initialValue = false,
-        key1 = pagerState.currentPage,
-        key2 = updatedStateHolders.size,
-    ) {
-        updatedStateHolders.getOrNull(pagerState.currentPage)
-            ?.tilingState
-            ?.collect {
-                value = it.isRefreshing
-            }
-    }
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)
+        ?.isRefreshing == true
 
     PullToRefreshBox(
         modifier = modifier
@@ -182,7 +169,7 @@ internal fun ListScreen(
         isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
-            updatedStateHolders[pagerState.currentPage].refresh()
+            state.stateHolders[pagerState.currentPage].refresh()
         },
         indicator = {
             DismissableRefreshIndicator(
@@ -194,7 +181,7 @@ internal fun ListScreen(
                 state = pullToRefreshState,
                 isRefreshing = isRefreshing,
                 onDismissRequest = {
-                    when (val holder = updatedStateHolders[pagerState.currentPage]) {
+                    when (val holder = state.stateHolders[pagerState.currentPage]) {
                         is ListScreenStateHolders.Members -> Unit
                         is ListScreenStateHolders.Timeline -> holder.accept(
                             TimelineState.Action.DismissRefresh,
@@ -248,7 +235,7 @@ internal fun ListScreen(
                                 }
                             },
                             onTabReselected = { index ->
-                                updatedStateHolders.getOrNull(index = index)
+                                state.stateHolders.getOrNull(index = index)
                                     ?.refresh()
                             },
                         ),
@@ -260,9 +247,9 @@ internal fun ListScreen(
                     modifier = Modifier
                         .fillMaxSize(),
                     state = pagerState,
-                    key = { page -> updatedStateHolders[page].key },
+                    key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
-                        when (val stateHolder = updatedStateHolders[page]) {
+                        when (val stateHolder = state.stateHolders[page]) {
                             is ListScreenStateHolders.Members -> ListMembers(
                                 paneScaffoldState = paneScaffoldState,
                                 membersStateHolder = stateHolder,
@@ -316,8 +303,8 @@ private fun ListMembers(
     membersStateHolder: MembersStateHolder,
     actions: (Action) -> Unit,
 ) {
-    val state by membersStateHolder.state.collectAsStateWithLifecycle()
-    val updatedMembers by rememberUpdatedState(state.tiledItems)
+    val state = membersStateHolder.produceStateWithLifecycle()
+    val updatedMembers = state.tiledItems
     val listState = rememberLazyListState()
 
     var listMemberToDelete by remember { mutableStateOf<ListMember?>(null) }
@@ -456,8 +443,8 @@ private fun ListTimeline(
     showEngagementMetrics: Boolean,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.tiledItems)
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
+    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current
@@ -564,14 +551,14 @@ private fun ListTimeline(
                 )
                 .fillMaxSize()
                 .paneClip()
-                .onSizeChanged {
-                    val itemWidth = with(density) {
-                        presentation.cardSize.toPx()
-                    }
+                .gridColumnCount(
+                    density = density,
+                    maxColumnWidth = presentation.cardSize,
+                ) { numColumns ->
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
                             tilingAction = TilingState.Action.GridSize(
-                                floor(it.width / itemWidth).roundToInt(),
+                                numColumns = numColumns,
                             ),
                         ),
                     )

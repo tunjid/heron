@@ -36,21 +36,17 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -116,7 +112,9 @@ import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.abs
@@ -132,12 +130,8 @@ internal fun HomeScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val updatedTimelineStateHolders by rememberUpdatedState(
-        state.timelineStateHolders,
-    )
-
     val pagerState = rememberPagerState {
-        updatedTimelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
+        state.timelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
@@ -180,15 +174,14 @@ internal fun HomeScreen(
                 .paneClip(),
             state = pagerState,
             key = { page ->
-                updatedTimelineStateHolders[page]
+                state.timelineStateHolders[page]
                     .state
-                    .value
                     .timeline
                     .sourceId
             },
             pageContent = { page ->
                 val gridState = rememberLazyStaggeredGridState()
-                val timelineStateHolder = updatedTimelineStateHolders[page]
+                val timelineStateHolder = state.timelineStateHolders[page]
                 HomeTimeline(
                     gridState = gridState,
                     paneScaffoldState = paneScaffoldState,
@@ -238,7 +231,7 @@ internal fun HomeScreen(
                 }
             },
             onCollapsedTabReselected = { page ->
-                updatedTimelineStateHolders
+                state.timelineStateHolders
                     .getOrNull(page)
                     ?.accept
                     ?.invoke(
@@ -248,12 +241,12 @@ internal fun HomeScreen(
                     )
             },
             onExpandedTabSelected = { page ->
-                when (val holder = updatedTimelineStateHolders.getOrNull(page)) {
-                    is HomeScreenStateHolders.Pinned -> holder.state.value.timeline.uri?.path?.let {
+                when (val holder = state.timelineStateHolders.getOrNull(page)) {
+                    is HomeScreenStateHolders.Pinned -> holder.state.timeline.uri?.path?.let {
                         actions(Action.Navigate.To(pathDestination(it)))
                     }
 
-                    is HomeScreenStateHolders.Saved -> holder.state.value.timeline.uri?.path?.let {
+                    is HomeScreenStateHolders.Saved -> holder.state.timeline.uri?.path?.let {
                         actions(Action.Navigate.To(pathDestination(it)))
                     }
 
@@ -262,11 +255,11 @@ internal fun HomeScreen(
             },
             onLayoutChanged = onLayoutChanged,
             onTimelinePresentationUpdated = click@{ index, presentation ->
-                val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
+                val timelineStateHolder = state.timelineStateHolders.getOrNull(index)
                     ?: return@click
                 timelineStateHolder.accept(
                     TimelineState.Action.UpdatePreferredPresentation(
-                        timeline = timelineStateHolder.state.value.timeline,
+                        timeline = timelineStateHolder.state.timeline,
                         presentation = presentation,
                     ),
                 )
@@ -301,10 +294,10 @@ internal fun HomeScreen(
         LaunchedEffect(Unit) {
             snapshotFlow { pagerState.currentPage }
                 .collect { page ->
-                    val holder = updatedTimelineStateHolders.getOrNull(page) ?: return@collect
+                    val holder = state.timelineStateHolders
+                        .getOrNull(page) ?: return@collect
                     val currentTabUri = holder
                         .state
-                        .value
                         .timeline
                         .uri
                         ?: return@collect
@@ -328,8 +321,8 @@ private fun HomeTimeline(
     tabsOffset: () -> Offset,
     actions: (Action) -> Unit,
 ) {
-    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.tiledItems)
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
+    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current
@@ -463,14 +456,14 @@ private fun HomeTimeline(
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
                     .fillMaxSize()
-                    .onSizeChanged {
-                        val itemWidth = with(density) {
-                            presentation.cardSize.toPx()
-                        }
+                    .gridColumnCount(
+                        density = density,
+                        maxColumnWidth = presentation.cardSize,
+                    ) { numColumns ->
                         timelineStateHolder.accept(
                             TimelineState.Action.Tile(
                                 tilingAction = TilingState.Action.GridSize(
-                                    numColumns = floor(it.width / itemWidth).roundToInt(),
+                                    numColumns = numColumns,
                                 ),
                             ),
                         )

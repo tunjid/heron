@@ -302,7 +302,9 @@ private fun ProfileBio(
                     },
                     keyboardActions = {
                         when (it.id) {
-                            DisplayName -> focusManager.moveFocus(
+                            DisplayName,
+                            Pronouns,
+                            -> focusManager.moveFocus(
                                 focusDirection = FocusDirection.Next,
                             )
 

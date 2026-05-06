@@ -78,7 +78,9 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.OfflineFirstRockSkyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
+import com.tunjid.heron.data.repository.records.RockSkyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
@@ -461,6 +463,12 @@ class DataBindings(
     internal fun provideStandardSiteRecordOperations(
         offlineFirstStandardSiteRecordOperations: OfflineFirstStandardSiteRecordOperations,
     ): StandardSiteRecordOperations = offlineFirstStandardSiteRecordOperations
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideRockSkyRecordOperations(
+        offlineFirstRockSkyRecordOperations: OfflineFirstRockSkyRecordOperations,
+    ): RockSkyRecordOperations = offlineFirstRockSkyRecordOperations
 
     @SingleIn(AppScope::class)
     @Provides

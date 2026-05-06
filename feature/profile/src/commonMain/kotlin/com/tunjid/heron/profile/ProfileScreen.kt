@@ -59,10 +59,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -86,7 +84,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
@@ -165,6 +162,8 @@ import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
+import com.tunjid.heron.timeline.utilities.Label
+import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -192,6 +191,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -239,23 +239,14 @@ internal fun ProfileScreen(
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
     }
-    val updatedStateHolders by rememberUpdatedState(state.stateHolders)
-
     val pagerState = rememberPagerState {
-        updatedStateHolders.size
+        state.stateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val isRefreshing by produceState(
-        initialValue = false,
-        key1 = pagerState.currentPage,
-        key2 = updatedStateHolders.size,
-    ) {
-        updatedStateHolders
-            .getOrNull(pagerState.currentPage)
-            .isRefreshing
-            .collect { value = it }
-    }
+    val isRefreshing = state.stateHolders
+        .getOrNull(pagerState.currentPage)
+        .isRefreshing
 
     val profileUpdateLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
         profile = state.profile,
@@ -284,13 +275,13 @@ internal fun ProfileScreen(
                 headerState.width = with(density) { it.width.toDp() }
             }
             .pullToRefresh(
-                enabled = updatedStateHolders
+                enabled = state.stateHolders
                     .getOrNull(pagerState.currentPage)
                     .canRefresh,
                 isRefreshing = isRefreshing,
                 state = pullToRefreshState,
                 onRefresh = {
-                    updatedStateHolders
+                    state.stateHolders
                         .getOrNull(pagerState.currentPage)
                         ?.refresh()
                 },
@@ -303,7 +294,7 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 timelineTabs = timelineTabs(
-                    updatedStateHolders = updatedStateHolders,
+                    stateHolders = state.stateHolders,
                     sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
                 ),
                 modifier = Modifier
@@ -323,12 +314,12 @@ internal fun ProfileScreen(
                     state.isSubscribedToLabeler
                 },
                 viewerState = state.viewerState,
-                timelineStateHolders = remember(updatedStateHolders) {
-                    updatedStateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
+                timelineStateHolders = remember(state.stateHolders) {
+                    state.stateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
                 },
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    updatedStateHolders.getOrNull(index = index)
+                    state.stateHolders.getOrNull(index = index)
                         ?.refresh()
                 },
                 onViewerStateClicked = { viewerState ->
@@ -396,9 +387,9 @@ internal fun ProfileScreen(
                     modifier = Modifier
                         .paneClip(),
                     state = pagerState,
-                    key = { page -> updatedStateHolders[page].key },
+                    key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
-                        when (val stateHolder = updatedStateHolders[page]) {
+                        when (val stateHolder = state.stateHolders[page]) {
                             is ProfileScreenStateHolders.Records.Feeds -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
@@ -620,20 +611,20 @@ internal fun ProfileScreen(
 
 @Composable
 private fun timelineTabs(
-    updatedStateHolders: List<ProfileScreenStateHolders>,
+    stateHolders: List<ProfileScreenStateHolders>,
     sourceIdsToHasUpdates: Map<String, Boolean>,
-): List<Tab> = updatedStateHolders.map { holder ->
+): List<Tab> = stateHolders.map { holder ->
     when (holder) {
         is ProfileScreenStateHolders.Records<*> -> Tab(
-            title = stringResource(holder.state.value.stringResource),
+            title = stringResource(holder.state.stringResource),
             id = holder.key,
             hasUpdate = false,
         )
 
         is ProfileScreenStateHolders.Timeline -> Tab(
-            title = holder.state.value.timeline.displayName(),
+            title = holder.state.timeline.displayName(),
             id = holder.key,
-            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
+            hasUpdate = sourceIdsToHasUpdates[holder.state.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
@@ -1002,10 +993,26 @@ private fun ProfileHeadline(
                     ellipsize = false,
                 )
                 Spacer(Modifier.height(4.dp))
-                ProfileHandle(
-                    modifier = Modifier,
-                    profile = profile,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ProfileHandle(
+                        modifier = Modifier,
+                        profile = profile,
+                    )
+                    profile.pronouns
+                        ?.takeIf(String::isNotBlank)
+                        ?.let { pronouns ->
+                            Label(
+                                isElevated = true,
+                                contentDescription = pronouns,
+                                icon = {},
+                                description = { LabelText(pronouns) },
+                                onClick = {},
+                            )
+                        }
+                }
             }
         },
         action = {
@@ -1300,8 +1307,8 @@ private fun ProfileTimeline(
     showEngagementMetrics: Boolean,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-    val items by rememberUpdatedState(timelineState.tiledItems)
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
+    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current
@@ -1610,33 +1617,29 @@ private fun TimelinePresentationSelector(
     page: Int,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
 ) {
-    val timeline = produceState(
-        initialValue = timelineStateHolders.getOrNull(page)?.state?.value?.timeline,
-        key1 = page,
-        key2 = timelineStateHolders,
-    ) {
-        val holder = timelineStateHolders.getOrNull(page) ?: return@produceState
-        value = holder.state.value.timeline
-        holder.state.collect {
-            value = it.timeline
+    val timeline by remember(page, timelineStateHolders) {
+        derivedStateOf {
+            timelineStateHolders.getOrNull(page)?.state?.timeline
         }
-    }.value
+    }
 
-    if (timeline != null) TimelinePresentationSelector(
-        modifier = modifier,
-        selected = timeline.presentation,
-        available = timeline.supportedPresentations,
-        onPresentationSelected = { presentation ->
-            timelineStateHolders.getOrNull(page)
-                ?.accept
-                ?.invoke(
-                    TimelineState.Action.UpdatePreferredPresentation(
-                        timeline = timeline,
-                        presentation = presentation,
-                    ),
-                )
-        },
-    )
+    timeline?.let { currentTimeline ->
+        TimelinePresentationSelector(
+            modifier = modifier,
+            selected = currentTimeline.presentation,
+            available = currentTimeline.supportedPresentations,
+            onPresentationSelected = { presentation ->
+                timelineStateHolders.getOrNull(page)
+                    ?.accept
+                    ?.invoke(
+                        TimelineState.Action.UpdatePreferredPresentation(
+                            timeline = currentTimeline,
+                            presentation = presentation,
+                        ),
+                    )
+            },
+        )
+    }
 }
 
 private fun Map<RecordUri?, Boolean>.status(

@@ -45,6 +45,10 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Repost
+import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockSkyArtist
+import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockSkyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -474,6 +478,10 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         is Block,
                         is StandardPublication,
                         is StandardSubscription,
+                        is RockSkyAlbum,
+                        is RockSkyArtist,
+                        is RockSkyScrobble,
+                        is RockSkyTrack,
                         -> throw UnknownNotificationException(query.recordUri)
 
                         is StandardDocument -> Notification.DocumentPublished(

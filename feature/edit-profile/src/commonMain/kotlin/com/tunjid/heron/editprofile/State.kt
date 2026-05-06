@@ -37,11 +37,14 @@ import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
 import com.tunjid.heron.ui.text.valueFor
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.character_limit
 import heron.feature.edit_profile.generated.resources.description
 import heron.feature.edit_profile.generated.resources.display_name
+import heron.feature.edit_profile.generated.resources.pronouns
 import heron.feature.edit_profile.generated.resources.tab_bio
 import heron.feature.edit_profile.generated.resources.tab_profile_feeds
 import heron.feature.edit_profile.generated.resources.tab_profile_tabs
@@ -52,76 +55,99 @@ import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
 internal val DisplayName = FormField.Id("displayName")
+internal val Pronouns = FormField.Id("pronouns")
 internal val Description = FormField.Id("description")
 
-@Serializable
-data class State(
-    val profile: Profile,
-    val avatarSharedElementKey: String,
-    @Transient
-    val tabs: List<EditProfileScreenTabs> = listOf(
-        EditProfileScreenTabs.Bio,
-        EditProfileScreenTabs.Editor,
-    ),
-    @Transient
-    val feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator> = emptyMap(),
-    @Transient
-    val currentProfileTabs: Set<ProfileTab> = emptySet(),
-    @Transient
-    val editableTabs: List<ProfileTab> = emptyList(),
-    @Transient
-    val tabsToSave: List<ProfileTab> = emptyList(),
-    @Transient
-    val submitting: Boolean = false,
-    @Transient
-    val updatedAvatar: RestrictedFile.Media.Photo? = null,
-    @Transient
-    val updatedBanner: RestrictedFile.Media.Photo? = null,
-    @Transient
-    val fields: List<FormField> = listOf(
-        FormField(
-            id = DisplayName,
-            value = "",
-            maxLines = 1,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next,
+@Snapshottable
+interface State {
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val profile: Profile,
+        val avatarSharedElementKey: String,
+        @Transient
+        val tabs: List<EditProfileScreenTabs> = listOf(
+            EditProfileScreenTabs.Bio,
+            EditProfileScreenTabs.Editor,
+        ),
+        @Transient
+        val feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator> = emptyMap(),
+        @Transient
+        val currentProfileTabs: Set<ProfileTab> = emptySet(),
+        @Transient
+        val editableTabs: List<ProfileTab> = emptyList(),
+        @Transient
+        val tabsToSave: List<ProfileTab> = emptyList(),
+        @Transient
+        val submitting: Boolean = false,
+        @Transient
+        val updatedAvatar: RestrictedFile.Media.Photo? = null,
+        @Transient
+        val updatedBanner: RestrictedFile.Media.Photo? = null,
+        @Transient
+        val fields: List<FormField> = listOf(
+            FormField(
+                id = DisplayName,
+                value = "",
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+                contentDescription = Memo.Resource(Res.string.display_name),
+                validator = Validator(
+                    String::isMaxDisplayName to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.display_name, MAX_DISPLAY_NAME_LENGTH),
+                    ),
+                ),
             ),
-            contentDescription = Memo.Resource(Res.string.display_name),
-            validator = Validator(
-                String::isMaxDisplayName to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.display_name),
+            FormField(
+                id = Pronouns,
+                value = "",
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+                contentDescription = Memo.Resource(Res.string.pronouns),
+                validator = Validator(
+                    String::isMaxPronouns to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.pronouns, MAX_PRONOUNS_LENGTH),
+                    ),
+                ),
+            ),
+            FormField(
+                id = Description,
+                value = "",
+                maxLines = Int.MAX_VALUE,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done,
+                ),
+                contentDescription = Memo.Resource(Res.string.description),
+                validator = Validator(
+                    String::isMaxDescription to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.description, MAX_DESCRIPTION_LENGTH),
+                    ),
                 ),
             ),
         ),
-        FormField(
-            id = Description,
-            value = "",
-            maxLines = Int.MAX_VALUE,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done,
-            ),
-            contentDescription = Memo.Resource(Res.string.description),
-            validator = Validator(
-                String::isMaxDescription to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.description),
-                ),
-            ),
-        ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 @OptIn(ExperimentalUuidApi::class)
-fun State(route: Route) = State(
+fun State(route: Route): State.Immutable = State.Immutable(
     profile = route.model<Profile>() ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
         handle = ProfileHandle(route.profileHandleOrId.id),
@@ -134,6 +160,7 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
     profileId = profile.did,
     displayName = fields.valueFor(DisplayName),
     description = fields.valueFor(Description),
+    pronouns = fields.valueFor(Pronouns),
     avatar = updatedAvatar,
     banner = updatedBanner,
     selectedProfileTabs = tabsToSave.takeUnless(List<ProfileTab>::isEmpty),
@@ -171,6 +198,7 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val displayName: String,
         val description: String,
+        val pronouns: String,
         val avatar: RestrictedFile.Media.Photo?,
         val banner: RestrictedFile.Media.Photo?,
         val selectedProfileTabs: List<ProfileTab>?,
@@ -202,6 +230,8 @@ sealed class Action(val key: String) {
 
 private val String.isMaxDisplayName get() = length <= MAX_DISPLAY_NAME_LENGTH
 private val String.isMaxDescription get() = length <= MAX_DESCRIPTION_LENGTH
+private val String.isMaxPronouns get() = length <= MAX_PRONOUNS_LENGTH
 
 private const val MAX_DISPLAY_NAME_LENGTH = 64
 private const val MAX_DESCRIPTION_LENGTH = 256
+private const val MAX_PRONOUNS_LENGTH = 200

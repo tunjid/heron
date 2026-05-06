@@ -146,3 +146,35 @@ value class StandardSubscriptionId(
 ) : Id {
     override fun toString(): String = id
 }
+
+@Serializable
+@JvmInline
+value class AlbumId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class TrackId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class ArtistId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class ScrobbleId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}

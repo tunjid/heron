@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.profile
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -61,41 +63,55 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.any
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.listOfNotNull
+import kotlin.collections.mapOf
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val profile: Profile,
-    val signedInProfileId: ProfileId? = null,
-    val isSignedInProfile: Boolean = false,
-    val viewerState: ProfileViewerState? = null,
-    val avatarSharedElementKey: String,
-    val currentPage: Int = 0,
-    val commonFollowers: List<Profile> = emptyList(),
-    val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
-    val subscribedLabelers: Labelers = emptyList(),
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
-    @Transient
-    val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
 
-fun State(route: Route) = State(
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val profile: Profile,
+        val signedInProfileId: ProfileId? = null,
+        val isSignedInProfile: Boolean = false,
+        val viewerState: ProfileViewerState? = null,
+        val avatarSharedElementKey: String,
+        val currentPage: Int = 0,
+        val commonFollowers: List<Profile> = emptyList(),
+        val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
+        val subscribedLabelers: Labelers = emptyList(),
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
+        @Transient
+        val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
+
+fun State(route: Route): State.Immutable = State.Immutable(
     avatarSharedElementKey = route.avatarSharedElementKey ?: "",
     profile = route.model<Profile>() ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
@@ -163,7 +179,7 @@ sealed class ProfileScreenStateHolders {
             is Records.StarterPacks -> "StarterPacks"
             is Records.Documents -> "Documents"
             is Records.Publications -> "Publications"
-            is Timeline -> state.value.timeline.sourceId
+            is Timeline -> state.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
         }
 
@@ -174,7 +190,7 @@ sealed class ProfileScreenStateHolders {
             is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
             is Records.Documents -> ProfileTab.StandardSite.Documents
             is Records.Publications -> ProfileTab.StandardSite.Publications
-            is Timeline -> when (val timeline = state.value.timeline) {
+            is Timeline -> when (val timeline = state.timeline) {
                 is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
                     timeline.feedGenerator.uri,
                 )
@@ -210,11 +226,11 @@ sealed class ProfileScreenStateHolders {
 
 val ProfileScreenStateHolders?.isRefreshing
     get() = when (this) {
-        is Records<*> -> state.map { it.isRefreshing }
-        is ProfileScreenStateHolders.Timeline -> state.map { it.isRefreshing }
+        is Records<*> -> state.isRefreshing
+        is ProfileScreenStateHolders.Timeline -> state.isRefreshing
         is LabelerSettings,
         null,
-        -> flowOf(false)
+        -> false
     }
 
 val ProfileScreenStateHolders?.canRefresh

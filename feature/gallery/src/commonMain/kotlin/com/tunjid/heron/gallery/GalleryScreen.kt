@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -108,6 +107,7 @@ import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.text.links
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -201,8 +201,7 @@ internal fun GalleryScreen(
             }
         },
     )
-    val updatedItems by rememberUpdatedState(state.items)
-    val pagerState = rememberPagerState(pageCount = updatedItems::size)
+    val pagerState = rememberPagerState(pageCount = { state.items.size })
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
     val commentsState = rememberCommentsState()
 
@@ -226,7 +225,7 @@ internal fun GalleryScreen(
                 // Vertical scroll already begun
                 if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
 
-                val item = updatedItems.getOrNull(pagerState.currentPage)
+                val item = state.items.getOrNull(pagerState.currentPage)
                     ?: return@canPop true
 
                 // No items to scroll horizontally
@@ -266,10 +265,10 @@ internal fun GalleryScreen(
             beyondViewportPageCount = PagerPrefetchCount,
             userScrollEnabled = state.canScrollVertically,
             key = { page ->
-                updatedItems[page].post.uri.uri
+                state.items[page].post.uri.uri
             },
             pageContent = { page ->
-                val item = updatedItems[page]
+                val item = state.items[page]
 
                 HorizontalItems(
                     item = item,
@@ -280,7 +279,7 @@ internal fun GalleryScreen(
                     commentsState = commentsState,
                     focusedItem = {
                         val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                        updatedItems.getOrNull(page.fastRoundToInt())
+                        state.items.getOrNull(page.fastRoundToInt())
                     },
                     isDraggingToPop = dragToPopState::isDraggingToPop,
                     actions = actions,
@@ -318,8 +317,8 @@ internal fun GalleryScreen(
     }
 
     state.timelineStateHolder?.let { timelineStateHolder ->
-        val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
-        val updatedTiledItems by rememberUpdatedState(timelineState.tiledItems)
+        val timelineState = timelineStateHolder.produceStateWithLifecycle()
+        val updatedTiledItems = timelineState.tiledItems
         pagerState.PivotedTilingEffect(
             items = updatedTiledItems,
             onQueryChanged = { query ->
