@@ -69,32 +69,34 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    sharedElementPrefix = route.sharedElementPrefix,
-    timelineStateHolder = route.model<FeedGenerator>()
-        ?.let { model ->
-            val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
-            noOpActionSuspendingStateMutator(
-                TimelineState(
-                    timeline = timeline,
-                    hasUpdates = false,
-                    tilingData = TilingState.Data(
-                        currentQuery = TimelineQuery(
-                            data = CursorQuery.Data(
-                                page = 0,
-                                cursorAnchor = Clock.System.now(),
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            sharedElementPrefix = route.sharedElementPrefix,
+            timelineStateHolder = route.model<FeedGenerator>()
+                ?.let { model ->
+                    val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
+                    noOpActionSuspendingStateMutator(
+                        TimelineState(
+                            timeline = timeline,
+                            hasUpdates = false,
+                            tilingData = TilingState.Data(
+                                currentQuery = TimelineQuery(
+                                    data = CursorQuery.Data(
+                                        page = 0,
+                                        cursorAnchor = Clock.System.now(),
+                                    ),
+                                    source = timeline.source,
+                                ),
                             ),
-                            source = timeline.source,
                         ),
-                    ),
-                ),
-            )
-        },
-)
+                    )
+                },
+        )
+    }
+}
 
 val State.timelineState
     get() = timelineStateHolder

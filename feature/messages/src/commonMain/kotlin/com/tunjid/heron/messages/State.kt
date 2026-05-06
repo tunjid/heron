@@ -58,9 +58,11 @@ interface State : TilingState<ConversationQuery, Conversation> {
         @Transient
         val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
     ) : State
-}
 
-fun State(): State.Immutable = State.Immutable()
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 sealed class Action(val key: String) {
 

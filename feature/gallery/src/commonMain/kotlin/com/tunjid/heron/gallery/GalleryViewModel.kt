@@ -95,26 +95,26 @@ class ActualGalleryViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            loadSignedInProfileIdMutations(
+            launchLoadSignedInProfileIdMutations(
                 state = state,
                 authRepository = authRepository,
             )
-            loadPreferencesMutations(
+            launchLoadPreferencesMutations(
                 state = state,
                 userDataRepository = userDataRepository,
             )
-            profileRelationshipMutations(
+            launchProfileRelationshipMutations(
                 state = state,
                 profileId = route.profileId,
                 profileRepository = profileRepository,
             )
-            loadPostMutations(
+            launchLoadPostMutations(
                 state = state,
                 route = route,
                 postRepository = postRepository,
                 profileRepository = profileRepository,
             )
-            verticalTimelineMutations(
+            launchVerticalTimelineMutations(
                 state = state,
                 route = route,
                 viewModelScope = scope,
@@ -125,49 +125,49 @@ class ActualGalleryViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
 
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
+                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
+                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
                         state = state,
                         messageRepository = messageRepository,
                     )
-                    is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.TextChanged -> action.flow.collectLatest { event ->
                         state.inputText = event.inputText
                     }
-                    is Action.SendReply -> action.flow.sendReplyMutations(
+                    is Action.SendReply -> action.flow.launchSendReplyMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.LoadComments -> action.flow.loadCommentsMutations(
+                    is Action.LoadComments -> action.flow.launchLoadCommentsMutations(
                         state = state,
                         timelineRepository = timelineRepository,
                         userDataRepository = userDataRepository,
@@ -178,7 +178,7 @@ class ActualGalleryViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private suspend fun loadPostMutations(
+private suspend fun launchLoadPostMutations(
     state: State.SnapshotMutable,
     route: Route,
     postRepository: PostRepository,
@@ -203,7 +203,7 @@ private suspend fun loadPostMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadPreferencesMutations(
+private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
@@ -211,7 +211,7 @@ private fun loadPreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
     state: State.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = launchAndCollectLatest {
@@ -221,7 +221,7 @@ private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadSignedInProfileIdMutations(
+private fun launchLoadSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect {
@@ -229,7 +229,7 @@ private fun loadSignedInProfileIdMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun profileRelationshipMutations(
+private fun launchProfileRelationshipMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
@@ -245,7 +245,7 @@ private fun profileRelationshipMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -257,7 +257,7 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -275,7 +275,7 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.BlockAccount>.blockAccountMutations(
+private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -294,7 +294,7 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.MuteAccount>.muteAccountMutations(
+private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -313,7 +313,7 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -342,7 +342,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -368,7 +368,7 @@ private fun Action.SendReply.toReplyWritable(): Writable.Create =
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendReply>.sendReplyMutations(
+private fun Flow<Action.SendReply>.launchSendReplyMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -381,14 +381,14 @@ private fun Flow<Action.SendReply>.sendReplyMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.LoadComments>.loadCommentsMutations(
+private fun Flow<Action.LoadComments>.launchLoadCommentsMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -425,7 +425,7 @@ private fun Flow<Action.LoadComments>.loadCommentsMutations(
 }
 
 context(productionScope: CoroutineScope)
-private suspend fun verticalTimelineMutations(
+private suspend fun launchVerticalTimelineMutations(
     state: State.SnapshotMutable,
     route: Route,
     viewModelScope: CoroutineScope,

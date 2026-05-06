@@ -25,8 +25,8 @@ import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
@@ -139,7 +139,7 @@ fun CoroutineScope.timelineStateHolder(
                     is TimelineState.Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
-                            .tilingMutations(
+                            .launchTilingMutations(
                                 isRefreshedOnNewItems = false,
                                 state = state,
                                 updateQueryData = TimelineQuery::updateData,

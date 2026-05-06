@@ -144,17 +144,19 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-@OptIn(ExperimentalUuidApi::class)
-fun State(route: Route): State.Immutable = State.Immutable(
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-    avatarSharedElementKey = route.avatarSharedElementKey ?: Uuid.random().toString(),
-)
+    companion object {
+        @OptIn(ExperimentalUuidApi::class)
+        operator fun invoke(route: Route): Immutable = Immutable(
+            profile = route.model<Profile>() ?: stubProfile(
+                did = ProfileId(route.profileHandleOrId.id),
+                handle = ProfileHandle(route.profileHandleOrId.id),
+                avatar = null,
+            ),
+            avatarSharedElementKey = route.avatarSharedElementKey ?: Uuid.random().toString(),
+        )
+    }
+}
 
 internal fun State.saveProfileAction() = Action.SaveProfile(
     profileId = profile.did,

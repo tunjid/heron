@@ -24,8 +24,8 @@ import com.tunjid.heron.data.core.models.Record as HeronRecord
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
@@ -67,7 +67,7 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
     return actionSuspendingStateMutator<TilingState.Action, RecordState<T>>(
         initialState = state,
         producer = { state, actions ->
-            actions.tilingMutations<ProfilesQuery, T, RecordState<T>>(
+            actions.launchTilingMutations<ProfilesQuery, T, RecordState<T>>(
                 state = state,
                 updateQueryData = { copy(data = it) },
                 refreshQuery = { copy(data = data.reset()) },

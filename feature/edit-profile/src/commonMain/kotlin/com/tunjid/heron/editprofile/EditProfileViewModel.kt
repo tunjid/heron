@@ -84,15 +84,15 @@ class ActualEditProfileViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            loadProfileMutations(
+            launchLoadProfileMutations(
                 state = state,
                 authRepository = authRepository,
             )
-            pendingUpdateSubmissionMutations(
+            launchPendingUpdateSubmissionMutations(
                 state = state,
                 writeQueue = writeQueue,
             )
-            profileTabMutations(
+            launchProfileTabMutations(
                 state = state,
                 route = route,
                 profileRepository = profileRepository,
@@ -111,13 +111,13 @@ class ActualEditProfileViewModel(
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.AvatarPicked -> action.flow.avatarPickedMutations(state)
-                    is Action.BannerPicked -> action.flow.bannerPickedMutations(state)
-                    is Action.FieldChanged -> action.flow.formEditMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
-                    is Action.UpdateTabsToSave -> action.flow.pinnedTabMutations(state)
-                    is Action.ToggleFeed -> action.flow.toggleFeedMutations(state)
-                    is Action.SaveProfile -> action.flow.saveProfileMutations(
+                    is Action.AvatarPicked -> action.flow.launchAvatarPickedMutations(state)
+                    is Action.BannerPicked -> action.flow.launchBannerPickedMutations(state)
+                    is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
+                    is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
+                    is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
                         state = state,
                         navActions = navActions,
                         writeQueue = writeQueue,
@@ -129,7 +129,7 @@ class ActualEditProfileViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun loadProfileMutations(
+private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
@@ -152,7 +152,7 @@ private fun loadProfileMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun pendingUpdateSubmissionMutations(
+private fun launchPendingUpdateSubmissionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = writeQueue.queueChanges.launchAndCollect { writes ->
@@ -160,7 +160,7 @@ private fun pendingUpdateSubmissionMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun profileTabMutations(
+private fun launchProfileTabMutations(
     state: State.SnapshotMutable,
     route: Route,
     profileRepository: ProfileRepository,
@@ -193,35 +193,35 @@ private suspend fun screenTabMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.AvatarPicked>.avatarPickedMutations(
+private fun Flow<Action.AvatarPicked>.launchAvatarPickedMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollectWithState(state) { action ->
     updatedAvatar = action.item
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.BannerPicked>.bannerPickedMutations(
+private fun Flow<Action.BannerPicked>.launchBannerPickedMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollectWithState(state) { action ->
     updatedBanner = action.item
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.FieldChanged>.formEditMutations(
+private fun Flow<Action.FieldChanged>.launchFormEditMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollectWithState(state) { action ->
     fields = fields.copyWithValidation(action.id, action.text)
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SaveProfile>.saveProfileMutations(
+private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
@@ -263,14 +263,14 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateTabsToSave>.pinnedTabMutations(
+private fun Flow<Action.UpdateTabsToSave>.launchPinnedTabMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollectWithState(state) { action ->
     tabsToSave = action.tabs
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ToggleFeed>.toggleFeedMutations(
+private fun Flow<Action.ToggleFeed>.launchToggleFeedMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollectWithState(state) { action ->
     feedUrisToFeeds =

@@ -66,9 +66,11 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(): State.Immutable = State.Immutable()
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 @Serializable
 sealed class TabLayout {

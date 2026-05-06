@@ -40,9 +40,9 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.search.di.query
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
@@ -109,35 +109,35 @@ class SearchViewModel(
         ).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            loadProfileMutations(
+            launchLoadProfileMutations(
                 state = state,
                 authRepository = authRepository,
             )
-            searchStateHolderMutations(
+            launchSearchStateHolderMutations(
                 state = state,
                 routeScope = scope,
                 availableSearchStates = route.searchStates(),
                 authRepository = authRepository,
                 searchRepository = searchRepository,
             )
-            trendsMutations(
+            launchTrendsMutations(
                 state = state,
                 searchRepository = searchRepository,
             )
-            suggestedStarterPackMutations(
+            launchSuggestedStarterPackMutations(
                 state = state,
                 searchRepository = searchRepository,
                 recordRepository = recordRepository,
             )
-            suggestedFeedGeneratorMutations(
+            launchSuggestedFeedGeneratorMutations(
                 state = state,
                 searchRepository = searchRepository,
             )
-            feedGeneratorUrisToStatusMutations(
+            launchFeedGeneratorUrisToStatusMutations(
                 state = state,
                 timelineRepository = timelineRepository,
             )
-            loadPreferencesMutations(
+            launchLoadPreferencesMutations(
                 state = state,
                 userDataRepository = userDataRepository,
             )
@@ -146,52 +146,52 @@ class SearchViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.Search -> action.flow.searchQueryMutations(
+                    is Action.Search -> action.flow.launchSearchQueryMutations(
                         state = state,
                         coroutineScope = scope,
                         searchRepository = searchRepository,
                     )
-                    is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
+                    is Action.FetchSuggestedProfiles -> action.flow.launchSuggestedProfilesMutations(
                         state = state,
                         searchRepository = searchRepository,
                     )
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                    is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
+                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
+                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
                         state = state,
                         messageRepository = messageRepository,
                     )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
                     )
-                    is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
@@ -201,7 +201,7 @@ class SearchViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun loadProfileMutations(
+private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
@@ -209,7 +209,7 @@ private fun loadProfileMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun searchStateHolderMutations(
+private fun launchSearchStateHolderMutations(
     state: State.SnapshotMutable,
     availableSearchStates: List<SearchState>,
     routeScope: CoroutineScope,
@@ -244,7 +244,7 @@ private fun searchStateHolderMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
     state: State.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = launchAndCollectLatest {
@@ -254,7 +254,7 @@ private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadPreferencesMutations(
+private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
@@ -262,7 +262,7 @@ private fun loadPreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun trendsMutations(
+private fun launchTrendsMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) = searchRepository.trends().launchAndCollect {
@@ -270,7 +270,7 @@ private fun trendsMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun suggestedStarterPackMutations(
+private fun launchSuggestedStarterPackMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
     recordRepository: RecordRepository,
@@ -315,7 +315,7 @@ private fun suggestedStarterPackMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun suggestedFeedGeneratorMutations(
+private fun launchSuggestedFeedGeneratorMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) = searchRepository.suggestedFeeds().launchAndCollect {
@@ -323,7 +323,7 @@ private fun suggestedFeedGeneratorMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun feedGeneratorUrisToStatusMutations(
+private fun launchFeedGeneratorUrisToStatusMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
@@ -337,7 +337,7 @@ private fun feedGeneratorUrisToStatusMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
+private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) = launchAndCollectLatest { action ->
@@ -349,7 +349,7 @@ private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.Search>.searchQueryMutations(
+private fun Flow<Action.Search>.launchSearchQueryMutations(
     state: State.SnapshotMutable,
     coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
@@ -422,7 +422,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -450,7 +450,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -468,7 +468,7 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.BlockAccount>.blockAccountMutations(
+private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -487,7 +487,7 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.MuteAccount>.muteAccountMutations(
+private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -506,7 +506,7 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -522,7 +522,7 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -534,14 +534,14 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
+private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -553,7 +553,7 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = launchAndCollectLatest {
@@ -620,7 +620,7 @@ private fun CoroutineScope.searchStateHolder(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
-                .tilingMutations(
+                .launchTilingMutations(
                     state = holderState,
                     updateQueryData = {
                         when (this) {
@@ -656,7 +656,7 @@ private fun CoroutineScope.searchStateHolder(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
-                .tilingMutations(
+                .launchTilingMutations(
                     state = holderState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
@@ -677,7 +677,7 @@ private fun CoroutineScope.searchStateHolder(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
-                .tilingMutations(
+                .launchTilingMutations(
                     state = holderState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },

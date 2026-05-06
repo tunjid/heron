@@ -32,8 +32,8 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.conversationDestination
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.Memo
@@ -87,7 +87,7 @@ class ActualMessagesViewModel(
         initialState = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            loadProfileMutations(
+            launchLoadProfileMutations(
                 state = state,
                 authRepository = authRepository,
             )
@@ -96,16 +96,16 @@ class ActualMessagesViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.SetIsSearching -> action.flow.setIsSearchingMutations(state)
-                    is Action.SearchQueryChanged -> action.flow.searchQueryChangeMutations(
+                    is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
+                    is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
                         state = state,
                         searchRepository = searchRepository,
                     )
-                    is Action.ResolveConversation -> action.flow.resolveConversationMutations(
+                    is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
                         state = state,
                         navActions = navActions,
                         messagesRepository = messagesRepository,
@@ -113,7 +113,7 @@ class ActualMessagesViewModel(
                     is Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
-                            .tilingMutations(
+                            .launchTilingMutations(
                                 state = state,
                                 updateQueryData = { copy(data = it) },
                                 refreshQuery = { copy(data = data.reset()) },
@@ -128,7 +128,7 @@ class ActualMessagesViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun loadProfileMutations(
+private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect {
@@ -136,21 +136,21 @@ private fun loadProfileMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(
+private fun Flow<Action.SetIsSearching>.launchSetIsSearchingMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.isSearching = event.isSearching
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ResolveConversation>.resolveConversationMutations(
+private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
@@ -183,7 +183,7 @@ private fun Flow<Action.ResolveConversation>.resolveConversationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
+private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) {
