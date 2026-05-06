@@ -518,7 +518,7 @@ internal class OfflineProfileRepository @Inject constructor(
                             record = existingProfile.copy(
                                 displayName = update.displayName,
                                 description = update.description,
-                                pronouns = update.pronouns,
+                                pronouns = update.pronouns.takeIf(String::isNotBlank),
                                 avatar = avatarBlob ?: existingProfile.avatar,
                                 banner = bannerBlob ?: existingProfile.banner,
                             )

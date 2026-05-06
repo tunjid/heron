@@ -100,7 +100,7 @@ interface State {
                 validator = Validator(
                     String::isMaxDisplayName to Memo.Resource(
                         Res.string.character_limit,
-                        listOf(Res.string.display_name),
+                        listOf(Res.string.display_name, MAX_DISPLAY_NAME_LENGTH),
                     ),
                 ),
             ),
@@ -118,7 +118,7 @@ interface State {
                 validator = Validator(
                     String::isMaxPronouns to Memo.Resource(
                         Res.string.character_limit,
-                        listOf(Res.string.pronouns),
+                        listOf(Res.string.pronouns, MAX_PRONOUNS_LENGTH),
                     ),
                 ),
             ),
@@ -136,7 +136,7 @@ interface State {
                 validator = Validator(
                     String::isMaxDescription to Memo.Resource(
                         Res.string.character_limit,
-                        listOf(Res.string.description),
+                        listOf(Res.string.description, MAX_DESCRIPTION_LENGTH),
                     ),
                 ),
             ),
