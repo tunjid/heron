@@ -50,9 +50,11 @@ interface State : TilingState<DataQuery, StandardPublication> {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(): State.Immutable = State.Immutable()
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 val State.isRefreshing: Boolean
     get() = tilingData.status is TilingState.Status.Refreshing

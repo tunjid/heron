@@ -49,14 +49,16 @@ data class State(
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
-)
-
-fun State(
-    route: Route,
-) = State(
-    feedGenerator = route.model(),
-    sharedElementPrefix = route.sharedElementPrefix,
-)
+) {
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ) = State(
+            feedGenerator = route.model(),
+            sharedElementPrefix = route.sharedElementPrefix,
+        )
+    }
+}
 
 val State.currentFilter
     get() = grazeFeed.filter.rootFilterAt(currentPath)

@@ -67,32 +67,34 @@ interface State : TilingState<PostDataQuery, TimelineItem> {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-internal fun State(
-    request: PostsRequest,
-): State.Immutable = State.Immutable(
-    tilingData = TilingState.Data(
-        currentQuery = when (request) {
-            is PostsRequest.Quotes -> PostDataQuery(
-                profileId = request.profileHandleOrId,
-                postRecordKey = request.postRecordKey,
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                ),
-            )
-            PostsRequest.Saved -> PostDataQuery(
-                profileId = ProfileHandle(""),
-                postRecordKey = RecordKey(""),
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                ),
-            )
-        },
-    ),
-)
+    companion object {
+        internal operator fun invoke(
+            request: PostsRequest,
+        ): Immutable = Immutable(
+            tilingData = TilingState.Data(
+                currentQuery = when (request) {
+                    is PostsRequest.Quotes -> PostDataQuery(
+                        profileId = request.profileHandleOrId,
+                        postRecordKey = request.postRecordKey,
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
+                    )
+                    PostsRequest.Saved -> PostDataQuery(
+                        profileId = ProfileHandle(""),
+                        postRecordKey = RecordKey(""),
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
+                    )
+                },
+            ),
+        )
+    }
+}
 
 val State.isRefreshing: Boolean
     get() = tilingData.status is TilingState.Status.Refreshing

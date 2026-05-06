@@ -112,29 +112,29 @@ class ActualProfileViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            commonFollowerMutations(
+            launchCommonFollowerMutations(
                 state = state,
                 profileId = route.profileHandleOrId,
                 profileRepository = profileRepository,
             )
-            profileRelationshipMutations(
+            launchProfileRelationshipMutations(
                 state = state,
                 profileId = route.profileHandleOrId,
                 profileRepository = profileRepository,
             )
-            feedGeneratorUrisToStatusMutations(
+            launchFeedGeneratorUrisToStatusMutations(
                 state = state,
                 timelineRepository = timelineRepository,
             )
-            subscribedLabelerMutations(
+            launchSubscribedLabelerMutations(
                 state = state,
                 recordRepository = recordRepository,
             )
-            loadPreferencesMutations(
+            launchLoadPreferencesMutations(
                 state = state,
                 userDataRepository = userDataRepository,
             )
-            loadProfileMutations(
+            launchLoadProfileMutations(
                 state = state,
                 profileId = route.profileHandleOrId,
                 viewModelScope = scope,
@@ -154,18 +154,18 @@ class ActualProfileViewModel(
                             state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                         }
                     }
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
 
-                    is Action.UpdatePreferences -> action.flow.feedGeneratorStatusMutations(
+                    is Action.UpdatePreferences -> action.flow.launchFeedGeneratorStatusMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
@@ -183,38 +183,38 @@ class ActualProfileViewModel(
                             else -> Unit
                         }
                     }
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.Block -> action.flow.blockAccountMutations(
+                    is Action.Block -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.Mute -> action.flow.muteAccountMutations(
+                    is Action.Mute -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.PageChanged -> action.flow.collect { event ->
                         state.currentPage = event.page
                     }
-                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
                         state = state,
                         messageRepository = messageRepository,
                     )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
                     )
-                    is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateLiveStatus -> action.flow.liveStatusMutations(
+                    is Action.UpdateLiveStatus -> action.flow.launchLiveStatusMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
@@ -224,7 +224,7 @@ class ActualProfileViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
     state: State.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = launchAndCollectLatest {
@@ -234,7 +234,7 @@ private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = launchAndCollectLatest {
@@ -244,7 +244,7 @@ private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadPreferencesMutations(
+private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
@@ -252,7 +252,7 @@ private fun loadPreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun subscribedLabelerMutations(
+private fun launchSubscribedLabelerMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = recordRepository.subscribedLabelers.launchAndCollect { labelers ->
@@ -260,7 +260,7 @@ private fun subscribedLabelerMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun commonFollowerMutations(
+private fun launchCommonFollowerMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
@@ -272,7 +272,7 @@ private fun commonFollowerMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadProfileMutations(
+private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     viewModelScope: CoroutineScope,
@@ -368,7 +368,7 @@ private fun loadProfileMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun profileRelationshipMutations(
+private fun launchProfileRelationshipMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
@@ -377,7 +377,7 @@ private fun profileRelationshipMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun feedGeneratorUrisToStatusMutations(
+private fun launchFeedGeneratorUrisToStatusMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
@@ -391,7 +391,7 @@ private fun feedGeneratorUrisToStatusMutations(
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -424,7 +424,7 @@ private fun Action.Block.toBlockWritable(): Writable.Restriction =
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.Block>.blockAccountMutations(
+private fun Flow<Action.Block>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -450,7 +450,7 @@ private fun Action.Mute.toMuteWritable(): Writable.Restriction =
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.Mute>.muteAccountMutations(
+private fun Flow<Action.Mute>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -462,7 +462,7 @@ private fun Flow<Action.Mute>.muteAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -488,7 +488,7 @@ private fun Action.UpdateLiveStatus.toLiveStatusWritable(): Writable.StatusUpdat
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateLiveStatus>.liveStatusMutations(
+private fun Flow<Action.UpdateLiveStatus>.launchLiveStatusMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -500,7 +500,7 @@ private fun Flow<Action.UpdateLiveStatus>.liveStatusMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
@@ -517,7 +517,7 @@ private fun Action.TogglePublicationSubscription.toPublicationSubscriptionWritab
     }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -529,7 +529,7 @@ private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscrip
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -558,7 +558,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -570,7 +570,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
+private fun Flow<Action.UpdatePreferences>.launchFeedGeneratorStatusMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(

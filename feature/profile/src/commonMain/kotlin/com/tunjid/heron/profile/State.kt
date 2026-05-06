@@ -109,16 +109,18 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(route: Route): State.Immutable = State.Immutable(
-    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-)
+    companion object {
+        operator fun invoke(route: Route): Immutable = Immutable(
+            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+            profile = route.model<Profile>() ?: stubProfile(
+                did = ProfileId(route.profileHandleOrId.id),
+                handle = ProfileHandle(route.profileHandleOrId.id),
+                avatar = null,
+            ),
+        )
+    }
+}
 
 val State.isSubscribedToLabeler
     get() = profile.isLabeler && subscribedLabelers.any { it.creator.did == profile.did }

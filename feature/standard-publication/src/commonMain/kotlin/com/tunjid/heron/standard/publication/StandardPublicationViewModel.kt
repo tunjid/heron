@@ -31,8 +31,8 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.standard.publication.di.PublicationRequest
 import com.tunjid.heron.standard.publication.di.publicationRequest
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -73,7 +73,7 @@ class ActualStandardPublicationViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            publicationMutations(
+            launchPublicationMutations(
                 state = state,
                 route = route,
                 viewModelScope = scope,
@@ -85,11 +85,11 @@ class ActualStandardPublicationViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
@@ -99,7 +99,7 @@ class ActualStandardPublicationViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private suspend fun publicationMutations(
+private suspend fun launchPublicationMutations(
     state: State.SnapshotMutable,
     route: Route,
     viewModelScope: CoroutineScope,
@@ -131,7 +131,7 @@ private suspend fun publicationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -152,7 +152,7 @@ private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscrip
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
@@ -165,7 +165,7 @@ private fun CoroutineScope.documentsStateHolder(
     initialState = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     producer = { state, actions ->
-        actions.tilingMutations(
+        actions.launchTilingMutations(
             state = state,
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },

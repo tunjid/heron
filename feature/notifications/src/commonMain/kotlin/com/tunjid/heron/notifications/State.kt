@@ -68,9 +68,11 @@ interface State : TilingState<NotificationsQuery, Notification> {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(): State.Immutable = State.Immutable()
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
     tiledItems.forEachIndexed { index, notification ->

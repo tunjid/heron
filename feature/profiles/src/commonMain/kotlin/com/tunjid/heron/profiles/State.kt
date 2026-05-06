@@ -49,30 +49,32 @@ interface State : TilingState<CursorQuery, ProfileWithViewerState> {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
+
+    companion object {
+        operator fun invoke(route: Route): Immutable = Immutable(
+            load = route.load,
+            tilingData = TilingState.Data(
+                currentQuery = when (val load = route.load) {
+                    is Load.Post -> PostDataQuery(
+                        profileId = load.profileId,
+                        postRecordKey = load.postRecordKey,
+                        data = CursorQuery.defaultStartData(),
+                    )
+
+                    is Load.Profile -> ProfilesQuery(
+                        profileId = load.profileId,
+                        data = CursorQuery.defaultStartData(),
+                    )
+                    Load.Moderation.Blocks,
+                    Load.Moderation.Mutes,
+                    -> DataQuery(
+                        data = CursorQuery.defaultStartData(),
+                    )
+                },
+            ),
+        )
+    }
 }
-
-fun State(route: Route): State.Immutable = State.Immutable(
-    load = route.load,
-    tilingData = TilingState.Data(
-        currentQuery = when (val load = route.load) {
-            is Load.Post -> PostDataQuery(
-                profileId = load.profileId,
-                postRecordKey = load.postRecordKey,
-                data = CursorQuery.defaultStartData(),
-            )
-
-            is Load.Profile -> ProfilesQuery(
-                profileId = load.profileId,
-                data = CursorQuery.defaultStartData(),
-            )
-            Load.Moderation.Blocks,
-            Load.Moderation.Mutes,
-            -> DataQuery(
-                data = CursorQuery.defaultStartData(),
-            )
-        },
-    ),
-)
 
 @Serializable
 sealed class Load {

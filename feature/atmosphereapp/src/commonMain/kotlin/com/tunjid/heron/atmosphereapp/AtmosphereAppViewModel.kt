@@ -83,7 +83,7 @@ class ActualAtmosphereAppViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            profileLoadMutations(
+            launchProfileLoadMutations(
                 profileRepository,
                 route,
                 scope,
@@ -109,7 +109,7 @@ class ActualAtmosphereAppViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun profileLoadMutations(
+private fun launchProfileLoadMutations(
     profileRepository: ProfileRepository,
     route: Route,
     scope: CoroutineScope,

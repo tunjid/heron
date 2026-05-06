@@ -59,32 +59,34 @@ data class State(
     val messages: List<Memo> = emptyList(),
     @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
-)
+) {
+    companion object {
+        operator fun invoke(route: Route): State = when (val model = route.model<Post.Create>()) {
+            is Post.Create -> State(
+                postText = TextFieldValue(
+                    annotatedString = AnnotatedString(
+                        when (model) {
+                            is Post.Create.Mention -> "@${model.profile.handle.id} "
+                            is Post.Create.Reply,
+                            is Post.Create.Quote,
+                            Post.Create.Timeline,
+                            -> ""
+                        },
+                    ),
+                    selection = TextRange(
+                        if (model is Post.Create.Mention) model.profile.handle.id.length + 2
+                        else 0,
+                    ),
+                ),
+                sharedElementPrefix = route.sharedElementPrefix,
+                postType = model,
+            )
 
-fun State(route: Route): State = when (val model = route.model<Post.Create>()) {
-    is Post.Create -> State(
-        postText = TextFieldValue(
-            annotatedString = AnnotatedString(
-                when (model) {
-                    is Post.Create.Mention -> "@${model.profile.handle.id} "
-                    is Post.Create.Reply,
-                    is Post.Create.Quote,
-                    Post.Create.Timeline,
-                    -> ""
-                },
-            ),
-            selection = TextRange(
-                if (model is Post.Create.Mention) model.profile.handle.id.length + 2
-                else 0,
-            ),
-        ),
-        sharedElementPrefix = route.sharedElementPrefix,
-        postType = model,
-    )
-
-    else -> State(
-        sharedElementPrefix = route.sharedElementPrefix,
-    )
+            else -> State(
+                sharedElementPrefix = route.sharedElementPrefix,
+            )
+        }
+    }
 }
 
 val State.hasLongPost

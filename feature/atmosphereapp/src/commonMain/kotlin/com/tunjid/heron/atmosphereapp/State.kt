@@ -64,19 +64,21 @@ interface State {
         @Transient
         val stateHolders: List<AppScreenStateHolders> = emptyList(),
     ) : State
-}
 
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    app = route.model<AtmosphereApp>(),
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-)
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+            app = route.model<AtmosphereApp>(),
+            profile = route.model<Profile>() ?: stubProfile(
+                did = ProfileId(route.profileHandleOrId.id),
+                handle = ProfileHandle(route.profileHandleOrId.id),
+                avatar = null,
+            ),
+        )
+    }
+}
 
 internal typealias AtmosphereAppStateHolder = ActionSuspendingStateMutator<Action, State>
 

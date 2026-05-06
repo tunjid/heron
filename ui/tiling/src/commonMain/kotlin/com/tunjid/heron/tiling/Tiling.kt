@@ -172,7 +172,7 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
  *   and produce the final [TiledList] that gets committed.
  */
 context(productionScope: CoroutineScope)
-inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.launchTilingMutations(
     isRefreshedOnNewItems: Boolean = true,
     state: State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,

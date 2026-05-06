@@ -25,8 +25,8 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -71,15 +71,15 @@ class ActualStandardSubscriptionViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.Tile -> action.flow.subscriptionLoadMutations(
+                    is Action.Tile -> action.flow.launchSubscriptionLoadMutations(
                         state = state,
                         recordRepository = recordRepository,
                     )
-                    is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
@@ -89,11 +89,11 @@ class ActualStandardSubscriptionViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.Tile>.subscriptionLoadMutations(
+private fun Flow<Action.Tile>.launchSubscriptionLoadMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = map { it.tilingAction }
-    .tilingMutations(
+    .launchTilingMutations(
         state = state,
         updateQueryData = { copy(data = it) },
         refreshQuery = { copy(data = data.reset()) },
@@ -102,7 +102,7 @@ private fun Flow<Action.Tile>.subscriptionLoadMutations(
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -123,7 +123,7 @@ private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscrip
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
