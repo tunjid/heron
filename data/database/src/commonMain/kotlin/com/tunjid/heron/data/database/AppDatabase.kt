@@ -55,6 +55,10 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.RockSkyAlbumEntity
+import com.tunjid.heron.data.database.entities.RockSkyArtistEntity
+import com.tunjid.heron.data.database.entities.RockSkyScrobbleEntity
+import com.tunjid.heron.data.database.entities.RockSkyTrackEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -99,7 +103,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 40,
+    version = 41,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -142,6 +146,10 @@ import kotlinx.coroutines.IO
         StandardPublicationEntity::class,
         StandardDocumentEntity::class,
         StandardSubscriptionEntity::class,
+        RockSkyTrackEntity::class,
+        RockSkyScrobbleEntity::class,
+        RockSkyAlbumEntity::class,
+        RockSkyArtistEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -224,6 +232,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 38, to = 39),
         // Add `via` column to posts and `pronouns` column to profiles
         AutoMigration(from = 39, to = 40),
+        // add RockSkyTrackEntity, RockSkyScrobbleEntity, RockSkyAlbumEntity and RockSkyArtistEntity
+        AutoMigration(from = 40, to = 41),
     ],
     exportSchema = true,
 )
