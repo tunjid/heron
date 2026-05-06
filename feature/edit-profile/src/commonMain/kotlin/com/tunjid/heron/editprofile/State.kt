@@ -44,6 +44,7 @@ import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.character_limit
 import heron.feature.edit_profile.generated.resources.description
 import heron.feature.edit_profile.generated.resources.display_name
+import heron.feature.edit_profile.generated.resources.pronouns
 import heron.feature.edit_profile.generated.resources.tab_bio
 import heron.feature.edit_profile.generated.resources.tab_profile_feeds
 import heron.feature.edit_profile.generated.resources.tab_profile_tabs
@@ -54,6 +55,7 @@ import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
 internal val DisplayName = FormField.Id("displayName")
+internal val Pronouns = FormField.Id("pronouns")
 internal val Description = FormField.Id("description")
 
 @Snapshottable
@@ -98,7 +100,25 @@ interface State {
                 validator = Validator(
                     String::isMaxDisplayName to Memo.Resource(
                         Res.string.character_limit,
-                        listOf(Res.string.display_name),
+                        listOf(Res.string.display_name, MAX_DISPLAY_NAME_LENGTH),
+                    ),
+                ),
+            ),
+            FormField(
+                id = Pronouns,
+                value = "",
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = true,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+                contentDescription = Memo.Resource(Res.string.pronouns),
+                validator = Validator(
+                    String::isMaxPronouns to Memo.Resource(
+                        Res.string.character_limit,
+                        listOf(Res.string.pronouns, MAX_PRONOUNS_LENGTH),
                     ),
                 ),
             ),
@@ -116,7 +136,7 @@ interface State {
                 validator = Validator(
                     String::isMaxDescription to Memo.Resource(
                         Res.string.character_limit,
-                        listOf(Res.string.description),
+                        listOf(Res.string.description, MAX_DESCRIPTION_LENGTH),
                     ),
                 ),
             ),
@@ -140,6 +160,7 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
     profileId = profile.did,
     displayName = fields.valueFor(DisplayName),
     description = fields.valueFor(Description),
+    pronouns = fields.valueFor(Pronouns),
     avatar = updatedAvatar,
     banner = updatedBanner,
     selectedProfileTabs = tabsToSave.takeUnless(List<ProfileTab>::isEmpty),
@@ -177,6 +198,7 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val displayName: String,
         val description: String,
+        val pronouns: String,
         val avatar: RestrictedFile.Media.Photo?,
         val banner: RestrictedFile.Media.Photo?,
         val selectedProfileTabs: List<ProfileTab>?,
@@ -208,6 +230,8 @@ sealed class Action(val key: String) {
 
 private val String.isMaxDisplayName get() = length <= MAX_DISPLAY_NAME_LENGTH
 private val String.isMaxDescription get() = length <= MAX_DESCRIPTION_LENGTH
+private val String.isMaxPronouns get() = length <= MAX_PRONOUNS_LENGTH
 
 private const val MAX_DISPLAY_NAME_LENGTH = 64
 private const val MAX_DESCRIPTION_LENGTH = 256
+private const val MAX_PRONOUNS_LENGTH = 200

@@ -77,6 +77,8 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.models.toNetworkRecord
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
@@ -767,6 +769,7 @@ internal class OfflinePostRepository @Inject constructor(
                 mediaBlobs = blobs,
             ),
             facets = resolvedLinks.facet(),
+            via = Platform.current.description,
             createdAt = createdAt,
         )
             .asJsonContent(BskyPost.serializer())

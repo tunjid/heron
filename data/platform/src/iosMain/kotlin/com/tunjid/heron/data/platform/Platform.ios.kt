@@ -21,6 +21,7 @@ import platform.UIKit.UIDevice
 class IOSPlatform internal constructor() : Platform {
     override val name: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
+    override val description: String = "Heron for iOS"
     override val isNativeCompose: Boolean = false
     override val supportsComposeDiagnosticStackTraces: Boolean = false
 }

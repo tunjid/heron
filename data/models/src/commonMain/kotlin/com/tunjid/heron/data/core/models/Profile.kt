@@ -170,6 +170,8 @@ data class Profile(
         // Newly added fields should have defaults
         @ProtoNumber(8)
         val tabs: List<ProfileTab>? = null,
+        @ProtoNumber(9)
+        val pronouns: String = "",
     )
 
     @Serializable

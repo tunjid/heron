@@ -162,6 +162,8 @@ import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
+import com.tunjid.heron.timeline.utilities.Label
+import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -993,10 +995,26 @@ private fun ProfileHeadline(
                     ellipsize = false,
                 )
                 Spacer(Modifier.height(4.dp))
-                ProfileHandle(
-                    modifier = Modifier,
-                    profile = profile,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ProfileHandle(
+                        modifier = Modifier,
+                        profile = profile,
+                    )
+                    profile.pronouns
+                        ?.takeIf(String::isNotBlank)
+                        ?.let { pronouns ->
+                            Label(
+                                isElevated = true,
+                                contentDescription = pronouns,
+                                icon = {},
+                                description = { LabelText(pronouns) },
+                                onClick = {},
+                            )
+                        }
+                }
             }
         },
         action = {
