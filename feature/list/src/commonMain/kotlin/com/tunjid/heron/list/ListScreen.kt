@@ -147,8 +147,7 @@ internal fun ListScreen(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val updatedStateHolders = state.stateHolders
-    val pagerState = rememberPagerState { updatedStateHolders.size }
+    val pagerState = rememberPagerState { state.stateHolders.size }
     val scope = rememberCoroutineScope()
 
     val collapsedHeight = with(density) {
@@ -160,7 +159,7 @@ internal fun ListScreen(
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
-    val isRefreshing = updatedStateHolders.getOrNull(pagerState.currentPage)
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)
         ?.isRefreshing == true
 
     PullToRefreshBox(
@@ -170,7 +169,7 @@ internal fun ListScreen(
         isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
-            updatedStateHolders[pagerState.currentPage].refresh()
+            state.stateHolders[pagerState.currentPage].refresh()
         },
         indicator = {
             DismissableRefreshIndicator(
@@ -182,7 +181,7 @@ internal fun ListScreen(
                 state = pullToRefreshState,
                 isRefreshing = isRefreshing,
                 onDismissRequest = {
-                    when (val holder = updatedStateHolders[pagerState.currentPage]) {
+                    when (val holder = state.stateHolders[pagerState.currentPage]) {
                         is ListScreenStateHolders.Members -> Unit
                         is ListScreenStateHolders.Timeline -> holder.accept(
                             TimelineState.Action.DismissRefresh,
@@ -236,7 +235,7 @@ internal fun ListScreen(
                                 }
                             },
                             onTabReselected = { index ->
-                                updatedStateHolders.getOrNull(index = index)
+                                state.stateHolders.getOrNull(index = index)
                                     ?.refresh()
                             },
                         ),
@@ -248,9 +247,9 @@ internal fun ListScreen(
                     modifier = Modifier
                         .fillMaxSize(),
                     state = pagerState,
-                    key = { page -> updatedStateHolders[page].key },
+                    key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
-                        when (val stateHolder = updatedStateHolders[page]) {
+                        when (val stateHolder = state.stateHolders[page]) {
                             is ListScreenStateHolders.Members -> ListMembers(
                                 paneScaffoldState = paneScaffoldState,
                                 membersStateHolder = stateHolder,
