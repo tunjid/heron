@@ -99,7 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 39,
+    version = 40,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -222,6 +222,8 @@ import kotlinx.coroutines.IO
         // Migration 37 - 38 is a manual migration
         // Add ProfileTabsEntity
         AutoMigration(from = 38, to = 39),
+        // Add `via` column to posts and `pronouns` column to profiles
+        AutoMigration(from = 39, to = 40),
     ],
     exportSchema = true,
 )

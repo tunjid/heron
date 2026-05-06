@@ -61,6 +61,7 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
         status = status?.statusEntity(),
+        pronouns = pronouns,
     )
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
@@ -85,6 +86,7 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
         status = status?.statusEntity(),
+        pronouns = pronouns,
     )
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
@@ -109,6 +111,7 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
         status = status?.statusEntity(),
+        pronouns = pronouns,
     )
 
 internal fun BlockedAuthor.profileEntity(): ProfileEntity =
@@ -131,6 +134,7 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
             createdStarterPackCount = 0,
         ),
         status = null,
+        pronouns = null,
     )
 
 internal fun stubProfileEntity(
@@ -154,6 +158,7 @@ internal fun stubProfileEntity(
         createdStarterPackCount = 0,
     ),
     status = null,
+    pronouns = null,
 )
 
 internal fun ProfileViewBasic.profileViewerStateEntity(
@@ -216,6 +221,7 @@ internal fun ProfileViewBasic.profile() = Profile(
     labels = labels?.map(Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
     status = status.asExternalModel(),
+    pronouns = pronouns,
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -242,6 +248,7 @@ internal fun ProfileView.profile() = Profile(
     labels = labels?.map(Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
     status = status.asExternalModel(),
+    pronouns = pronouns,
 )
 
 private fun StatusView?.asExternalModel(): Profile.ProfileStatus? {

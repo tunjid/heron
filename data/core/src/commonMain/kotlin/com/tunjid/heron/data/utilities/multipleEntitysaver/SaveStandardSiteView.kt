@@ -171,6 +171,7 @@ private fun MultipleEntitySaver.add(
                 allowDms = null,
             ),
             status = null,
+            pronouns = null,
         ),
     )
 }
