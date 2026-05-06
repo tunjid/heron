@@ -1,6 +1,5 @@
 package com.tunjid.heron.data.database.entities
 
-import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -31,21 +30,21 @@ import kotlin.time.Instant
             entity = RockSkyTrackEntity::class,
             parentColumns = ["uri"],
             childColumns = ["trackUri"],
-            onDelete = ForeignKey.CASCADE,
+            onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = RockSkyArtistEntity::class,
             parentColumns = ["uri"],
             childColumns = ["artistUri"],
-            onDelete = ForeignKey.CASCADE,
+            onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = RockSkyAlbumEntity::class,
             parentColumns = ["uri"],
             childColumns = ["albumUri"],
-            onDelete = ForeignKey.CASCADE,
+            onDelete = ForeignKey.SET_NULL,
             onUpdate = ForeignKey.CASCADE,
         ),
     ],
@@ -77,27 +76,20 @@ data class RockSkyScrobbleEntity(
     val createdAt: Instant,
 )
 
-data class PopulatedRockSkyScrobbleEntity(
-    @Embedded
-    val entity: RockSkyScrobbleEntity,
-    @Embedded(prefix = "profile_")
-    val profile: ProfileEntity?,
-)
-
-fun PopulatedRockSkyScrobbleEntity.asExternalModel() = RockSkyScrobble(
-    cid = entity.cid,
-    trackId = entity.trackId,
-    title = entity.title,
-    artist = entity.artist,
-    albumArtist = entity.albumArtist,
-    album = entity.album,
-    albumArt = entity.albumArt,
-    handle = entity.handle,
-    did = entity.did,
-    avatar = entity.avatar,
-    uri = entity.uri,
-    trackUri = entity.trackUri,
-    artistUri = entity.artistUri,
-    albumUri = entity.albumUri,
-    createdAt = entity.createdAt,
+fun RockSkyScrobbleEntity.asExternalModel() = RockSkyScrobble(
+    cid = cid,
+    trackId = trackId,
+    title = title,
+    artist = artist,
+    albumArtist = albumArtist,
+    album = album,
+    albumArt = albumArt,
+    handle = handle,
+    did = did,
+    avatar = avatar,
+    uri = uri,
+    trackUri = trackUri,
+    artistUri = artistUri,
+    albumUri = albumUri,
+    createdAt = createdAt,
 )
