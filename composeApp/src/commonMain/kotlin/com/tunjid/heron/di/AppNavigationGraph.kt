@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.di
 
+import com.tunjid.heron.atmosphereapp.di.AtmosphereAppNavigationBindings
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
 import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.editprofile.di.EditProfileNavigationBindings
@@ -53,6 +54,7 @@ interface AppNavigationGraph {
     fun interface Factory {
         fun create(
             @Includes signInNavigationBindings: SignInNavigationBindings,
+            @Includes atmosphereAppNavigationBindings: AtmosphereAppNavigationBindings,
             @Includes composeNavigationBindings: ComposeNavigationBindings,
             @Includes conversationNavigationBindings: ConversationNavigationBindings,
             @Includes editProfileNavigationBindings: EditProfileNavigationBindings,
