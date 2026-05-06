@@ -36,4 +36,4 @@ fun RockSkyArtistEntity.asExternalModel() = RockSkyArtist(
 )
 
 private fun String.deserializeArtistTags(): List<String> =
-    split(",").filter(String::isNotEmpty)
+    split(",").map(String::trim).filter(String::isNotEmpty)
