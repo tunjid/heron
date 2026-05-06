@@ -18,6 +18,8 @@ package com.tunjid.heron
 
 import androidx.compose.runtime.Composer
 import androidx.compose.runtime.tooling.ComposeStackTraceMode
+import com.tunjid.heron.atmosphereapp.di.AtmosphereAppBindings
+import com.tunjid.heron.atmosphereapp.di.AtmosphereAppNavigationBindings
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.compose.di.ComposeNavigationBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
@@ -103,6 +105,7 @@ fun createAppState(
 
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
         signInNavigationBindings = SignInNavigationBindings,
+        atmosphereAppNavigationBindings = AtmosphereAppNavigationBindings,
         composeNavigationBindings = ComposeNavigationBindings,
         conversationNavigationBindings = ConversationNavigationBindings,
         feedNavigationBindings = FeedNavigationBindings,
@@ -145,6 +148,10 @@ fun createAppState(
         dataBindings = dataBindings,
         scaffoldBindings = scaffoldBindings,
         signInBindings = SignInBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        atmosphereAppBindings = AtmosphereAppBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

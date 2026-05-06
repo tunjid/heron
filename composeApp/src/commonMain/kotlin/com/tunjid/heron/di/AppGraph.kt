@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.di
 
+import com.tunjid.heron.atmosphereapp.di.AtmosphereAppBindings
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppMainScope
@@ -72,6 +73,7 @@ interface AppGraph {
             @Includes dataBindings: DataBindings,
             @Includes scaffoldBindings: ScaffoldBindings,
             @Includes signInBindings: SignInBindings,
+            @Includes atmosphereAppBindings: AtmosphereAppBindings,
             @Includes composeBindings: ComposeBindings,
             @Includes conversationBindings: ConversationBindings,
             @Includes editProfileBindings: EditProfileBindings,

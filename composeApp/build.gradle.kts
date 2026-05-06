@@ -68,6 +68,7 @@ kotlin {
             implementation(project(":data:logging"))
             implementation(project(":data:platform"))
             implementation(project(":scaffold"))
+            implementation(project(":feature:atmosphereapp"))
             implementation(project(":feature:auth"))
             implementation(project(":feature:compose"))
             implementation(project(":feature:conversation"))
