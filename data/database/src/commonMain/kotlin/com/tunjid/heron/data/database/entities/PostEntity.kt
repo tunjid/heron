@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -100,6 +101,8 @@ data class PostEntity(
         val base64EncodedRecord: String?,
         val embeddedRecordUri: EmbeddableRecordUri?,
         val createdAt: Instant,
+        @ColumnInfo(defaultValue = "NULL")
+        val via: String?,
     )
 }
 

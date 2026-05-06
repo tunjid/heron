@@ -54,6 +54,12 @@
             "maxLength": 8,
             "items": { "type": "string", "maxLength": 640, "maxGraphemes": 64 }
           },
+          "via": {
+            "type": "string",
+            "description": "Optional human-readable identifier for the application/service that created this post.",
+            "maxLength": 256,
+            "maxGraphemes": 64
+          },
           "createdAt": {
             "type": "string",
             "format": "datetime",

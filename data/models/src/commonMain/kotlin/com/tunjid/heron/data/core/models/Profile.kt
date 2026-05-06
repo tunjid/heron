@@ -46,6 +46,7 @@ data class Profile(
     val labels: List<Label> = emptyList(),
     val isLabeler: Boolean = false,
     val status: ProfileStatus? = null,
+    val pronouns: String? = null,
 ) : UrlEncodableModel {
 
     @Serializable
@@ -226,4 +227,5 @@ fun stubProfile(
     labels = emptyList(),
     isLabeler = false,
     status = null,
+    pronouns = null,
 )

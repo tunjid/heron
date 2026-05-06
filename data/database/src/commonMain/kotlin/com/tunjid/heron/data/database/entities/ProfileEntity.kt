@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
@@ -58,6 +59,8 @@ data class ProfileEntity(
     val associated: Associated?,
     @Embedded(prefix = "status_")
     val status: Status?,
+    @ColumnInfo(defaultValue = "NULL")
+    val pronouns: String?,
 ) {
     data class Partial(
         val did: ProfileId,
@@ -123,6 +126,7 @@ fun ProfileEntity?.asExternalModel(
         labels = labels,
         isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
+        pronouns = pronouns,
     )
 
 data class PopulatedProfileEntity(
@@ -162,6 +166,7 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         labels = labelEntities.asActiveExternalModels(),
         isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
+        pronouns = pronouns,
     )
 }
 

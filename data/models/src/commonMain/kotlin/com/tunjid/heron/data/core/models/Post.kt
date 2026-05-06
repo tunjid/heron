@@ -66,6 +66,7 @@ data class Post(
         val createdAt: Instant,
         val links: List<Link> = emptyList(),
         val replyRef: ReplyRef? = null,
+        val via: String? = null,
     ) : UrlEncodableModel
 
     @Serializable
