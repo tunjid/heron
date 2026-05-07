@@ -34,7 +34,6 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.records.RockSkyRecordOperations
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -72,7 +71,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualAtmosphereAppViewModel(
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
-    rockSkyRecordOperations: RockSkyRecordOperations,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -89,7 +87,6 @@ class ActualAtmosphereAppViewModel(
                 scope,
                 state,
                 recordRepository,
-                rockSkyRecordOperations,
             )
 
             actions.launchMutationsIn(
@@ -115,7 +112,6 @@ private fun launchProfileLoadMutations(
     scope: CoroutineScope,
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-    rockSkyRecordOperations: RockSkyRecordOperations,
 ) {
     val sharedProfile = profileRepository.profile(route.profileHandleOrId)
         .shareIn(
@@ -141,7 +137,6 @@ private fun launchProfileLoadMutations(
                 existingHolders = keysToHolders,
                 viewModelScope = scope,
                 recordRepository = recordRepository,
-                rockSkyRecordOperations = rockSkyRecordOperations,
             )
         }
 }
@@ -152,7 +147,6 @@ private fun stateHoldersFor(
     existingHolders: Map<String, AppScreenStateHolders>,
     viewModelScope: CoroutineScope,
     recordRepository: RecordRepository,
-    rockSkyRecordOperations: RockSkyRecordOperations,
 ): List<AppScreenStateHolders> = when (app?.id) {
     AtmosphereApp.StandardSiteId -> listOf(
         existingHolders[StandardDocumentUri.NAMESPACE]
@@ -181,7 +175,7 @@ private fun stateHoldersFor(
                     profileId = profileId,
                     stringResource = Res.string.tab_albums,
                     itemId = RockSkyAlbum::cid,
-                    cursorListLoader = rockSkyRecordOperations::albums,
+                    cursorListLoader = recordRepository::albums,
                 ),
             ),
         existingHolders[TrackUri.NAMESPACE]
@@ -190,7 +184,7 @@ private fun stateHoldersFor(
                     profileId = profileId,
                     stringResource = Res.string.tab_tracks,
                     itemId = RockSkyTrack::cid,
-                    cursorListLoader = rockSkyRecordOperations::tracks,
+                    cursorListLoader = recordRepository::tracks,
                 ),
             ),
         existingHolders[ArtistUri.NAMESPACE]
@@ -199,7 +193,7 @@ private fun stateHoldersFor(
                     profileId = profileId,
                     stringResource = Res.string.tab_artists,
                     itemId = RockSkyArtist::uri,
-                    cursorListLoader = rockSkyRecordOperations::artists,
+                    cursorListLoader = recordRepository::artists,
                 ),
             ),
         existingHolders[ScrobbleUri.NAMESPACE]
@@ -208,7 +202,7 @@ private fun stateHoldersFor(
                     profileId = profileId,
                     stringResource = Res.string.tab_scrobbles,
                     itemId = RockSkyScrobble::cid,
-                    cursorListLoader = rockSkyRecordOperations::scrobbles,
+                    cursorListLoader = recordRepository::scrobbles,
                 ),
             ),
     )
