@@ -3,6 +3,7 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.RockSkyScrobble
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
@@ -17,7 +18,6 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "rockskyScrobbles",
-    primaryKeys = ["uri", "viewerDid"],
     foreignKeys = [
         ForeignKey(
             entity = ProfileEntity::class,
@@ -58,8 +58,8 @@ import kotlin.time.Instant
     ],
 )
 data class RockskyScrobbleEntity(
+    @PrimaryKey
     val uri: ScrobbleUri,
-    val viewerDid: ProfileId,
     val cid: ScrobbleId,
     val trackId: TrackId,
     val title: String,

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 41,
-    "identityHash": "ef444877b2af6f3185e2b2ceebefd1e6",
+    "identityHash": "ea83486f2c50fa80850ada0f2a571ce7",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -3909,17 +3909,11 @@
       },
       {
         "tableName": "rockskyScrobbles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `viewerDid` TEXT NOT NULL, `cid` TEXT NOT NULL, `trackId` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `handle` TEXT, `did` TEXT NOT NULL, `avatar` TEXT, `trackUri` TEXT, `artistUri` TEXT, `albumUri` TEXT, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`uri`, `viewerDid`), FOREIGN KEY(`did`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`trackUri`) REFERENCES `rockskyTracks`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`artistUri`) REFERENCES `rockskyArtists`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`albumUri`) REFERENCES `rockskyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT NOT NULL, `trackId` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT NOT NULL, `albumArtist` TEXT, `album` TEXT, `albumArt` TEXT, `handle` TEXT, `did` TEXT NOT NULL, `avatar` TEXT, `trackUri` TEXT, `artistUri` TEXT, `albumUri` TEXT, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`uri`), FOREIGN KEY(`did`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`trackUri`) REFERENCES `rockskyTracks`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`artistUri`) REFERENCES `rockskyArtists`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL , FOREIGN KEY(`albumUri`) REFERENCES `rockskyAlbums`(`uri`) ON UPDATE CASCADE ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "uri",
             "columnName": "uri",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "viewerDid",
-            "columnName": "viewerDid",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -4003,8 +3997,7 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "uri",
-            "viewerDid"
+            "uri"
           ]
         },
         "indices": [
@@ -4294,7 +4287,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ef444877b2af6f3185e2b2ceebefd1e6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea83486f2c50fa80850ada0f2a571ce7')"
     ]
   }
 }
