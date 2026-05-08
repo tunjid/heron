@@ -67,6 +67,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
@@ -165,6 +166,8 @@ internal class MultipleEntitySaver(
 
     private val profileTabEntities = LazyList<ProfileTabsEntity>()
 
+    private val profileAtmosphereAppEntities = LazyList<ProfileAtmosphereAppEntity>()
+
     private val listEntities = LazyList<ListEntity>()
 
     private val labelerEntities = LazyList<LabelerEntity>()
@@ -235,6 +238,10 @@ internal class MultipleEntitySaver(
 
         if (profileTabEntities.isNotEmpty) {
             profileDao.upsertProfileTabs(profileTabEntities.list)
+        }
+
+        if (profileAtmosphereAppEntities.isNotEmpty) {
+            profileDao.upsertProfileAtmosphereApps(profileAtmosphereAppEntities.list)
         }
 
         if (postEntities.isNotEmpty) {
@@ -438,6 +445,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileEntity) = profileEntities.add(entity)
 
     fun add(entity: ProfileTabsEntity) = profileTabEntities.add(entity)
+
+    fun add(entity: ProfileAtmosphereAppEntity) = profileAtmosphereAppEntities.add(entity)
 
     fun add(entity: PostPostEntity) = postPostEntities.add(entity)
 
