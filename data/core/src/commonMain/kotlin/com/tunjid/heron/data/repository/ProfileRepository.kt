@@ -35,7 +35,9 @@ import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
 import com.atproto.repo.PutRecordRequest
+import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -56,6 +58,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -66,6 +69,8 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.atmosphereintegration.AtmosphereAppNsids
+import com.tunjid.heron.data.utilities.atmosphereintegration.SupportedAtmosphereApps
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -117,6 +122,8 @@ interface ProfileRepository {
     fun profile(profileId: Id.Profile): Flow<Profile>
 
     fun tabs(profileId: Id.Profile): Flow<List<ProfileTab>>
+
+    fun supportedApps(profileId: Id.Profile): Flow<List<AtmosphereApp>>
 
     fun profileRelationships(
         profileIds: Set<Id.Profile>,
@@ -215,6 +222,59 @@ internal class OfflineProfileRepository @Inject constructor(
                                 )
                             }
                         }
+                }
+        }
+            .flowOn(ioDispatcher)
+
+    override fun supportedApps(
+        profileId: Id.Profile,
+    ): Flow<List<AtmosphereApp>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            val profileDid = profileLookup.lookupProfileDid(profileId)?.did
+                ?: return@singleAuthorizedSessionFlow emptyFlow()
+
+            profileDao.atmosphereApps(
+                profileId = profileDid,
+                viewingProfileId = signedInProfileId.id,
+            )
+                .distinctUntilChangedMap { appEntities ->
+                    val appIds = appEntities.mapTo(
+                        destination = mutableSetOf(),
+                        transform = ProfileAtmosphereAppEntity::atmosphereAppId,
+                    )
+                    SupportedAtmosphereApps.filter { it.id in appIds }
+                }
+                .withRefresh {
+                    val presentAppIds = SupportedAtmosphereApps.mapNotNull { app ->
+                        val nsids = AtmosphereAppNsids[app.id].orEmpty()
+                        val hasAny = nsids.any { nsid ->
+                            networkService.runCatchingWithMonitoredNetworkRetry {
+                                listRecords(
+                                    ListRecordsQueryParams(
+                                        repo = profileDid.let(::Did),
+                                        collection = Nsid(nsid),
+                                        limit = 1,
+                                    ),
+                                )
+                            }
+                                .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
+                                .getOrElse { false }
+                        }
+                        app.id.takeIf { hasAny }
+                    }
+
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            profileId = ProfileId(profileDid),
+                            viewingProfileId = signedInProfileId,
+                            atmosphereAppIds = presentAppIds,
+                        )
+                        profileDao.deleteAtmosphereAppsExcept(
+                            profileId = profileDid,
+                            viewingProfileId = signedInProfileId.id,
+                            keepAppIds = presentAppIds,
+                        )
+                    }
                 }
         }
             .flowOn(ioDispatcher)
