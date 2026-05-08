@@ -245,22 +245,28 @@ internal class OfflineProfileRepository @Inject constructor(
                     SupportedAtmosphereApps.filter { it.id in appIds }
                 }
                 .withRefresh {
-                    val presentAppIds = SupportedAtmosphereApps.mapNotNull { app ->
-                        val nsids = AtmosphereAppNsids[app.id].orEmpty()
-                        val hasAny = nsids.any { nsid ->
-                            networkService.runCatchingWithMonitoredNetworkRetry {
-                                listRecords(
-                                    ListRecordsQueryParams(
-                                        repo = profileDid.let(::Did),
-                                        collection = Nsid(nsid),
-                                        limit = 1,
-                                    ),
-                                )
+                    val presentAppIds = coroutineScope {
+                        SupportedAtmosphereApps.map { app ->
+                            async {
+                                val nsids = AtmosphereAppNsids[app.id].orEmpty()
+                                val hasAny = nsids.any { nsid ->
+                                    networkService.runCatchingWithMonitoredNetworkRetry {
+                                        listRecords(
+                                            ListRecordsQueryParams(
+                                                repo = profileDid.let(::Did),
+                                                collection = Nsid(nsid),
+                                                limit = 1,
+                                            ),
+                                        )
+                                    }
+                                        .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
+                                        .getOrElse { false }
+                                }
+                                app.id.takeIf { hasAny }
                             }
-                                .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
-                                .getOrElse { false }
                         }
-                        app.id.takeIf { hasAny }
+                            .awaitAll()
+                            .filterNotNull()
                     }
 
                     multipleEntitySaverProvider.saveInTransaction {
