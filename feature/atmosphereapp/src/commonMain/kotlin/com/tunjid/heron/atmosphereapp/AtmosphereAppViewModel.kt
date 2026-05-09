@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.RockSkyScrobble
 import com.tunjid.heron.data.core.models.RockSkyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -34,10 +35,13 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -54,6 +58,7 @@ import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -71,6 +76,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualAtmosphereAppViewModel(
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -97,6 +103,13 @@ class ActualAtmosphereAppViewModel(
                     is Action.PageChanged -> action.flow.collect { event ->
                         state.currentPage = event.page
                     }
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                        state = state,
+                    )
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
@@ -140,6 +153,34 @@ private fun launchProfileLoadMutations(
             )
         }
 }
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchAndCollect { event ->
+    state.messages -= event.message
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        when (action) {
+            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
+                create = StandardSubscription.Create(publicationUri = action.publicationUri),
+            )
+            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
+                recordUri = action.subscriptionUri,
+            )
+        }
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
 private fun stateHoldersFor(
     app: AtmosphereApp?,

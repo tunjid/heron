@@ -58,3 +58,6 @@ fun ProfileHandle(
         color = MaterialTheme.colorScheme.outline,
     )
 }
+
+val Profile?.nameOrHandleOrUnknown: String
+    get() = this?.displayName ?: this?.handle?.id ?: "-"

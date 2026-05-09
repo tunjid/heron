@@ -15,11 +15,15 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.profile.AppLogoZIndex
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @Composable
 fun ProfileApps(
     modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
     apps: List<AtmosphereApp>,
     onAppClicked: (AtmosphereApp) -> Unit,
 ) {
@@ -32,6 +36,7 @@ fun ProfileApps(
             key = AtmosphereApp::id,
             itemContent = { app ->
                 ProfileApp(
+                    paneScaffoldState = paneScaffoldState,
                     app = app,
                     onAppClicked = onAppClicked,
                 )
@@ -43,27 +48,35 @@ fun ProfileApps(
 @Composable
 private fun ProfileApp(
     modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
     app: AtmosphereApp,
     onAppClicked: (AtmosphereApp) -> Unit,
-) {
+) = with(paneScaffoldState) {
     ElevatedAssistChip(
         modifier = modifier,
         shape = CircleShape,
         leadingIcon = {
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
                     .size(24.dp),
-                args = remember(app.logo) {
-                    ImageArgs(
-                        url = app.logo.uri,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-            )
+                sharedContentState = rememberSharedContentState(app.id),
+                zIndexInOverlay = AppLogoZIndex,
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap(),
+                    args = remember(app.logo) {
+                        ImageArgs(
+                            url = app.logo.uri,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
+                )
+            }
         },
         label = {
-            Text(app.id)
+            Text(app.displayName())
         },
         onClick = {
             onAppClicked(app)

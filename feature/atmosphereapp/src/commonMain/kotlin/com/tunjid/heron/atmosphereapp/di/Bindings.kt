@@ -17,6 +17,7 @@
 package com.tunjid.heron.atmosphereapp.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -139,12 +140,19 @@ class AtmosphereAppBindings(
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
-                content = {
+                snackBarMessages = state.messages,
+                onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
+                },
+                content = { paddingValues ->
                     AtmosphereAppScreen(
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
                 },
