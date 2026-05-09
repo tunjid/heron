@@ -88,6 +88,7 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
+import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -118,10 +119,12 @@ import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUp
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
+import com.tunjid.heron.profile.ui.ProfileApps
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.atmosphereAppDestination
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.editProfileDestination
@@ -305,6 +308,7 @@ internal fun ProfileScreen(
                 subscribedLabelers = state.subscribedLabelers,
                 preferences = state.preferences,
                 isRefreshing = isRefreshing,
+                supportedApps = state.supportedApps,
                 isSignedInProfile = state.isSignedInProfile,
                 signedInProfileId = state.signedInProfileId,
                 isSubscribedToLabeler = remember(
@@ -652,6 +656,7 @@ private fun ProfileHeader(
     isSubscribedToLabeler: Boolean,
     signedInProfileId: ProfileId?,
     viewerState: ProfileViewerState?,
+    supportedApps: List<AtmosphereApp>,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
@@ -749,6 +754,21 @@ private fun ProfileHeader(
                     CommonFollowers(
                         commonFollowerCount = commonFollowerCount,
                         commonFollowers = commonFollowers,
+                    )
+                }
+                if (supportedApps.isNotEmpty()) {
+                    ProfileApps(
+                        paneScaffoldState = paneScaffoldState,
+                        apps = supportedApps,
+                        onAppClicked = { app ->
+                            onNavigate(
+                                atmosphereAppDestination(
+                                    profile = profile,
+                                    app = app,
+                                    avatarSharedElementKey = avatarSharedElementKey,
+                                ),
+                            )
+                        },
                     )
                 }
                 ProfileLabels(

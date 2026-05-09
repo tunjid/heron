@@ -31,6 +31,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:core"))
                 implementation(project(":scaffold"))
+                implementation(project(":ui:profile"))
                 implementation(project(":ui:tiling"))
                 implementation(project(":ui:timeline"))
                 implementation(project(":feature:template"))

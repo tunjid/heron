@@ -122,6 +122,11 @@ class ActualProfileViewModel(
                 profileId = route.profileHandleOrId,
                 profileRepository = profileRepository,
             )
+            launchSupportedAppMutations(
+                state = state,
+                profileId = route.profileHandleOrId,
+                profileRepository = profileRepository,
+            )
             launchFeedGeneratorUrisToStatusMutations(
                 state = state,
                 timelineRepository = timelineRepository,
@@ -377,6 +382,15 @@ private fun launchProfileRelationshipMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun launchSupportedAppMutations(
+    state: State.SnapshotMutable,
+    profileId: Id.Profile,
+    profileRepository: ProfileRepository,
+) = profileRepository.supportedApps(profileId).launchAndCollect {
+    state.supportedApps = it
+}
+
+context(productionScope: CoroutineScope)
 private fun launchFeedGeneratorUrisToStatusMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
@@ -506,23 +520,22 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state.messages -= event.message
 }
 
-private fun Action.TogglePublicationSubscription.toPublicationSubscriptionWritable(): Writable =
-    when (this) {
-        is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-            create = StandardSubscription.Create(publicationUri = publicationUri),
-        )
-        is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-            recordUri = subscriptionUri,
-        )
-    }
-
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { it.toPublicationSubscriptionWritable() },
+    toWritable = { action ->
+        when (action) {
+            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
+                create = StandardSubscription.Create(publicationUri = action.publicationUri),
+            )
+            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
+                recordUri = action.subscriptionUri,
+            )
+        }
+    },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

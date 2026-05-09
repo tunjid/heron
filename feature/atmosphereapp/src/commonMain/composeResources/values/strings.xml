@@ -21,7 +21,5 @@
     <string name="tab_tracks">Tracks</string>
     <string name="tab_artists">Artists</string>
     <string name="tab_scrobbles">Scrobbles</string>
-    <string name="app_name_rocksky">Rocksky</string>
-    <string name="app_name_standard_site">Standard</string>
-    <string name="app_name_unknown">Unknown app</string>
+    <string name="profiles_apps">%1$s's %2$s</string>
 </resources>

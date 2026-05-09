@@ -161,6 +161,10 @@
     <string name="empty_timeline_videos">No videos yet</string>
     <string name="empty_timeline_videos_description">This user hasn't posted any videos yet.</string>
 
+    <string name="app_name_rocksky">Rocksky</string>
+    <string name="app_name_standard_site">Longform content</string>
+    <string name="app_name_unknown">Unknown app</string>
+
     <string name="bluesky_server">Bluesky</string>
     <string name="blacksky_server">Blacksky</string>
     <string name="eurosky_server">Eurosky</string>

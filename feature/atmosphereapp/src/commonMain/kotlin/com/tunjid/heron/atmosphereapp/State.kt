@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
@@ -43,6 +44,7 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.RecordStateHolder
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -63,6 +65,8 @@ interface State {
         val currentPage: Int = 0,
         @Transient
         val stateHolders: List<AppScreenStateHolders> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
@@ -147,6 +151,20 @@ sealed class Action(val key: String) {
     data class PageChanged(
         val page: Int,
     ) : Action(key = "PageChanged")
+
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
+    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
+        data class Subscribe(
+            val publicationUri: StandardPublicationUri,
+        ) : TogglePublicationSubscription()
+
+        data class Unsubscribe(
+            val subscriptionUri: StandardSubscriptionUri,
+        ) : TogglePublicationSubscription()
+    }
 
     sealed class Navigate :
         Action(key = "Navigate"),
