@@ -31,16 +31,25 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.ui.AtmosphereAppHeader
+import com.tunjid.heron.data.core.models.link
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.takeIfIs
+import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.shapedClickable
 
 @Composable
 internal fun AtmosphereAppScreen(
@@ -105,15 +114,32 @@ internal fun AtmosphereAppScreen(
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.uri.uri },
                             itemContent = { document ->
+                                val uriHandler = LocalUriHandler.current
                                 Document(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(8.dp)
-                                        .animateItem(),
+                                        .animateItem()
+                                        .shapedClickable {
+                                            runCatching {
+                                                document.link
+                                                    ?.takeIfIs(Uri.Host.Https)
+                                                    ?.let(uriHandler::openUri)
+                                            }
+                                        }
+                                        .padding(8.dp),
                                     paneTransitionScope = paneScaffoldState,
                                     sharedElementPrefix = document.uri.uri,
                                     document = document,
-                                    onPublicationClicked = null,
+                                    onPublicationClicked = {
+                                        actions(
+                                            Action.Navigate.To(
+                                                standardPublicationDestination(
+                                                    publication = it,
+                                                    sharedElementPrefix = document.uri.uri,
+                                                ),
+                                            ),
+                                        )
+                                    },
                                     onSubscriptionToggled = { publication, subscription ->
                                         actions(
                                             if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
@@ -136,7 +162,19 @@ internal fun AtmosphereAppScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(8.dp)
-                                        .animateItem(),
+                                        .animateItem()
+                                        .shapedClickable {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = publication.uri.path,
+                                                        models = listOf(publication),
+                                                        sharedElementPrefix = publication.uri.uri,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    ),
+                                                ),
+                                            )
+                                        },
                                     paneTransitionScope = paneScaffoldState,
                                     sharedElementPrefix = publication.uri.uri,
                                     publication = publication,

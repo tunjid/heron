@@ -264,4 +264,3 @@ private fun AppScreenStateHolders.tabTitle(): String = stringResource(
 
 private val AvatarSize = 44.dp
 private val AvatarOffset = 48.dp
-
