@@ -19,6 +19,11 @@ plugins {
     id("ui-module-convention")
     id("com.tunjid.snapshottable")
 }
+
+compose.resources {
+    publicResClass = true
+}
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.ui.timeline"
