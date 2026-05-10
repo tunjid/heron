@@ -161,6 +161,27 @@
     <string name="empty_timeline_videos">No videos yet</string>
     <string name="empty_timeline_videos_description">This user hasn't posted any videos yet.</string>
 
+    <string name="empty_records">No records yet</string>
+    <string name="empty_records_description">Records will show up here once available.</string>
+    <string name="empty_records_feeds">No feeds yet</string>
+    <string name="empty_records_feeds_description">Feeds created or saved by this user will show up here.</string>
+    <string name="empty_records_starter_packs">No starter packs yet</string>
+    <string name="empty_records_starter_packs_description">Starter packs created by this user will show up here.</string>
+    <string name="empty_records_lists">No lists yet</string>
+    <string name="empty_records_lists_description">Lists created by this user will show up here.</string>
+    <string name="empty_records_documents">No documents yet</string>
+    <string name="empty_records_documents_description">Documents published by this user will show up here.</string>
+    <string name="empty_records_publications">No publications yet</string>
+    <string name="empty_records_publications_description">Publications by this user will show up here.</string>
+    <string name="empty_records_albums">No albums yet</string>
+    <string name="empty_records_albums_description">Albums associated with this user will show up here.</string>
+    <string name="empty_records_tracks">No tracks yet</string>
+    <string name="empty_records_tracks_description">Tracks associated with this user will show up here.</string>
+    <string name="empty_records_artists">No artists yet</string>
+    <string name="empty_records_artists_description">Artists associated with this user will show up here.</string>
+    <string name="empty_records_scrobbles">No scrobbles yet</string>
+    <string name="empty_records_scrobbles_description">Scrobbled tracks will show up here as this user listens.</string>
+
     <string name="app_name_rocksky">Rocksky</string>
     <string name="app_name_standard_site">Longform content</string>
     <string name="app_name_unknown">Unknown app</string>

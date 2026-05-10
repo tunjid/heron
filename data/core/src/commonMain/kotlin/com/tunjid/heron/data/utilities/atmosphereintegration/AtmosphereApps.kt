@@ -26,17 +26,18 @@ import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
 
-val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
+internal val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
     AtmosphereApp(
         id = AtmosphereApp.StandardSiteId,
         webpage = GenericUri("https://standard.site"),
         logo = ImageUri("https://standard.site/favicon.ico"),
     ),
-    AtmosphereApp(
-        id = AtmosphereApp.RockskyId,
-        webpage = GenericUri("https://rocksky.app"),
-        logo = ImageUri("https://rocksky.app/favicon.ico"),
-    ),
+    // Uncomment for development, undercooked for now
+//    AtmosphereApp(
+//        id = AtmosphereApp.RockskyId,
+//        webpage = GenericUri("https://rocksky.app"),
+//        logo = ImageUri("https://rocksky.app/favicon.ico"),
+//    ),
 )
 
 internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(

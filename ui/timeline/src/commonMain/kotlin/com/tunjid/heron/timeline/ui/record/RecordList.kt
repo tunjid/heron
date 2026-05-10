@@ -22,28 +22,89 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Article
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.DynamicFeed
+import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Inbox
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockSkyArtist
+import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.empty_records
+import heron.ui.timeline.generated.resources.empty_records_albums
+import heron.ui.timeline.generated.resources.empty_records_albums_description
+import heron.ui.timeline.generated.resources.empty_records_artists
+import heron.ui.timeline.generated.resources.empty_records_artists_description
+import heron.ui.timeline.generated.resources.empty_records_description
+import heron.ui.timeline.generated.resources.empty_records_documents
+import heron.ui.timeline.generated.resources.empty_records_documents_description
+import heron.ui.timeline.generated.resources.empty_records_feeds
+import heron.ui.timeline.generated.resources.empty_records_feeds_description
+import heron.ui.timeline.generated.resources.empty_records_lists
+import heron.ui.timeline.generated.resources.empty_records_lists_description
+import heron.ui.timeline.generated.resources.empty_records_publications
+import heron.ui.timeline.generated.resources.empty_records_publications_description
+import heron.ui.timeline.generated.resources.empty_records_scrobbles
+import heron.ui.timeline.generated.resources.empty_records_scrobbles_description
+import heron.ui.timeline.generated.resources.empty_records_starter_packs
+import heron.ui.timeline.generated.resources.empty_records_starter_packs_description
+import heron.ui.timeline.generated.resources.empty_records_tracks
+import heron.ui.timeline.generated.resources.empty_records_tracks_description
+import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.StringResource
 
 @Composable
-fun <T : Record, State : TilingState<out CursorQuery, T>> RecordList(
+inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordList(
     collectionStateHolder: ActionSuspendingStateMutator<TilingState.Action, State>,
     prefersCompactBottomNav: Boolean,
-    itemKey: (T) -> Any,
-    itemContent: @Composable (LazyItemScope.(T) -> Unit),
+    emptyTitleRes: StringResource = T::class.emptyTitleRes,
+    emptyDescriptionRes: StringResource = T::class.emptyDescriptionRes,
+    emptyIcon: ImageVector = T::class.emptyIcon,
+    crossinline itemKey: (T) -> Any,
+    crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val collectionState = collectionStateHolder.produceStateWithLifecycle()
     val updatedItems = collectionState.tiledItems
+
+    val currentlyEmpty = collectionStateHolder.state.tiledItems.isEmpty()
+    val isEmpty by produceState(
+        initialValue = currentlyEmpty,
+        key1 = currentlyEmpty,
+    ) {
+        if (currentlyEmpty) delay(3.seconds)
+        value = currentlyEmpty
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -57,9 +118,19 @@ fun <T : Record, State : TilingState<out CursorQuery, T>> RecordList(
     ) {
         items(
             items = updatedItems,
-            key = itemKey,
+            key = { itemKey(it) },
             itemContent = itemContent,
         )
+
+        if (isEmpty) {
+            item {
+                EmptyContent(
+                    titleRes = emptyTitleRes,
+                    descriptionRes = emptyDescriptionRes,
+                    icon = emptyIcon,
+                )
+            }
+        }
     }
 
     listState.PivotedTilingEffect(
@@ -73,3 +144,48 @@ fun <T : Record, State : TilingState<out CursorQuery, T>> RecordList(
         },
     )
 }
+
+@PublishedApi
+internal val KClass<out Record>.emptyTitleRes: StringResource
+    get() = when (this) {
+        FeedGenerator::class -> Res.string.empty_records_feeds
+        StarterPack::class -> Res.string.empty_records_starter_packs
+        FeedList::class -> Res.string.empty_records_lists
+        StandardDocument::class -> Res.string.empty_records_documents
+        StandardPublication::class -> Res.string.empty_records_publications
+        RockSkyAlbum::class -> Res.string.empty_records_albums
+        RockSkyTrack::class -> Res.string.empty_records_tracks
+        RockSkyArtist::class -> Res.string.empty_records_artists
+        RockSkyScrobble::class -> Res.string.empty_records_scrobbles
+        else -> Res.string.empty_records
+    }
+
+@PublishedApi
+internal val KClass<out Record>.emptyDescriptionRes: StringResource
+    get() = when (this) {
+        FeedGenerator::class -> Res.string.empty_records_feeds_description
+        StarterPack::class -> Res.string.empty_records_starter_packs_description
+        FeedList::class -> Res.string.empty_records_lists_description
+        StandardDocument::class -> Res.string.empty_records_documents_description
+        StandardPublication::class -> Res.string.empty_records_publications_description
+        RockSkyAlbum::class -> Res.string.empty_records_albums_description
+        RockSkyTrack::class -> Res.string.empty_records_tracks_description
+        RockSkyArtist::class -> Res.string.empty_records_artists_description
+        RockSkyScrobble::class -> Res.string.empty_records_scrobbles_description
+        else -> Res.string.empty_records_description
+    }
+
+@PublishedApi
+internal val KClass<out Record>.emptyIcon: ImageVector
+    get() = when (this) {
+        FeedGenerator::class -> Icons.Rounded.DynamicFeed
+        StarterPack::class -> Icons.Rounded.Group
+        FeedList::class -> Icons.AutoMirrored.Rounded.List
+        StandardDocument::class -> Icons.AutoMirrored.Rounded.Article
+        StandardPublication::class -> Icons.Rounded.Public
+        RockSkyAlbum::class -> Icons.Rounded.Album
+        RockSkyTrack::class -> Icons.Rounded.MusicNote
+        RockSkyArtist::class -> Icons.Rounded.Mic
+        RockSkyScrobble::class -> Icons.Rounded.History
+        else -> Icons.Rounded.Inbox
+    }
