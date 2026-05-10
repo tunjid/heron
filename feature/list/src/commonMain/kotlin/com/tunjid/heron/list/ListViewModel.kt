@@ -251,6 +251,7 @@ private suspend fun launchTimelineStateHolderMutations(
         ),
     )
     state.stateHolders = listOf(createdHolder) + state.stateHolders
+        .filterIsInstance<ListScreenStateHolders.Members>()
 
     launchListStatusMutations(
         state = state,
@@ -314,7 +315,8 @@ private suspend fun listMemberStateHolderMutations(
             },
         ),
     )
-    state.stateHolders += createdHolder
+    state.stateHolders = state.stateHolders
+        .filterIsInstance<ListScreenStateHolders.Timeline>() + createdHolder
 }
 
 context(productionScope: CoroutineScope)
