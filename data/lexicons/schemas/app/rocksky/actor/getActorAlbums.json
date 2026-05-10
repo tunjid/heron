@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "app.rocksky.actor.getActorAlbums",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List the albums an actor has scrobbled, ordered by play count.",
+      "parameters": {
+        "type": "params",
+        "required": ["did"],
+        "properties": {
+          "did": { "type": "string", "format": "did" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 },
+          "offset": { "type": "integer", "minimum": 0, "default": 0 }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["albums"],
+          "properties": {
+            "albums": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "app.rocksky.actor.defs#albumView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

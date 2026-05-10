@@ -1,0 +1,87 @@
+{
+  "lexicon": 1,
+  "id": "app.rocksky.actor.defs",
+  "defs": {
+    "albumView": {
+      "type": "object",
+      "required": ["id", "title", "artist", "uri", "artistUri"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "releaseDate": { "type": "string" },
+        "albumArt": { "type": "string", "format": "uri" },
+        "year": { "type": "integer" },
+        "sha256": { "type": "string" },
+        "uri": { "type": "string", "format": "at-uri" },
+        "artistUri": { "type": "string", "format": "at-uri" },
+        "playCount": { "type": "integer" },
+        "uniqueListeners": { "type": "integer" },
+        "appleMusicLink": { "type": "string", "format": "uri" },
+        "spotifyLink": { "type": "string", "format": "uri" },
+        "tidalLink": { "type": "string", "format": "uri" },
+        "youtubeLink": { "type": "string", "format": "uri" }
+      }
+    },
+    "trackView": {
+      "type": "object",
+      "required": ["id", "title", "artist", "uri"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "albumArtist": { "type": "string" },
+        "albumArt": { "type": "string", "format": "uri" },
+        "album": { "type": "string" },
+        "trackNumber": { "type": "integer" },
+        "duration": { "type": "integer" },
+        "sha256": { "type": "string" },
+        "discNumber": { "type": "integer" },
+        "uri": { "type": "string", "format": "at-uri" },
+        "createdAt": { "type": "string", "format": "datetime" },
+        "playCount": { "type": "integer" },
+        "uniqueListeners": { "type": "integer" },
+        "artistUri": { "type": "string", "format": "at-uri" },
+        "albumUri": { "type": "string", "format": "at-uri" }
+      }
+    },
+    "artistView": {
+      "type": "object",
+      "required": ["id", "name", "uri"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "picture": { "type": "string", "format": "uri" },
+        "sha256": { "type": "string" },
+        "uri": { "type": "string", "format": "at-uri" },
+        "playCount": { "type": "integer" },
+        "uniqueListeners": { "type": "integer" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "scrobbleView": {
+      "type": "object",
+      "required": ["id", "trackId", "title", "artist", "did", "uri", "createdAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "trackId": { "type": "string" },
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "albumArtist": { "type": "string" },
+        "albumArt": { "type": "string", "format": "uri" },
+        "album": { "type": "string" },
+        "handle": { "type": "string", "format": "handle" },
+        "did": { "type": "string", "format": "did" },
+        "avatar": { "type": "string", "format": "uri" },
+        "uri": { "type": "string", "format": "at-uri" },
+        "trackUri": { "type": "string", "format": "at-uri" },
+        "artistUri": { "type": "string", "format": "at-uri" },
+        "albumUri": { "type": "string", "format": "at-uri" },
+        "createdAt": { "type": "string", "format": "datetime" }
+      }
+    }
+  }
+}
