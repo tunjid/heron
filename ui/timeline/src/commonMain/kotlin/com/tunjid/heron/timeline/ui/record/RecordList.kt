@@ -85,6 +85,7 @@ import heron.ui.timeline.generated.resources.empty_records_tracks_description
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.StringResource
 
 @Composable
@@ -145,7 +146,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     LaunchedEffect(Unit) {
         snapshotFlow {
             collectionState.tiledItems.isEmpty()
-        }.collect { currentlyEmpty ->
+        }.collectLatest { currentlyEmpty ->
             if (currentlyEmpty) delay(3.seconds)
             isEmpty = currentlyEmpty
         }
