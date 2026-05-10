@@ -41,6 +41,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -230,69 +231,71 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
             // Only emit once
             .distinctUntilChanged()
             .collectLatest { (queries, numColumns) ->
-                val backgroundDispatcher =
-                    currentCoroutineContext().requireStateProducingBackgroundDispatcher()
-                // Refreshes need tear down the tiling pipeline all over
-                val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
-                queries.launchAndCollectWithState(startingState) { newQuery ->
-                    status = when {
-                        currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
-                            cursorAnchor = newQuery.data.cursorAnchor,
-                        )
-
-                        else -> status
-                    }
-                    currentQuery = newQuery
-                }
-                numColumns.launchAndCollectWithState(startingState) {
-                    update(numColumns = it)
-                }
-                refreshes.flatMapLatest { refreshedQuery ->
-                    cursorTileInputs<Query, Item>(
-                        numColumns = numColumns,
-                        queries = queries,
-                        updatePage = updateQueryData,
-                    )
-                        .toTiledList(
-                            cursorListTiler(
-                                startingQuery = refreshedQuery,
-                                cursorListLoader = cursorListLoader,
-                                updatePage = updateQueryData,
-                            ),
-                        )
-                }
-                    .debounce { items ->
-                        if (items.isEmpty()) 300.milliseconds
-                        else 80.milliseconds
-                    }
-                    .flowOn(backgroundDispatcher)
-                    .launchAndCollectLatestWithState(startingState) { items ->
-                        // Ignore results from stale queries
-                        if (items.isValidFor(currentQuery)) {
-                            // Heavy work on the background dispatcher
-                            val deduped = withContext(backgroundDispatcher) {
-                                onNewItems(items)
-                            }
-                            // Final transform on the production dispatcher with State as
-                            // receiver, so callers can read live snapshot-state fields
-                            // race-free with other producer-scope writers.
-                            val toCommit = with(state) { onWriteItems(deduped) }
-                            update(
-                                items = toCommit,
-                                status = when {
-                                    isRefreshedOnNewItems && items.isNotEmpty() -> {
-                                        val fetchedQuery = items.queryAt(0)
-                                        if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
-                                        else TilingState.Status.Refreshed(
-                                            cursorAnchor = fetchedQuery.data.cursorAnchor,
-                                        )
-                                    }
-
-                                    else -> status
-                                },
+                coroutineScope {
+                    val backgroundDispatcher =
+                        currentCoroutineContext().requireStateProducingBackgroundDispatcher()
+                    // Refreshes need tear down the tiling pipeline all over
+                    val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
+                    queries.launchAndCollectWithState(startingState) { newQuery ->
+                        status = when {
+                            currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
+                                cursorAnchor = newQuery.data.cursorAnchor,
                             )
+
+                            else -> status
                         }
+                        currentQuery = newQuery
                     }
+                    numColumns.launchAndCollectWithState(startingState) {
+                        update(numColumns = it)
+                    }
+                    refreshes.flatMapLatest { refreshedQuery ->
+                        cursorTileInputs<Query, Item>(
+                            numColumns = numColumns,
+                            queries = queries,
+                            updatePage = updateQueryData,
+                        )
+                            .toTiledList(
+                                cursorListTiler(
+                                    startingQuery = refreshedQuery,
+                                    cursorListLoader = cursorListLoader,
+                                    updatePage = updateQueryData,
+                                ),
+                            )
+                    }
+                        .debounce { items ->
+                            if (items.isEmpty()) 300.milliseconds
+                            else 80.milliseconds
+                        }
+                        .flowOn(backgroundDispatcher)
+                        .launchAndCollectLatestWithState(startingState) { items ->
+                            // Ignore results from stale queries
+                            if (items.isValidFor(currentQuery)) {
+                                // Heavy work on the background dispatcher
+                                val deduped = withContext(backgroundDispatcher) {
+                                    onNewItems(items)
+                                }
+                                // Final transform on the production dispatcher with State as
+                                // receiver, so callers can read live snapshot-state fields
+                                // race-free with other producer-scope writers.
+                                val toCommit = with(state) { onWriteItems(deduped) }
+                                update(
+                                    items = toCommit,
+                                    status = when {
+                                        isRefreshedOnNewItems && items.isNotEmpty() -> {
+                                            val fetchedQuery = items.queryAt(0)
+                                            if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
+                                            else TilingState.Status.Refreshed(
+                                                cursorAnchor = fetchedQuery.data.cursorAnchor,
+                                            )
+                                        }
+
+                                        else -> status
+                                    },
+                                )
+                            }
+                        }
+                }
             }
     }
 }
