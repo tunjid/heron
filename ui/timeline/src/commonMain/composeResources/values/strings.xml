@@ -48,6 +48,16 @@
     <string name="starter_pack_by">Starter Pack by %1$s</string>
     <string name="labeling_service_by">Labeling Service by %1$s</string>
     <string name="list_by">List by %1$s</string>
+    <string name="album_by">Album by %1$s</string>
+    <string name="track_by">Track by %1$s</string>
+    <string name="artist_subtitle">Artist</string>
+    <string name="scrobbled_by">Scrobbled by %1$s</string>
+    <string name="played_n_times">%1$s plays</string>
+    <string name="n_listeners">%1$s listeners</string>
+    <string name="apple_music">Apple Music</string>
+    <string name="spotify">Spotify</string>
+    <string name="tidal">Tidal</string>
+    <string name="youtube">YouTube</string>
     <string name="show_more">Show More</string>
     <string name="sign_in">Sign In</string>
     <string name="pin_feed">Pin</string>
