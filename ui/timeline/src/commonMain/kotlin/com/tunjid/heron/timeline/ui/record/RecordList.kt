@@ -34,8 +34,12 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -95,15 +99,9 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
 ) {
     val listState = rememberLazyListState()
     val collectionState = collectionStateHolder.produceStateWithLifecycle()
-    val updatedItems = collectionState.tiledItems
 
-    val currentlyEmpty = collectionStateHolder.state.tiledItems.isEmpty()
-    val isEmpty by produceState(
-        initialValue = currentlyEmpty,
-        key1 = currentlyEmpty,
-    ) {
-        if (currentlyEmpty) delay(3.seconds)
-        value = currentlyEmpty
+    var isEmpty by rememberSaveable {
+        mutableStateOf(false)
     }
 
     LazyColumn(
@@ -117,7 +115,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(
-            items = updatedItems,
+            items = collectionState.tiledItems,
             key = { itemKey(it) },
             itemContent = itemContent,
         )
@@ -134,7 +132,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     }
 
     listState.PivotedTilingEffect(
-        items = updatedItems,
+        items = collectionState.tiledItems,
         onQueryChanged = { query ->
             collectionStateHolder.accept(
                 TilingState.Action.LoadAround(
@@ -143,6 +141,15 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
             )
         },
     )
+
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            collectionState.tiledItems.isEmpty()
+        }.collect { currentlyEmpty ->
+            if (currentlyEmpty) delay(3.seconds)
+            isEmpty = currentlyEmpty
+        }
+    }
 }
 
 @PublishedApi
