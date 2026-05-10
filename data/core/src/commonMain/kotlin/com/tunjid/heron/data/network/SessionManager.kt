@@ -639,6 +639,10 @@ private val HeronProxyPaths = listOf(
     "site.standard.heron.getDocuments",
     "site.standard.heron.getPublications",
     "site.standard.heron.getSubscribedPublications",
+    "app.rocksky.actor.getActorAlbums",
+    "app.rocksky.actor.getActorSongs",
+    "app.rocksky.actor.getActorArtists",
+    "app.rocksky.actor.getActorScrobbles",
 )
 
 private val SignedOutPaths = listOf(
