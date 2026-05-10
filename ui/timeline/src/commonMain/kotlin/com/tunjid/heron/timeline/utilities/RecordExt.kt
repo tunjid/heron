@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -177,6 +178,10 @@ fun Profile.avatarSharedElementKey(
     prefix: String?,
 ): String = "$prefix-${did.id}-avatar"
 
+fun RecordUri.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-$uri-avatar"
+
 fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
@@ -224,6 +229,13 @@ internal val StarterPackCollectionShape by lazy {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val DocumentCollectionShape by lazy {
+    RoundedPolygonShape.Custom(
+        polygon = MaterialShapes.Square,
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val RockSkyCollectionShape by lazy {
     RoundedPolygonShape.Custom(
         polygon = MaterialShapes.Square,
     )

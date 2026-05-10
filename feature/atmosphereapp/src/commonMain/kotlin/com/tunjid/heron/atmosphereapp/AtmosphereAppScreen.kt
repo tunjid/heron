@@ -16,14 +16,11 @@
 
 package com.tunjid.heron.atmosphereapp
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -46,6 +43,10 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.record.RecordList
+import com.tunjid.heron.timeline.ui.rocksky.RockskyAlbum
+import com.tunjid.heron.timeline.ui.rocksky.RockskyArtist
+import com.tunjid.heron.timeline.ui.rocksky.RockskyScrobble
+import com.tunjid.heron.timeline.ui.rocksky.RockskyTrack
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
@@ -196,9 +197,20 @@ internal fun AtmosphereAppScreen(
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.cid.id },
                             itemContent = { album ->
-                                RockskyRecordRow(
-                                    title = album.title,
-                                    subtitle = album.artist,
+                                val uriHandler = LocalUriHandler.current
+                                RockskyAlbum(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                        .animateItem(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    album = album,
+                                    onMusicServiceLinkClicked = { url ->
+                                        runCatching {
+                                            uriHandler.openUri(url)
+                                        }
+                                    },
                                 )
                             },
                         )
@@ -207,9 +219,14 @@ internal fun AtmosphereAppScreen(
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.cid.id },
                             itemContent = { track ->
-                                RockskyRecordRow(
-                                    title = track.title,
-                                    subtitle = track.artist,
+                                RockskyTrack(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                        .animateItem(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    track = track,
                                 )
                             },
                         )
@@ -217,16 +234,31 @@ internal fun AtmosphereAppScreen(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.cid.id },
-                            itemContent = { artist -> RockskyRecordRow(title = artist.name, subtitle = null) },
+                            itemContent = { artist ->
+                                RockskyArtist(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                        .animateItem(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    artist = artist,
+                                )
+                            },
                         )
                         is AppScreenStateHolders.Rocksky.Scrobbles -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.cid.id },
                             itemContent = { scrobble ->
-                                RockskyRecordRow(
-                                    title = scrobble.title,
-                                    subtitle = scrobble.artist,
+                                RockskyScrobble(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                        .animateItem(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                    scrobble = scrobble,
                                 )
                             },
                         )
@@ -244,27 +276,4 @@ internal fun AtmosphereAppScreen(
     }
 }
 
-@Composable
-private fun RockskyRecordRow(
-    title: String,
-    subtitle: String?,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        subtitle?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.outline,
-                ),
-            )
-        }
-    }
-}
+private const val AtmosphereScreenSharedElementPrefix = "AtmosphereScreenSharedElementPrefix"
