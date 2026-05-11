@@ -93,4 +93,5 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     debugImplementation(libs.compose.multiplatform.ui.tooling.preview)
+    debugImplementation(libs.leak.canary)
 }
