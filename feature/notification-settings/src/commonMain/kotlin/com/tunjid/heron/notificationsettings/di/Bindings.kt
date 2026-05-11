@@ -37,6 +37,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -45,7 +46,6 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -107,16 +107,19 @@ class NotificationSettingsBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
-        contentTransform = predictiveBackContentTransformProvider(),
+        contentTransform = navigationContentTransformer::contentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

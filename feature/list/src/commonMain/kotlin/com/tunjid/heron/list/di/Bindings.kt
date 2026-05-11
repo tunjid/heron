@@ -57,12 +57,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -204,9 +204,11 @@ class ListBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -215,9 +217,11 @@ class ListBindings(
     fun provideUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -226,9 +230,11 @@ class ListBindings(
     fun provideStarterPackRoutePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -237,16 +243,19 @@ class ListBindings(
     fun provideStarterPackUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
-        contentTransform = predictiveBackContentTransformProvider(),
+        contentTransform = navigationContentTransformer::contentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
