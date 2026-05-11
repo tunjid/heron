@@ -83,56 +83,58 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    sharedElementPrefix = route.sharedElementPrefix,
-    stateHolders = listOfNotNull(
-        route.model<FeedList>()?.let { model ->
-            val timeline = Timeline.Home.List.stub(list = model)
-            TimelineState(
-                timeline = timeline,
-                hasUpdates = false,
-                tilingData = TilingState.Data(
-                    currentQuery = TimelineQuery(
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            sharedElementPrefix = route.sharedElementPrefix,
+            stateHolders = listOfNotNull(
+                route.model<FeedList>()?.let { model ->
+                    val timeline = Timeline.Home.List.stub(list = model)
+                    TimelineState(
+                        timeline = timeline,
+                        hasUpdates = false,
+                        tilingData = TilingState.Data(
+                            currentQuery = TimelineQuery(
+                                data = CursorQuery.Data(
+                                    page = 0,
+                                    cursorAnchor = Clock.System.now(),
+                                ),
+                                source = timeline.source,
+                            ),
                         ),
-                        source = timeline.source,
-                    ),
-                ),
-            )
-        },
-        route.model<StarterPack>()?.let { model ->
-            val starterPackList = model.list ?: return@let null
-            val timeline = Timeline.StarterPack.stub(
-                starterPack = model,
-                list = starterPackList,
-            )
-            TimelineState(
-                timeline = timeline,
-                hasUpdates = false,
-                tilingData = TilingState.Data(
-                    currentQuery = TimelineQuery(
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
+                    )
+                },
+                route.model<StarterPack>()?.let { model ->
+                    val starterPackList = model.list ?: return@let null
+                    val timeline = Timeline.StarterPack.stub(
+                        starterPack = model,
+                        list = starterPackList,
+                    )
+                    TimelineState(
+                        timeline = timeline,
+                        hasUpdates = false,
+                        tilingData = TilingState.Data(
+                            currentQuery = TimelineQuery(
+                                data = CursorQuery.Data(
+                                    page = 0,
+                                    cursorAnchor = Clock.System.now(),
+                                ),
+                                source = timeline.source,
+                            ),
                         ),
-                        source = timeline.source,
-                    ),
-                ),
-            )
-        },
-    ).map {
-        ListScreenStateHolders.Timeline(
-            noOpActionSuspendingStateMutator(it),
+                    )
+                },
+            ).map {
+                ListScreenStateHolders.Timeline(
+                    noOpActionSuspendingStateMutator(it),
+                )
+            }
+                .take(1),
         )
     }
-        .take(1),
-)
+}
 
 val State.timelineState
     get() = stateHolders
@@ -188,17 +190,19 @@ interface MemberState : TilingState<ListMemberQuery, ListMember> {
         @Transient
         override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
     ) : MemberState
-}
 
-fun MemberState(
-    signedInProfileId: ProfileId?,
-    listUri: ListUri,
-    tilingData: TilingState.Data<ListMemberQuery, ListMember>,
-): MemberState.Immutable = MemberState.Immutable(
-    signedInProfileId = signedInProfileId,
-    listUri = listUri,
-    tilingData = tilingData,
-)
+    companion object {
+        operator fun invoke(
+            signedInProfileId: ProfileId?,
+            listUri: ListUri,
+            tilingData: TilingState.Data<ListMemberQuery, ListMember>,
+        ): Immutable = Immutable(
+            signedInProfileId = signedInProfileId,
+            listUri = listUri,
+            tilingData = tilingData,
+        )
+    }
+}
 
 typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, MemberState.SnapshotMutable>
 

@@ -25,6 +25,8 @@ import com.tunjid.heron.scaffold.navigation.PersistedNavigationStateHolder
 import com.tunjid.heron.scaffold.notifications.AppNotificationStateHolder
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.notifications.Notifier
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.scaffold.scaffold.PredictiveBackContentTransformer
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
@@ -74,6 +76,10 @@ class ScaffoldBindings(
     @Provides
     fun videoPlayerController(): VideoPlayerController =
         args.videoPlayerController
+
+    @Provides
+    fun provideNavigationContentTransformer(): NavigationContentTransformer =
+        PredictiveBackContentTransformer()
 
     @SingleIn(AppScope::class)
     @Provides

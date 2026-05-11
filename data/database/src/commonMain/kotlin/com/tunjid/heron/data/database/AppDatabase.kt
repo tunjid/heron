@@ -55,6 +55,10 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
+import com.tunjid.heron.data.database.entities.RockskyArtistEntity
+import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
+import com.tunjid.heron.data.database.entities.RockskyTrackEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -76,6 +80,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCreatedAt
@@ -99,7 +104,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 40,
+    version = 42,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -114,6 +119,7 @@ import kotlinx.coroutines.IO
         PostThreadEntity::class,
         PostViewerStatisticsEntity::class,
         ProfileTabsEntity::class,
+        ProfileAtmosphereAppEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
         PostLikeEntity::class,
@@ -142,6 +148,10 @@ import kotlinx.coroutines.IO
         StandardPublicationEntity::class,
         StandardDocumentEntity::class,
         StandardSubscriptionEntity::class,
+        RockskyTrackEntity::class,
+        RockskyScrobbleEntity::class,
+        RockskyAlbumEntity::class,
+        RockskyArtistEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -224,6 +234,10 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 38, to = 39),
         // Add `via` column to posts and `pronouns` column to profiles
         AutoMigration(from = 39, to = 40),
+        // add RockSkyTrackEntity, RockSkyScrobbleEntity, RockSkyAlbumEntity and RockSkyArtistEntity
+        AutoMigration(from = 40, to = 41),
+        // Add ProfileAtmosphereAppEntity
+        AutoMigration(from = 41, to = 42),
     ],
     exportSchema = true,
 )

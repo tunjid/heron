@@ -61,6 +61,7 @@ include(
     ":data:lexicons",
     ":ui:tiling",
     ":scaffold",
+    ":feature:atmosphereapp",
     ":feature:auth",
     ":feature:compose",
     ":feature:conversation",

@@ -172,7 +172,7 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
  *   and produce the final [TiledList] that gets committed.
  */
 context(productionScope: CoroutineScope)
-inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.launchTilingMutations(
     isRefreshedOnNewItems: Boolean = true,
     state: State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
@@ -231,9 +231,9 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
             // Only emit once
             .distinctUntilChanged()
             .collectLatest { (queries, numColumns) ->
-                val backgroundDispatcher =
-                    currentCoroutineContext().requireStateProducingBackgroundDispatcher()
                 coroutineScope {
+                    val backgroundDispatcher =
+                        currentCoroutineContext().requireStateProducingBackgroundDispatcher()
                     // Refreshes need tear down the tiling pipeline all over
                     val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
                     queries.launchAndCollectWithState(startingState) { newQuery ->
@@ -265,7 +265,7 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                     }
                         .debounce { items ->
                             if (items.isEmpty()) 300.milliseconds
-                            else 0.milliseconds
+                            else 80.milliseconds
                         }
                         .flowOn(backgroundDispatcher)
                         .launchAndCollectLatestWithState(startingState) { items ->

@@ -62,25 +62,27 @@ interface State : TilingState<MessageQuery, MessageItem> {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    id = route.conversationId,
-    sharedElementPrefix = route.sharedElementPrefix,
-    members = route.models.filterIsInstance<Profile>(),
-    tilingData = TilingState.Data(
-        currentQuery = MessageQuery(
-            conversationId = route.conversationId,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15,
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            id = route.conversationId,
+            sharedElementPrefix = route.sharedElementPrefix,
+            members = route.models.filterIsInstance<Profile>(),
+            tilingData = TilingState.Data(
+                currentQuery = MessageQuery(
+                    conversationId = route.conversationId,
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                        limit = 15,
+                    ),
+                ),
             ),
-        ),
-    ),
-)
+        )
+    }
+}
 
 @Serializable
 sealed class SharedRecord {

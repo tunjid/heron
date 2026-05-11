@@ -51,6 +51,15 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
+
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            publication = route.model<StandardPublication>(),
+            sharedElementPrefix = route.sharedElementPrefix,
+        )
+    }
 }
 
 val State.isRefreshing: Boolean
@@ -58,13 +67,6 @@ val State.isRefreshing: Boolean
         ?.state
         ?.tilingData
         ?.status is TilingState.Status.Refreshing
-
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    publication = route.model<StandardPublication>(),
-    sharedElementPrefix = route.sharedElementPrefix,
-)
 
 typealias DocumentsStateHolder = ActionSuspendingStateMutator<TilingState.Action, DocumentsTilingState>
 
@@ -87,13 +89,15 @@ interface DocumentsTilingState : TilingState<StandardPublicationDocumentsQuery, 
             ),
         ),
     ) : DocumentsTilingState
-}
 
-fun DocumentsTilingState(
-    publicationUri: StandardPublicationUri,
-): DocumentsTilingState.Immutable = DocumentsTilingState.Immutable(
-    publicationUri = publicationUri,
-)
+    companion object {
+        operator fun invoke(
+            publicationUri: StandardPublicationUri,
+        ): Immutable = Immutable(
+            publicationUri = publicationUri,
+        )
+    }
+}
 
 sealed class Action(val key: String) {
 

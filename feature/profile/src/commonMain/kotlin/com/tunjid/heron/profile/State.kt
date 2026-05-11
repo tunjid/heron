@@ -17,7 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -68,15 +68,8 @@ import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
-import kotlin.collections.List
-import kotlin.collections.Map
 import kotlin.collections.any
-import kotlin.collections.emptyList
-import kotlin.collections.emptyMap
-import kotlin.collections.listOfNotNull
-import kotlin.collections.mapOf
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -97,6 +90,8 @@ interface State {
         val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
         val subscribedLabelers: Labelers = emptyList(),
         @Transient
+        val supportedApps: List<AtmosphereApp> = emptyList(),
+        @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
         val recentConversations: List<Conversation> = emptyList(),
@@ -109,16 +104,18 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(route: Route): State.Immutable = State.Immutable(
-    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-)
+    companion object {
+        operator fun invoke(route: Route): Immutable = Immutable(
+            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+            profile = route.model<Profile>() ?: stubProfile(
+                did = ProfileId(route.profileHandleOrId.id),
+                handle = ProfileHandle(route.profileHandleOrId.id),
+                avatar = null,
+            ),
+        )
+    }
+}
 
 val State.isSubscribedToLabeler
     get() = profile.isLabeler && subscribedLabelers.any { it.creator.did == profile.did }

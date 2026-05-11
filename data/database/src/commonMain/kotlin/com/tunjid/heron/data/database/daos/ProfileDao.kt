@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
+import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
@@ -219,5 +220,36 @@ interface ProfileDao {
     )
     suspend fun deleteBlock(
         uri: BlockUri,
+    )
+
+    @Query(
+        """
+            SELECT * FROM profileAtmosphereApps
+            WHERE profileId = :profileId
+            AND viewingProfileId = :viewingProfileId
+        """,
+    )
+    fun atmosphereApps(
+        profileId: String,
+        viewingProfileId: String,
+    ): Flow<List<ProfileAtmosphereAppEntity>>
+
+    @Upsert
+    suspend fun upsertProfileAtmosphereApps(
+        entities: List<ProfileAtmosphereAppEntity>,
+    )
+
+    @Query(
+        """
+            DELETE FROM profileAtmosphereApps
+            WHERE profileId = :profileId
+            AND viewingProfileId = :viewingProfileId
+            AND atmosphereAppId NOT IN (:keepAppIds)
+        """,
+    )
+    suspend fun deleteAtmosphereAppsExcept(
+        profileId: String,
+        viewingProfileId: String,
+        keepAppIds: List<String>,
     )
 }

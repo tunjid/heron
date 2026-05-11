@@ -60,41 +60,43 @@ data class State(
     val items: List<TimelineItem> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
-)
-
-fun State(route: Route): State {
-    val anchorPost = route.model<Post>()
-    return State(
-        anchorPost = anchorPost,
-        sharedElementPrefix = route.sharedElementPrefix,
-        source = route.model(),
-        timelinePosition = route.model(),
-        items = when (anchorPost) {
-            null -> TimelineItem.LoadingItems
-            else -> listOf(
-                TimelineItem.Threaded.Linear(
-                    id = anchorPost.uri.uri,
-                    anchorPostIndex = 0,
-                    nodes = listOf(
-                        TimelineItem.Threaded.Node(
-                            post = anchorPost,
-                            threadGate = null,
-                            appliedLabels = route.model<AppliedLabels>()
-                                ?: anchorPost.appliedLabels(
-                                    adultContentEnabled = false,
-                                    labelers = emptyList(),
-                                    labelPreferences = emptyList(),
+) {
+    companion object {
+        operator fun invoke(route: Route): State {
+            val anchorPost = route.model<Post>()
+            return State(
+                anchorPost = anchorPost,
+                sharedElementPrefix = route.sharedElementPrefix,
+                source = route.model(),
+                timelinePosition = route.model(),
+                items = when (anchorPost) {
+                    null -> TimelineItem.LoadingItems
+                    else -> listOf(
+                        TimelineItem.Threaded.Linear(
+                            id = anchorPost.uri.uri,
+                            anchorPostIndex = 0,
+                            nodes = listOf(
+                                TimelineItem.Threaded.Node(
+                                    post = anchorPost,
+                                    threadGate = null,
+                                    appliedLabels = route.model<AppliedLabels>()
+                                        ?: anchorPost.appliedLabels(
+                                            adultContentEnabled = false,
+                                            labelers = emptyList(),
+                                            labelPreferences = emptyList(),
+                                        ),
+                                    isMuted = false,
                                 ),
-                            isMuted = false,
+                            ),
+                            generation = 0,
+                            hasBreak = false,
+                            signedInProfileId = null,
                         ),
-                    ),
-                    generation = 0,
-                    hasBreak = false,
-                    signedInProfileId = null,
-                ),
+                    )
+                },
             )
-        },
-    )
+        }
+    }
 }
 
 sealed class Action(val key: String) {

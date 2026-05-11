@@ -78,6 +78,9 @@ const val BannerAspectRatio = 16f / 9
 const val AvatarLiveZIndex = 7f
 const val AvatarZIndex = 6f
 const val AvatarHaloZIndex = 5f
+
+const val AppLogoZIndex = 5f
+
 const val SurfaceZIndex = 4f
 const val BannerZIndex = 3f
 

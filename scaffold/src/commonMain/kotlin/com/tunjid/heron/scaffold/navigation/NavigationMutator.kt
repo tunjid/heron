@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
@@ -295,6 +296,20 @@ fun standardPublicationDestination(
         publication,
     ),
     sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
+fun atmosphereAppDestination(
+    profile: Profile,
+    app: AtmosphereApp,
+    avatarSharedElementKey: String? = null,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profile.did.id}/app/${app.id}",
+    models = listOfNotNull(
+        profile,
+        app,
+    ),
+    avatarSharedElementKey = avatarSharedElementKey,
     referringRouteOption = ReferringRouteOption.Current,
 )
 

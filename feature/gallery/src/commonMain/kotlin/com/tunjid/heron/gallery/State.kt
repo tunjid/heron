@@ -92,47 +92,49 @@ interface State {
         @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
-}
 
-fun State(
-    route: Route,
-): State.Immutable = State.Immutable(
-    viewedProfileId = route.profileId,
-    sharedElementPrefix = route.sharedElementPrefix,
-    cursorData = route.model<CursorQuery.Data>(),
-    items = tiledListOf(
-        DataQuery(
-            data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
-        ) to GalleryItem.Initial(
+    companion object {
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            viewedProfileId = route.profileId,
             sharedElementPrefix = route.sharedElementPrefix,
-            startIndex = route.startIndex,
-            threadGate = null,
-            viewerState = null,
-            media = route.model<Embed.Media>().toGalleryMedia(),
-            post = Post(
-                cid = Constants.unknownPostId,
-                uri = PostUri(
-                    route.profileId,
-                    route.postRecordKey,
+            cursorData = route.model<CursorQuery.Data>(),
+            items = tiledListOf(
+                DataQuery(
+                    data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
+                ) to GalleryItem.Initial(
+                    sharedElementPrefix = route.sharedElementPrefix,
+                    startIndex = route.startIndex,
+                    threadGate = null,
+                    viewerState = null,
+                    media = route.model<Embed.Media>().toGalleryMedia(),
+                    post = Post(
+                        cid = Constants.unknownPostId,
+                        uri = PostUri(
+                            route.profileId,
+                            route.postRecordKey,
+                        ),
+                        author = stubProfile(
+                            did = route.profileId,
+                            handle = ProfileHandle(route.profileId.id),
+                        ),
+                        replyCount = 0,
+                        repostCount = 0,
+                        likeCount = 0,
+                        quoteCount = 0,
+                        indexedAt = Instant.DISTANT_PAST,
+                        embed = null,
+                        record = null,
+                        viewerStats = null,
+                        labels = emptyList(),
+                        embeddedRecord = null,
+                    ),
                 ),
-                author = stubProfile(
-                    did = route.profileId,
-                    handle = ProfileHandle(route.profileId.id),
-                ),
-                replyCount = 0,
-                repostCount = 0,
-                likeCount = 0,
-                quoteCount = 0,
-                indexedAt = Instant.DISTANT_PAST,
-                embed = null,
-                record = null,
-                viewerStats = null,
-                labels = emptyList(),
-                embeddedRecord = null,
             ),
-        ),
-    ),
-)
+        )
+    }
+}
 
 val GalleryItem.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"

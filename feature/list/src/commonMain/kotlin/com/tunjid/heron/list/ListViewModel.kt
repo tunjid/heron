@@ -43,8 +43,8 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.list.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.isNoOp
@@ -98,15 +98,15 @@ class ActualListViewModel(
         initialState = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
-            signedInProfileIdMutations(
+            launchSignedInProfileIdMutations(
                 state = state,
                 authRepository = authRepository,
             )
-            loadPreferencesMutations(
+            launchLoadPreferencesMutations(
                 state = state,
                 userDataRepository = userDataRepository,
             )
-            timelineStateHolderMutations(
+            launchTimelineStateHolderMutations(
                 state = state,
                 request = route.timelineRequest,
                 viewModelScope = scope,
@@ -127,52 +127,52 @@ class ActualListViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations(state)
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateFeedListStatus -> action.flow.feedListStatusMutations(
+                    is Action.UpdateFeedListStatus -> action.flow.launchFeedListStatusMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
+                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
+                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
                         state = state,
                         messageRepository = messageRepository,
                     )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
                     )
-                    is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.AddListMember -> action.flow.addListMemberMutations(
+                    is Action.AddListMember -> action.flow.launchAddListMemberMutations(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.SearchProfiles -> action.flow.searchMutations(
+                    is Action.SearchProfiles -> action.flow.launchSearchMutations(
                         state = state,
                         searchRepository = searchRepository,
                     )
@@ -186,7 +186,7 @@ class ActualListViewModel(
     )
 
 context(productionScope: CoroutineScope)
-private fun signedInProfileIdMutations(
+private fun launchSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
@@ -194,7 +194,7 @@ private fun signedInProfileIdMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
     state: State.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = launchAndCollectLatest {
@@ -204,7 +204,7 @@ private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun loadPreferencesMutations(
+private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
@@ -212,7 +212,7 @@ private fun loadPreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private suspend fun timelineStateHolderMutations(
+private suspend fun launchTimelineStateHolderMutations(
     state: State.SnapshotMutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,
@@ -225,12 +225,12 @@ private suspend fun timelineStateHolderMutations(
         .takeUnless { it?.mutator.isNoOp() }
 
     if (existingHolder != null) {
-        listStatusMutations(
+        launchListStatusMutations(
             state = state,
             timeline = existingHolder.state.timeline,
             timelineRepository = timelineRepository,
         )
-        timelineCreatorMutations(
+        launchTimelineCreatorMutations(
             state = state,
             timeline = existingHolder.state.timeline,
             profileRepository = profileRepository,
@@ -251,13 +251,14 @@ private suspend fun timelineStateHolderMutations(
         ),
     )
     state.stateHolders = listOf(createdHolder) + state.stateHolders
+        .filterIsInstance<ListScreenStateHolders.Members>()
 
-    listStatusMutations(
+    launchListStatusMutations(
         state = state,
         timeline = timeline,
         timelineRepository = timelineRepository,
     )
-    timelineCreatorMutations(
+    launchTimelineCreatorMutations(
         state = state,
         timeline = timeline,
         profileRepository = profileRepository,
@@ -302,7 +303,7 @@ private suspend fun listMemberStateHolderMutations(
                 authRepository.signedInUser.launchAndCollect {
                     memberState.signedInProfileId = it?.did
                 }
-                actions.tilingMutations(
+                actions.launchTilingMutations(
                     state = memberState,
                     updateQueryData = { copy(data = it) },
                     refreshQuery = { copy(data = data.reset()) },
@@ -314,11 +315,12 @@ private suspend fun listMemberStateHolderMutations(
             },
         ),
     )
-    state.stateHolders += createdHolder
+    state.stateHolders = state.stateHolders
+        .filterIsInstance<ListScreenStateHolders.Timeline>() + createdHolder
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -330,7 +332,7 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -348,7 +350,7 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.AddListMember>.addListMemberMutations(
+private fun Flow<Action.AddListMember>.launchAddListMemberMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -367,7 +369,7 @@ private fun Flow<Action.AddListMember>.addListMemberMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.BlockAccount>.blockAccountMutations(
+private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -386,7 +388,7 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.MuteAccount>.muteAccountMutations(
+private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -405,7 +407,7 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -417,7 +419,7 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SearchProfiles>.searchMutations(
+private fun Flow<Action.SearchProfiles>.launchSearchMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) = debounce(SEARCH_DEBOUNCE_MILLIS).launchAndCollectLatest { action ->
@@ -442,7 +444,7 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
@@ -466,7 +468,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
     )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
+private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -478,7 +480,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateFeedListStatus>.feedListStatusMutations(
+private fun Flow<Action.UpdateFeedListStatus>.launchFeedListStatusMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
@@ -490,7 +492,7 @@ private fun Flow<Action.UpdateFeedListStatus>.feedListStatusMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = launchAndCollectLatest {
@@ -500,7 +502,7 @@ private fun Flow<Action.UpdateRecentLists>.recentListsMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun listStatusMutations(
+private fun launchListStatusMutations(
     state: State.SnapshotMutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
@@ -522,7 +524,7 @@ private fun listStatusMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun timelineCreatorMutations(
+private fun launchTimelineCreatorMutations(
     state: State.SnapshotMutable,
     timeline: Timeline,
     profileRepository: ProfileRepository,
