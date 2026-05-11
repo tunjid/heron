@@ -16,10 +16,8 @@
 
 package com.tunjid.heron.profiles.di
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -34,9 +32,9 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -197,9 +195,11 @@ class ProfilesBindings(
     fun provideBlocksPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -208,9 +208,11 @@ class ProfilesBindings(
     fun provideMutesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -219,9 +221,11 @@ class ProfilesBindings(
     fun providePostLikesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -230,9 +234,11 @@ class ProfilesBindings(
     fun providePostRepostsPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -241,9 +247,11 @@ class ProfilesBindings(
     fun provideProfileFollowersPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     @Provides
@@ -252,16 +260,19 @@ class ProfilesBindings(
     fun provideProfileFollowingPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
+        contentTransform = navigationContentTransformer::contentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

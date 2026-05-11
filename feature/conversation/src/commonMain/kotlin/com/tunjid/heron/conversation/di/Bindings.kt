@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -43,11 +42,11 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.bottomNavigationSharedBounds
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -110,14 +109,17 @@ class ConversationBindings(
     @StringKey(RoutePattern)
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
+        contentTransform = navigationContentTransformer::contentTransform,
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,

@@ -47,15 +47,19 @@ fun Modifier.predictiveBackPlacement(
         )
 }
 
-fun predictiveBackContentTransformProvider(): PaneScope<ThreePane, *>.() -> ContentTransform =
-    PredictiveBackContentTransformProvider()::contentTransform
-
-private class PredictiveBackContentTransformProvider {
-    private val previewedRouteIds = mutableSetOf<String>()
-
+interface NavigationContentTransformer {
     fun contentTransform(
         scope: PaneScope<ThreePane, *>,
+    ): ContentTransform
+}
+
+internal class PredictiveBackContentTransformer : NavigationContentTransformer {
+    private val previewedRouteIds = mutableSetOf<String>()
+
+    override fun contentTransform(
+        scope: PaneScope<ThreePane, *>,
     ): ContentTransform = with(scope) {
+        println(previewedRouteIds)
         val routeId = paneState.currentDestination?.id
         val wasPreviewed = routeId in previewedRouteIds
 

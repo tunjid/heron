@@ -48,6 +48,7 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -56,7 +57,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -117,14 +117,17 @@ class HomeBindings(
     @StringKey(RoutePattern)
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         viewModelInitializer = viewModelInitializer,
+        navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
+        navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
+        contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
             val viewModel = viewModel<ActualHomeViewModel> {
                 viewModelInitializer.invoke(
