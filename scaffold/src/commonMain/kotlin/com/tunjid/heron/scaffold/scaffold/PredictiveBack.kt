@@ -59,7 +59,6 @@ internal class PredictiveBackContentTransformer : NavigationContentTransformer {
     override fun contentTransform(
         scope: PaneScope<ThreePane, *>,
     ): ContentTransform = with(scope) {
-        println(previewedRouteIds)
         val routeId = paneState.currentDestination?.id
         val wasPreviewed = routeId in previewedRouteIds
 
