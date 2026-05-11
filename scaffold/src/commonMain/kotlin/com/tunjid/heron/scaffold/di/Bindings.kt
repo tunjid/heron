@@ -77,7 +77,6 @@ class ScaffoldBindings(
     fun videoPlayerController(): VideoPlayerController =
         args.videoPlayerController
 
-    @SingleIn(AppScope::class)
     @Provides
     fun provideNavigationContentTransformer(): NavigationContentTransformer =
         PredictiveBackContentTransformer()
