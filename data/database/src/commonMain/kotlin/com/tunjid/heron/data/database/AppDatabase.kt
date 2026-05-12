@@ -263,7 +263,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
-    abstract fun rockSkyDao(): RockskyDao
+    abstract fun rockskyDao(): RockskyDao
     abstract fun databaseCleanupDao(): DatabaseCleanupDao
 }
 

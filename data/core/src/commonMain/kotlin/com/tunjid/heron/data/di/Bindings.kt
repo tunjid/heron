@@ -360,9 +360,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideRockSkyDao(
+    fun provideRockskyDao(
         database: AppDatabase,
-    ): RockskyDao = database.rockSkyDao()
+    ): RockskyDao = database.rockskyDao()
 
     @SingleIn(AppScope::class)
     @Provides
