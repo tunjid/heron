@@ -19,10 +19,10 @@ package com.tunjid.heron.atmosphereapp
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
-import com.tunjid.heron.data.core.models.RockSkyAlbum
-import com.tunjid.heron.data.core.models.RockSkyArtist
-import com.tunjid.heron.data.core.models.RockSkyScrobble
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyAlbum
+import com.tunjid.heron.data.core.models.RockskyArtist
+import com.tunjid.heron.data.core.models.RockskyScrobble
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -215,7 +215,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_albums,
-                    itemId = RockSkyAlbum::cid,
+                    itemId = RockskyAlbum::cid,
                     cursorListLoader = recordRepository::albums,
                 ),
             ),
@@ -224,7 +224,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_tracks,
-                    itemId = RockSkyTrack::cid,
+                    itemId = RockskyTrack::cid,
                     cursorListLoader = recordRepository::tracks,
                 ),
             ),
@@ -233,7 +233,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_artists,
-                    itemId = RockSkyArtist::uri,
+                    itemId = RockskyArtist::uri,
                     cursorListLoader = recordRepository::artists,
                 ),
             ),
@@ -242,7 +242,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_scrobbles,
-                    itemId = RockSkyScrobble::cid,
+                    itemId = RockskyScrobble::cid,
                     cursorListLoader = recordRepository::scrobbles,
                 ),
             ),

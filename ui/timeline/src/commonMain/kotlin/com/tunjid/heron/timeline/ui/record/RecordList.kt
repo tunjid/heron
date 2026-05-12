@@ -47,10 +47,10 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.RockSkyAlbum
-import com.tunjid.heron.data.core.models.RockSkyArtist
-import com.tunjid.heron.data.core.models.RockSkyScrobble
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyAlbum
+import com.tunjid.heron.data.core.models.RockskyArtist
+import com.tunjid.heron.data.core.models.RockskyScrobble
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
@@ -161,10 +161,10 @@ internal val KClass<out Record>.emptyTitleRes: StringResource
         FeedList::class -> Res.string.empty_records_lists
         StandardDocument::class -> Res.string.empty_records_documents
         StandardPublication::class -> Res.string.empty_records_publications
-        RockSkyAlbum::class -> Res.string.empty_records_albums
-        RockSkyTrack::class -> Res.string.empty_records_tracks
-        RockSkyArtist::class -> Res.string.empty_records_artists
-        RockSkyScrobble::class -> Res.string.empty_records_scrobbles
+        RockskyAlbum::class -> Res.string.empty_records_albums
+        RockskyTrack::class -> Res.string.empty_records_tracks
+        RockskyArtist::class -> Res.string.empty_records_artists
+        RockskyScrobble::class -> Res.string.empty_records_scrobbles
         else -> Res.string.empty_records
     }
 
@@ -176,10 +176,10 @@ internal val KClass<out Record>.emptyDescriptionRes: StringResource
         FeedList::class -> Res.string.empty_records_lists_description
         StandardDocument::class -> Res.string.empty_records_documents_description
         StandardPublication::class -> Res.string.empty_records_publications_description
-        RockSkyAlbum::class -> Res.string.empty_records_albums_description
-        RockSkyTrack::class -> Res.string.empty_records_tracks_description
-        RockSkyArtist::class -> Res.string.empty_records_artists_description
-        RockSkyScrobble::class -> Res.string.empty_records_scrobbles_description
+        RockskyAlbum::class -> Res.string.empty_records_albums_description
+        RockskyTrack::class -> Res.string.empty_records_tracks_description
+        RockskyArtist::class -> Res.string.empty_records_artists_description
+        RockskyScrobble::class -> Res.string.empty_records_scrobbles_description
         else -> Res.string.empty_records_description
     }
 
@@ -191,9 +191,9 @@ internal val KClass<out Record>.emptyIcon: ImageVector
         FeedList::class -> Icons.AutoMirrored.Rounded.List
         StandardDocument::class -> Icons.AutoMirrored.Rounded.Article
         StandardPublication::class -> Icons.Rounded.Public
-        RockSkyAlbum::class -> Icons.Rounded.Album
-        RockSkyTrack::class -> Icons.Rounded.MusicNote
-        RockSkyArtist::class -> Icons.Rounded.Mic
-        RockSkyScrobble::class -> Icons.Rounded.History
+        RockskyAlbum::class -> Icons.Rounded.Album
+        RockskyTrack::class -> Icons.Rounded.MusicNote
+        RockskyArtist::class -> Icons.Rounded.Mic
+        RockskyScrobble::class -> Icons.Rounded.History
         else -> Icons.Rounded.Inbox
     }

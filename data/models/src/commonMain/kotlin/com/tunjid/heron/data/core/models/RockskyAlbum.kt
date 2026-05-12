@@ -1,30 +1,28 @@
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.AlbumId
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.TrackId
-import com.tunjid.heron.data.core.types.TrackUri
-import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RockSkyTrack(
-    val cid: TrackId,
+data class RockskyAlbum(
+    val cid: AlbumId,
+    val uri: AlbumUri,
     val title: String,
     val artist: String,
-    val albumArtist: String?,
-    val album: String?,
+    val releaseDate: String?,
+    val year: Int?,
     val albumArt: ImageUri?,
-    val trackNumber: Int?,
-    val discNumber: Int?,
-    val duration: Long?,
-    val uri: TrackUri,
-    val albumUri: AlbumUri?,
     val artistUri: ArtistUri?,
-    val createdAt: Instant?,
-    val playCount: Long? = null,
-    val uniqueListeners: Long? = null,
+    val playCount: Long?,
+    val uniqueListeners: Long?,
+    val tracks: List<RockskyTrack> = emptyList(),
+    val appleMusicLink: String? = null,
+    val spotifyLink: String? = null,
+    val tidalLink: String? = null,
+    val youtubeLink: String? = null,
 ) : Record {
 
     override val reference: Record.Reference =
