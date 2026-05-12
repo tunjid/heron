@@ -38,12 +38,12 @@ interface RockskyDao {
         entities: List<RockskyScrobbleEntity>,
     )
 
-    @Transaction
     @Query(
         """
-        SELECT * FROM rockskyAlbums
-        WHERE creatorId = :profileId
-        LIMIT :limit OFFSET :offset
+    SELECT * FROM rockskyAlbums
+    WHERE creatorId = :profileId
+    ORDER BY title ASC
+    LIMIT :limit OFFSET :offset
     """,
     )
     fun albums(
@@ -54,9 +54,10 @@ interface RockskyDao {
 
     @Query(
         """
-        SELECT * FROM rockskyTracks
-        WHERE creatorId = :profileId
-        LIMIT :limit OFFSET :offset
+    SELECT * FROM rockskyTracks
+    WHERE creatorId = :profileId
+    ORDER BY title ASC
+    LIMIT :limit OFFSET :offset
     """,
     )
     fun tracks(
@@ -67,9 +68,10 @@ interface RockskyDao {
 
     @Query(
         """
-        SELECT * FROM rockskyArtists
-        WHERE creatorId = :profileId
-        LIMIT :limit OFFSET :offset
+    SELECT * FROM rockskyArtists
+    WHERE creatorId = :profileId
+    ORDER BY name ASC
+    LIMIT :limit OFFSET :offset
     """,
     )
     fun artists(
