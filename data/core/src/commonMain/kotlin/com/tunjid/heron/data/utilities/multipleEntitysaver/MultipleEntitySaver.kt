@@ -26,6 +26,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.RockskyDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -46,6 +47,10 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
+import com.tunjid.heron.data.database.entities.RockskyArtistEntity
+import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
+import com.tunjid.heron.data.database.entities.RockskyTrackEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -93,6 +98,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
+    private val rockSkyDao: RockskyDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -111,6 +117,7 @@ class MultipleEntitySaverProvider @Inject constructor(
             messageDao = messageDao,
             threadGateDao = threadGateDao,
             standardSiteDao = standardSiteDao,
+            rockSkyDao = rockSkyDao,
         ).apply {
             block()
             flushPendingOperations()
@@ -134,6 +141,7 @@ internal class MultipleEntitySaver(
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
+    private val rockSkyDao: RockskyDao,
 ) {
     private val timelineItemEntities = LazyList<TimelineItemEntity>()
 
@@ -207,6 +215,11 @@ internal class MultipleEntitySaver(
     private val standardDocumentEntities = LazyList<StandardDocumentEntity>()
     private val standardSubscriptionEntities = LazyList<StandardSubscriptionEntity>()
     private val standardSubscriptionDeletions = LazyList<StandardSubscriptionEntity.Deletion>()
+
+    private val rockSkyAlbumEntities = LazyList<RockskyAlbumEntity>()
+    private val rockSkyArtistEntities = LazyList<RockskyArtistEntity>()
+    private val rockSkyTrackEntities = LazyList<RockskyTrackEntity>()
+    private val rockSkyScrobbleEntities = LazyList<RockskyScrobbleEntity>()
 
     /**
      * Flushes all queued entities to the database.
@@ -403,6 +416,19 @@ internal class MultipleEntitySaver(
             standardSiteDao.deleteSubscriptions(standardSubscriptionDeletions.list)
         }
 
+        if (rockSkyArtistEntities.isNotEmpty) {
+            rockSkyDao.upsertArtists(rockSkyArtistEntities.list)
+        }
+        if (rockSkyAlbumEntities.isNotEmpty) {
+            rockSkyDao.upsertAlbums(rockSkyAlbumEntities.list)
+        }
+        if (rockSkyScrobbleEntities.isNotEmpty) {
+            rockSkyDao.upsertScrobbles(rockSkyScrobbleEntities.list)
+        }
+        if (rockSkyTrackEntities.isNotEmpty) {
+            rockSkyDao.upsertTracks(rockSkyTrackEntities.list)
+        }
+
         if (threadGateEntities.isNotEmpty) {
             threadGateDao.upsertThreadGates(threadGateEntities.list)
             val threadGateUris = threadGateEntities.list.map(
@@ -507,6 +533,11 @@ internal class MultipleEntitySaver(
     fun add(entity: StandardSubscriptionEntity) = standardSubscriptionEntities.add(entity)
 
     fun remove(entity: StandardSubscriptionEntity.Deletion) = standardSubscriptionDeletions.add(entity)
+
+    fun add(entity: RockskyAlbumEntity) = rockSkyAlbumEntities.add(entity)
+    fun add(entity: RockskyTrackEntity) = rockSkyTrackEntities.add(entity)
+    fun add(entity: RockskyScrobbleEntity) = rockSkyScrobbleEntities.add(entity)
+    fun add(entity: RockskyArtistEntity) = rockSkyArtistEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
