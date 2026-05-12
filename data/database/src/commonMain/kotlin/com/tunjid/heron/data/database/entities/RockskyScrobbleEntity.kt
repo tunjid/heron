@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockskyScrobble
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
@@ -51,6 +51,7 @@ import kotlin.time.Instant
     indices = [
         Index(value = ["uri"]),
         Index(value = ["did"]),
+        Index(value = ["creatorId"]),
         Index(value = ["trackUri"]),
         Index(value = ["artistUri"]),
         Index(value = ["albumUri"]),
@@ -61,6 +62,7 @@ data class RockskyScrobbleEntity(
     @PrimaryKey
     val uri: ScrobbleUri,
     val cid: ScrobbleId,
+    val creatorId: ProfileId,
     val trackId: TrackId,
     val title: String,
     val artist: String,
@@ -76,7 +78,7 @@ data class RockskyScrobbleEntity(
     val createdAt: Instant,
 )
 
-fun RockskyScrobbleEntity.asExternalModel() = RockSkyScrobble(
+fun RockskyScrobbleEntity.asExternalModel() = RockskyScrobble(
     cid = cid,
     trackId = trackId,
     title = title,

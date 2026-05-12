@@ -4,10 +4,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 import kotlin.time.Instant
@@ -32,6 +33,7 @@ import kotlin.time.Instant
     ],
     indices = [
         Index(value = ["uri"]),
+        Index(value = ["creatorId"]),
         Index(value = ["albumUri"]),
         Index(value = ["artistUri"]),
         Index(value = ["createdAt"]),
@@ -41,6 +43,7 @@ data class RockskyTrackEntity(
     @PrimaryKey
     val uri: TrackUri,
     val cid: TrackId,
+    val creatorId: ProfileId,
     val title: String,
     val artist: String,
     val albumArtist: String?,
@@ -56,7 +59,7 @@ data class RockskyTrackEntity(
     val uniqueListeners: Long?,
 )
 
-fun RockskyTrackEntity.asExternalModel() = RockSkyTrack(
+fun RockskyTrackEntity.asExternalModel() = RockskyTrack(
     cid = cid,
     title = title,
     artist = artist,
