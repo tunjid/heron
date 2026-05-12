@@ -98,7 +98,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
-    private val rockSkyDao: RockskyDao,
+    private val rockskyDao: RockskyDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -117,7 +117,7 @@ class MultipleEntitySaverProvider @Inject constructor(
             messageDao = messageDao,
             threadGateDao = threadGateDao,
             standardSiteDao = standardSiteDao,
-            rockSkyDao = rockSkyDao,
+            rockskyDao = rockskyDao,
         ).apply {
             block()
             flushPendingOperations()
@@ -141,7 +141,7 @@ internal class MultipleEntitySaver(
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
-    private val rockSkyDao: RockskyDao,
+    private val rockskyDao: RockskyDao,
 ) {
     private val timelineItemEntities = LazyList<TimelineItemEntity>()
 
@@ -216,10 +216,10 @@ internal class MultipleEntitySaver(
     private val standardSubscriptionEntities = LazyList<StandardSubscriptionEntity>()
     private val standardSubscriptionDeletions = LazyList<StandardSubscriptionEntity.Deletion>()
 
-    private val rockSkyAlbumEntities = LazyList<RockskyAlbumEntity>()
-    private val rockSkyArtistEntities = LazyList<RockskyArtistEntity>()
-    private val rockSkyTrackEntities = LazyList<RockskyTrackEntity>()
-    private val rockSkyScrobbleEntities = LazyList<RockskyScrobbleEntity>()
+    private val rockskyAlbumEntities = LazyList<RockskyAlbumEntity>()
+    private val rockskyArtistEntities = LazyList<RockskyArtistEntity>()
+    private val rockskyTrackEntities = LazyList<RockskyTrackEntity>()
+    private val rockskyScrobbleEntities = LazyList<RockskyScrobbleEntity>()
 
     /**
      * Flushes all queued entities to the database.
@@ -416,17 +416,17 @@ internal class MultipleEntitySaver(
             standardSiteDao.deleteSubscriptions(standardSubscriptionDeletions.list)
         }
 
-        if (rockSkyArtistEntities.isNotEmpty) {
-            rockSkyDao.upsertArtists(rockSkyArtistEntities.list)
+        if (rockskyArtistEntities.isNotEmpty) {
+            rockskyDao.upsertArtists(rockskyArtistEntities.list)
         }
-        if (rockSkyAlbumEntities.isNotEmpty) {
-            rockSkyDao.upsertAlbums(rockSkyAlbumEntities.list)
+        if (rockskyAlbumEntities.isNotEmpty) {
+            rockskyDao.upsertAlbums(rockskyAlbumEntities.list)
         }
-        if (rockSkyScrobbleEntities.isNotEmpty) {
-            rockSkyDao.upsertScrobbles(rockSkyScrobbleEntities.list)
+        if (rockskyScrobbleEntities.isNotEmpty) {
+            rockskyDao.upsertScrobbles(rockskyScrobbleEntities.list)
         }
-        if (rockSkyTrackEntities.isNotEmpty) {
-            rockSkyDao.upsertTracks(rockSkyTrackEntities.list)
+        if (rockskyTrackEntities.isNotEmpty) {
+            rockskyDao.upsertTracks(rockskyTrackEntities.list)
         }
 
         if (threadGateEntities.isNotEmpty) {
@@ -534,10 +534,10 @@ internal class MultipleEntitySaver(
 
     fun remove(entity: StandardSubscriptionEntity.Deletion) = standardSubscriptionDeletions.add(entity)
 
-    fun add(entity: RockskyAlbumEntity) = rockSkyAlbumEntities.add(entity)
-    fun add(entity: RockskyTrackEntity) = rockSkyTrackEntities.add(entity)
-    fun add(entity: RockskyScrobbleEntity) = rockSkyScrobbleEntities.add(entity)
-    fun add(entity: RockskyArtistEntity) = rockSkyArtistEntities.add(entity)
+    fun add(entity: RockskyAlbumEntity) = rockskyAlbumEntities.add(entity)
+    fun add(entity: RockskyTrackEntity) = rockskyTrackEntities.add(entity)
+    fun add(entity: RockskyScrobbleEntity) = rockskyScrobbleEntities.add(entity)
+    fun add(entity: RockskyArtistEntity) = rockskyArtistEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
