@@ -31,9 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -50,6 +48,7 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -168,7 +167,6 @@ private fun Documents(
     paneScaffoldState: PaneScaffoldState,
 ) {
     val state = holder.produceStateWithLifecycle()
-    val items by rememberUpdatedState(state.tilingData.items)
     val gridState = rememberLazyStaggeredGridState()
 
     LazyVerticalStaggeredGrid(
@@ -190,7 +188,7 @@ private fun Documents(
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
         items(
-            items = items,
+            items = state.tiledItems,
             key = { it.uri.uri },
             itemContent = { document ->
                 val uriHandler = LocalUriHandler.current
@@ -215,7 +213,7 @@ private fun Documents(
         )
     }
     gridState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             holder.accept(
                 TilingState.Action.LoadAround(

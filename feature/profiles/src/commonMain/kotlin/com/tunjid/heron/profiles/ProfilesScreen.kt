@@ -24,8 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
@@ -48,8 +46,6 @@ internal fun ProfilesScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val items by rememberUpdatedState(state.tiledItems)
-    val signedInProfileId by rememberUpdatedState(state.signedInProfileId)
     LazyColumn(
         modifier = modifier
             .padding(horizontal = 8.dp)
@@ -64,7 +60,7 @@ internal fun ProfilesScreen(
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
         items(
-            items = items,
+            items = state.tiledItems,
             key = { it.profile.did.id },
             itemContent = { item ->
                 val onProfileClicked = { profile: Profile ->
@@ -89,7 +85,7 @@ internal fun ProfilesScreen(
                         .padding(horizontal = 4.dp)
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
-                    signedInProfileId = signedInProfileId,
+                    signedInProfileId = state.signedInProfileId,
                     profile = item.profile,
                     viewerState = item.viewerState,
                     profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
@@ -112,7 +108,7 @@ internal fun ProfilesScreen(
     }
 
     listState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(

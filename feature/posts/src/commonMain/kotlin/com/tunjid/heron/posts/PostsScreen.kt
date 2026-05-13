@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
@@ -57,6 +56,7 @@ import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
@@ -91,7 +91,6 @@ internal fun PostsScreen(
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val items by rememberUpdatedState(state.tilingData.items)
     val density = LocalDensity.current
     val now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
@@ -173,7 +172,7 @@ internal fun PostsScreen(
                     )
 
                 is PostOption.ThreadGate ->
-                    items.firstOrNull { it.post.uri == option.postUri }
+                    state.tiledItems.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockAccount ->
@@ -242,7 +241,7 @@ internal fun PostsScreen(
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
-                    items = items,
+                    items = state.tiledItems,
                     key = TimelineItem::id,
                     itemContent = { item ->
                         TimelineItem(
@@ -369,11 +368,11 @@ internal fun PostsScreen(
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,
-            itemsAvailable = items.size,
+            itemsAvailable = state.tiledItems.size,
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
+            state.tiledItems.getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
@@ -383,7 +382,7 @@ internal fun PostsScreen(
     }
 
     gridState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(

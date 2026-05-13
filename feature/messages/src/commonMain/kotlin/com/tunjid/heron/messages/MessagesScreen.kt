@@ -34,9 +34,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +75,6 @@ internal fun MessagesScreen(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val items by rememberUpdatedState(state.tiledItems)
 
     Box(
         modifier = modifier,
@@ -93,7 +90,7 @@ internal fun MessagesScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             items(
-                items = items,
+                items = state.tiledItems,
                 key = { it.id.id },
                 itemContent = { conversation ->
                     Conversation(
@@ -139,7 +136,7 @@ internal fun MessagesScreen(
     }
 
     listState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
