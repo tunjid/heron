@@ -6,11 +6,13 @@ import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.RockskyArtistEntity
+import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
     creatorId: ProfileId,
     artistView: ArtistView,
 ) {
+    add(stubProfileEntity(Did(creatorId.id)))
     add(
         RockskyArtistEntity(
             uri = ArtistUri(artistView.uri.atUri),

@@ -8,11 +8,13 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.database.entities.RockskyTrackEntity
+import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
     creatorId: ProfileId,
     trackView: TrackView,
 ) {
+    add(stubProfileEntity(Did(creatorId.id)))
     add(
         RockskyTrackEntity(
             uri = TrackUri(trackView.uri.atUri),

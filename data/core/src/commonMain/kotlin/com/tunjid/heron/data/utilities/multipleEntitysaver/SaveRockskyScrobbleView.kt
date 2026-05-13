@@ -11,11 +11,13 @@ import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
+import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
     creatorId: ProfileId,
     scrobbleView: ScrobbleView,
 ) {
+    add(stubProfileEntity(Did(creatorId.id)))
     add(
         RockskyScrobbleEntity(
             uri = ScrobbleUri(scrobbleView.uri.atUri),
