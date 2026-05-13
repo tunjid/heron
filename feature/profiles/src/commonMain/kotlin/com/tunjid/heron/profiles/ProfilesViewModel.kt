@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profiles
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -58,6 +59,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualProfilesViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualProfilesViewModel(
     navActions: (NavigationMutation) -> Unit,

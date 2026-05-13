@@ -17,7 +17,6 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
@@ -43,15 +42,18 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
+import kotlin.collections.List
+import kotlin.collections.emptyList
+import kotlin.collections.filterIsInstance
+import kotlin.collections.firstOrNull
+import kotlin.collections.listOfNotNull
+import kotlin.collections.map
+import kotlin.collections.take
 import kotlin.time.Clock
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -142,13 +144,16 @@ val State.timelineState
         .firstOrNull()
         ?.state
 
+@Stable
 sealed class ListScreenStateHolders {
 
+    @Stable
     class Members(
         val mutator: MembersStateHolder,
     ) : ListScreenStateHolders(),
         MembersStateHolder by mutator
 
+    @Stable
     class Timeline(
         val mutator: TimelineStateHolder,
     ) : ListScreenStateHolders(),

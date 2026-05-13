@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.feed
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -65,6 +66,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualFeedViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,

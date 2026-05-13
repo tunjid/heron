@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.list
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -78,6 +79,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualListViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualListViewModel(
     navActions: (NavigationMutation) -> Unit,

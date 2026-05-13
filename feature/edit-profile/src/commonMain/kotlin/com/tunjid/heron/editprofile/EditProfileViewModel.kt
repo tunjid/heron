@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.editprofile
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
@@ -67,6 +68,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualEditProfileViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualEditProfileViewModel(
     authRepository: AuthRepository,
