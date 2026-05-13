@@ -33,6 +33,7 @@ import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.listTiler
+import com.tunjid.tiler.queryAtOrNull
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
@@ -270,8 +271,8 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                             )
                     }
                         .debounce { items ->
-                            if (items.isEmpty()) 1.seconds
-                            else 500.milliseconds
+                            if (items.isEmpty()) 800.milliseconds
+                            else 200.milliseconds
                         }
                         .flowOn(backgroundDispatcher)
                         .launchAndCollectLatestWithState(startingState) { items ->
