@@ -49,7 +49,6 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -57,7 +56,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
-import com.tunjid.treenav.strings.toRouteTrie
+import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -96,21 +95,21 @@ private val Route.profileId by mappedRoutePath(
 
 private val Route.publicationUriSuffix by routePath()
 
-private val RequestTrie = mapOf(
-    PathPattern(StandardPublicationRoutePattern) to { route: Route ->
+private val RequestTrie = trieOf(
+    StandardPublicationRoutePattern to { route: Route ->
         PublicationRequest.WithProfile(
             profileHandleOrId = route.profileId,
             publicationUriSuffix = route.publicationUriSuffix,
         )
     },
-    PathPattern(StandardPublicationUriRoutePattern) to { route: Route ->
+    StandardPublicationUriRoutePattern to { route: Route ->
         PublicationRequest.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::StandardPublicationUri),
         )
     },
-).toRouteTrie()
+)
 
 internal val Route.publicationRequest: PublicationRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)

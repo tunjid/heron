@@ -51,14 +51,13 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.toRouteTrie
+import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -85,14 +84,14 @@ private val Route.feedGeneratorRecordKey by mappedRoutePath(
     mapper = ::RecordKey,
 )
 
-private val RequestTrie = mapOf(
-    PathPattern(RoutePattern) to {
+private val RequestTrie = trieOf(
+    RoutePattern to {
         null
     },
-    PathPattern(EditPattern) to { route: Route ->
+    EditPattern to { route: Route ->
         Action.Update.InitialLoad(route.feedGeneratorRecordKey)
     },
-).toRouteTrie()
+)
 
 internal val Route.initialLoad: Action.Update?
     get() = checkNotNull(RequestTrie[this]).invoke(this)
