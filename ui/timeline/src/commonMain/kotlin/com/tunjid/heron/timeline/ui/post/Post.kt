@@ -94,6 +94,7 @@ import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_words_post_hidden
 import heron.ui.timeline.generated.resources.sensitive_media
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.time.TimeSource
@@ -747,7 +748,7 @@ private fun rememberUpdatedPostData(
         languageTag = languageTag,
     )
 }.also {
-    if (it.presentation != presentation) it.presentationChanged = true
+    if (it.presentation != presentation) it.onPresentationChanged()
     it.postActions = postActions
     it.paneTransitionScope = paneTransitionScope
     it.presentationLookaheadScope = presentationLookaheadScope
@@ -803,7 +804,6 @@ private class PostData(
     var createdAt by mutableStateOf(created)
     var languageTag by mutableStateOf(languageTag)
 
-    var presentationChanged by mutableStateOf(false)
     var selectedLabel by mutableStateOf<Label?>(null)
 
     var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
@@ -812,9 +812,15 @@ private class PostData(
     // Stop bounds transform from running on first composition as it causes
     // a jelly scroll.
     private val createdTime = TimeSource.Monotonic.markNow()
+    private var elapsedAtPresentationChange by mutableStateOf<Duration?>(null)
+
     val delayedBoundsTransform = BoundsTransform { initial, target ->
+        val changedAt = elapsedAtPresentationChange ?: return@BoundsTransform BoundsSnapSpec
         val elapsed = createdTime.elapsedNow()
-        if (elapsed < BoundsTransformDelay) BoundsSnapSpec
+        val diff = elapsed - changedAt
+
+        val canAnimate = diff.isPositive() && diff < BoundsTransformDelay
+        if (diff.isPositive() && diff < BoundsTransformDelay) BoundsSnapSpec
         else paneTransitionScope.childBoundsTransform.createAnimationSpec(
             initial,
             target,
@@ -832,6 +838,10 @@ private class PostData(
     fun sharedElementKey(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
+
+    fun onPresentationChanged() {
+        elapsedAtPresentationChange = createdTime.elapsedNow()
+    }
 }
 
 private val PostData.textBlurred: Boolean
