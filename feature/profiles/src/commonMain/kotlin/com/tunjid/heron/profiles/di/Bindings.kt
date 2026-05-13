@@ -43,14 +43,13 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.toRouteTrie
+import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -74,36 +73,36 @@ private const val PostRepostsPattern =
 private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/followers"
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
-private val LoadTrie = mapOf(
-    PathPattern(BlockedProfilesPattern) to {
+private val LoadTrie = trieOf(
+    BlockedProfilesPattern to {
         Load.Moderation.Blocks
     },
-    PathPattern(MutedProfilesPattern) to {
+    MutedProfilesPattern to {
         Load.Moderation.Mutes
     },
-    PathPattern(PostLikesPattern) to { route: Route ->
+    PostLikesPattern to { route: Route ->
         Load.Post.Likes(
             route.postRecordKey,
             route.profileHandleOrId,
         )
     },
-    PathPattern(PostRepostsPattern) to { route: Route ->
+    PostRepostsPattern to { route: Route ->
         Load.Post.Reposts(
             route.postRecordKey,
             route.profileHandleOrId,
         )
     },
-    PathPattern(ProfileFollowersPattern) to { route: Route ->
+    ProfileFollowersPattern to { route: Route ->
         Load.Profile.Followers(
             route.profileHandleOrId,
         )
     },
-    PathPattern(ProfileFollowingPattern) to { route: Route ->
+    ProfileFollowingPattern to { route: Route ->
         Load.Profile.Following(
             route.profileHandleOrId,
         )
     },
-).toRouteTrie()
+)
 
 internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
