@@ -123,37 +123,45 @@ val State.isSubscribedToLabeler
 @Stable
 sealed class ProfileScreenStateHolders {
 
+    @Stable
     sealed class Records<T : Record>(
         private val mutator: RecordStateHolder<T>,
     ) : ProfileScreenStateHolders(),
         RecordStateHolder<T> by mutator {
 
+        @Stable
         class Feeds(
             mutator: RecordStateHolder<FeedGenerator>,
         ) : Records<FeedGenerator>(mutator)
 
+        @Stable
         class Lists(
             mutator: RecordStateHolder<FeedList>,
         ) : Records<FeedList>(mutator)
 
+        @Stable
         class StarterPacks(
             mutator: RecordStateHolder<StarterPack>,
         ) : Records<StarterPack>(mutator)
 
+        @Stable
         class Documents(
             mutator: RecordStateHolder<StandardDocument>,
         ) : Records<StandardDocument>(mutator)
 
+        @Stable
         class Publications(
             mutator: RecordStateHolder<StandardPublication>,
         ) : Records<StandardPublication>(mutator)
     }
 
+    @Stable
     class Timeline(
         private val mutator: TimelineStateHolder,
     ) : ProfileScreenStateHolders(),
         TimelineStateHolder by mutator
 
+    @Stable
     class LabelerSettings(
         private val mutator: LabelerSettingsStateHolder,
     ) : ProfileScreenStateHolders(),
