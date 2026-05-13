@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -93,6 +94,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualProfileViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualProfileViewModel(
     authRepository: AuthRepository,

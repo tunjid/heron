@@ -120,6 +120,7 @@ interface State {
 val State.isSubscribedToLabeler
     get() = profile.isLabeler && subscribedLabelers.any { it.creator.did == profile.did }
 
+@Stable
 sealed class ProfileScreenStateHolders {
 
     sealed class Records<T : Record>(

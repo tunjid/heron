@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
@@ -76,6 +77,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualGalleryViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,

@@ -17,6 +17,7 @@
 package com.tunjid.heron.editprofile
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -168,6 +169,7 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
     selectedProfileTabs = tabsToSave.takeUnless(List<ProfileTab>::isEmpty),
 )
 
+@Stable
 sealed class EditProfileScreenTabs(
     val stringResource: StringResource,
 ) {
@@ -179,6 +181,7 @@ sealed class EditProfileScreenTabs(
         stringResource = Res.string.tab_profile_tabs,
     )
 
+    @Stable
     class Feeds(
         val mutator: RecordStateHolder<FeedGenerator>,
     ) : EditProfileScreenTabs(

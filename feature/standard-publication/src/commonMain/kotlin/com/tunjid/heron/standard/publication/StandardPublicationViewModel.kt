@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.standard.publication
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -58,6 +59,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualStandardPublicationViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualStandardPublicationViewModel(
     navActions: (NavigationMutation) -> Unit,

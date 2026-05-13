@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -79,6 +80,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): SearchViewModel
 }
 
+@Stable
 @AssistedInject
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,

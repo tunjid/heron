@@ -86,42 +86,52 @@ interface State {
 
 internal typealias AtmosphereAppStateHolder = ActionSuspendingStateMutator<Action, State>
 
+@Stable
 sealed class AppScreenStateHolders {
 
+    @Stable
     sealed class Records<T : Record>(
         private val mutator: RecordStateHolder<T>,
     ) : AppScreenStateHolders(),
         RecordStateHolder<T> by mutator
 
+    @Stable
     sealed class StandardSite<T : Record>(
         mutator: RecordStateHolder<T>,
     ) : Records<T>(mutator) {
 
+        @Stable
         class Documents(
             mutator: RecordStateHolder<StandardDocument>,
         ) : StandardSite<StandardDocument>(mutator)
 
+        @Stable
         class Publications(
             mutator: RecordStateHolder<StandardPublication>,
         ) : StandardSite<StandardPublication>(mutator)
     }
 
+    @Stable
     sealed class Rocksky<T : Record>(
         mutator: RecordStateHolder<T>,
     ) : Records<T>(mutator) {
 
+        @Stable
         class Albums(
             mutator: RecordStateHolder<RockSkyAlbum>,
         ) : Rocksky<RockSkyAlbum>(mutator)
 
+        @Stable
         class Tracks(
             mutator: RecordStateHolder<RockSkyTrack>,
         ) : Rocksky<RockSkyTrack>(mutator)
 
+        @Stable
         class Artists(
             mutator: RecordStateHolder<RockSkyArtist>,
         ) : Rocksky<RockSkyArtist>(mutator)
 
+        @Stable
         class Scrobbles(
             mutator: RecordStateHolder<RockSkyScrobble>,
         ) : Rocksky<RockSkyScrobble>(mutator)
