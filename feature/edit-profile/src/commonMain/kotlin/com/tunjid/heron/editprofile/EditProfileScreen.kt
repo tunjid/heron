@@ -42,10 +42,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -188,8 +186,7 @@ internal fun EditProfileScreen(
                             )
                         }
                     }
-                    val updatedTabs by rememberUpdatedState(state.tabs)
-                    val pagerState = rememberPagerState { updatedTabs.size }
+                    val pagerState = rememberPagerState { state.tabs.size }
                     Column(
                         modifier = Modifier
                             .background(surfaceColor),
@@ -199,12 +196,12 @@ internal fun EditProfileScreen(
                                 .screenHorizontalPadding()
                                 .padding(vertical = 24.dp),
                             pagerState = pagerState,
-                            tabs = rememberEditProfileTabs(updatedTabs),
+                            tabs = rememberEditProfileTabs(state.tabs),
                         )
                         HorizontalPager(
                             state = pagerState,
                             pageContent = { page ->
-                                when (val tab = updatedTabs[page]) {
+                                when (val tab = state.tabs[page]) {
                                     EditProfileScreenTabs.Bio -> ProfileBio(
                                         modifier = Modifier
                                             .screenHorizontalPadding(),
