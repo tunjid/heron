@@ -74,7 +74,7 @@ class ActualProfilesViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadSignedInProfileIdMutations(

@@ -77,7 +77,7 @@ class ActualNotificationsViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     NotificationsStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLastRefreshedMutations(

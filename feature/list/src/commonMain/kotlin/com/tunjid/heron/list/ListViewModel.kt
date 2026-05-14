@@ -97,7 +97,7 @@ class ActualListViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ListStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchSignedInProfileIdMutations(
@@ -290,7 +290,7 @@ private suspend fun listMemberStateHolderMutations(
 
     val createdHolder = ListScreenStateHolders.Members(
         mutator = viewModelScope.actionSuspendingStateMutator(
-            initialState = MemberState(
+            state = MemberState(
                 signedInProfileId = null,
                 listUri = timeline.feedList.uri,
                 tilingData = TilingState.Data(

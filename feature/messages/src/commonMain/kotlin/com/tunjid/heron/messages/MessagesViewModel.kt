@@ -86,7 +86,7 @@ class ActualMessagesViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     MessagesStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadProfileMutations(

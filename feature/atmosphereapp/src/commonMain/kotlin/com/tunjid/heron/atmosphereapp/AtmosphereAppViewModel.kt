@@ -84,7 +84,7 @@ class ActualAtmosphereAppViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     AtmosphereAppStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchProfileLoadMutations(
