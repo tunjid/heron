@@ -72,7 +72,7 @@ class ActualStandardPublicationViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     StandardPublicationStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchPublicationMutations(
@@ -164,7 +164,7 @@ private fun CoroutineScope.documentsStateHolder(
     publicationUri: StandardPublicationUri,
     recordRepository: RecordRepository,
 ): DocumentsStateHolder = actionSuspendingStateMutator(
-    initialState = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
+    state = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     producer = { state, actions ->
         actions.launchTilingMutations(

@@ -83,7 +83,7 @@ class ActualEditProfileViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     EditProfileStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadProfileMutations(

@@ -97,7 +97,7 @@ class SearchViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     SearchStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State.Immutable(
+        state = State.Immutable(
             currentQuery = route.query,
             isQueryEditable = route.query.isBlank(),
             layout = when {
@@ -618,7 +618,7 @@ private fun CoroutineScope.searchStateHolder(
     searchRepository: SearchRepository,
 ): SearchResultStateHolder? = when (searchState) {
     is SearchState.OfPosts -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
@@ -654,7 +654,7 @@ private fun CoroutineScope.searchStateHolder(
     )
 
     is SearchState.OfProfiles -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
@@ -675,7 +675,7 @@ private fun CoroutineScope.searchStateHolder(
     )
 
     is SearchState.OfFeedGenerators -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }

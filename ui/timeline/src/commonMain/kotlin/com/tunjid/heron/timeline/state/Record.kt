@@ -65,7 +65,7 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
         ),
     )
     return actionSuspendingStateMutator<TilingState.Action, RecordState<T>>(
-        initialState = state,
+        state = state,
         producer = { state, actions ->
             actions.launchTilingMutations<ProfilesQuery, T, RecordState<T>>(
                 state = state,

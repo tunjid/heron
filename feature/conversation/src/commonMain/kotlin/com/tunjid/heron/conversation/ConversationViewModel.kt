@@ -91,7 +91,7 @@ class ActualConversationViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ConversationStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadProfileMutations(

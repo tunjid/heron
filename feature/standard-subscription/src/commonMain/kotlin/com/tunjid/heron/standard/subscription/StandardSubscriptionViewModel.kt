@@ -65,7 +65,7 @@ class ActualStandardSubscriptionViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             actions.launchMutationsIn(

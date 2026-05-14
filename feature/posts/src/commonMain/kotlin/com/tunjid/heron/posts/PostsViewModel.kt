@@ -78,7 +78,7 @@ class ActualPostsViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     PostsStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route.postsRequest).toSnapshotMutable(),
+        state = State(route.postsRequest).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadPreferencesMutations(

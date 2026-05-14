@@ -87,7 +87,7 @@ class ActualHomeViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     HomeStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchTimelineMutations(

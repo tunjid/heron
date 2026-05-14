@@ -112,7 +112,7 @@ fun CoroutineScope.timelineStateHolder(
         ),
     )
     return actionSuspendingStateMutator(
-        initialState = TimelineState.SnapshotMutable(
+        state = TimelineState.SnapshotMutable(
             timeline = timeline,
             hasUpdates = false,
             tilingData = TilingState.Data(
