@@ -79,7 +79,7 @@ class ScaffoldBindings(
 
     @Provides
     fun provideNavigationContentTransformer(): NavigationContentTransformer =
-        PredictiveBackContentTransformer()
+        PredictiveBackContentTransformer
 
     @SingleIn(AppScope::class)
     @Provides

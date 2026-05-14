@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.Adaptation
+import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
@@ -85,7 +86,10 @@ fun PaneScaffoldState.PaneNavigationBar(
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
                 renderInOverlay = {
-                    isActive && isTransitionActive && !sharedContentState.isMatchFound
+                    isActive &&
+                        isTransitionActive &&
+                        !sharedContentState.isMatchFound &&
+                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
                 },
             ),
         visible = canShowNavigationBar,

@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.treenav.compose.NavigationEventStatus
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -116,7 +117,9 @@ fun PaneScaffoldState.PaneFab(
                 renderInOverlay = {
                     val isVisible = transition.targetState == EnterExitState.Visible
                     val isVisibleInPredictiveBack = isVisible && inPredictiveBack
-                    (isVisibleInPredictiveBack || isActive) && !sharedContentState.isMatchFound
+                    (isVisibleInPredictiveBack || isActive) &&
+                        !sharedContentState.isMatchFound &&
+                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
                 },
             )
             .constrainedSizePlacement(
