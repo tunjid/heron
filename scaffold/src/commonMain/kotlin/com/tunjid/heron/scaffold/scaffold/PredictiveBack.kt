@@ -18,15 +18,16 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.heron.ui.modifiers.animatedRoundedCornerClip
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.adaptTo
@@ -53,16 +54,13 @@ interface NavigationContentTransformer {
     ): ContentTransform
 }
 
-internal class PredictiveBackContentTransformer : NavigationContentTransformer {
-    private val previewedRouteIds = mutableSetOf<String>()
-
+@Stable
+internal object PredictiveBackContentTransformer : NavigationContentTransformer {
     override fun contentTransform(
         scope: PaneScope<ThreePane, *>,
     ): ContentTransform = with(scope) {
-        val routeId = paneState.currentDestination?.id
-        val wasPreviewed = routeId in previewedRouteIds
-
-        val isStillVisible = wasPreviewed && isActive
+        val isStillVisible = isActive &&
+            navigationEventStatus is NavigationEventStatus.Completed.Cancelled
 
         ContentTransform(
             targetContentEnter =
@@ -71,19 +69,11 @@ internal class PredictiveBackContentTransformer : NavigationContentTransformer {
                 animationSpec = NavigationAnimationSpec,
             ),
             initialContentExit =
-            if (isStillVisible) ExitTransition.None
-            else fadeOut(
+            fadeOut(
                 animationSpec = NavigationAnimationSpec,
                 targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
             ),
         ).adaptTo(paneScope = this)
-            .also {
-                if (wasPreviewed) previewedRouteIds.remove(routeId)
-                else if (!isActive && inPredictiveBack && routeId != null) {
-                    previewedRouteIds.clear()
-                    previewedRouteIds.add(routeId)
-                }
-            }
     }
 }
 

@@ -124,8 +124,6 @@ class DragToPopState private constructor(
         if (dismissOffset.getDistanceSquared() > dismissThresholdSquared()) {
             channel.trySend(NavigationEventStatus.Completed.Commited)
         } else {
-            channel.trySend(NavigationEventStatus.Completed.Cancelled)
-
             resetAnimationJob = scope.launch {
                 Animatable(
                     initialValue = dismissOffset,
@@ -133,6 +131,7 @@ class DragToPopState private constructor(
                 ).animateTo(Offset.Zero) {
                     dismissOffset = value
                 }
+                channel.trySend(NavigationEventStatus.Completed.Cancelled)
             }
         }
     }
