@@ -110,7 +110,10 @@ internal fun dotSeparatedText(
     preText != null -> preText
     postText != null -> {
         val postTextColor = MaterialTheme.colorScheme.outline
-        remember(postText) {
+        remember(
+            key1 = postText,
+            key2 = postTextColor,
+        ) {
             buildAnnotatedString {
                 withStyle(
                     style = SpanStyle(

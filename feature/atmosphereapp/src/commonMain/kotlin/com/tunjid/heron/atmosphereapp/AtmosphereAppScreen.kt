@@ -201,7 +201,6 @@ internal fun AtmosphereAppScreen(
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.uri.uri },
                             itemContent = { album ->
-                                val uriHandler = LocalUriHandler.current
                                 RockskyAlbum(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -255,12 +254,10 @@ internal fun AtmosphereAppScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .shapedClickable {
-                                            runCatching {
-                                                uriHandler.openRockskyLink(
-                                                    recordUri = artist.uri,
-                                                    collection = "artist",
-                                                )
-                                            }
+                                            uriHandler.openRockskyLink(
+                                                recordUri = artist.uri,
+                                                collection = "artist",
+                                            )
                                         }
                                         .padding(8.dp)
                                         .animateItem(),
