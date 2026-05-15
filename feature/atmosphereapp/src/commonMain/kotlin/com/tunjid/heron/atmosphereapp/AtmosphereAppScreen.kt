@@ -29,13 +29,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.ui.AtmosphereAppHeader
 import com.tunjid.heron.data.core.models.link
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -103,6 +107,7 @@ internal fun AtmosphereAppScreen(
             )
         },
         body = {
+            val uriHandler = LocalUriHandler.current
             HorizontalPager(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -115,7 +120,6 @@ internal fun AtmosphereAppScreen(
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
                             itemKey = { it.uri.uri },
                             itemContent = { document ->
-                                val uriHandler = LocalUriHandler.current
                                 Document(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -195,12 +199,17 @@ internal fun AtmosphereAppScreen(
                         is AppScreenStateHolders.Rocksky.Albums -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.cid.id },
+                            itemKey = { it.uri.uri },
                             itemContent = { album ->
-                                val uriHandler = LocalUriHandler.current
                                 RockskyAlbum(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .shapedClickable {
+                                            uriHandler.openRockskyLink(
+                                                recordUri = album.uri,
+                                                collection = "album",
+                                            )
+                                        }
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
@@ -217,11 +226,17 @@ internal fun AtmosphereAppScreen(
                         is AppScreenStateHolders.Rocksky.Tracks -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.cid.id },
+                            itemKey = { it.uri.uri },
                             itemContent = { track ->
                                 RockskyTrack(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .shapedClickable {
+                                            uriHandler.openRockskyLink(
+                                                recordUri = track.uri,
+                                                collection = "song",
+                                            )
+                                        }
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
@@ -233,11 +248,17 @@ internal fun AtmosphereAppScreen(
                         is AppScreenStateHolders.Rocksky.Artists -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.cid.id },
+                            itemKey = { it.uri.uri },
                             itemContent = { artist ->
                                 RockskyArtist(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .shapedClickable {
+                                            uriHandler.openRockskyLink(
+                                                recordUri = artist.uri,
+                                                collection = "artist",
+                                            )
+                                        }
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
@@ -249,11 +270,17 @@ internal fun AtmosphereAppScreen(
                         is AppScreenStateHolders.Rocksky.Scrobbles -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                            itemKey = { it.cid.id },
+                            itemKey = { it.uri.uri },
                             itemContent = { scrobble ->
                                 RockskyScrobble(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .shapedClickable {
+                                            uriHandler.openRockskyLink(
+                                                recordUri = scrobble.uri,
+                                                collection = "scrobble",
+                                            )
+                                        }
                                         .padding(8.dp)
                                         .animateItem(),
                                     paneTransitionScope = paneScaffoldState,
@@ -273,6 +300,17 @@ internal fun AtmosphereAppScreen(
         }.collect { page ->
             actions(Action.PageChanged(page))
         }
+    }
+}
+
+private fun UriHandler.openRockskyLink(
+    recordUri: RecordUri,
+    collection: String,
+) {
+    runCatching {
+        openUri(
+            "https://rocksky.app/${recordUri.profileId().id}/$collection/${recordUri.recordKey.value}",
+        )
     }
 }
 

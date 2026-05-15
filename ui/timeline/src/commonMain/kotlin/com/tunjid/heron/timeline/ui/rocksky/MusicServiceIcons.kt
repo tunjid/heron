@@ -17,10 +17,14 @@
 package com.tunjid.heron.timeline.ui.rocksky
 
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.images.AsyncImage
@@ -76,4 +80,50 @@ internal fun MusicServiceIcon(
             )
         },
     )
+}
+
+@Composable
+internal fun dotSeparatedText(
+    preText: String?,
+    postText: String?,
+): CharSequence? = when {
+    preText != null && postText != null -> {
+        val postTextColor = MaterialTheme.colorScheme.outline
+        remember(
+            key1 = preText,
+            key2 = postText,
+            key3 = postTextColor,
+        ) {
+            buildAnnotatedString {
+                append(preText)
+                withStyle(
+                    style = SpanStyle(
+                        color = postTextColor,
+                    ),
+                ) {
+                    append(" · ")
+                    append(postText)
+                }
+            }
+        }
+    }
+    preText != null -> preText
+    postText != null -> {
+        val postTextColor = MaterialTheme.colorScheme.outline
+        remember(
+            key1 = postText,
+            key2 = postTextColor,
+        ) {
+            buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        color = postTextColor,
+                    ),
+                ) {
+                    append(postText)
+                }
+            }
+        }
+    }
+    else -> null
 }

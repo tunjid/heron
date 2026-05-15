@@ -42,8 +42,11 @@ fun RockskyTrack(
             Res.string.track_by,
             track.artist,
         ),
-        description = track.album,
-        blurb = trackBlurb(track),
+        description = dotSeparatedText(
+            preText = track.album,
+            postText = trackBlurb(track),
+        ),
+        blurb = null,
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = track.uri,
         avatar = {

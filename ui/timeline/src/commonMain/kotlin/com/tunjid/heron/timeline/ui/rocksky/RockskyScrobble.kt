@@ -24,6 +24,7 @@ import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.scrobbled_ago
 import heron.ui.timeline.generated.resources.scrobbled_by
 import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
@@ -42,10 +43,16 @@ fun RockskyScrobble(
         subtitle = scrobble.handle
             ?.let { stringResource(Res.string.scrobbled_by, it.id) }
             ?: scrobble.artist,
-        description = scrobble.album,
-        blurb = remember(scrobble.createdAt) {
-            (Clock.System.now() - scrobble.createdAt).roundComponent()
-        },
+        description = dotSeparatedText(
+            preText = scrobble.album,
+            postText = stringResource(
+                Res.string.scrobbled_ago,
+                remember(scrobble.createdAt) {
+                    (Clock.System.now() - scrobble.createdAt).roundComponent()
+                },
+            ),
+        ),
+        blurb = null,
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = scrobble.uri,
         avatar = {
