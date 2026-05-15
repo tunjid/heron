@@ -62,12 +62,12 @@ internal object PredictiveBackContentTransformer : NavigationContentTransformer 
             targetContentEnter =
             fadeIn(
                 animationSpec = NavigationAnimationSpec,
-                initialAlpha = if (isStillVisible) Opaque else FullAlpha,
+                initialAlpha = if (isStillVisible) Opaque else Transparent,
             ),
             initialContentExit =
             fadeOut(
                 animationSpec = NavigationAnimationSpec,
-                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
+                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else Transparent,
             ),
         )
     }
@@ -86,5 +86,5 @@ private val PaneScope<ThreePane, *>.isStillVisible: Boolean
 private val NavigationAnimationSpec = tween<Float>(400)
 
 private const val PredictiveBackTargetAlpha = 0.9f
-private const val FullAlpha = 0f
+private const val Transparent = 0f
 private const val Opaque = 1f
