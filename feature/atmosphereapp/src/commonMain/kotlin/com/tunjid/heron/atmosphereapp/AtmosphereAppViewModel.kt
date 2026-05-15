@@ -215,7 +215,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_scrobbles,
-                    itemId = RockskyScrobble::cid,
+                    itemId = RockskyScrobble::uri,
                     cursorListLoader = recordRepository::scrobbles,
                 ),
             ),
@@ -233,7 +233,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_tracks,
-                    itemId = RockskyTrack::cid,
+                    itemId = RockskyTrack::uri,
                     cursorListLoader = recordRepository::tracks,
                 ),
             ),
@@ -242,7 +242,7 @@ private fun stateHoldersFor(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
                     stringResource = Res.string.tab_albums,
-                    itemId = RockskyAlbum::cid,
+                    itemId = RockskyAlbum::uri,
                     cursorListLoader = recordRepository::albums,
                 ),
             ),
