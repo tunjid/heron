@@ -417,16 +417,16 @@ internal class MultipleEntitySaver(
         }
 
         if (rockskyArtistEntities.isNotEmpty) {
-            rockskyDao.upsertArtists(rockskyArtistEntities.list)
+            rockskyDao.insertOrPartiallyUpdateArtists(rockskyArtistEntities.list)
         }
         if (rockskyAlbumEntities.isNotEmpty) {
-            rockskyDao.upsertAlbums(rockskyAlbumEntities.list)
-        }
-        if (rockskyScrobbleEntities.isNotEmpty) {
-            rockskyDao.upsertScrobbles(rockskyScrobbleEntities.list)
+            rockskyDao.insertOrPartiallyUpdateAlbums(rockskyAlbumEntities.list)
         }
         if (rockskyTrackEntities.isNotEmpty) {
-            rockskyDao.upsertTracks(rockskyTrackEntities.list)
+            rockskyDao.insertOrPartiallyUpdateTracks(rockskyTrackEntities.list)
+        }
+        if (rockskyScrobbleEntities.isNotEmpty) {
+            rockskyDao.insertOrPartiallyUpdateScrobbles(rockskyScrobbleEntities.list)
         }
 
         if (threadGateEntities.isNotEmpty) {

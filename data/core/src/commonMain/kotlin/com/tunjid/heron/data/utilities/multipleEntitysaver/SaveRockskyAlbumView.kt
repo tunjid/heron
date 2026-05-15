@@ -14,6 +14,18 @@ internal fun MultipleEntitySaver.add(
     albumView: AlbumView,
 ) {
     add(stubProfileEntity(Did(creatorId.id)))
+
+    val artistUri = ArtistUri(albumView.artistUri.atUri)
+    val albumArt = albumView.albumArt?.let { ImageUri(it.uri) }
+
+    add(
+        stubRockskyArtistEntity(
+            uri = artistUri,
+            creatorId = creatorId,
+            name = albumView.artist,
+        ),
+    )
+
     add(
         RockskyAlbumEntity(
             uri = AlbumUri(albumView.uri.atUri),
@@ -23,8 +35,8 @@ internal fun MultipleEntitySaver.add(
             artist = albumView.artist,
             releaseDate = albumView.releaseDate,
             year = albumView.year?.toInt(),
-            albumArt = albumView.albumArt?.let { ImageUri(it.uri) },
-            artistUri = ArtistUri(albumView.artistUri.atUri),
+            albumArt = albumArt,
+            artistUri = artistUri,
             playCount = albumView.playCount,
             uniqueListeners = albumView.uniqueListeners,
             appleMusicLink = albumView.appleMusicLink?.uri,
