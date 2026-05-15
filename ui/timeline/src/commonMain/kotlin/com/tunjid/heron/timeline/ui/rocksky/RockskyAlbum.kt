@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,8 @@ import com.tunjid.heron.ui.RecordLayout
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.album_by
 import heron.ui.timeline.generated.resources.played_n_times
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.parseOrNull
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -57,13 +60,21 @@ fun RockskyAlbum(
                 Res.string.album_by,
                 album.artist,
             ),
-            description = album.releaseDate ?: album.year?.toString(),
-            blurb = album.playCount?.let { count ->
-                stringResource(
-                    Res.string.played_n_times,
-                    format(count),
-                )
-            },
+            description = dotSeparatedText(
+                preText = remember(album.releaseDate) {
+                    album.releaseDate
+                        ?.let(LocalDate::parseOrNull)
+                        ?.year
+                        ?.toString()
+                } ?: album.year?.toString(),
+                postText = album.playCount?.let { count ->
+                    stringResource(
+                        Res.string.played_n_times,
+                        format(count),
+                    )
+                },
+            ),
+            blurb = null,
             sharedElementPrefix = sharedElementPrefix,
             sharedElementType = album.uri,
             avatar = {

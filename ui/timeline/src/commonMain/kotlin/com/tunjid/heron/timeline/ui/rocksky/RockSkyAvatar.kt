@@ -28,7 +28,6 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.RockSkyCollectionShape
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.ui.PaneTransitionScope
 
 @Composable
@@ -37,7 +36,7 @@ internal fun PaneTransitionScope.RockSkyAvatar(
     uri: RecordUri,
     sharedElementPrefix: String?,
 ) {
-    val resolved = image.orDefault
+    val resolved = image?.uri ?: "https://rocksky.app/favicon.ico"
     PaneStickySharedElement(
         modifier = Modifier
             .size(44.dp),
@@ -50,7 +49,7 @@ internal fun PaneTransitionScope.RockSkyAvatar(
                 .fillParentAxisIfFixedOrWrap(),
             args = remember(resolved) {
                 ImageArgs(
-                    url = resolved.uri,
+                    url = resolved,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                     shape = RockSkyCollectionShape,

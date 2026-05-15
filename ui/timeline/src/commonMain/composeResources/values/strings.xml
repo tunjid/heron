@@ -52,6 +52,7 @@
     <string name="track_by">Track by %1$s</string>
     <string name="artist_subtitle">Artist</string>
     <string name="scrobbled_by">Scrobbled by %1$s</string>
+    <string name="scrobbled_ago">%1$s ago</string>
     <string name="played_n_times">%1$s plays</string>
     <string name="n_listeners">%1$s listeners</string>
     <string name="apple_music">Apple Music</string>
@@ -123,6 +124,8 @@
     <string name="post_replies_all">Everybody can reply</string>
     <string name="post_replies_some">Some people can reply</string>
     <string name="post_replies_none">Replies Disabled</string>
+
+
     <string name="writable_duplicate_post_interaction">Your %1$s for this post is processing.</string>
     <string name="writable_failed_post_interaction">Cannot process this action on this post right now.</string>
     <string name="writable_duplicate">Your %1$s is processing.</string>

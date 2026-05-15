@@ -210,22 +210,13 @@ private fun stateHoldersFor(
             ),
     )
     AtmosphereApp.RockskyId -> listOf(
-        existingHolders[AlbumUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Albums(
+        existingHolders[ScrobbleUri.NAMESPACE]
+            ?: AppScreenStateHolders.Rocksky.Scrobbles(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
-                    stringResource = Res.string.tab_albums,
-                    itemId = RockskyAlbum::cid,
-                    cursorListLoader = recordRepository::albums,
-                ),
-            ),
-        existingHolders[TrackUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Tracks(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_tracks,
-                    itemId = RockskyTrack::cid,
-                    cursorListLoader = recordRepository::tracks,
+                    stringResource = Res.string.tab_scrobbles,
+                    itemId = RockskyScrobble::cid,
+                    cursorListLoader = recordRepository::scrobbles,
                 ),
             ),
         existingHolders[ArtistUri.NAMESPACE]
@@ -237,13 +228,22 @@ private fun stateHoldersFor(
                     cursorListLoader = recordRepository::artists,
                 ),
             ),
-        existingHolders[ScrobbleUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Scrobbles(
+        existingHolders[TrackUri.NAMESPACE]
+            ?: AppScreenStateHolders.Rocksky.Tracks(
                 mutator = viewModelScope.recordStateHolder(
                     profileId = profileId,
-                    stringResource = Res.string.tab_scrobbles,
-                    itemId = RockskyScrobble::cid,
-                    cursorListLoader = recordRepository::scrobbles,
+                    stringResource = Res.string.tab_tracks,
+                    itemId = RockskyTrack::cid,
+                    cursorListLoader = recordRepository::tracks,
+                ),
+            ),
+        existingHolders[AlbumUri.NAMESPACE]
+            ?: AppScreenStateHolders.Rocksky.Albums(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_albums,
+                    itemId = RockskyAlbum::cid,
+                    cursorListLoader = recordRepository::albums,
                 ),
             ),
     )

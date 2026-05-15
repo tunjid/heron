@@ -24,7 +24,10 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,7 +40,7 @@ fun RecordLayout(
     paneTransitionScope: PaneTransitionScope,
     title: String,
     subtitle: String,
-    description: String?,
+    description: CharSequence?,
     blurb: String?,
     sharedElementPrefix: String?,
     sharedElementType: RecordUri,
@@ -80,7 +83,7 @@ fun RecordLayout(
             },
             action = action,
         )
-        description.takeUnless(String?::isNullOrEmpty)?.let {
+        description.takeUnless(CharSequence?::isNullOrEmpty)?.let {
             RecordText(
                 text = it,
             )
@@ -125,12 +128,18 @@ fun RecordSubtitle(
 
 @Composable
 fun RecordText(
-    text: String,
+    text: CharSequence,
     modifier: Modifier = Modifier,
 ) {
     Text(
         modifier = modifier,
-        text = rememberFormattedTextPost(text),
+        text = when (text) {
+            is String -> rememberFormattedTextPost(text)
+            is AnnotatedString -> text
+            else -> remember(text) {
+                buildAnnotatedString { append(text) }
+            }
+        },
         style = MaterialTheme.typography.bodySmall,
         maxLines = 3,
         overflow = TextOverflow.Ellipsis,
