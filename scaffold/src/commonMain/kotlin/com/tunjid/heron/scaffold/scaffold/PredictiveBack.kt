@@ -17,7 +17,6 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,10 +26,10 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.backpreview.backPreview
 import com.tunjid.heron.ui.modifiers.animatedRoundedCornerClip
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.adaptTo
 
 fun Modifier.predictiveBackPlacement(
     paneScaffoldState: PaneScaffoldState,
@@ -59,25 +58,33 @@ internal object PredictiveBackContentTransformer : NavigationContentTransformer 
     override fun contentTransform(
         scope: PaneScope<ThreePane, *>,
     ): ContentTransform = with(scope) {
-        val isStillVisible = isActive &&
-            navigationEventStatus is NavigationEventStatus.Completed.Cancelled
-
         ContentTransform(
             targetContentEnter =
-            if (isStillVisible) EnterTransition.None
-            else fadeIn(
+            fadeIn(
                 animationSpec = NavigationAnimationSpec,
+                initialAlpha = if (isStillVisible) Opaque else Transparent,
             ),
             initialContentExit =
             fadeOut(
                 animationSpec = NavigationAnimationSpec,
-                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
+                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else Transparent,
             ),
-        ).adaptTo(paneScope = this)
+        )
     }
 }
 
-private val NavigationAnimationSpec = tween<Float>(700)
+private val PaneScope<ThreePane, *>.isStillVisible: Boolean
+    get() {
+        if (!isActive) return false
+        return navigationEventStatus is NavigationEventStatus.Completed.Cancelled ||
+            paneState.adaptations.any { adaptation ->
+                adaptation is Adaptation.Same ||
+                    (adaptation is Adaptation.Swap<*> && adaptation.to == paneState.pane)
+            }
+    }
+
+private val NavigationAnimationSpec = tween<Float>(400)
 
 private const val PredictiveBackTargetAlpha = 0.9f
-private const val FullAlpha = 0f
+private const val Transparent = 0f
+private const val Opaque = 1f
