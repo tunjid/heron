@@ -214,6 +214,7 @@ internal fun GalleryScreen(
 
             canPop@{ delta ->
                 commentsState.collapse()
+                if (pagerState.isScrollInProgress) return@canPop false
 
                 // Already dragging, continue
                 if (isDraggingToPop) return@canPop true
