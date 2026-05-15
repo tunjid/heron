@@ -22,10 +22,10 @@ import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.RockSkyAlbum
-import com.tunjid.heron.data.core.models.RockSkyArtist
-import com.tunjid.heron.data.core.models.RockSkyScrobble
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyAlbum
+import com.tunjid.heron.data.core.models.RockskyArtist
+import com.tunjid.heron.data.core.models.RockskyScrobble
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.stubProfile
@@ -118,23 +118,23 @@ sealed class AppScreenStateHolders {
 
         @Stable
         class Albums(
-            mutator: RecordStateHolder<RockSkyAlbum>,
-        ) : Rocksky<RockSkyAlbum>(mutator)
+            mutator: RecordStateHolder<RockskyAlbum>,
+        ) : Rocksky<RockskyAlbum>(mutator)
 
         @Stable
         class Tracks(
-            mutator: RecordStateHolder<RockSkyTrack>,
-        ) : Rocksky<RockSkyTrack>(mutator)
+            mutator: RecordStateHolder<RockskyTrack>,
+        ) : Rocksky<RockskyTrack>(mutator)
 
         @Stable
         class Artists(
-            mutator: RecordStateHolder<RockSkyArtist>,
-        ) : Rocksky<RockSkyArtist>(mutator)
+            mutator: RecordStateHolder<RockskyArtist>,
+        ) : Rocksky<RockskyArtist>(mutator)
 
         @Stable
         class Scrobbles(
-            mutator: RecordStateHolder<RockSkyScrobble>,
-        ) : Rocksky<RockSkyScrobble>(mutator)
+            mutator: RecordStateHolder<RockskyScrobble>,
+        ) : Rocksky<RockskyScrobble>(mutator)
     }
 
     val key: String

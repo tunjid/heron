@@ -6,7 +6,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RockSkyArtist(
+data class RockskyArtist(
     val cid: ArtistId,
     val name: String,
     val picture: ImageUri?,

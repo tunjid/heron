@@ -20,10 +20,10 @@ import app.rocksky.actor.AlbumView
 import app.rocksky.actor.ArtistView
 import app.rocksky.actor.ScrobbleView
 import app.rocksky.actor.TrackView
-import com.tunjid.heron.data.core.models.RockSkyAlbum
-import com.tunjid.heron.data.core.models.RockSkyArtist
-import com.tunjid.heron.data.core.models.RockSkyScrobble
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyAlbum
+import com.tunjid.heron.data.core.models.RockskyArtist
+import com.tunjid.heron.data.core.models.RockskyScrobble
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.types.AlbumId
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistId
@@ -36,7 +36,7 @@ import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 
-internal fun AlbumView.asExternalModel(): RockSkyAlbum = RockSkyAlbum(
+internal fun AlbumView.asExternalModel(): RockskyAlbum = RockskyAlbum(
     cid = AlbumId(id),
     uri = AlbumUri(uri.atUri),
     title = title,
@@ -54,7 +54,7 @@ internal fun AlbumView.asExternalModel(): RockSkyAlbum = RockSkyAlbum(
     youtubeLink = youtubeLink?.uri,
 )
 
-internal fun TrackView.asExternalModel(): RockSkyTrack = RockSkyTrack(
+internal fun TrackView.asExternalModel(): RockskyTrack = RockskyTrack(
     cid = TrackId(id),
     title = title,
     artist = artist,
@@ -72,7 +72,7 @@ internal fun TrackView.asExternalModel(): RockSkyTrack = RockSkyTrack(
     uniqueListeners = uniqueListeners,
 )
 
-internal fun ArtistView.asExternalModel(): RockSkyArtist = RockSkyArtist(
+internal fun ArtistView.asExternalModel(): RockskyArtist = RockskyArtist(
     cid = ArtistId(id),
     name = name,
     picture = picture?.uri?.let(::ImageUri),
@@ -82,7 +82,7 @@ internal fun ArtistView.asExternalModel(): RockSkyArtist = RockSkyArtist(
     tags = tags,
 )
 
-internal fun ScrobbleView.asExternalModel(): RockSkyScrobble = RockSkyScrobble(
+internal fun ScrobbleView.asExternalModel(): RockskyScrobble = RockskyScrobble(
     cid = ScrobbleId(id),
     trackId = TrackId(trackId),
     title = title,

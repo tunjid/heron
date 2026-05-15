@@ -31,6 +31,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.RockskyDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -78,9 +79,9 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
-import com.tunjid.heron.data.repository.records.OfflineFirstRockSkyRecordOperations
+import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
-import com.tunjid.heron.data.repository.records.RockSkyRecordOperations
+import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
@@ -359,6 +360,12 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    fun provideRockskyDao(
+        database: AppDatabase,
+    ): RockskyDao = database.rockskyDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
     fun provideDatabaseCleanupDao(
         database: AppDatabase,
     ): DatabaseCleanupDao = database.databaseCleanupDao()
@@ -467,8 +474,8 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideRockSkyRecordOperations(
-        offlineFirstRockSkyRecordOperations: OfflineFirstRockSkyRecordOperations,
-    ): RockSkyRecordOperations = offlineFirstRockSkyRecordOperations
+        offlineFirstRockSkyRecordOperations: OfflineFirstRockskyRecordOperations,
+    ): RockskyRecordOperations = offlineFirstRockSkyRecordOperations
 
     @SingleIn(AppScope::class)
     @Provides
