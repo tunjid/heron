@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.RockskyDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -96,6 +97,7 @@ import com.tunjid.heron.data.database.migrations.Migration30To31ThreadGateAutoMi
 import com.tunjid.heron.data.database.migrations.Migration32To33ItemSortOnTimelineEntity
 import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignKey
 import com.tunjid.heron.data.database.migrations.Migration37To38StandardSubscriptionViewerIds
+import com.tunjid.heron.data.database.migrations.Migration42To43RockskyCreatorId
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -104,7 +106,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 42,
+    version = 43,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -238,6 +240,7 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 40, to = 41),
         // Add ProfileAtmosphereAppEntity
         AutoMigration(from = 41, to = 42),
+        // Migration 42-43 is a manual migration
     ],
     exportSchema = true,
 )
@@ -260,6 +263,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
+    abstract fun rockskyDao(): RockskyDao
     abstract fun databaseCleanupDao(): DatabaseCleanupDao
 }
 
@@ -291,6 +295,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration32To33ItemSortOnTimelineEntity,
             Migration33To34OnUpdateForeignKey,
             Migration37To38StandardSubscriptionViewerIds,
+            Migration42To43RockskyCreatorId,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

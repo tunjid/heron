@@ -39,7 +39,6 @@ import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri

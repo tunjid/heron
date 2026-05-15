@@ -36,7 +36,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
-import com.tunjid.heron.data.repository.records.RockSkyRecordOperations
+import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.flowOn
 
 interface RecordRepository :
     BlueskyRecordOperations,
-    RockSkyRecordOperations,
+    RockskyRecordOperations,
     StandardSiteRecordOperations {
 
     fun embeddableRecord(
@@ -63,7 +63,7 @@ interface RecordRepository :
 
 internal class OfflineFirstRecordRepository @Inject constructor(
     blueskyRecordOperations: BlueskyRecordOperations,
-    rockSkyRecordOperations: RockSkyRecordOperations,
+    rockSkyRecordOperations: RockskyRecordOperations,
     standardSiteRecordOperations: StandardSiteRecordOperations,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
@@ -76,7 +76,7 @@ internal class OfflineFirstRecordRepository @Inject constructor(
     private val recordResolver: RecordResolver,
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
-    RockSkyRecordOperations by rockSkyRecordOperations,
+    RockskyRecordOperations by rockSkyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
 
     override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =

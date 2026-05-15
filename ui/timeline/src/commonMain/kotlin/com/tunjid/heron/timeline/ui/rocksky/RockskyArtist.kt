@@ -18,7 +18,7 @@ package com.tunjid.heron.timeline.ui.rocksky
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.RockSkyArtist
+import com.tunjid.heron.data.core.models.RockskyArtist
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
@@ -32,7 +32,7 @@ fun RockskyArtist(
     modifier: Modifier = Modifier,
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
-    artist: RockSkyArtist,
+    artist: RockskyArtist,
 ) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,

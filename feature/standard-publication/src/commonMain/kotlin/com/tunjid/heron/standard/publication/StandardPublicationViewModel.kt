@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.standard.publication
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -58,6 +59,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualStandardPublicationViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualStandardPublicationViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -70,7 +72,7 @@ class ActualStandardPublicationViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     StandardPublicationStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchPublicationMutations(
@@ -162,7 +164,7 @@ private fun CoroutineScope.documentsStateHolder(
     publicationUri: StandardPublicationUri,
     recordRepository: RecordRepository,
 ): DocumentsStateHolder = actionSuspendingStateMutator(
-    initialState = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
+    state = DocumentsTilingState(publicationUri = publicationUri).toSnapshotMutable(),
     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
     producer = { state, actions ->
         actions.launchTilingMutations(

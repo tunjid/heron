@@ -81,6 +81,7 @@ sealed class TabLayout {
     }
 }
 
+@Stable
 sealed class HomeScreenStateHolders : TimelineStateHolder {
 
     abstract val mutator: TimelineStateHolder

@@ -6,11 +6,12 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.types.AlbumId
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "rockskyAlbums",
@@ -26,12 +27,14 @@ import com.tunjid.heron.data.core.types.ImageUri
     indices = [
         Index(value = ["uri"]),
         Index(value = ["artistUri"]),
+        Index(value = ["creatorId"]),
     ],
 )
 data class RockskyAlbumEntity(
     @PrimaryKey
     val uri: AlbumUri,
     val cid: AlbumId,
+    val creatorId: ProfileId,
     val title: String,
     val artist: String,
     val releaseDate: String?,
@@ -56,7 +59,7 @@ data class PopulatedRockSkyAlbumEntity(
     val tracks: List<RockskyTrackEntity>,
 )
 
-fun PopulatedRockSkyAlbumEntity.asExternalModel() = RockSkyAlbum(
+fun PopulatedRockSkyAlbumEntity.asExternalModel() = RockskyAlbum(
     cid = entity.cid,
     uri = entity.uri,
     title = entity.title,

@@ -20,6 +20,7 @@ import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
@@ -29,6 +30,7 @@ import com.tunjid.treenav.compose.PaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 
+@Stable
 interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route> {
     val childBoundsTransform: BoundsTransform
 }

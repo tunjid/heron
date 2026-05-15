@@ -31,8 +31,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -43,6 +41,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.standard.Publication
@@ -63,7 +62,6 @@ internal fun StandardSubscriptionScreen(
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyStaggeredGridState()
-    val items by rememberUpdatedState(state.tilingData.items)
     val density = LocalDensity.current
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -106,7 +104,7 @@ internal fun StandardSubscriptionScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
-            if (items.isEmpty()) item {
+            if (state.tiledItems.isEmpty()) item {
                 EmptyContent(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -117,7 +115,7 @@ internal fun StandardSubscriptionScreen(
                 )
             }
             else items(
-                items = items,
+                items = state.tiledItems,
                 key = { it.uri.uri },
                 itemContent = { publication ->
                     Publication(
@@ -158,7 +156,7 @@ internal fun StandardSubscriptionScreen(
     }
 
     gridState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(

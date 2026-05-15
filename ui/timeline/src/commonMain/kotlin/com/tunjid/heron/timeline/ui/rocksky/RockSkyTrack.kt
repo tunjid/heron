@@ -18,7 +18,7 @@ package com.tunjid.heron.timeline.ui.rocksky
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.RockSkyTrack
+import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
@@ -32,7 +32,7 @@ fun RockskyTrack(
     modifier: Modifier = Modifier,
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
-    track: RockSkyTrack,
+    track: RockskyTrack,
 ) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -57,7 +57,7 @@ fun RockskyTrack(
 }
 
 @Composable
-private fun trackBlurb(track: RockSkyTrack): String? {
+private fun trackBlurb(track: RockskyTrack): String? {
     track.duration?.let { return formatDuration(it) }
     return track.playCount?.let { count ->
         stringResource(Res.string.played_n_times, format(count))

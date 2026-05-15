@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
@@ -41,7 +41,7 @@ fun RockskyAlbum(
     modifier: Modifier = Modifier,
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
-    album: RockSkyAlbum,
+    album: RockskyAlbum,
     onMusicServiceLinkClicked: (String) -> Unit,
 ) = with(paneTransitionScope) {
     Column(

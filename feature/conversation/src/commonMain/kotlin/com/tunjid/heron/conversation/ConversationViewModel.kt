@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
@@ -76,6 +77,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualConversationViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualConversationViewModel(
     authRepository: AuthRepository,
@@ -89,7 +91,7 @@ class ActualConversationViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ConversationStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadProfileMutations(

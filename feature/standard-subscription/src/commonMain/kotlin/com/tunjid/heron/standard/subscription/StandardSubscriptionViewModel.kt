@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.standard.subscription
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -52,6 +53,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualStandardSubscriptionViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualStandardSubscriptionViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -63,7 +65,7 @@ class ActualStandardSubscriptionViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             actions.launchMutationsIn(

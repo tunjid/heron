@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profiles
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -58,6 +59,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualProfilesViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualProfilesViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -72,7 +74,7 @@ class ActualProfilesViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadSignedInProfileIdMutations(

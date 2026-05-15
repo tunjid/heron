@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.notifications
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
@@ -60,6 +61,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualNotificationsViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualNotificationsViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -75,7 +77,7 @@ class ActualNotificationsViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     NotificationsStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLastRefreshedMutations(

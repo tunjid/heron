@@ -77,7 +77,6 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
@@ -85,7 +84,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
-import com.tunjid.treenav.strings.toRouteTrie
+import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -120,34 +119,34 @@ private val Route.listUriSuffix by routePath()
 
 private val Route.starterPackUriSuffix by routePath()
 
-private val RequestTrie = mapOf(
-    PathPattern(ListRoutePattern) to { route: Route ->
+private val RequestTrie = trieOf(
+    ListRoutePattern to { route: Route ->
         TimelineRequest.OfList.WithProfile(
             profileHandleOrDid = route.profileId,
             listUriSuffix = route.listUriSuffix,
         )
     },
-    PathPattern(ListRouteUriPattern) to { route: Route ->
+    ListRouteUriPattern to { route: Route ->
         TimelineRequest.OfList.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::ListUri),
         )
     },
-    PathPattern(StarterPackRoutePattern) to { route: Route ->
+    StarterPackRoutePattern to { route: Route ->
         TimelineRequest.OfStarterPack.WithProfile(
             profileHandleOrDid = route.profileId,
             starterPackUriSuffix = route.starterPackUriSuffix,
         )
     },
-    PathPattern(StarterPackRouteUriPattern) to { route: Route ->
+    StarterPackRouteUriPattern to { route: Route ->
         TimelineRequest.OfStarterPack.WithUri(
             uri = route.routeParams.pathAndQueries
                 .getAsRawUri(Uri.Host.AtProto)
                 .let(::StarterPackUri),
         )
     },
-).toRouteTrie()
+)
 
 internal val Route.timelineRequest: TimelineRequest.OfList
     get() = checkNotNull(RequestTrie[this]).invoke(this)

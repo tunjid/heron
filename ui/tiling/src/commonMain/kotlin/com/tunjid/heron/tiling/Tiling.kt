@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.tiling
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -65,12 +66,14 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+@Stable
 interface TilingState<Query : CursorQuery, Item> {
 
     val tilingData: Data<Query, Item>
 
-    @Serializable(with = DataSerializer::class)
+    @Stable
     @Snapshottable
+    @Serializable(with = DataSerializer::class)
     sealed interface Data<Query : CursorQuery, Item> {
         @Serializable
         @SnapshotSpec
@@ -122,9 +125,11 @@ interface TilingState<Query : CursorQuery, Item> {
     }
 }
 
+@Stable
 val TilingState<*, *>.isRefreshing
     get() = tilingData.status is TilingState.Status.Refreshing
 
+@Stable
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
@@ -264,8 +269,8 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                             )
                     }
                         .debounce { items ->
-                            if (items.isEmpty()) 300.milliseconds
-                            else 80.milliseconds
+                            if (items.isEmpty()) 800.milliseconds
+                            else 200.milliseconds
                         }
                         .flowOn(backgroundDispatcher)
                         .launchAndCollectLatestWithState(startingState) { items ->

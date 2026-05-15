@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import com.tunjid.heron.data.core.models.RockSkyAlbum
+import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -44,13 +44,13 @@ internal val YouTubeIconUri = ImageUri(
     "https://www.gstatic.com/marketing-cms/assets/images/96/ff/14b02dc0467e8875e062e9565cbd/external-icon-core-1.png=n-w1860-h1047-fcrop64=1,00000000ffffffff-rw",
 )
 
-internal val RockSkyAlbum.hasMusicServiceLink: Boolean
+internal val RockskyAlbum.hasMusicServiceLink: Boolean
     get() = spotifyLink != null ||
         appleMusicLink != null ||
         tidalLink != null ||
         youtubeLink != null
 
-internal inline fun RockSkyAlbum.forEachMusicServiceLink(
+internal inline fun RockskyAlbum.forEachMusicServiceLink(
     block: (label: StringResource, iconUri: ImageUri?, url: String) -> Unit,
 ) {
     spotifyLink?.let { block(Res.string.spotify, SpotifyIconUri, it) }

@@ -19,7 +19,7 @@ package com.tunjid.heron.timeline.ui.rocksky
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.RockSkyScrobble
+import com.tunjid.heron.data.core.models.RockskyScrobble
 import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
@@ -33,7 +33,7 @@ fun RockskyScrobble(
     modifier: Modifier = Modifier,
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
-    scrobble: RockSkyScrobble,
+    scrobble: RockskyScrobble,
 ) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,

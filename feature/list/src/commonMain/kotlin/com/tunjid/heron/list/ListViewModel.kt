@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.list
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -78,6 +79,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualListViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualListViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -95,7 +97,7 @@ class ActualListViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     ListStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchSignedInProfileIdMutations(
@@ -288,7 +290,7 @@ private suspend fun listMemberStateHolderMutations(
 
     val createdHolder = ListScreenStateHolders.Members(
         mutator = viewModelScope.actionSuspendingStateMutator(
-            initialState = MemberState(
+            state = MemberState(
                 signedInProfileId = null,
                 listUri = timeline.feedList.uri,
                 tilingData = TilingState.Data(

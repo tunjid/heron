@@ -45,10 +45,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,7 +103,6 @@ internal fun ConversationScreen(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val items by rememberUpdatedState(state.tiledItems)
 
     val emojiPickerSheetState = rememberEmojiPickerState()
 
@@ -119,12 +116,12 @@ internal fun ConversationScreen(
             .fillMaxSize(),
     ) {
         items(
-            count = items.size,
-            key = { items[it].id },
+            count = state.tiledItems.size,
+            key = { state.tiledItems[it].id },
         ) { index ->
-            val prevAuthor = items.getOrNull(index - 1)?.sender
-            val nextAuthor = items.getOrNull(index + 1)?.sender
-            val content = items[index]
+            val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
+            val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
+            val content = state.tiledItems[index]
             val isFirstMessageByAuthor = prevAuthor != content.sender
             val isLastMessageByAuthor = nextAuthor != content.sender
 
@@ -184,7 +181,7 @@ internal fun ConversationScreen(
     )
 
     listState.PivotedTilingEffect(
-        items = items,
+        items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
@@ -197,7 +194,7 @@ internal fun ConversationScreen(
     )
 
     LaunchedEffect(listState) {
-        snapshotFlow { items.firstOrNull()?.id }
+        snapshotFlow { state.tiledItems.firstOrNull()?.id }
             .drop(1)
             .collect {
                 // User has scrolled to see earlier chats

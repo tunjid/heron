@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
@@ -76,6 +77,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualGalleryViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -92,7 +94,7 @@ class ActualGalleryViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     GalleryStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route).toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadSignedInProfileIdMutations(

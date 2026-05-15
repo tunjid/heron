@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -79,6 +80,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): SearchViewModel
 }
 
+@Stable
 @AssistedInject
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -95,7 +97,7 @@ class SearchViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     SearchStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State.Immutable(
+        state = State.Immutable(
             currentQuery = route.query,
             isQueryEditable = route.query.isBlank(),
             layout = when {
@@ -616,7 +618,7 @@ private fun CoroutineScope.searchStateHolder(
     searchRepository: SearchRepository,
 ): SearchResultStateHolder? = when (searchState) {
     is SearchState.OfPosts -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
@@ -652,7 +654,7 @@ private fun CoroutineScope.searchStateHolder(
     )
 
     is SearchState.OfProfiles -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }
@@ -673,7 +675,7 @@ private fun CoroutineScope.searchStateHolder(
     )
 
     is SearchState.OfFeedGenerators -> actionSuspendingStateMutator(
-        initialState = searchState,
+        state = searchState,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { holderState, actions ->
             actions.map { it.tilingAction }

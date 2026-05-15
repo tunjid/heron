@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.posts
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -62,6 +63,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualPostsViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -76,7 +78,7 @@ class ActualPostsViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     PostsStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State(route.postsRequest).toSnapshotMutable(),
+        state = State(route.postsRequest).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadPreferencesMutations(

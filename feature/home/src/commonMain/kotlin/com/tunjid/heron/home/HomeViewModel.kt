@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.home
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -68,6 +69,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualHomeViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
@@ -85,7 +87,7 @@ class ActualHomeViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     HomeStateHolder by scope.actionSuspendingStateMutator(
-        initialState = State().toSnapshotMutable(),
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchTimelineMutations(
