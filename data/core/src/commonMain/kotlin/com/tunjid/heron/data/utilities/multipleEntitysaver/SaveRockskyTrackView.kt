@@ -15,6 +15,38 @@ internal fun MultipleEntitySaver.add(
     trackView: TrackView,
 ) {
     add(stubProfileEntity(Did(creatorId.id)))
+
+    val artistUri = trackView.artistUri?.let { ArtistUri(it.atUri) }
+    val albumArt = trackView.albumArt?.let { ImageUri(it.uri) }
+    // Album requires a non-null artistUri FK; if we don't have one, drop the
+    // track's albumUri rather than stubbing an album we can't satisfy.
+    val albumUri = trackView.albumUri
+        ?.takeIf { artistUri != null }
+        ?.let { AlbumUri(it.atUri) }
+
+    if (artistUri != null) {
+        add(
+            stubRockskyArtistEntity(
+                uri = artistUri,
+                creatorId = creatorId,
+                name = trackView.artist,
+            ),
+        )
+    }
+
+    if (albumUri != null && artistUri != null) {
+        add(
+            stubRockskyAlbumEntity(
+                uri = albumUri,
+                creatorId = creatorId,
+                artistUri = artistUri,
+                title = trackView.album ?: trackView.title,
+                artist = trackView.albumArtist ?: trackView.artist,
+                albumArt = albumArt,
+            ),
+        )
+    }
+
     add(
         RockskyTrackEntity(
             uri = TrackUri(trackView.uri.atUri),
@@ -24,12 +56,12 @@ internal fun MultipleEntitySaver.add(
             artist = trackView.artist,
             albumArtist = trackView.albumArtist,
             album = trackView.album,
-            albumArt = trackView.albumArt?.let { ImageUri(it.uri) },
+            albumArt = albumArt,
             trackNumber = trackView.trackNumber?.toInt(),
             discNumber = trackView.discNumber?.toInt(),
             duration = trackView.duration,
-            albumUri = trackView.albumUri?.let { AlbumUri(it.atUri) },
-            artistUri = trackView.artistUri?.let { ArtistUri(it.atUri) },
+            albumUri = albumUri,
+            artistUri = artistUri,
             createdAt = trackView.createdAt,
             playCount = trackView.playCount,
             uniqueListeners = trackView.uniqueListeners,

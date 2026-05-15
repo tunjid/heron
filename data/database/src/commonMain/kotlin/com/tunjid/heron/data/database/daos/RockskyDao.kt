@@ -1,6 +1,8 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -38,11 +40,71 @@ interface RockskyDao {
         entities: List<RockskyScrobbleEntity>,
     )
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreArtists(
+        entities: List<RockskyArtistEntity>,
+    ): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreAlbums(
+        entities: List<RockskyAlbumEntity>,
+    ): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreTracks(
+        entities: List<RockskyTrackEntity>,
+    ): List<Long>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreScrobbles(
+        entities: List<RockskyScrobbleEntity>,
+    ): List<Long>
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateArtists(
+        entities: List<RockskyArtistEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = { it },
+        insertEntities = ::insertOrIgnoreArtists,
+        updatePartials = ::upsertArtists,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateAlbums(
+        entities: List<RockskyAlbumEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = { it },
+        insertEntities = ::insertOrIgnoreAlbums,
+        updatePartials = ::upsertAlbums,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateTracks(
+        entities: List<RockskyTrackEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = { it },
+        insertEntities = ::insertOrIgnoreTracks,
+        updatePartials = ::upsertTracks,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateScrobbles(
+        entities: List<RockskyScrobbleEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = { it },
+        insertEntities = ::insertOrIgnoreScrobbles,
+        updatePartials = ::upsertScrobbles,
+    )
+
     @Query(
         """
     SELECT * FROM rockskyAlbums
     WHERE creatorId = :profileId
-    ORDER BY title ASC
+    ORDER BY COALESCE(playCount, 0) DESC, title ASC
     LIMIT :limit OFFSET :offset
     """,
     )
@@ -56,7 +118,7 @@ interface RockskyDao {
         """
     SELECT * FROM rockskyTracks
     WHERE creatorId = :profileId
-    ORDER BY title ASC
+    ORDER BY COALESCE(playCount, 0) DESC, title ASC
     LIMIT :limit OFFSET :offset
     """,
     )
@@ -70,7 +132,7 @@ interface RockskyDao {
         """
     SELECT * FROM rockskyArtists
     WHERE creatorId = :profileId
-    ORDER BY name ASC
+    ORDER BY COALESCE(playCount, 0) DESC, name ASC
     LIMIT :limit OFFSET :offset
     """,
     )

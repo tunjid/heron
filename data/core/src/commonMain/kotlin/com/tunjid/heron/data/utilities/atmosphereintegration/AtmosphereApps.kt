@@ -33,11 +33,11 @@ internal val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
         logo = ImageUri("https://standard.site/favicon.ico"),
     ),
     // Uncomment for development, undercooked for now
-//    AtmosphereApp(
-//        id = AtmosphereApp.RockskyId,
-//        webpage = GenericUri("https://rocksky.app"),
-//        logo = ImageUri("https://rocksky.app/favicon.ico"),
-//    ),
+    AtmosphereApp(
+        id = AtmosphereApp.RockskyId,
+        webpage = GenericUri("https://rocksky.app"),
+        logo = ImageUri("https://rocksky.app/favicon.ico"),
+    ),
 )
 
 internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
