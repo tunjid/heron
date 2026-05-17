@@ -61,7 +61,6 @@ import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
@@ -255,18 +254,16 @@ private fun launchTimelineStateHolderMutations(
             state.stateHolders = listOf(createdHolder) + state.stateHolders
                 .filterIsInstance<ListScreenStateHolders.Members>()
 
-            coroutineScope {
-                launchListStatusMutations(
-                    state = state,
-                    timeline = timeline,
-                    timelineRepository = timelineRepository,
-                )
-                launchTimelineCreatorMutations(
-                    state = state,
-                    timeline = timeline,
-                    profileRepository = profileRepository,
-                )
-            }
+            launchListStatusMutations(
+                state = state,
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            )
+            launchTimelineCreatorMutations(
+                state = state,
+                timeline = timeline,
+                profileRepository = profileRepository,
+            )
         }
 }
 
