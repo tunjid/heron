@@ -115,7 +115,7 @@ class ActualListViewModel(
                 timelineRepository = timelineRepository,
                 profileRepository = profileRepository,
             )
-            listMemberStateHolderMutations(
+            launchListMemberStateHolderMutations(
                 state = state,
                 request = route.timelineRequest,
                 viewModelScope = scope,
@@ -267,7 +267,7 @@ private suspend fun launchTimelineStateHolderMutations(
     )
 }
 
-private suspend fun listMemberStateHolderMutations(
+private suspend fun launchListMemberStateHolderMutations(
     state: State.SnapshotMutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,

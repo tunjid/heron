@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
 
 internal typealias EditProfileStateHolder = ActionSuspendingStateMutator<Action, State.SnapshotMutable>
 
@@ -99,7 +99,7 @@ class ActualEditProfileViewModel(
                 route = route,
                 profileRepository = profileRepository,
             )
-            screenTabMutations(
+            launchScreenTabMutations(
                 state = state,
                 viewModelScope = scope,
                 authRepository = authRepository,
@@ -175,22 +175,29 @@ private fun launchProfileTabMutations(
         editableTabs = tabs + missingTabs
     }
 
-private suspend fun screenTabMutations(
+context(productionScope: CoroutineScope)
+private fun launchScreenTabMutations(
     state: State.SnapshotMutable,
     viewModelScope: CoroutineScope,
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
 ) {
     if (state.tabs.none { it is EditProfileScreenTabs.Feeds }) {
-        val profileId = authRepository.signedInUser.filterNotNull().first().did
-        state.tabs += EditProfileScreenTabs.Feeds(
-            mutator = viewModelScope.recordStateHolder(
-                profileId = profileId,
-                stringResource = ProfileTab.Bluesky.FeedGenerators.All.stringResource,
-                itemId = FeedGenerator::uri,
-                cursorListLoader = recordRepository::feedGenerators,
-            ),
-        )
+        authRepository.signedInUser
+            .filterNotNull()
+            .take(1)
+            .launchAndCollect { profile ->
+                val profileId = profile.did
+                if (state.tabs.any { it is EditProfileScreenTabs.Feeds }) return@launchAndCollect
+                state.tabs += EditProfileScreenTabs.Feeds(
+                    mutator = viewModelScope.recordStateHolder(
+                        profileId = profileId,
+                        stringResource = ProfileTab.Bluesky.FeedGenerators.All.stringResource,
+                        itemId = FeedGenerator::uri,
+                        cursorListLoader = recordRepository::feedGenerators,
+                    ),
+                )
+            }
     }
 }
 

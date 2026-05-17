@@ -124,12 +124,12 @@ fun CoroutineScope.timelineStateHolder(
             ),
         ),
         producer = { state, actions ->
-            hasUpdatesMutations(
+            launchHasUpdatesMutations(
                 state = state,
                 timeline = timeline,
                 timelineRepository = timelineRepository,
             )
-            timelineUpdateMutations(
+            launchTimelineUpdateMutations(
                 state = state,
                 timeline = timeline,
                 timelineRepository = timelineRepository,
@@ -149,7 +149,7 @@ fun CoroutineScope.timelineStateHolder(
                             )
 
                     is TimelineState.Action.UpdatePreferredPresentation ->
-                        action.flow.updatePreferredPresentationMutations(
+                        action.flow.launchUpdatePreferredPresentationMutations(
                             timelineRepository = timelineRepository,
                         )
 
@@ -164,7 +164,7 @@ fun CoroutineScope.timelineStateHolder(
 }
 
 context(scope: CoroutineScope)
-private fun hasUpdatesMutations(
+private fun launchHasUpdatesMutations(
     state: TimelineState.SnapshotMutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
@@ -179,7 +179,7 @@ private fun hasUpdatesMutations(
 }
 
 context(scope: CoroutineScope)
-private fun timelineUpdateMutations(
+private fun launchTimelineUpdateMutations(
     state: TimelineState.SnapshotMutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
@@ -203,7 +203,7 @@ private fun timelineUpdateMutations(
 }
 
 context(scope: CoroutineScope)
-private fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
+private fun Flow<TimelineState.Action.UpdatePreferredPresentation>.launchUpdatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
 ) = launchAndCollectLatest {
     timelineRepository.updatePreferredPresentation(
