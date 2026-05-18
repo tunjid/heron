@@ -189,7 +189,11 @@ class ConversationBindings(
                             .bottomNavigationSharedBounds(this),
                         inputText = state.inputText,
                         pendingRecord = state.sharedRecord.pendingRecord,
-                        sendMessage = remember(viewModel, state.id, state.sharedRecord) {
+                        sendMessage = remember(
+                            stateHolder,
+                            state.id,
+                            state.sharedRecord,
+                        ) {
                             { annotatedString: AnnotatedString ->
                                 stateHolder.accept(
                                     Action.SendMessage(
