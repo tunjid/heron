@@ -48,6 +48,7 @@ import com.tunjid.heron.list.Action
 import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
 import com.tunjid.heron.list.ListScreenStateHolders
+import com.tunjid.heron.list.ListStateHolder
 import com.tunjid.heron.list.RouteViewModelInitializer
 import com.tunjid.heron.list.timelineState
 import com.tunjid.heron.list.withListTimelineOrNull
@@ -262,13 +263,13 @@ class ListBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualListViewModel> {
+            val stateHolder: ListStateHolder = viewModel<ActualListViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
@@ -292,7 +293,7 @@ class ListBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
@@ -301,7 +302,7 @@ class ListBindings(
                         editTitle = null,
                         onEditClicked = {},
                         onShareInConversationClicked = { recordUri, conversation ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     conversationDestination(
                                         id = conversation.id,
@@ -314,7 +315,7 @@ class ListBindings(
                             )
                         },
                         onShareInPostClicked = { recordUri ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     composePostDestination(
                                         sharedUri = recordUri.asGenericUri(),
@@ -347,7 +348,7 @@ class ListBindings(
                                 },
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                         actions = {
                             state.timelineState
                                 ?.timeline
@@ -356,7 +357,7 @@ class ListBindings(
                                         status = state.listStatus,
                                         uri = listTimeline.feedList.uri,
                                         onListStatusUpdated = {
-                                            viewModel.accept(Action.UpdateFeedListStatus(it))
+                                            stateHolder.accept(Action.UpdateFeedListStatus(it))
                                         },
                                     )
                                 }
@@ -365,7 +366,7 @@ class ListBindings(
                                     state.timelineState?.timeline?.uri
                                         ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
-                                            viewModel.accept(Action.UpdateRecentConversations)
+                                            stateHolder.accept(Action.UpdateRecentConversations)
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
                                 },
@@ -383,7 +384,7 @@ class ListBindings(
                         suggestedProfiles = state.suggestedProfiles,
                         onProfileIdSelected = { profileId ->
                             listUri?.let { uri ->
-                                viewModel.accept(
+                                stateHolder.accept(
                                     Action.AddListMember(
                                         profileId = profileId,
                                         listUri = uri,
@@ -415,7 +416,7 @@ class ListBindings(
                         LaunchedEffect(Unit) {
                             snapshotFlow { addListMemberSheetState.options.text }
                                 .collect { query ->
-                                    viewModel.accept(Action.SearchProfiles(query))
+                                    stateHolder.accept(Action.SearchProfiles(query))
                                 }
                         }
                     }
@@ -428,7 +429,7 @@ class ListBindings(
                                 top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                     SecondaryPaneCloseBackHandler()
                 },

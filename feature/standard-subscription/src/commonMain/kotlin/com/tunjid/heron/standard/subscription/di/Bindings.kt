@@ -40,6 +40,7 @@ import com.tunjid.heron.standard.subscription.Action
 import com.tunjid.heron.standard.subscription.ActualStandardSubscriptionViewModel
 import com.tunjid.heron.standard.subscription.RouteViewModelInitializer
 import com.tunjid.heron.standard.subscription.StandardSubscriptionScreen
+import com.tunjid.heron.standard.subscription.StandardSubscriptionStateHolder
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -119,13 +120,13 @@ class StandardSubscriptionBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualStandardSubscriptionViewModel> {
+            val stateHolder: StandardSubscriptionStateHolder = viewModel<ActualStandardSubscriptionViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -147,7 +148,7 @@ class StandardSubscriptionBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -157,7 +158,7 @@ class StandardSubscriptionBindings(
                             )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 navigationBar = {
@@ -174,7 +175,7 @@ class StandardSubscriptionBindings(
                     StandardSubscriptionScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()

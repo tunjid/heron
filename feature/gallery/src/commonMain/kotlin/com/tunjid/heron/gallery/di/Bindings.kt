@@ -26,6 +26,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.gallery.Action
 import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
+import com.tunjid.heron.gallery.GalleryStateHolder
 import com.tunjid.heron.gallery.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
@@ -107,13 +108,13 @@ class GalleryBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualGalleryViewModel> {
+            val stateHolder: GalleryStateHolder = viewModel<ActualGalleryViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             paneScaffoldState.PaneScaffold(
@@ -124,13 +125,13 @@ class GalleryBindings(
                 containerColor = Color.Transparent,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 content = {
                     GalleryScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

@@ -29,6 +29,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.moderation.Action
 import com.tunjid.heron.moderation.ActualModerationViewModel
 import com.tunjid.heron.moderation.ModerationScreen
+import com.tunjid.heron.moderation.ModerationStateHolder
 import com.tunjid.heron.moderation.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -119,13 +120,13 @@ class ModerationBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualModerationViewModel> {
+            val stateHolder: ModerationStateHolder = viewModel<ActualModerationViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val bottomNavigationNestedScrollConnection =
@@ -143,7 +144,7 @@ class ModerationBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -152,7 +153,7 @@ class ModerationBindings(
                                 title = stringResource(Res.string.moderation_settings),
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 navigationBar = {
@@ -169,7 +170,7 @@ class ModerationBindings(
                     ModerationScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .padding(
                                 top = paddingValues.calculateTopPadding(),

@@ -33,6 +33,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
+import com.tunjid.heron.notifications.NotificationsStateHolder
 import com.tunjid.heron.notifications.RouteViewModelInitializer
 import com.tunjid.heron.notifications.ui.RequestNotificationsButton
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -124,13 +125,13 @@ class NotificationsBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualNotificationsViewModel> {
+            val stateHolder: NotificationsStateHolder = viewModel<ActualNotificationsViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -152,7 +153,7 @@ class NotificationsBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     RootDestinationTopAppBar(
@@ -167,7 +168,7 @@ class NotificationsBindings(
                         signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
@@ -192,7 +193,7 @@ class NotificationsBindings(
                                     icon = Icons.Rounded.Settings,
                                     iconDescription = stringResource(CommonStrings.notification_settings),
                                     onClick = {
-                                        viewModel.accept(
+                                        stateHolder.accept(
                                             Action.Navigate.To(notificationSettingsDestination()),
                                         )
                                     },
@@ -214,7 +215,7 @@ class NotificationsBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     composePostDestination(
                                         type = Post.Create.Timeline,
@@ -232,7 +233,7 @@ class NotificationsBindings(
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
+                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
                             true
                         },
                     )
@@ -240,7 +241,7 @@ class NotificationsBindings(
                 navigationRail = {
                     PaneNavigationRail(
                         onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
+                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
                             true
                         },
                     )
@@ -249,7 +250,7 @@ class NotificationsBindings(
                     NotificationsScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

@@ -30,6 +30,7 @@ import com.tunjid.heron.profile.Action
 import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileScreenStateHolders
+import com.tunjid.heron.profile.ProfileStateHolder
 import com.tunjid.heron.profile.RouteViewModelInitializer
 import com.tunjid.heron.profile.State
 import com.tunjid.heron.profile.ui.ProfileFab
@@ -157,13 +158,13 @@ class ProfileBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualProfileViewModel> {
+            val stateHolder: ProfileStateHolder = viewModel<ActualProfileViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -186,7 +187,7 @@ class ProfileBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 snackBarHost = {
@@ -210,7 +211,7 @@ class ProfileBindings(
                         state = profileFabState(state),
                         profileHandle = state.profile.handle,
                         onStateClicked = { fabState ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     when (fabState) {
                                         ProfileFabState.SignedOut -> signInDestination()
@@ -242,13 +243,13 @@ class ProfileBindings(
                 },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 content = {
                     ProfileScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()

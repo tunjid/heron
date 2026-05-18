@@ -35,6 +35,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
+import com.tunjid.heron.postdetail.PostDetailStateHolder
 import com.tunjid.heron.postdetail.RouteViewModelInitializer
 import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -170,13 +171,13 @@ class PostDetailBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualPostDetailViewModel> {
+            val stateHolder: PostDetailStateHolder = viewModel<ActualPostDetailViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -198,7 +199,7 @@ class PostDetailBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -208,7 +209,7 @@ class PostDetailBindings(
                                 title = stringResource(Res.string.title),
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                         actions = {
                             ThreadDisplayOptions(
                                 modifier = Modifier
@@ -216,10 +217,10 @@ class PostDetailBindings(
                                 order = state.order,
                                 viewMode = state.viewMode,
                                 onOrderChanged = {
-                                    viewModel.accept(Action.Load.Order(it))
+                                    stateHolder.accept(Action.Load.Order(it))
                                 },
                                 onViewModeChanged = {
-                                    viewModel.accept(Action.Load.ViewMode(it))
+                                    stateHolder.accept(Action.Load.ViewMode(it))
                                 },
                             )
                         },
@@ -255,7 +256,7 @@ class PostDetailBindings(
                         },
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     when {
                                         isSignedOut -> signInDestination()
@@ -285,7 +286,7 @@ class PostDetailBindings(
                     PostDetailScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()

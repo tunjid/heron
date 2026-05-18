@@ -28,6 +28,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.posts.Action
 import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
+import com.tunjid.heron.posts.PostsStateHolder
 import com.tunjid.heron.posts.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -174,13 +175,13 @@ class PostsBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualPostsViewModel> {
+            val stateHolder: PostsStateHolder = viewModel<ActualPostsViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -202,7 +203,7 @@ class PostsBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -217,7 +218,7 @@ class PostsBindings(
                             )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 navigationBar = {
@@ -234,7 +235,7 @@ class PostsBindings(
                     PostsScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()

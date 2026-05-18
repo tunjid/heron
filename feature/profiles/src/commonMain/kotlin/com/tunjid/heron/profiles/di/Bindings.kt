@@ -27,6 +27,7 @@ import com.tunjid.heron.profiles.Action
 import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
+import com.tunjid.heron.profiles.ProfilesStateHolder
 import com.tunjid.heron.profiles.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -283,13 +284,13 @@ class ProfilesBindings(
             val load = hydratedRoute.load
             val titleRes = load.titleRes()
 
-            val viewModel = viewModel<ActualProfilesViewModel> {
+            val stateHolder: ProfilesStateHolder = viewModel<ActualProfilesViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             paneScaffoldState.PaneScaffold(
@@ -299,11 +300,11 @@ class ProfilesBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                         title = {
                             AppBarTitle(
                                 title = stringResource(titleRes),
@@ -319,7 +320,7 @@ class ProfilesBindings(
                                 top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

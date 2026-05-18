@@ -41,6 +41,7 @@ import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.ActualStandardPublicationViewModel
 import com.tunjid.heron.standard.publication.RouteViewModelInitializer
 import com.tunjid.heron.standard.publication.StandardPublicationScreen
+import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
 import com.tunjid.heron.standard.publication.ui.PublicationTitle
 import com.tunjid.heron.standard.publication.ui.SubscribeButton
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -181,13 +182,13 @@ class StandardPublicationBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualStandardPublicationViewModel> {
+            val stateHolder: StandardPublicationStateHolder = viewModel<ActualStandardPublicationViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -201,7 +202,7 @@ class StandardPublicationBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -219,7 +220,7 @@ class StandardPublicationBindings(
                                         .padding(horizontal = 8.dp),
                                     publication = it,
                                     onSubscriptionToggled = { publication, subscription ->
-                                        viewModel.accept(
+                                        stateHolder.accept(
                                             if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
                                                 subscriptionUri = subscription.uri,
                                             )
@@ -232,7 +233,7 @@ class StandardPublicationBindings(
                             }
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 content = { paddingValues ->
@@ -243,7 +244,7 @@ class StandardPublicationBindings(
                                 top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                     SecondaryPaneCloseBackHandler()
                 },
