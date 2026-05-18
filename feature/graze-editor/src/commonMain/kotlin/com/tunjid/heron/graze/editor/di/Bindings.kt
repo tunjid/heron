@@ -30,6 +30,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
+import com.tunjid.heron.graze.editor.GrazeEditorStateHolder
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
 import com.tunjid.heron.graze.editor.State
 import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
@@ -157,17 +158,17 @@ class GrazeEditorBindings(
     ): PaneEntry<ThreePane, Route> = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualGrazeEditorViewModel> {
+            val stateHolder: GrazeEditorStateHolder = viewModel<ActualGrazeEditorViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
-                viewModel.accept(
+                stateHolder.accept(
                     Action.EditFilter.AddFilter(
                         path = state.currentPath,
                         filter = addedFilter,
@@ -186,7 +187,7 @@ class GrazeEditorBindings(
                 topBar = {
                     val editFeedInfoSheetState =
                         rememberEditFeedInfoSheetState { name, description ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Metadata(
                                     displayName = name,
                                     description = description,
@@ -229,21 +230,21 @@ class GrazeEditorBindings(
                                     editFeedInfoSheetState.editFeed(state)
                                 },
                                 onSaveClicked = {
-                                    viewModel.accept(
+                                    stateHolder.accept(
                                         Action.Update.Save(
                                             feed = state.grazeFeed,
                                         ),
                                     )
                                 },
                                 onDeleteClicked = {
-                                    viewModel.accept(
+                                    stateHolder.accept(
                                         Action.Update.Delete(state.grazeFeed.recordKey),
                                     )
                                 },
                             )
                         },
                         onBackPressed = {
-                            viewModel.accept(
+                            stateHolder.accept(
                                 if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
                                 else Action.Navigate.Pop,
                             )
@@ -265,13 +266,13 @@ class GrazeEditorBindings(
                             .padding(top = contentPadding.calculateTopPadding()),
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )
 
             paneScaffoldState.NestedNavigationEventHandler {
-                viewModel.accept(Action.EditorNavigation.ExitFilter)
+                stateHolder.accept(Action.EditorNavigation.ExitFilter)
             }
         },
     )

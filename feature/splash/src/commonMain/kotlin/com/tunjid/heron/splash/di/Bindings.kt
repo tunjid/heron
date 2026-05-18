@@ -26,6 +26,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.RouteViewModelInitializer
 import com.tunjid.heron.splash.SplashScreen
+import com.tunjid.heron.splash.SplashStateHolder
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -80,13 +81,13 @@ class SplashBindings(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
         render = { route ->
-            val viewModel = viewModel<ActualSplashViewModel> {
+            val stateHolder: SplashStateHolder = viewModel<ActualSplashViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            viewModel.state.collectAsStateWithLifecycle()
+            stateHolder.state.collectAsStateWithLifecycle()
 
             SplashScreen(
                 paneScaffoldState = rememberPaneScaffoldState(),

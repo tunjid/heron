@@ -63,6 +63,7 @@ import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
 import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
+import com.tunjid.heron.signin.SignInStateHolder
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
 import com.tunjid.heron.signin.canSwitchAccount
@@ -163,13 +164,13 @@ class SignInBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualSignInViewModel> {
+            val stateHolder: SignInStateHolder = viewModel<ActualSignInViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             paneScaffoldState.PaneScaffold(
@@ -179,7 +180,7 @@ class SignInBindings(
                 showNavigation = false,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.MessageConsumed(it))
+                    stateHolder.accept(Action.MessageConsumed(it))
                 },
                 topBar = {
                     TopBar(
@@ -187,7 +188,7 @@ class SignInBindings(
                         oauthAvailable = state.isOauthAvailable,
                         selectedServer = state.selectedServer,
                         onPasswordPreferenceToggled = {
-                            viewModel.accept(Action.TogglePasswordPreference)
+                            stateHolder.accept(Action.TogglePasswordPreference)
                         },
                     )
                 },
@@ -215,7 +216,7 @@ class SignInBindings(
                         enabled = state.submitButtonEnabled,
                         expanded = true,
                         onClick = {
-                            viewModel.accept(state.createSessionAction())
+                            stateHolder.accept(state.createSessionAction())
                         },
                     )
                 },
@@ -223,7 +224,7 @@ class SignInBindings(
                     SignInScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .padding(paddingValues = paddingValues),
                     )

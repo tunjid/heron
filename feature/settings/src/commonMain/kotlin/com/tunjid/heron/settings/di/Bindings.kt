@@ -46,6 +46,7 @@ import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
 import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
+import com.tunjid.heron.settings.SettingsStateHolder
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneEntry
@@ -122,13 +123,13 @@ class SettingsBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualSettingsViewModel> {
+            val stateHolder: SettingsStateHolder = viewModel<ActualSettingsViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val bottomNavigationNestedScrollConnection =
@@ -146,7 +147,7 @@ class SettingsBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -157,7 +158,7 @@ class SettingsBindings(
                         },
                         onBackPressed = {
                             if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                                viewModel.accept(
+                                stateHolder.accept(
                                     if (state.section == Section.Main) Action.Navigate.Pop
                                     else Action.UpdateSection(Section.Main),
                                 )
@@ -181,7 +182,7 @@ class SettingsBindings(
                     SettingsScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .padding(
                                 top = paddingValues.calculateTopPadding(),
@@ -192,7 +193,7 @@ class SettingsBindings(
             )
 
             paneScaffoldState.NestedNavigationEventHandler {
-                viewModel.accept(Action.UpdateSection(Section.Main))
+                stateHolder.accept(Action.UpdateSection(Section.Main))
             }
         },
     )

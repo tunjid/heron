@@ -31,6 +31,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notificationsettings.Action
 import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
 import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
+import com.tunjid.heron.notificationsettings.NotificationSettingsStateHolder
 import com.tunjid.heron.notificationsettings.RouteViewModelInitializer
 import com.tunjid.heron.notificationsettings.updates
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -127,13 +128,13 @@ class NotificationSettingsBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualNotificationSettingsViewModel> {
+            val stateHolder: NotificationSettingsStateHolder = viewModel<ActualNotificationSettingsViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -155,14 +156,14 @@ class NotificationSettingsBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = {
                             AppBarTitle(title = stringResource(CommonStrings.notification_settings))
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 floatingActionButton = {
@@ -179,7 +180,7 @@ class NotificationSettingsBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.UpdateNotificationPreferences(state.updates()),
                             )
                         },
@@ -199,7 +200,7 @@ class NotificationSettingsBindings(
                     NotificationSettingsScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .padding(
                                 top = paddingValues.calculateTopPadding(),

@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.atmosphereapp.Action
 import com.tunjid.heron.atmosphereapp.ActualAtmosphereAppViewModel
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
+import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
 import com.tunjid.heron.atmosphereapp.RouteViewModelInitializer
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
@@ -119,13 +120,13 @@ class AtmosphereAppBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualAtmosphereAppViewModel> {
+            val stateHolder: AtmosphereAppStateHolder = viewModel<ActualAtmosphereAppViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -140,12 +141,12 @@ class AtmosphereAppBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 content = { paddingValues ->
                     AtmosphereAppScreen(
@@ -155,7 +156,7 @@ class AtmosphereAppBindings(
                             ),
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                     SecondaryPaneCloseBackHandler()
                 },
