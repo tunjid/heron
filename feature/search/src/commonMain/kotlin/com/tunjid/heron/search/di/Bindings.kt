@@ -149,7 +149,7 @@ class SearchBindings(
             val searchFocusRequester = remember { FocusRequester() }
 
             LaunchedEffect(Unit) {
-                searchFocusRequester.requestFocus()
+                if (state.isQueryEditable) searchFocusRequester.requestFocus()
             }
 
             val topAppBarNestedScrollConnection =
@@ -236,7 +236,7 @@ class SearchBindings(
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
-                            searchFocusRequester.requestFocus()
+                            if (state.isQueryEditable) searchFocusRequester.requestFocus()
                             true
                         },
                     )
