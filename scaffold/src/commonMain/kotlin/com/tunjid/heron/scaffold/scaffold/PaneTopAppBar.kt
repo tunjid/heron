@@ -68,6 +68,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     actions: (@Composable RowScope.() -> Unit)? = null,
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
+    onLogoClicked: (() -> Unit)? = null,
 ) {
     val isLive = signedInProfile?.status?.isLive == true
     ClickPassThroughToolbar(
@@ -94,7 +95,14 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             AppLogo(
                 modifier = Modifier
                     .padding(8.dp)
-                    .size(UiTokens.avatarSize),
+                    .size(UiTokens.avatarSize)
+                    .let { baseModifier ->
+                        if (onLogoClicked != null) {
+                            baseModifier.shapedClickable(CircleShape, onClick = onLogoClicked)
+                        } else {
+                            baseModifier
+                        }
+                    },
                 presentation = LogoPresentation.Destination.Root(
                     blurProgress = transparencyFactor,
                 ),

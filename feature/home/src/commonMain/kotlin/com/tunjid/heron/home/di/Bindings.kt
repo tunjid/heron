@@ -203,6 +203,15 @@ class HomeBindings(
                                 ),
                             )
                         },
+                        onLogoClicked = {
+                            val nextLayout = if (state.tabLayout is TabLayout.Expanded) {
+                                TabLayout.Collapsed.All
+                            } else {
+                                TabLayout.Expanded
+                            }
+
+                            stateHolder.accept(Action.SetTabLayout(layout = nextLayout))
+                        },
                     )
                 },
                 snackBarHost = {
