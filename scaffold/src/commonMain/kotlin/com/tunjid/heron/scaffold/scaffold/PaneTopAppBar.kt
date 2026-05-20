@@ -96,13 +96,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .padding(8.dp)
                     .size(UiTokens.avatarSize)
-                    .let { baseModifier ->
+                    .then(
                         if (onLogoClicked != null) {
-                            baseModifier.shapedClickable(CircleShape, onClick = onLogoClicked)
+                            Modifier.shapedClickable(CircleShape, onClick = onLogoClicked)
                         } else {
-                            baseModifier
-                        }
-                    },
+                            Modifier
+                        },
+                    ),
                 presentation = LogoPresentation.Destination.Root(
                     blurProgress = transparencyFactor,
                 ),
