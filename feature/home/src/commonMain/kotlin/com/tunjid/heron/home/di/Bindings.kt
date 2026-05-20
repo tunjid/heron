@@ -203,6 +203,17 @@ class HomeBindings(
                                 ),
                             )
                         },
+                        onLogoClicked = {
+                            stateHolder.accept(
+                                Action.SetTabLayout(
+                                    layout = if (state.tabLayout is TabLayout.Expanded) {
+                                        TabLayout.Collapsed.All
+                                    } else {
+                                        TabLayout.Expanded
+                                    },
+                                ),
+                            )
+                        },
                     )
                 },
                 snackBarHost = {
