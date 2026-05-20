@@ -21,7 +21,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -143,6 +146,12 @@ class SearchBindings(
             val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            val searchFocusRequester = remember { FocusRequester() }
+
+            LaunchedEffect(Unit) {
+                searchFocusRequester.requestFocus()
+            }
+
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
@@ -173,6 +182,7 @@ class SearchBindings(
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
+                                focusRequester = searchFocusRequester,
                                 onQueryChanged = { query ->
                                     stateHolder.accept(
                                         Action.Search.OnSearchQueryChanged(query),
@@ -225,6 +235,10 @@ class SearchBindings(
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
+                        onNavItemReselected = {
+                            searchFocusRequester.requestFocus()
+                            true
+                        },
                     )
                 },
                 navigationRail = {
