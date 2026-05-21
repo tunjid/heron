@@ -64,7 +64,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.messages.generated.resources.Res
 import heron.feature.messages.generated.resources.sender_reacted
-import heron.feature.messages.generated.resources.you_sent_prefix
+import heron.feature.messages.generated.resources.you_sent_summary
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -272,11 +272,10 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
     val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
 
     return when {
-        lastMessageReactedTo == null -> lastMessage?.let { message ->
-            val prefix = if (message.sender.did == signedInProfileId) {
-                stringResource(Res.string.you_sent_prefix)
-            } else ""
-            "$prefix${message.text}"
+        lastMessageReactedTo == null -> lastMessage?.let {
+            if (it.sender.did == signedInProfileId) {
+                stringResource(Res.string.you_sent_summary, it.text)
+            } else it.text
         } ?: ""
 
         lastMessage == null -> ""
@@ -304,10 +303,9 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
                     )
                 }
                 lastMessage -> {
-                    val prefix = if (mostRecent.sender.did == signedInProfileId) {
-                        stringResource(Res.string.you_sent_prefix)
-                    } else ""
-                    "$prefix${mostRecent.text}"
+                    if (mostRecent.sender.did == signedInProfileId) {
+                        stringResource(Res.string.you_sent_summary, mostRecent.text)
+                    } else mostRecent.text
                 }
                 else -> ""
             }
