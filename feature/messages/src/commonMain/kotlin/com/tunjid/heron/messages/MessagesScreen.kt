@@ -64,6 +64,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.messages.generated.resources.Res
 import heron.feature.messages.generated.resources.sender_reacted
+import heron.feature.messages.generated.resources.you_sent_prefix
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -186,7 +187,7 @@ fun Conversation(
         ConversationDetails(
             participants = participants,
             signedInProfileId = signedInProfileId,
-            conversationSummary = conversation.summary(),
+            conversationSummary = conversation.summary(signedInProfileId = signedInProfileId),
         )
     }
 }
@@ -266,15 +267,20 @@ private fun ConversationDetails(
 }
 
 @Composable
-private fun Conversation.summary(): String {
+private fun Conversation.summary(signedInProfileId: ProfileId?): String {
     val lastMessage = lastMessage
     val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
 
     return when {
-        lastMessageReactedTo == null -> lastMessage?.text ?: ""
-        // Invalid state.
-        // A reaction should not be able to occur if there's no message to react to.
+        lastMessageReactedTo == null -> lastMessage?.let { message ->
+            val prefix = if (message.sender.did == signedInProfileId) {
+                stringResource(Res.string.you_sent_prefix)
+            } else ""
+            "$prefix${message.text}"
+        } ?: ""
+
         lastMessage == null -> ""
+
         else -> maxOf(
             a = lastMessage,
             b = lastMessageReactedTo,
@@ -283,7 +289,6 @@ private fun Conversation.summary(): String {
                 val lastMessageReactedToAt = b.reactions.maxOfOrNull(
                     Message.Reaction::createdAt,
                 ) ?: Instant.DISTANT_PAST
-
                 lastMessageSent.compareTo(lastMessageReactedToAt)
             },
         ).let { mostRecent ->
@@ -298,7 +303,12 @@ private fun Conversation.summary(): String {
                         mostRecent.text,
                     )
                 }
-                lastMessage -> mostRecent.text
+                lastMessage -> {
+                    val prefix = if (mostRecent.sender.did == signedInProfileId) {
+                        stringResource(Res.string.you_sent_prefix)
+                    } else ""
+                    "$prefix${mostRecent.text}"
+                }
                 else -> ""
             }
         }
