@@ -201,7 +201,6 @@ class MessagesBindings(
                                 }
                             }
                         },
-                        signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             stateHolder.accept(

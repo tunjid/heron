@@ -165,7 +165,6 @@ class NotificationsBindings(
                                 title = stringResource(Res.string.title),
                             )
                         },
-                        signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             stateHolder.accept(

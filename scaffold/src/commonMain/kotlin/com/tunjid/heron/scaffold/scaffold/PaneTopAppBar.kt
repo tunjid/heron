@@ -63,14 +63,13 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 @Composable
 fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
-    signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
     actions: (@Composable RowScope.() -> Unit)? = null,
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
     onLogoClicked: (() -> Unit)? = null,
 ) {
-    val isLive = signedInProfile?.status?.isLive == true
+    val isLive = appState.identityState.signedInProfile?.status?.isLive == true
     ClickPassThroughToolbar(
         modifier = modifier
             .constrainedSizePlacement(
@@ -94,15 +93,19 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
-                    .padding(8.dp)
-                    .size(UiTokens.avatarSize)
+                    .padding(4.dp)
                     .then(
                         if (onLogoClicked != null) {
-                            Modifier.shapedClickable(CircleShape, onClick = onLogoClicked)
+                            Modifier.shapedClickable(
+                                CircleShape,
+                                onClick = onLogoClicked,
+                            )
                         } else {
                             Modifier
                         },
-                    ),
+                    )
+                    .padding(4.dp)
+                    .size(UiTokens.avatarSize),
                 presentation = LogoPresentation.Destination.Root(
                     blurProgress = transparencyFactor,
                 ),
@@ -120,9 +123,9 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 Spacer(Modifier.width(8.dp))
             }
             AnimatedVisibility(
-                visible = signedInProfile != null,
+                visible = appState.identityState.signedInProfile != null,
             ) {
-                signedInProfile?.let { profile ->
+                appState.identityState.signedInProfile?.let { profile ->
                     Box {
                         PaneStickySharedElement(
                             modifier = Modifier
@@ -148,7 +151,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                 args = remember(profile) {
                                     ImageArgs(
                                         url = profile.avatar?.uri,
-                                        contentDescription = signedInProfile.displayName,
+                                        contentDescription = profile.displayName,
                                         contentScale = ContentScale.Crop,
                                         shape = RoundedPolygonShape.Circle,
                                     )
