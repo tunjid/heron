@@ -59,6 +59,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.scaffold.identity.isSignedIn
 import com.tunjid.heron.scaffold.scaffold.components.NonSubComposingScaffold
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.Memo
@@ -97,10 +98,10 @@ class PaneScaffoldState internal constructor(
         get() = appState.dismissBehavior
 
     val isSignedOut
-        get() = !appState.isSignedIn
+        get() = !appState.identityState.isSignedIn
 
     val isSignedIn
-        get() = appState.isSignedIn
+        get() = appState.identityState.isSignedIn
 
     val prefersCompactBottomNav
         get() = appState.prefersCompactBottomNav

@@ -21,8 +21,6 @@ import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
@@ -43,6 +41,7 @@ import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
 import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -106,8 +105,7 @@ interface AppGraph {
     fun appState(
         @AppMainScope
         appMainScope: CoroutineScope,
-        authRepository: AuthRepository,
-        userDataRepository: UserDataRepository,
+        identityStateHolder: IdentityStateHolder,
         navigationStateHolder: NavigationStateHolder,
         notificationStateHolder: NotificationStateHolder,
         imageLoader: ImageLoader,
@@ -116,14 +114,11 @@ interface AppGraph {
         databaseCleanup: DatabaseCleanup,
     ): AppState = AppState(
         entryMap = entryMap,
-        authRepository = authRepository,
-        userDataRepository = userDataRepository,
+        identityStateHolder = identityStateHolder,
         navigationStateHolder = navigationStateHolder,
         notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
-        writeQueue = writeQueue,
-        databaseCleanup = databaseCleanup,
     )
 
     val appState: AppState
