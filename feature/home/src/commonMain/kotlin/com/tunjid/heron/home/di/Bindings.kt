@@ -166,7 +166,6 @@ class HomeBindings(
                             topAppBarNestedScrollConnection.offset.round()
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        signedInProfile = state.signedInProfile,
                         title = {
                             AnimatedVisibility(
                                 visible = state.preferences.local.showTrendingTopics,

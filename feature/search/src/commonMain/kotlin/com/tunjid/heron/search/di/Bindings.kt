@@ -178,7 +178,6 @@ class SearchBindings(
                         modifier = Modifier.offset {
                             topAppBarNestedScrollConnection.offset.round()
                         },
-                        signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
