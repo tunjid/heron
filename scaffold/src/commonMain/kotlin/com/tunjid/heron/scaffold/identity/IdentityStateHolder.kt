@@ -89,6 +89,9 @@ class AppIdentityStateHolder(
             authRepository.signedInUser.launchAndCollect(
                 state::signedInProfile::set,
             )
+            authRepository.pastSessions.launchAndCollect(
+                state::pastSessions::set,
+            )
             userDataRepository.preferences.launchAndCollect(
                 state::preferences::set,
             )
