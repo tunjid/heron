@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -275,7 +276,10 @@ internal fun MediaCreatorAndDescription(
         )
         val altText = (media as? GalleryItem.Media.Photo)?.image?.alt
         if (!altText.isNullOrBlank()) {
-            ElevatedCard {
+            ElevatedCard(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
                 Text(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     text = altText,
