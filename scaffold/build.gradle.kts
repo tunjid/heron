@@ -20,6 +20,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeCompiler)
     id("org.jetbrains.compose")
+    id("com.tunjid.snapshottable")
 }
 
 kotlin {

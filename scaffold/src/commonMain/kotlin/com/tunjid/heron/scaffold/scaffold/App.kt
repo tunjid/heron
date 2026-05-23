@@ -56,7 +56,7 @@ fun App(
 ) {
     AppTheme(
         theme = Theme.fromOrdinal(
-            appState.preferences?.local?.currentThemeOrdinal ?: 0,
+            appState.identityState.preferences?.local?.currentThemeOrdinal ?: 0,
         ),
     ) {
         CompositionLocalProvider(
