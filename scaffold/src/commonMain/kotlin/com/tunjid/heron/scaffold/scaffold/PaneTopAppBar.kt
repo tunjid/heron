@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,7 +42,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -83,7 +81,8 @@ import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityState
 import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -159,15 +158,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             ) { currentState ->
                 when (currentState) {
                     IdentityState.SwitchStatus.Choosing -> {
-                        ElevatedCard(
-                            shape = CircleShape,
+                        AppBarTextButton(
                             onClick = appState::addAccount,
                             content = {
                                 val description = stringResource(Res.string.identity_account_add)
                                 Row(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp)
-                                        .height(46.dp)
                                         .semantics {
                                             contentDescription = description
                                             role = Role.Button
@@ -250,7 +247,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     .appbarAnimatedBounds(),
                 visible = identityState.switchStatus is IdentityState.SwitchStatus.Choosing,
             ) {
-                AppBarButton(
+                AppBarIconButton(
                     onClick = {
                         appState.onIdentityAction(IdentityAction.Switch.Cancel)
                     },

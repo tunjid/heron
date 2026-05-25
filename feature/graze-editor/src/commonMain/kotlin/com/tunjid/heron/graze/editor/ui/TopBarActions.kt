@@ -32,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.graze.isValid
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.delete_feed
@@ -49,7 +49,7 @@ fun TopBarActions(
     onSaveClicked: () -> Unit,
     onDeleteClicked: () -> Unit,
 ) {
-    AppBarButton(
+    AppBarIconButton(
         icon = Icons.Rounded.Save,
         enabled = enabled && grazeFeed.filter.isValid,
         iconDescription = stringResource(CommonStrings.save),

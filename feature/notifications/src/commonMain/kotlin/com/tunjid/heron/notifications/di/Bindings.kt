@@ -55,7 +55,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
@@ -188,7 +188,7 @@ class NotificationsBindings(
                                         animateIcon = state.canAnimateRequestPermissionsButton,
                                     )
                                 }
-                                AppBarButton(
+                                AppBarIconButton(
                                     icon = Icons.Rounded.Settings,
                                     iconDescription = stringResource(CommonStrings.notification_settings),
                                     onClick = {

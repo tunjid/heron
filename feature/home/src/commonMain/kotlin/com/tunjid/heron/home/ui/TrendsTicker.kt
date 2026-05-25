@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.close
 import kotlin.time.Duration.Companion.seconds
@@ -79,10 +80,7 @@ fun TrendsTicker(
         modifier = modifier,
     ) {
         var isVertical by rememberSaveable { mutableStateOf(true) }
-        if (trends.isNotEmpty()) ElevatedCard(
-            modifier = Modifier
-                .height(46.dp),
-            shape = CircleShape,
+        if (trends.isNotEmpty()) AppBarTextButton(
             onClick = { isVertical = !isVertical },
         ) {
             Row(

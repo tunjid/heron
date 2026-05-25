@@ -40,7 +40,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.standard.PublicationSubscriptionIcon
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.collectionShape
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.rememberLatchedState
@@ -127,7 +127,7 @@ fun SubscribeButton(
     val subscribed = publication.subscription != null
     val latchedSubscribedState = rememberLatchedState(subscribed)
 
-    AppBarButton(
+    AppBarIconButton(
         modifier = modifier,
         onClick = {
             latchedSubscribedState.latch(!subscribed)
