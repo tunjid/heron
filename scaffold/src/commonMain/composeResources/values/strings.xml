@@ -28,6 +28,7 @@
     <string name="share">Share</string>
     <string name="identity_account_add">Add account</string>
     <string name="identity_account_switching">Switching accounts</string>
+    <string name="identity_account_switch_reauth">Reauthentication required</string>
     <string name="notification_channel_new_followers">New followers</string>
     <string name="notification_channel_likes">Likes</string>
     <string name="notification_channel_likes_repost">Likes of your reposts</string>
