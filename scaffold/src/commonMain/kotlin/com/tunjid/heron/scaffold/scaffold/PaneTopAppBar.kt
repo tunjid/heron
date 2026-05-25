@@ -27,7 +27,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -41,9 +40,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,10 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -81,6 +77,7 @@ import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityState
 import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
+import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
@@ -90,6 +87,7 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.identity_account_add
@@ -158,37 +156,37 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             ) { currentState ->
                 when (currentState) {
                     IdentityState.SwitchStatus.Choosing -> {
+                        val description = stringResource(Res.string.identity_account_add)
                         AppBarTextButton(
+                            modifier = Modifier
+                                .semantics {
+                                    contentDescription = description
+                                    role = Role.Button
+                                },
                             onClick = appState::addAccount,
                             content = {
-                                val description = stringResource(Res.string.identity_account_add)
-                                Row(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .semantics {
-                                            contentDescription = description
-                                            role = Role.Button
-                                        },
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Add,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.outline,
-                                    )
-                                    Text(
-                                        text = description,
-                                        color = MaterialTheme.colorScheme.outline,
-                                        style = MaterialTheme.typography.bodyMediumEmphasized,
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline,
+                                )
+                                EmphasizedSingleLineOutlinedText(
+                                    text = description,
+                                )
                             },
                         )
                     }
                     is IdentityState.SwitchStatus.Stable -> title()
-                    is IdentityState.SwitchStatus.Switching -> AppBarTitle(
-                        title = stringResource(Res.string.identity_account_switching),
+                    is IdentityState.SwitchStatus.Switching -> AppBarElevatedCard(
+                        content = {
+                            LoadingIndicator(
+                                modifier = Modifier
+                                    .size(24.dp),
+                            )
+                            EmphasizedSingleLineOutlinedText(
+                                text = stringResource(Res.string.identity_account_switching),
+                            )
+                        },
                     )
                 }
             }
@@ -204,6 +202,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     .appbarAnimatedBounds()
                     .clip(CircleShape),
                 reverseLayout = true,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(
                     items = identityState.pastSessions
@@ -335,12 +334,11 @@ private fun PaneScaffoldState.SessionAvatar(
     val isSignedInProfile = profileId == signedInProfileId
     Box(
         modifier = modifier
-            .size(44.dp),
+            .size(UiTokens.appBarButtonSize),
     ) {
         PaneStickySharedElement(
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(4.dp)
                 .matchParentSize(),
             sharedContentState = rememberSharedContentState(
                 key = when {
@@ -382,22 +380,6 @@ private fun PaneScaffoldState.SessionAvatar(
             ) {
                 ProfileLiveChip()
             }
-            val density = LocalDensity.current
-            if (status is IdentityState.SwitchStatus.Switching && status.session.profileId == profileId) CircularWavyProgressIndicator(
-                progress = { 1f },
-                trackColor = MaterialTheme.colorScheme.surface,
-                stroke = remember(density) {
-                    Stroke(
-                        width = with(density) {
-                            2.dp.toPx()
-                        },
-                        cap = StrokeCap.Round,
-                    )
-                },
-                amplitude = { 1f },
-                modifier = Modifier
-                    .matchParentSize(),
-            )
         }
     }
 }
@@ -458,3 +440,5 @@ private val TitleTransform = slideInVertically(
 
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
+
+private const val AvatarAnimationDelayMillis = 1000L
