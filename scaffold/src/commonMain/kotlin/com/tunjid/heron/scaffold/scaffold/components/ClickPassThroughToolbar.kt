@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.scaffold.scaffold.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -35,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.UiTokens
 
 @Composable
-fun ClickPassThroughToolbar(
+internal fun ClickPassThroughToolbar(
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0.dp),
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
@@ -53,6 +54,7 @@ fun ClickPassThroughToolbar(
             modifier = Modifier
                 .height(UiTokens.toolbarHeight),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             CompositionLocalProvider(LocalContentColor provides colors.navigationIconContentColor) {
                 navigationIcon()
