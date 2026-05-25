@@ -39,6 +39,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -91,6 +92,7 @@ import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.identity_account_add
+import heron.scaffold.generated.resources.identity_account_switch_reauth
 import heron.scaffold.generated.resources.identity_account_switching
 import org.jetbrains.compose.resources.stringResource
 
@@ -154,41 +156,10 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     TitleTransform
                 },
             ) { currentState ->
-                when (currentState) {
-                    IdentityState.SwitchStatus.Choosing -> {
-                        val description = stringResource(Res.string.identity_account_add)
-                        AppBarTextButton(
-                            modifier = Modifier
-                                .semantics {
-                                    contentDescription = description
-                                    role = Role.Button
-                                },
-                            onClick = appState::addAccount,
-                            content = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.outline,
-                                )
-                                EmphasizedSingleLineOutlinedText(
-                                    text = description,
-                                )
-                            },
-                        )
-                    }
-                    is IdentityState.SwitchStatus.Stable -> title()
-                    is IdentityState.SwitchStatus.Switching -> AppBarElevatedCard(
-                        content = {
-                            LoadingIndicator(
-                                modifier = Modifier
-                                    .size(24.dp),
-                            )
-                            EmphasizedSingleLineOutlinedText(
-                                text = stringResource(Res.string.identity_account_switching),
-                            )
-                        },
-                    )
-                }
+                SwitchStatus(
+                    currentState = currentState,
+                    title = title,
+                )
             }
         },
         actions = {
@@ -315,6 +286,69 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         },
         actions = actions,
     )
+}
+
+@Composable
+private fun PaneScaffoldState.SwitchStatus(
+    currentState: IdentityState.SwitchStatus,
+    title: @Composable () -> Unit,
+) {
+    when (currentState) {
+        is IdentityState.SwitchStatus.Stable.Idle -> title()
+        is IdentityState.SwitchStatus.Stable.Error -> {
+            val description = stringResource(Res.string.identity_account_switch_reauth)
+            AppBarTextButton(
+                modifier = Modifier
+                    .semantics {
+                        contentDescription = description
+                        role = Role.Button
+                    },
+                onClick = appState::addAccount,
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Error,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                    EmphasizedSingleLineOutlinedText(
+                        text = description,
+                    )
+                },
+            )
+        }
+        IdentityState.SwitchStatus.Choosing -> {
+            val description = stringResource(Res.string.identity_account_add)
+            AppBarTextButton(
+                modifier = Modifier
+                    .semantics {
+                        contentDescription = description
+                        role = Role.Button
+                    },
+                onClick = appState::addAccount,
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline,
+                    )
+                    EmphasizedSingleLineOutlinedText(
+                        text = description,
+                    )
+                },
+            )
+        }
+        is IdentityState.SwitchStatus.Switching -> AppBarElevatedCard(
+            content = {
+                LoadingIndicator(
+                    modifier = Modifier
+                        .size(24.dp),
+                )
+                EmphasizedSingleLineOutlinedText(
+                    text = stringResource(Res.string.identity_account_switching),
+                )
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
