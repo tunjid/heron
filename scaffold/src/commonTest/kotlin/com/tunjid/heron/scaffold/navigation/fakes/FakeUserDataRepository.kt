@@ -40,6 +40,9 @@ class FakeUserDataRepository : UserDataRepository {
     override suspend fun setAutoPlayTimelineVideos(autoPlayTimelineVideos: Boolean): Outcome =
         Outcome.Success
 
+    override suspend fun setAutoPlayGifs(autoPlayGifs: Boolean): Outcome =
+        Outcome.Success
+
     override suspend fun setShowPostEngagementMetrics(showEngagementMetrics: Boolean): Outcome =
         Outcome.Success
 

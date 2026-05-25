@@ -111,6 +111,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetAutoPlayGifs -> action.flow.gifAutoPlayMutations(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.SetCurrentThemeOrdinal -> action.flow.setCurrentThemeOrdinal(
                         userDataRepository = userDataRepository,
                     )
@@ -286,6 +290,13 @@ private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutation
 ): Flow<Mutation<State>> =
     mapToManyMutations { (autoPlayTimelineVideos) ->
         userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
+    }
+
+private fun Flow<Action.SetAutoPlayGifs>.gifAutoPlayMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (autoPlayGifs) ->
+        userDataRepository.setAutoPlayGifs(autoPlayGifs)
     }
 
 private fun Flow<Action.SetCurrentThemeOrdinal>.setCurrentThemeOrdinal(

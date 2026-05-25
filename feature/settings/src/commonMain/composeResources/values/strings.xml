@@ -50,6 +50,7 @@
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
     <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>
+    <string name="autoplay_gifs">Autoplay GIFs</string>
     <string name="show_post_engagement_metrics">Show post engagement metrics</string>
     <string name="show_trending_topics">Show trending topics</string>
     <string name="allow_all_timeline_presentations">Allow all presentations types for timelines</string>

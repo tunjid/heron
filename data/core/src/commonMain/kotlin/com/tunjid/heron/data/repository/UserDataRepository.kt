@@ -47,6 +47,10 @@ interface UserDataRepository {
         autoPlayTimelineVideos: Boolean,
     ): Outcome
 
+    suspend fun setAutoPlayGifs(
+        autoPlayGifs: Boolean,
+    ): Outcome
+
     suspend fun setShowPostEngagementMetrics(
         showEngagementMetrics: Boolean,
     ): Outcome
@@ -121,6 +125,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         autoPlayTimelineVideos: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
+    }
+
+    override suspend fun setAutoPlayGifs(
+        autoPlayGifs: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(autoPlayGifs = autoPlayGifs))
     }
 
     override suspend fun setShowPostEngagementMetrics(

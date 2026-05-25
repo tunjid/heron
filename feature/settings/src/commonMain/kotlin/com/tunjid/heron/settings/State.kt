@@ -106,6 +106,10 @@ sealed class Action(val key: String) {
         val autoPlayTimelineVideos: Boolean,
     ) : Action(key = "SetAutoPlayTimelineVideos")
 
+    data class SetAutoPlayGifs(
+        val autoPlayGifs: Boolean,
+    ) : Action(key = "SetAutoPlayGifs")
+
     data class SetCurrentThemeOrdinal(
         val themeOrdinal: Int,
     ) : Action(key = "SetCurrentThemeOrdinal")
