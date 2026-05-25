@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardColors
@@ -25,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,4 +80,31 @@ fun AppBarIconButton(
             )
         },
     )
+}
+
+@Composable
+fun AppBarTextButton(
+    modifier: Modifier = Modifier,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    ElevatedCard(
+        modifier = modifier,
+        shape = CircleShape,
+        colors = colors,
+        onClick = onClick,
+    ) {
+        Box(
+            modifier = Modifier
+                .height(UiTokens.appBarButtonSize),
+        ) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center),
+            ) {
+                content()
+            }
+        }
+    }
 }
