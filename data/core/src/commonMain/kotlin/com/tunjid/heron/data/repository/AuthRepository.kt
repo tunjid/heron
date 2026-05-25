@@ -164,6 +164,11 @@ internal class AuthTokenRepository(
         savedStateDataSource.savedState
             .map { it.pastSessions ?: emptyList() }
             .distinctUntilChanged()
+            .shareIn(
+                scope = appMainScope + ioDispatcher,
+                started = SharingStarted.WhileSubscribed(5_000),
+                replay = 1,
+            )
 
     override fun isSignedInProfile(id: ProfileId): Flow<Boolean> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->

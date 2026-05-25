@@ -21,7 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.timeline_thread_linear
 import heron.ui.core.generated.resources.timeline_thread_newest_first
@@ -45,7 +45,7 @@ fun ThreadDisplayOptions(
         modifier = modifier,
     ) {
         var expanded by remember { mutableStateOf(false) }
-        AppBarButton(
+        AppBarIconButton(
             icon = Icons.AutoMirrored.Rounded.Sort,
             iconDescription = stringResource(CommonStrings.timeline_thread_order),
             onClick = { expanded = true },

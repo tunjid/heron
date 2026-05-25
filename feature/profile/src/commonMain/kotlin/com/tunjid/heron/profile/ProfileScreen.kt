@@ -1730,7 +1730,7 @@ private fun Modifier.recordPadding() =
     padding(8.dp)
 
 private val ExpandedProfilePhotoSize = 68.dp
-private val CollapsedProfilePhotoSize = 36.dp
+private val CollapsedProfilePhotoSize = UiTokens.appBarButtonSize
 private val BannerBlurRadius = 40.dp
 
 private const val ProfileCollectionSharedElementPrefix = "profile-collection"

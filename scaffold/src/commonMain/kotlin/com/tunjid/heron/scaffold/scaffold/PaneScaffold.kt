@@ -22,6 +22,7 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -59,8 +61,14 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.scaffold.identity.isSignedIn
+import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.scaffold.scaffold.components.NonSubComposingScaffold
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.modifiers.blockClickEvents
+import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
@@ -97,10 +105,10 @@ class PaneScaffoldState internal constructor(
         get() = appState.dismissBehavior
 
     val isSignedOut
-        get() = !appState.isSignedIn
+        get() = !appState.identityState.isSignedIn
 
     val isSignedIn
-        get() = appState.isSignedIn
+        get() = appState.identityState.isSignedIn
 
     val prefersCompactBottomNav
         get() = appState.prefersCompactBottomNav
@@ -260,8 +268,27 @@ fun PaneScaffoldState.PaneScaffold(
                     snackBarHost()
                 },
                 content = { paddingValues ->
+                    val isStable = appState.identityState.isStable
+                    val blurState = animateFloatAsState(
+                        if (isStable) 0f else 1f,
+                    )
                     Box(
                         modifier = Modifier
+                            .ifTrue(
+                                predicate = !isStable,
+                                block = {
+                                    blockClickEvents()
+                                        .drawWithContent {
+                                            drawContent()
+                                            drawRect(Color.Black.withDim(true))
+                                        }
+                                },
+                            )
+                            .blur(
+                                shape = PaneClipShape,
+                                radius = { 32.dp },
+                                progress = blurState::value,
+                            )
                             .constrainedSizePlacement(
                                 orientation = Orientation.Horizontal,
                                 minSize = splitPaneState.minPaneWidth,
@@ -362,11 +389,13 @@ private fun PaneScaffoldState.PersistentSharedElement() {
     )
 }
 
+private val PaneClipShape = RoundedCornerShape(
+    topStart = 16.dp,
+    topEnd = 16.dp,
+)
+
 private val PaneClipModifier = Modifier.clip(
-    shape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-    ),
+    shape = PaneClipShape,
 )
 
 private val BoundsTransformSpring = spring(

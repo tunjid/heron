@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.NavigationEventStatus
@@ -182,6 +183,7 @@ internal fun AppState.PaneNavigationBar(
                                 },
                             )
                         },
+                        enabled = identityState.isStable,
                         selected = item.selected,
                         onClick = {
                             if (item.selected && onNavItemReselected()) return@NavigationBarItem
@@ -226,6 +228,7 @@ internal fun AppState.PaneNavigationRail(
         ) {
             navItems.forEach { item ->
                 NavigationRailItem(
+                    enabled = identityState.isStable,
                     selected = item.selected,
                     icon = {
                         BadgedBox(

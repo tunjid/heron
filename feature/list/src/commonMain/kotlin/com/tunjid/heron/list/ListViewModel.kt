@@ -66,8 +66,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 
 internal typealias ListStateHolder = ActionSuspendingStateMutator<Action, State>
 
@@ -115,7 +115,7 @@ class ActualListViewModel(
                 timelineRepository = timelineRepository,
                 profileRepository = profileRepository,
             )
-            listMemberStateHolderMutations(
+            launchListMemberStateHolderMutations(
                 state = state,
                 request = route.timelineRequest,
                 viewModelScope = scope,
@@ -214,17 +214,14 @@ private fun launchLoadPreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private suspend fun launchTimelineStateHolderMutations(
+private fun launchTimelineStateHolderMutations(
     state: State.SnapshotMutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
 ) {
-    val existingHolder = state.stateHolders
-        .filterIsInstance<ListScreenStateHolders.Timeline>()
-        .firstOrNull()
-        .takeUnless { it?.mutator.isNoOp() }
+    val existingHolder = state.existingTimelineStateHolder()
 
     if (existingHolder != null) {
         launchListStatusMutations(
@@ -240,34 +237,38 @@ private suspend fun launchTimelineStateHolderMutations(
         return
     }
 
-    val timeline = timelineRepository.timeline(request)
-        .first()
+    timelineRepository.timeline(request)
+        .take(1)
+        .launchAndCollect { timeline ->
+            if (state.existingTimelineStateHolder() != null) return@launchAndCollect
 
-    val createdHolder = ListScreenStateHolders.Timeline(
-        mutator = viewModelScope.timelineStateHolder(
-            initialItems = TimelineItem.LoadingItems,
-            refreshOnStart = true,
-            timeline = timeline,
-            startNumColumns = 1,
-            timelineRepository = timelineRepository,
-        ),
-    )
-    state.stateHolders = listOf(createdHolder) + state.stateHolders
-        .filterIsInstance<ListScreenStateHolders.Members>()
+            val createdHolder = ListScreenStateHolders.Timeline(
+                mutator = viewModelScope.timelineStateHolder(
+                    initialItems = TimelineItem.LoadingItems,
+                    refreshOnStart = true,
+                    timeline = timeline,
+                    startNumColumns = 1,
+                    timelineRepository = timelineRepository,
+                ),
+            )
+            state.stateHolders = listOf(createdHolder) + state.stateHolders
+                .filterIsInstance<ListScreenStateHolders.Members>()
 
-    launchListStatusMutations(
-        state = state,
-        timeline = timeline,
-        timelineRepository = timelineRepository,
-    )
-    launchTimelineCreatorMutations(
-        state = state,
-        timeline = timeline,
-        profileRepository = profileRepository,
-    )
+            launchListStatusMutations(
+                state = state,
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            )
+            launchTimelineCreatorMutations(
+                state = state,
+                timeline = timeline,
+                profileRepository = profileRepository,
+            )
+        }
 }
 
-private suspend fun listMemberStateHolderMutations(
+context(productionScope: CoroutineScope)
+private fun launchListMemberStateHolderMutations(
     state: State.SnapshotMutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,
@@ -275,50 +276,51 @@ private suspend fun listMemberStateHolderMutations(
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
 ) {
-    val existingHolder = state.stateHolders
-        .filterIsInstance<ListScreenStateHolders.Members>()
-        .firstOrNull()
+    val existingHolder = state.existingMembersStateHolder()
 
     if (existingHolder != null) return
 
-    val timeline = timelineRepository.timeline(request)
+    timelineRepository.timeline(request)
         .map { timeline ->
             if (timeline is Timeline.StarterPack) timeline.listTimeline else timeline
         }
         .filterIsInstance<Timeline.Home.List>()
-        .first()
+        .take(1)
+        .launchAndCollect { timeline ->
+            if (state.existingMembersStateHolder() != null) return@launchAndCollect
 
-    val createdHolder = ListScreenStateHolders.Members(
-        mutator = viewModelScope.actionSuspendingStateMutator(
-            state = MemberState(
-                signedInProfileId = null,
-                listUri = timeline.feedList.uri,
-                tilingData = TilingState.Data(
-                    currentQuery = ListMemberQuery(
+            val createdHolder = ListScreenStateHolders.Members(
+                mutator = viewModelScope.actionSuspendingStateMutator(
+                    state = MemberState(
+                        signedInProfileId = null,
                         listUri = timeline.feedList.uri,
-                        data = defaultQueryData(),
-                    ),
-                ),
-            ).toSnapshotMutable(),
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            producer = { memberState, actions ->
-                authRepository.signedInUser.launchAndCollect {
-                    memberState.signedInProfileId = it?.did
-                }
-                actions.launchTilingMutations(
-                    state = memberState,
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = recordRepository::listMembers,
-                    onNewItems = { items ->
-                        items.distinctBy(ListMember::uri)
+                        tilingData = TilingState.Data(
+                            currentQuery = ListMemberQuery(
+                                listUri = timeline.feedList.uri,
+                                data = defaultQueryData(),
+                            ),
+                        ),
+                    ).toSnapshotMutable(),
+                    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+                    producer = { memberState, actions ->
+                        authRepository.signedInUser.launchAndCollect {
+                            memberState.signedInProfileId = it?.did
+                        }
+                        actions.launchTilingMutations(
+                            state = memberState,
+                            updateQueryData = { copy(data = it) },
+                            refreshQuery = { copy(data = data.reset()) },
+                            cursorListLoader = recordRepository::listMembers,
+                            onNewItems = { items ->
+                                items.distinctBy(ListMember::uri)
+                            },
+                        )
                     },
-                )
-            },
-        ),
-    )
-    state.stateHolders = state.stateHolders
-        .filterIsInstance<ListScreenStateHolders.Timeline>() + createdHolder
+                ),
+            )
+            state.stateHolders = state.stateHolders
+                .filterIsInstance<ListScreenStateHolders.Timeline>() + createdHolder
+        }
 }
 
 context(productionScope: CoroutineScope)
@@ -548,6 +550,17 @@ private fun launchTimelineCreatorMutations(
         state.creator = it
     }
 }
+
+private fun State.SnapshotMutable.existingTimelineStateHolder(): ListScreenStateHolders.Timeline? =
+    stateHolders
+        .filterIsInstance<ListScreenStateHolders.Timeline>()
+        .firstOrNull()
+        .takeUnless { it?.mutator.isNoOp() }
+
+private fun State.SnapshotMutable.existingMembersStateHolder(): ListScreenStateHolders.Members? =
+    stateHolders
+        .filterIsInstance<ListScreenStateHolders.Members>()
+        .firstOrNull()
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,

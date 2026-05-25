@@ -31,6 +31,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.editprofile.ActualEditProfileViewModel
 import com.tunjid.heron.editprofile.EditProfileScreen
+import com.tunjid.heron.editprofile.EditProfileStateHolder
 import com.tunjid.heron.editprofile.RouteViewModelInitializer
 import com.tunjid.heron.editprofile.saveProfileAction
 import com.tunjid.heron.editprofile.ui.EditButton
@@ -134,13 +135,13 @@ class EditProfileBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualEditProfileViewModel> {
+            val stateHolder: EditProfileStateHolder = viewModel<ActualEditProfileViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -162,12 +163,12 @@ class EditProfileBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                         actions = {
                             EditButton(
                                 modifier = Modifier
@@ -200,7 +201,7 @@ class EditProfileBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(state.saveProfileAction())
+                            stateHolder.accept(state.saveProfileAction())
                         },
                     )
                 },
@@ -211,7 +212,7 @@ class EditProfileBindings(
                     EditProfileScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()

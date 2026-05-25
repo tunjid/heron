@@ -42,6 +42,7 @@ import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
+import com.tunjid.heron.feed.FeedStateHolder
 import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.timelineState
 import com.tunjid.heron.feed.withFeedTimelineOrNull
@@ -196,13 +197,13 @@ class FeedBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualFeedViewModel> {
+            val stateHolder: FeedStateHolder = viewModel<ActualFeedViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val editFeedText = stringResource(Res.string.edit_feed)
@@ -215,7 +216,7 @@ class FeedBindings(
                     if (isEditable) editFeedText else null
                 },
                 onShareInConversationClicked = { recordUri, conversation ->
-                    viewModel.accept(
+                    stateHolder.accept(
                         Action.Navigate.To(
                             conversationDestination(
                                 id = conversation.id,
@@ -228,7 +229,7 @@ class FeedBindings(
                     )
                 },
                 onEditClicked = onEditClicked@{
-                    viewModel.accept(
+                    stateHolder.accept(
                         Action.Navigate.To(
                             grazeEditorDestination(
                                 feedGenerator = state.timelineState
@@ -241,7 +242,7 @@ class FeedBindings(
                     )
                 },
                 onShareInPostClicked = { recordUri ->
-                    viewModel.accept(
+                    stateHolder.accept(
                         Action.Navigate.To(
                             composePostDestination(
                                 sharedUri = recordUri.asGenericUri(),
@@ -261,7 +262,7 @@ class FeedBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -304,7 +305,7 @@ class FeedBindings(
                                         status = state.feedStatus,
                                         uri = feedTimeline.feedGenerator.uri,
                                         onFeedGeneratorStatusUpdated = {
-                                            viewModel.accept(Action.UpdateFeedGeneratorStatus(it))
+                                            stateHolder.accept(Action.UpdateFeedGeneratorStatus(it))
                                         },
                                     )
                                 }
@@ -313,14 +314,14 @@ class FeedBindings(
                                     state.timelineState?.timeline?.uri
                                         ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
-                                            viewModel.accept(Action.UpdateRecentConversations)
+                                            stateHolder.accept(Action.UpdateRecentConversations)
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
                                 },
                             )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 floatingActionButton = {
@@ -331,7 +332,7 @@ class FeedBindings(
                             topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(Action.ScrollToTop)
+                            stateHolder.accept(Action.ScrollToTop)
                         },
                     )
                 },
@@ -339,7 +340,7 @@ class FeedBindings(
                     FeedScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                     SecondaryPaneCloseBackHandler()
                 },

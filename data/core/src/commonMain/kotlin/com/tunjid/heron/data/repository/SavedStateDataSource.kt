@@ -38,10 +38,10 @@ import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
@@ -435,7 +435,12 @@ internal class DataStoreSavedStateDataSource(
         else copy(
             activeProfileId = profileId,
             profileData = profileData + (
-                profileId to savedStateProfileData.copy(auth = freshAuth)
+                profileId to savedStateProfileData.copy(
+                    auth = freshAuth,
+                    sessionSummary = savedStateProfileData.sessionSummary?.copy(
+                        lastSeen = Clock.System.now(),
+                    ),
+                )
                 ),
         )
     }

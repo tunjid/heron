@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -32,39 +33,47 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val anchorPost: Post?,
-    val sharedElementPrefix: String,
-    @Transient
-    val order: TimelineItem.Threaded.Order? = null,
-    @Transient
-    val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
-    @Transient
-    val source: Timeline.Source? = null,
-    @Transient
-    val timelinePosition: CursorQuery.Data? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val items: List<TimelineItem> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) {
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val anchorPost: Post?,
+        val sharedElementPrefix: String,
+        @Transient
+        val order: TimelineItem.Threaded.Order? = null,
+        @Transient
+        val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
+        @Transient
+        val source: Timeline.Source? = null,
+        @Transient
+        val timelinePosition: CursorQuery.Data? = null,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val signedInProfileId: ProfileId? = null,
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
+        @Transient
+        val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val items: List<TimelineItem> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
     companion object {
-        operator fun invoke(route: Route): State {
+        operator fun invoke(route: Route): Immutable {
             val anchorPost = route.model<Post>()
-            return State(
+            return Immutable(
                 anchorPost = anchorPost,
                 sharedElementPrefix = route.sharedElementPrefix,
                 source = route.model(),

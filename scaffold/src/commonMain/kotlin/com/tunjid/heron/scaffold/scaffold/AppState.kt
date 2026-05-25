@@ -41,25 +41,25 @@ import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayoutState
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.utilities.DatabaseCleanup
-import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.scaffold.identity.IdentityAction
+import com.tunjid.heron.scaffold.identity.IdentityStateHolder
+import com.tunjid.heron.scaffold.identity.isSignedIn
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.scaffold.navigation.NavItem
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.mutator.compose.produceState
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.compose.MultiPaneDisplayState
@@ -86,20 +86,16 @@ import kotlinx.coroutines.launch
 @Stable
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
-    private val authRepository: AuthRepository,
-    private val userDataRepository: UserDataRepository,
+    private val identityStateHolder: IdentityStateHolder,
     private val navigationStateHolder: NavigationStateHolder,
     private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
-    private val writeQueue: WriteQueue,
-    private val databaseCleanup: DatabaseCleanup,
 ) {
     private var notificationCount by mutableStateOf(0L)
 
-    internal var isSignedIn by mutableStateOf(false)
-
-    internal var preferences by mutableStateOf<Preferences?>(null)
+    internal val identityState
+        get() = identityStateHolder.state
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
@@ -174,6 +170,9 @@ class AppState(
                 },
             )
         }
+
+        identityStateHolder.produceState()
+
         DisposableEffect(Unit) {
             val job = CoroutineScope(Dispatchers.Main.immediate).launch {
                 navigationStateHolder.state.collect { multiStackNav ->
@@ -186,24 +185,8 @@ class AppState(
         // TODO: Figure out a way to do this in the background with KMP
         LaunchedEffect(Unit) {
             launch {
-                writeQueue.drain()
-            }
-            launch {
-                databaseCleanup.cleanup()
-            }
-            launch {
                 notificationStateHolder.state.collect { notificationState ->
                     notificationCount = notificationState.unreadCount
-                }
-            }
-            launch {
-                authRepository.isSignedIn.collect { signedIn ->
-                    isSignedIn = signedIn
-                }
-            }
-            launch {
-                userDataRepository.preferences.collect { currentPreferences ->
-                    preferences = currentPreferences
                 }
             }
         }
@@ -256,6 +239,15 @@ class AppState(
             navState.pop()
         }
 
+    internal fun addAccount() {
+        identityStateHolder.accept(
+            IdentityAction.Switch.Cancel,
+        )
+        navigationStateHolder.accept(
+            signInDestination().navigationMutation,
+        )
+    }
+
     internal fun onPaneAnchorChanged(
         anchor: PaneAnchor,
         destinationId: String,
@@ -269,6 +261,9 @@ class AppState(
 
     fun onNotificationAction(action: NotificationAction) =
         notificationStateHolder.accept(action)
+
+    fun onIdentityAction(action: IdentityAction) =
+        identityStateHolder.accept(action)
 
     suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
         notificationStateHolder.state.first { state ->
@@ -285,8 +280,8 @@ class AppState(
                     when (stack) {
                         AppStack.Home -> stack.stackName == name
                         AppStack.Search -> stack.stackName == name
-                        AppStack.Messages -> isSignedIn && stack.stackName == name
-                        AppStack.Notifications -> isSignedIn && stack.stackName == name
+                        AppStack.Messages -> identityState.isSignedIn && stack.stackName == name
+                        AppStack.Notifications -> identityState.isSignedIn && stack.stackName == name
                         AppStack.Auth -> stack.stackName == name
                         AppStack.Splash -> stack.stackName == name
                     }
@@ -379,10 +374,10 @@ internal class SplitPaneState(
 }
 
 internal val AppState.prefersCompactBottomNav: Boolean
-    get() = preferences?.local?.useCompactNavigation ?: false
+    get() = identityState.preferences?.local?.useCompactNavigation ?: false
 
 internal val AppState.prefersAutoHidingBottomNav: Boolean
-    get() = preferences?.local?.autoHideBottomNavigation ?: true
+    get() = identityState.preferences?.local?.autoHideBottomNavigation ?: true
 
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,

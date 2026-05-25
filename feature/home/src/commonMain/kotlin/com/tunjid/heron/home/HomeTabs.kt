@@ -68,7 +68,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -99,7 +98,7 @@ import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.JiggleBox
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
@@ -133,7 +132,6 @@ internal fun HomeTabs(
     modifier: Modifier = Modifier,
     tabLayout: TabLayout,
     isSignedIn: Boolean,
-    isOffset: Boolean,
     currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
@@ -230,21 +228,15 @@ internal fun HomeTabs(
                 )
             }
         }
-        val extraPadding by animateDpAsState(
-            targetValue = if (isOffset) 8.dp else 0.dp,
-            animationSpec = TabButtonPaddingAnimationSpec,
-        )
-
         if (isSignedIn) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    // Inset horizontally by 8 dp so it doesn't touch timeline cards
-                    horizontal = 8.dp + extraPadding,
+                    horizontal = 16.dp,
                     vertical = 4.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val alphaModifier = remember {
                 Modifier.graphicsLayer {
@@ -278,14 +270,14 @@ internal fun HomeTabs(
                         )
                         .then(alphaModifier)
                 }
-                AppBarButton(
+                AppBarIconButton(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
                     colors = TabButtonColors,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
-                AppBarButton(
+                AppBarIconButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
                     colors = TabButtonColors,
@@ -293,7 +285,7 @@ internal fun HomeTabs(
                     iconDescription = stringResource(Res.string.bookmark),
                 )
             }
-            AppBarButton(
+            AppBarIconButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
                         zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
@@ -494,7 +486,7 @@ private fun CollapsedTabs(
             // 8 dp would align perfectly with the scrolling content.
             // Inset it by 8 dp.
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -745,10 +737,6 @@ private val ExpandedTabsContentEnterAnimation =
             delayMillis = 90,
         ),
     )
-
-private val TabButtonPaddingAnimationSpec = tween<Dp>(
-    durationMillis = 400,
-)
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 

@@ -217,11 +217,6 @@ internal fun HomeScreen(
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentTabUri = state.currentTabUri,
             isSignedIn = state.signedInProfile != null,
-            isOffset = remember {
-                derivedStateOf {
-                    tabsOffsetNestedScrollConnection.offset.y < 0
-                }
-            }.value,
             tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,

@@ -21,7 +21,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,6 +46,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
+import com.tunjid.heron.search.SearchStateHolder
 import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
@@ -133,14 +137,20 @@ class SearchBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<SearchViewModel> {
+            val stateHolder: SearchStateHolder = viewModel<SearchViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+
+            val searchFocusRequester = remember { FocusRequester() }
+
+            LaunchedEffect(Unit) {
+                searchFocusRequester.requestFocus()
+            }
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
@@ -161,24 +171,24 @@ class SearchBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     if (state.isQueryEditable) RootDestinationTopAppBar(
                         modifier = Modifier.offset {
                             topAppBarNestedScrollConnection.offset.round()
                         },
-                        signedInProfile = state.signedInProfile,
                         title = {
                             SearchBar(
                                 searchQuery = state.currentQuery,
+                                focusRequester = searchFocusRequester,
                                 onQueryChanged = { query ->
-                                    viewModel.accept(
+                                    stateHolder.accept(
                                         Action.Search.OnSearchQueryChanged(query),
                                     )
                                 },
                                 onQueryConfirmed = {
-                                    viewModel.accept(
+                                    stateHolder.accept(
                                         Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                                     )
                                 },
@@ -186,7 +196,7 @@ class SearchBindings(
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
@@ -206,7 +216,7 @@ class SearchBindings(
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = {
-                            viewModel.accept(Action.Navigate.Pop)
+                            stateHolder.accept(Action.Navigate.Pop)
                         },
                     )
                 },
@@ -224,6 +234,10 @@ class SearchBindings(
                             .offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
+                        onNavItemReselected = {
+                            searchFocusRequester.requestFocus()
+                            true
+                        },
                     )
                 },
                 navigationRail = {
@@ -234,7 +248,7 @@ class SearchBindings(
                         paneScaffoldState = this,
                         modifier = Modifier,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
+import com.tunjid.heron.compose.ComposeStateHolder
 import com.tunjid.heron.compose.RouteViewModelInitializer
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
@@ -112,13 +113,13 @@ class ComposeBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualComposeViewModel> {
+            val stateHolder: ComposeStateHolder = viewModel<ActualComposeViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             paneScaffoldState.PaneScaffold(
@@ -128,7 +129,7 @@ class ComposeBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -136,12 +137,12 @@ class ComposeBindings(
                             TopAppBarFab(
                                 modifier = Modifier,
                                 state = state,
-                                onCreatePost = viewModel.accept,
+                                onCreatePost = stateHolder.accept,
                             )
                             Spacer(Modifier.width(16.dp))
                         },
                         onBackPressed = {
-                            viewModel.accept(Action.Navigate.Pop)
+                            stateHolder.accept(Action.Navigate.Pop)
                         },
                     )
                 },
@@ -149,7 +150,7 @@ class ComposeBindings(
                     ComposePostFabRow(
                         modifier = Modifier,
                         state = state,
-                        onAction = viewModel.accept,
+                        onAction = stateHolder.accept,
                     )
                 },
                 navigationBar = {
@@ -179,12 +180,12 @@ class ComposeBindings(
                             .windowInsetsPadding(WindowInsets.navigationBars),
                         postText = state.postText,
                         photos = state.photos,
-                        onMediaEdited = viewModel.accept,
+                        onMediaEdited = stateHolder.accept,
                     )
 
                     DisposableEffect(hasBlankText, imeShowing) {
                         val fabExpanded = hasBlankText || !imeShowing
-                        viewModel.accept(Action.SetFabExpanded(expanded = fabExpanded))
+                        stateHolder.accept(Action.SetFabExpanded(expanded = fabExpanded))
                         onDispose { }
                     }
                 },
@@ -201,7 +202,7 @@ class ComposeBindings(
                                 bottom = UiTokens.toolbarHeight,
                             ),
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

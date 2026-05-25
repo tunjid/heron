@@ -19,6 +19,8 @@ package com.tunjid.heron.scaffold.di
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.scaffold.identity.AppIdentityStateHolder
+import com.tunjid.heron.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.PersistedNavigationStateHolder
@@ -98,4 +100,10 @@ class ScaffoldBindings(
     fun provideNotificationStateHolder(
         appNotificationStateHolder: AppNotificationStateHolder,
     ): NotificationStateHolder = appNotificationStateHolder
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideIdentityStateHolder(
+        appIdentityStateHolder: AppIdentityStateHolder,
+    ): IdentityStateHolder = appIdentityStateHolder
 }

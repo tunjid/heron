@@ -17,6 +17,7 @@
 package com.tunjid.heron.ui.modifiers
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
@@ -36,6 +37,20 @@ fun Modifier.shapedClickable(
     this
         .then(clipped(shape))
         .clickable(
+            onClick = onClick,
+        )
+
+fun Modifier.shapedCombinedClickable(
+    shape: Shape = DefaultClipShape,
+    onLongClickLabel: String? = null,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) =
+    this
+        .then(clipped(shape))
+        .combinedClickable(
+            onLongClickLabel = onLongClickLabel,
+            onLongClick = onLongClick,
             onClick = onClick,
         )
 

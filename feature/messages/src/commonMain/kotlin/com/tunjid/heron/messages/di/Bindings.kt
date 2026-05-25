@@ -47,6 +47,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.messages.Action
 import com.tunjid.heron.messages.ActualMessagesViewModel
 import com.tunjid.heron.messages.MessagesScreen
+import com.tunjid.heron.messages.MessagesStateHolder
 import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -132,13 +133,13 @@ class MessagesBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualMessagesViewModel> {
+            val stateHolder: MessagesStateHolder = viewModel<ActualMessagesViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -162,7 +163,7 @@ class MessagesBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     RootDestinationTopAppBar(
@@ -183,10 +184,10 @@ class MessagesBindings(
                                         searchQuery = state.searchQuery,
                                         focusRequester = searchFocusRequester,
                                         onQueryChanged = { query ->
-                                            viewModel.accept(Action.SearchQueryChanged(query))
+                                            stateHolder.accept(Action.SearchQueryChanged(query))
                                         },
                                         onQueryConfirmed = {
-                                            viewModel.accept(Action.SearchQueryChanged(query = ""))
+                                            stateHolder.accept(Action.SearchQueryChanged(query = ""))
                                             keyboardController?.hide()
                                         },
                                     )
@@ -200,10 +201,9 @@ class MessagesBindings(
                                 }
                             }
                         },
-                        signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
@@ -228,7 +228,7 @@ class MessagesBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(Action.SetIsSearching(isSearching = true))
+                            stateHolder.accept(Action.SetIsSearching(isSearching = true))
                         },
                     )
                 },
@@ -253,7 +253,7 @@ class MessagesBindings(
                     MessagesScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .imePadding(),
                     )
@@ -276,7 +276,7 @@ class MessagesBindings(
                 ) return@LaunchedEffect
 
                 searchFocusRequester.freeFocus()
-                viewModel.accept(Action.SetIsSearching(isSearching = false))
+                stateHolder.accept(Action.SetIsSearching(isSearching = false))
             }
         },
     )

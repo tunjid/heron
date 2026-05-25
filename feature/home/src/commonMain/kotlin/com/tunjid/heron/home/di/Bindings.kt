@@ -38,6 +38,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
+import com.tunjid.heron.home.HomeStateHolder
 import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.home.ui.TabsExpansionEffect
@@ -129,13 +130,13 @@ class HomeBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val viewModel = viewModel<ActualHomeViewModel> {
+            val stateHolder: HomeStateHolder = viewModel<ActualHomeViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -157,7 +158,7 @@ class HomeBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     RootDestinationTopAppBar(
@@ -165,7 +166,6 @@ class HomeBindings(
                             topAppBarNestedScrollConnection.offset.round()
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        signedInProfile = state.signedInProfile,
                         title = {
                             AnimatedVisibility(
                                 visible = state.preferences.local.showTrendingTopics,
@@ -174,12 +174,11 @@ class HomeBindings(
                             ) {
                                 TrendsTicker(
                                     modifier = Modifier
-                                        .padding(horizontal = 20.dp)
                                         .fillMaxWidth(),
                                     sharedTransitionScope = paneScaffoldState,
                                     trends = state.trends,
                                     onTrendClicked = { trend ->
-                                        viewModel.accept(
+                                        stateHolder.accept(
                                             Action.Navigate.To(
                                                 pathDestination(
                                                     path = trend.link,
@@ -192,13 +191,24 @@ class HomeBindings(
                             }
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     profileDestination(
                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                         profile = profile,
                                         avatarSharedElementKey = sharedElementKey,
                                     ),
+                                ),
+                            )
+                        },
+                        onLogoClicked = {
+                            stateHolder.accept(
+                                Action.SetTabLayout(
+                                    layout = if (state.tabLayout is TabLayout.Expanded) {
+                                        TabLayout.Collapsed.All
+                                    } else {
+                                        TabLayout.Expanded
+                                    },
                                 ),
                             )
                         },
@@ -235,7 +245,7 @@ class HomeBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
-                            viewModel.accept(
+                            stateHolder.accept(
                                 when {
                                     isSignedOut -> Action.Navigate.To(
                                         signInDestination(),
@@ -260,7 +270,7 @@ class HomeBindings(
                                 bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
-                            viewModel.accept(Action.RefreshCurrentTab)
+                            stateHolder.accept(Action.RefreshCurrentTab)
                             true
                         },
                     )
@@ -268,7 +278,7 @@ class HomeBindings(
                 navigationRail = {
                     PaneNavigationRail(
                         onNavItemReselected = {
-                            viewModel.accept(Action.RefreshCurrentTab)
+                            stateHolder.accept(Action.RefreshCurrentTab)
                             true
                         },
                     )
@@ -277,7 +287,7 @@ class HomeBindings(
                     HomeScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                     )
                 },
             )

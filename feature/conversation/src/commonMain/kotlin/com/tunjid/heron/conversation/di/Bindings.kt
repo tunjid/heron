@@ -31,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.conversation.Action
 import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
+import com.tunjid.heron.conversation.ConversationStateHolder
 import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.pendingRecord
 import com.tunjid.heron.conversation.ui.ConversationTitle
@@ -127,13 +128,13 @@ class ConversationBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualConversationViewModel> {
+            val stateHolder: ConversationStateHolder = viewModel<ActualConversationViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = route,
                 )
             }
-            val state = viewModel.produceStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val bottomNavigationNestedScrollConnection =
@@ -151,7 +152,7 @@ class ConversationBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -162,7 +163,7 @@ class ConversationBindings(
                                 participants = state.members,
                                 paneScaffoldState = this,
                                 onProfileClicked = { profile ->
-                                    viewModel.accept(
+                                    stateHolder.accept(
                                         Action.Navigate.To(
                                             profileDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
@@ -176,7 +177,7 @@ class ConversationBindings(
                                 },
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
                 navigationBar = {
@@ -188,9 +189,13 @@ class ConversationBindings(
                             .bottomNavigationSharedBounds(this),
                         inputText = state.inputText,
                         pendingRecord = state.sharedRecord.pendingRecord,
-                        sendMessage = remember(viewModel, state.id, state.sharedRecord) {
+                        sendMessage = remember(
+                            stateHolder,
+                            state.id,
+                            state.sharedRecord,
+                        ) {
                             { annotatedString: AnnotatedString ->
-                                viewModel.accept(
+                                stateHolder.accept(
                                     Action.SendMessage(
                                         Message.Create(
                                             conversationId = state.id,
@@ -205,10 +210,10 @@ class ConversationBindings(
                             }
                         },
                         removePendingRecordClicked = {
-                            viewModel.accept(Action.SharedRecord.Remove)
+                            stateHolder.accept(Action.SharedRecord.Remove)
                         },
                         onTextChanged = {
-                            viewModel.accept(Action.TextChanged(it))
+                            stateHolder.accept(Action.TextChanged(it))
                         },
                     )
                 },
@@ -219,7 +224,7 @@ class ConversationBindings(
                     ConversationScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier
                             .padding(paddingValues),
                     )

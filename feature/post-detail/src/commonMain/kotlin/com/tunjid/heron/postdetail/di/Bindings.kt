@@ -22,12 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.canReply
@@ -37,6 +35,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
+import com.tunjid.heron.postdetail.PostDetailStateHolder
 import com.tunjid.heron.postdetail.RouteViewModelInitializer
 import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -63,6 +62,7 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -171,13 +171,13 @@ class PostDetailBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualPostDetailViewModel> {
+            val stateHolder: PostDetailStateHolder = viewModel<ActualPostDetailViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
                 )
             }
-            val state by viewModel.state.collectAsStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
@@ -199,7 +199,7 @@ class PostDetailBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -209,7 +209,7 @@ class PostDetailBindings(
                                 title = stringResource(Res.string.title),
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                         actions = {
                             ThreadDisplayOptions(
                                 modifier = Modifier
@@ -217,10 +217,10 @@ class PostDetailBindings(
                                 order = state.order,
                                 viewMode = state.viewMode,
                                 onOrderChanged = {
-                                    viewModel.accept(Action.Load.Order(it))
+                                    stateHolder.accept(Action.Load.Order(it))
                                 },
                                 onViewModeChanged = {
-                                    viewModel.accept(Action.Load.ViewMode(it))
+                                    stateHolder.accept(Action.Load.ViewMode(it))
                                 },
                             )
                         },
@@ -256,7 +256,7 @@ class PostDetailBindings(
                         },
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
-                            viewModel.accept(
+                            stateHolder.accept(
                                 Action.Navigate.To(
                                     when {
                                         isSignedOut -> signInDestination()
@@ -286,7 +286,7 @@ class PostDetailBindings(
                     PostDetailScreen(
                         paneScaffoldState = this,
                         state = state,
-                        actions = viewModel.accept,
+                        actions = stateHolder.accept,
                         modifier = Modifier,
                     )
                     SecondaryPaneCloseBackHandler()
