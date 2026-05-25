@@ -205,7 +205,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                             profileId = sessionSummary.profileId,
                             signedInProfileId = identityState.signedInProfile?.did,
                             onLongClick = {
-                                if (identityState.pastSessions.size > 1) appState.onIdentityAction(
+                                if (identityState.pastSessions.isNotEmpty()) appState.onIdentityAction(
                                     IdentityAction.Switch.Choose,
                                 )
                             },
