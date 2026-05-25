@@ -42,18 +42,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -63,6 +70,15 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.profile.AvatarLiveZIndex
+import com.tunjid.heron.profile.AvatarZIndex
+import com.tunjid.heron.profile.ProfileLiveChip
+import com.tunjid.heron.profile.profileLiveAvatarBorder
+import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityState
 import com.tunjid.heron.scaffold.identity.isStable
@@ -70,8 +86,11 @@ import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
 import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
 import com.tunjid.heron.ui.platformStatusBars
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.identity_account_add
@@ -187,7 +206,6 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .appbarAnimatedBounds()
                     .clip(CircleShape),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 reverseLayout = true,
             ) {
                 items(
@@ -237,7 +255,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                         appState.onIdentityAction(IdentityAction.Switch.Cancel)
                     },
                     colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        containerColor = Color.Transparent,
                     ),
                     content = {
                         Icon(
@@ -302,6 +320,89 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         },
         actions = actions,
     )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun PaneScaffoldState.SessionAvatar(
+    modifier: Modifier = Modifier,
+    status: IdentityState.SwitchStatus,
+    isLive: Boolean,
+    profileAvatar: ImageUri?,
+    profileDescription: String?,
+    profileId: ProfileId,
+    signedInProfileId: ProfileId?,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit = {},
+) {
+    val isSignedInProfile = profileId == signedInProfileId
+    Box(
+        modifier = modifier
+            .size(44.dp),
+    ) {
+        PaneStickySharedElement(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(4.dp)
+                .matchParentSize(),
+            sharedContentState = rememberSharedContentState(
+                key = when {
+                    isSignedInProfile -> UiTokens.SignedInUserAvatarSharedElementKey
+                    else -> profileId.id
+                },
+            ),
+            zIndexInOverlay = AvatarZIndex,
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .fillParentAxisIfFixedOrWrap()
+                    .ifTrue(
+                        predicate = isLive,
+                        block = Modifier::profileLiveAvatarBorder,
+                    )
+                    .shapedCombinedClickable(
+                        CircleShape,
+                        onLongClick = onLongClick,
+                        onClick = onClick,
+                    ),
+                args = remember(profileAvatar) {
+                    ImageArgs(
+                        url = profileAvatar?.uri,
+                        contentDescription = profileDescription,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+            )
+            if (isLive && isSignedInProfile) PaneStickySharedElement(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter),
+                sharedContentState = rememberSharedContentState(
+                    key = UiTokens.SignedInUserAvatarSharedElementKey
+                        .withProfileAvatarLiveSharedElementPrefix(),
+                ),
+                zIndexInOverlay = AvatarLiveZIndex,
+            ) {
+                ProfileLiveChip()
+            }
+            val density = LocalDensity.current
+            if (status is IdentityState.SwitchStatus.Switching && status.session.profileId == profileId) CircularWavyProgressIndicator(
+                progress = { 1f },
+                trackColor = MaterialTheme.colorScheme.surface,
+                stroke = remember(density) {
+                    Stroke(
+                        width = with(density) {
+                            2.dp.toPx()
+                        },
+                        cap = StrokeCap.Round,
+                    )
+                },
+                amplitude = { 1f },
+                modifier = Modifier
+                    .matchParentSize(),
+            )
+        }
+    }
 }
 
 @Suppress("UnusedReceiverParameter")
