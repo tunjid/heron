@@ -11,6 +11,7 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -132,7 +133,7 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
         is IdentityAction.Switch.Transition -> 300.milliseconds
     }
 }
-    .launchAndCollect { action ->
+    .launchAndCollectLatest { action ->
         when (action) {
             IdentityAction.Switch.Cancel ->
                 state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
