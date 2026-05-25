@@ -212,7 +212,6 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                         this@RootDestinationTopAppBar.SessionAvatar(
                             modifier = Modifier
                                 .animateItem(),
-                            status = identityState.switchStatus,
                             isLive = false,
                             profileAvatar = sessionSummary.profileAvatar,
                             profileDescription = null,
@@ -322,7 +321,6 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
 @Composable
 private fun PaneScaffoldState.SessionAvatar(
     modifier: Modifier = Modifier,
-    status: IdentityState.SwitchStatus,
     isLive: Boolean,
     profileAvatar: ImageUri?,
     profileDescription: String?,
@@ -440,5 +438,3 @@ private val TitleTransform = slideInVertically(
 
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
-
-private const val AvatarAnimationDelayMillis = 1000L
