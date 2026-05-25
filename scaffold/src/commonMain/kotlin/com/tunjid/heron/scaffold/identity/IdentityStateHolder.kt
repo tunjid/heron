@@ -25,7 +25,6 @@ import kotlin.collections.emptyList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
@@ -37,6 +36,7 @@ sealed class IdentityAction(
         IdentityAction(
             key = "switch",
         ) {
+        data object Cancel : Switch()
         data object Choose : Switch()
         data class Transition(
             val summary: SessionSummary,
@@ -72,6 +72,9 @@ interface IdentityState {
 
 internal val IdentityState.isSignedIn
     get() = signedInProfile != null
+
+internal val IdentityState.isStable
+    get() = switchStatus is IdentityState.SwitchStatus.Stable
 
 @Inject
 class AppIdentityStateHolder(
@@ -118,29 +121,35 @@ context(productionScope: CoroutineScope)
 private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
     state: IdentityState.SnapshotMutable,
     authRepository: AuthRepository,
-) = distinctUntilChanged()
-    .launchAndCollect { action ->
-        when (action) {
-            IdentityAction.Switch.Choose -> {
-                state.switchStatus = IdentityState.SwitchStatus.Choosing
-            }
-            is IdentityAction.Switch.Transition -> {
-                state.switchStatus = IdentityState.SwitchStatus.Switching(
-                    session = action.summary,
-                )
+) = launchAndCollect { action ->
+    when (action) {
+        IdentityAction.Switch.Cancel ->
+            state.switchStatus = IdentityState.SwitchStatus.Stable.Success
+        IdentityAction.Switch.Choose ->
+            state.switchStatus = IdentityState.SwitchStatus.Choosing
+        is IdentityAction.Switch.Transition ->
+            when (action.summary.profileId) {
+                state.signedInProfile?.did -> {
+                    state.switchStatus = IdentityState.SwitchStatus.Stable.Success
+                }
+                else -> {
+                    state.switchStatus = IdentityState.SwitchStatus.Switching(
+                        session = action.summary,
+                    )
 
-                when (val outcome = authRepository.switchSession(action.summary)) {
-                    is Outcome.Success -> {
-                        state.switchStatus = IdentityState.SwitchStatus.Stable.Success
-                    }
+                    when (val outcome = authRepository.switchSession(action.summary)) {
+                        is Outcome.Success -> {
+                            state.switchStatus = IdentityState.SwitchStatus.Stable.Success
+                        }
 
-                    is Outcome.Failure -> {
-                        state.switchStatus = IdentityState.SwitchStatus.Stable.Error(
-                            outcome.exception.message?.let(Memo::Text)
-                                ?: Memo.Resource(CommonStrings.error_session_switch),
-                        )
+                        is Outcome.Failure -> {
+                            state.switchStatus = IdentityState.SwitchStatus.Stable.Error(
+                                outcome.exception.message?.let(Memo::Text)
+                                    ?: Memo.Resource(CommonStrings.error_session_switch),
+                            )
+                        }
                     }
                 }
             }
-        }
     }
+}

@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.NavigationEventStatus
@@ -99,6 +100,7 @@ fun PaneScaffoldState.PaneFab(
     var fabWidth by remember {
         mutableStateOf(DefaultFabSize)
     }
+    val clickable = enabled && appState.identityState.isStable
     AnimatedVisibility(
         modifier = Modifier
             // Use the enter and exit transition on navigation
@@ -134,7 +136,7 @@ fun PaneScaffoldState.PaneFab(
         exit = exitTransition,
         content = {
             val fabAlpha = animateFloatAsState(
-                if (enabled) 1f else 0.6f,
+                if (clickable) 1f else 0.6f,
             )
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
@@ -149,7 +151,7 @@ fun PaneScaffoldState.PaneFab(
                     modifier = Modifier
                         .requiredHeight(DefaultFabSize)
                         .graphicsLayer { alpha = fabAlpha.value },
-                    onClick = { if (enabled) onClick() },
+                    onClick = { if (clickable) onClick() },
                     shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
                     content = {
                         Row(

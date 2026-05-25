@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.scaffold.identity.isSignedIn
 import com.tunjid.heron.scaffold.navigation.AppStack
@@ -53,6 +54,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
@@ -237,6 +239,15 @@ class AppState(
             navState.pop()
         }
 
+    internal fun addAccount() {
+        identityStateHolder.accept(
+            IdentityAction.Switch.Cancel,
+        )
+        navigationStateHolder.accept(
+            signInDestination().navigationMutation,
+        )
+    }
+
     internal fun onPaneAnchorChanged(
         anchor: PaneAnchor,
         destinationId: String,
@@ -250,6 +261,9 @@ class AppState(
 
     fun onNotificationAction(action: NotificationAction) =
         notificationStateHolder.accept(action)
+
+    fun onIdentityAction(action: IdentityAction) =
+        identityStateHolder.accept(action)
 
     suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
         notificationStateHolder.state.first { state ->

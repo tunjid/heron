@@ -174,7 +174,6 @@ class HomeBindings(
                             ) {
                                 TrendsTicker(
                                     modifier = Modifier
-                                        .padding(horizontal = 20.dp)
                                         .fillMaxWidth(),
                                     sharedTransitionScope = paneScaffoldState,
                                     trends = state.trends,
