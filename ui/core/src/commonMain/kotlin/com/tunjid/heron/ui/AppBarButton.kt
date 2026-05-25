@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardColors
@@ -32,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppBarIconButton(
@@ -87,7 +91,7 @@ fun AppBarTextButton(
     modifier: Modifier = Modifier,
     colors: CardColors = CardDefaults.elevatedCardColors(),
     onClick: () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable RowScope.() -> Unit,
 ) {
     ElevatedCard(
         modifier = modifier,
@@ -95,16 +99,41 @@ fun AppBarTextButton(
         colors = colors,
         onClick = onClick,
     ) {
-        Box(
+        AppBarRow(content)
+    }
+}
+
+@Composable
+fun AppBarElevatedCard(
+    modifier: Modifier = Modifier,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
+    content: @Composable RowScope.() -> Unit,
+) {
+    ElevatedCard(
+        modifier = modifier,
+        shape = CircleShape,
+        colors = colors,
+    ) {
+        AppBarRow(content)
+    }
+}
+
+@Composable
+private fun AppBarRow(
+    content: @Composable (RowScope.() -> Unit),
+) {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .height(UiTokens.appBarButtonSize),
+    ) {
+        Row(
             modifier = Modifier
-                .height(UiTokens.appBarButtonSize),
+                .align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.Center),
-            ) {
-                content()
-            }
+            content()
         }
     }
 }

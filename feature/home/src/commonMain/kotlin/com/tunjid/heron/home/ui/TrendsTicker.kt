@@ -19,7 +19,6 @@ package com.tunjid.heron.home.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -41,11 +39,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import heron.ui.core.generated.resources.close
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -83,49 +80,39 @@ fun TrendsTicker(
         if (trends.isNotEmpty()) AppBarTextButton(
             onClick = { isVertical = !isVertical },
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .animateContentSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                var ticker by rememberSaveable { mutableStateOf(0) }
-                val focusedIndex = ticker % trends.size
-                val trend = trends[focusedIndex]
+            var ticker by rememberSaveable { mutableStateOf(0) }
+            val focusedIndex = ticker % trends.size
+            val trend = trends[focusedIndex]
 
-                AnimatedContent(
-                    targetState = isVertical,
-                ) { vertical ->
-                    if (vertical) VerticalTicker(
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        trend = trend,
-                    )
-                    else HorizontalTicker(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp),
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        focusedIndex = focusedIndex,
-                        trends = trends,
-                        onCollapsed = { firstCompletelyVisibleIndex ->
-                            ticker = firstCompletelyVisibleIndex
-                            isVertical = true
-                        },
-                        onTrendClicked = onTrendClicked,
-                    )
-                }
+            AnimatedContent(
+                targetState = isVertical,
+            ) { vertical ->
+                if (vertical) VerticalTicker(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@AnimatedContent,
+                    trend = trend,
+                )
+                else HorizontalTicker(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this@AnimatedContent,
+                    focusedIndex = focusedIndex,
+                    trends = trends,
+                    onCollapsed = { firstCompletelyVisibleIndex ->
+                        ticker = firstCompletelyVisibleIndex
+                        isVertical = true
+                    },
+                    onTrendClicked = onTrendClicked,
+                )
+            }
 
-                LaunchedEffect(Unit) {
-                    snapshotFlow { isVertical }
-                        .collectLatest { vertical ->
-                            if (vertical) while (isActive) {
-                                delay(VerticalTickerChangeDelay)
-                                ++ticker
-                            }
+            LaunchedEffect(Unit) {
+                snapshotFlow { isVertical }
+                    .collectLatest { vertical ->
+                        if (vertical) while (isActive) {
+                            delay(VerticalTickerChangeDelay)
+                            ++ticker
                         }
-                }
+                    }
             }
         }
     }
@@ -141,8 +128,7 @@ private fun VerticalTicker(
 ) = with(sharedTransitionScope) {
     Row(
         modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 12.dp),
+            .fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -163,11 +149,8 @@ private fun VerticalTicker(
             targetState = trend.tickerValue,
             transitionSpec = { TextCheckedTransform },
         ) { currentText ->
-            Text(
-                modifier = Modifier,
+            EmphasizedSingleLineOutlinedText(
                 text = currentText,
-                color = MaterialTheme.colorScheme.outline,
-                style = MaterialTheme.typography.bodyMediumEmphasized,
             )
         }
     }
@@ -214,7 +197,7 @@ private fun HorizontalTicker(
                             )
                             .animateItem(),
                     ) {
-                        Text(
+                        EmphasizedSingleLineOutlinedText(
                             modifier = Modifier
                                 .sharedElement(
                                     sharedContentState = rememberSharedContentState(
@@ -223,8 +206,6 @@ private fun HorizontalTicker(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                 ),
                             text = trend.tickerValue,
-                            color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
                         )
                     }
                 },
