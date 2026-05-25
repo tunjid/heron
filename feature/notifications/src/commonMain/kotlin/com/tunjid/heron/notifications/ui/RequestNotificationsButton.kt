@@ -27,7 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import com.tunjid.heron.scaffold.notifications.notificationPermissionsLauncher
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.notification_permissions_request
 import kotlin.math.PI
@@ -50,7 +50,7 @@ internal fun RequestNotificationsButton(
         )
     }
 
-    AppBarButton(
+    AppBarIconButton(
         modifier = Modifier
             .graphicsLayer {
                 rotationZ = calculateDampedBellRotation(ringProgressAnimatable.value)

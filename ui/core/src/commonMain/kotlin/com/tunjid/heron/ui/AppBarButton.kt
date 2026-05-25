@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
-fun AppBarButton(
+fun AppBarIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: CardColors = CardDefaults.elevatedCardColors(),
@@ -54,7 +54,7 @@ fun AppBarButton(
 }
 
 @Composable
-fun AppBarButton(
+fun AppBarIconButton(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
@@ -63,7 +63,7 @@ fun AppBarButton(
     colors: CardColors = CardDefaults.elevatedCardColors(),
     onClick: () -> Unit,
 ) {
-    AppBarButton(
+    AppBarIconButton(
         modifier = modifier,
         enabled = enabled,
         colors = colors,

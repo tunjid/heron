@@ -83,7 +83,7 @@ import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityState
 import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -250,7 +250,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     .appbarAnimatedBounds(),
                 visible = identityState.switchStatus is IdentityState.SwitchStatus.Choosing,
             ) {
-                AppBarButton(
+                AppBarIconButton(
                     onClick = {
                         appState.onIdentityAction(IdentityAction.Switch.Cancel)
                     },

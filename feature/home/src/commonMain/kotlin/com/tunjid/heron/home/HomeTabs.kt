@@ -99,7 +99,7 @@ import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
-import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.JiggleBox
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
@@ -278,14 +278,14 @@ internal fun HomeTabs(
                         )
                         .then(alphaModifier)
                 }
-                AppBarButton(
+                AppBarIconButton(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
                     colors = TabButtonColors,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
-                AppBarButton(
+                AppBarIconButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
                     colors = TabButtonColors,
@@ -293,7 +293,7 @@ internal fun HomeTabs(
                     iconDescription = stringResource(Res.string.bookmark),
                 )
             }
-            AppBarButton(
+            AppBarIconButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
                         zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
