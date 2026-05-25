@@ -86,13 +86,27 @@ jobs:
           debugSymbols: androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
 
 
-      - name: Extract signed APKs
+      - name: Extract and sign universal APK
+        env:
+          SIGNING_KEY_BASE_64: ${{ secrets.SIGNING_KEY_BASE_64 }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          # bundletool signs extracted APKs with its built-in debug key unless
+          # given the release keystore, which made the GitHub-release APK
+          # unusable for sideloading. Decode the same keystore the AAB uses.
+          echo "$SIGNING_KEY_BASE_64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
+
           curl -L -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
           java -jar bundletool.jar build-apks \
             --bundle=${{ steps.sign_app.outputs.signedReleaseFile }} \
             --output=androidApp/build/outputs/apk/release/heron.apks \
-            --mode=universal
+            --mode=universal \
+            --ks="${RUNNER_TEMP}/release.keystore" \
+            --ks-pass="pass:${KEY_STORE_PASSWORD}" \
+            --ks-key-alias="${ALIAS}" \
+            --key-pass="pass:${KEY_PASSWORD}"
 
           unzip -o androidApp/build/outputs/apk/release/heron.apks -d androidApp/build/outputs/apk/release/
 
