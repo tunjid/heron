@@ -19,8 +19,17 @@ package com.tunjid.heron.timeline.utilities
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 
-// Public extensions
-val Timeline.Presentation.cardSize
+// The most columns this presentation may render, regardless of how wide the window is.
+// Read by [TimelineDisplayState] to keep wide tablets from rendering (and fetching) too many cards.
+internal val Timeline.Presentation.maxColumns
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 4
+        Timeline.Presentation.Media.Condensed -> 5
+        Timeline.Presentation.Media.Expanded -> 4
+        Timeline.Presentation.Media.Grid -> 6
+    }
+
+internal val Timeline.Presentation.cardSize
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 340.dp
         Timeline.Presentation.Media.Condensed -> 160.dp
@@ -28,7 +37,7 @@ val Timeline.Presentation.cardSize
         Timeline.Presentation.Media.Grid -> 120.dp
     }
 
-val Timeline.Presentation.timelineHorizontalPadding
+internal val Timeline.Presentation.timelineHorizontalPadding
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 8.dp
         Timeline.Presentation.Media.Condensed -> 8.dp
@@ -36,7 +45,7 @@ val Timeline.Presentation.timelineHorizontalPadding
         Timeline.Presentation.Media.Grid -> 2.dp
     }
 
-val Timeline.Presentation.lazyGridHorizontalItemSpacing
+internal val Timeline.Presentation.lazyGridHorizontalItemSpacing
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 8.dp
         Timeline.Presentation.Media.Condensed -> 4.dp
@@ -44,7 +53,7 @@ val Timeline.Presentation.lazyGridHorizontalItemSpacing
         Timeline.Presentation.Media.Grid -> 2.dp
     }
 
-val Timeline.Presentation.lazyGridVerticalItemSpacing
+internal val Timeline.Presentation.lazyGridVerticalItemSpacing
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 12.dp
         Timeline.Presentation.Media.Condensed -> 4.dp

@@ -360,7 +360,7 @@ internal class SplitPaneState(
     )
 
     internal val isMediumScreenWidthOrWider
-        get() = windowWidth.value >= SecondaryPaneMinWidthBreakpointDp
+        get() = windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     fun update(
         density: Density,

@@ -104,12 +104,10 @@ import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
-import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.description
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
@@ -450,6 +448,7 @@ private fun ListTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
+    val displayState = rememberTimelineDisplayState()
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -546,14 +545,14 @@ private fun ListTimeline(
             modifier = Modifier
                 .padding(
                     horizontal = animateDpAsState(
-                        presentation.timelineHorizontalPadding,
+                        displayState.horizontalPadding(presentation),
                     ).value,
                 )
                 .fillMaxSize()
                 .paneClip()
                 .gridColumnCount(
                     density = density,
-                    maxColumnWidth = presentation.cardSize,
+                    maxColumnWidth = displayState.cardSize(presentation),
                 ) { numColumns ->
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
@@ -564,12 +563,14 @@ private fun ListTimeline(
                     )
                 },
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+            columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
+            verticalItemSpacing = displayState.verticalItemSpacing(presentation),
             contentPadding = bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(
+                displayState.horizontalItemSpacing(presentation),
+            ),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
             items(

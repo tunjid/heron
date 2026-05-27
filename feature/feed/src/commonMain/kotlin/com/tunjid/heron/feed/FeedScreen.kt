@@ -81,12 +81,9 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
-import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.contentType
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -147,6 +144,7 @@ private fun FeedTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
+    val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
@@ -243,14 +241,14 @@ private fun FeedTimeline(
         modifier = Modifier
             .padding(
                 horizontal = animateDpAsState(
-                    presentation.timelineHorizontalPadding,
+                    displayState.horizontalPadding(presentation),
                 ).value,
             )
             .fillMaxSize()
             .paneClip()
             .gridColumnCount(
                 density = density,
-                maxColumnWidth = presentation.cardSize,
+                maxColumnWidth = displayState.cardSize(presentation),
             ) { numColumns ->
                 timelineStateHolder.accept(
                     TimelineState.Action.Tile(
@@ -287,14 +285,14 @@ private fun FeedTimeline(
         LookaheadScope {
             LazyVerticalStaggeredGrid(
                 state = gridState,
-                columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-                verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+                columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
+                verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(
-                    presentation.lazyGridHorizontalItemSpacing,
+                    displayState.horizontalItemSpacing(presentation),
                 ),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {

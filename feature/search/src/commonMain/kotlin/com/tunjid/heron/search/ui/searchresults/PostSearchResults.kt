@@ -69,9 +69,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.cardSize
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -111,6 +109,7 @@ internal fun PostSearchResults(
     onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
+    val displayState = rememberTimelineDisplayState()
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
@@ -238,15 +237,15 @@ internal fun PostSearchResults(
         modifier = modifier,
         state = gridState,
         columns = StaggeredGridCells.Adaptive(
-            Timeline.Presentation.Text.WithEmbed.cardSize,
+            displayState.cardSize(Timeline.Presentation.Text.WithEmbed),
         ),
-        verticalItemSpacing = Timeline.Presentation.Text.WithEmbed.lazyGridVerticalItemSpacing,
+        verticalItemSpacing = displayState.verticalItemSpacing(Timeline.Presentation.Text.WithEmbed),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(
-            Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing,
+            displayState.horizontalItemSpacing(Timeline.Presentation.Text.WithEmbed),
         ),
     ) {
         items(
