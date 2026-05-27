@@ -422,7 +422,7 @@ object DataSerializer : KSerializer<TilingState.Data<*, *>> {
         val immutable: TilingState.Data.Immutable<out CursorQuery, out Any?> = when (value) {
             is TilingState.Data.Immutable<*, *> -> value
             is TilingState.Data.SnapshotMutable<*, *> -> value.toSnapshotSpec()
-            else -> throw IllegalArgumentException(
+            else -> throw kotlinx.serialization.SerializationException(
                 "Unsupported serialization of tiling data state $value",
             )
         }
