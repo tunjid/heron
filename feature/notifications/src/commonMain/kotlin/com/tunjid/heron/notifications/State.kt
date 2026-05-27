@@ -142,6 +142,8 @@ sealed class Action(val key: String) {
         Action(key = "Navigate"),
         NavigationAction {
 
+        data object Home : Navigate(), NavigationAction by NavigationAction.Home
+
         data class To(
             val delegate: NavigationAction.Destination,
         ) : Navigate(),

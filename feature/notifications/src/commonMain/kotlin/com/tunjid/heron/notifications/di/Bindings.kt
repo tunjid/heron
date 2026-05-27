@@ -199,6 +199,9 @@ class NotificationsBindings(
                                 )
                             }
                         },
+                        onLogoClicked = {
+                            stateHolder.accept(Action.Navigate.Home)
+                        },
                     )
                 },
                 floatingActionButton = {
