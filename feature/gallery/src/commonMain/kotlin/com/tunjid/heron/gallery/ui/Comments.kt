@@ -99,7 +99,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.text.withFormattedTextPost
@@ -194,6 +194,7 @@ fun Comments(
     ) {
         val now = remember { Clock.System.now() }
         val presentation = Timeline.Presentation.Text.WithEmbed
+        val displayState = rememberTimelineDisplayState()
 
         val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
             isSignedIn = paneScaffoldState.isSignedIn,
@@ -253,7 +254,7 @@ fun Comments(
                             isCompact = paneScaffoldState.prefersCompactBottomNav,
                         ),
                         verticalArrangement = Arrangement.spacedBy(
-                            presentation.lazyGridVerticalItemSpacing,
+                            displayState.verticalItemSpacing(presentation),
                         ),
                         userScrollEnabled = !paneScaffoldState.isTransitionActive,
                     ) {

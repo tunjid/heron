@@ -215,7 +215,7 @@ internal fun AppState.PaneNavigationRail(
                 .align(Alignment.Center)
                 .constrainedSizePlacement(
                     orientation = Orientation.Horizontal,
-                    minSize = NavRailWidth,
+                    minSize = UiTokens.NavRailWidth,
                     atStart = true,
                 )
                 .background(
@@ -298,7 +298,9 @@ fun navigationBarShape(
 @Composable
 private fun SplitPaneState.shouldElevateNavRail(): Boolean = remember(this) {
     derivedStateOf {
-        ((splitLayoutState.weightAt(0) * splitLayoutState.size) - NavRailWidth) < minPaneWidth
+        splitLayoutState.weightAt(0)
+            .times(splitLayoutState.size)
+            .minus(UiTokens.NavRailWidth) < minPaneWidth
     }
 }.value
 
@@ -307,10 +309,7 @@ private data object NavigationRailSharedElementKey
 
 private val CompactCornerSize = 0.dp
 private val RegularCornerSize = 16.dp
-
-private val NavRailWidth = 72.dp
-
-private val NavRailShape = RoundedCornerShape(NavRailWidth)
+private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
 
 private const val MaxBadgeCount = 100L
 

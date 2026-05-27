@@ -69,6 +69,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
@@ -171,7 +172,7 @@ internal class PaneAnchorState(
 
     private fun defaultOpenAnchorPosition(density: Density): PaneAnchor {
         val layoutSize = with(density) { maxWidth.toDp() }
-        val isExpanded = layoutSize >= SecondaryPaneMinWidthBreakpointDp
+        val isExpanded = layoutSize >= UiTokens.SecondaryPaneMinWidthBreakpoint
         return if (isExpanded) PaneAnchor.Half
         else PaneAnchor.OneThirds
     }
@@ -381,7 +382,4 @@ internal expect fun Modifier.platformSystemGestureExclusion(): Modifier
 internal object SecondaryPaneCloseNavigationEventInfo : NavigationEventInfo()
 
 private val DraggableDividerSizeDp = 48.dp
-internal val SecondaryPaneMinWidthBreakpointDp = 600.dp
-internal val TertiaryPaneMinWidthBreakpointDp = 1200.dp
-
 private val DraggableDividerShape = RoundedCornerShape(DraggableDividerSizeDp)
