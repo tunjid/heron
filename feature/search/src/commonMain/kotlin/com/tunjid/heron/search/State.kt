@@ -205,6 +205,8 @@ sealed class Action(val key: String) {
 
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
+        data object Home : Navigate(), NavigationAction by NavigationAction.Home
+
         data class To(
             val delegate: NavigationAction.Destination,
         ) : Navigate(),

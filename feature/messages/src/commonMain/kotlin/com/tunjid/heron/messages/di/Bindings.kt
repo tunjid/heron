@@ -213,6 +213,9 @@ class MessagesBindings(
                                 ),
                             )
                         },
+                        onLogoClicked = {
+                            stateHolder.accept(Action.Navigate.Home)
+                        },
                     )
                 },
                 floatingActionButton = {

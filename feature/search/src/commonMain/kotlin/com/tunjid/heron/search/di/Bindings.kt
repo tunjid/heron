@@ -206,6 +206,9 @@ class SearchBindings(
                                 ),
                             )
                         },
+                        onLogoClicked = {
+                            stateHolder.accept(Action.Navigate.Home)
+                        },
                     )
                     else PoppableDestinationTopAppBar(
                         title = {

@@ -57,6 +57,7 @@ import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.popToRoot
 import com.tunjid.treenav.push
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.Route
@@ -67,6 +68,7 @@ import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.routeString
+import com.tunjid.treenav.switch
 import dev.zacsweers.metro.Inject
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.auth
@@ -401,6 +403,12 @@ interface NavigationAction {
     data object Pop : NavigationAction {
         override val navigationMutation: NavigationMutation = {
             navState.pop()
+        }
+    }
+
+    data object Home : NavigationAction {
+        override val navigationMutation: NavigationMutation = {
+            navState.switch(0).popToRoot()
         }
     }
 
