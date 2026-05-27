@@ -187,7 +187,7 @@ internal fun PostDetailScreen(
             .fillMaxSize()
             .paneClip(),
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(340.dp),
+        columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
         verticalItemSpacing = displayState.verticalItemSpacing(presentation),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
