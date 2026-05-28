@@ -55,6 +55,13 @@
     <string name="scrobbled_ago">%1$s ago</string>
     <string name="played_n_times">%1$s plays</string>
     <string name="n_listeners">%1$s listeners</string>
+    <string name="derakkuma_profile_subtitle">maimai DX Profile</string>
+    <string name="derakkuma_play_subtitle">%1$s %2$s · %3$s%%</string>
+    <string name="derakkuma_best_subtitle">Best · %1$s %2$s · %3$s%%</string>
+    <string name="derakkuma_friend_subtitle">Friend · Rating %1$s</string>
+    <string name="derakkuma_favorite_subtitle">Favorite song #%1$s</string>
+    <string name="derakkuma_circle_subtitle">Circle · Rank %1$s · %2$s points</string>
+    <string name="derakkuma_circle_member_subtitle">%1$s · Rank %2$s · %3$s points</string>
     <string name="apple_music">Apple Music</string>
     <string name="spotify">Spotify</string>
     <string name="tidal">Tidal</string>
@@ -197,6 +204,7 @@
 
     <string name="app_name_rocksky">Rocksky</string>
     <string name="app_name_standard_site">Longform content</string>
+    <string name="app_name_derakkuma">Derakkuma</string>
     <string name="app_name_unknown">Unknown app</string>
 
     <string name="bluesky_server">Bluesky</string>

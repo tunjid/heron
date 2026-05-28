@@ -20,6 +20,13 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.atmosphereapp.AppScreenStateHolders.Records
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
+import com.tunjid.heron.data.core.models.DerakkumaBest
+import com.tunjid.heron.data.core.models.DerakkumaCircle
+import com.tunjid.heron.data.core.models.DerakkumaCircleMember
+import com.tunjid.heron.data.core.models.DerakkumaFavoriteSong
+import com.tunjid.heron.data.core.models.DerakkumaFriend
+import com.tunjid.heron.data.core.models.DerakkumaPlay
+import com.tunjid.heron.data.core.models.DerakkumaProfile
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.RockskyAlbum
@@ -31,6 +38,13 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.DerakkumaBestUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleMemberUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleUri
+import com.tunjid.heron.data.core.types.DerakkumaFavoriteSongUri
+import com.tunjid.heron.data.core.types.DerakkumaFriendUri
+import com.tunjid.heron.data.core.types.DerakkumaPlayUri
+import com.tunjid.heron.data.core.types.DerakkumaProfileUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ScrobbleUri
@@ -137,6 +151,19 @@ sealed class AppScreenStateHolders {
         ) : Rocksky<RockskyScrobble>(mutator)
     }
 
+    @Stable
+    sealed class Derakkuma<T : Record>(
+        mutator: RecordStateHolder<T>,
+    ) : Records<T>(mutator) {
+        @Stable class Profiles(mutator: RecordStateHolder<DerakkumaProfile>) : Derakkuma<DerakkumaProfile>(mutator)
+        @Stable class Plays(mutator: RecordStateHolder<DerakkumaPlay>) : Derakkuma<DerakkumaPlay>(mutator)
+        @Stable class Bests(mutator: RecordStateHolder<DerakkumaBest>) : Derakkuma<DerakkumaBest>(mutator)
+        @Stable class Friends(mutator: RecordStateHolder<DerakkumaFriend>) : Derakkuma<DerakkumaFriend>(mutator)
+        @Stable class FavoriteSongs(mutator: RecordStateHolder<DerakkumaFavoriteSong>) : Derakkuma<DerakkumaFavoriteSong>(mutator)
+        @Stable class Circle(mutator: RecordStateHolder<DerakkumaCircle>) : Derakkuma<DerakkumaCircle>(mutator)
+        @Stable class CircleMembers(mutator: RecordStateHolder<DerakkumaCircleMember>) : Derakkuma<DerakkumaCircleMember>(mutator)
+    }
+
     val key: String
         get() = when (this) {
             is StandardSite.Documents -> StandardDocumentUri.NAMESPACE
@@ -145,6 +172,13 @@ sealed class AppScreenStateHolders {
             is Rocksky.Tracks -> TrackUri.NAMESPACE
             is Rocksky.Artists -> ArtistUri.NAMESPACE
             is Rocksky.Scrobbles -> ScrobbleUri.NAMESPACE
+            is Derakkuma.Profiles -> DerakkumaProfileUri.NAMESPACE
+            is Derakkuma.Plays -> DerakkumaPlayUri.NAMESPACE
+            is Derakkuma.Bests -> DerakkumaBestUri.NAMESPACE
+            is Derakkuma.Friends -> DerakkumaFriendUri.NAMESPACE
+            is Derakkuma.FavoriteSongs -> DerakkumaFavoriteSongUri.NAMESPACE
+            is Derakkuma.Circle -> DerakkumaCircleUri.NAMESPACE
+            is Derakkuma.CircleMembers -> DerakkumaCircleMemberUri.NAMESPACE
         }
 
     fun refresh() = (this as Records<*>).accept(TilingState.Action.Refresh)

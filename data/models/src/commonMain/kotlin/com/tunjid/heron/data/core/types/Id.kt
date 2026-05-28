@@ -109,6 +109,14 @@ value class GenericId(
 
 @Serializable
 @JvmInline
+value class DerakkumaRecordId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class ConversationId(
     override val id: String,
 ) : Id {

@@ -250,17 +250,22 @@ internal class OfflineProfileRepository @Inject constructor(
                             async {
                                 val nsids = AtmosphereAppNsids[app.id].orEmpty()
                                 val hasAny = nsids.any { nsid ->
-                                    networkService.runCatchingWithMonitoredNetworkRetry {
-                                        listRecords(
-                                            ListRecordsQueryParams(
-                                                repo = profileDid.let(::Did),
-                                                collection = Nsid(nsid),
-                                                limit = 1,
-                                            ),
-                                        )
+                                    runCatching {
+                                        networkService.runCatchingWithMonitoredNetworkRetry {
+                                            listRecords(
+                                                ListRecordsQueryParams(
+                                                    repo = profileDid.let(::Did),
+                                                    collection = Nsid(nsid),
+                                                    limit = 1,
+                                                ),
+                                            )
+                                        }
+                                            .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
+                                            .getOrElse { false }
                                     }
-                                        .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
-                                        .getOrElse { false }
+                                        .getOrElse {
+                                            false
+                                        }
                                 }
                                 app.id.takeIf { hasAny }
                             }
