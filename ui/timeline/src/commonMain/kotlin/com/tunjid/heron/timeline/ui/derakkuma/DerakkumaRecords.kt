@@ -23,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.DerakkumaBest
 import com.tunjid.heron.data.core.models.DerakkumaCircle
 import com.tunjid.heron.data.core.models.DerakkumaCircleMember
@@ -31,6 +30,8 @@ import com.tunjid.heron.data.core.models.DerakkumaFavoriteSong
 import com.tunjid.heron.data.core.models.DerakkumaFriend
 import com.tunjid.heron.data.core.models.DerakkumaPlay
 import com.tunjid.heron.data.core.models.DerakkumaProfile
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
@@ -39,7 +40,6 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.data.core.models.stubProfile
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.derakkuma_best_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_circle_member_subtitle

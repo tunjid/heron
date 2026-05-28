@@ -156,11 +156,17 @@ sealed class AppScreenStateHolders {
         mutator: RecordStateHolder<T>,
     ) : Records<T>(mutator) {
         @Stable class Profiles(mutator: RecordStateHolder<DerakkumaProfile>) : Derakkuma<DerakkumaProfile>(mutator)
+
         @Stable class Plays(mutator: RecordStateHolder<DerakkumaPlay>) : Derakkuma<DerakkumaPlay>(mutator)
+
         @Stable class Bests(mutator: RecordStateHolder<DerakkumaBest>) : Derakkuma<DerakkumaBest>(mutator)
+
         @Stable class Friends(mutator: RecordStateHolder<DerakkumaFriend>) : Derakkuma<DerakkumaFriend>(mutator)
+
         @Stable class FavoriteSongs(mutator: RecordStateHolder<DerakkumaFavoriteSong>) : Derakkuma<DerakkumaFavoriteSong>(mutator)
+
         @Stable class Circle(mutator: RecordStateHolder<DerakkumaCircle>) : Derakkuma<DerakkumaCircle>(mutator)
+
         @Stable class CircleMembers(mutator: RecordStateHolder<DerakkumaCircleMember>) : Derakkuma<DerakkumaCircleMember>(mutator)
     }
 
