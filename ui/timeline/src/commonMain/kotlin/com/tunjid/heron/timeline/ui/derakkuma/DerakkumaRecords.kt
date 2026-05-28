@@ -1,5 +1,6 @@
 package com.tunjid.heron.timeline.ui.derakkuma
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -309,9 +310,17 @@ private fun DerakkumaProfileDetails(
                             shadow = DerakkumaTextShadow,
                         ),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Clip,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 8.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp)
+                            .basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                initialDelayMillis = 500,
+                                repeatDelayMillis = 1_000,
+                                velocity = 40.dp,
+                            ),
                     )
                 }
             }
