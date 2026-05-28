@@ -44,10 +44,18 @@ import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.derakkuma_best_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_circle_member_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_circle_subtitle
+import heron.ui.timeline.generated.resources.derakkuma_days_left
+import heron.ui.timeline.generated.resources.derakkuma_favorite
 import heron.ui.timeline.generated.resources.derakkuma_favorite_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_friend_subtitle
+import heron.ui.timeline.generated.resources.derakkuma_member
+import heron.ui.timeline.generated.resources.derakkuma_owner
 import heron.ui.timeline.generated.resources.derakkuma_play_subtitle
+import heron.ui.timeline.generated.resources.derakkuma_points
 import heron.ui.timeline.generated.resources.derakkuma_profile_subtitle
+import heron.ui.timeline.generated.resources.derakkuma_rating
+import heron.ui.timeline.generated.resources.derakkuma_rival
+import heron.ui.timeline.generated.resources.played_n_times
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -107,7 +115,7 @@ fun DerakkumaBest(
         title = best.songName,
         subtitle = stringResource(Res.string.derakkuma_best_subtitle, best.difficulty, best.level, best.achievement),
         description = listOf(best.artist, best.scoreRank.uppercase(), best.fcStatus.uppercase(), best.syncStatus.uppercase()).filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
-        blurb = if (best.playCount > 0) "${best.playCount} plays" else best.updatedAt,
+        blurb = if (best.playCount > 0) stringResource(Res.string.played_n_times, best.playCount) else best.updatedAt,
         image = best.coverArt,
         sharedElementPrefix = sharedElementPrefix,
         uri = best.uri,
@@ -128,7 +136,12 @@ fun DerakkumaFriend(
         title = friend.displayName,
         subtitle = stringResource(Res.string.derakkuma_friend_subtitle, friend.rating),
         description = listOf(friend.title, friend.comment, friend.status).filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
-        blurb = listOfNotNull("Rating ${friend.rating}".takeIf { friend.rating > 0 }, "★×${friend.stars}".takeIf { friend.stars > 0 }, "Favorite".takeIf { friend.favorite }, "Rival".takeIf { friend.rival }).joinToString(" · ").ifBlank { null },
+        blurb = listOfNotNull(
+            friend.rating.takeIf { it > 0 }?.let { stringResource(Res.string.derakkuma_rating, it) },
+            "★×${friend.stars}".takeIf { friend.stars > 0 },
+            stringResource(Res.string.derakkuma_favorite).takeIf { friend.favorite },
+            stringResource(Res.string.derakkuma_rival).takeIf { friend.rival },
+        ).joinToString(" · ").ifBlank { null },
         image = friend.icon,
         secondaryImages = listOf(friend.courseImage, friend.classImage),
         onClick = friend.subject?.let { subject ->
@@ -181,8 +194,15 @@ fun DerakkumaCircle(
         paneTransitionScope = paneTransitionScope,
         title = circle.name,
         subtitle = stringResource(Res.string.derakkuma_circle_subtitle, circle.rank, circle.totalPoints),
-        description = listOf(circle.ownerName.takeIf(String::isNotBlank)?.let { "Owner $it" }, circle.month, circle.comment).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
-        blurb = listOf("${circle.totalPoints} pts", circle.daysUntilReset.takeIf { it > 0 }?.let { "$it days left" }).filterNotNull().joinToString(" · "),
+        description = listOf(
+            circle.ownerName.takeIf(String::isNotBlank)?.let { stringResource(Res.string.derakkuma_owner, it) },
+            circle.month,
+            circle.comment,
+        ).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
+        blurb = listOf(
+            stringResource(Res.string.derakkuma_points, circle.totalPoints),
+            circle.daysUntilReset.takeIf { it > 0 }?.let { stringResource(Res.string.derakkuma_days_left, it) },
+        ).filterNotNull().joinToString(" · "),
         image = circle.characterImage ?: circle.backgroundImage,
         sharedElementPrefix = sharedElementPrefix,
         uri = circle.uri,
@@ -200,8 +220,12 @@ fun DerakkumaCircleMember(
         modifier = modifier,
         paneTransitionScope = paneTransitionScope,
         title = member.displayName,
-        subtitle = stringResource(Res.string.derakkuma_circle_member_subtitle, member.role.ifBlank { "Member" }, member.rank, member.points),
-        description = listOf(member.title, member.rating.takeIf { it > 0 }?.let { "Rating $it" }, member.updatedAt).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
+        subtitle = stringResource(Res.string.derakkuma_circle_member_subtitle, member.role.ifBlank { stringResource(Res.string.derakkuma_member) }, member.rank, member.points),
+        description = listOf(
+            member.title,
+            member.rating.takeIf { it > 0 }?.let { stringResource(Res.string.derakkuma_rating, it) },
+            member.updatedAt,
+        ).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
         blurb = null,
         image = member.icon,
         sharedElementPrefix = sharedElementPrefix,

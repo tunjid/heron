@@ -263,6 +263,7 @@ internal class OfflineProfileRepository @Inject constructor(
                                             .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
                                             .getOrElse { false }
                                     }
+                                        .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                                         .getOrElse {
                                             false
                                         }

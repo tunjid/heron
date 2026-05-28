@@ -29,6 +29,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,7 +91,9 @@ internal fun AtmosphereAppScreen(
         initialExpandedHeight = with(density) { 800.dp.toPx() },
     )
 
-    val visibleStateHolders = state.stateHolders.filterNot { it is AppScreenStateHolders.Derakkuma.CircleMembers }
+    val visibleStateHolders = remember(state.stateHolders) {
+        state.stateHolders.filterNot { it is AppScreenStateHolders.Derakkuma.CircleMembers }
+    }
     val pagerState = rememberPagerState { visibleStateHolders.size }
     val pullToRefreshState = rememberPullToRefreshState()
     val circleMembers = state.stateHolders

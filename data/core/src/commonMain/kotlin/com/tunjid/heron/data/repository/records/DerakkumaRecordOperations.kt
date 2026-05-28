@@ -43,6 +43,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -70,6 +72,9 @@ internal class OfflineFirstDerakkumaRecordOperations @Inject constructor(
     private val pdsResolver: PdsResolver,
     private val savedStateDataSource: SavedStateDataSource,
 ) : DerakkumaRecordOperations {
+    private val resolvedRecordsMutex = Mutex()
+    private val resolvedRecords = mutableMapOf<RecordUri, RawDerakkumaRecord>()
+
     override fun derakkumaProfiles(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaProfileUri.NAMESPACE, ::profile)
     override fun derakkumaPlays(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaPlayUri.NAMESPACE, ::play)
     override fun derakkumaBests(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaBestUri.NAMESPACE, ::best)
@@ -291,6 +296,9 @@ internal class OfflineFirstDerakkumaRecordOperations @Inject constructor(
 
     private suspend fun RawDerakkumaRecord.resolveRef(key: String): RawDerakkumaRecord? {
         val uri = value[key]?.objectOrNull()?.string("uri")?.asRecordUriOrNull() ?: return null
+        resolvedRecordsMutex.withLock {
+            resolvedRecords[uri]?.let { return it }
+        }
         val components = uri.rawAtUriComponents() ?: return null
         val response = networkService.runCatchingWithMonitoredNetworkRetry {
             getRecord(
@@ -302,6 +310,11 @@ internal class OfflineFirstDerakkumaRecordOperations @Inject constructor(
             )
         }.getOrNull() ?: return null
         return RawDerakkumaRecord(uri, DerakkumaRecordId(response.cid?.cid.orEmpty()), response.value.decodeAs<JsonObject>())
+            .also { resolved ->
+                resolvedRecordsMutex.withLock {
+                    resolvedRecords[uri] = resolved
+                }
+            }
     }
 
     private suspend fun RawDerakkumaRecord.blobImage(key: String): ImageUri? = value.blobImage(key, uri.profileId(), pdsResolver)
