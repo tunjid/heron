@@ -56,6 +56,7 @@
     <string name="played_n_times">%1$s plays</string>
     <string name="n_listeners">%1$s listeners</string>
     <string name="derakkuma_profile_subtitle">maimai DX Profile</string>
+    <string name="derakkuma_friend_code">Friend code %1$s</string>
     <string name="derakkuma_play_subtitle">%1$s %2$s · %3$s%%</string>
     <string name="derakkuma_best_subtitle">Best · %1$s %2$s · %3$s%%</string>
     <string name="derakkuma_friend_subtitle">Friend · Rating %1$s</string>

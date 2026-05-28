@@ -47,6 +47,7 @@ import heron.ui.timeline.generated.resources.derakkuma_circle_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_days_left
 import heron.ui.timeline.generated.resources.derakkuma_favorite
 import heron.ui.timeline.generated.resources.derakkuma_favorite_subtitle
+import heron.ui.timeline.generated.resources.derakkuma_friend_code
 import heron.ui.timeline.generated.resources.derakkuma_friend_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_member
 import heron.ui.timeline.generated.resources.derakkuma_owner
@@ -363,6 +364,14 @@ private fun DerakkumaProfileDetails(
                         )
                     }
                 }
+            }
+
+            profile.friendCode.takeIf(String::isNotBlank)?.let { friendCode ->
+                Text(
+                    text = stringResource(Res.string.derakkuma_friend_code, friendCode),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                )
             }
         }
 
