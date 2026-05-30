@@ -2,6 +2,7 @@ package com.tunjid.heron.data.repository.records
 
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.DerakkumaBest
@@ -34,6 +35,7 @@ import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.safeDecodeAs
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -45,16 +47,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import sh.christian.ozone.api.model.Blob
+import sh.christian.ozone.api.model.JsonContent
 
 interface DerakkumaRecordOperations {
     fun derakkumaProfiles(query: ProfilesQuery, cursor: Cursor): Flow<CursorList<DerakkumaProfile>>
@@ -91,10 +89,11 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
 
         flow {
             val rawRecords = response.records.mapNotNull { record ->
-                RawDerakkumaRecord(
+                decodeDerakkumaRecord(
+                    collection = collection,
                     uri = record.uri.atUri.asRecordUriOrNull() ?: return@mapNotNull null,
                     cid = DerakkumaRecordId(record.cid.cid),
-                    value = record.value.decodeAs<JsonObject>(),
+                    value = record.value,
                 )
             }
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
@@ -119,183 +118,200 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
     private suspend fun profile(raw: RawDerakkumaRecord): DerakkumaProfile? = DerakkumaProfile(
         cid = raw.cid,
         uri = raw.uri as? DerakkumaProfileUri ?: return null,
-        playerName = raw.string("playerName"),
-        title = raw.string("title"),
-        titleRarity = raw.string("titleRarity"),
-        rating = raw.long("rating"),
-        stars = raw.long("stars"),
-        comment = raw.string("comment"),
-        friendCode = raw.string("friendCode"),
-        profileImage = raw.blobImage("profileImage"),
-        ratingPlateImage = raw.blobImage("ratingPlateImage"),
-        trophyPlateImage = raw.blobImage("trophyPlateImage"),
-        partnerImage = raw.blobImage("partnerImage"),
-        courseImage = raw.blobImage("courseImage"),
-        classImage = raw.blobImage("classImage"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+        playerName = raw.profile?.playerName.orEmpty(),
+        title = raw.profile?.title.orEmpty(),
+        titleRarity = raw.profile?.titleRarity.orEmpty(),
+        rating = raw.profile?.rating ?: 0,
+        stars = raw.profile?.stars ?: 0,
+        comment = raw.profile?.comment.orEmpty(),
+        friendCode = raw.profile?.friendCode.orEmpty(),
+        profileImage = raw.blobImage(raw.profile?.profileImage),
+        ratingPlateImage = raw.blobImage(raw.profile?.ratingPlateImage),
+        trophyPlateImage = raw.blobImage(raw.profile?.trophyPlateImage),
+        partnerImage = raw.blobImage(raw.profile?.partnerImage),
+        courseImage = raw.blobImage(raw.profile?.courseImage),
+        classImage = raw.blobImage(raw.profile?.classImage),
+        updatedAt = raw.profile?.updatedAt ?: raw.profile?.createdAt.orEmpty(),
     )
 
     private suspend fun play(raw: RawDerakkumaRecord): DerakkumaPlay? {
-        val chart = raw.resolveRef("chart")
-        val song = chart?.resolveRef("song")
+        val play = raw.play ?: return null
+        val chart = raw.resolveRef(play.chart)
+        val chartRecord = chart?.chart
+        val song = chart?.resolveRef(chartRecord?.song)
+        val songRecord = song?.song
         return DerakkumaPlay(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaPlayUri ?: return null,
-            songName = song?.string("title") ?: chart?.string("songId") ?: raw.chartSongName(),
-            difficulty = chart?.string("difficulty") ?: raw.chartString("difficulty"),
-            level = chart?.string("level") ?: raw.chartString("level"),
-            type = chart?.string("type").orEmpty(),
-            artist = song?.string("artist").orEmpty(),
-            coverArt = song?.blobImage("coverArt"),
-            achievement = raw.string("achievement"),
-            scoreRank = raw.string("scoreRank"),
-            fcStatus = raw.string("fcStatus"),
-            syncStatus = raw.string("syncStatus"),
-            dxScore = raw.value["dxScore"].fractionString(),
-            trackNum = raw.long("trackNum"),
-            rating = raw.long("rating"),
-            ratingDelta = raw.long("ratingDelta"),
-            playedAt = raw.string("playedAt"),
-            createdAt = raw.string("createdAt"),
+            songName = songRecord?.title ?: chartRecord?.songId ?: play.chartSongName(),
+            difficulty = chartRecord?.difficulty ?: play.chartString("difficulty"),
+            level = chartRecord?.level ?: play.chartString("level"),
+            type = chartRecord?.type.orEmpty(),
+            artist = songRecord?.artist.orEmpty(),
+            coverArt = song?.blobImage(songRecord?.coverArt),
+            achievement = play.achievement.orEmpty(),
+            scoreRank = play.scoreRank.orEmpty(),
+            fcStatus = play.fcStatus.orEmpty(),
+            syncStatus = play.syncStatus.orEmpty(),
+            dxScore = play.dxScore.fractionString(),
+            trackNum = play.trackNum ?: 0,
+            rating = play.rating ?: 0,
+            ratingDelta = play.ratingDelta ?: 0,
+            playedAt = play.playedAt.orEmpty(),
+            createdAt = play.createdAt.orEmpty(),
         )
     }
 
-    private fun playWithoutRefs(raw: RawDerakkumaRecord): DerakkumaPlay? = DerakkumaPlay(
-        cid = raw.cid,
-        uri = raw.uri as? DerakkumaPlayUri ?: return null,
-        songName = raw.chartSongName(),
-        difficulty = raw.chartString("difficulty"),
-        level = raw.chartString("level"),
-        type = raw.chartString("type"),
-        artist = "",
-        coverArt = null,
-        achievement = raw.string("achievement"),
-        scoreRank = raw.string("scoreRank"),
-        fcStatus = raw.string("fcStatus"),
-        syncStatus = raw.string("syncStatus"),
-        dxScore = raw.value["dxScore"].fractionString(),
-        trackNum = raw.long("trackNum"),
-        rating = raw.long("rating"),
-        ratingDelta = raw.long("ratingDelta"),
-        playedAt = raw.string("playedAt"),
-        createdAt = raw.string("createdAt"),
-    )
+    private fun playWithoutRefs(raw: RawDerakkumaRecord): DerakkumaPlay? {
+        val play = raw.play ?: return null
+        return DerakkumaPlay(
+            cid = raw.cid,
+            uri = raw.uri as? DerakkumaPlayUri ?: return null,
+            songName = play.chartSongName(),
+            difficulty = play.chartString("difficulty"),
+            level = play.chartString("level"),
+            type = play.chartString("type"),
+            artist = "",
+            coverArt = null,
+            achievement = play.achievement.orEmpty(),
+            scoreRank = play.scoreRank.orEmpty(),
+            fcStatus = play.fcStatus.orEmpty(),
+            syncStatus = play.syncStatus.orEmpty(),
+            dxScore = play.dxScore.fractionString(),
+            trackNum = play.trackNum ?: 0,
+            rating = play.rating ?: 0,
+            ratingDelta = play.ratingDelta ?: 0,
+            playedAt = play.playedAt.orEmpty(),
+            createdAt = play.createdAt.orEmpty(),
+        )
+    }
 
     private suspend fun best(raw: RawDerakkumaRecord): DerakkumaBest? {
-        val chart = raw.resolveRef("chart")
-        val song = chart?.resolveRef("song")
+        val best = raw.best ?: return null
+        val chart = raw.resolveRef(best.chart)
+        val chartRecord = chart?.chart
+        val song = chart?.resolveRef(chartRecord?.song)
+        val songRecord = song?.song
         return DerakkumaBest(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaBestUri ?: return null,
-            songName = song?.string("title") ?: chart?.string("songId") ?: raw.chartSongName(),
-            difficulty = chart?.string("difficulty") ?: raw.chartString("difficulty"),
-            level = chart?.string("level") ?: raw.chartString("level"),
-            type = chart?.string("type").orEmpty(),
-            artist = song?.string("artist").orEmpty(),
-            coverArt = song?.blobImage("coverArt"),
-            achievement = raw.string("achievement"),
-            scoreRank = raw.string("scoreRank"),
-            fcStatus = raw.string("fcStatus"),
-            syncStatus = raw.string("syncStatus"),
-            playCount = raw.long("playCount"),
-            updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+            songName = songRecord?.title ?: chartRecord?.songId ?: best.chartSongName(),
+            difficulty = chartRecord?.difficulty ?: best.chartString("difficulty"),
+            level = chartRecord?.level ?: best.chartString("level"),
+            type = chartRecord?.type.orEmpty(),
+            artist = songRecord?.artist.orEmpty(),
+            coverArt = song?.blobImage(songRecord?.coverArt),
+            achievement = best.achievement.orEmpty(),
+            scoreRank = best.scoreRank.orEmpty(),
+            fcStatus = best.fcStatus.orEmpty(),
+            syncStatus = best.syncStatus.orEmpty(),
+            playCount = best.playCount ?: 0,
+            updatedAt = best.updatedAt ?: best.createdAt.orEmpty(),
         )
     }
 
-    private fun bestWithoutRefs(raw: RawDerakkumaRecord): DerakkumaBest? = DerakkumaBest(
-        cid = raw.cid,
-        uri = raw.uri as? DerakkumaBestUri ?: return null,
-        songName = raw.chartSongName(),
-        difficulty = raw.chartString("difficulty"),
-        level = raw.chartString("level"),
-        type = raw.chartString("type"),
-        artist = "",
-        coverArt = null,
-        achievement = raw.string("achievement"),
-        scoreRank = raw.string("scoreRank"),
-        fcStatus = raw.string("fcStatus"),
-        syncStatus = raw.string("syncStatus"),
-        playCount = raw.long("playCount"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
-    )
+    private fun bestWithoutRefs(raw: RawDerakkumaRecord): DerakkumaBest? {
+        val best = raw.best ?: return null
+        return DerakkumaBest(
+            cid = raw.cid,
+            uri = raw.uri as? DerakkumaBestUri ?: return null,
+            songName = best.chartSongName(),
+            difficulty = best.chartString("difficulty"),
+            level = best.chartString("level"),
+            type = best.chartString("type"),
+            artist = "",
+            coverArt = null,
+            achievement = best.achievement.orEmpty(),
+            scoreRank = best.scoreRank.orEmpty(),
+            fcStatus = best.fcStatus.orEmpty(),
+            syncStatus = best.syncStatus.orEmpty(),
+            playCount = best.playCount ?: 0,
+            updatedAt = best.updatedAt ?: best.createdAt.orEmpty(),
+        )
+    }
 
     private suspend fun friend(raw: RawDerakkumaRecord): DerakkumaFriend? = DerakkumaFriend(
         cid = raw.cid,
         uri = raw.uri as? DerakkumaFriendUri ?: return null,
-        subject = raw.string("subject").takeIf { it.startsWith("did:") }?.let(::ProfileId),
-        displayName = raw.string("displayName", raw.string("name")),
-        title = raw.string("title"),
-        rating = raw.long("rating"),
-        stars = raw.long("stars"),
-        comment = raw.string("comment"),
-        icon = raw.blobImage("icon"),
-        courseImage = raw.blobImage("courseImage"),
-        classImage = raw.blobImage("classImage"),
-        favorite = raw.boolean("favorite", raw.boolean("isFavorite")),
-        rival = raw.boolean("rival", raw.boolean("isRival")),
-        status = raw.string("status"),
-        createdAt = raw.string("createdAt"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+        subject = raw.friend?.subject?.takeIf { it.startsWith("did:") }?.let(::ProfileId),
+        displayName = raw.friend?.displayName ?: raw.friend?.name.orEmpty(),
+        title = raw.friend?.title.orEmpty(),
+        rating = raw.friend?.rating ?: 0,
+        stars = raw.friend?.stars ?: 0,
+        comment = raw.friend?.comment.orEmpty(),
+        icon = raw.blobImage(raw.friend?.icon),
+        courseImage = raw.blobImage(raw.friend?.courseImage),
+        classImage = raw.blobImage(raw.friend?.classImage),
+        favorite = raw.friend?.favorite ?: raw.friend?.isFavorite ?: false,
+        rival = raw.friend?.rival ?: raw.friend?.isRival ?: false,
+        status = raw.friend?.status.orEmpty(),
+        createdAt = raw.friend?.createdAt.orEmpty(),
+        updatedAt = raw.friend?.updatedAt ?: raw.friend?.createdAt.orEmpty(),
     )
 
     private suspend fun favoriteSong(raw: RawDerakkumaRecord): DerakkumaFavoriteSong? {
-        val song = raw.resolveRef("song")
+        val favoriteSong = raw.favoriteSong ?: return null
+        val song = raw.resolveRef(favoriteSong.song)
+        val songRecord = song?.song
         return DerakkumaFavoriteSong(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaFavoriteSongUri ?: return null,
-            songName = song?.string("title") ?: raw.songName(),
-            artist = song?.string("artist").orEmpty(),
-            coverArt = song?.blobImage("coverArt"),
-            orderId = raw.long("orderId"),
-            createdAt = raw.string("createdAt"),
-            updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+            songName = songRecord?.title ?: favoriteSong.songName(),
+            artist = songRecord?.artist.orEmpty(),
+            coverArt = song?.blobImage(songRecord?.coverArt),
+            orderId = favoriteSong.orderId ?: 0,
+            createdAt = favoriteSong.createdAt.orEmpty(),
+            updatedAt = favoriteSong.updatedAt ?: favoriteSong.createdAt.orEmpty(),
         )
     }
 
-    private fun favoriteSongWithoutRefs(raw: RawDerakkumaRecord): DerakkumaFavoriteSong? = DerakkumaFavoriteSong(
-        cid = raw.cid,
-        uri = raw.uri as? DerakkumaFavoriteSongUri ?: return null,
-        songName = raw.songName(),
-        artist = "",
-        coverArt = null,
-        orderId = raw.long("orderId"),
-        createdAt = raw.string("createdAt"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
-    )
+    private fun favoriteSongWithoutRefs(raw: RawDerakkumaRecord): DerakkumaFavoriteSong? {
+        val favoriteSong = raw.favoriteSong ?: return null
+        return DerakkumaFavoriteSong(
+            cid = raw.cid,
+            uri = raw.uri as? DerakkumaFavoriteSongUri ?: return null,
+            songName = favoriteSong.songName(),
+            artist = "",
+            coverArt = null,
+            orderId = favoriteSong.orderId ?: 0,
+            createdAt = favoriteSong.createdAt.orEmpty(),
+            updatedAt = favoriteSong.updatedAt ?: favoriteSong.createdAt.orEmpty(),
+        )
+    }
 
     private suspend fun circle(raw: RawDerakkumaRecord): DerakkumaCircle? = DerakkumaCircle(
         cid = raw.cid,
         uri = raw.uri as? DerakkumaCircleUri ?: return null,
-        name = raw.string("name"),
-        comment = raw.string("comment"),
-        rank = raw.long("rank"),
-        totalPoints = raw.long("totalPoints"),
-        circleCode = raw.string("circleCode"),
-        ownerName = raw.string("ownerName"),
-        month = raw.string("month"),
-        daysUntilReset = raw.long("daysUntilReset"),
-        nextRewardPoints = raw.long("nextRewardPoints"),
-        characterImage = raw.blobImage("characterImage"),
-        backgroundImage = raw.blobImage("backgroundImage"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+        name = raw.circle?.name.orEmpty(),
+        comment = raw.circle?.comment.orEmpty(),
+        rank = raw.circle?.rank ?: 0,
+        totalPoints = raw.circle?.totalPoints ?: 0,
+        circleCode = raw.circle?.circleCode.orEmpty(),
+        ownerName = raw.circle?.ownerName.orEmpty(),
+        month = raw.circle?.month.orEmpty(),
+        daysUntilReset = raw.circle?.daysUntilReset ?: 0,
+        nextRewardPoints = raw.circle?.nextRewardPoints ?: 0,
+        characterImage = raw.blobImage(raw.circle?.characterImage),
+        backgroundImage = raw.blobImage(raw.circle?.backgroundImage),
+        updatedAt = raw.circle?.updatedAt ?: raw.circle?.createdAt.orEmpty(),
     )
 
     private suspend fun circleMember(raw: RawDerakkumaRecord): DerakkumaCircleMember? = DerakkumaCircleMember(
         cid = raw.cid,
         uri = raw.uri as? DerakkumaCircleMemberUri ?: return null,
-        displayName = raw.string("displayName", raw.string("name")),
-        role = raw.string("role", raw.string("status")),
-        title = raw.string("title"),
-        rating = raw.long("rating"),
-        status = raw.string("status"),
-        icon = raw.blobImage("icon"),
-        points = raw.long("points"),
-        rank = raw.long("rank"),
-        updatedAt = raw.string("updatedAt", raw.string("createdAt")),
+        displayName = raw.circleMember?.displayName ?: raw.circleMember?.name.orEmpty(),
+        role = raw.circleMember?.role ?: raw.circleMember?.status.orEmpty(),
+        title = raw.circleMember?.title.orEmpty(),
+        rating = raw.circleMember?.rating ?: 0,
+        status = raw.circleMember?.status.orEmpty(),
+        icon = raw.blobImage(raw.circleMember?.icon),
+        points = raw.circleMember?.points ?: 0,
+        rank = raw.circleMember?.rank ?: 0,
+        updatedAt = raw.circleMember?.updatedAt ?: raw.circleMember?.createdAt.orEmpty(),
     )
 
-    private suspend fun RawDerakkumaRecord.resolveRef(key: String): RawDerakkumaRecord? {
-        val uri = value[key]?.objectOrNull()?.string("uri")?.asRecordUriOrNull() ?: return null
+    private suspend fun RawDerakkumaRecord.resolveRef(ref: StrongRef?): RawDerakkumaRecord? {
+        val uri = ref?.uri?.atUri?.asRecordUriOrNull() ?: return null
         resolvedRecordsMutex.withLock {
             resolvedRecords[uri]?.let { return it }
         }
@@ -309,7 +325,13 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
                 ),
             )
         }.getOrNull() ?: return null
-        return RawDerakkumaRecord(uri, DerakkumaRecordId(response.cid?.cid.orEmpty()), response.value.decodeAs<JsonObject>())
+        val decodedRecord = decodeDerakkumaRecord(
+            collection = components.collection,
+            uri = uri,
+            cid = DerakkumaRecordId(response.cid?.cid ?: ref.cid.cid),
+            value = response.value,
+        ) ?: return null
+        return decodedRecord
             .also { resolved ->
                 resolvedRecordsMutex.withLock {
                     resolvedRecords[uri] = resolved
@@ -317,11 +339,34 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             }
     }
 
-    private suspend fun RawDerakkumaRecord.blobImage(key: String): ImageUri? = value.blobImage(key, uri.profileId(), pdsResolver)
+    private suspend fun RawDerakkumaRecord.blobImage(blob: Blob?): ImageUri? = blob.blobImage(uri.profileId(), pdsResolver)
 }
 
-private data class RawDerakkumaRecord(val uri: RecordUri, val cid: DerakkumaRecordId, val value: JsonObject)
+private fun decodeDerakkumaRecord(collection: String, uri: RecordUri, cid: DerakkumaRecordId, value: JsonContent): RawDerakkumaRecord? = when (collection) {
+    DerakkumaProfileUri.NAMESPACE -> value.safeDecodeAs<DerakkumaProfileRecord>()
+    DerakkumaPlayUri.NAMESPACE -> value.safeDecodeAs<DerakkumaPlayRecord>()
+    DerakkumaBestUri.NAMESPACE -> value.safeDecodeAs<DerakkumaBestRecord>()
+    DerakkumaFriendUri.NAMESPACE -> value.safeDecodeAs<DerakkumaFriendRecord>()
+    DerakkumaFavoriteSongUri.NAMESPACE -> value.safeDecodeAs<DerakkumaFavoriteSongRecord>()
+    DerakkumaCircleUri.NAMESPACE -> value.safeDecodeAs<DerakkumaCircleRecord>()
+    DerakkumaCircleMemberUri.NAMESPACE -> value.safeDecodeAs<DerakkumaCircleMemberRecord>()
+    "com.derakkuma.chart" -> value.safeDecodeAs<DerakkumaChartRecord>()
+    "com.derakkuma.song" -> value.safeDecodeAs<DerakkumaSongRecord>()
+    else -> null
+}?.let { RawDerakkumaRecord(uri = uri, cid = cid, value = it) }
+
+private data class RawDerakkumaRecord(val uri: RecordUri, val cid: DerakkumaRecordId, val value: Any)
 private data class AtUriComponents(val repo: String, val collection: String, val rkey: String)
+
+private val RawDerakkumaRecord.profile get() = value as? DerakkumaProfileRecord
+private val RawDerakkumaRecord.play get() = value as? DerakkumaPlayRecord
+private val RawDerakkumaRecord.best get() = value as? DerakkumaBestRecord
+private val RawDerakkumaRecord.friend get() = value as? DerakkumaFriendRecord
+private val RawDerakkumaRecord.favoriteSong get() = value as? DerakkumaFavoriteSongRecord
+private val RawDerakkumaRecord.circle get() = value as? DerakkumaCircleRecord
+private val RawDerakkumaRecord.circleMember get() = value as? DerakkumaCircleMemberRecord
+private val RawDerakkumaRecord.chart get() = value as? DerakkumaChartRecord
+private val RawDerakkumaRecord.song get() = value as? DerakkumaSongRecord
 
 private fun RecordUri.rawAtUriComponents(): AtUriComponents? {
     val withoutPrefix = uri.removePrefix("at://")
@@ -336,29 +381,173 @@ private fun RecordUri.rawAtUriComponents(): AtUriComponents? {
     )
 }
 
-private suspend fun JsonObject.blobImage(key: String, profileId: com.tunjid.heron.data.core.types.ProfileId, pdsResolver: PdsResolver): ImageUri? {
-    val cid = this[key]?.blobCid() ?: return null
+private suspend fun Blob?.blobImage(profileId: com.tunjid.heron.data.core.types.ProfileId, pdsResolver: PdsResolver): ImageUri? {
+    val cid = blobCid() ?: return null
     val pdsUrl = pdsResolver.resolve(Did(profileId.id))?.toString()?.trimEnd('/') ?: return null
     return ImageUri("$pdsUrl/xrpc/com.atproto.sync.getBlob?did=${profileId.id}&cid=$cid")
 }
-private fun JsonElement?.blobCid(): String? = when (this) {
-    is JsonObject -> string("ref") ?: (this["ref"] as? JsonObject)?.string("$" + "link") ?: string("cid")
+private fun Blob?.blobCid(): String? = when (this) {
+    is Blob.StandardBlob -> ref.link.toString()
+    is Blob.LegacyBlob -> cid
     else -> null
 }
-private fun RawDerakkumaRecord.string(key: String, default: String = ""): String = value[key].stringOrNull() ?: default
-private fun RawDerakkumaRecord.long(key: String): Long = value[key].longOrNull() ?: 0
-private fun RawDerakkumaRecord.boolean(key: String, default: Boolean = false): Boolean = value[key]?.jsonPrimitive?.booleanOrNull ?: default
-private fun RawDerakkumaRecord.chartString(key: String): String = value["chart"]?.objectOrNull()?.string(key).orEmpty()
-private fun RawDerakkumaRecord.chartSongName(): String = value["songName"].stringOrNull() ?: value["chart"]?.objectOrNull()?.string("songName") ?: value["chart"]?.objectOrNull()?.string("songId") ?: value["chart"]?.objectOrNull()?.string("uri") ?: "Unknown song"
-private fun RawDerakkumaRecord.songName(): String = value["songName"].stringOrNull() ?: value["name"].stringOrNull() ?: value["song"]?.objectOrNull()?.string("title") ?: value["song"]?.objectOrNull()?.string("songId") ?: value["song"]?.objectOrNull()?.string("uri") ?: "Unknown song"
-private fun JsonElement?.stringOrNull(): String? = when (this) {
-    is JsonPrimitive -> contentOrNull
-    is JsonObject -> string("uri") ?: string("cid") ?: string("$" + "link")
-    is JsonArray -> joinToString { it.stringOrNull().orEmpty() }.takeIf(String::isNotBlank)
+
+private fun DerakkumaPlayRecord.chartString(key: String): String = when (key) {
+    "difficulty" -> chartDifficulty
+    "level" -> chartLevel
+    "type" -> chartType
     else -> null
-}
-private fun JsonElement?.longOrNull(): Long? = stringOrNull()?.toLongOrNull()
-private fun JsonElement?.fractionString(): String = objectOrNull()?.let { obj -> listOf(obj.long("achieved"), obj.long("total")).takeIf { it.any { n -> n > 0 } }?.joinToString("/") }.orEmpty()
-private fun JsonElement?.objectOrNull(): JsonObject? = this as? JsonObject
-private fun JsonObject.string(key: String): String? = this[key].stringOrNull()
-private fun JsonObject.long(key: String): Long = this[key].longOrNull() ?: 0
+}.orEmpty()
+private fun DerakkumaBestRecord.chartString(key: String): String = when (key) {
+    "difficulty" -> chartDifficulty
+    "level" -> chartLevel
+    "type" -> chartType
+    else -> null
+}.orEmpty()
+private fun DerakkumaPlayRecord.chartSongName(): String = songName ?: chartSongName ?: chartSongId ?: chart?.uri?.atUri ?: "Unknown song"
+private fun DerakkumaBestRecord.chartSongName(): String = songName ?: chartSongName ?: chartSongId ?: chart?.uri?.atUri ?: "Unknown song"
+private fun DerakkumaFavoriteSongRecord.songName(): String = songName ?: name ?: song?.uri?.atUri ?: "Unknown song"
+private fun DerakkumaDxScoreRecord?.fractionString(): String = this?.let { score -> listOf(score.achieved, score.total).takeIf { it.any { n -> n > 0 } }?.joinToString("/") }.orEmpty()
+
+@Serializable
+private data class DerakkumaProfileRecord(
+    val playerName: String? = null,
+    val title: String? = null,
+    val titleRarity: String? = null,
+    val rating: Long? = null,
+    val stars: Long? = null,
+    val comment: String? = null,
+    val friendCode: String? = null,
+    val profileImage: Blob? = null,
+    val ratingPlateImage: Blob? = null,
+    val trophyPlateImage: Blob? = null,
+    val partnerImage: Blob? = null,
+    val courseImage: Blob? = null,
+    val classImage: Blob? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaPlayRecord(
+    val chart: StrongRef? = null,
+    val songName: String? = null,
+    val chartSongName: String? = null,
+    val chartSongId: String? = null,
+    val chartDifficulty: String? = null,
+    val chartLevel: String? = null,
+    val chartType: String? = null,
+    val achievement: String? = null,
+    val scoreRank: String? = null,
+    val fcStatus: String? = null,
+    val syncStatus: String? = null,
+    val dxScore: DerakkumaDxScoreRecord? = null,
+    val trackNum: Long? = null,
+    val rating: Long? = null,
+    val ratingDelta: Long? = null,
+    val playedAt: String? = null,
+    val createdAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaBestRecord(
+    val chart: StrongRef? = null,
+    val songName: String? = null,
+    val chartSongName: String? = null,
+    val chartSongId: String? = null,
+    val chartDifficulty: String? = null,
+    val chartLevel: String? = null,
+    val chartType: String? = null,
+    val achievement: String? = null,
+    val scoreRank: String? = null,
+    val fcStatus: String? = null,
+    val syncStatus: String? = null,
+    val playCount: Long? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaFriendRecord(
+    val subject: String? = null,
+    val displayName: String? = null,
+    val name: String? = null,
+    val title: String? = null,
+    val rating: Long? = null,
+    val stars: Long? = null,
+    val comment: String? = null,
+    val icon: Blob? = null,
+    val courseImage: Blob? = null,
+    val classImage: Blob? = null,
+    val favorite: Boolean? = null,
+    val isFavorite: Boolean? = null,
+    val rival: Boolean? = null,
+    val isRival: Boolean? = null,
+    val status: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaFavoriteSongRecord(
+    val song: StrongRef? = null,
+    val songName: String? = null,
+    val name: String? = null,
+    val orderId: Long? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaCircleRecord(
+    val name: String? = null,
+    val comment: String? = null,
+    val rank: Long? = null,
+    val totalPoints: Long? = null,
+    val circleCode: String? = null,
+    val ownerName: String? = null,
+    val month: String? = null,
+    val daysUntilReset: Long? = null,
+    val nextRewardPoints: Long? = null,
+    val characterImage: Blob? = null,
+    val backgroundImage: Blob? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaCircleMemberRecord(
+    val displayName: String? = null,
+    val name: String? = null,
+    val role: String? = null,
+    val title: String? = null,
+    val rating: Long? = null,
+    val status: String? = null,
+    val icon: Blob? = null,
+    val points: Long? = null,
+    val rank: Long? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+private data class DerakkumaChartRecord(
+    val song: StrongRef? = null,
+    val songId: String? = null,
+    val type: String? = null,
+    val difficulty: String? = null,
+    val level: String? = null,
+)
+
+@Serializable
+private data class DerakkumaSongRecord(
+    val title: String? = null,
+    val artist: String? = null,
+    val coverArt: Blob? = null,
+)
+
+@Serializable
+private data class DerakkumaDxScoreRecord(
+    val achieved: Long = 0,
+    val total: Long = 0,
+)
