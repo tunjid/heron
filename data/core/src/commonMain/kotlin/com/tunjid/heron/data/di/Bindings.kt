@@ -80,9 +80,9 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.DerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
-import com.tunjid.heron.data.repository.records.OfflineFirstDerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
+import com.tunjid.heron.data.repository.records.RemoteDerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.TidGenerator
@@ -470,8 +470,8 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideDerakkumaRecordOperations(
-        offlineFirstDerakkumaRecordOperations: OfflineFirstDerakkumaRecordOperations,
-    ): DerakkumaRecordOperations = offlineFirstDerakkumaRecordOperations
+        remoteDerakkumaRecordOperations: RemoteDerakkumaRecordOperations,
+    ): DerakkumaRecordOperations = remoteDerakkumaRecordOperations
 
     @SingleIn(AppScope::class)
     @Provides

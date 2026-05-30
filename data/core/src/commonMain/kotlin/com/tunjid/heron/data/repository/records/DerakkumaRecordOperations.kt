@@ -66,7 +66,7 @@ interface DerakkumaRecordOperations {
     fun derakkumaCircleMembers(query: ProfilesQuery, cursor: Cursor): Flow<CursorList<DerakkumaCircleMember>>
 }
 
-internal class OfflineFirstDerakkumaRecordOperations @Inject constructor(
+internal class RemoteDerakkumaRecordOperations @Inject constructor(
     @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val networkService: NetworkService,
     private val pdsResolver: PdsResolver,
