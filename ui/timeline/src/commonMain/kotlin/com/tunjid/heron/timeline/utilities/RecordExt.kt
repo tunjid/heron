@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -172,38 +173,27 @@ fun EmbeddedRecord(
     }
 }
 
-inline fun <T : Record> T.avatarSharedElementKey(
+fun Record.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
-    creator: T.() -> Profile,
 ): String {
     val finalPrefix = quotingPostUri
         ?.let { "$prefix-$it" }
         ?: prefix
-    val creator = creator()
-    return creator.avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
-}
-
-fun Record.Embeddable.avatarSharedElementKey(
-    prefix: String?,
-    quotingPostUri: PostUri? = null,
-): String = avatarSharedElementKey(prefix, quotingPostUri) {
-    when (this) {
-        is Labeler -> creator
-        is Post -> author
-        is FeedGenerator -> creator
-        is FeedList -> creator
-        is StarterPack -> creator
-        is StandardPublication -> publisher
-        is StandardDocument ->
-            publication?.publisher
-                ?: return "$prefix-${reference.uri.uri}-avatar"
-    }
+    return reference.uri
+        .profileId()
+        .avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
 }
 
 fun Profile.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${did.id}-avatar"
+): String = did.avatarSharedElementKey(
+    prefix = prefix,
+)
+
+fun ProfileId.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-$id-avatar"
 
 fun RecordUri.avatarSharedElementKey(
     prefix: String?,
