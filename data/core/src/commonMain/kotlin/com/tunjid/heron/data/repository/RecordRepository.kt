@@ -113,7 +113,7 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                         )
                             .distinctUntilChangedMap {
                                 it.firstOrNull()?.asExternalModel(
-                                    embeddedRecord = null,
+                                    embeddedRecords = emptyList(),
                                 )
                             }
                     }

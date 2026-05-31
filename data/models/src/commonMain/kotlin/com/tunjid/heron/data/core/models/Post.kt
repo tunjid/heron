@@ -45,7 +45,9 @@ data class Post(
     val record: Record?,
     val viewerStats: ViewerStats?,
     val labels: List<Label>,
-    val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable?,
+    val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
+    @Deprecated("Use embeddedRecords / Post.primaryEmbeddedRecord")
+    val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable? = null,
     val viewerState: ProfileViewerState? = null,
 ) : UrlEncodableModel,
     Record,
@@ -197,6 +199,17 @@ data class Post(
         }
     }
 }
+
+/**
+ * The primary embedded record of a [Post], if any.
+ *
+ * Reads from [Post.embeddedRecords], falling back to the deprecated
+ * [Post.embeddedRecord] so that navigation routes serialized by older app
+ * versions (which only populated the single field) continue to resolve.
+ */
+@Suppress("DEPRECATION")
+val Post.primaryEmbeddedRecord: Record.Embeddable?
+    get() = embeddedRecords.firstOrNull() ?: embeddedRecord
 
 val Post.ViewerStats?.canReply
     get() = this?.replyDisabled?.not() ?: true

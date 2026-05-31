@@ -213,7 +213,7 @@ data class ThreadedPostEntity(
 )
 
 fun PopulatedPostEntity.asExternalModel(
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecords: List<Record.Embeddable>,
 ) = Post(
     cid = entity.cid,
     uri = entity.uri,
@@ -238,7 +238,7 @@ fun PopulatedPostEntity.asExternalModel(
     viewerStats = postStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labelEntities.asActiveExternalModels(),
-    embeddedRecord = embeddedRecord,
+    embeddedRecords = embeddedRecords,
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =

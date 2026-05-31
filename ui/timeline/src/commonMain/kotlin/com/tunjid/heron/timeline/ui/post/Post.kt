@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
@@ -443,7 +444,7 @@ private fun EmbedContent(
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
-        embeddedRecord = data.post.embeddedRecord,
+        embeddedRecord = data.post.primaryEmbeddedRecord,
         postUri = data.post.uri,
         isBlurred = data.mediaBlurred,
         canUnblur = data.canUnblurMedia,

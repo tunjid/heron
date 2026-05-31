@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isMuted
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -146,7 +147,7 @@ internal class MutableTimelineItemCreationContext(
                 }
             }
         }
-        return when (val embedded = embeddedRecord) {
+        return when (val embedded = primaryEmbeddedRecord) {
             is Post -> isMuted(embedded)
             else -> false
         }

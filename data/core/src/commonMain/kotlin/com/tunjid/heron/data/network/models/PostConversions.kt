@@ -117,12 +117,11 @@ internal fun PostView.post(
             ),
             viewerStatisticsEntity = null,
             labels = emptyList(),
-            embeddedRecord = null,
-            quote = null,
+            embeddedRecords = emptyList(),
         )
         else null
 
-    val embeddedRecord = quotedPost ?: nonPostEmbeddedRecord()
+    val embeddedRecords = listOfNotNull(quotedPost ?: nonPostEmbeddedRecord())
 
     return post(
         postEntity = postEntity,
@@ -138,9 +137,8 @@ internal fun PostView.post(
                 postUri = postEntity.uri,
                 viewingProfileId = viewingProfileId,
             ),
-        quote = quotedPost,
         labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
-        embeddedRecord = embeddedRecord,
+        embeddedRecords = embeddedRecords,
     )
 }
 
@@ -150,9 +148,8 @@ private fun post(
     embeds: List<PostEmbed>,
     viewerStateEntity: ProfileViewerStateEntity?,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
-    quote: Post?,
     labels: List<Label>,
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecords: List<Record.Embeddable>,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -176,7 +173,7 @@ private fun post(
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labels,
-    embeddedRecord = embeddedRecord,
+    embeddedRecords = embeddedRecords,
 )
 
 internal fun PostView.postEntity() =

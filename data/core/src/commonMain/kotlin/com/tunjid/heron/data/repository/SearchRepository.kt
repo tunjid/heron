@@ -43,6 +43,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.canRequestData
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -196,7 +197,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 signedInProfileId = signedInProfileId,
                 postUri = Post::uri,
                 associatedRecordUris = {
-                    listOfNotNull(it.embeddedRecord?.embeddableRecordUri)
+                    listOfNotNull(it.primaryEmbeddedRecord?.embeddableRecordUri)
                 },
                 associatedProfileIds = {
                     emptyList()

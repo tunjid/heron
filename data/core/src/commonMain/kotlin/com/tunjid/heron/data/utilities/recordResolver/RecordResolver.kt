@@ -331,21 +331,23 @@ internal class OfflineRecordResolver @Inject constructor(
                     is PopulatedStandardPublicationEntity -> recordEntity.asExternalModel()
                     is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
                     is PopulatedPostEntity -> recordEntity.asExternalModel(
-                        embeddedRecord = when (
-                            val embeddedRecordEntity =
-                                associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
-                        ) {
-                            is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedStandardDocumentEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedStandardPublicationEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
-                                embeddedRecord = null,
-                            )
-                            is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
-                            null -> null
-                        },
+                        embeddedRecords = listOfNotNull(
+                            when (
+                                val embeddedRecordEntity =
+                                    associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
+                            ) {
+                                is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
+                                is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
+                                is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
+                                is PopulatedStandardDocumentEntity -> embeddedRecordEntity.asExternalModel()
+                                is PopulatedStandardPublicationEntity -> embeddedRecordEntity.asExternalModel()
+                                is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
+                                    embeddedRecords = emptyList(),
+                                )
+                                is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
+                                null -> null
+                            },
+                        ),
                     )
                 }
             }
