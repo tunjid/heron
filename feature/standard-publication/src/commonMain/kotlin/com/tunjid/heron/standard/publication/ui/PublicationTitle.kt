@@ -69,7 +69,6 @@ fun PublicationTitle(
             sharedContentState = rememberSharedContentState(
                 key = publication.avatarSharedElementKey(
                     prefix = sharedElementPrefix,
-                    creator = StandardPublication::publisher,
                 ),
             ),
             zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),

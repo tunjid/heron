@@ -116,7 +116,6 @@ fun Document(
                                     sharedContentState = rememberSharedContentState(
                                         key = publication.avatarSharedElementKey(
                                             prefix = sharedElementPrefix,
-                                            creator = StandardPublication::publisher,
                                         ),
                                     ),
                                 ) {
