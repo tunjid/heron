@@ -173,7 +173,7 @@ fun EmbeddedRecord(
     }
 }
 
-fun <T : Record> T.avatarSharedElementKey(
+fun Record.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
 ): String {
