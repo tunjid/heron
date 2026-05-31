@@ -46,6 +46,8 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -60,6 +62,8 @@ import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
+import com.tunjid.heron.timeline.ui.standard.Document
+import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -244,6 +248,35 @@ internal fun PostEmbed(
                         ),
                         labeler = embeddedRecord,
                     )
+                    is StandardDocument -> FeatureContainer(
+                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                    ) {
+                        Document(
+                            modifier = Modifier.padding(12.dp),
+                            paneTransitionScope = paneTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            document = embeddedRecord,
+                            // TODO: Define actions for embedded records and use here
+                            onPublicationClicked = null,
+                            onSubscriptionToggled = null,
+                        )
+                    }
+                    is StandardPublication -> FeatureContainer(
+                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                    ) {
+                        Publication(
+                            modifier = Modifier.padding(12.dp),
+                            paneTransitionScope = paneTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            publication = embeddedRecord,
+                            // TODO: Define actions for embedded records and use here
+                            onSubscriptionToggled = { _, _ -> },
+                        )
+                    }
                     null -> Unit
                 }
             }

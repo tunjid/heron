@@ -64,6 +64,8 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
@@ -87,9 +89,11 @@ import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.remove_quoted_post
 import heron.feature.compose.generated.resources.remove_shared_record
+import heron.ui.core.generated.resources.record_document
 import heron.ui.core.generated.resources.record_feed
 import heron.ui.core.generated.resources.record_labeler
 import heron.ui.core.generated.resources.record_list
+import heron.ui.core.generated.resources.record_publication
 import heron.ui.core.generated.resources.record_starter_pack
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -252,6 +256,14 @@ private fun Post(
                     is StarterPack -> stringResource(
                         Res.string.remove_shared_record,
                         stringResource(CommonStrings.record_starter_pack),
+                    )
+                    is StandardDocument -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_document),
+                    )
+                    is StandardPublication -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_publication),
                     )
                 }
                 FilledTonalIconButton(

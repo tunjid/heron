@@ -36,6 +36,8 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -45,6 +47,8 @@ import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -55,6 +59,8 @@ import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.timeline.ui.standard.Document
+import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlin.time.Clock
@@ -145,6 +151,23 @@ fun EmbeddedRecord(
                 paneTransitionScope = paneTransitionScope,
                 starterPack = record,
             )
+            is StandardDocument -> Document(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                paneTransitionScope = paneTransitionScope,
+                document = record,
+                // TODO: Define actions for embedded records and use here
+                onPublicationClicked = null,
+                onSubscriptionToggled = null,
+            )
+            is StandardPublication -> Publication(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                paneTransitionScope = paneTransitionScope,
+                publication = record,
+                // TODO: Define actions for embedded records and use here
+                onSubscriptionToggled = { _, _ -> },
+            )
         }
     }
 }
@@ -171,6 +194,10 @@ fun Record.Embeddable.avatarSharedElementKey(
         is FeedGenerator -> creator
         is FeedList -> creator
         is StarterPack -> creator
+        is StandardPublication -> publisher
+        is StandardDocument ->
+            publication?.publisher
+                ?: return "$prefix-${reference.uri.uri}-avatar"
     }
 }
 
@@ -190,6 +217,9 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
             is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
+            // Standard site records are shared via their canonical AT URI for now.
+            is StandardDocumentUri -> uri
+            is StandardPublicationUri -> uri
         },
     )
 
@@ -204,6 +234,8 @@ fun EmbeddableRecordUri.collectionShape() = when (this) {
     is ListUri -> ListCollectionShape
     is PostUri -> RoundedPolygonShape.Circle
     is StarterPackUri -> StarterPackCollectionShape
+    is StandardDocumentUri -> DocumentCollectionShape
+    is StandardPublicationUri -> DocumentCollectionShape
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
