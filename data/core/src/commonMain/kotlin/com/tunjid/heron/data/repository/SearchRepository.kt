@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
@@ -197,7 +198,11 @@ internal class OfflineSearchRepository @Inject constructor(
                 signedInProfileId = signedInProfileId,
                 postUri = Post::uri,
                 associatedRecordUris = {
-                    listOfNotNull(it.primaryEmbeddedRecord?.embeddableRecordUri)
+                    it.embeddedRecords
+                        .map(Record.Embeddable::embeddableRecordUri)
+                        .ifEmpty {
+                            listOfNotNull(it.primaryEmbeddedRecord?.embeddableRecordUri)
+                        }
                 },
                 associatedProfileIds = {
                     emptyList()

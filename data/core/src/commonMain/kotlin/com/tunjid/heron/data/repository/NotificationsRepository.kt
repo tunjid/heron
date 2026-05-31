@@ -726,8 +726,8 @@ private fun Post.isReply(
 private fun Post.isQuote(
     signedInProfileId: ProfileId?,
 ): Boolean {
-    val embeddedRecord = primaryEmbeddedRecord
-    return embeddedRecord is Post && embeddedRecord.author.did == signedInProfileId
+    val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+    return records.any { it is Post && it.author.did == signedInProfileId }
 }
 
 private fun Post.isMention(

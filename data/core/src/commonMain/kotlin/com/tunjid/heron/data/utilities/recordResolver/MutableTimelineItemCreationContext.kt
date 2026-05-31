@@ -147,9 +147,9 @@ internal class MutableTimelineItemCreationContext(
                 }
             }
         }
-        return when (val embedded = primaryEmbeddedRecord) {
-            is Post -> isMuted(embedded)
-            else -> false
+        val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+        return records.any { embedded ->
+            embedded is Post && isMuted(embedded)
         }
     }
 
