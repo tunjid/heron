@@ -130,6 +130,34 @@ interface StandardSiteDao {
         offset: Long,
     ): Flow<List<PopulatedStandardPublicationEntity>>
 
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardPublications.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardPublications
+            LEFT JOIN standardSubscriptions
+                ON standardPublications.uri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardPublications.uri IN (:uris)
+        """,
+    )
+    fun publications(
+        viewingProfileId: String?,
+        uris: Collection<StandardPublicationUri>,
+    ): Flow<List<PopulatedStandardPublicationEntity>>
+
     @Upsert
     suspend fun upsertPublications(
         entities: List<StandardPublicationEntity>,
@@ -221,6 +249,36 @@ interface StandardSiteDao {
         publicationUri: String,
         limit: Long,
         offset: Long,
+    ): Flow<List<PopulatedStandardDocumentEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardDocuments.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardDocuments
+            LEFT JOIN standardSubscriptions
+                ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            WHERE standardDocuments.uri IN (:uris)
+        """,
+    )
+    fun documents(
+        viewingProfileId: String?,
+        uris: Collection<StandardDocumentUri>,
     ): Flow<List<PopulatedStandardDocumentEntity>>
 
     @Upsert

@@ -93,6 +93,8 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -278,6 +280,8 @@ internal class OfflineRecordResolver @Inject constructor(
         val postUris = LazyList<PostUri>()
         val starterPackUris = LazyList<StarterPackUri>()
         val labelerUris = LazyList<LabelerUri>()
+        val documentUris = LazyList<StandardDocumentUri>()
+        val publicationUris = LazyList<StandardPublicationUri>()
 
         uris.forEach { uri ->
             when (uri) {
@@ -286,33 +290,46 @@ internal class OfflineRecordResolver @Inject constructor(
                 is PostUri -> postUris.add(uri)
                 is StarterPackUri -> starterPackUris.add(uri)
                 is LabelerUri -> labelerUris.add(uri)
+                is StandardDocumentUri -> documentUris.add(uri)
+                is StandardPublicationUri -> publicationUris.add(uri)
             }
         }
 
         return combine(
-            feedUris.list
-                .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
-            listUris.list
-                .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
-            postUris.list
-                .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
-            starterPackUris.list
-                .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
-            labelerUris.list
-                .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
-        ) { feeds, lists, posts, starterPacks, labelers ->
+            listOf(
+                feedUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
+                listUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
+                postUris.list
+                    .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
+                starterPackUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
+                labelerUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
+                documentUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        standardSiteDao.documents(viewingProfileId?.id, it)
+                    },
+                publicationUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        standardSiteDao.publications(viewingProfileId?.id, it)
+                    },
+            ),
+        ) { populatedRecordLists ->
             val associatedRecords = buildMap {
-                feeds.forEach { put(it.recordUri, it) }
-                lists.forEach { put(it.recordUri, it) }
-                posts.forEach { put(it.recordUri, it) }
-                starterPacks.forEach { put(it.recordUri, it) }
-                labelers.forEach { put(it.recordUri, it) }
+                populatedRecordLists.forEach { populatedRecords ->
+                    populatedRecords.forEach { put(it.recordUri, it) }
+                }
             }
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
                     is PopulatedFeedGeneratorEntity -> recordEntity.asExternalModel()
                     is PopulatedLabelerEntity -> recordEntity.asExternalModel()
                     is PopulatedListEntity -> recordEntity.asExternalModel()
+                    is PopulatedStandardDocumentEntity -> recordEntity.asExternalModel()
+                    is PopulatedStandardPublicationEntity -> recordEntity.asExternalModel()
+                    is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
                     is PopulatedPostEntity -> recordEntity.asExternalModel(
                         embeddedRecord = when (
                             val embeddedRecordEntity =
@@ -321,6 +338,8 @@ internal class OfflineRecordResolver @Inject constructor(
                             is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
                             is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
                             is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
+                            is PopulatedStandardDocumentEntity -> embeddedRecordEntity.asExternalModel()
+                            is PopulatedStandardPublicationEntity -> embeddedRecordEntity.asExternalModel()
                             is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
                                 embeddedRecord = null,
                             )
@@ -328,7 +347,6 @@ internal class OfflineRecordResolver @Inject constructor(
                             null -> null
                         },
                     )
-                    is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
                 }
             }
         }

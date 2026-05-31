@@ -23,6 +23,8 @@ import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.profileId
@@ -32,6 +34,7 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
@@ -72,6 +75,7 @@ internal class OfflineFirstRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
 ) : RecordRepository,
@@ -112,6 +116,26 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                                     embeddedRecord = null,
                                 )
                             }
+                    }
+
+            is StandardDocumentUri ->
+                savedStateDataSource
+                    .singleSessionFlow { profileId ->
+                        standardSiteDao.documents(
+                            viewingProfileId = profileId?.id,
+                            uris = listOf(uri),
+                        )
+                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                    }
+
+            is StandardPublicationUri ->
+                savedStateDataSource
+                    .singleSessionFlow { profileId ->
+                        standardSiteDao.publications(
+                            viewingProfileId = profileId?.id,
+                            uris = listOf(uri),
+                        )
+                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
                     }
         }
             .filterNotNull()
