@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.sheets
+package com.tunjid.heron.timeline.ui.sheets.mutedwords
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -39,12 +39,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -52,7 +51,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.ViewModelStoreProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.ui.coroutines.UIStateProducerElement
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -82,6 +88,9 @@ import heron.ui.timeline.generated.resources.your_muted_word
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -90,81 +99,23 @@ class MutedWordsSheetState(
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
 
-    var mutedWords by mutableStateOf<List<MutedWordPreference>>(emptyList())
-        internal set
-
-    var newWord by mutableStateOf("")
-    var newWordTargets by mutableStateOf(listOf("content", "tag"))
-    var newWordDuration by mutableStateOf<Duration?>(null)
-    var newWordExcludeNonFollowers by mutableStateOf(false)
-    var error by mutableStateOf<String?>(null)
-
-    fun addMutedWord() {
-        val duration = newWordDuration
-        val expiresAt = duration?.let {
-            Clock.System.now().plus(it)
-        }
-
-        if (mutedWords.any { it.value.contentEquals(newWord, ignoreCase = true) }) {
-            error = "Word already muted"
-            return
-        }
-
-        mutedWords = mutedWords + MutedWordPreference(
-            value = newWord,
-            targets = newWordTargets.map { MutedWordPreference.Target(it) },
-            actorTarget =
-            if (newWordExcludeNonFollowers)
-                MutedWordPreference.Target("non_followers")
-            else null,
-            expiresAt = expiresAt,
-        )
-
-        // Reset input fields
-        newWord = ""
-        newWordDuration = null
-        error = null
-    }
-
-    fun removeMutedWord(value: String) {
-        mutedWords = mutedWords.filterNot { it.value == value }
-        error = null
-    }
-
-    fun clearAll() {
-        mutedWords = emptyList()
-        error = null
-    }
-
-    override fun onHidden() {
-        newWord = ""
-        newWordDuration = null
-        newWordExcludeNonFollowers = false
-        newWordTargets = listOf("content", "tag")
-        error = null
-    }
+    override fun onHidden() { }
 
     companion object {
         @Composable
         fun rememberUpdatedMutedWordsSheetState(
-            mutedWordPreferences: List<MutedWordPreference>,
-            onSave: (List<MutedWordPreference>) -> Unit,
-            onShown: () -> Unit,
+            initializer: MutedWordsViewModelInitializer,
         ): MutedWordsSheetState {
             val state = rememberBottomSheetState(
                 skipPartiallyExpanded = false,
-            ) { scope ->
-                MutedWordsSheetState(
-                    scope = scope,
-                )
-            }.also {
-                it.mutedWords = mutedWordPreferences
-            }
+            ) { scope -> MutedWordsSheetState(scope = scope) }
+
+            val storeProvider = rememberViewModelStoreProvider()
 
             MutedWordsBottomSheet(
                 state = state,
-                onShown = onShown,
-                onSave = { onSave(state.mutedWords) },
+                storeProvider = storeProvider,
+                initializer = initializer,
             )
             return state
         }
@@ -173,292 +124,309 @@ class MutedWordsSheetState(
 
 @Composable
 private fun MutedWordsBottomSheet(
-    modifier: Modifier = Modifier,
     state: MutedWordsSheetState,
-    onSave: (List<MutedWordPreference>) -> Unit,
-    onShown: () -> Unit,
+    storeProvider: ViewModelStoreProvider,
+    initializer: MutedWordsViewModelInitializer,
 ) {
+    val storeOwner = rememberViewModelStoreOwner(
+        provider = storeProvider,
+        key = "muted_words_sheet",
+    )
+
     state.ModalBottomSheet {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item(
-                key = MainTitleKey,
+        CompositionLocalProvider(LocalViewModelStoreOwner provides storeOwner) {
+            MutedWordsScreen(
+                sheetState = state,
+                initializer = initializer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MutedWordsScreen(
+    sheetState: MutedWordsSheetState,
+    initializer: MutedWordsViewModelInitializer,
+) {
+    val stateHolder: MutedWordsStateHolder = viewModel<MutedWordsViewModel> {
+        initializer.invoke(
+            scope = CoroutineScope(
+                SupervisorJob() +
+                    Dispatchers.Main.immediate +
+                    UIStateProducerElement(backgroundDispatcher = Dispatchers.Default),
+            ),
+        )
+    }
+
+    val state by stateHolder.state.collectAsStateWithLifecycle()
+
+    // stateHolder.state.value reads the live StateFlow value,
+    // avoiding stale capture from the time DisposableEffect was set up
+    DisposableEffect(Unit) {
+        onDispose {
+            stateHolder.accept(
+                MutedWordsAction.UpdateMutedWord(stateHolder.state.value.mutedWords),
+            )
+        }
+    }
+
+    MutedWordsContent(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        sheetState = sheetState,
+        state = state,
+        actions = stateHolder.accept,
+    )
+}
+
+@Composable
+private fun MutedWordsContent(
+    modifier: Modifier = Modifier,
+    sheetState: MutedWordsSheetState,
+    state: MutedWordsState,
+    actions: (MutedWordsAction) -> Unit,
+) {
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item(key = MainTitleKey) {
+            Row(
+                modifier = Modifier.fillMaxWidth().animateItem(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                Text(
+                    stringResource(Res.string.mute_words),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                IconButton(
+                    onClick = { sheetState.hide() },
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = null)
+                }
+            }
+        }
+
+        state.error?.let { error ->
+            item(key = ErrorKey) {
+                ErrorMessage(modifier = Modifier.animateItem(), error = error)
+            }
+        }
+
+        item(
+            key = InputKey,
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant,
+                ),
+                tonalElevation = 0.dp,
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(
-                        stringResource(Res.string.mute_words),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        stringResource(Res.string.mute_words_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
 
-                    IconButton(
-                        onClick = { state.hide() },
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = null)
-                    }
-                }
-            }
-            state.error?.let { error ->
-                item(
-                    key = ErrorKey,
-                ) {
-                    ErrorMessage(
-                        modifier = Modifier
-                            .animateItem(),
-                        error = error,
-                    )
-                }
-            }
-            item(
-                key = InputKey,
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant,
-                    ),
-                    tonalElevation = 0.dp,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        Text(
-                            stringResource(Res.string.mute_words_title),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-
-                        TextField(
-                            value = state.newWord,
-                            onValueChange = { state.newWord = it },
-                            placeholder = {
-                                Text(
-                                    stringResource(Res.string.mute_words_placeholder),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            isError = state.error != null,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                                unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
-                            ),
-                            trailingIcon = {
-                                if (state.newWord.isNotBlank()) {
-                                    IconButton(onClick = { state.newWord = "" }) {
-                                        Icon(Icons.Default.Close, contentDescription = null)
-                                    }
+                    TextField(
+                        value = state.newWord,
+                        onValueChange = { actions(MutedWordsAction.UpdateNewWord(it)) },
+                        placeholder = {
+                            Text(
+                                stringResource(Res.string.mute_words_placeholder),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = state.error != null,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            disabledContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
+                        ),
+                        trailingIcon = {
+                            if (state.newWord.isNotBlank()) {
+                                IconButton(onClick = { actions(MutedWordsAction.UpdateNewWord("")) }) {
+                                    Icon(Icons.Default.Close, contentDescription = null)
                                 }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                            ),
-                            keyboardActions = KeyboardActions {
-                                state.addMutedWord()
-                            },
-                        )
-
-                        Text(
-                            stringResource(Res.string.duration),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-
-                        val durationOptions = remember {
-                            listOf(
-                                DurationOption(Res.string.forever, null),
-                                DurationOption(Res.string.twenty_four_hours, Duration.parse("24h")),
-                                DurationOption(Res.string.seven_days, Duration.parse("7d")),
-                                DurationOption(Res.string.thirty_days, Duration.parse("30d")),
-                            )
-                        }
-
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            durationOptions.forEach { option ->
-                                DurationChip(
-                                    option = option,
-                                    isSelected = state.newWordDuration == option.expiresAt,
-                                    onSelected = {
-                                        state.newWordDuration = option.expiresAt
-                                    },
-                                )
                             }
-                        }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions {
+                            actions(MutedWordsAction.AddMutedWord)
+                        },
+                    )
 
-                        Text(
-                            stringResource(Res.string.mute_in),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp),
+                    Text(
+                        stringResource(Res.string.duration),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+
+                    val durationOptions = remember {
+                        listOf(
+                            DurationOption(Res.string.forever, null),
+                            DurationOption(Res.string.twenty_four_hours, Duration.parse("24h")),
+                            DurationOption(Res.string.seven_days, Duration.parse("7d")),
+                            DurationOption(Res.string.thirty_days, Duration.parse("30d")),
                         )
+                    }
 
-                        val targets = remember {
-                            listOf(
-                                MuteTargetOption(Res.string.text_tags, listOf("content", "tag")),
-                                MuteTargetOption(Res.string.tags_only, listOf("tag")),
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            targets.forEach { target ->
-                                MuteTargetChip(
-                                    target = target,
-                                    isSelected =
-                                    state.newWordTargets.containsAll(target.targets) &&
-                                        target.targets.containsAll(state.newWordTargets),
-                                    onSelected = {
-                                        state.newWordTargets = target.targets
-                                    },
-                                )
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(Res.string.exclude_user_txt),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                                Text(
-                                    stringResource(Res.string.mute_user_txt),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            Switch(
-                                checked = state.newWordExcludeNonFollowers,
-                                onCheckedChange = {
-                                    state.newWordExcludeNonFollowers = it
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        durationOptions.forEach { option ->
+                            DurationChip(
+                                option = option,
+                                isSelected = state.newWordDuration == option.expiresAt,
+                                onSelected = {
+                                    actions(MutedWordsAction.UpdateDuration(option.expiresAt))
                                 },
                             )
                         }
-
-                        Button(
-                            onClick = {
-                                state.addMutedWord()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = state.newWord.isNotBlank() &&
-                                state.newWordTargets.isNotEmpty(),
-                            shape = MaterialTheme.shapes.large,
-                        ) {
-                            Text(
-                                stringResource(Res.string.add_muted_word),
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        }
                     }
-                }
-            }
-            item(
-                key = MutedWordsSubtitleKey,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+
                     Text(
-                        stringResource(Res.string.your_muted_word),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        stringResource(Res.string.mute_in),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
 
-                    if (state.mutedWords.isNotEmpty()) {
-                        TextButton(
-                            onClick = {
-                                state.clearAll()
-                            },
-                        ) {
-                            Text(
-                                stringResource(Res.string.clear_all),
-                                color = MaterialTheme.colorScheme.error,
+                    val targets = remember {
+                        listOf(
+                            MuteTargetOption(Res.string.text_tags, listOf("content", "tag")),
+                            MuteTargetOption(Res.string.tags_only, listOf("tag")),
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        targets.forEach { target ->
+                            MuteTargetChip(
+                                target = target,
+                                isSelected =
+                                state.newWordTargets.containsAll(target.targets) &&
+                                    target.targets.containsAll(state.newWordTargets),
+                                onSelected = {
+                                    actions(MutedWordsAction.UpdateTargets(target.targets))
+                                },
                             )
                         }
                     }
-                }
-            }
-            if (state.mutedWords.isEmpty()) {
-                item(
-                    key = EmptyKey,
-                ) {
-                    EmptyState(
-                        modifier = Modifier
-                            .animateItem(),
-                    )
-                }
-            } else {
-                items(
-                    items = state.mutedWords,
-                    key = { it.value },
-                ) { mutedWord ->
-                    MutedWordItem(
-                        modifier = Modifier
-                            .animateItem(),
-                        mutedWord = mutedWord,
-                        onRemove = {
-                            state.removeMutedWord(mutedWord.value)
-                        },
-                    )
-                }
-            }
 
-            item(
-                key = BottomPaddingKey,
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                stringResource(Res.string.exclude_user_txt),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                stringResource(Res.string.mute_user_txt),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+
+                        Switch(
+                            checked = state.newWordExcludeNonFollowers,
+                            onCheckedChange = {
+                                actions(MutedWordsAction.UpdateExcludeNonFollowers(it))
+                            },
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            actions(MutedWordsAction.AddMutedWord)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = state.newWord.isNotBlank() &&
+                            state.newWordTargets.isNotEmpty(),
+                        shape = MaterialTheme.shapes.large,
+                    ) {
+                        Text(
+                            stringResource(Res.string.add_muted_word),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+        }
+
+        item(key = MutedWordsSubtitleKey) {
+            Row(
+                modifier = Modifier.fillMaxWidth().animateItem(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Spacer(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .navigationBarsPadding()
-                        .imePadding(),
+                Text(
+                    stringResource(Res.string.your_muted_word),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (state.mutedWords.isNotEmpty()) {
+                    TextButton(
+                        onClick = { actions(MutedWordsAction.ClearAll) },
+                    ) {
+                        Text(
+                            stringResource(Res.string.clear_all),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+        }
+
+        if (state.mutedWords.isEmpty()) {
+            item(key = EmptyKey) { EmptyState(modifier = Modifier.animateItem()) }
+        } else {
+            items(items = state.mutedWords, key = { it.value }) { mutedWord ->
+                MutedWordItem(
+                    modifier = Modifier.animateItem(),
+                    mutedWord = mutedWord,
+                    onRemove = { actions(MutedWordsAction.RemoveMutedWord(mutedWord.value)) },
                 )
             }
         }
-        DisposableEffect(Unit) {
-            onShown()
-            onDispose {
-                onSave(state.mutedWords)
-            }
+
+        item(key = BottomPaddingKey) {
+            Spacer(
+                modifier = Modifier
+                    .height(40.dp)
+                    .navigationBarsPadding()
+                    .imePadding(),
+            )
         }
     }
 }
