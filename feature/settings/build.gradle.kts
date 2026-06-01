@@ -52,9 +52,10 @@ kotlin {
 
 aboutLibraries {
     export {
-        outputFile = project.layout.projectDirectory
-            .file("src/commonMain/composeResources/files/aboutlibraries.json")
-            .asFile
+        outputFile =
+            project.layout.projectDirectory
+                .file("src/commonMain/composeResources/files/aboutlibraries.json")
+                .asFile
         variant = "release"
     }
 }

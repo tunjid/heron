@@ -35,8 +35,7 @@ object FilterSerializer : KSerializer<Filter> {
             when (value) {
                 is Filter.Root -> encoder.json.encodeToJsonElement(RootFilterSerializer, value)
                 is Filter.Leaf -> encoder.json.encodeToJsonElement(LeafSerializer, value)
-            }
-                .let { encoder.encodeJsonElement(it) }
+            }.let { encoder.encodeJsonElement(it) }
         } else {
             delegate.serialize(encoder, value)
         }

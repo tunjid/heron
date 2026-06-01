@@ -47,18 +47,15 @@ import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDeco
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
 
-/**
- * Root scaffold for the app
- */
+/** Root scaffold for the app */
 @Composable
 fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
     AppTheme(
-        theme = Theme.fromOrdinal(
-            appState.identityState.preferences?.local?.currentThemeOrdinal ?: 0,
-        ),
+        theme =
+            Theme.fromOrdinal(appState.identityState.preferences?.local?.currentThemeOrdinal ?: 0)
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
@@ -67,66 +64,66 @@ fun App(
         ) {
             Surface {
                 // Root LookaheadScope used to anchor all shared element transitions
-                SharedTransitionLayout(
-                    modifier = modifier.fillMaxSize(),
-                ) {
+                SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
                     val density = LocalDensity.current
                     val movableSharedElementHostState = remember {
                         MovableSharedElementHostState<ThreePane, Route>(
-                            sharedTransitionScope = this,
+                            sharedTransitionScope = this
                         )
                     }
-                    val windowWidth = rememberUpdatedState(
-                        with(density) {
-                            LocalWindowInfo.current.containerSize.width.toDp()
-                        },
-                    )
+                    val windowWidth =
+                        rememberUpdatedState(
+                            with(density) {
+                                LocalWindowInfo.current.containerSize.width.toDp()
+                            }
+                        )
                     if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
-                    val displayState = appState.rememberMultiPaneDisplayState(
-                        paneDecorators = remember {
-                            listOf(
-                                threePaneAdaptiveDecorator(
-                                    secondaryPaneBreakPoint = mutableStateOf(
-                                        UiTokens.SecondaryPaneMinWidthBreakpoint,
-                                    ),
-                                    tertiaryPaneBreakPoint = mutableStateOf(
-                                        UiTokens.TertiaryPaneMinWidthBreakpoint,
-                                    ),
-                                    windowWidthState = windowWidth,
-                                ),
-                                threePaneMovableSharedElementDecorator(
-                                    movableSharedElementHostState,
-                                ),
-                            )
-                        },
-                    )
+                    val displayState =
+                        appState.rememberMultiPaneDisplayState(
+                            paneDecorators =
+                                remember {
+                                    listOf(
+                                        threePaneAdaptiveDecorator(
+                                            secondaryPaneBreakPoint =
+                                                mutableStateOf(
+                                                    UiTokens.SecondaryPaneMinWidthBreakpoint
+                                                ),
+                                            tertiaryPaneBreakPoint =
+                                                mutableStateOf(
+                                                    UiTokens.TertiaryPaneMinWidthBreakpoint
+                                                ),
+                                            windowWidthState = windowWidth,
+                                        ),
+                                        threePaneMovableSharedElementDecorator(
+                                            movableSharedElementHostState
+                                        ),
+                                    )
+                                }
+                        )
                     MultiPaneDisplay(
                         modifier = Modifier.fillMaxSize(),
                         state = displayState,
                     ) {
-                        val splitPaneState = remember {
-                            SplitPaneState(
-                                paneNavigationState = { this.paneNavigationState },
-                                density = density,
-                                windowWidth = windowWidth,
-                                initialAnchor = appState.lastPaneAnchor,
-                                hasCompatBottomNav = {
-                                    appState.prefersCompactBottomNav
-                                },
-                            )
-                        }.also {
-                            it.update(
-                                density = density,
-                            )
-                        }
-                        CompositionLocalProvider(
-                            LocalSplitPaneState provides splitPaneState,
-                        ) {
+                        val splitPaneState =
+                            remember {
+                                    SplitPaneState(
+                                        paneNavigationState = { this.paneNavigationState },
+                                        density = density,
+                                        windowWidth = windowWidth,
+                                        initialAnchor = appState.lastPaneAnchor,
+                                        hasCompatBottomNav = {
+                                            appState.prefersCompactBottomNav
+                                        },
+                                    )
+                                }
+                                .also {
+                                    it.update(density = density)
+                                }
+                        CompositionLocalProvider(LocalSplitPaneState provides splitPaneState) {
                             SplitLayout(
                                 state = splitPaneState.splitLayoutState,
-                                modifier = modifier
-                                    .fillMaxSize(),
+                                modifier = modifier.fillMaxSize(),
                                 itemSeparators = { _, offset ->
                                     DraggableThumb(
                                         splitLayoutState = splitPaneState.splitLayoutState,
@@ -141,13 +138,14 @@ fun App(
                         }
                         LaunchedEffect(Unit) {
                             snapshotFlow {
-                                splitPaneState.paneAnchorState.currentPaneAnchor
-                            }.collect { anchor ->
-                                appState.onPaneAnchorChanged(
-                                    anchor = anchor,
-                                    destinationId = paneNavigationState.destinationId,
-                                )
-                            }
+                                    splitPaneState.paneAnchorState.currentPaneAnchor
+                                }
+                                .collect { anchor ->
+                                    appState.onPaneAnchorChanged(
+                                        anchor = anchor,
+                                        destinationId = paneNavigationState.destinationId,
+                                    )
+                                }
                         }
                     }
                 }
@@ -170,7 +168,7 @@ private fun sharedElementsCoordinatesSet(): Boolean {
                 }
                 placeable.place(0, 0)
             }
-        },
+        }
     )
     return coordinatesSet
 }

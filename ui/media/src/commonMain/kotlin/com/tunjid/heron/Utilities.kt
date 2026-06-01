@@ -32,21 +32,24 @@ internal inline fun DrawScope.scaleAndAlignTo(
     alignment: Alignment,
     crossinline block: DrawScope.() -> Unit,
 ) {
-    val scaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
+    val scaleFactor =
+        contentScale.computeScaleFactor(
+            srcSize = srcSize.toSize(),
+            dstSize = destSize.toSize(),
+        )
 
-    val alignmentOffset = alignment.align(
-        size = srcSize,
-        space = destSize,
-        layoutDirection = layoutDirection,
-    )
+    val alignmentOffset =
+        alignment.align(
+            size = srcSize,
+            space = destSize,
+            layoutDirection = layoutDirection,
+        )
 
-    val translationOffset = Offset(
-        x = alignmentOffset.x * scaleFactor.scaleX,
-        y = alignmentOffset.y * scaleFactor.scaleY,
-    )
+    val translationOffset =
+        Offset(
+            x = alignmentOffset.x * scaleFactor.scaleX,
+            y = alignmentOffset.y * scaleFactor.scaleY,
+        )
 
     translate(
         left = translationOffset.x,

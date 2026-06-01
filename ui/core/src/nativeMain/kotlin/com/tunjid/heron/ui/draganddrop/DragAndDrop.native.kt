@@ -23,22 +23,14 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import platform.Foundation.NSItemProvider
 import platform.UIKit.UIDragItem
 
-actual fun selectorDragAndDropTransferData(
-    title: String,
-): DragAndDropTransferData =
+actual fun selectorDragAndDropTransferData(title: String): DragAndDropTransferData =
     DragAndDropTransferData(
-        items = listOf(
-            UIDragItem(
-                itemProvider = NSItemProvider(),
-            ).apply { localObject = title },
-        ),
+        items = listOf(UIDragItem(itemProvider = NSItemProvider()).apply { localObject = title })
     )
 
-actual fun DragAndDropEvent.draggedId(): String? =
-    items.firstOrNull()?.localObject as? String
+actual fun DragAndDropEvent.draggedId(): String? = items.firstOrNull()?.localObject as? String
 
-actual fun Modifier.selectorDragAndDropSource(
-    id: String,
-): Modifier = this.dragAndDropSource {
-    selectorDragAndDropTransferData(id)
-}
+actual fun Modifier.selectorDragAndDropSource(id: String): Modifier =
+    this.dragAndDropSource {
+        selectorDragAndDropTransferData(id)
+    }

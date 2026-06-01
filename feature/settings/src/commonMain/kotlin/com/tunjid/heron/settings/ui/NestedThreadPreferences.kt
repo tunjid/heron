@@ -37,9 +37,7 @@ fun ThreadPreferencesSection(
     onPreferenceUpdated: (ThreadViewPreference) -> Unit,
 ) {
     SettingsRadioButtons(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth(),
+        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
         title = CommonStrings.timeline_thread_order,
         selectedItem = threadViewPreference.order(),
         items = TimelineItem.Threaded.Order.entries,

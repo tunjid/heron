@@ -83,11 +83,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/notifications"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object NotificationsNavigationBindings {
@@ -114,148 +110,155 @@ class NotificationsBindings(
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry(
-        contentTransform = navigationContentTransformer::contentTransform,
-        render = { route ->
-            val stateHolder: NotificationsStateHolder = viewModel<ActualNotificationsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    ) =
+        threePaneEntry(
+            contentTransform = navigationContentTransformer::contentTransform,
+            render = { route ->
+                val stateHolder: NotificationsStateHolder =
+                    viewModel<ActualNotificationsViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.title),
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        actions = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
+                    topBar = {
+                        RootDestinationTopAppBar(
+                            modifier =
+                                Modifier.offset {
+                                    topAppBarNestedScrollConnection.offset.round()
+                                },
+                            title = {
+                                AppBarTitle(title = stringResource(Res.string.title))
+                            },
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            onSignedInProfileClicked = { profile, sharedElementKey ->
+                                stateHolder.accept(
+                                    Action.Navigate.To(
+                                        profileDestination(
+                                            referringRouteOption =
+                                                NavigationAction.ReferringRouteOption
+                                                    .ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = sharedElementKey,
+                                        )
+                                    )
+                                )
+                            },
+                            actions = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = !hasNotificationPermissions()
+                                    ) {
+                                        RequestNotificationsButton(
+                                            animateIcon = state.canAnimateRequestPermissionsButton
+                                        )
+                                    }
+                                    AppBarIconButton(
+                                        icon = Icons.Rounded.Settings,
+                                        iconDescription =
+                                            stringResource(CommonStrings.notification_settings),
+                                        onClick = {
+                                            stateHolder.accept(
+                                                Action.Navigate.To(
+                                                    notificationSettingsDestination()
+                                                )
+                                            )
+                                        },
                                     )
                                 }
-                                AppBarIconButton(
-                                    icon = Icons.Rounded.Settings,
-                                    iconDescription = stringResource(CommonStrings.notification_settings),
-                                    onClick = {
-                                        stateHolder.accept(
-                                            Action.Navigate.To(notificationSettingsDestination()),
+                            },
+                            onLogoClicked = {
+                                stateHolder.accept(Action.Navigate.Home)
+                            },
+                        )
+                    },
+                    floatingActionButton = {
+                        PaneFab(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                },
+                            text = stringResource(CommonStrings.notifications_create_post),
+                            icon = Icons.Rounded.Edit,
+                            expanded =
+                                isFabExpanded {
+                                    if (prefersAutoHidingBottomNav)
+                                        bottomNavigationNestedScrollConnection.offset
+                                    else topAppBarNestedScrollConnection.offset * -1f
+                                },
+                            onClick = {
+                                stateHolder.accept(
+                                    Action.Navigate.To(
+                                        composePostDestination(
+                                            type = Post.Create.Timeline,
+                                            sharedElementPrefix = null,
                                         )
-                                    },
+                                    )
                                 )
+                            },
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                },
+                            onNavItemReselected = {
+                                stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
+                                true
+                            },
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail(
+                            onNavItemReselected = {
+                                stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
+                                true
                             }
-                        },
-                        onLogoClicked = {
-                            stateHolder.accept(Action.Navigate.Home)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
-                },
-                content = {
-                    NotificationsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
-            )
-        },
-    )
+                        )
+                    },
+                    content = {
+                        NotificationsScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

@@ -27,44 +27,39 @@ sealed interface Memo {
         val args: List<Any> = emptyList(),
     ) : Memo
 
-    data class Text(
-        val message: String,
-    ) : Memo
+    data class Text(val message: String) : Memo
 }
 
 suspend fun Memo.message(): String =
     when (this) {
-        is Memo.Resource -> when {
-            args.isEmpty() -> getString(
-                resource = stringResource,
-            )
-            else -> getString(
-                resource = stringResource,
-                *(
-                    args
-                        .map { if (it is StringResource) getString(it) else it }
-                        .toTypedArray()
-                    ),
-            )
-        }
+        is Memo.Resource ->
+            when {
+                args.isEmpty() -> getString(resource = stringResource)
+                else ->
+                    getString(
+                        resource = stringResource,
+                        *(args
+                            .map { if (it is StringResource) getString(it) else it }
+                            .toTypedArray()),
+                    )
+            }
         is Memo.Text -> message
     }
 
 val Memo.message: String
-    @Composable get() =
+    @Composable
+    get() =
         when (this) {
-            is Memo.Resource -> when {
-                args.isEmpty() -> stringResource(
-                    resource = stringResource,
-                )
-                else -> stringResource(
-                    resource = stringResource,
-                    *(
-                        args
-                            .map { if (it is StringResource) stringResource(it) else it }
-                            .toTypedArray()
-                        ),
-                )
-            }
+            is Memo.Resource ->
+                when {
+                    args.isEmpty() -> stringResource(resource = stringResource)
+                    else ->
+                        stringResource(
+                            resource = stringResource,
+                            *(args
+                                .map { if (it is StringResource) stringResource(it) else it }
+                                .toTypedArray()),
+                        )
+                }
             is Memo.Text -> message
         }

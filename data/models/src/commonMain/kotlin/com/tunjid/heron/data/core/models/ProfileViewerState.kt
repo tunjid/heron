@@ -33,11 +33,16 @@ data class ProfileViewerState(
     val commonFollowersCount: Long?,
 )
 
-val ProfileViewerState?.isFollowing: Boolean get() = this?.following != null
-val ProfileViewerState?.followsYou: Boolean get() = this?.followedBy != null
-val ProfileViewerState?.isBlockedBy: Boolean get() = this?.blockedBy == true
-val ProfileViewerState?.isBlocked: Boolean get() = this?.blocking != null
-val ProfileViewerState?.isMuted: Boolean get() = this?.muted == true
+val ProfileViewerState?.isFollowing: Boolean
+    get() = this?.following != null
+val ProfileViewerState?.followsYou: Boolean
+    get() = this?.followedBy != null
+val ProfileViewerState?.isBlockedBy: Boolean
+    get() = this?.blockedBy == true
+val ProfileViewerState?.isBlocked: Boolean
+    get() = this?.blocking != null
+val ProfileViewerState?.isMuted: Boolean
+    get() = this?.muted == true
 
 val ProfileViewerState?.isRestricted
     get() = isMuted || isBlocked || this?.blockingByList != null

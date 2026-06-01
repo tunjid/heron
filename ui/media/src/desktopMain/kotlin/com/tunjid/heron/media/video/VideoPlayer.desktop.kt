@@ -63,10 +63,11 @@ private fun AVFoundationVideoPlayer(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 state.currentFrame?.let { frame ->
                     scaleAndAlignTo(
-                        srcSize = IntSize(
-                            width = frame.width,
-                            height = frame.height,
-                        ),
+                        srcSize =
+                            IntSize(
+                                width = frame.width,
+                                height = frame.height,
+                            ),
                         destSize = size.roundToIntSize(),
                         contentScale = state.contentScale,
                         alignment = state.alignment,
@@ -104,10 +105,11 @@ private fun GStreamerVideoPlayer(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 state.currentFrame?.let { frame ->
                     scaleAndAlignTo(
-                        srcSize = IntSize(
-                            width = frame.width,
-                            height = frame.height,
-                        ),
+                        srcSize =
+                            IntSize(
+                                width = frame.width,
+                                height = frame.height,
+                            ),
                         destSize = size.roundToIntSize(),
                         contentScale = state.contentScale,
                         alignment = state.alignment,
@@ -178,11 +180,8 @@ private fun JavaFxVideoSurface(
     modifier: Modifier,
     state: JavaFxPlayerState,
 ) {
-    val surfaceColor = MaterialTheme.colorScheme
-        .surface
-    val surfaceColorHex = surfaceColor
-        .toArgb()
-        .toHexString()
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val surfaceColorHex = surfaceColor.toArgb().toHexString()
 
     SwingPanel(
         background = surfaceColor,
@@ -191,14 +190,16 @@ private fun JavaFxVideoSurface(
             JFXPanel().also { jfxPanel ->
                 Platform.runLater {
                     jfxPanel.isEnabled = false
-                    val mediaView = MediaView().apply {
-                        isPreserveRatio = true
-                        mediaPlayer = state.mediaPlayer
-                    }
+                    val mediaView =
+                        MediaView().apply {
+                            isPreserveRatio = true
+                            mediaPlayer = state.mediaPlayer
+                        }
                     state.mediaView = mediaView
-                    val root = StackPane(mediaView).apply {
-                        style = "-fx-background-color: #$surfaceColorHex;"
-                    }
+                    val root =
+                        StackPane(mediaView).apply {
+                            style = "-fx-background-color: #$surfaceColorHex;"
+                        }
                     jfxPanel.scene = Scene(root)
                 }
             }
@@ -217,54 +218,60 @@ private fun JavaFxVideoSurface(
 // Native player helpers
 
 private val AVFoundationPlayerState.canShowVideo
-    get() = when (status) {
-        is PlayerStatus.Idle -> false
-        is PlayerStatus.Play -> true
-        is PlayerStatus.Pause -> true
-    }
+    get() =
+        when (status) {
+            is PlayerStatus.Idle -> false
+            is PlayerStatus.Play -> true
+            is PlayerStatus.Pause -> true
+        }
 
 private val AVFoundationPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
-        !hasRenderedFirstFrame ||
-        when (status) {
-            is PlayerStatus.Idle -> true
-            is PlayerStatus.Pause -> false
-            PlayerStatus.Play.Requested -> true
-            PlayerStatus.Play.Confirmed -> false
-        }
+    get() =
+        videoSize == IntSize.Zero ||
+            !hasRenderedFirstFrame ||
+            when (status) {
+                is PlayerStatus.Idle -> true
+                is PlayerStatus.Pause -> false
+                PlayerStatus.Play.Requested -> true
+                PlayerStatus.Play.Confirmed -> false
+            }
 
 private val GStreamerPlayerState.canShowVideo
-    get() = when (status) {
-        is PlayerStatus.Idle -> false
-        is PlayerStatus.Play -> true
-        is PlayerStatus.Pause -> true
-    }
+    get() =
+        when (status) {
+            is PlayerStatus.Idle -> false
+            is PlayerStatus.Play -> true
+            is PlayerStatus.Pause -> true
+        }
 
 private val GStreamerPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
-        !hasRenderedFirstFrame ||
-        when (status) {
-            is PlayerStatus.Idle -> true
-            is PlayerStatus.Pause -> false
-            PlayerStatus.Play.Requested -> true
-            PlayerStatus.Play.Confirmed -> false
-        }
+    get() =
+        videoSize == IntSize.Zero ||
+            !hasRenderedFirstFrame ||
+            when (status) {
+                is PlayerStatus.Idle -> true
+                is PlayerStatus.Pause -> false
+                PlayerStatus.Play.Requested -> true
+                PlayerStatus.Play.Confirmed -> false
+            }
 
 // JavaFx player helpers
 
 private val JavaFxPlayerState.canShowVideo
-    get() = when (status) {
-        is PlayerStatus.Idle -> false
-        is PlayerStatus.Play -> true
-        is PlayerStatus.Pause -> true
-    }
+    get() =
+        when (status) {
+            is PlayerStatus.Idle -> false
+            is PlayerStatus.Play -> true
+            is PlayerStatus.Pause -> true
+        }
 
 private val JavaFxPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
-        !hasRenderedFirstFrame ||
-        when (status) {
-            is PlayerStatus.Idle -> true
-            is PlayerStatus.Pause -> false
-            PlayerStatus.Play.Requested -> true
-            PlayerStatus.Play.Confirmed -> false
-        }
+    get() =
+        videoSize == IntSize.Zero ||
+            !hasRenderedFirstFrame ||
+            when (status) {
+                is PlayerStatus.Idle -> true
+                is PlayerStatus.Pause -> false
+                PlayerStatus.Play.Requested -> true
+                PlayerStatus.Play.Confirmed -> false
+            }

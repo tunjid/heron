@@ -41,7 +41,8 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
-class SelectListSheetState private constructor(
+class SelectListSheetState
+private constructor(
     lists: List<FeedList>,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
@@ -57,14 +58,16 @@ class SelectListSheetState private constructor(
             lists: List<FeedList>,
             onListSelected: (FeedList) -> Unit,
         ): SelectListSheetState {
-            val state = rememberBottomSheetState {
-                SelectListSheetState(
-                    lists = lists,
-                    scope = it,
-                )
-            }.also {
-                it.lists = lists
-            }
+            val state =
+                rememberBottomSheetState {
+                        SelectListSheetState(
+                            lists = lists,
+                            scope = it,
+                        )
+                    }
+                    .also {
+                        it.lists = lists
+                    }
 
             SelectListBottomSheet(
                 state = state,
@@ -94,12 +97,10 @@ private fun SelectListBottomSheet(
                     onClick = {
                         onListSelected(list)
                         state.hide()
-                    },
+                    }
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(

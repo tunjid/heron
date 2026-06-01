@@ -27,11 +27,9 @@ import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
 import org.jetbrains.compose.resources.stringResource
 
-@Stable
-expect fun isDynamicThemingSupported(): Boolean
+@Stable expect fun isDynamicThemingSupported(): Boolean
 
-@Stable
-expect fun isCompactNavigationSupported(): Boolean
+@Stable expect fun isCompactNavigationSupported(): Boolean
 
 @Composable
 fun AppearanceItem(
@@ -39,12 +37,13 @@ fun AppearanceItem(
     onAppearanceClicked: () -> Unit,
 ) {
     SettingsItem(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                onAppearanceClicked()
-            }
-            .settingsItemPaddingAndMinHeight(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable {
+                    onAppearanceClicked()
+                }
+                .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
     )

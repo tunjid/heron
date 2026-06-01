@@ -33,27 +33,28 @@ kotlin {
     }
 
     listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-            export(project(":scaffold"))
-            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
-            // (>100k LOC) codebases during the release link — the memory is
-            // consumed by ConstraintGraphBuilder. We also disable the
-            // downstream Devirtualization phase which would otherwise crash
-            // trying to apply missing analysis results. BuildDFG, DCEPhase,
-            // EscapeAnalysis and the rest still run normally, so we only
-            // lose devirtualization as an optimization (minor perf cost,
-            // marginally larger binary). Revisit after Kotlin 2.4.0 stable
-            // (see KT-80367) and a Compose Multiplatform release targeting it.
-            if (buildType == NativeBuildType.RELEASE) {
-                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"
+            iosArm64(),
+            iosSimulatorArm64(),
+        )
+        .forEach { iosTarget ->
+            iosTarget.binaries.framework {
+                baseName = "ComposeApp"
+                isStatic = true
+                export(project(":scaffold"))
+                // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
+                // (>100k LOC) codebases during the release link — the memory is
+                // consumed by ConstraintGraphBuilder. We also disable the
+                // downstream Devirtualization phase which would otherwise crash
+                // trying to apply missing analysis results. BuildDFG, DCEPhase,
+                // EscapeAnalysis and the rest still run normally, so we only
+                // lose devirtualization as an optimization (minor perf cost,
+                // marginally larger binary). Revisit after Kotlin 2.4.0 stable
+                // (see KT-80367) and a Compose Multiplatform release targeting it.
+                if (buildType == NativeBuildType.RELEASE) {
+                    freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"
+                }
             }
         }
-    }
 
     sourceSets {
         val desktopMain by getting
@@ -158,13 +159,13 @@ compose.desktop {
                 entitlementsFile.set(project.file("entitlements.plist"))
                 runtimeEntitlementsFile.set(project.file("entitlements.plist"))
 
-                providers.gradleProperty("heron.macOS.signing.identity")
-                    .let { identityProperty ->
-                        if (identityProperty.isPresent) signing {
+                providers.gradleProperty("heron.macOS.signing.identity").let { identityProperty ->
+                    if (identityProperty.isPresent)
+                        signing {
                             sign.set(true)
                             identity.set(identityProperty)
                         }
-                    }
+                }
 
                 // The notarizeDmg task does not support the Gradle configuration
                 // cache, so CI uses xcrun notarytool directly instead.
@@ -189,52 +190,63 @@ compose.desktop {
 // These are picked up by appResourcesRootDir and bundled into the .app package,
 // accessible at runtime via the compose.application.resources.dir system property.
 // The build and extraction tasks live in :ui:media; this module just copies the outputs.
-val copyNativeLibsTasks = listOf(
-    "Arm" to ("aarch64" to "macos-arm64"),
-    "X64" to ("x86-64" to "macos-x86-64"),
-).map { (taskSuffix, archPair) ->
-    val (buildArch, resourceArch) = archPair
-    tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
-        from(project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-$buildArch"))
-        include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
-        into(project.file("resources/$resourceArch"))
-        dependsOn(
-            ":ui:media:buildAVFoundationMac$taskSuffix",
-            ":ui:media:extractJnaNative$taskSuffix",
+val copyNativeLibsTasks =
+    listOf(
+            "Arm" to ("aarch64" to "macos-arm64"),
+            "X64" to ("x86-64" to "macos-x86-64"),
         )
-    }
-}
+        .map { (taskSuffix, archPair) ->
+            val (buildArch, resourceArch) = archPair
+            tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
+                from(
+                    project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-$buildArch")
+                )
+                include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
+                into(project.file("resources/$resourceArch"))
+                dependsOn(
+                    ":ui:media:buildAVFoundationMac$taskSuffix",
+                    ":ui:media:extractJnaNative$taskSuffix",
+                )
+            }
+        }
 
-val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
-    dependsOn(copyNativeLibsTasks)
-}
+val copyNativeLibsForSandbox =
+    tasks.register("copyNativeLibsForSandbox") {
+        dependsOn(copyNativeLibsTasks)
+    }
 
 // Sign native libraries with Developer ID so they pass notarization.
 // Must run after copying but before packaging.
 val signingIdentityProperty = providers.gradleProperty("heron.macOS.signing.identity")
 val nativeLibsResourcesDir = layout.projectDirectory.dir("resources")
-val signNativeLibsForSandbox = tasks.register<SignNativeLibsTask>("signNativeLibsForSandbox") {
-    dependsOn(copyNativeLibsForSandbox)
-    libraries.from(
-        nativeLibsResourcesDir.asFileTree.matching {
-            include("**/*.dylib", "**/*.jnilib")
-        },
-    )
-    signingIdentity.set(signingIdentityProperty)
-}
+val signNativeLibsForSandbox =
+    tasks.register<SignNativeLibsTask>("signNativeLibsForSandbox") {
+        dependsOn(copyNativeLibsForSandbox)
+        libraries.from(
+            nativeLibsResourcesDir.asFileTree.matching {
+                include("**/*.dylib", "**/*.jnilib")
+            }
+        )
+        signingIdentity.set(signingIdentityProperty)
+    }
 
-val nativeLibDependentTasks = setOf(
-    "packageDmg",
-    "packageReleaseDmg",
-    "prepareAppResources",
-)
-tasks.matching { it.name in nativeLibDependentTasks }.configureEach {
-    dependsOn(signNativeLibsForSandbox)
-}
+val nativeLibDependentTasks =
+    setOf(
+        "packageDmg",
+        "packageReleaseDmg",
+        "prepareAppResources",
+    )
+
+tasks
+    .matching { it.name in nativeLibDependentTasks }
+    .configureEach {
+        dependsOn(signNativeLibsForSandbox)
+    }
 
 configurations {
-    getByName("desktopMainApi").exclude(
-        group = "org.jetbrains.kotlinx",
-        module = "kotlinx-coroutines-android",
-    )
+    getByName("desktopMainApi")
+        .exclude(
+            group = "org.jetbrains.kotlinx",
+            module = "kotlinx-coroutines-android",
+        )
 }

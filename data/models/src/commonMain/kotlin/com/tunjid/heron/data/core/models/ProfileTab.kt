@@ -26,76 +26,66 @@ sealed class ProfileTab : UrlEncodableModel {
     sealed class Bluesky : ProfileTab() {
         @Serializable
         sealed class Posts : Bluesky() {
-            @Serializable
-            data object Standard : Posts()
+            @Serializable data object Standard : Posts()
 
-            @Serializable
-            data object Replies : Posts()
+            @Serializable data object Replies : Posts()
 
-            @Serializable
-            data object Likes : Posts()
+            @Serializable data object Likes : Posts()
 
-            @Serializable
-            data object Media : Posts()
+            @Serializable data object Media : Posts()
 
-            @Serializable
-            data object Videos : Posts()
+            @Serializable data object Videos : Posts()
         }
 
         @Serializable
         sealed class Lists : Bluesky() {
-            @Serializable
-            data object All : Lists()
+            @Serializable data object All : Lists()
         }
 
         @Serializable
         sealed class FeedGenerators : Bluesky() {
 
-            @Serializable
-            data object All : FeedGenerators()
+            @Serializable data object All : FeedGenerators()
 
-            @Serializable
-            data class FeedGenerator(
-                val uri: FeedGeneratorUri,
-            ) : FeedGenerators()
+            @Serializable data class FeedGenerator(val uri: FeedGeneratorUri) : FeedGenerators()
         }
 
-        @Serializable
-        data object StarterPacks : Bluesky()
+        @Serializable data object StarterPacks : Bluesky()
     }
 
     @Serializable
     sealed class StandardSite : ProfileTab() {
-        @Serializable
-        data object Publications : StandardSite()
+        @Serializable data object Publications : StandardSite()
 
-        @Serializable
-        data object Documents : StandardSite()
+        @Serializable data object Documents : StandardSite()
     }
 
     companion object {
-        val Static: List<ProfileTab> get() = StaticTabs
+        val Static: List<ProfileTab>
+            get() = StaticTabs
     }
 }
 
 val ProfileTab.Bluesky.Posts.profileTimelineType: Timeline.Profile.Type
-    get() = when (this) {
-        ProfileTab.Bluesky.Posts.Standard -> Timeline.Profile.Type.Posts
-        ProfileTab.Bluesky.Posts.Replies -> Timeline.Profile.Type.Replies
-        ProfileTab.Bluesky.Posts.Likes -> Timeline.Profile.Type.Likes
-        ProfileTab.Bluesky.Posts.Media -> Timeline.Profile.Type.Media
-        ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos
-    }
+    get() =
+        when (this) {
+            ProfileTab.Bluesky.Posts.Standard -> Timeline.Profile.Type.Posts
+            ProfileTab.Bluesky.Posts.Replies -> Timeline.Profile.Type.Replies
+            ProfileTab.Bluesky.Posts.Likes -> Timeline.Profile.Type.Likes
+            ProfileTab.Bluesky.Posts.Media -> Timeline.Profile.Type.Media
+            ProfileTab.Bluesky.Posts.Videos -> Timeline.Profile.Type.Videos
+        }
 
-private val StaticTabs: List<ProfileTab> = listOf(
-    ProfileTab.Bluesky.Posts.Standard,
-    ProfileTab.Bluesky.Posts.Replies,
-    ProfileTab.Bluesky.Posts.Likes,
-    ProfileTab.Bluesky.Posts.Media,
-    ProfileTab.Bluesky.Posts.Videos,
-    ProfileTab.Bluesky.FeedGenerators.All,
-    ProfileTab.Bluesky.Lists.All,
-    ProfileTab.Bluesky.StarterPacks,
-    ProfileTab.StandardSite.Documents,
-    ProfileTab.StandardSite.Publications,
-)
+private val StaticTabs: List<ProfileTab> =
+    listOf(
+        ProfileTab.Bluesky.Posts.Standard,
+        ProfileTab.Bluesky.Posts.Replies,
+        ProfileTab.Bluesky.Posts.Likes,
+        ProfileTab.Bluesky.Posts.Media,
+        ProfileTab.Bluesky.Posts.Videos,
+        ProfileTab.Bluesky.FeedGenerators.All,
+        ProfileTab.Bluesky.Lists.All,
+        ProfileTab.Bluesky.StarterPacks,
+        ProfileTab.StandardSite.Documents,
+        ProfileTab.StandardSite.Publications,
+    )

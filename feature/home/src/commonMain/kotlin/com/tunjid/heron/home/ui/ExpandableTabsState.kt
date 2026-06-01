@@ -56,18 +56,20 @@ class ExpandableTabsState(
 ) {
 
     private val interactionSource = MutableInteractionSource()
-    private val draggableState = AnchoredDraggableState(
-        initialValue = transitionState.currentState,
-        anchors = maxOffset.anchors(),
-    )
+    private val draggableState =
+        AnchoredDraggableState(
+            initialValue = transitionState.currentState,
+            anchors = maxOffset.anchors(),
+        )
 
     private val maxOffset
         get() = draggableState.anchors.maxPosition()
 
     val expansionProgress: Float
-        get() = with(draggableState) {
-            requireOffset() / maxOffset
-        }
+        get() =
+            with(draggableState) {
+                requireOffset() / maxOffset
+            }
 
     val isPartiallyOrFullyExpanded by derivedStateOf {
         expansionProgress > FullyCollapsed
@@ -86,34 +88,31 @@ class ExpandableTabsState(
         )
     }
 
-    private fun updateAnchors(
-        maxOffset: Float,
-    ) {
+    private fun updateAnchors(maxOffset: Float) {
         if (maxOffset == this.maxOffset) return
         draggableState.updateAnchors(maxOffset.anchors())
     }
 
-    private suspend fun onOffsetChanged(
-        dragOffset: Float,
-    ) = when (dragOffset) {
-        0f -> {
-            transitionState.snapTo(targetState = false)
-        }
-        maxOffset -> {
-            transitionState.snapTo(targetState = true)
-        }
-        else -> {
-            val isExpanding = !draggableState.settledValue
+    private suspend fun onOffsetChanged(dragOffset: Float) =
+        when (dragOffset) {
+            0f -> {
+                transitionState.snapTo(targetState = false)
+            }
+            maxOffset -> {
+                transitionState.snapTo(targetState = true)
+            }
+            else -> {
+                val isExpanding = !draggableState.settledValue
 
-            val heightFraction = dragOffset / maxOffset
-            val progress = if (isExpanding) heightFraction else 1f - heightFraction
+                val heightFraction = dragOffset / maxOffset
+                val progress = if (isExpanding) heightFraction else 1f - heightFraction
 
-            transitionState.seekTo(
-                fraction = progress,
-                targetState = isExpanding,
-            )
+                transitionState.seekTo(
+                    fraction = progress,
+                    targetState = isExpanding,
+                )
+            }
         }
-    }
 
     companion object Companion {
         @Composable
@@ -131,25 +130,29 @@ class ExpandableTabsState(
             val toolbarHeight = UiTokens.toolbarHeight
             val tabsHeight = UiTokens.tabsHeight
 
-            val maxOffset = remember(
-                windowInfo,
-                density,
-                statusBarHeight + toolbarHeight + tabsHeight,
-            ) {
-                windowInfo.containerSize.height - with(density) {
-                    statusBarHeight.toPx() + toolbarHeight.toPx() + tabsHeight.toPx()
+            val maxOffset =
+                remember(
+                    windowInfo,
+                    density,
+                    statusBarHeight + toolbarHeight + tabsHeight,
+                ) {
+                    windowInfo.containerSize.height -
+                        with(density) {
+                            statusBarHeight.toPx() + toolbarHeight.toPx() + tabsHeight.toPx()
+                        }
                 }
-            }
 
             val scope = rememberCoroutineScope()
-            val state = remember(seekingState, transition) {
-                ExpandableTabsState(
-                    scope = scope,
-                    transitionState = seekingState,
-                    transition = transition,
-                    maxOffset = maxOffset,
-                )
-            }.also { it.updateAnchors(maxOffset) }
+            val state =
+                remember(seekingState, transition) {
+                        ExpandableTabsState(
+                            scope = scope,
+                            transitionState = seekingState,
+                            transition = transition,
+                            maxOffset = maxOffset,
+                        )
+                    }
+                    .also { it.updateAnchors(maxOffset) }
 
             LaunchedEffect(state) {
                 snapshotFlow { state.draggableState.requireOffset() }
@@ -161,8 +164,7 @@ class ExpandableTabsState(
                 snapshotFlow { state.draggableState.settledValue }
                     .collectLatest { isExpanded ->
                         updatedOnTabLayoutChanged.value(
-                            if (isExpanded) TabLayout.Expanded
-                            else TabLayout.Collapsed.All,
+                            if (isExpanded) TabLayout.Expanded else TabLayout.Collapsed.All
                         )
                     }
             }
@@ -174,24 +176,23 @@ class ExpandableTabsState(
             return state
         }
 
-        fun Modifier.expandable(
-            state: ExpandableTabsState,
-        ) = anchoredDraggable(
-            state = state.draggableState,
-            orientation = Orientation.Vertical,
-            interactionSource = state.interactionSource,
-        )
+        fun Modifier.expandable(state: ExpandableTabsState) =
+            anchoredDraggable(
+                state = state.draggableState,
+                orientation = Orientation.Vertical,
+                interactionSource = state.interactionSource,
+            )
 
         val IntOffsetAnimationSpec =
             animationSpec(visibilityThreshold = IntOffset.VisibilityThreshold)
 
-        val FloatAnimationSpec =
-            animationSpec(visibilityThreshold = 0.05f)
+        val FloatAnimationSpec = animationSpec(visibilityThreshold = 0.05f)
 
-        val Shape = RoundedCornerShape(
-            bottomStart = 16.dp,
-            bottomEnd = 16.dp,
-        )
+        val Shape =
+            RoundedCornerShape(
+                bottomStart = 16.dp,
+                bottomEnd = 16.dp,
+            )
 
         val BackgroundBlurRadius = 60.dp
         const val BackgroundAlpha = 0.9f
@@ -209,11 +210,10 @@ private fun Float.anchors() = DraggableAnchors {
     true at this@anchors
 }
 
-private fun <T> animationSpec(
-    visibilityThreshold: T,
-) = spring(
-    stiffness = Spring.StiffnessMediumLow,
-    visibilityThreshold = visibilityThreshold,
-)
+private fun <T> animationSpec(visibilityThreshold: T) =
+    spring(
+        stiffness = Spring.StiffnessMediumLow,
+        visibilityThreshold = visibilityThreshold,
+    )
 
 private const val FullyCollapsed = 0f

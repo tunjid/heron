@@ -106,13 +106,13 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            horizontal = 8.dp,
-            isCompact = prefersCompactBottomNav,
-        ),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(
+                horizontal = 8.dp,
+                isCompact = prefersCompactBottomNav,
+            ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(
@@ -137,63 +137,67 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
         onQueryChanged = { query ->
             collectionStateHolder.accept(
                 TilingState.Action.LoadAround(
-                    query = query ?: collectionState.tilingData.currentQuery,
-                ),
+                    query = query ?: collectionState.tilingData.currentQuery
+                )
             )
         },
     )
 
     LaunchedEffect(Unit) {
         snapshotFlow {
-            collectionState.tiledItems.isEmpty()
-        }.collectLatest { currentlyEmpty ->
-            if (currentlyEmpty) delay(3.seconds)
-            isEmpty = currentlyEmpty
-        }
+                collectionState.tiledItems.isEmpty()
+            }
+            .collectLatest { currentlyEmpty ->
+                if (currentlyEmpty) delay(3.seconds)
+                isEmpty = currentlyEmpty
+            }
     }
 }
 
 @PublishedApi
 internal val KClass<out Record>.emptyTitleRes: StringResource
-    get() = when (this) {
-        FeedGenerator::class -> Res.string.empty_records_feeds
-        StarterPack::class -> Res.string.empty_records_starter_packs
-        FeedList::class -> Res.string.empty_records_lists
-        StandardDocument::class -> Res.string.empty_records_documents
-        StandardPublication::class -> Res.string.empty_records_publications
-        RockskyAlbum::class -> Res.string.empty_records_albums
-        RockskyTrack::class -> Res.string.empty_records_tracks
-        RockskyArtist::class -> Res.string.empty_records_artists
-        RockskyScrobble::class -> Res.string.empty_records_scrobbles
-        else -> Res.string.empty_records
-    }
+    get() =
+        when (this) {
+            FeedGenerator::class -> Res.string.empty_records_feeds
+            StarterPack::class -> Res.string.empty_records_starter_packs
+            FeedList::class -> Res.string.empty_records_lists
+            StandardDocument::class -> Res.string.empty_records_documents
+            StandardPublication::class -> Res.string.empty_records_publications
+            RockskyAlbum::class -> Res.string.empty_records_albums
+            RockskyTrack::class -> Res.string.empty_records_tracks
+            RockskyArtist::class -> Res.string.empty_records_artists
+            RockskyScrobble::class -> Res.string.empty_records_scrobbles
+            else -> Res.string.empty_records
+        }
 
 @PublishedApi
 internal val KClass<out Record>.emptyDescriptionRes: StringResource
-    get() = when (this) {
-        FeedGenerator::class -> Res.string.empty_records_feeds_description
-        StarterPack::class -> Res.string.empty_records_starter_packs_description
-        FeedList::class -> Res.string.empty_records_lists_description
-        StandardDocument::class -> Res.string.empty_records_documents_description
-        StandardPublication::class -> Res.string.empty_records_publications_description
-        RockskyAlbum::class -> Res.string.empty_records_albums_description
-        RockskyTrack::class -> Res.string.empty_records_tracks_description
-        RockskyArtist::class -> Res.string.empty_records_artists_description
-        RockskyScrobble::class -> Res.string.empty_records_scrobbles_description
-        else -> Res.string.empty_records_description
-    }
+    get() =
+        when (this) {
+            FeedGenerator::class -> Res.string.empty_records_feeds_description
+            StarterPack::class -> Res.string.empty_records_starter_packs_description
+            FeedList::class -> Res.string.empty_records_lists_description
+            StandardDocument::class -> Res.string.empty_records_documents_description
+            StandardPublication::class -> Res.string.empty_records_publications_description
+            RockskyAlbum::class -> Res.string.empty_records_albums_description
+            RockskyTrack::class -> Res.string.empty_records_tracks_description
+            RockskyArtist::class -> Res.string.empty_records_artists_description
+            RockskyScrobble::class -> Res.string.empty_records_scrobbles_description
+            else -> Res.string.empty_records_description
+        }
 
 @PublishedApi
 internal val KClass<out Record>.emptyIcon: ImageVector
-    get() = when (this) {
-        FeedGenerator::class -> Icons.Rounded.DynamicFeed
-        StarterPack::class -> Icons.Rounded.Group
-        FeedList::class -> Icons.AutoMirrored.Rounded.List
-        StandardDocument::class -> Icons.AutoMirrored.Rounded.Article
-        StandardPublication::class -> Icons.Rounded.Public
-        RockskyAlbum::class -> Icons.Rounded.Album
-        RockskyTrack::class -> Icons.Rounded.MusicNote
-        RockskyArtist::class -> Icons.Rounded.Mic
-        RockskyScrobble::class -> Icons.Rounded.History
-        else -> Icons.Rounded.Inbox
-    }
+    get() =
+        when (this) {
+            FeedGenerator::class -> Icons.Rounded.DynamicFeed
+            StarterPack::class -> Icons.Rounded.Group
+            FeedList::class -> Icons.AutoMirrored.Rounded.List
+            StandardDocument::class -> Icons.AutoMirrored.Rounded.Article
+            StandardPublication::class -> Icons.Rounded.Public
+            RockskyAlbum::class -> Icons.Rounded.Album
+            RockskyTrack::class -> Icons.Rounded.MusicNote
+            RockskyArtist::class -> Icons.Rounded.Mic
+            RockskyScrobble::class -> Icons.Rounded.History
+            else -> Icons.Rounded.Inbox
+        }

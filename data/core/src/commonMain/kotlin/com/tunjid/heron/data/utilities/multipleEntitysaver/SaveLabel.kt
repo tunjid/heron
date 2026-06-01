@@ -22,9 +22,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelEntity
 import kotlin.time.Clock
 
-internal fun MultipleEntitySaver.add(
-    label: Label,
-) {
+internal fun MultipleEntitySaver.add(label: Label) {
     val entity = label.toLabelEntity()
     val exp = label.exp
 
@@ -39,12 +37,13 @@ internal fun MultipleEntitySaver.add(
     add(entity)
 }
 
-private fun Label.toLabelEntity() = LabelEntity(
-    cid = cid?.cid,
-    uri = uri.uri.let(::GenericUri),
-    creatorId = src.did.let(::ProfileId),
-    value = `val`,
-    version = ver,
-    createdAt = cts,
-    expiresAt = exp,
-)
+private fun Label.toLabelEntity() =
+    LabelEntity(
+        cid = cid?.cid,
+        uri = uri.uri.let(::GenericUri),
+        creatorId = src.did.let(::ProfileId),
+        value = `val`,
+        version = ver,
+        createdAt = cts,
+        expiresAt = exp,
+    )

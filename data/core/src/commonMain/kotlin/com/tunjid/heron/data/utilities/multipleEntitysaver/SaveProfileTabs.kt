@@ -32,14 +32,15 @@ internal fun MultipleEntitySaver.add(
             ProfileTabsEntity(
                 profileId = ProfileId(profileId.id),
                 delimitedTabs = "",
-            ),
+            )
         ) { entity, item ->
             when (item) {
                 is GetTabsResponseItemUnion.CollectionTab -> entity + item.value.collection.value
                 is GetTabsResponseItemUnion.ProfileTab -> entity + item.value.kind.value
-                is GetTabsResponseItemUnion.FeedGeneratorTab -> entity + item.value.feedGeneratorUri.atUri
+                is GetTabsResponseItemUnion.FeedGeneratorTab ->
+                    entity + item.value.feedGeneratorUri.atUri
                 is GetTabsResponseItemUnion.Unknown -> entity
             }
-        },
+        }
     )
 }

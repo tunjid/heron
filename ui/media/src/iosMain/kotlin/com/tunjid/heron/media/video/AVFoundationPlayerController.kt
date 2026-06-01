@@ -30,13 +30,10 @@ import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.setActive
 
 @Stable
-class AVFoundationPlayerController(
-    private val appMainScope: CoroutineScope,
-) : VideoPlayerController {
+class AVFoundationPlayerController(private val appMainScope: CoroutineScope) :
+    VideoPlayerController {
 
-    private val states = VideoPlayerStates(
-        onEvicted = AVFoundationPlayerState::dispose,
-    )
+    private val states = VideoPlayerStates(onEvicted = AVFoundationPlayerState::dispose)
 
     @OptIn(ExperimentalForeignApi::class)
     private val audioSession by lazy {
@@ -50,9 +47,7 @@ class AVFoundationPlayerController(
     override var isMuted: Boolean by states::isMuted
 
     init {
-        snapshotFlow { isMuted }
-            .onEach { states.activeState?.applyVolume() }
-            .launchIn(appMainScope)
+        snapshotFlow { isMuted }.onEach { states.activeState?.applyVolume() }.launchIn(appMainScope)
     }
 
     override fun registerVideo(
@@ -61,19 +56,18 @@ class AVFoundationPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState = states.registerOrGet(
-        videoId = videoId,
-    ) {
-        AVFoundationPlayerState(
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf { isMuted },
-            appMainScope = appMainScope,
-        )
-    }
+    ): VideoPlayerState =
+        states.registerOrGet(videoId = videoId) {
+            AVFoundationPlayerState(
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf { isMuted },
+                appMainScope = appMainScope,
+            )
+        }
 
     override fun play(
         videoId: String?,

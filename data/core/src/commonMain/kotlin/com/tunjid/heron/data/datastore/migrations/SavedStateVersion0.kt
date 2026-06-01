@@ -27,35 +27,29 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion0(
-    @ProtoNumber(1)
-    private val auth: AuthTokensV0?,
-    @ProtoNumber(2)
-    private val navigation: SavedState.Navigation,
-    @ProtoNumber(3)
-    private val profileData: Map<String, ProfileDataV0>,
+    @ProtoNumber(1) private val auth: AuthTokensV0?,
+    @ProtoNumber(2) private val navigation: SavedState.Navigation,
+    @ProtoNumber(3) private val profileData: Map<String, ProfileDataV0>,
 ) : SavedStateVersion {
 
-    override fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState =
+    override fun toVersionedSavedState(currentVersion: Int): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
             navigation = navigation,
-            profileData = profileData.entries.associate { (profileId, profileData) ->
-                ProfileId(profileId) to when (auth?.authProfileId?.id) {
-                    profileId -> profileData.asProfileData(
-                        auth = auth.asBearerToken(),
-                    )
-                    else -> profileData.asProfileData(
-                        auth = null,
-                    )
-                }
-            },
-            activeProfileId = when (val authProfileId = auth?.authProfileId) {
-                null -> null
-                Constants.unknownAuthorId -> Constants.guestProfileId
-                else -> authProfileId
-            },
+            profileData =
+                profileData.entries.associate { (profileId, profileData) ->
+                    ProfileId(profileId) to
+                        when (auth?.authProfileId?.id) {
+                            profileId -> profileData.asProfileData(auth = auth.asBearerToken())
+                            else -> profileData.asProfileData(auth = null)
+                        }
+                },
+            activeProfileId =
+                when (val authProfileId = auth?.authProfileId) {
+                    null -> null
+                    Constants.unknownAuthorId -> Constants.guestProfileId
+                    else -> authProfileId
+                },
         )
 
     @Serializable

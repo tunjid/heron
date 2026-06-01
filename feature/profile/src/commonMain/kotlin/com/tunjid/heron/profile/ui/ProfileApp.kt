@@ -51,35 +51,35 @@ private fun ProfileApp(
     paneScaffoldState: PaneScaffoldState,
     app: AtmosphereApp,
     onAppClicked: (AtmosphereApp) -> Unit,
-) = with(paneScaffoldState) {
-    ElevatedAssistChip(
-        modifier = modifier,
-        shape = CircleShape,
-        leadingIcon = {
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(24.dp),
-                sharedContentState = rememberSharedContentState(app.id),
-                zIndexInOverlay = AppLogoZIndex,
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = remember(app.logo) {
-                        ImageArgs(
-                            url = app.logo.uri,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
-                        )
-                    },
-                )
-            }
-        },
-        label = {
-            Text(app.displayName())
-        },
-        onClick = {
-            onAppClicked(app)
-        },
-    )
-}
+) =
+    with(paneScaffoldState) {
+        ElevatedAssistChip(
+            modifier = modifier,
+            shape = CircleShape,
+            leadingIcon = {
+                PaneStickySharedElement(
+                    modifier = Modifier.size(24.dp),
+                    sharedContentState = rememberSharedContentState(app.id),
+                    zIndexInOverlay = AppLogoZIndex,
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(app.logo) {
+                                ImageArgs(
+                                    url = app.logo.uri,
+                                    contentScale = ContentScale.Crop,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                    )
+                }
+            },
+            label = {
+                Text(app.displayName())
+            },
+            onClick = {
+                onAppClicked(app)
+            },
+        )
+    }

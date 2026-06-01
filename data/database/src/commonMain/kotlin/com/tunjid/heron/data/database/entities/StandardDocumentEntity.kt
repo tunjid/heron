@@ -36,32 +36,33 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "standardDocuments",
-    foreignKeys = [
-        ForeignKey(
-            entity = StandardPublicationEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["publicationUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["authorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["publicationUri"]),
-        Index(value = ["authorId"]),
-        Index(value = ["publishedAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = StandardPublicationEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["publicationUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["authorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["publicationUri"]),
+            Index(value = ["authorId"]),
+            Index(value = ["publishedAt"]),
+        ],
 )
 data class StandardDocumentEntity(
-    @PrimaryKey
-    val uri: StandardDocumentUri,
+    @PrimaryKey val uri: StandardDocumentUri,
     val cid: StandardDocumentId?,
     val authorId: ProfileId,
     val title: String,
@@ -80,47 +81,47 @@ data class StandardDocumentEntity(
 )
 
 data class PopulatedStandardDocumentEntity(
-    @Embedded
-    val entity: StandardDocumentEntity,
-    @Embedded(prefix = "subscription_")
-    val subscription: StandardSubscriptionEntity?,
-    @Embedded(prefix = "publisher_")
-    val publisher: ProfileEntity?,
+    @Embedded val entity: StandardDocumentEntity,
+    @Embedded(prefix = "subscription_") val subscription: StandardSubscriptionEntity?,
+    @Embedded(prefix = "publisher_") val publisher: ProfileEntity?,
     @Relation(
         parentColumn = "publicationUri",
         entityColumn = "uri",
     )
     val publication: StandardPublicationEntity?,
 ) : PopulatedRecordEntity {
-    override val recordUri: EmbeddableRecordUri get() = entity.uri
+    override val recordUri: EmbeddableRecordUri
+        get() = entity.uri
 }
 
-fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
-    uri = entity.uri,
-    cid = entity.cid,
-    authorId = entity.authorId,
-    title = entity.title,
-    description = entity.description,
-    textContent = entity.textContent,
-    path = entity.path,
-    site = entity.site,
-    publishedAt = entity.publishedAt,
-    updatedAt = entity.updatedAt,
-    coverImage = entity.coverImage,
-    bskyPostRef = entity.bskyPostRefUri?.let { refUri ->
-        Record.Reference(
-            id = entity.bskyPostRefCid,
-            uri = refUri,
-        )
-    },
-    tags = entity.tags?.deserializeTags() ?: emptyList(),
-    publication = publisher?.let { publisher ->
-        publication?.asExternalModel(
-            publisher = publisher.asExternalModel(),
-            subscription = subscription?.asExternalModel(),
-        )
-    },
-)
+fun PopulatedStandardDocumentEntity.asExternalModel() =
+    StandardDocument(
+        uri = entity.uri,
+        cid = entity.cid,
+        authorId = entity.authorId,
+        title = entity.title,
+        description = entity.description,
+        textContent = entity.textContent,
+        path = entity.path,
+        site = entity.site,
+        publishedAt = entity.publishedAt,
+        updatedAt = entity.updatedAt,
+        coverImage = entity.coverImage,
+        bskyPostRef =
+            entity.bskyPostRefUri?.let { refUri ->
+                Record.Reference(
+                    id = entity.bskyPostRefCid,
+                    uri = refUri,
+                )
+            },
+        tags = entity.tags?.deserializeTags() ?: emptyList(),
+        publication =
+            publisher?.let { publisher ->
+                publication?.asExternalModel(
+                    publisher = publisher.asExternalModel(),
+                    subscription = subscription?.asExternalModel(),
+                )
+            },
+    )
 
-private fun String.deserializeTags(): List<String> =
-    split(",").filter(String::isNotEmpty)
+private fun String.deserializeTags(): List<String> = split(",").filter(String::isNotEmpty)

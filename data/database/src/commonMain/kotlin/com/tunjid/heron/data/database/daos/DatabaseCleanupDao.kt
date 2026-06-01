@@ -28,7 +28,7 @@ interface DatabaseCleanupDao {
         """
         SELECT COUNT(*)
         FROM posts
-        """,
+        """
     )
     suspend fun postCount(): Long
 
@@ -44,8 +44,8 @@ interface DatabaseCleanupDao {
      * - Referenced in a message
      * - Embedded in another post (conservative: protects for one extra cycle)
      *
-     * Importance score: likeCount + repostCount*2 + replyCount + quoteCount*2
-     * Tiebreaker: older indexedAt deleted first.
+     * Importance score: likeCount + repostCount*2 + replyCount + quoteCount*2 Tiebreaker: older
+     * indexedAt deleted first.
      */
     @Query(
         """
@@ -73,7 +73,7 @@ interface DatabaseCleanupDao {
              + COALESCE(p.replyCount, 0) + COALESCE(p.quoteCount, 0) * 2) ASC,
             p.indexedAt ASC
         LIMIT :limit
-        """,
+        """
     )
     suspend fun findDeletablePostUris(sentinelPostUris: List<PostUri>, limit: Int): List<PostUri>
 
@@ -81,7 +81,7 @@ interface DatabaseCleanupDao {
         """
         DELETE FROM posts
         WHERE uri IN (:uris)
-        """,
+        """
     )
     suspend fun deletePostsByUri(uris: List<PostUri>)
 
@@ -92,7 +92,7 @@ interface DatabaseCleanupDao {
             SELECT imageUri
             FROM postImages
         )
-        """,
+        """
     )
     suspend fun deleteOrphanedImages()
 
@@ -103,7 +103,7 @@ interface DatabaseCleanupDao {
             SELECT videoId
             FROM postVideos
         )
-        """,
+        """
     )
     suspend fun deleteOrphanedVideos()
 
@@ -114,14 +114,14 @@ interface DatabaseCleanupDao {
             SELECT externalEmbedUri
             FROM postExternalEmbeds
         )
-        """,
+        """
     )
     suspend fun deleteOrphanedExternalEmbeds()
 
     /**
-     * Deletes old notifications beyond [maxPerOwner] for each owner profile,
-     * keeping the newest ones. A notification is deleted if there are already
-     * [maxPerOwner] or more notifications for the same owner with a more recent indexedAt.
+     * Deletes old notifications beyond [maxPerOwner] for each owner profile, keeping the newest
+     * ones. A notification is deleted if there are already [maxPerOwner] or more notifications for
+     * the same owner with a more recent indexedAt.
      */
     @Query(
         """
@@ -132,14 +132,14 @@ interface DatabaseCleanupDao {
             WHERE n2.ownerId = notifications.ownerId
               AND n2.indexedAt > notifications.indexedAt
         ) >= :maxPerOwner
-        """,
+        """
     )
     suspend fun deleteOldNotifications(maxPerOwner: Int)
 
     /**
-     * Deletes profiles not referenced by any table with a CASCADE foreign key to profiles.
-     * Uses UNION to collect all referenced profile IDs across the schema.
-     * Sentinel profiles (unknown, guest, pending) are excluded via [sentinelProfileIds].
+     * Deletes profiles not referenced by any table with a CASCADE foreign key to profiles. Uses
+     * UNION to collect all referenced profile IDs across the schema. Sentinel profiles (unknown,
+     * guest, pending) are excluded via [sentinelProfileIds].
      */
     @Query(
         """
@@ -160,7 +160,7 @@ interface DatabaseCleanupDao {
             UNION SELECT publisherId FROM standardPublications
             UNION SELECT authorId FROM standardDocuments
         )
-        """,
+        """
     )
     suspend fun deleteOrphanedProfiles(sentinelProfileIds: List<ProfileId>)
 }

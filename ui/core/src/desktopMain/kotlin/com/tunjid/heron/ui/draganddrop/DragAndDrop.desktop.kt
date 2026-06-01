@@ -26,23 +26,17 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 
-actual fun selectorDragAndDropTransferData(
-    title: String,
-): DragAndDropTransferData = DragAndDropTransferData(
-    transferable = DragAndDropTransferable(
-        StringSelection(title),
-    ),
-    supportedActions = listOf(
-        DragAndDropTransferAction.Move,
-    ),
-)
+actual fun selectorDragAndDropTransferData(title: String): DragAndDropTransferData =
+    DragAndDropTransferData(
+        transferable = DragAndDropTransferable(StringSelection(title)),
+        supportedActions = listOf(DragAndDropTransferAction.Move),
+    )
 
 actual fun DragAndDropEvent.draggedId(): String? {
     return awtTransferable.getTransferData(DataFlavor.stringFlavor) as? String
 }
 
-actual fun Modifier.selectorDragAndDropSource(
-    id: String,
-): Modifier = this.dragAndDropSource {
-    selectorDragAndDropTransferData(id)
-}
+actual fun Modifier.selectorDragAndDropSource(id: String): Modifier =
+    this.dragAndDropSource {
+        selectorDragAndDropTransferData(id)
+    }

@@ -37,38 +37,46 @@ import okio.Buffer
 class SavedStateVersion5To6MigrationTest {
 
     private val proto = SavedStateSerializationHelper.proto
-    private val serializer = VersionedSavedStateOkioSerializer(
-        protoBuf = proto,
-        encryption = SavedStateEncryption.None,
-    )
+    private val serializer =
+        VersionedSavedStateOkioSerializer(
+            protoBuf = proto,
+            encryption = SavedStateEncryption.None,
+        )
 
     @Test
     fun migrateV5ToV6_preservesThemeOrdinal() {
         runBlocking {
             val profileId = ProfileId("p1")
-            val v5 = SavedStateVersion5(
-                version = 5,
-                navigation = SavedState.Navigation(activeNav = 1),
-                profileData = mapOf(
-                    profileId to SavedState.ProfileData(
-                        preferences = samplePreferences().copy(
-                            local = Preferences.Local(
-                                // Theme.Default
-                                currentThemeOrdinal = 0,
-                                refreshHomeTimelineOnLaunch = true,
-                            ),
+            val v5 =
+                SavedStateVersion5(
+                    version = 5,
+                    navigation = SavedState.Navigation(activeNav = 1),
+                    profileData =
+                        mapOf(
+                            profileId to
+                                SavedState.ProfileData(
+                                    preferences =
+                                        samplePreferences()
+                                            .copy(
+                                                local =
+                                                    Preferences.Local(
+                                                        // Theme.Default
+                                                        currentThemeOrdinal = 0,
+                                                        refreshHomeTimelineOnLaunch = true,
+                                                    )
+                                            ),
+                                    notifications = sampleNotifications(),
+                                    auth =
+                                        SavedState.AuthTokens.Authenticated.Bearer(
+                                            authProfileId = profileId,
+                                            auth = "auth",
+                                            refresh = "refresh",
+                                            authEndpoint = "https://example.com",
+                                        ),
+                                )
                         ),
-                        notifications = sampleNotifications(),
-                        auth = SavedState.AuthTokens.Authenticated.Bearer(
-                            authProfileId = profileId,
-                            auth = "auth",
-                            refresh = "refresh",
-                            authEndpoint = "https://example.com",
-                        ),
-                    ),
-                ),
-                activeProfileId = profileId,
-            )
+                    activeProfileId = profileId,
+                )
 
             val migrated = v5.toVersionedSavedState(currentVersion = 6)
 
@@ -97,27 +105,31 @@ class SavedStateVersion5To6MigrationTest {
             // the wire. This test asserts that a V5-encoded `useDynamicTheming = true`
             // reads back as `currentThemeOrdinal == 1` (Dynamic) under the V6 schema.
             val profileId = ProfileId("p1")
-            val v5WithDynamicTheming = SavedStateVersion5(
-                version = 5,
-                navigation = SavedState.Navigation(activeNav = 1),
-                profileData = mapOf(
-                    profileId to SavedState.ProfileData(
-                        preferences = samplePreferences().copy(
-                            local = Preferences.Local(
-                                currentThemeOrdinal = 1,
-                            ),
+            val v5WithDynamicTheming =
+                SavedStateVersion5(
+                    version = 5,
+                    navigation = SavedState.Navigation(activeNav = 1),
+                    profileData =
+                        mapOf(
+                            profileId to
+                                SavedState.ProfileData(
+                                    preferences =
+                                        samplePreferences()
+                                            .copy(
+                                                local = Preferences.Local(currentThemeOrdinal = 1)
+                                            ),
+                                    notifications = sampleNotifications(),
+                                    auth = null,
+                                )
                         ),
-                        notifications = sampleNotifications(),
-                        auth = null,
-                    ),
-                ),
-                activeProfileId = profileId,
-            )
+                    activeProfileId = profileId,
+                )
 
-            val v5Bytes = SavedStateSerializationHelper.encode(
-                v5WithDynamicTheming,
-                SavedStateVersion5.serializer(),
-            )
+            val v5Bytes =
+                SavedStateSerializationHelper.encode(
+                    v5WithDynamicTheming,
+                    SavedStateVersion5.serializer(),
+                )
             val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
 
             assertEquals(6, migrated.version)
@@ -132,23 +144,29 @@ class SavedStateVersion5To6MigrationTest {
     fun v6Bytes_roundTrip() {
         runBlocking {
             val profileId = ProfileId("p1")
-            val v5 = SavedStateVersion5(
-                version = 5,
-                navigation = SavedState.Navigation(activeNav = 1),
-                profileData = mapOf(
-                    profileId to SavedState.ProfileData(
-                        preferences = samplePreferences().copy(
-                            local = Preferences.Local(
-                                currentThemeOrdinal = 5,
-                                useCompactNavigation = true,
-                            ),
+            val v5 =
+                SavedStateVersion5(
+                    version = 5,
+                    navigation = SavedState.Navigation(activeNav = 1),
+                    profileData =
+                        mapOf(
+                            profileId to
+                                SavedState.ProfileData(
+                                    preferences =
+                                        samplePreferences()
+                                            .copy(
+                                                local =
+                                                    Preferences.Local(
+                                                        currentThemeOrdinal = 5,
+                                                        useCompactNavigation = true,
+                                                    )
+                                            ),
+                                    notifications = sampleNotifications(),
+                                    auth = null,
+                                )
                         ),
-                        notifications = sampleNotifications(),
-                        auth = null,
-                    ),
-                ),
-                activeProfileId = profileId,
-            )
+                    activeProfileId = profileId,
+                )
             val v5Bytes = SavedStateSerializationHelper.encode(v5, SavedStateVersion5.serializer())
             val migrated = serializer.readFrom(v5Bytes.toBufferedSource())
 

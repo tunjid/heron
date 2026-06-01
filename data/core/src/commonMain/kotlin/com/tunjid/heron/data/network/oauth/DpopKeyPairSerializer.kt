@@ -33,25 +33,29 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-object JwkDpopKeyPairSerializer : DpopKeyPairSerializer(
-    publicKeyFormat = DpopKeyPair.PublicKeyFormat.JWK,
-    privateKeyFormat = DpopKeyPair.PrivateKeyFormat.JWK,
-)
+object JwkDpopKeyPairSerializer :
+    DpopKeyPairSerializer(
+        publicKeyFormat = DpopKeyPair.PublicKeyFormat.JWK,
+        privateKeyFormat = DpopKeyPair.PrivateKeyFormat.JWK,
+    )
 
-object RawDpopKeyPairSerializer : DpopKeyPairSerializer(
-    publicKeyFormat = DpopKeyPair.PublicKeyFormat.RAW,
-    privateKeyFormat = DpopKeyPair.PrivateKeyFormat.RAW,
-)
+object RawDpopKeyPairSerializer :
+    DpopKeyPairSerializer(
+        publicKeyFormat = DpopKeyPair.PublicKeyFormat.RAW,
+        privateKeyFormat = DpopKeyPair.PrivateKeyFormat.RAW,
+    )
 
-object PemDpopKeyPairSerializer : DpopKeyPairSerializer(
-    publicKeyFormat = DpopKeyPair.PublicKeyFormat.PEM,
-    privateKeyFormat = DpopKeyPair.PrivateKeyFormat.PEM,
-)
+object PemDpopKeyPairSerializer :
+    DpopKeyPairSerializer(
+        publicKeyFormat = DpopKeyPair.PublicKeyFormat.PEM,
+        privateKeyFormat = DpopKeyPair.PrivateKeyFormat.PEM,
+    )
 
-object DerDpopKeyPairSerializer : DpopKeyPairSerializer(
-    publicKeyFormat = DpopKeyPair.PublicKeyFormat.DER,
-    privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
-)
+object DerDpopKeyPairSerializer :
+    DpopKeyPairSerializer(
+        publicKeyFormat = DpopKeyPair.PublicKeyFormat.DER,
+        privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
+    )
 
 abstract class DpopKeyPairSerializer(
     val publicKeyFormat: DpopKeyPair.PublicKeyFormat,
@@ -74,7 +78,9 @@ abstract class DpopKeyPairSerializer(
         val keyPair: List<String> = decoder.decodeSerializableValue(stringListSerializer)
 
         // Ensure we have exactly two elements (public and private keys).
-        require(keyPair.size == 2) { "Expected an array of two strings for serialized DpopKeyPair." }
+        require(keyPair.size == 2) {
+            "Expected an array of two strings for serialized DpopKeyPair."
+        }
 
         val publicKeyRaw = keyPair[0]
         val privateKeyRaw = keyPair[1]

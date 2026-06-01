@@ -88,7 +88,7 @@ internal fun MultipleEntitySaver.add(
             // To be added in later as support for different standard doc
             // types are added.
             markdownContent = null,
-        ),
+        )
     )
 }
 
@@ -108,14 +108,15 @@ internal fun MultipleEntitySaver.add(
                     sortedAt = it.sortedAt,
                     publicationUri = publicationUri,
                     viewingProfileId = profileId,
-                ),
+                )
             )
-        } ?: remove(
-            StandardSubscriptionEntity.Deletion(
-                publicationUri = publicationUri,
-                viewingProfileId = profileId,
-            ),
-        )
+        }
+            ?: remove(
+                StandardSubscriptionEntity.Deletion(
+                    publicationUri = publicationUri,
+                    viewingProfileId = profileId,
+                )
+            )
     }
 
     add(publicationView.author)
@@ -129,26 +130,26 @@ internal fun MultipleEntitySaver.add(
             url = publication.url.uri,
             icon = publicationView.iconUrl?.uri?.let(::ImageUri),
             sortedAt = publicationView.sortedAt,
-            preferences = publication.preferences?.let { prefs ->
-                StandardPublicationEntity.Preferences(
-                    showInDiscover = prefs.showInDiscover == true,
-                )
-            },
-            basicTheme = publication.basicTheme?.let { theme ->
-                StandardPublicationEntity.BasicTheme(
-                    accent = theme.accent.toColor(),
-                    accentForeground = theme.accentForeground.toColor(),
-                    background = theme.background.toColor(),
-                    foreground = theme.foreground.toColor(),
-                )
-            },
-        ),
+            preferences =
+                publication.preferences?.let { prefs ->
+                    StandardPublicationEntity.Preferences(
+                        showInDiscover = prefs.showInDiscover == true
+                    )
+                },
+            basicTheme =
+                publication.basicTheme?.let { theme ->
+                    StandardPublicationEntity.BasicTheme(
+                        accent = theme.accent.toColor(),
+                        accentForeground = theme.accentForeground.toColor(),
+                        background = theme.background.toColor(),
+                        foreground = theme.foreground.toColor(),
+                    )
+                },
+        )
     )
 }
 
-private fun MultipleEntitySaver.add(
-    author: ProfileView,
-) {
+private fun MultipleEntitySaver.add(author: ProfileView) {
     add(
         ProfileEntity(
             did = ProfileId(author.did.did),
@@ -163,16 +164,17 @@ private fun MultipleEntitySaver.add(
             joinedViaStarterPack = null,
             indexedAt = null,
             createdAt = null,
-            associated = ProfileEntity.Associated(
-                createdListCount = null,
-                createdFeedGeneratorCount = null,
-                createdStarterPackCount = null,
-                labeler = null,
-                allowDms = null,
-            ),
+            associated =
+                ProfileEntity.Associated(
+                    createdListCount = null,
+                    createdFeedGeneratorCount = null,
+                    createdStarterPackCount = null,
+                    labeler = null,
+                    allowDms = null,
+                ),
             status = null,
             pronouns = null,
-        ),
+        )
     )
 }
 
@@ -184,11 +186,7 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId,
 ) {
     val publicationUri = StandardPublicationUri(subscription.publication.atUri)
-    add(
-        stubPublicationEntity(
-            publicationUri = publicationUri,
-        ),
-    )
+    add(stubPublicationEntity(publicationUri = publicationUri))
     add(
         StandardSubscriptionEntity(
             uri = subscriptionUri,
@@ -196,7 +194,7 @@ internal fun MultipleEntitySaver.add(
             sortedAt = sortedAt,
             publicationUri = publicationUri,
             viewingProfileId = viewingProfileId,
-        ),
+        )
     )
 }
 
@@ -207,15 +205,16 @@ private fun Blob?.imageUri(
     if (pdsUrl == null) return null
     return when (val icon = this) {
         is Blob.LegacyBlob -> null
-        is Blob.StandardBlob -> ImageUri(
-            "$pdsUrl/xrpc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}",
-        )
+        is Blob.StandardBlob ->
+            ImageUri(
+                "$pdsUrl/xrpc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}"
+            )
         null -> null
     }
 }
 
 private fun stubPublicationEntity(
-    publicationUri: StandardPublicationUri,
+    publicationUri: StandardPublicationUri
 ): StandardPublicationEntity =
     StandardPublicationEntity(
         uri = publicationUri,
@@ -230,70 +229,79 @@ private fun stubPublicationEntity(
         basicTheme = null,
     )
 
-private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
-    is BasicAccentUnion.Rgb -> value.toColor()
-    is BasicAccentUnion.Rgba -> value.toColor()
-    is BasicAccentUnion.Unknown -> null
-}
+private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? =
+    when (this) {
+        is BasicAccentUnion.Rgb -> value.toColor()
+        is BasicAccentUnion.Rgba -> value.toColor()
+        is BasicAccentUnion.Unknown -> null
+    }
 
-private fun BasicAccentForegroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
-    is BasicAccentForegroundUnion.Rgb -> value.toColor()
-    is BasicAccentForegroundUnion.Rgba -> value.toColor()
-    is BasicAccentForegroundUnion.Unknown -> null
-}
+private fun BasicAccentForegroundUnion.toColor(): StandardPublicationEntity.Color? =
+    when (this) {
+        is BasicAccentForegroundUnion.Rgb -> value.toColor()
+        is BasicAccentForegroundUnion.Rgba -> value.toColor()
+        is BasicAccentForegroundUnion.Unknown -> null
+    }
 
-private fun BasicBackgroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
-    is BasicBackgroundUnion.Rgb -> value.toColor()
-    is BasicBackgroundUnion.Rgba -> value.toColor()
-    is BasicBackgroundUnion.Unknown -> null
-}
+private fun BasicBackgroundUnion.toColor(): StandardPublicationEntity.Color? =
+    when (this) {
+        is BasicBackgroundUnion.Rgb -> value.toColor()
+        is BasicBackgroundUnion.Rgba -> value.toColor()
+        is BasicBackgroundUnion.Unknown -> null
+    }
 
-private fun BasicForegroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
-    is BasicForegroundUnion.Rgb -> value.toColor()
-    is BasicForegroundUnion.Rgba -> value.toColor()
-    is BasicForegroundUnion.Unknown -> null
-}
+private fun BasicForegroundUnion.toColor(): StandardPublicationEntity.Color? =
+    when (this) {
+        is BasicForegroundUnion.Rgb -> value.toColor()
+        is BasicForegroundUnion.Rgba -> value.toColor()
+        is BasicForegroundUnion.Unknown -> null
+    }
 
-private fun ColorRgb.toColor() = StandardPublicationEntity.Color(
-    r = r.toInt(),
-    g = g.toInt(),
-    b = b.toInt(),
-    a = 100,
-)
+private fun ColorRgb.toColor() =
+    StandardPublicationEntity.Color(
+        r = r.toInt(),
+        g = g.toInt(),
+        b = b.toInt(),
+        a = 100,
+    )
 
-private fun ColorRgba.toColor() = StandardPublicationEntity.Color(
-    r = r.toInt(),
-    g = g.toInt(),
-    b = b.toInt(),
-    a = a.toInt(),
-)
+private fun ColorRgba.toColor() =
+    StandardPublicationEntity.Color(
+        r = r.toInt(),
+        g = g.toInt(),
+        b = b.toInt(),
+        a = a.toInt(),
+    )
 
 internal fun Document.asExternalModel(
     uri: StandardDocumentUri,
     cid: StandardDocumentId?,
     publication: StandardPublication?,
     pdsUrl: String,
-) = StandardDocument(
-    uri = uri,
-    cid = cid,
-    authorId = uri.profileId(),
-    title = title,
-    description = description,
-    textContent = textContent,
-    path = path,
-    site = site.uri,
-    publishedAt = publishedAt,
-    updatedAt = updatedAt,
-    coverImage = coverImage?.imageUri(
-        profileId = uri.profileId(),
-        pdsUrl = pdsUrl,
-    ),
-    bskyPostRef = bskyPostRef?.let { ref ->
-        Record.Reference(
-            id = ref.cid.cid.let(::PostId),
-            uri = PostUri(ref.uri.atUri),
-        )
-    },
-    tags = tags ?: emptyList(),
-    publication = publication,
-)
+) =
+    StandardDocument(
+        uri = uri,
+        cid = cid,
+        authorId = uri.profileId(),
+        title = title,
+        description = description,
+        textContent = textContent,
+        path = path,
+        site = site.uri,
+        publishedAt = publishedAt,
+        updatedAt = updatedAt,
+        coverImage =
+            coverImage?.imageUri(
+                profileId = uri.profileId(),
+                pdsUrl = pdsUrl,
+            ),
+        bskyPostRef =
+            bskyPostRef?.let { ref ->
+                Record.Reference(
+                    id = ref.cid.cid.let(::PostId),
+                    uri = PostUri(ref.uri.atUri),
+                )
+            },
+        tags = tags ?: emptyList(),
+        publication = publication,
+    )

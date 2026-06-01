@@ -76,99 +76,104 @@ fun EmbeddedRecord(
     postActions: PostActions,
 ) {
     val now = remember { Clock.System.now() }
-    OutlinedCard(
-        modifier = modifier,
-    ) {
+    OutlinedCard(modifier = modifier) {
         when (record) {
-            is Labeler -> Labeler(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                labeler = record,
-            )
-            is Post -> QuotedPost(
-                paneTransitionScope = paneTransitionScope,
-                now = now,
-                quotedPost = record,
-                appliedLabels = appliedLabels,
-                sharedElementPrefix = sharedElementPrefix,
-                onClick = {
-                    postActions.onPostAction(
-                        PostAction.OfPost(
-                            post = record,
-                            isMainPost = false,
-                            warnedAppliedLabels = null,
-                        ),
-                    )
-                },
-                onLinkTargetClicked = { post, linkTarget ->
-                    postActions.onPostAction(
-                        PostAction.OfLinkTarget(
-                            post = post,
-                            linkTarget = linkTarget,
-                        ),
-                    )
-                },
-                onProfileClicked = { post, profile ->
-                    postActions.onPostAction(
-                        PostAction.OfProfile(
-                            profile = profile,
-                            post = post,
-                            quotingPostUri = null,
-                        ),
-                    )
-                },
-                onPostMediaClicked = { mediaEmbed, index, post ->
-                    postActions.onPostAction(
-                        PostAction.OfMedia(
-                            isMainPost = false,
-                            media = mediaEmbed,
-                            index = index,
-                            post = post,
-                            quotingPostUri = null,
-                        ),
-                    )
-                },
-            )
-            is FeedGenerator -> FeedGenerator(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                feedGenerator = record,
-                status = null,
-                onFeedGeneratorStatusUpdated = {},
-            )
-            is FeedList -> FeedList(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                list = record,
-                status = null,
-                onListStatusUpdated = {},
-            )
-            is StarterPack -> StarterPack(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                starterPack = record,
-            )
-            is StandardDocument -> Document(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                document = record,
-                // TODO: Define actions for embedded records and use here
-                onPublicationClicked = null,
-                onSubscriptionToggled = null,
-            )
-            is StandardPublication -> Publication(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                publication = record,
-                // TODO: Define actions for embedded records and use here
-                onSubscriptionToggled = { _, _ -> },
-            )
+            is Labeler ->
+                Labeler(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    labeler = record,
+                )
+            is Post ->
+                QuotedPost(
+                    paneTransitionScope = paneTransitionScope,
+                    now = now,
+                    quotedPost = record,
+                    appliedLabels = appliedLabels,
+                    sharedElementPrefix = sharedElementPrefix,
+                    onClick = {
+                        postActions.onPostAction(
+                            PostAction.OfPost(
+                                post = record,
+                                isMainPost = false,
+                                warnedAppliedLabels = null,
+                            )
+                        )
+                    },
+                    onLinkTargetClicked = { post, linkTarget ->
+                        postActions.onPostAction(
+                            PostAction.OfLinkTarget(
+                                post = post,
+                                linkTarget = linkTarget,
+                            )
+                        )
+                    },
+                    onProfileClicked = { post, profile ->
+                        postActions.onPostAction(
+                            PostAction.OfProfile(
+                                profile = profile,
+                                post = post,
+                                quotingPostUri = null,
+                            )
+                        )
+                    },
+                    onPostMediaClicked = { mediaEmbed, index, post ->
+                        postActions.onPostAction(
+                            PostAction.OfMedia(
+                                isMainPost = false,
+                                media = mediaEmbed,
+                                index = index,
+                                post = post,
+                                quotingPostUri = null,
+                            )
+                        )
+                    },
+                )
+            is FeedGenerator ->
+                FeedGenerator(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    feedGenerator = record,
+                    status = null,
+                    onFeedGeneratorStatusUpdated = {},
+                )
+            is FeedList ->
+                FeedList(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    list = record,
+                    status = null,
+                    onListStatusUpdated = {},
+                )
+            is StarterPack ->
+                StarterPack(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    starterPack = record,
+                )
+            is StandardDocument ->
+                Document(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    document = record,
+                    // TODO: Define actions for embedded records and use here
+                    onPublicationClicked = null,
+                    onSubscriptionToggled = null,
+                )
+            is StandardPublication ->
+                Publication(
+                    modifier = NonPostRecordModifier,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    publication = record,
+                    // TODO: Define actions for embedded records and use here
+                    onSubscriptionToggled = { _, _ -> },
+                )
         }
     }
 }
@@ -177,110 +182,95 @@ fun Record.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
 ): String {
-    val finalPrefix = quotingPostUri
-        ?.let { "$prefix-$it" }
-        ?: prefix
-    return reference.uri
-        .profileId()
-        .avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
+    val finalPrefix = quotingPostUri?.let { "$prefix-$it" } ?: prefix
+    return reference.uri.profileId().avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
 }
 
-fun Profile.avatarSharedElementKey(
-    prefix: String?,
-): String = did.avatarSharedElementKey(
-    prefix = prefix,
-)
+fun Profile.avatarSharedElementKey(prefix: String?): String =
+    did.avatarSharedElementKey(prefix = prefix)
 
-fun ProfileId.avatarSharedElementKey(
-    prefix: String?,
-): String = "$prefix-$id-avatar"
+fun ProfileId.avatarSharedElementKey(prefix: String?): String = "$prefix-$id-avatar"
 
-fun RecordUri.avatarSharedElementKey(
-    prefix: String?,
-): String = "$prefix-$uri-avatar"
+fun RecordUri.avatarSharedElementKey(prefix: String?): String = "$prefix-$uri-avatar"
 
 fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
-            is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
+            is FeedGeneratorUri ->
+                "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
             is ListUri -> "https://bsky.app/profile/${profileId().id}/lists/${recordKey.value}"
-            is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
+            is StarterPackUri ->
+                "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
             // Standard site records are shared via their canonical AT URI for now.
             is StandardDocumentUri -> uri
             is StandardPublicationUri -> uri
-        },
+        }
     )
 
-fun Record.collectionShape() = when (this) {
-    is Record.Embeddable -> embeddableRecordUri.collectionShape()
-    else -> DocumentCollectionShape
-}
+fun Record.collectionShape() =
+    when (this) {
+        is Record.Embeddable -> embeddableRecordUri.collectionShape()
+        else -> DocumentCollectionShape
+    }
 
-fun EmbeddableRecordUri.collectionShape() = when (this) {
-    is FeedGeneratorUri -> FeedGeneratorCollectionShape
-    is LabelerUri -> LabelerCollectionShape
-    is ListUri -> ListCollectionShape
-    is PostUri -> RoundedPolygonShape.Circle
-    is StarterPackUri -> StarterPackCollectionShape
-    is StandardDocumentUri -> DocumentCollectionShape
-    is StandardPublicationUri -> DocumentCollectionShape
-}
+fun EmbeddableRecordUri.collectionShape() =
+    when (this) {
+        is FeedGeneratorUri -> FeedGeneratorCollectionShape
+        is LabelerUri -> LabelerCollectionShape
+        is ListUri -> ListCollectionShape
+        is PostUri -> RoundedPolygonShape.Circle
+        is StarterPackUri -> StarterPackCollectionShape
+        is StandardDocumentUri -> DocumentCollectionShape
+        is StandardPublicationUri -> DocumentCollectionShape
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val FeedGeneratorCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    RoundedPolygonShape.Custom(polygon = MaterialShapes.Square)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val ListCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Pill,
-    )
+    RoundedPolygonShape.Custom(polygon = MaterialShapes.Pill)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val StarterPackCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Cookie9Sided,
-    )
+    RoundedPolygonShape.Custom(polygon = MaterialShapes.Cookie9Sided)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val DocumentCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    RoundedPolygonShape.Custom(polygon = MaterialShapes.Square)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val RockSkyCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    RoundedPolygonShape.Custom(polygon = MaterialShapes.Square)
 }
 
 internal val LabelerCollectionShape by lazy {
     RoundedPolygonShape.Custom(
-        polygon = RoundedPolygon(
-            numVertices = 4,
-            perVertexRounding = floatArrayOf(1f, 1f, 0.2f, 0.2f)
-                .map(::CornerRounding),
-        ).transformed(Matrix().apply { rotateZ(degrees = 45f) }),
+        polygon =
+            RoundedPolygon(
+                    numVertices = 4,
+                    perVertexRounding = floatArrayOf(1f, 1f, 0.2f, 0.2f).map(::CornerRounding),
+                )
+                .transformed(Matrix().apply { rotateZ(degrees = 45f) })
     )
 }
 
 val ImageUri?.orDefault
     get() = this ?: BlueskyClouds
 
-private val NonPostRecordModifier = Modifier
-    .padding(12.dp)
+private val NonPostRecordModifier = Modifier.padding(12.dp)
 
 internal val BlueskyClouds =
-    ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
+    ImageUri(
+        "https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg"
+    )
 
 private fun RoundedPolygon.transformed(matrix: Matrix): RoundedPolygon = transformed { x, y ->
     val transformedPoint = matrix.map(Offset(x, y))

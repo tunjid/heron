@@ -46,15 +46,14 @@ class TidGenerator @Inject constructor() {
     private val mutex = Mutex()
 
     /**
-     * The clock identifier is a random 10-bit number (0-1023) generated once per
-     * generator instance to minimize collisions between different processes or machines.
+     * The clock identifier is a random 10-bit number (0-1023) generated once per generator instance
+     * to minimize collisions between different processes or machines.
      */
     private val clockId: Long = Random.nextInt(0, 1024).toLong()
 
     /**
-     * Stores the last generated TID value. Using AtomicLong ensures thread-safe
-     * reads and writes, which is crucial for guaranteeing monotonicity in a
-     * multi-threaded environment.
+     * Stores the last generated TID value. Using AtomicLong ensures thread-safe reads and writes,
+     * which is crucial for guaranteeing monotonicity in a multi-threaded environment.
      */
     private val lastTidValue = AtomicLong(0L)
 
@@ -79,16 +78,17 @@ class TidGenerator @Inject constructor() {
         val lastTimeMicros = lastVal ushr 10
 
         // 4. Determine the next TID value to ensure it's always increasing.
-        val nextValue: Long = if (timeMicros > lastTimeMicros) {
-            // If the current time is greater than the last recorded time, we can safely
-            // generate a new TID based on the current time and the clock ID.
-            (timeMicros shl 10) or clockId
-        } else {
-            // If the current time is not greater (e.g., same microsecond or clock skew),
-            // we must increment the last generated value by 1. This ensures the new TID
-            // is still larger than the previous one, maintaining sort order.
-            lastVal + 1
-        }
+        val nextValue: Long =
+            if (timeMicros > lastTimeMicros) {
+                // If the current time is greater than the last recorded time, we can safely
+                // generate a new TID based on the current time and the clock ID.
+                (timeMicros shl 10) or clockId
+            } else {
+                // If the current time is not greater (e.g., same microsecond or clock skew),
+                // we must increment the last generated value by 1. This ensures the new TID
+                // is still larger than the previous one, maintaining sort order.
+                lastVal + 1
+            }
 
         // 5. Atomically set the new value as the last generated TID.
         lastTidValue.store(nextValue)

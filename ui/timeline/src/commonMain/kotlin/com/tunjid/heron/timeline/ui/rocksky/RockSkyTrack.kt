@@ -33,35 +33,40 @@ fun RockskyTrack(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     track: RockskyTrack,
-) = with(paneTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        paneTransitionScope = paneTransitionScope,
-        title = track.title,
-        subtitle = stringResource(
-            Res.string.track_by,
-            track.artist,
-        ),
-        description = dotSeparatedText(
-            preText = track.album,
-            postText = trackBlurb(track),
-        ),
-        blurb = null,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = track.uri,
-        avatar = {
-            RockSkyAvatar(
-                image = track.albumArt,
-                uri = track.uri,
-                sharedElementPrefix = sharedElementPrefix,
-            )
-        },
-    )
-}
+) =
+    with(paneTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            paneTransitionScope = paneTransitionScope,
+            title = track.title,
+            subtitle =
+                stringResource(
+                    Res.string.track_by,
+                    track.artist,
+                ),
+            description =
+                dotSeparatedText(
+                    preText = track.album,
+                    postText = trackBlurb(track),
+                ),
+            blurb = null,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = track.uri,
+            avatar = {
+                RockSkyAvatar(
+                    image = track.albumArt,
+                    uri = track.uri,
+                    sharedElementPrefix = sharedElementPrefix,
+                )
+            },
+        )
+    }
 
 @Composable
 private fun trackBlurb(track: RockskyTrack): String? {
-    track.duration?.let { return formatDuration(it) }
+    track.duration?.let {
+        return formatDuration(it)
+    }
     return track.playCount?.let { count ->
         stringResource(Res.string.played_n_times, format(count))
     }

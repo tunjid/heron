@@ -67,19 +67,18 @@ fun TimelineItem(
         presentation = presentation,
         content = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .timelineCardPresentationPadding(
-                        presentation = presentation,
-                    ),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .timelineCardPresentationPadding(presentation = presentation)
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
-                        modifier = Modifier.padding(
-                            start = 32.dp,
-                            top = 4.dp,
-                            bottom = 4.dp,
-                        ),
+                        modifier =
+                            Modifier.padding(
+                                start = 32.dp,
+                                top = 4.dp,
+                                bottom = 4.dp,
+                            ),
                         item = item,
                         onProfileClicked = { post, profile ->
                             postActions.onPostAction(
@@ -87,53 +86,55 @@ fun TimelineItem(
                                     profile = profile,
                                     post = post,
                                     quotingPostUri = null,
-                                ),
+                                )
                             )
                         },
                     )
                 }
                 when (item) {
-                    is TimelineItem.Loading -> LoadingPost(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        presentation = presentation,
-                    )
-                    is TimelineItem.Empty -> EmptyPost(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        item = item,
-                    )
-                    is TimelineItem.Threaded if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        paneTransitionScope = paneTransitionScope,
-                        presentationLookaheadScope = presentationLookaheadScope,
-                        item = item,
-                        sharedElementPrefix = sharedElementPrefix,
-                        now = now,
-                        showEngagementMetrics = showEngagementMetrics,
-                        presentation = presentation,
-                        postActions = postActions,
-                    )
-                    else -> Post(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        paneTransitionScope = paneTransitionScope,
-                        presentationLookaheadScope = presentationLookaheadScope,
-                        hasMutedWords = item.isMuted && !item.post.authorMuted,
-                        now = now,
-                        post = item.post,
-                        threadGate = item.threadGate,
-                        isAnchoredInTimeline = false,
-                        isMainPost = true,
-                        showEngagementMetrics = showEngagementMetrics,
-                        avatarShape = RoundedPolygonShape.Circle,
-                        sharedElementPrefix = sharedElementPrefix,
-                        createdAt = item.post.createdAt,
-                        presentation = presentation,
-                        appliedLabels = item.appliedLabels,
-                        postActions = postActions,
-                    )
+                    is TimelineItem.Loading ->
+                        LoadingPost(
+                            modifier = Modifier.fillMaxWidth(),
+                            presentation = presentation,
+                        )
+                    is TimelineItem.Empty ->
+                        EmptyPost(
+                            modifier = Modifier.fillMaxWidth(),
+                            item = item,
+                        )
+                    is TimelineItem.Threaded if
+                        presentation == Timeline.Presentation.Text.WithEmbed
+                     ->
+                        ThreadedPost(
+                            modifier = Modifier.fillMaxWidth(),
+                            paneTransitionScope = paneTransitionScope,
+                            presentationLookaheadScope = presentationLookaheadScope,
+                            item = item,
+                            sharedElementPrefix = sharedElementPrefix,
+                            now = now,
+                            showEngagementMetrics = showEngagementMetrics,
+                            presentation = presentation,
+                            postActions = postActions,
+                        )
+                    else ->
+                        Post(
+                            modifier = Modifier.fillMaxWidth(),
+                            paneTransitionScope = paneTransitionScope,
+                            presentationLookaheadScope = presentationLookaheadScope,
+                            hasMutedWords = item.isMuted && !item.post.authorMuted,
+                            now = now,
+                            post = item.post,
+                            threadGate = item.threadGate,
+                            isAnchoredInTimeline = false,
+                            isMainPost = true,
+                            showEngagementMetrics = showEngagementMetrics,
+                            avatarShape = RoundedPolygonShape.Circle,
+                            sharedElementPrefix = sharedElementPrefix,
+                            createdAt = item.post.createdAt,
+                            presentation = presentation,
+                            appliedLabels = item.appliedLabels,
+                            postActions = postActions,
+                        )
                 }
             }
         },
@@ -141,16 +142,13 @@ fun TimelineItem(
 }
 
 @Composable
-fun Timeline(
-    modifier: Modifier = Modifier,
-) {
+fun Timeline(modifier: Modifier = Modifier) {
     Box(modifier) {
         Spacer(
-            Modifier
-                .offset(x = 4.dp)
+            Modifier.offset(x = 4.dp)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .fillMaxHeight()
-                .width(2.dp),
+                .width(2.dp)
         )
     }
 }
@@ -163,31 +161,33 @@ fun TimelineCard(
     content: @Composable () -> Unit,
 ) {
     val cornerRadius =
-        if (item.isThreadedAncestorOrAnchor) 0.dp
-        else presentation.timelineCardPadding
+        if (item.isThreadedAncestorOrAnchor) 0.dp else presentation.timelineCardPadding
 
     val isEmpty = item is TimelineItem.Empty
     val isFlat = cornerRadius == 0.dp
 
-    val itemModifier = modifier
-        .ifTrue(
+    val itemModifier =
+        modifier.ifTrue(
             predicate = isEmpty,
             block = Modifier::fillMaxHeight,
         )
 
-    if (isEmpty) Box(
-        modifier = itemModifier,
-        content = { content() },
-    )
-    else ElevatedCard(
-        modifier = itemModifier,
-        shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
-        colors =
-        if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        else CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(),
-        content = { content() },
-    )
+    if (isEmpty)
+        Box(
+            modifier = itemModifier,
+            content = { content() },
+        )
+    else
+        ElevatedCard(
+            modifier = itemModifier,
+            shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
+            colors =
+                if (isFlat)
+                    CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                else CardDefaults.elevatedCardColors(),
+            elevation = CardDefaults.cardElevation(),
+            content = { content() },
+        )
 }
 
 val ReplyThreadStartImageShape =
@@ -200,10 +200,10 @@ val ReplyThreadStartImageShape =
 
 val ReplyThreadImageShape =
     RoundedPolygonShape.Polygon(
-        cornerSizePercentAtIndex = (0..4).map { index ->
-            if (index == 2 || index == 3) 2f / 3
-            else 1f
-        },
+        cornerSizePercentAtIndex =
+            (0..4).map { index ->
+                if (index == 2 || index == 3) 2f / 3 else 1f
+            }
     )
 
 internal val ReplyThreadEndImageShape =
@@ -215,12 +215,13 @@ internal val ReplyThreadEndImageShape =
     )
 
 private val Timeline.Presentation.timelineCardPadding: Dp
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 0.dp
+            Timeline.Presentation.Media.Grid -> 0.dp
+        }
 
 private fun Modifier.timelineCardPresentationPadding(
     presentation: Timeline.Presentation,
@@ -228,30 +229,31 @@ private fun Modifier.timelineCardPresentationPadding(
     top: Dp = 0.dp,
     end: Dp = 0.dp,
     bottom: Dp = 0.dp,
-) = when (presentation) {
-    Timeline.Presentation.Text.WithEmbed -> padding(
-        start = start,
-        top = top,
-        end = end,
-        bottom = bottom,
-    )
+) =
+    when (presentation) {
+        Timeline.Presentation.Text.WithEmbed ->
+            padding(
+                start = start,
+                top = top,
+                end = end,
+                bottom = bottom,
+            )
 
-    Timeline.Presentation.Media.Condensed -> this
-    Timeline.Presentation.Media.Expanded -> this
-    Timeline.Presentation.Media.Grid -> this
-}
+        Timeline.Presentation.Media.Condensed -> this
+        Timeline.Presentation.Media.Expanded -> this
+        Timeline.Presentation.Media.Grid -> this
+    }
 
-fun String.withQuotingPostUriPrefix(
-    quotingPostUri: PostUri? = null,
-): String = quotingPostUri
-    ?.let { "$this-$it" }
-    ?: this
+fun String.withQuotingPostUriPrefix(quotingPostUri: PostUri? = null): String =
+    quotingPostUri?.let { "$this-$it" } ?: this
 
 internal val TimelineItem.isThreadedAncestor
-    get() = this is TimelineItem.Threaded.Linear && when (val gen = generation) {
-        null -> false
-        else -> gen <= -1
-    }
+    get() =
+        this is TimelineItem.Threaded.Linear &&
+            when (val gen = generation) {
+                null -> false
+                else -> gen <= -1
+            }
 
 internal val TimelineItem.isThreadedAnchor
     get() = this is TimelineItem.Threaded.Linear && generation == 0L

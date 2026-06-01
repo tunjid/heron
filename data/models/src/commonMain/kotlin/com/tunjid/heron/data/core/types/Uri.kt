@@ -30,24 +30,18 @@ sealed interface Uri {
     }
 }
 
-fun String.takeIfIs(
-    host: Uri.Host,
-) = takeIf { it.startsWith(host.prefix) }
+fun String.takeIfIs(host: Uri.Host) = takeIf { it.startsWith(host.prefix) }
 
-@Serializable
-sealed interface RecordUri : Uri
+@Serializable sealed interface RecordUri : Uri
 
-@Serializable
-sealed interface EmbeddableRecordUri : RecordUri
+@Serializable sealed interface EmbeddableRecordUri : RecordUri
 
-/**
- * Extracts the [ProfileId] component from an AT URI string.
- */
+/** Extracts the [ProfileId] component from an AT URI string. */
 fun RecordUri.profileId(): ProfileId =
     requireNotNull(
         uri.atUriComponents { authorityRange, _, _ ->
             ProfileId(uri.substring(authorityRange.start, authorityRange.endExclusive))
-        },
+        }
     )
 
 fun RecordUri.requireCollection(): String =
@@ -76,25 +70,23 @@ fun recordUriOrNull(
     profileId: ProfileId,
     namespace: String,
     recordKey: RecordKey,
-): RecordUri? = "${Uri.Host.AtProto.prefix}${profileId.id}/$namespace/${recordKey.value}"
-    .asRecordUriOrNull()
+): RecordUri? =
+    "${Uri.Host.AtProto.prefix}${profileId.id}/$namespace/${recordKey.value}".asRecordUriOrNull()
 
 val RecordUri.recordKey: RecordKey
-    get() = requireNotNull(
-        uri.atUriComponents { _, _, rKeyRange ->
-            RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
-        },
-    )
+    get() =
+        requireNotNull(
+            uri.atUriComponents { _, _, rKeyRange ->
+                RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
+            }
+        )
 
-val Uri.domain get() = Url(uri).host.removePrefix("www.")
+val Uri.domain
+    get() = Url(uri).host.removePrefix("www.")
 
 @Serializable
 @JvmInline
-value class PostUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class PostUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -104,9 +96,7 @@ value class PostUri(
 
 @Serializable
 @JvmInline
-value class ProfileUri(
-    override val uri: String,
-) : Uri {
+value class ProfileUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -117,11 +107,7 @@ value class ProfileUri(
 
 @Serializable
 @JvmInline
-value class FeedGeneratorUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class FeedGeneratorUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -131,11 +117,7 @@ value class FeedGeneratorUri(
 
 @Serializable
 @JvmInline
-value class ListUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class ListUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -145,11 +127,7 @@ value class ListUri(
 
 @Serializable
 @JvmInline
-value class StarterPackUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class StarterPackUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -159,11 +137,7 @@ value class StarterPackUri(
 
 @Serializable
 @JvmInline
-value class LabelerUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class LabelerUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -173,10 +147,7 @@ value class LabelerUri(
 
 @Serializable
 @JvmInline
-value class LikeUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class LikeUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -186,10 +157,7 @@ value class LikeUri(
 
 @Serializable
 @JvmInline
-value class RepostUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class RepostUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -199,10 +167,7 @@ value class RepostUri(
 
 @Serializable
 @JvmInline
-value class FollowUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class FollowUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -212,10 +177,7 @@ value class FollowUri(
 
 @Serializable
 @JvmInline
-value class BlockUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class BlockUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -225,11 +187,7 @@ value class BlockUri(
 
 @Serializable
 @JvmInline
-value class StandardPublicationUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class StandardPublicationUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -239,11 +197,7 @@ value class StandardPublicationUri(
 
 @Serializable
 @JvmInline
-value class StandardDocumentUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class StandardDocumentUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -253,10 +207,7 @@ value class StandardDocumentUri(
 
 @Serializable
 @JvmInline
-value class AlbumUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class AlbumUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -266,10 +217,7 @@ value class AlbumUri(
 
 @Serializable
 @JvmInline
-value class TrackUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class TrackUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -279,10 +227,7 @@ value class TrackUri(
 
 @Serializable
 @JvmInline
-value class ArtistUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class ArtistUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -292,10 +237,7 @@ value class ArtistUri(
 
 @Serializable
 @JvmInline
-value class ScrobbleUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class ScrobbleUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -305,10 +247,7 @@ value class ScrobbleUri(
 
 @Serializable
 @JvmInline
-value class StandardSubscriptionUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class StandardSubscriptionUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -318,19 +257,13 @@ value class StandardSubscriptionUri(
 
 @Serializable
 @JvmInline
-value class UnknownRecordUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class UnknownRecordUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class ListMemberUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class ListMemberUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -340,9 +273,7 @@ value class ListMemberUri(
 
 @Serializable
 @JvmInline
-value class ThreadGateUri(
-    override val uri: String,
-) : Uri {
+value class ThreadGateUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -352,9 +283,7 @@ value class ThreadGateUri(
 
 @Serializable
 @JvmInline
-value class PostGateUri(
-    override val uri: String,
-) : Uri {
+value class PostGateUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -364,44 +293,34 @@ value class PostGateUri(
 
 @Serializable
 @JvmInline
-value class ImageUri(
-    override val uri: String,
-) : Uri {
+value class ImageUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class GenericUri(
-    override val uri: String,
-) : Uri {
+value class GenericUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class FileUri(
-    override val uri: String,
-) : Uri {
+value class FileUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
-/**
- * Returns this [Uri] as a [RecordUri] if applicable.
- */
+/** Returns this [Uri] as a [RecordUri] if applicable. */
 fun Uri.asRecordUriOrNull(): RecordUri? = uri.asRecordUriOrNull()
 
-/**
- * Returns this [Uri] as a [RecordUri] if applicable.
- */
+/** Returns this [Uri] as a [RecordUri] if applicable. */
 fun Uri.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = uri.asEmbeddableRecordUriOrNull()
 
 /**
  * Parses a string into a specific [RecordUri] object based on its collection.
  *
+ * @return A specific [RecordUri] (e.g., [FeedGeneratorUri], [ListUri], e.t.c) if parsing is
+ *   successful, or `null` if the string is not a valid AT URI.
  * @receiver The string to parse.
- * @return A specific [RecordUri] (e.g., [FeedGeneratorUri], [ListUri], e.t.c)
- * if parsing is successful, or `null` if the string is not a valid AT URI.
  */
 fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRange, _ ->
     val normalized = withAtProtoPrefix()
@@ -428,10 +347,11 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
 }
 
 fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
-    val atUri = when {
-        startsWith(Uri.Host.Https.prefix) -> bskyHttpsUrlToAtUri() ?: return null
-        else -> this
-    }
+    val atUri =
+        when {
+            startsWith(Uri.Host.Https.prefix) -> bskyHttpsUrlToAtUri() ?: return null
+            else -> this
+        }
     return atUri.atUriComponents { _, collectionRange, _ ->
         val normalized = atUri.withAtProtoPrefix()
         when (atUri.substring(collectionRange.start, collectionRange.endExclusive)) {
@@ -448,16 +368,16 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
 }
 
 private fun String.withAtProtoPrefix(): String =
-    if (startsWith(Uri.Host.AtProto.prefix)) this
-    else "${Uri.Host.AtProto.prefix}$this"
+    if (startsWith(Uri.Host.AtProto.prefix)) this else "${Uri.Host.AtProto.prefix}$this"
 
-private val bskyPathSegmentToNamespace = mapOf(
-    "post" to PostUri.NAMESPACE,
-    "feed" to FeedGeneratorUri.NAMESPACE,
-    "lists" to ListUri.NAMESPACE,
-    "starter-pack" to StarterPackUri.NAMESPACE,
-    "labeler" to LabelerUri.NAMESPACE,
-)
+private val bskyPathSegmentToNamespace =
+    mapOf(
+        "post" to PostUri.NAMESPACE,
+        "feed" to FeedGeneratorUri.NAMESPACE,
+        "lists" to ListUri.NAMESPACE,
+        "starter-pack" to StarterPackUri.NAMESPACE,
+        "labeler" to LabelerUri.NAMESPACE,
+    )
 
 private fun String.bskyHttpsUrlToAtUri(): String? {
     if (!startsWith(Uri.Host.Https.prefix)) return null
@@ -481,23 +401,25 @@ private fun String.bskyHttpsUrlToAtUri(): String? {
 
     // Find third segment — stop at '?', '#' or end of string
     val seg2Start = seg1End + 1
-    val seg2End = indexOfFirst(seg2Start) { it == '/' || it == '?' || it == '#' }
-        .takeIf { it != -1 } ?: length
+    val seg2End =
+        indexOfFirst(seg2Start) { it == '/' || it == '?' || it == '#' }.takeIf { it != -1 }
+            ?: length
     val seg2 = substring(seg2Start, seg2End)
 
     // Find optional fourth segment
-    val seg3End = if (seg2End < length && this[seg2End] == '/') {
-        indexOfFirst(seg2End + 1) { it == '?' || it == '#' }
-            .takeIf { it != -1 } ?: length
-    } else -1
+    val seg3End =
+        if (seg2End < length && this[seg2End] == '/') {
+            indexOfFirst(seg2End + 1) { it == '?' || it == '#' }.takeIf { it != -1 } ?: length
+        } else -1
     val seg3 = if (seg3End != -1) substring(seg2End + 1, seg3End) else null
 
-    val (handle, type, rkey) = when {
-        seg0 == "profile" && seg3 != null -> Triple(seg1, seg2, seg3)
-        seg0 == "starter-pack" -> Triple(seg1, seg0, seg2)
-        seg0 == "profile" -> Triple(seg1, seg2, "self") // labeler
-        else -> return null
-    }
+    val (handle, type, rkey) =
+        when {
+            seg0 == "profile" && seg3 != null -> Triple(seg1, seg2, seg3)
+            seg0 == "starter-pack" -> Triple(seg1, seg0, seg2)
+            seg0 == "profile" -> Triple(seg1, seg2, "self") // labeler
+            else -> return null
+        }
 
     val namespace = bskyPathSegmentToNamespace[type] ?: return null
     return "${Uri.Host.AtProto.prefix}$handle/$namespace/$rkey"
@@ -511,19 +433,18 @@ private inline fun String.indexOfFirst(startIndex: Int, predicate: (Char) -> Boo
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.
  *
- * Format expected: at://{authority}/{collection}/{rkey}
- * Example: at://did:plc:12345/app.bsky.feed.post/98765
+ * Format expected: at://{authority}/{collection}/{rkey} Example:
+ * at://did:plc:12345/app.bsky.feed.post/98765
  *
  * @param action A lambda to consume the parsed parts.
  * @return The result of [action] if parsing is successful, or `null` if the format is invalid.
  */
 private inline fun <T> String.atUriComponents(
-    action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T,
+    action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T
 ): T? {
     // 1. Prefix "at://" is optional; start parsing after it if present.
     val authorityStart =
-        if (this.startsWith(Uri.Host.AtProto.prefix)) Uri.Host.AtProto.prefix.length
-        else 0
+        if (this.startsWith(Uri.Host.AtProto.prefix)) Uri.Host.AtProto.prefix.length else 0
     val length = this.length
 
     // 2. Find the first separator '/' after authority
@@ -554,17 +475,12 @@ private inline fun <T> String.atUriComponents(
     )
 }
 
-@JvmInline
-private value class StringRange(
-    val packed: Long,
-)
+@JvmInline private value class StringRange(val packed: Long)
 
 private fun StringRange(
     start: Int,
     endExclusive: Int,
-) = StringRange(
-    packed = packInts(start, endExclusive),
-)
+) = StringRange(packed = packInts(start, endExclusive))
 
 private val StringRange.start
     get() = unpackInt1(packed)

@@ -30,85 +30,73 @@ import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
- * Interface definition for data that is written to disk or over the wire.
- * If written to disk, it is using protobufs and all the rules about constructor argument
- * order apply.
+ * Interface definition for data that is written to disk or over the wire. If written to disk, it is
+ * using protobufs and all the rules about constructor argument order apply.
  */
 @Serializable
 sealed interface Writable {
-    /**
-     * An id to identify if a [Writable] is in the [WriteQueue]
-     */
+    /** An id to identify if a [Writable] is in the [WriteQueue] */
     val queueId: String
 
     suspend fun WriteQueue.write(): Outcome
 
     @Serializable
-    data class Interaction(
-        val interaction: Post.Interaction,
-    ) : Writable {
+    data class Interaction(val interaction: Post.Interaction) : Writable {
 
         override val queueId: String
-            get() = when (interaction) {
-                is Post.Interaction.Create.Like -> "like-${interaction.postUri}"
-                is Post.Interaction.Create.Repost -> "repost-${interaction.postUri}"
-                is Post.Interaction.Delete.RemoveRepost -> "remove-repost-${interaction.postUri}"
-                is Post.Interaction.Delete.Unlike -> "remove-like-${interaction.postUri}"
-                is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
-                is Post.Interaction.Delete.RemoveBookmark -> "remove-bookmark-${interaction.postUri}"
-                is Post.Interaction.Upsert.Gate -> "update-thread-gate-$interaction"
-            }
+            get() =
+                when (interaction) {
+                    is Post.Interaction.Create.Like -> "like-${interaction.postUri}"
+                    is Post.Interaction.Create.Repost -> "repost-${interaction.postUri}"
+                    is Post.Interaction.Delete.RemoveRepost ->
+                        "remove-repost-${interaction.postUri}"
+                    is Post.Interaction.Delete.Unlike -> "remove-like-${interaction.postUri}"
+                    is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
+                    is Post.Interaction.Delete.RemoveBookmark ->
+                        "remove-bookmark-${interaction.postUri}"
+                    is Post.Interaction.Upsert.Gate -> "update-thread-gate-$interaction"
+                }
 
         override suspend fun WriteQueue.write(): Outcome =
             postRepository.sendInteraction(interaction)
     }
 
     @Serializable
-    data class Create(
-        val request: Post.Create.Request,
-    ) : Writable {
+    data class Create(val request: Post.Create.Request) : Writable {
 
         override val queueId: String
             get() = "create-post-$request"
 
-        override suspend fun WriteQueue.write(): Outcome =
-            postRepository.createPost(request)
+        override suspend fun WriteQueue.write(): Outcome = postRepository.createPost(request)
     }
 
     @Serializable
-    data class Send(
-        val request: Message.Create,
-    ) : Writable {
+    data class Send(val request: Message.Create) : Writable {
 
         override val queueId: String
             get() = "send-message-$request"
 
-        override suspend fun WriteQueue.write(): Outcome =
-            messageRepository.sendMessage(request)
+        override suspend fun WriteQueue.write(): Outcome = messageRepository.sendMessage(request)
     }
 
     @Serializable
-    data class Reaction(
-        val update: Message.UpdateReaction,
-    ) : Writable {
+    data class Reaction(val update: Message.UpdateReaction) : Writable {
 
         override val queueId: String
             get() = "update-reaction-$update"
 
-        override suspend fun WriteQueue.write(): Outcome =
-            messageRepository.updateReaction(update)
+        override suspend fun WriteQueue.write(): Outcome = messageRepository.updateReaction(update)
     }
 
     @Serializable
-    data class Connection(
-        val connection: Profile.Connection,
-    ) : Writable {
+    data class Connection(val connection: Profile.Connection) : Writable {
 
         override val queueId: String
-            get() = when (connection) {
-                is Profile.Connection.Follow -> "follow-$connection"
-                is Profile.Connection.Unfollow -> "unfollow-$connection"
-            }
+            get() =
+                when (connection) {
+                    is Profile.Connection.Follow -> "follow-$connection"
+                    is Profile.Connection.Unfollow -> "unfollow-$connection"
+                }
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.sendConnection(connection)
@@ -117,10 +105,7 @@ sealed interface Writable {
     @Serializable
     sealed interface FeedList {
         @Serializable
-        data class AddMember(
-            val create: ListMember.Create,
-        ) : FeedList,
-            Writable {
+        data class AddMember(val create: ListMember.Create) : FeedList, Writable {
             override val queueId: String
                 get() = "add-list-member-$this"
 
@@ -132,10 +117,7 @@ sealed interface Writable {
     @Serializable
     sealed interface StandardSite {
         @Serializable
-        data class Subscribe(
-            val create: StandardSubscription.Create,
-        ) : StandardSite,
-            Writable {
+        data class Subscribe(val create: StandardSubscription.Create) : StandardSite, Writable {
             override val queueId: String
                 get() = "subscribe-standard-publication-${create.publicationUri}"
 
@@ -145,26 +127,23 @@ sealed interface Writable {
     }
 
     @Serializable
-    data class Restriction(
-        val restriction: Profile.Restriction,
-    ) : Writable {
+    data class Restriction(val restriction: Profile.Restriction) : Writable {
 
         override val queueId: String
-            get() = when (restriction) {
-                is Profile.Restriction.Block.Add -> "block-$restriction"
-                is Profile.Restriction.Block.Remove -> "unblock-$restriction"
-                is Profile.Restriction.Mute.Add -> "mute-$restriction"
-                is Profile.Restriction.Mute.Remove -> "unmute-$restriction"
-            }
+            get() =
+                when (restriction) {
+                    is Profile.Restriction.Block.Add -> "block-$restriction"
+                    is Profile.Restriction.Block.Remove -> "unblock-$restriction"
+                    is Profile.Restriction.Mute.Add -> "mute-$restriction"
+                    is Profile.Restriction.Mute.Remove -> "unmute-$restriction"
+                }
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateRestriction(restriction)
     }
 
     @Serializable
-    data class StatusUpdate(
-        val update: Profile.StatusUpdate,
-    ) : Writable {
+    data class StatusUpdate(val update: Profile.StatusUpdate) : Writable {
 
         override val queueId: String
             get() = "status-update-${update.signedInProfileId}"
@@ -174,47 +153,43 @@ sealed interface Writable {
     }
 
     @Serializable
-    data class TimelineUpdate(
-        val update: Timeline.Update,
-    ) : Writable {
+    data class TimelineUpdate(val update: Timeline.Update) : Writable {
         override val queueId: String
-            get() = when (update) {
-                is Timeline.Update.Bulk -> update.timelines.joinToString(
-                    separator = "-",
-                    transform = Timeline.Home::sourceId,
-                )
-                is Timeline.Update.HomeFeed.Pin -> "pin-${update.uri}"
-                is Timeline.Update.HomeFeed.Remove -> "remove-${update.uri}"
-                is Timeline.Update.HomeFeed.Save -> "save-${update.uri}"
-                is Timeline.Update.OfContentLabel -> "visibility-change-$update"
-                is Timeline.Update.OfLabeler.Subscription -> "labeler-subscription-$update"
-                is Timeline.Update.OfAdultContent -> "adult-content-change-$update"
-                is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
-                is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
-                is Timeline.Update.OfFeedPreference.Add -> "feed-preference-$update"
-                is Timeline.Update.OfThreadViewPreference.ThreadView -> "thread-view-preference-$update"
-            }
+            get() =
+                when (update) {
+                    is Timeline.Update.Bulk ->
+                        update.timelines.joinToString(
+                            separator = "-",
+                            transform = Timeline.Home::sourceId,
+                        )
+                    is Timeline.Update.HomeFeed.Pin -> "pin-${update.uri}"
+                    is Timeline.Update.HomeFeed.Remove -> "remove-${update.uri}"
+                    is Timeline.Update.HomeFeed.Save -> "save-${update.uri}"
+                    is Timeline.Update.OfContentLabel -> "visibility-change-$update"
+                    is Timeline.Update.OfLabeler.Subscription -> "labeler-subscription-$update"
+                    is Timeline.Update.OfAdultContent -> "adult-content-change-$update"
+                    is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
+                    is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
+                    is Timeline.Update.OfFeedPreference.Add -> "feed-preference-$update"
+                    is Timeline.Update.OfThreadViewPreference.ThreadView ->
+                        "thread-view-preference-$update"
+                }
 
         override suspend fun WriteQueue.write(): Outcome =
             timelineRepository.updateHomeTimelines(update)
     }
 
     @Serializable
-    data class ProfileUpdate(
-        val update: Profile.Update,
-    ) : Writable {
+    data class ProfileUpdate(val update: Profile.Update) : Writable {
 
         override val queueId: String
             get() = "update-profile-${update.profileId}-$update"
 
-        override suspend fun WriteQueue.write(): Outcome =
-            profileRepository.updateProfile(update)
+        override suspend fun WriteQueue.write(): Outcome = profileRepository.updateProfile(update)
     }
 
     @Serializable
-    data class NotificationUpdate(
-        val updates: List<NotificationPreferences.Update>,
-    ) : Writable {
+    data class NotificationUpdate(val updates: List<NotificationPreferences.Update>) : Writable {
 
         override val queueId: String
             get() = "notification-pref-$updates"
@@ -224,15 +199,12 @@ sealed interface Writable {
     }
 
     @Serializable
-    data class RecordDeletion(
-        val recordUri: RecordUri,
-    ) : Writable {
+    data class RecordDeletion(val recordUri: RecordUri) : Writable {
 
         override val queueId: String
             get() = "delete-$recordUri"
 
-        override suspend fun WriteQueue.write(): Outcome =
-            recordRepository.deleteRecord(recordUri)
+        override suspend fun WriteQueue.write(): Outcome = recordRepository.deleteRecord(recordUri)
     }
 }
 
@@ -244,6 +216,6 @@ data class FailedWrite(
 ) {
     @Serializable
     enum class Reason {
-        IO,
+        IO
     }
 }

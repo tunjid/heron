@@ -44,31 +44,25 @@ interface State {
     @SnapshotSpec
     data class Immutable(
         val sharedElementPrefix: String? = null,
-        @Transient
-        val publication: StandardPublication? = null,
-        @Transient
-        val documentsTilingStateHolder: DocumentsStateHolder? = null,
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val publication: StandardPublication? = null,
+        @Transient val documentsTilingStateHolder: DocumentsStateHolder? = null,
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        operator fun invoke(
-            route: Route,
-        ): Immutable = Immutable(
-            publication = route.model<StandardPublication>(),
-            sharedElementPrefix = route.sharedElementPrefix,
-        )
+        operator fun invoke(route: Route): Immutable =
+            Immutable(
+                publication = route.model<StandardPublication>(),
+                sharedElementPrefix = route.sharedElementPrefix,
+            )
     }
 }
 
 val State.isRefreshing: Boolean
-    get() = documentsTilingStateHolder
-        ?.state
-        ?.tilingData
-        ?.status is TilingState.Status.Refreshing
+    get() = documentsTilingStateHolder?.state?.tilingData?.status is TilingState.Status.Refreshing
 
-typealias DocumentsStateHolder = ActionSuspendingStateMutator<TilingState.Action, DocumentsTilingState>
+typealias DocumentsStateHolder =
+    ActionSuspendingStateMutator<TilingState.Action, DocumentsTilingState>
 
 @Stable
 @Snapshottable
@@ -79,50 +73,43 @@ interface DocumentsTilingState : TilingState<StandardPublicationDocumentsQuery, 
     data class Immutable(
         val publicationUri: StandardPublicationUri,
         @Transient
-        override val tilingData: TilingState.Data<StandardPublicationDocumentsQuery, StandardDocument> = TilingState.Data(
-            currentQuery = StandardPublicationDocumentsQuery(
-                publicationUri = publicationUri,
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                ),
+        override val tilingData:
+            TilingState.Data<StandardPublicationDocumentsQuery, StandardDocument> =
+            TilingState.Data(
+                currentQuery =
+                    StandardPublicationDocumentsQuery(
+                        publicationUri = publicationUri,
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                            ),
+                    )
             ),
-        ),
     ) : DocumentsTilingState
 
     companion object {
-        operator fun invoke(
-            publicationUri: StandardPublicationUri,
-        ): Immutable = Immutable(
-            publicationUri = publicationUri,
-        )
+        operator fun invoke(publicationUri: StandardPublicationUri): Immutable =
+            Immutable(publicationUri = publicationUri)
     }
 }
 
 sealed class Action(val key: String) {
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
+        data class Subscribe(val publicationUri: StandardPublicationUri) :
+            TogglePublicationSubscription()
 
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
+        data class Unsubscribe(val subscriptionUri: StandardSubscriptionUri) :
+            TogglePublicationSubscription()
     }
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

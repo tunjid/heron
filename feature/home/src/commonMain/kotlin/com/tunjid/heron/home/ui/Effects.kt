@@ -43,9 +43,10 @@ fun PagerState.RestoreLastViewedTabEffect(
 ) {
     val updatedTimelines = rememberUpdatedState(lastViewedTabUri to timelines)
     LaunchedEffect(Unit) {
-        val (lastTabUri, initialTimelines) = snapshotFlow { updatedTimelines.value }
-            .filter { (_, timelines) -> timelines.isNotEmpty() }
-            .first()
+        val (lastTabUri, initialTimelines) =
+            snapshotFlow { updatedTimelines.value }
+                .filter { (_, timelines) -> timelines.isNotEmpty() }
+                .first()
 
         val page = initialTimelines.indexOfFirst { it.uri == lastTabUri }
         if (page < 0) return@LaunchedEffect
@@ -61,29 +62,28 @@ internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
     onCollapsed: (TabLayout.Collapsed) -> Unit,
 ) {
     LaunchedEffect(layout) {
-        if (layout is TabLayout.Collapsed) snapshotFlow {
-            verticalOffsetProgress() < 0.5f
-        }
-            .distinctUntilChanged()
-            .collect { showAllTabs ->
-                onCollapsed(
-                    if (showAllTabs) TabLayout.Collapsed.All
-                    else TabLayout.Collapsed.Selected,
-                )
-            }
+        if (layout is TabLayout.Collapsed)
+            snapshotFlow {
+                    verticalOffsetProgress() < 0.5f
+                }
+                .distinctUntilChanged()
+                .collect { showAllTabs ->
+                    onCollapsed(
+                        if (showAllTabs) TabLayout.Collapsed.All else TabLayout.Collapsed.Selected
+                    )
+                }
     }
 }
 
 @Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
-    isExpanded: Boolean,
-) {
+internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(isExpanded: Boolean) {
     val density = LocalDensity.current
-    val expandedHeight = rememberUpdatedState(
-        with(density) {
-            (UiTokens.statusBarHeight + UiTokens.toolbarHeight).toPx()
-        },
-    )
+    val expandedHeight =
+        rememberUpdatedState(
+            with(density) {
+                (UiTokens.statusBarHeight + UiTokens.toolbarHeight).toPx()
+            }
+        )
 
     LaunchedEffect(isExpanded) {
         if (!isExpanded) return@LaunchedEffect
@@ -96,10 +96,11 @@ internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
             val delta = current - cumulative
             cumulative += delta
             onPreScroll(
-                available = Offset(
-                    x = 0f,
-                    y = delta,
-                ),
+                available =
+                    Offset(
+                        x = 0f,
+                        y = delta,
+                    ),
                 source = NestedScrollSource.SideEffect,
             )
         }

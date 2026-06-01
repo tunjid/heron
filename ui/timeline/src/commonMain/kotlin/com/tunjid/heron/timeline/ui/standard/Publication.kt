@@ -40,59 +40,60 @@ fun Publication(
     sharedElementPrefix: String,
     publication: StandardPublication,
     onSubscriptionToggled: (StandardPublication, StandardSubscription?) -> Unit,
-) = with(paneTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        paneTransitionScope = paneTransitionScope,
-        title = publication.name,
-        subtitle = publication.url,
-        description = publication.description,
-        blurb = null,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = publication.uri,
-        avatar = {
-            publication.icon?.let { icon ->
-                PaneStickySharedElement(
-                    modifier = Modifier.size(44.dp),
-                    sharedContentState = rememberSharedContentState(
-                        key = publication.avatarSharedElementKey(
-                            prefix = sharedElementPrefix,
-                        ),
-                    ),
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        args = remember(icon) {
-                            ImageArgs(
-                                url = icon.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = null,
-                                shape = DocumentCollectionShape,
-                            )
-                        },
-                    )
+) =
+    with(paneTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            paneTransitionScope = paneTransitionScope,
+            title = publication.name,
+            subtitle = publication.url,
+            description = publication.description,
+            blurb = null,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = publication.uri,
+            avatar = {
+                publication.icon?.let { icon ->
+                    PaneStickySharedElement(
+                        modifier = Modifier.size(44.dp),
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    publication.avatarSharedElementKey(prefix = sharedElementPrefix)
+                            ),
+                    ) {
+                        AsyncImage(
+                            modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                            args =
+                                remember(icon) {
+                                    ImageArgs(
+                                        url = icon.uri,
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription = null,
+                                        shape = DocumentCollectionShape,
+                                    )
+                                },
+                        )
+                    }
                 }
-            }
-        },
-        action = {
-            val subscribed = publication.subscription != null
-            val latchedSubscribedState = rememberLatchedState(subscribed)
-            IconButton(
-                onClick = {
-                    latchedSubscribedState.latch(!subscribed)
-                    onSubscriptionToggled(
-                        publication,
-                        publication.subscription,
-                    )
-                },
-                content = {
-                    PublicationSubscriptionIcon(
-                        subscribed = latchedSubscribedState.value,
-                        iconSize = 24.dp,
-                    )
-                },
-            )
-        },
-    )
-}
+            },
+            action = {
+                val subscribed = publication.subscription != null
+                val latchedSubscribedState = rememberLatchedState(subscribed)
+                IconButton(
+                    onClick = {
+                        latchedSubscribedState.latch(!subscribed)
+                        onSubscriptionToggled(
+                            publication,
+                            publication.subscription,
+                        )
+                    },
+                    content = {
+                        PublicationSubscriptionIcon(
+                            subscribed = latchedSubscribedState.value,
+                            iconSize = 24.dp,
+                        )
+                    },
+                )
+            },
+        )
+    }

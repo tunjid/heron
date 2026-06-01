@@ -73,24 +73,24 @@ sealed class WriteQueue {
 
     abstract val queueChanges: Flow<List<Writable>>
 
-    abstract suspend fun enqueue(
-        writable: Writable,
-    ): Status
+    abstract suspend fun enqueue(writable: Writable): Status
 
-    abstract suspend fun awaitDequeue(
-        writable: Writable,
-    )
+    abstract suspend fun awaitDequeue(writable: Writable)
 
     abstract suspend fun drain()
 
     sealed interface Status {
         data object Enqueued : Status
+
         data object Dropped : Status
+
         data object Duplicate : Status
     }
 }
 
-internal class SnapshotWriteQueue @Inject constructor(
+internal class SnapshotWriteQueue
+@Inject
+constructor(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,
@@ -102,14 +102,13 @@ internal class SnapshotWriteQueue @Inject constructor(
     private val queue = mutableStateListOf<Writable>()
 
     override val queueChanges: Flow<List<Writable>>
-        get() = snapshotFlow { queue.toList() }
-            .distinctUntilChangedBy {
-                it.map(Writable::queueId)
-            }
+        get() =
+            snapshotFlow { queue.toList() }
+                .distinctUntilChangedBy {
+                    it.map(Writable::queueId)
+                }
 
-    override suspend fun enqueue(
-        writable: Writable,
-    ): Status {
+    override suspend fun enqueue(writable: Writable): Status {
         // Enqueue on main
         return withContext(Dispatchers.Main) {
             // De-dup
@@ -121,8 +120,9 @@ internal class SnapshotWriteQueue @Inject constructor(
 
     override suspend fun awaitDequeue(writable: Writable) {
         snapshotFlow {
-            queue.firstOrNull { it.queueId == writable.queueId }
-        }.first { it == null }
+                queue.firstOrNull { it.queueId == writable.queueId }
+            }
+            .first { it == null }
     }
 
     override suspend fun drain() {
@@ -142,7 +142,9 @@ internal class SnapshotWriteQueue @Inject constructor(
     }
 }
 
-internal class PersistedWriteQueue @Inject constructor(
+internal class PersistedWriteQueue
+@Inject
+constructor(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,
@@ -158,9 +160,7 @@ internal class PersistedWriteQueue @Inject constructor(
     override val queueChanges: Flow<List<Writable>>
         get() = savedStateDataSource.signedInProfileWrites()
 
-    override suspend fun enqueue(
-        writable: Writable,
-    ): Status {
+    override suspend fun enqueue(writable: Writable): Status {
         concurrentWriteMutex.withLock {
             if (writable.queueId in processingWriteIds) return Status.Duplicate
         }
@@ -187,14 +187,14 @@ internal class PersistedWriteQueue @Inject constructor(
     }
 
     override suspend fun awaitDequeue(writable: Writable) {
-        savedStateDataSource.signedInProfileWrites()
-            .first { writes ->
-                writes.none { it.queueId == writable.queueId }
-            }
+        savedStateDataSource.signedInProfileWrites().first { writes ->
+            writes.none { it.queueId == writable.queueId }
+        }
     }
 
     override suspend fun drain() = savedStateDataSource.onEachSignedInProfile {
-        savedStateDataSource.signedInProfileWrites()
+        savedStateDataSource
+            .signedInProfileWrites()
             .transform { writes ->
                 filterAndRecordNewWrites(writes)
             }
@@ -207,9 +207,7 @@ internal class PersistedWriteQueue @Inject constructor(
             }
     }
 
-    private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(
-        writes: List<Writable>,
-    ) {
+    private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(writes: List<Writable>) {
         for (writable in writes) {
             var inserted = false
             try {
@@ -222,36 +220,37 @@ internal class PersistedWriteQueue @Inject constructor(
         }
     }
 
-    private fun concurrentWrite(
-        writable: Writable,
-    ) = flow {
-        emit(
-            Pair(
-                first = writable,
-                second = with(writable) {
-                    withTimeout(writable.writeTimeout()) { write() }
-                },
-            ),
-        )
-    }
-        .catch {
-            emit(writable to Outcome.Failure(it))
-        }
+    private fun concurrentWrite(writable: Writable) =
+        flow {
+                emit(
+                    Pair(
+                        first = writable,
+                        second =
+                            with(writable) {
+                                withTimeout(writable.writeTimeout()) { write() }
+                            },
+                    )
+                )
+            }
+            .catch {
+                emit(writable to Outcome.Failure(it))
+            }
 
     private suspend fun onWriteOutcome(
         outcome: Outcome,
         writable: Writable,
     ) {
-        val failure = when (outcome) {
-            is Outcome.Failure -> outcome.exception
-            else -> null
-        }
-        val shouldTryAgain = when (failure) {
-            is NetworkConnectionException,
-            is TimeoutCancellationException,
-            -> true
-            else -> false
-        }
+        val failure =
+            when (outcome) {
+                is Outcome.Failure -> outcome.exception
+                else -> null
+            }
+        val shouldTryAgain =
+            when (failure) {
+                is NetworkConnectionException,
+                is TimeoutCancellationException -> true
+                else -> false
+            }
 
         if (shouldTryAgain) {
             removeFromConcurrentProcessingQueue(writable)
@@ -260,26 +259,29 @@ internal class PersistedWriteQueue @Inject constructor(
         try {
             savedStateDataSource.updateWrites {
                 copy(
-                    failedWrites = when {
-                        failure != null && !shouldTryAgain ->
-                            failedWrites
-                                .plus(
-                                    FailedWrite(
-                                        writable = writable,
-                                        failedAt = Clock.System.now(),
-                                        reason = when (failure) {
-                                            is IOException -> FailedWrite.Reason.IO
-                                            else -> null
-                                        },
-                                    ),
-                                )
-                                .distinctBy { it.writable.queueId }
-                                .takeLast(MaximumFailedWrites)
-                        else -> failedWrites
-                    },
-                    pendingWrites = pendingWrites
-                        .filter { it.queueId != writable.queueId }
-                        .let { writes -> if (shouldTryAgain) writes + writable else writes },
+                    failedWrites =
+                        when {
+                            failure != null && !shouldTryAgain ->
+                                failedWrites
+                                    .plus(
+                                        FailedWrite(
+                                            writable = writable,
+                                            failedAt = Clock.System.now(),
+                                            reason =
+                                                when (failure) {
+                                                    is IOException -> FailedWrite.Reason.IO
+                                                    else -> null
+                                                },
+                                        )
+                                    )
+                                    .distinctBy { it.writable.queueId }
+                                    .takeLast(MaximumFailedWrites)
+                            else -> failedWrites
+                        },
+                    pendingWrites =
+                        pendingWrites
+                            .filter { it.queueId != writable.queueId }
+                            .let { writes -> if (shouldTryAgain) writes + writable else writes },
                 )
             }
         } finally {
@@ -289,19 +291,17 @@ internal class PersistedWriteQueue @Inject constructor(
         }
     }
 
-    private suspend fun maybeInsertIntoConcurrentProcessingQueue(
-        writable: Writable,
-    ) = concurrentWriteMutex.withLock {
-        processingWriteIds.add(writable.queueId)
-    }
-
-    private suspend fun removeFromConcurrentProcessingQueue(
-        writable: Writable,
-    ) = withContext(NonCancellable) {
+    private suspend fun maybeInsertIntoConcurrentProcessingQueue(writable: Writable) =
         concurrentWriteMutex.withLock {
-            processingWriteIds.remove(writable.queueId)
+            processingWriteIds.add(writable.queueId)
         }
-    }
+
+    private suspend fun removeFromConcurrentProcessingQueue(writable: Writable) =
+        withContext(NonCancellable) {
+            concurrentWriteMutex.withLock {
+                processingWriteIds.remove(writable.queueId)
+            }
+        }
 }
 
 private fun SavedStateDataSource.signedInProfileWrites() =
@@ -321,7 +321,7 @@ private fun SavedStateDataSource.signedInProfileWrites() =
     }
 
 private suspend inline fun SavedStateDataSource.updateWrites(
-    crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
+    crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes
 ) {
     updateSignedInProfileData { signedInProfileId ->
         copy(writes = writes.block(signedInProfileId))
@@ -331,17 +331,15 @@ private suspend inline fun SavedStateDataSource.updateWrites(
 private fun Writable.writeTimeout() =
     when (this) {
         is Writable.Create ->
-            request.metadata
-                .embeddedMedia
-                .fold(BasicWriteTimeout) { timeout, media ->
-                    timeout + when (media) {
+            request.metadata.embeddedMedia.fold(BasicWriteTimeout) { timeout, media ->
+                timeout +
+                    when (media) {
                         is File.Media.Photo -> ImageWriteTimeout
                         is File.Media.Video -> VideoWriteTimeout
                     }
-                }
+            }
         is Writable.ProfileUpdate ->
-            BasicWriteTimeout
-                .plus(if (update.avatarFile != null) ImageWriteTimeout else 0.seconds)
+            BasicWriteTimeout.plus(if (update.avatarFile != null) ImageWriteTimeout else 0.seconds)
                 .plus(if (update.bannerFile != null) ImageWriteTimeout else 0.seconds)
         is Writable.Connection,
         is Writable.Interaction,
@@ -353,8 +351,7 @@ private fun Writable.writeTimeout() =
         is Writable.RecordDeletion,
         is Writable.FeedList,
         is Writable.StandardSite,
-        is Writable.StatusUpdate,
-        -> BasicWriteTimeout
+        is Writable.StatusUpdate -> BasicWriteTimeout
     }
 
 private val VideoWriteTimeout = 8.minutes

@@ -84,21 +84,17 @@ fun PaneScaffoldState.UserInput(
     var textFieldFocusState by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .animateContentSize(),
+        modifier = modifier.padding(vertical = 8.dp).animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         pendingRecord?.let { record ->
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 EmbeddedRecord(
-                    modifier = Modifier
-                        .weight(1f),
+                    modifier = Modifier.weight(1f),
                     record = record,
                     appliedLabels = AppliedLabels.Empty,
                     sharedElementPrefix = SharedRecordPrefix,
@@ -121,19 +117,17 @@ fun PaneScaffoldState.UserInput(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             UserInputText(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = UserInputShape,
-                    )
-                    .padding(vertical = 16.dp)
-                    .weight(1f)
-                    .heightIn(max = 80.dp),
+                modifier =
+                    Modifier.background(
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = UserInputShape,
+                        )
+                        .padding(vertical = 16.dp)
+                        .weight(1f)
+                        .heightIn(max = 80.dp),
                 textFieldValue = inputText,
                 onTextChanged = { value ->
-                    onTextChanged(
-                        value.withFormattedTextPost(),
-                    )
+                    onTextChanged(value.withFormattedTextPost())
                 },
                 // Only show the keyboard if there's no input selector and text field has focus
                 keyboardShown = textFieldFocusState,
@@ -144,8 +138,7 @@ fun PaneScaffoldState.UserInput(
                 focusState = textFieldFocusState,
             )
             SendButton(
-                modifier = Modifier
-                    .height(36.dp),
+                modifier = Modifier.height(36.dp),
                 textFieldValue = inputText,
                 hasPendingRecord = pendingRecord != null,
                 onMessageSent = sendMessage,
@@ -170,19 +163,18 @@ private fun UserInputText(
 ) {
     val a11ylabel = stringResource(Res.string.textfield_desc)
 
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         UserInputTextField(
             textFieldValue = textFieldValue,
             onTextChanged = onTextChanged,
             onTextFieldFocused = onTextFieldFocused,
             keyboardType = keyboardType,
             focusState = focusState,
-            modifier = Modifier.fillMaxWidth().semantics {
-                contentDescription = a11ylabel
-                keyboardShownProperty = keyboardShown
-            },
+            modifier =
+                Modifier.fillMaxWidth().semantics {
+                    contentDescription = a11ylabel
+                    keyboardShownProperty = keyboardShown
+                },
         )
     }
 }
@@ -200,30 +192,27 @@ private fun BoxScope.UserInputTextField(
     BasicTextField(
         value = textFieldValue,
         onValueChange = { onTextChanged(it) },
-        modifier = modifier
-            .padding(horizontal = 32.dp)
-            .align(Alignment.CenterStart)
-            .onFocusChanged { state ->
+        modifier =
+            modifier.padding(horizontal = 32.dp).align(Alignment.CenterStart).onFocusChanged { state
+                ->
                 if (lastFocusState != state.isFocused) {
                     onTextFieldFocused(state.isFocused)
                 }
                 lastFocusState = state.isFocused
             },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = ImeAction.Default,
-        ),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = ImeAction.Default,
+            ),
         cursorBrush = SolidColor(LocalContentColor.current),
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
     )
 
-    val disableContentColor =
-        MaterialTheme.colorScheme.onSurfaceVariant
+    val disableContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     if (textFieldValue.text.isEmpty() && !focusState) {
         Text(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 32.dp),
+            modifier = Modifier.align(Alignment.CenterStart).padding(start = 32.dp),
             text = stringResource(Res.string.textfield_hint),
             style = MaterialTheme.typography.bodyLarge.copy(color = disableContentColor),
         )
@@ -244,8 +233,8 @@ fun PaneScaffoldState.SendButton(
         expanded = true,
         enabled = textFieldValue.text.isNotBlank() || hasPendingRecord,
         onClick = onClick@{
-            onMessageSent(textFieldValue.annotatedString)
-        },
+                onMessageSent(textFieldValue.annotatedString)
+            },
     )
 }
 

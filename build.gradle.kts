@@ -55,7 +55,7 @@ allprojects {
                 "**/*.kts",
             )
             targetExclude("**/build/**")
-            ktlint(rootProject.libs.ktlint.get().version)
+            ktfmt(libs.ktfmt.get().version).kotlinlangStyle()
         }
     }
 }

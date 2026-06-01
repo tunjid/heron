@@ -46,12 +46,13 @@ fun SignOutItem(
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
     SettingsItem(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                showSignOutDialog = true
-            }
-            .settingsItemPaddingAndMinHeight(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable {
+                    showSignOutDialog = true
+                }
+                .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
@@ -78,14 +79,10 @@ fun SignOutDialog(
     SimpleDialog(
         onDismissRequest = onDismiss,
         title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.sign_out),
-            )
+            SimpleDialogTitle(text = stringResource(Res.string.sign_out))
         },
         text = {
-            SimpleDialogText(
-                text = stringResource(Res.string.sign_out_confirmation),
-            )
+            SimpleDialogText(text = stringResource(Res.string.sign_out_confirmation))
         },
         confirmButton = {
             DestructiveDialogButton(

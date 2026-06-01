@@ -73,18 +73,13 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/messages/{conversationId}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
-internal val Route.conversationId by mappedRoutePath(
-    mapper = ::ConversationId,
-)
+internal val Route.conversationId by mappedRoutePath(mapper = ::ConversationId)
 
 @BindingContainer
 object ConversationNavigationBindings {
@@ -111,125 +106,130 @@ class ConversationBindings(
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: ConversationStateHolder = viewModel<ActualConversationViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
+    ) =
+        threePaneEntry(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val stateHolder: ConversationStateHolder =
+                    viewModel<ActualConversationViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            ConversationTitle(
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                signedInProfileId = state.signedInProfile?.did,
-                                participants = state.members,
-                                paneScaffoldState = this,
-                                onProfileClicked = { profile ->
-                                    stateHolder.accept(
-                                        Action.Navigate.To(
-                                            profileDestination(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                profile = profile,
-                                                avatarSharedElementKey = profile.avatarSharedElementKey(
-                                                    prefix = state.sharedElementPrefix,
-                                                ),
-                                            ),
-                                        ),
-                                    )
-                                },
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                navigationBar = {
-                    UserInput(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .imePadding()
-                            .windowInsetsPadding(WindowInsets.navigationBars)
-                            .bottomNavigationSharedBounds(this),
-                        inputText = state.inputText,
-                        pendingRecord = state.sharedRecord.pendingRecord,
-                        sendMessage = remember(
-                            stateHolder,
-                            state.id,
-                            state.sharedRecord,
-                        ) {
-                            { annotatedString: AnnotatedString ->
-                                stateHolder.accept(
-                                    Action.SendMessage(
-                                        Message.Create(
-                                            conversationId = state.id,
-                                            text = annotatedString.text,
-                                            links = annotatedString.links(),
-                                            recordReference = state.sharedRecord
-                                                .pendingRecord
-                                                ?.reference,
-                                        ),
-                                    ),
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                ConversationTitle(
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    signedInProfileId = state.signedInProfile?.did,
+                                    participants = state.members,
+                                    paneScaffoldState = this,
+                                    onProfileClicked = { profile ->
+                                        stateHolder.accept(
+                                            Action.Navigate.To(
+                                                profileDestination(
+                                                    referringRouteOption =
+                                                        NavigationAction.ReferringRouteOption
+                                                            .Current,
+                                                    profile = profile,
+                                                    avatarSharedElementKey =
+                                                        profile.avatarSharedElementKey(
+                                                            prefix = state.sharedElementPrefix
+                                                        ),
+                                                )
+                                            )
+                                        )
+                                    },
                                 )
-                            }
-                        },
-                        removePendingRecordClicked = {
-                            stateHolder.accept(Action.SharedRecord.Remove)
-                        },
-                        onTextChanged = {
-                            stateHolder.accept(Action.TextChanged(it))
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    ConversationScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(paddingValues),
-                    )
-                },
-            )
-        },
-    )
+                            },
+                            onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                        )
+                    },
+                    navigationBar = {
+                        UserInput(
+                            modifier =
+                                Modifier.padding(horizontal = 8.dp)
+                                    .imePadding()
+                                    .windowInsetsPadding(WindowInsets.navigationBars)
+                                    .bottomNavigationSharedBounds(this),
+                            inputText = state.inputText,
+                            pendingRecord = state.sharedRecord.pendingRecord,
+                            sendMessage =
+                                remember(
+                                    stateHolder,
+                                    state.id,
+                                    state.sharedRecord,
+                                ) {
+                                    { annotatedString: AnnotatedString ->
+                                        stateHolder.accept(
+                                            Action.SendMessage(
+                                                Message.Create(
+                                                    conversationId = state.id,
+                                                    text = annotatedString.text,
+                                                    links = annotatedString.links(),
+                                                    recordReference =
+                                                        state.sharedRecord.pendingRecord?.reference,
+                                                )
+                                            )
+                                        )
+                                    }
+                                },
+                            removePendingRecordClicked = {
+                                stateHolder.accept(Action.SharedRecord.Remove)
+                            },
+                            onTextChanged = {
+                                stateHolder.accept(Action.TextChanged(it))
+                            },
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail()
+                    },
+                    content = { paddingValues ->
+                        ConversationScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                            modifier = Modifier.padding(paddingValues),
+                        )
+                    },
+                )
+            },
+        )
 }

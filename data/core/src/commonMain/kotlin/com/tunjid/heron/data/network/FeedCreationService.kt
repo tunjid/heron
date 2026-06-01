@@ -56,12 +56,12 @@ import sh.christian.ozone.api.Nsid
 
 internal interface FeedCreationService {
 
-    suspend fun updateGrazeFeed(
-        update: GrazeFeed.Update,
-    ): Result<GrazeResponse>
+    suspend fun updateGrazeFeed(update: GrazeFeed.Update): Result<GrazeResponse>
 }
 
-internal class GrazeFeedCreationService @Inject constructor(
+internal class GrazeFeedCreationService
+@Inject
+constructor(
     httpClient: HttpClient,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -73,79 +73,84 @@ internal class GrazeFeedCreationService @Inject constructor(
         }
         install(Logging) {
             level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-                    logcat(LogPriority.VERBOSE) { message }
+            logger =
+                object : Logger {
+                    override fun log(message: String) {
+                        logcat(LogPriority.VERBOSE) { message }
+                    }
                 }
-            }
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 15.seconds.inWholeMilliseconds
         }
     }
 
-    override suspend fun updateGrazeFeed(
-        update: GrazeFeed.Update,
-    ): Result<GrazeResponse> =
+    override suspend fun updateGrazeFeed(update: GrazeFeed.Update): Result<GrazeResponse> =
         when (update) {
-            is GrazeFeed.Update.Create -> performRequest<GrazeResponse.Created>(
-                call = GrazeCall.Create,
-                body = GrazeRequestBody.Feed(update.feed),
-            )
-            is GrazeFeed.Update.Delete -> performRequest<GrazeResponse.Deleted>(
-                call = (GrazeCall.Delete),
-                body = GrazeRequestBody.Key(
-                    recordKey = update.recordKey,
-                ),
-            )
+            is GrazeFeed.Update.Create ->
+                performRequest<GrazeResponse.Created>(
+                    call = GrazeCall.Create,
+                    body = GrazeRequestBody.Feed(update.feed),
+                )
+            is GrazeFeed.Update.Delete ->
+                performRequest<GrazeResponse.Deleted>(
+                    call = (GrazeCall.Delete),
+                    body = GrazeRequestBody.Key(recordKey = update.recordKey),
+                )
 
-            is GrazeFeed.Update.Edit -> performRequest<GrazeResponse.Edited>(
-                call = GrazeCall.Edit,
-                body = GrazeRequestBody.Feed(update.feed),
-            )
-            is GrazeFeed.Update.Get -> performRequest<GrazeResponse.Read>(
-                call = GrazeCall.Get,
-                body = GrazeRequestBody.Key(
-                    recordKey = update.recordKey,
-                ),
-            )
+            is GrazeFeed.Update.Edit ->
+                performRequest<GrazeResponse.Edited>(
+                    call = GrazeCall.Edit,
+                    body = GrazeRequestBody.Feed(update.feed),
+                )
+            is GrazeFeed.Update.Get ->
+                performRequest<GrazeResponse.Read>(
+                    call = GrazeCall.Get,
+                    body = GrazeRequestBody.Key(recordKey = update.recordKey),
+                )
         }
 
     private suspend inline fun <reified T : GrazeResponse> performRequest(
         call: GrazeCall,
         body: GrazeRequestBody,
-    ): Result<GrazeResponse> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
+    ): Result<GrazeResponse> =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
 
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getServiceAuth(
-                GetServiceAuthQueryParams(
-                    aud = Did(GrazeDid.id),
-                    exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
-                    lxm = call.lexicon,
-                ),
-            )
-        }.mapCatchingUnlessCancelled { tokenResponse ->
-            val response = feedCreationClient.post(call.path) {
-                setBody(body.body())
-                contentType(ContentType.Application.Json)
-                bearerAuth(tokenResponse.token)
-            }
-
-            if (!response.status.isSuccess()) when (response.status) {
-                HttpStatusCode.NotFound -> return@mapCatchingUnlessCancelled GrazeResponse.Deleted(
-                    rkey = body.recordKey,
-                )
-                else -> throw Exception(response.bodyAsText())
-            }
-            response.body<T>()
-        }
-            .onFailure {
-                logcat(LogPriority.DEBUG) {
-                    "Failed graze call notification for ${call.path}: ${it.loggableText()}"
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    getServiceAuth(
+                        GetServiceAuthQueryParams(
+                            aud = Did(GrazeDid.id),
+                            exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
+                            lxm = call.lexicon,
+                        )
+                    )
                 }
-            }
-    } ?: expiredSessionResult()
+                .mapCatchingUnlessCancelled { tokenResponse ->
+                    val response =
+                        feedCreationClient.post(call.path) {
+                            setBody(body.body())
+                            contentType(ContentType.Application.Json)
+                            bearerAuth(tokenResponse.token)
+                        }
+
+                    if (!response.status.isSuccess())
+                        when (response.status) {
+                            HttpStatusCode.NotFound ->
+                                return@mapCatchingUnlessCancelled GrazeResponse.Deleted(
+                                    rkey = body.recordKey
+                                )
+                            else -> throw Exception(response.bodyAsText())
+                        }
+                    response.body<T>()
+                }
+                .onFailure {
+                    logcat(LogPriority.DEBUG) {
+                        "Failed graze call notification for ${call.path}: ${it.loggableText()}"
+                    }
+                }
+        } ?: expiredSessionResult()
 }
 
 private enum class GrazeCall(
@@ -176,16 +181,11 @@ private sealed interface GrazeRequestBody {
     fun body(): Any
 
     @Serializable
-    data class Key(
-        @SerialName("rkey")
-        override val recordKey: RecordKey,
-    ) : GrazeRequestBody {
+    data class Key(@SerialName("rkey") override val recordKey: RecordKey) : GrazeRequestBody {
         override fun body(): Any = this
     }
 
-    data class Feed(
-        val feed: GrazeFeed,
-    ) : GrazeRequestBody {
+    data class Feed(val feed: GrazeFeed) : GrazeRequestBody {
         override val recordKey: RecordKey
             get() = feed.recordKey
 
@@ -198,10 +198,7 @@ internal sealed interface GrazeResponse {
 
     val rkey: RecordKey
 
-    @Serializable
-    data class Deleted(
-        override val rkey: RecordKey,
-    ) : GrazeResponse
+    @Serializable data class Deleted(override val rkey: RecordKey) : GrazeResponse
 
     @Serializable
     data class Created(
@@ -227,9 +224,6 @@ internal sealed interface GrazeResponse {
             val manifest: Manifest,
         )
 
-        @Serializable
-        data class Manifest(
-            val filter: Filter.Root,
-        )
+        @Serializable data class Manifest(val filter: Filter.Root)
     }
 }

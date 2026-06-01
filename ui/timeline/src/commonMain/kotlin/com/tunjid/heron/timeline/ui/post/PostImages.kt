@@ -60,18 +60,20 @@ internal fun PostImages(
     presentation: Timeline.Presentation,
 ) {
     val shape = presentation.imageShape
-    val itemModifier = Modifier.ifTrue(isBlurred) {
-        sensitiveContentBlur(shape)
-    }
+    val itemModifier =
+        Modifier.ifTrue(isBlurred) {
+            sensitiveContentBlur(shape)
+        }
 
     val imagesSize = feature.images.size
-    val overlayClip = remember(imagesSize) {
-        if (imagesSize > 1 && Platform.current.isNativeCompose) TrackingOverlayClip() else null
-    }
+    val overlayClip =
+        remember(imagesSize) {
+            if (imagesSize > 1 && Platform.current.isNativeCompose) TrackingOverlayClip() else null
+        }
 
     LazyRow(
-        modifier = modifier
-            .ifNotNull(
+        modifier =
+            modifier.ifNotNull(
                 item = overlayClip,
                 block = Modifier::trackOverlayClipBounds,
             ),
@@ -84,63 +86,66 @@ internal fun PostImages(
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
                 paneTransitionScope.UpdatedMovableStickySharedElementOf(
-                    modifier = when (presentation) {
-                        Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
-                            1 ->
-                                itemModifier
-                                    .then(
-                                        if (matchHeightConstraintsFirst) Modifier
-                                        else Modifier.fillParentMaxWidth(),
-                                    )
-                                    .aspectRatio(
-                                        ratio = image.aspectRatioOrSquare,
-                                        matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-                                    )
+                    modifier =
+                        when (presentation) {
+                            Timeline.Presentation.Text.WithEmbed ->
+                                when (feature.images.size) {
+                                    1 ->
+                                        itemModifier
+                                            .then(
+                                                if (matchHeightConstraintsFirst) Modifier
+                                                else Modifier.fillParentMaxWidth()
+                                            )
+                                            .aspectRatio(
+                                                ratio = image.aspectRatioOrSquare,
+                                                matchHeightConstraintsFirst =
+                                                    matchHeightConstraintsFirst,
+                                            )
 
-                            else ->
-                                itemModifier
-                                    .height(200.dp)
-                                    .aspectRatio(
-                                        ratio = image.aspectRatioOrSquare,
-                                    )
-                        }
+                                    else ->
+                                        itemModifier
+                                            .height(200.dp)
+                                            .aspectRatio(ratio = image.aspectRatioOrSquare)
+                                }
 
-                        Timeline.Presentation.Media.Condensed ->
-                            itemModifier
-                                .fillParentMaxWidth()
-                                .aspectRatio(tallestImage.bucketedRatio())
-                        Timeline.Presentation.Media.Expanded ->
-                            itemModifier
-                                .fillParentMaxWidth()
-                                .aspectRatio(tallestImage.aspectRatioOrSquare)
-                        Timeline.Presentation.Media.Grid ->
-                            itemModifier
-                                .fillParentMaxWidth()
-                                .aspectRatio(1f)
-                    }
-                        .shapedClickable(shape) { onImageClicked(index) },
-                    clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.localOverlayClip,
-                    sharedContentState = with(paneTransitionScope) {
-                        rememberSharedContentState(
-                            key = image.sharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postUri = postUri,
-                            ),
-                        )
-                    },
-                    state = remember(image.thumb.uri, presentation, shape) {
-                        ImageArgs(
-                            url = image.thumb.uri,
-                            contentDescription = image.alt,
-                            contentScale = when (presentation) {
-                                Timeline.Presentation.Media.Expanded -> ContentScale.Crop
-                                Timeline.Presentation.Media.Grid -> ContentScale.Crop
-                                Timeline.Presentation.Media.Condensed -> ContentScale.Crop
-                                Timeline.Presentation.Text.WithEmbed -> ContentScale.Fit
-                            },
-                            shape = shape,
-                        )
-                    },
+                            Timeline.Presentation.Media.Condensed ->
+                                itemModifier
+                                    .fillParentMaxWidth()
+                                    .aspectRatio(tallestImage.bucketedRatio())
+                            Timeline.Presentation.Media.Expanded ->
+                                itemModifier
+                                    .fillParentMaxWidth()
+                                    .aspectRatio(tallestImage.aspectRatioOrSquare)
+                            Timeline.Presentation.Media.Grid ->
+                                itemModifier.fillParentMaxWidth().aspectRatio(1f)
+                        }.shapedClickable(shape) { onImageClicked(index) },
+                    clipInOverlayDuringTransition =
+                        overlayClip ?: paneTransitionScope.localOverlayClip,
+                    sharedContentState =
+                        with(paneTransitionScope) {
+                            rememberSharedContentState(
+                                key =
+                                    image.sharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        postUri = postUri,
+                                    )
+                            )
+                        },
+                    state =
+                        remember(image.thumb.uri, presentation, shape) {
+                            ImageArgs(
+                                url = image.thumb.uri,
+                                contentDescription = image.alt,
+                                contentScale =
+                                    when (presentation) {
+                                        Timeline.Presentation.Media.Expanded -> ContentScale.Crop
+                                        Timeline.Presentation.Media.Grid -> ContentScale.Crop
+                                        Timeline.Presentation.Media.Condensed -> ContentScale.Crop
+                                        Timeline.Presentation.Text.WithEmbed -> ContentScale.Fit
+                                    },
+                                shape = shape,
+                            )
+                        },
                     sharedElement = { state, innerModifier ->
                         AsyncImage(
                             modifier = innerModifier,
@@ -154,12 +159,13 @@ internal fun PostImages(
 }
 
 private val Timeline.Presentation.imageShape
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
-        Timeline.Presentation.Media.Condensed -> CondensedShape
-        Timeline.Presentation.Media.Expanded -> ExpandedShape
-        Timeline.Presentation.Media.Grid -> GridShape
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+            Timeline.Presentation.Media.Condensed -> CondensedShape
+            Timeline.Presentation.Media.Expanded -> ExpandedShape
+            Timeline.Presentation.Media.Grid -> GridShape
+        }
 
 fun Image.sharedElementKey(
     prefix: String,

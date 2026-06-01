@@ -28,12 +28,11 @@ internal data class ProfileDataV0(
     // Need default for migration
     val writes: SavedState.Writes = SavedState.Writes(),
 ) {
-    fun asProfileData(
-        auth: SavedState.AuthTokens?,
-    ) = SavedState.ProfileData(
-        preferences = preferences.asPreferences(),
-        notifications = notifications,
-        writes = writes,
-        auth = auth,
-    )
+    fun asProfileData(auth: SavedState.AuthTokens?) =
+        SavedState.ProfileData(
+            preferences = preferences.asPreferences(),
+            notifications = notifications,
+            writes = writes,
+            auth = auth,
+        )
 }

@@ -27,18 +27,14 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Applies the [clip] [Modifier] and the [clickable] [Modifier].
+ *
  * @param shape the clip [Shape].
  * @param onClick the click action.
  */
 fun Modifier.shapedClickable(
     shape: Shape = DefaultClipShape,
     onClick: () -> Unit,
-) =
-    this
-        .then(clipped(shape))
-        .clickable(
-            onClick = onClick,
-        )
+) = this.then(clipped(shape)).clickable(onClick = onClick)
 
 fun Modifier.shapedCombinedClickable(
     shape: Shape = DefaultClipShape,
@@ -46,8 +42,7 @@ fun Modifier.shapedCombinedClickable(
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) =
-    this
-        .then(clipped(shape))
+    this.then(clipped(shape))
         .combinedClickable(
             onLongClickLabel = onLongClickLabel,
             onLongClick = onLongClick,
@@ -62,11 +57,12 @@ fun Modifier.shapedCombinedClickable(
 fun Modifier.rootShapedClickable(
     shape: Shape = DefaultClipShape,
     onClick: () -> Unit,
-) = Modifier.shapedClickable(
-    shape = shape,
-    onClick = onClick,
-)
-    .then(this)
+) =
+    Modifier.shapedClickable(
+            shape = shape,
+            onClick = onClick,
+        )
+        .then(this)
 
 private fun clipped(shape: Shape): Modifier =
     when (shape) {
@@ -77,8 +73,6 @@ private fun clipped(shape: Shape): Modifier =
 
 private val DefaultClipShape = RoundedCornerShape(8.dp)
 
-private val DefaultClipModifier = Modifier
-    .clip(DefaultClipShape)
+private val DefaultClipModifier = Modifier.clip(DefaultClipShape)
 
-private val CircleClipModifier = Modifier
-    .clip(CircleShape)
+private val CircleClipModifier = Modifier.clip(CircleShape)

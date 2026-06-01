@@ -47,7 +47,7 @@ internal fun MultipleEntitySaver.add(
                 sourceId = source.id,
                 itemSort = query.itemSortKey(index),
                 viewingProfileId = viewingProfileId,
-            ),
+            )
         )
 
         // Extract data from post
@@ -64,26 +64,28 @@ internal fun MultipleEntitySaver.add(
                     it.root.profileEntity()?.let(::add)
                     it.root.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
                 }
-                else -> add(
-                    viewingProfileId = viewingProfileId,
-                    postView = rootPostView,
-                )
-            }
-
-            val parentPostUri = when (val parentPostView = it.parent.postView()) {
-                null -> {
-                    it.parent.profileEntity()?.let(::add)
-                    it.parent.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
-                    it.parent.postEntity().also(::add).uri
-                }
-                else -> {
+                else ->
                     add(
                         viewingProfileId = viewingProfileId,
-                        postView = parentPostView,
+                        postView = rootPostView,
                     )
-                    parentPostView.uri.atUri.let(::PostUri)
-                }
             }
+
+            val parentPostUri =
+                when (val parentPostView = it.parent.postView()) {
+                    null -> {
+                        it.parent.profileEntity()?.let(::add)
+                        it.parent.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
+                        it.parent.postEntity().also(::add).uri
+                    }
+                    else -> {
+                        add(
+                            viewingProfileId = viewingProfileId,
+                            postView = parentPostView,
+                        )
+                        parentPostView.uri.atUri.let(::PostUri)
+                    }
+                }
 
             it.grandparentAuthor?.profileEntity()?.let(::add)
 
@@ -91,7 +93,7 @@ internal fun MultipleEntitySaver.add(
                 PostThreadEntity(
                     postUri = feedView.post.postEntity().uri,
                     parentPostUri = parentPostUri,
-                ),
+                )
             )
         }
     }
@@ -101,8 +103,7 @@ internal fun MultipleEntitySaver.add(
  * Allows up to [ITEM_SORT_BUFFER] items (333 pages, 30 items per page) before sorting logic breaks.
  * Safe from Long overflow for ~29,000 years.
  */
-private fun CursorQuery.itemSortKey(
-    index: Int,
-) = (data.cursorAnchor.toEpochMilliseconds() * ITEM_SORT_BUFFER) - (data.offset + index)
+private fun CursorQuery.itemSortKey(index: Int) =
+    (data.cursorAnchor.toEpochMilliseconds() * ITEM_SORT_BUFFER) - (data.offset + index)
 
 private const val ITEM_SORT_BUFFER = 10_000L

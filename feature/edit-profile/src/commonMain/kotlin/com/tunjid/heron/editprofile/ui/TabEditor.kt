@@ -70,75 +70,66 @@ fun TabEditor(
     onPinnedTabsChanged: (List<ProfileTab>) -> Unit,
 ) {
     LookaheadScope {
-        val tabEditorState = rememberTabEditorState(
-            tabs = editableTabs,
-            currentTabs = currentTabs,
-        )
-        Box(
-            modifier = modifier
-                .fillMaxSize(),
-        ) {
+        val tabEditorState =
+            rememberTabEditorState(
+                tabs = editableTabs,
+                currentTabs = currentTabs,
+            )
+        Box(modifier = modifier.fillMaxSize()) {
             FlowRow(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxHeight()
-                    .fillMaxRestrictedWidth(),
+                modifier =
+                    Modifier.align(Alignment.Center).fillMaxHeight().fillMaxRestrictedWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 val (pinned, saved) = tabEditorState.partitioned
 
                 key(Res.string.shown_tabs) {
                     SectionTitle(
-                        modifier = Modifier
-                            .animateBounds(
-                                lookaheadScope = this@LookaheadScope,
-                            ),
+                        modifier = Modifier.animateBounds(lookaheadScope = this@LookaheadScope),
                         title = stringResource(Res.string.shown_tabs),
                     )
                 }
                 pinned.forEach { tab ->
                     key(tab) {
-                        if (!tabEditorState.isDragged(tab)) TabChip(
-                            modifier = Modifier
-                                .animateBounds(lookaheadScope = this@LookaheadScope),
-                            tabEditorState = tabEditorState,
-                            tab = tab,
-                            feedUrisToFeeds = feedUrisToFeeds,
-                        )
+                        if (!tabEditorState.isDragged(tab))
+                            TabChip(
+                                modifier =
+                                    Modifier.animateBounds(lookaheadScope = this@LookaheadScope),
+                                tabEditorState = tabEditorState,
+                                tab = tab,
+                                feedUrisToFeeds = feedUrisToFeeds,
+                            )
                     }
                 }
                 key(Res.string.other_tabs) {
                     SectionTitle(
-                        modifier = Modifier
-                            .padding(top = 24.dp)
-                            .animateBounds(lookaheadScope = this@LookaheadScope),
+                        modifier =
+                            Modifier.padding(top = 24.dp)
+                                .animateBounds(lookaheadScope = this@LookaheadScope),
                         title = stringResource(Res.string.other_tabs),
                     )
                 }
                 saved.forEach { tab ->
                     key(tab) {
-                        if (!tabEditorState.isDragged(tab)) TabChip(
-                            modifier = Modifier
-                                .animateBounds(lookaheadScope = this@LookaheadScope),
-                            tabEditorState = tabEditorState,
-                            tab = tab,
-                            feedUrisToFeeds = feedUrisToFeeds,
-                        )
+                        if (!tabEditorState.isDragged(tab))
+                            TabChip(
+                                modifier =
+                                    Modifier.animateBounds(lookaheadScope = this@LookaheadScope),
+                                tabEditorState = tabEditorState,
+                                tab = tab,
+                                feedUrisToFeeds = feedUrisToFeeds,
+                            )
                     }
                 }
                 AnimatedVisibility(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                     visible = tabEditorState.shouldShowHint,
                 ) {
                     DropTargetBox(
-                        modifier = Modifier
-                            .tabEditorDropTarget(
-                                state = tabEditorState,
-                            )
-                            .padding(horizontal = 8.dp)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier.tabEditorDropTarget(state = tabEditorState)
+                                .padding(horizontal = 8.dp)
+                                .fillMaxWidth(),
                         isHovered = tabEditorState.isHintHovered,
                     )
                 }
@@ -158,11 +149,7 @@ private fun SectionTitle(
     title: String,
 ) {
     Text(
-        modifier = modifier
-            .padding(
-                vertical = 8.dp,
-            )
-            .fillMaxWidth(),
+        modifier = modifier.padding(vertical = 8.dp).fillMaxWidth(),
         text = title,
         style = MaterialTheme.typography.titleSmallEmphasized,
     )
@@ -175,34 +162,32 @@ private fun TabChip(
     tab: ProfileTab,
     feedUrisToFeeds: Map<FeedGeneratorUri, FeedGenerator>,
 ) {
-    JiggleBox(
-        modifier = modifier,
-    ) {
+    JiggleBox(modifier = modifier) {
         InputChip(
-            modifier = Modifier
-                .chipBackground(
-                    animateColorAsState(
-                        if (tabEditorState.isHoveredId(tab)) TabsState.TabBackgroundColor
-                        else Color.Transparent,
-                    )::value,
-                )
-                .tabEditorDragAndDrop(
-                    state = tabEditorState,
-                    tab = tab,
-                ),
+            modifier =
+                Modifier.chipBackground(
+                        animateColorAsState(
+                            if (tabEditorState.isHoveredId(tab)) TabsState.TabBackgroundColor
+                            else Color.Transparent
+                        )::value
+                    )
+                    .tabEditorDragAndDrop(
+                        state = tabEditorState,
+                        tab = tab,
+                    ),
             shape = CircleShape,
             selected = false,
-            onClick = {
-            },
+            onClick = {},
             label = {
                 Text(
-                    modifier = Modifier
-                        .width(IntrinsicSize.Max),
-                    text = when (tab) {
-                        is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> feedUrisToFeeds[tab.uri]?.displayName
-                            ?: stringResource(tab.stringResource)
-                        else -> stringResource(tab.stringResource)
-                    },
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                    text =
+                        when (tab) {
+                            is ProfileTab.Bluesky.FeedGenerators.FeedGenerator ->
+                                feedUrisToFeeds[tab.uri]?.displayName
+                                    ?: stringResource(tab.stringResource)
+                            else -> stringResource(tab.stringResource)
+                        },
                     maxLines = 1,
                 )
             },
@@ -216,23 +201,20 @@ private fun DropTargetBox(
     isHovered: Boolean,
 ) {
     Box(
-        modifier = modifier
-            .roundedBorder(
+        modifier =
+            modifier.roundedBorder(
                 isStroked = true,
                 cornerRadius = 8::dp,
-                borderColor = animateColorAsState(
-                    if (isHovered) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline,
-                )::value,
-                strokeWidth = animateDpAsState(
-                    if (isHovered) 4.dp
-                    else Dp.Hairline,
-                )::value,
-            ),
+                borderColor =
+                    animateColorAsState(
+                        if (isHovered) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.outline
+                    )::value,
+                strokeWidth = animateDpAsState(if (isHovered) 4.dp else Dp.Hairline)::value,
+            )
     ) {
         Text(
-            modifier = Modifier
-                .padding(vertical = 8.dp, horizontal = 16.dp),
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
             text = stringResource(Res.string.tab_drop_target_hint),
         )
     }

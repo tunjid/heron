@@ -29,37 +29,33 @@ import androidx.core.net.toUri
 import com.tunjid.heron.data.core.types.GenericUri
 
 @Composable
-actual fun rememberOauthFlowState(
-    onResult: (OauthFlowResult) -> Unit,
-): OauthFlowState {
-    val launcher = rememberLauncherForActivityResult(
-        contract = AtProtoOauthContract(),
-        onResult = onResult,
-    )
+actual fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState {
+    val launcher =
+        rememberLauncherForActivityResult(
+            contract = AtProtoOauthContract(),
+            onResult = onResult,
+        )
 
     return remember(launcher) {
-        ChromeAuthTabOauthFlowState(
-            activityResultLauncher = launcher,
-        )
+        ChromeAuthTabOauthFlowState(activityResultLauncher = launcher)
     }
 }
 
 private class ChromeAuthTabOauthFlowState(
-    private val activityResultLauncher: ActivityResultLauncher<GenericUri>,
+    private val activityResultLauncher: ActivityResultLauncher<GenericUri>
 ) : OauthFlowState {
 
     override val supportsOauth: Boolean
         get() = true
 
-    override fun launch(uri: GenericUri) =
-        activityResultLauncher.launch(uri)
+    override fun launch(uri: GenericUri) = activityResultLauncher.launch(uri)
 }
 
 /**
  * An ActivityResultContract to launch a Chrome Custom Tab and parse the result.
  *
- * This contract takes a URL string as input and returns the redirected URL string
- * as output, which is received in the onNewIntent of the handling activity.
+ * This contract takes a URL string as input and returns the redirected URL string as output, which
+ * is received in the onNewIntent of the handling activity.
  */
 private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlowResult>() {
 
@@ -84,9 +80,9 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
     /**
      * Parses the result from the Activity.
      *
-     * In this OAuth flow, the result is delivered via a new Intent to the Activity,
-     * not through the standard onActivityResult. Therefore, we expect the intent
-     * from onNewIntent to be passed here.
+     * In this OAuth flow, the result is delivered via a new Intent to the Activity, not through the
+     * standard onActivityResult. Therefore, we expect the intent from onNewIntent to be passed
+     * here.
      *
      * @param resultCode The result code from the activity (not typically used in this flow).
      * @param intent The intent received by the activity, which should contain the redirect URI.
@@ -95,19 +91,23 @@ private class AtProtoOauthContract : ActivityResultContract<GenericUri, OauthFlo
     override fun parseResult(
         resultCode: Int,
         intent: Intent?,
-    ): OauthFlowResult = when (resultCode) {
-        Activity.RESULT_OK -> when (val callbackUri = intent?.data) {
-            null -> OauthFlowResult.Failure
-            else -> when (val issuer = intent.data?.getQueryParameter(OauthIssuerKey)) {
-                null -> OauthFlowResult.Failure
-                else -> OauthFlowResult.Success(
-                    callbackUri = GenericUri(callbackUri.toString()),
-                    issuer = issuer,
-                )
-            }
+    ): OauthFlowResult =
+        when (resultCode) {
+            Activity.RESULT_OK ->
+                when (val callbackUri = intent?.data) {
+                    null -> OauthFlowResult.Failure
+                    else ->
+                        when (val issuer = intent.data?.getQueryParameter(OauthIssuerKey)) {
+                            null -> OauthFlowResult.Failure
+                            else ->
+                                OauthFlowResult.Success(
+                                    callbackUri = GenericUri(callbackUri.toString()),
+                                    issuer = issuer,
+                                )
+                        }
+                }
+            else -> OauthFlowResult.Failure
         }
-        else -> OauthFlowResult.Failure
-    }
 }
 
 private const val OauthIssuerKey = "iss"

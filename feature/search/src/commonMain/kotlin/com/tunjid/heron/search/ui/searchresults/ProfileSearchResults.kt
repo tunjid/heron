@@ -65,11 +65,12 @@ internal fun AutoCompleteProfileSearchResults(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-            horizontal = 16.dp,
-            isCompact = paneTransitionScope.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                horizontal = 16.dp,
+                isCompact = paneTransitionScope.prefersCompactBottomNav,
+            ),
     ) {
         items(
             items = results,
@@ -102,10 +103,11 @@ internal fun ProfileSearchResults(
         modifier = modifier,
         state = listState,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
     ) {
         items(
             items = results,
@@ -126,10 +128,9 @@ internal fun ProfileSearchResults(
         onQueryChanged = { query ->
             searchResultActions(
                 SearchState.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )
@@ -143,70 +144,65 @@ private fun ProfileSearchResult(
     sharedElementPrefix: String,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
-) = with(paneTransitionScope) {
-    AttributionLayout(
-        modifier = Modifier
-            .shapedClickable {
-                onProfileClicked(
-                    result.profileWithViewerState.profile,
-                    sharedElementPrefix,
+) =
+    with(paneTransitionScope) {
+        AttributionLayout(
+            modifier =
+                Modifier.shapedClickable {
+                    onProfileClicked(
+                        result.profileWithViewerState.profile,
+                        sharedElementPrefix,
+                    )
+                },
+            avatar = {
+                UpdatedMovableStickySharedElementOf(
+                    modifier =
+                        Modifier.size(UiTokens.avatarSize).shapedClickable(CircleShape) {
+                            onProfileClicked(
+                                result.profileWithViewerState.profile,
+                                sharedElementPrefix,
+                            )
+                        },
+                    sharedContentState =
+                        with(paneTransitionScope) {
+                            rememberSharedContentState(
+                                key =
+                                    result.profileWithViewerState.profile.avatarSharedElementKey(
+                                        sharedElementPrefix
+                                    )
+                            )
+                        },
+                    state =
+                        remember(result.profileWithViewerState.profile.avatar) {
+                            ImageArgs(
+                                url = result.profileWithViewerState.profile.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription =
+                                    result.profileWithViewerState.profile.contentDescription,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
+                    sharedElement = { state, modifier ->
+                        AsyncImage(state, modifier)
+                    },
                 )
             },
-        avatar = {
-            UpdatedMovableStickySharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .shapedClickable(CircleShape) {
-                        onProfileClicked(
-                            result.profileWithViewerState.profile,
-                            sharedElementPrefix,
-                        )
-                    },
-                sharedContentState = with(paneTransitionScope) {
-                    rememberSharedContentState(
-                        key = result.profileWithViewerState
-                            .profile
-                            .avatarSharedElementKey(sharedElementPrefix),
-                    )
-                },
-                state = remember(result.profileWithViewerState.profile.avatar) {
-                    ImageArgs(
-                        url = result.profileWithViewerState.profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = result.profileWithViewerState.profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                },
-            )
-        },
-        label = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                ProfileName(
-                    profile = result.profileWithViewerState.profile,
+            label = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    ProfileName(profile = result.profileWithViewerState.profile)
+                    ProfileHandle(profile = result.profileWithViewerState.profile)
+                }
+            },
+            action = {
+                ProfileViewerState(
+                    viewerState = result.profileWithViewerState.viewerState,
+                    isSignedInProfile = false,
+                    onClick = { onViewerStateClicked(result) },
                 )
-                ProfileHandle(
-                    profile = result.profileWithViewerState.profile,
-                )
-            }
-        },
-        action = {
-            ProfileViewerState(
-                viewerState = result.profileWithViewerState.viewerState,
-                isSignedInProfile = false,
-                onClick = { onViewerStateClicked(result) },
-            )
-        },
-    )
-}
+            },
+        )
+    }
 
-internal fun Profile.avatarSharedElementKey(
-    prefix: String,
-): String =
-    "$prefix-${did.id}"
+internal fun Profile.avatarSharedElementKey(prefix: String): String = "$prefix-${did.id}"
 
 private const val AutoCompleteProfilesSharedElementPrefix = "search-profile-auto-complete-results"

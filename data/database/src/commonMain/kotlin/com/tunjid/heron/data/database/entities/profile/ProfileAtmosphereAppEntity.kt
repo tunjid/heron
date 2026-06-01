@@ -24,32 +24,35 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
     tableName = "profileAtmosphereApps",
-    primaryKeys = [
-        "profileId",
-        "atmosphereAppId",
-        "viewingProfileId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["profileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["viewingProfileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["profileId"]),
-        Index(value = ["viewingProfileId"]),
-        Index(value = ["atmosphereAppId"]),
-    ],
+    primaryKeys =
+        [
+            "profileId",
+            "atmosphereAppId",
+            "viewingProfileId",
+        ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["profileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["viewingProfileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["profileId"]),
+            Index(value = ["viewingProfileId"]),
+            Index(value = ["atmosphereAppId"]),
+        ],
 )
 data class ProfileAtmosphereAppEntity(
     val profileId: ProfileId,

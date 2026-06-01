@@ -54,37 +54,41 @@ fun PaneScaffoldState.AppLogo(
         sharedElement = { currentPresentation, innerModifier ->
             // Keep this in composition so it transitions
             // smoothly from the splash animation
-            val backLogoAnimation = rememberBackLogoAnimation(
-                isArrow = currentPresentation is LogoPresentation.Destination.Poppable,
-            )
-            val animation = when (currentPresentation) {
-                is LogoPresentation.Destination -> backLogoAnimation
-                is LogoPresentation.Splash -> rememberSplashLogoAnimation()
-            }
+            val backLogoAnimation =
+                rememberBackLogoAnimation(
+                    isArrow = currentPresentation is LogoPresentation.Destination.Poppable
+                )
+            val animation =
+                when (currentPresentation) {
+                    is LogoPresentation.Destination -> backLogoAnimation
+                    is LogoPresentation.Splash -> rememberSplashLogoAnimation()
+                }
             Canvas(
-                modifier = innerModifier
-                    // Always draw logo in a square
-                    .aspectRatio(1f)
-                    .graphicsLayer {
-                        if (currentPresentation !is LogoPresentation.Destination.Root) return@graphicsLayer
+                modifier =
+                    innerModifier
+                        // Always draw logo in a square
+                        .aspectRatio(1f)
+                        .graphicsLayer {
+                            if (currentPresentation !is LogoPresentation.Destination.Root)
+                                return@graphicsLayer
 
-                        val animationProgress = backLogoAnimation.progress()
-                        // Apply the blur until the transition stops
-                        if (animationProgress == 0f && !isTransitionActive) return@graphicsLayer
+                            val animationProgress = backLogoAnimation.progress()
+                            // Apply the blur until the transition stops
+                            if (animationProgress == 0f && !isTransitionActive) return@graphicsLayer
 
-                        blurEffect(
-                            shape = CircleShape,
-                            radius = UiTokens::appBarBlurRadius,
-                            clip = { false },
-                            progress = {
-                                lerp(
-                                    start = 0f,
-                                    stop = currentPresentation.blurProgress(),
-                                    fraction = 1f - animationProgress,
-                                )
-                            },
-                        )
-                    },
+                            blurEffect(
+                                shape = CircleShape,
+                                radius = UiTokens::appBarBlurRadius,
+                                clip = { false },
+                                progress = {
+                                    lerp(
+                                        start = 0f,
+                                        stop = currentPresentation.blurProgress(),
+                                        fraction = 1f - animationProgress,
+                                    )
+                                },
+                            )
+                        }
             ) {
                 val scaleX = LogoAspectRatio * size.width / LogoViewportWidth
                 val scaleY = size.height / LogoViewportHeight
@@ -92,9 +96,7 @@ fun PaneScaffoldState.AppLogo(
                 val width = size.width
                 val actualWidth = LogoViewportWidth * scaleX
 
-                translate(
-                    left = (width - actualWidth) / 2,
-                ) {
+                translate(left = (width - actualWidth) / 2) {
                     scale(
                         scaleX = scaleX,
                         scaleY = scaleY,
@@ -115,89 +117,85 @@ fun PaneScaffoldState.AppLogo(
 @Stable
 sealed class LogoPresentation {
     data object Splash : LogoPresentation()
+
     sealed class Destination : LogoPresentation() {
-        @Stable
-        class Root(
-            val blurProgress: () -> Float = { 0f },
-        ) : Destination()
+        @Stable class Root(val blurProgress: () -> Float = { 0f }) : Destination()
 
         data object Poppable : Destination()
     }
 }
 
 internal sealed interface LogoAnimation {
-    fun DrawScope.drawPart(
-        part: HeronPart,
-    )
+    fun DrawScope.drawPart(part: HeronPart)
 }
 
-/**
- * Class to hold the path definitions so they aren't reconstructed every frame.
- */
-internal enum class HeronPart(
-    val path: Path,
-) {
+/** Class to hold the path definitions so they aren't reconstructed every frame. */
+internal enum class HeronPart(val path: Path) {
     Head(
-        path = Path().apply {
-            fillType = PathFillType.EvenOdd
-            moveTo(11.1272f, 6.5483f)
-            lineTo(16.4585f, 6.5404f)
-            lineTo(20.9436f, 6.5404f)
-            cubicTo(21.27770f, 4.64660f, 20.60420f, 2.19050f, 19.09240f, 1.03610f)
-            cubicTo(17.70120f, -0.02670f, 15.75990f, -0.29810f, 14.13780f, 0.34340f)
-            cubicTo(12.25280f, 1.0890f, 10.77490f, 2.77830f, 9.2570f, 4.15920f)
-            lineTo(11.1272f, 6.5483f)
-            close()
-        },
+        path =
+            Path().apply {
+                fillType = PathFillType.EvenOdd
+                moveTo(11.1272f, 6.5483f)
+                lineTo(16.4585f, 6.5404f)
+                lineTo(20.9436f, 6.5404f)
+                cubicTo(21.27770f, 4.64660f, 20.60420f, 2.19050f, 19.09240f, 1.03610f)
+                cubicTo(17.70120f, -0.02670f, 15.75990f, -0.29810f, 14.13780f, 0.34340f)
+                cubicTo(12.25280f, 1.0890f, 10.77490f, 2.77830f, 9.2570f, 4.15920f)
+                lineTo(11.1272f, 6.5483f)
+                close()
+            }
     ),
     Beak(
-        path = Path().apply {
-            fillType = PathFillType.EvenOdd
-            moveTo(0f, 12.0766f)
-            relativeLineTo(1.3261f, 1.7184f)
-            relativeLineTo(9.8007f, -7.2465f)
-            relativeLineTo(-1.8694f, -2.3891f)
-            close()
-        },
+        path =
+            Path().apply {
+                fillType = PathFillType.EvenOdd
+                moveTo(0f, 12.0766f)
+                relativeLineTo(1.3261f, 1.7184f)
+                relativeLineTo(9.8007f, -7.2465f)
+                relativeLineTo(-1.8694f, -2.3891f)
+                close()
+            }
     ),
     Body(
-        path = Path().apply {
-            fillType = PathFillType.EvenOdd
-            moveTo(13.4049f, 14.2816f)
-            lineTo(13.4119f, 14.2755f)
-            cubicTo(13.41190f, 14.27550f, 20.63680f, 7.87230f, 20.94310f, 6.54070f)
-            lineTo(16.4632f, 6.5407f)
-            lineTo(16.4632f, 6.5407f)
-            lineTo(16.458f, 6.5407f)
-            lineTo(5.8086f, 15.615f)
-            lineTo(5.8138f, 15.622f)
-            cubicTo(4.00430f, 17.10430f, 2.06120f, 19.55940f, 2.06120f, 22.10450f)
-            cubicTo(2.06120f, 25.91590f, 5.44320f, 28.92270f, 8.93890f, 29.77750f)
-            lineTo(29.6347f, 37.4259f)
-            lineTo(29.6365f, 37.4215f)
-            lineTo(34.7143f, 39.6043f)
-            cubicTo(30.70480f, 29.20030f, 22.97650f, 19.83350f, 13.40490f, 14.28160f)
-            moveTo(12.8859f, 9.589f)
-            lineTo(12.8859f, 9.589f)
-            cubicTo(12.88510f, 9.58810f, 12.88420f, 9.58810f, 12.88420f, 9.58720f)
-            cubicTo(12.88420f, 9.58810f, 12.88510f, 9.58810f, 12.88590f, 9.5890f)
-            moveTo(8.6846f, 25.4709f)
-            cubicTo(7.68230f, 24.89450f, 6.94720f, 23.86080f, 6.72420f, 22.71340f)
-            cubicTo(6.50110f, 21.56690f, 6.79530f, 20.3270f, 7.5070f, 19.40790f)
-            cubicTo(8.2360f, 18.46580f, 8.91290f, 17.86480f, 10.22420f, 17.49910f)
-            cubicTo(16.88330f, 21.07340f, 23.36790f, 26.84830f, 27.45810f, 33.15710f)
-            cubicTo(27.45810f, 33.15710f, 9.11340f, 25.71760f, 8.68460f, 25.47090f)
-        },
+        path =
+            Path().apply {
+                fillType = PathFillType.EvenOdd
+                moveTo(13.4049f, 14.2816f)
+                lineTo(13.4119f, 14.2755f)
+                cubicTo(13.41190f, 14.27550f, 20.63680f, 7.87230f, 20.94310f, 6.54070f)
+                lineTo(16.4632f, 6.5407f)
+                lineTo(16.4632f, 6.5407f)
+                lineTo(16.458f, 6.5407f)
+                lineTo(5.8086f, 15.615f)
+                lineTo(5.8138f, 15.622f)
+                cubicTo(4.00430f, 17.10430f, 2.06120f, 19.55940f, 2.06120f, 22.10450f)
+                cubicTo(2.06120f, 25.91590f, 5.44320f, 28.92270f, 8.93890f, 29.77750f)
+                lineTo(29.6347f, 37.4259f)
+                lineTo(29.6365f, 37.4215f)
+                lineTo(34.7143f, 39.6043f)
+                cubicTo(30.70480f, 29.20030f, 22.97650f, 19.83350f, 13.40490f, 14.28160f)
+                moveTo(12.8859f, 9.589f)
+                lineTo(12.8859f, 9.589f)
+                cubicTo(12.88510f, 9.58810f, 12.88420f, 9.58810f, 12.88420f, 9.58720f)
+                cubicTo(12.88420f, 9.58810f, 12.88510f, 9.58810f, 12.88590f, 9.5890f)
+                moveTo(8.6846f, 25.4709f)
+                cubicTo(7.68230f, 24.89450f, 6.94720f, 23.86080f, 6.72420f, 22.71340f)
+                cubicTo(6.50110f, 21.56690f, 6.79530f, 20.3270f, 7.5070f, 19.40790f)
+                cubicTo(8.2360f, 18.46580f, 8.91290f, 17.86480f, 10.22420f, 17.49910f)
+                cubicTo(16.88330f, 21.07340f, 23.36790f, 26.84830f, 27.45810f, 33.15710f)
+                cubicTo(27.45810f, 33.15710f, 9.11340f, 25.71760f, 8.68460f, 25.47090f)
+            }
     ),
     Legs(
-        path = Path().apply {
-            fillType = PathFillType.EvenOdd
-            moveTo(14.625f, 47.9987f)
-            relativeLineTo(3.6285f, 0f)
-            relativeLineTo(0f, -28.8737f)
-            relativeLineTo(-3.6285f, 0f)
-            close()
-        },
+        path =
+            Path().apply {
+                fillType = PathFillType.EvenOdd
+                moveTo(14.625f, 47.9987f)
+                relativeLineTo(3.6285f, 0f)
+                relativeLineTo(0f, -28.8737f)
+                relativeLineTo(-3.6285f, 0f)
+                close()
+            }
     ),
 }
 

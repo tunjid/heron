@@ -19,6 +19,7 @@ plugins {
     id("ui-module-convention")
     id("com.tunjid.snapshottable")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.ui.tiling"

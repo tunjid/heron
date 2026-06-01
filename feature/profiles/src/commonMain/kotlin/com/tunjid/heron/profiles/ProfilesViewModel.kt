@@ -68,11 +68,10 @@ class ActualProfilesViewModel(
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -86,21 +85,25 @@ class ActualProfilesViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.Tile -> action.flow.launchProfilesLoadMutations(
-                        state = state,
-                        load = route.load,
-                        postRepository = postRepository,
-                        profileRepository = profileRepository,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
+                    is Action.Tile ->
+                        action.flow.launchProfilesLoadMutations(
+                            state = state,
+                            load = route.load,
+                            postRepository = postRepository,
+                            profileRepository = profileRepository,
+                            recordRepository = recordRepository,
+                        )
+                    is Action.ToggleViewerState ->
+                        action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.Navigate ->
+                        action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
                 }
             }
         },
@@ -110,9 +113,10 @@ context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
-    state.signedInProfileId = it?.did
-}
+) =
+    authRepository.signedInUser.launchAndCollect {
+        state.signedInProfileId = it?.did
+    }
 
 context(productionScope: CoroutineScope)
 internal fun Flow<Action.Tile>.launchProfilesLoadMutations(
@@ -121,88 +125,92 @@ internal fun Flow<Action.Tile>.launchProfilesLoadMutations(
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
-) = map { it.tilingAction }
-    .launchTilingMutations(
-        state = state,
-        updateQueryData = {
-            when (this) {
-                is PostDataQuery -> copy(data = it)
-                is ProfilesQuery -> copy(data = it)
-                is DataQuery -> copy(data = it)
-                else -> throw IllegalArgumentException("Invalid query")
-            }
-        },
-        refreshQuery = {
-            when (this) {
-                is PostDataQuery -> copy(data = data.reset())
-                is ProfilesQuery -> copy(data = data.reset())
-                is DataQuery -> copy(data = data.reset())
-                else -> throw IllegalArgumentException("Invalid query")
-            }
-        },
-        cursorListLoader = { query, cursor ->
-            when (load) {
-                is Load.Post.Likes -> {
-                    check(query is PostDataQuery)
-                    postRepository.likedBy(query, cursor)
+) =
+    map { it.tilingAction }
+        .launchTilingMutations(
+            state = state,
+            updateQueryData = {
+                when (this) {
+                    is PostDataQuery -> copy(data = it)
+                    is ProfilesQuery -> copy(data = it)
+                    is DataQuery -> copy(data = it)
+                    else -> throw IllegalArgumentException("Invalid query")
                 }
-                is Load.Post.Reposts -> {
-                    check(query is PostDataQuery)
-                    postRepository.repostedBy(query, cursor)
+            },
+            refreshQuery = {
+                when (this) {
+                    is PostDataQuery -> copy(data = data.reset())
+                    is ProfilesQuery -> copy(data = data.reset())
+                    is DataQuery -> copy(data = data.reset())
+                    else -> throw IllegalArgumentException("Invalid query")
                 }
-                is Load.Profile.Followers -> {
-                    check(query is ProfilesQuery)
-                    profileRepository.followers(query, cursor)
+            },
+            cursorListLoader = { query, cursor ->
+                when (load) {
+                    is Load.Post.Likes -> {
+                        check(query is PostDataQuery)
+                        postRepository.likedBy(query, cursor)
+                    }
+                    is Load.Post.Reposts -> {
+                        check(query is PostDataQuery)
+                        postRepository.repostedBy(query, cursor)
+                    }
+                    is Load.Profile.Followers -> {
+                        check(query is ProfilesQuery)
+                        profileRepository.followers(query, cursor)
+                    }
+                    is Load.Profile.Following -> {
+                        check(query is ProfilesQuery)
+                        profileRepository.following(query, cursor)
+                    }
+                    is Load.Moderation.Blocks -> {
+                        check(query is DataQuery)
+                        recordRepository.blocks(query, cursor)
+                    }
+                    is Load.Moderation.Mutes -> {
+                        check(query is DataQuery)
+                        profileRepository.mutes(query, cursor)
+                    }
                 }
-                is Load.Profile.Following -> {
-                    check(query is ProfilesQuery)
-                    profileRepository.following(query, cursor)
-                }
-                is Load.Moderation.Blocks -> {
-                    check(query is DataQuery)
-                    recordRepository.blocks(query, cursor)
-                }
-                is Load.Moderation.Mutes -> {
-                    check(query is DataQuery)
-                    profileRepository.mutes(query, cursor)
-                }
-            }
-        },
-        onNewItems = { profiles -> profiles.distinctBy { it.profile.did } },
-    )
+            },
+            onNewItems = { profiles -> profiles.distinctBy { it.profile.did } },
+        )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        Writable.Connection(
-            when (val following = action.following) {
-                null -> Profile.Connection.Follow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followedBy = action.followedBy,
-                )
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.Connection(
+                when (val following = action.following) {
+                    null ->
+                        Profile.Connection.Follow(
+                            signedInProfileId = action.signedInProfileId,
+                            profileId = action.viewedProfileId,
+                            followedBy = action.followedBy,
+                        )
 
-                else -> Profile.Connection.Unfollow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followUri = following,
-                    followedBy = action.followedBy,
-                )
-            },
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+                    else ->
+                        Profile.Connection.Unfollow(
+                            signedInProfileId = action.signedInProfileId,
+                            profileId = action.viewedProfileId,
+                            followUri = following,
+                            followedBy = action.followedBy,
+                        )
+                }
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }

@@ -18,9 +18,7 @@ import ext.libs
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-fun Project.configureFeatureModule(
-    extension: KotlinMultiplatformExtension,
-) = extension.apply {
+fun Project.configureFeatureModule(extension: KotlinMultiplatformExtension) = extension.apply {
     sourceSets.apply {
         named("commonMain") {
             dependencies {

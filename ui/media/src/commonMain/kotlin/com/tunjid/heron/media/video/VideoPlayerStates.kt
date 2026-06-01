@@ -23,38 +23,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * A Compose state holder for managing [VideoPlayerState] instances across
- * platform-specific [VideoPlayerController] implementations.
+ * A Compose state holder for managing [VideoPlayerState] instances across platform-specific
+ * [VideoPlayerController] implementations.
  *
- * Encapsulates the common state management pattern shared by all controllers:
- * the map of registered states, the active video ID, and eviction of old states
- * when the maximum capacity is reached.
+ * Encapsulates the common state management pattern shared by all controllers: the map of registered
+ * states, the active video ID, and eviction of old states when the maximum capacity is reached.
  */
 @Stable
-class VideoPlayerStates<S : VideoPlayerState>(
-    private val onEvicted: (S) -> Unit = {},
-) {
+class VideoPlayerStates<S : VideoPlayerState>(private val onEvicted: (S) -> Unit = {}) {
     private val idsToStates = mutableStateMapOf<String, S>()
 
     var isMuted: Boolean by mutableStateOf(true)
 
     var activeVideoId: String by mutableStateOf("")
 
-    val activeState: S? get() = idsToStates[activeVideoId]
+    val activeState: S?
+        get() = idsToStates[activeVideoId]
 
     operator fun get(videoId: String): S? = idsToStates[videoId]
 
     /**
-     * Returns existing state for [videoId] if registered, otherwise calls [create]
-     * after trimming evicted states. The [onEvicted] callback passed at construction
-     * is invoked for each state removed during trim, allowing platforms to dispose
-     * native resources.
+     * Returns existing state for [videoId] if registered, otherwise calls [create] after trimming
+     * evicted states. The [onEvicted] callback passed at construction is invoked for each state
+     * removed during trim, allowing platforms to dispose native resources.
      */
     fun registerOrGet(
         videoId: String,
         create: () -> S,
     ): S {
-        idsToStates[videoId]?.let { return it }
+        idsToStates[videoId]?.let {
+            return it
+        }
         trim()
         return create().also { idsToStates[videoId] = it }
     }

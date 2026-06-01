@@ -36,9 +36,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun rememberEditProfileTabs(
-    tabs: List<EditProfileScreenTabs>,
-) = tabs.map {
+fun rememberEditProfileTabs(tabs: List<EditProfileScreenTabs>) = tabs.map {
     Tab(title = stringResource(it.stringResource), hasUpdate = false)
 }
 
@@ -50,26 +48,23 @@ fun EditProfileTabs(
 ) {
     val scope = rememberCoroutineScope()
     Row(
-        modifier = modifier
-            .clip(CircleShape),
+        modifier = modifier.clip(CircleShape),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tabs(
-            modifier = Modifier
-                .animateContentSize()
-                .weight(1f)
-                .clip(CircleShape),
-            tabsState = rememberTabsState(
-                tabs = tabs,
-                selectedTabIndex = pagerState::tabIndex,
-                onTabSelected = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(it)
-                    }
-                },
-                onTabReselected = {},
-            ),
+            modifier = Modifier.animateContentSize().weight(1f).clip(CircleShape),
+            tabsState =
+                rememberTabsState(
+                    tabs = tabs,
+                    selectedTabIndex = pagerState::tabIndex,
+                    onTabSelected = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(it)
+                        }
+                    },
+                    onTabReselected = {},
+                ),
         )
     }
 }

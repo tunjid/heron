@@ -30,22 +30,25 @@ fun Modifier.roundedBorder(
     cornerRadius: () -> Dp,
     strokeWidth: () -> Dp,
 ) = drawWithCache {
-    val style = Stroke(
-        width = strokeWidth().toPx(),
-        pathEffect =
-        if (isStroked) PathEffect.dashPathEffect(
-            intervals = floatArrayOf(10f, 10f), // Dash length and gap length
-            phase = 0f, // Optional: offset for the dash pattern
+    val style =
+        Stroke(
+            width = strokeWidth().toPx(),
+            pathEffect =
+                if (isStroked)
+                    PathEffect.dashPathEffect(
+                        intervals = floatArrayOf(10f, 10f), // Dash length and gap length
+                        phase = 0f, // Optional: offset for the dash pattern
+                    )
+                else null,
         )
-        else null,
-    )
     onDrawBehind {
         val radius = cornerRadius()
         drawRoundRect(
-            cornerRadius = CornerRadius(
-                x = radius.toPx(),
-                y = radius.toPx(),
-            ),
+            cornerRadius =
+                CornerRadius(
+                    x = radius.toPx(),
+                    y = radius.toPx(),
+                ),
             color = borderColor(),
             style = style,
         )

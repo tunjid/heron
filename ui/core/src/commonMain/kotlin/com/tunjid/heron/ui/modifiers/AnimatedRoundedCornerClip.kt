@@ -31,13 +31,11 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 
-fun Modifier.animatedRoundedCornerClip(
-    cornerRadius: Dp,
-): Modifier = this then AnimatedRoundedCornerClipElement(cornerRadius)
+fun Modifier.animatedRoundedCornerClip(cornerRadius: Dp): Modifier =
+    this then AnimatedRoundedCornerClipElement(cornerRadius)
 
-private data class AnimatedRoundedCornerClipElement(
-    val cornerRadius: Dp,
-) : ModifierNodeElement<AnimatedRoundedCornerClipNode>() {
+private data class AnimatedRoundedCornerClipElement(val cornerRadius: Dp) :
+    ModifierNodeElement<AnimatedRoundedCornerClipNode>() {
 
     override fun create(): AnimatedRoundedCornerClipNode =
         AnimatedRoundedCornerClipNode(cornerRadius)
@@ -53,23 +51,20 @@ private data class AnimatedRoundedCornerClipElement(
 }
 
 // 2. The Node: Holds state (Animatable) and logic (Draw)
-private class AnimatedRoundedCornerClipNode(
-    var cornerRadius: Dp,
-) : Modifier.Node(),
-    DrawModifierNode {
+private class AnimatedRoundedCornerClipNode(var cornerRadius: Dp) :
+    Modifier.Node(), DrawModifierNode {
 
     // We replace animateDpAsState with Animatable.
     // We initialize it immediately based on the initial 'isRounded' value.
-    private val clipRadius = Animatable(
-        initialValue = cornerRadius,
-        typeConverter = Dp.VectorConverter,
-    )
+    private val clipRadius =
+        Animatable(
+            initialValue = cornerRadius,
+            typeConverter = Dp.VectorConverter,
+        )
 
     private val path = Path()
 
-    fun update(
-        targetRadius: Dp,
-    ) {
+    fun update(targetRadius: Dp) {
         if (cornerRadius == targetRadius) return
 
         cornerRadius = targetRadius
@@ -99,7 +94,7 @@ private class AnimatedRoundedCornerClipNode(
                 right = size.width,
                 bottom = size.height,
                 cornerRadius = CornerRadius(radiusPx),
-            ),
+            )
         )
         clipPath(path) {
             this@draw.drawContent()

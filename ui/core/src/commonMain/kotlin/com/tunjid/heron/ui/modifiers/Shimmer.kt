@@ -35,15 +35,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.translate
 
-fun Modifier.shimmer(
-    state: ShimmerState,
-): Modifier = drawWithCache {
-    val brush = Brush.linearGradient(
-        colors = state.colors,
-        start = Offset.Zero,
-        end = Offset(size.width, size.height),
-        tileMode = TileMode.Clamp,
-    )
+fun Modifier.shimmer(state: ShimmerState): Modifier = drawWithCache {
+    val brush =
+        Brush.linearGradient(
+            colors = state.colors,
+            start = Offset.Zero,
+            end = Offset(size.width, size.height),
+            tileMode = TileMode.Clamp,
+        )
 
     val travelDistance = size.width * 2
 
@@ -52,10 +51,11 @@ fun Modifier.shimmer(
         translate(left = currentOffset) {
             drawRect(
                 brush = brush,
-                topLeft = Offset(
-                    x = -currentOffset,
-                    y = 0f,
-                ),
+                topLeft =
+                    Offset(
+                        x = -currentOffset,
+                        y = 0f,
+                    ),
                 size = size,
             )
         }
@@ -63,7 +63,8 @@ fun Modifier.shimmer(
 }
 
 @Immutable
-class ShimmerState internal constructor(
+class ShimmerState
+internal constructor(
     internal val colors: List<Color>,
     private val progressState: State<Float>,
 ) {
@@ -73,30 +74,34 @@ class ShimmerState internal constructor(
     companion object {
         @Composable
         fun rememberShimmerState(
-            colors: List<Color> = MaterialTheme.colorScheme.let { colorScheme ->
-                remember(colorScheme) {
-                    listOf(
-                        colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
-                        colorScheme.surfaceContainerHighest.copy(alpha = 0.2f),
-                        colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
-                    )
-                }
-            },
+            colors: List<Color> =
+                MaterialTheme.colorScheme.let { colorScheme ->
+                    remember(colorScheme) {
+                        listOf(
+                            colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                            colorScheme.surfaceContainerHighest.copy(alpha = 0.2f),
+                            colorScheme.surfaceContainerHighest.copy(alpha = 0.6f),
+                        )
+                    }
+                },
             durationMillis: Int = DefaultShimmerDurationMillis,
         ): ShimmerState {
             val transition = rememberInfiniteTransition(label = "shimmer")
-            val progressState = transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(
-                        durationMillis = durationMillis,
-                        easing = LinearEasing,
-                    ),
-                    repeatMode = RepeatMode.Restart,
-                ),
-                label = "ShimmerProgress",
-            )
+            val progressState =
+                transition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec =
+                        infiniteRepeatable(
+                            animation =
+                                tween(
+                                    durationMillis = durationMillis,
+                                    easing = LinearEasing,
+                                ),
+                            repeatMode = RepeatMode.Restart,
+                        ),
+                    label = "ShimmerProgress",
+                )
 
             return remember(colors, progressState) {
                 ShimmerState(

@@ -37,21 +37,16 @@ fun LabelerState(
     isSubscribed: Boolean,
     onClick: () -> Unit,
 ) {
-    val followStatusText = stringResource(
-        if (isSubscribed) Res.string.subscribed
-        else Res.string.subscribe,
-    )
+    val followStatusText =
+        stringResource(if (isSubscribed) Res.string.subscribed else Res.string.subscribe)
     FilterChip(
-        modifier = Modifier
-            .animateContentSize(),
+        modifier = Modifier.animateContentSize(),
         selected = isSubscribed,
         onClick = onClick,
         shape = FollowChipShape,
         leadingIcon = {
             Icon(
-                imageVector =
-                if (isSubscribed) Icons.Rounded.Check
-                else Icons.Rounded.Add,
+                imageVector = if (isSubscribed) Icons.Rounded.Check else Icons.Rounded.Add,
                 contentDescription = followStatusText,
             )
         },

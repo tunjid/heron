@@ -15,24 +15,25 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "rockskyAlbums",
-    foreignKeys = [
-        ForeignKey(
-            entity = RockskyArtistEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["artistUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["artistUri"]),
-        Index(value = ["creatorId"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = RockskyArtistEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["artistUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["artistUri"]),
+            Index(value = ["creatorId"]),
+        ],
 )
 data class RockskyAlbumEntity(
-    @PrimaryKey
-    val uri: AlbumUri,
+    @PrimaryKey val uri: AlbumUri,
     val cid: AlbumId,
     val creatorId: ProfileId,
     val title: String,
@@ -50,8 +51,7 @@ data class RockskyAlbumEntity(
 )
 
 data class PopulatedRockSkyAlbumEntity(
-    @Embedded
-    val entity: RockskyAlbumEntity,
+    @Embedded val entity: RockskyAlbumEntity,
     @Relation(
         parentColumn = "uri",
         entityColumn = "albumUri",
@@ -59,20 +59,21 @@ data class PopulatedRockSkyAlbumEntity(
     val tracks: List<RockskyTrackEntity>,
 )
 
-fun PopulatedRockSkyAlbumEntity.asExternalModel() = RockskyAlbum(
-    cid = entity.cid,
-    uri = entity.uri,
-    title = entity.title,
-    artist = entity.artist,
-    releaseDate = entity.releaseDate,
-    year = entity.year,
-    albumArt = entity.albumArt,
-    artistUri = entity.artistUri,
-    playCount = entity.playCount,
-    uniqueListeners = entity.uniqueListeners,
-    tracks = tracks.map(RockskyTrackEntity::asExternalModel),
-    appleMusicLink = entity.appleMusicLink,
-    spotifyLink = entity.spotifyLink,
-    tidalLink = entity.tidalLink,
-    youtubeLink = entity.youtubeLink,
-)
+fun PopulatedRockSkyAlbumEntity.asExternalModel() =
+    RockskyAlbum(
+        cid = entity.cid,
+        uri = entity.uri,
+        title = entity.title,
+        artist = entity.artist,
+        releaseDate = entity.releaseDate,
+        year = entity.year,
+        albumArt = entity.albumArt,
+        artistUri = entity.artistUri,
+        playCount = entity.playCount,
+        uniqueListeners = entity.uniqueListeners,
+        tracks = tracks.map(RockskyTrackEntity::asExternalModel),
+        appleMusicLink = entity.appleMusicLink,
+        spotifyLink = entity.spotifyLink,
+        tidalLink = entity.tidalLink,
+        youtubeLink = entity.youtubeLink,
+    )

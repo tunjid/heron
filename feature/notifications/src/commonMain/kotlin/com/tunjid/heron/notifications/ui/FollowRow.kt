@@ -51,8 +51,8 @@ fun FollowRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onProfileClicked(notification, notification.author)
             },
         isRead = isRead,
@@ -63,19 +63,21 @@ fun FollowRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Default.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(CommonStrings.notifications_followed_you_description),
+                contentDescription =
+                    stringResource(CommonStrings.notifications_followed_you_description),
             )
         },
         content = {
             Row(horizontalArrangement = spacedBy(8.dp)) {
                 Text(
                     modifier = Modifier.alignByBaseline(),
-                    text = notificationText(
-                        notification = notification,
-                        aggregatedSize = aggregatedProfiles.size,
-                        singularResource = CommonStrings.notifications_followed_you,
-                        pluralResource = CommonStrings.notifications_multiple_followed,
-                    ),
+                    text =
+                        notificationText(
+                            notification = notification,
+                            aggregatedSize = aggregatedProfiles.size,
+                            singularResource = CommonStrings.notifications_followed_you,
+                            pluralResource = CommonStrings.notifications_multiple_followed,
+                        ),
                 )
                 TimeDelta(
                     modifier = Modifier.alignByBaseline(),

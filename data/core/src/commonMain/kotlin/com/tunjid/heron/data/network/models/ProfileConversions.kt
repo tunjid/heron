@@ -53,13 +53,14 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
         joinedViaStarterPack = null,
         indexedAt = indexedAt,
         createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        ),
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = associated?.lists,
+                createdFeedGeneratorCount = associated?.feedgens,
+                createdStarterPackCount = associated?.starterPacks,
+                labeler = associated?.labeler,
+                allowDms = associated?.chat?.allowIncoming?.value,
+            ),
         status = status?.statusEntity(),
         pronouns = pronouns,
     )
@@ -78,13 +79,14 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
         joinedViaStarterPack = null,
         indexedAt = null,
         createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        ),
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = associated?.lists,
+                createdFeedGeneratorCount = associated?.feedgens,
+                createdStarterPackCount = associated?.starterPacks,
+                labeler = associated?.labeler,
+                allowDms = associated?.chat?.allowIncoming?.value,
+            ),
         status = status?.statusEntity(),
         pronouns = pronouns,
     )
@@ -103,13 +105,14 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
         joinedViaStarterPack = joinedViaStarterPack?.cid?.cid?.let(::GenericId),
         indexedAt = indexedAt,
         createdAt = createdAt,
-        associated = ProfileEntity.Associated(
-            createdListCount = associated?.lists,
-            createdFeedGeneratorCount = associated?.feedgens,
-            createdStarterPackCount = associated?.starterPacks,
-            labeler = associated?.labeler,
-            allowDms = associated?.chat?.allowIncoming?.value,
-        ),
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = associated?.lists,
+                createdFeedGeneratorCount = associated?.feedgens,
+                createdStarterPackCount = associated?.starterPacks,
+                labeler = associated?.labeler,
+                allowDms = associated?.chat?.allowIncoming?.value,
+            ),
         status = status?.statusEntity(),
         pronouns = pronouns,
     )
@@ -128,135 +131,137 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
         joinedViaStarterPack = null,
         indexedAt = null,
         createdAt = null,
-        associated = ProfileEntity.Associated(
-            createdListCount = 0,
-            createdFeedGeneratorCount = 0,
-            createdStarterPackCount = 0,
-        ),
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = 0,
+                createdFeedGeneratorCount = 0,
+                createdStarterPackCount = 0,
+            ),
         status = null,
         pronouns = null,
     )
 
-internal fun stubProfileEntity(
-    profileId: ProfileId,
-) = ProfileEntity(
-    did = profileId,
-    handle = Constants.unknownAuthorHandle,
-    displayName = null,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    associated = ProfileEntity.Associated(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-    ),
-    status = null,
-    pronouns = null,
-)
+internal fun stubProfileEntity(profileId: ProfileId) =
+    ProfileEntity(
+        did = profileId,
+        handle = Constants.unknownAuthorHandle,
+        displayName = null,
+        description = null,
+        avatar = null,
+        banner = null,
+        followersCount = null,
+        followsCount = null,
+        postsCount = null,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = null,
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = 0,
+                createdFeedGeneratorCount = 0,
+                createdStarterPackCount = 0,
+            ),
+        status = null,
+        pronouns = null,
+    )
 
 internal fun ProfileViewBasic.profileViewerStateEntity(
-    viewingProfileId: ProfileId,
+    viewingProfileId: ProfileId
 ): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
         null -> null
-        else -> profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-            viewedProfileId = did.did.let(::ProfileId),
-            viewer = viewer,
-        )
+        else ->
+            profileViewerStateEntity(
+                viewingProfileId = viewingProfileId,
+                viewedProfileId = did.did.let(::ProfileId),
+                viewer = viewer,
+            )
     }
 
 internal fun ProfileView.profileViewerStateEntity(
-    viewingProfileId: ProfileId,
+    viewingProfileId: ProfileId
 ): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
         null -> null
-        else -> profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-            viewedProfileId = did.did.let(::ProfileId),
-            viewer = viewer,
-        )
+        else ->
+            profileViewerStateEntity(
+                viewingProfileId = viewingProfileId,
+                viewedProfileId = did.did.let(::ProfileId),
+                viewer = viewer,
+            )
     }
 
 internal fun ProfileViewDetailed.profileViewerStateEntity(
-    viewingProfileId: ProfileId,
+    viewingProfileId: ProfileId
 ): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
         null -> null
-        else -> profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-            viewedProfileId = did.did.let(::ProfileId),
-            viewer = viewer,
-        )
+        else ->
+            profileViewerStateEntity(
+                viewingProfileId = viewingProfileId,
+                viewedProfileId = did.did.let(::ProfileId),
+                viewer = viewer,
+            )
     }
 
-internal fun ProfileViewBasic.profile() = Profile(
-    did = did.did.let(::ProfileId),
-    handle = handle.handle.let(::ProfileHandle),
-    displayName = displayName,
-    description = null,
-    avatar = avatar?.uri?.let(::ImageUri),
-    banner = null,
-    followersCount = 0,
-    followsCount = 0,
-    postsCount = 0,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = createdAt,
-    metadata = Profile.Metadata(
-        createdListCount = associated?.lists ?: 0,
-        createdFeedGeneratorCount = associated?.feedgens ?: 0,
-        createdStarterPackCount = associated?.starterPacks ?: 0,
-        chat = Profile.ChatInfo(
-            allowed = associated.allowedChat(),
-        ),
-    ),
-    labels = labels?.map(Label::asExternalModel) ?: emptyList(),
-    isLabeler = associated?.labeler ?: false,
-    status = status.asExternalModel(),
-    pronouns = pronouns,
-)
+internal fun ProfileViewBasic.profile() =
+    Profile(
+        did = did.did.let(::ProfileId),
+        handle = handle.handle.let(::ProfileHandle),
+        displayName = displayName,
+        description = null,
+        avatar = avatar?.uri?.let(::ImageUri),
+        banner = null,
+        followersCount = 0,
+        followsCount = 0,
+        postsCount = 0,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = createdAt,
+        metadata =
+            Profile.Metadata(
+                createdListCount = associated?.lists ?: 0,
+                createdFeedGeneratorCount = associated?.feedgens ?: 0,
+                createdStarterPackCount = associated?.starterPacks ?: 0,
+                chat = Profile.ChatInfo(allowed = associated.allowedChat()),
+            ),
+        labels = labels?.map(Label::asExternalModel) ?: emptyList(),
+        isLabeler = associated?.labeler ?: false,
+        status = status.asExternalModel(),
+        pronouns = pronouns,
+    )
 
-internal fun ProfileView.profile() = Profile(
-    did = did.did.let(::ProfileId),
-    handle = handle.handle.let(::ProfileHandle),
-    displayName = displayName,
-    description = description,
-    avatar = avatar?.uri?.let(::ImageUri),
-    banner = null,
-    followersCount = 0,
-    followsCount = 0,
-    postsCount = 0,
-    joinedViaStarterPack = null,
-    indexedAt = indexedAt,
-    createdAt = createdAt,
-    metadata = Profile.Metadata(
-        createdListCount = associated?.lists ?: 0,
-        createdFeedGeneratorCount = associated?.feedgens ?: 0,
-        createdStarterPackCount = associated?.starterPacks ?: 0,
-        chat = Profile.ChatInfo(
-            allowed = associated.allowedChat(),
-        ),
-    ),
-    labels = labels?.map(Label::asExternalModel) ?: emptyList(),
-    isLabeler = associated?.labeler ?: false,
-    status = status.asExternalModel(),
-    pronouns = pronouns,
-)
+internal fun ProfileView.profile() =
+    Profile(
+        did = did.did.let(::ProfileId),
+        handle = handle.handle.let(::ProfileHandle),
+        displayName = displayName,
+        description = description,
+        avatar = avatar?.uri?.let(::ImageUri),
+        banner = null,
+        followersCount = 0,
+        followsCount = 0,
+        postsCount = 0,
+        joinedViaStarterPack = null,
+        indexedAt = indexedAt,
+        createdAt = createdAt,
+        metadata =
+            Profile.Metadata(
+                createdListCount = associated?.lists ?: 0,
+                createdFeedGeneratorCount = associated?.feedgens ?: 0,
+                createdStarterPackCount = associated?.starterPacks ?: 0,
+                chat = Profile.ChatInfo(allowed = associated.allowedChat()),
+            ),
+        labels = labels?.map(Label::asExternalModel) ?: emptyList(),
+        isLabeler = associated?.labeler ?: false,
+        status = status.asExternalModel(),
+        pronouns = pronouns,
+    )
 
 private fun StatusView?.asExternalModel(): Profile.ProfileStatus? {
     if (this == null) return null
 
-    val external = (embed as? StatusViewEmbedUnion.View)
-        ?.value
-        ?.external
+    val external = (embed as? StatusViewEmbedUnion.View)?.value?.external
 
     return Profile.ProfileStatus(
         uri = uri?.atUri,
@@ -277,39 +282,39 @@ private fun ProfileAssociated?.allowedChat(): Profile.ChatInfo.Allowed =
         ProfileAssociatedChatAllowIncoming.Following -> Profile.ChatInfo.Allowed.Following
         ProfileAssociatedChatAllowIncoming.None,
         is ProfileAssociatedChatAllowIncoming.Unknown,
-        null,
-        -> Profile.ChatInfo.Allowed.NoOne
+        null -> Profile.ChatInfo.Allowed.NoOne
     }
 
 private fun profileViewerStateEntity(
     viewingProfileId: ProfileId,
     viewedProfileId: ProfileId,
     viewer: ViewerState,
-) = ProfileViewerStateEntity(
-    profileId = viewingProfileId,
-    otherProfileId = viewedProfileId,
-    muted = viewer.muted,
-    mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
-    blockedBy = viewer.blockedBy,
-    blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
-    following = viewer.following?.atUri?.let(::FollowUri),
-    followedBy = viewer.followedBy?.atUri?.let(::FollowUri),
-    blocking = viewer.blocking?.atUri?.let(::BlockUri),
-    commonFollowersCount = viewer.knownFollowers?.count,
-)
+) =
+    ProfileViewerStateEntity(
+        profileId = viewingProfileId,
+        otherProfileId = viewedProfileId,
+        muted = viewer.muted,
+        mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
+        blockedBy = viewer.blockedBy,
+        blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
+        following = viewer.following?.atUri?.let(::FollowUri),
+        followedBy = viewer.followedBy?.atUri?.let(::FollowUri),
+        blocking = viewer.blocking?.atUri?.let(::BlockUri),
+        commonFollowersCount = viewer.knownFollowers?.count,
+    )
 
 // TODO: Use this when known follower profiles are also saved
 @Suppress("unused")
 private fun KnownFollowers?.profileViewers(
-    viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> = when (this) {
-    null -> emptyList()
-    else -> followers.mapNotNull { profileViewBasic ->
-        profileViewBasic.profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-        )
+    viewingProfileId: ProfileId
+): List<ProfileViewerStateEntity> =
+    when (this) {
+        null -> emptyList()
+        else ->
+            followers.mapNotNull { profileViewBasic ->
+                profileViewBasic.profileViewerStateEntity(viewingProfileId = viewingProfileId)
+            }
     }
-}
 
 internal fun StatusView.statusEntity(): ProfileEntity.Status {
     val embed = (embed as? StatusViewEmbedUnion.View)?.value?.external

@@ -54,9 +54,7 @@ actual fun hasNotificationPermissions(): Boolean {
 }
 
 @Composable
-actual fun notificationPermissionsLauncher(
-    onPermissionResult: (Boolean) -> Unit,
-): () -> Unit {
+actual fun notificationPermissionsLauncher(onPermissionResult: (Boolean) -> Unit): () -> Unit {
     val appState = LocalAppState.current
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
@@ -92,7 +90,9 @@ actual fun notificationPermissionsLauncher(
                         onPermissionResult(true)
                     }
                     else -> {
-                        appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                        appState.onNotificationAction(
+                            NotificationAction.RequestedNotificationPermission
+                        )
                         requestNotificationPermission { granted ->
                             onPermissionResult(granted)
                             if (!granted) {
@@ -117,12 +117,11 @@ private suspend fun getNotificationAuthorizationStatus(): Long =
 
 @OptIn(ExperimentalForeignApi::class)
 private fun requestNotificationPermission(onResult: (Boolean) -> Unit) {
-    UNUserNotificationCenter.currentNotificationCenter()
-        .requestAuthorizationWithOptions(
-            UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge,
-        ) { granted, _ ->
-            onResult(granted)
-        }
+    UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
+        UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+    ) { granted, _ ->
+        onResult(granted)
+    }
 }
 
 private fun openAppSettings() {

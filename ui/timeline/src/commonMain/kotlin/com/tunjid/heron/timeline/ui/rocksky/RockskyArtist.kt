@@ -33,30 +33,30 @@ fun RockskyArtist(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     artist: RockskyArtist,
-) = with(paneTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        paneTransitionScope = paneTransitionScope,
-        title = artist.name,
-        subtitle = stringResource(Res.string.artist_subtitle),
-        description = artist.tags
-            ?.takeIf(List<String>::isNotEmpty)
-            ?.take(3)
-            ?.joinToString(" • "),
-        blurb = artist.uniqueListeners?.let { count ->
-            stringResource(
-                Res.string.n_listeners,
-                format(count),
-            )
-        },
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = artist.uri,
-        avatar = {
-            RockSkyAvatar(
-                image = artist.picture,
-                uri = artist.uri,
-                sharedElementPrefix = sharedElementPrefix,
-            )
-        },
-    )
-}
+) =
+    with(paneTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            paneTransitionScope = paneTransitionScope,
+            title = artist.name,
+            subtitle = stringResource(Res.string.artist_subtitle),
+            description =
+                artist.tags?.takeIf(List<String>::isNotEmpty)?.take(3)?.joinToString(" • "),
+            blurb =
+                artist.uniqueListeners?.let { count ->
+                    stringResource(
+                        Res.string.n_listeners,
+                        format(count),
+                    )
+                },
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = artist.uri,
+            avatar = {
+                RockSkyAvatar(
+                    image = artist.picture,
+                    uri = artist.uri,
+                    sharedElementPrefix = sharedElementPrefix,
+                )
+            },
+        )
+    }

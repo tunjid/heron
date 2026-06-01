@@ -25,11 +25,11 @@ import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 
 internal actual val WindowInsets.Companion.platformExtraStatusBars: WindowInsets
-    @Composable get() = when ((Platform.current as JVMPlatform).variant) {
-        JvmVariant.Mac -> MacWindowInsets
-        else -> EmptyWindowInsets
-    }
+    @Composable
+    get() =
+        when ((Platform.current as JVMPlatform).variant) {
+            JvmVariant.Mac -> MacWindowInsets
+            else -> EmptyWindowInsets
+        }
 
-private val MacWindowInsets = WindowInsets(
-    top = 30.dp,
-)
+private val MacWindowInsets = WindowInsets(top = 30.dp)

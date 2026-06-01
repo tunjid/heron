@@ -148,46 +148,31 @@ data class Profile(
             val durationMinutes: Int = ProfileStatus.DEFAULT_LIVE_DURATION_MINUTES,
         ) : StatusUpdate()
 
-        @Serializable
-        data class EndLive(
-            override val signedInProfileId: ProfileId,
-        ) : StatusUpdate()
+        @Serializable data class EndLive(override val signedInProfileId: ProfileId) : StatusUpdate()
     }
 
     @Serializable
     data class Update(
-        @ProtoNumber(1)
-        val profileId: ProfileId,
-        @ProtoNumber(2)
-        val displayName: String,
-        @ProtoNumber(3)
-        val description: String,
+        @ProtoNumber(1) val profileId: ProfileId,
+        @ProtoNumber(2) val displayName: String,
+        @ProtoNumber(3) val description: String,
         // Field's 4 & 5 were deprecated
-        @ProtoNumber(6)
-        val avatarFile: File.Media.Photo?,
-        @ProtoNumber(7)
-        val bannerFile: File.Media.Photo?,
+        @ProtoNumber(6) val avatarFile: File.Media.Photo?,
+        @ProtoNumber(7) val bannerFile: File.Media.Photo?,
         // Newly added fields should have defaults
-        @ProtoNumber(8)
-        val tabs: List<ProfileTab>? = null,
-        @ProtoNumber(9)
-        val pronouns: String = "",
+        @ProtoNumber(8) val tabs: List<ProfileTab>? = null,
+        @ProtoNumber(9) val pronouns: String = "",
     )
 
     @Serializable
-    data class ChatInfo(
-        val allowed: Allowed,
-    ) {
+    data class ChatInfo(val allowed: Allowed) {
         @Serializable
         sealed class Allowed {
-            @Serializable
-            data object Everyone : Allowed()
+            @Serializable data object Everyone : Allowed()
 
-            @Serializable
-            data object Following : Allowed()
+            @Serializable data object Following : Allowed()
 
-            @Serializable
-            data object NoOne : Allowed()
+            @Serializable data object NoOne : Allowed()
         }
     }
 }
@@ -198,36 +183,37 @@ data class ProfileWithViewerState(
     val viewerState: ProfileViewerState?,
 )
 
-val Profile.contentDescription get() = displayName ?: handle.id
+val Profile.contentDescription
+    get() = displayName ?: handle.id
 
 fun stubProfile(
     did: ProfileId,
     handle: ProfileHandle,
     displayName: String? = null,
     avatar: ImageUri? = null,
-) = Profile(
-    did = did,
-    handle = handle,
-    displayName = displayName,
-    description = null,
-    avatar = avatar,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    metadata = Profile.Metadata(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-        chat = Profile.ChatInfo(
-            allowed = Profile.ChatInfo.Allowed.NoOne,
-        ),
-    ),
-    labels = emptyList(),
-    isLabeler = false,
-    status = null,
-    pronouns = null,
-)
+) =
+    Profile(
+        did = did,
+        handle = handle,
+        displayName = displayName,
+        description = null,
+        avatar = avatar,
+        banner = null,
+        followersCount = null,
+        followsCount = null,
+        postsCount = null,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = null,
+        metadata =
+            Profile.Metadata(
+                createdListCount = 0,
+                createdFeedGeneratorCount = 0,
+                createdStarterPackCount = 0,
+                chat = Profile.ChatInfo(allowed = Profile.ChatInfo.Allowed.NoOne),
+            ),
+        labels = emptyList(),
+        isLabeler = false,
+        status = null,
+        pronouns = null,
+    )

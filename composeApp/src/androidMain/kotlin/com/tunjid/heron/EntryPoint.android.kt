@@ -61,5 +61,4 @@ fun createAppState(context: Context): AppState =
         },
     )
 
-private fun Context.savedStatePath(): Path =
-    filesDir.resolve("savedState").absolutePath.toPath()
+private fun Context.savedStatePath(): Path = filesDir.resolve("savedState").absolutePath.toPath()

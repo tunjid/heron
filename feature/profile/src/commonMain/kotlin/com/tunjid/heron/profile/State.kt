@@ -89,31 +89,27 @@ interface State {
         val commonFollowers: List<Profile> = emptyList(),
         val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
         val subscribedLabelers: Labelers = emptyList(),
-        @Transient
-        val supportedApps: List<AtmosphereApp> = emptyList(),
-        @Transient
-        val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
-        val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
-        @Transient
-        val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val supportedApps: List<AtmosphereApp> = emptyList(),
+        @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient val recentConversations: List<Conversation> = emptyList(),
+        @Transient val recentLists: List<FeedList> = emptyList(),
+        @Transient val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
+        @Transient val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        operator fun invoke(route: Route): Immutable = Immutable(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            profile = route.model<Profile>() ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
-            ),
-        )
+        operator fun invoke(route: Route): Immutable =
+            Immutable(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                profile =
+                    route.model<Profile>()
+                        ?: stubProfile(
+                            did = ProfileId(route.profileHandleOrId.id),
+                            handle = ProfileHandle(route.profileHandleOrId.id),
+                            avatar = null,
+                        ),
+            )
     }
 }
 
@@ -124,48 +120,33 @@ val State.isSubscribedToLabeler
 sealed class ProfileScreenStateHolders {
 
     @Stable
-    sealed class Records<T : Record>(
-        private val mutator: RecordStateHolder<T>,
-    ) : ProfileScreenStateHolders(),
-        RecordStateHolder<T> by mutator {
+    sealed class Records<T : Record>(private val mutator: RecordStateHolder<T>) :
+        ProfileScreenStateHolders(), RecordStateHolder<T> by mutator {
 
         @Stable
-        class Feeds(
-            mutator: RecordStateHolder<FeedGenerator>,
-        ) : Records<FeedGenerator>(mutator)
+        class Feeds(mutator: RecordStateHolder<FeedGenerator>) : Records<FeedGenerator>(mutator)
+
+        @Stable class Lists(mutator: RecordStateHolder<FeedList>) : Records<FeedList>(mutator)
 
         @Stable
-        class Lists(
-            mutator: RecordStateHolder<FeedList>,
-        ) : Records<FeedList>(mutator)
+        class StarterPacks(mutator: RecordStateHolder<StarterPack>) : Records<StarterPack>(mutator)
 
         @Stable
-        class StarterPacks(
-            mutator: RecordStateHolder<StarterPack>,
-        ) : Records<StarterPack>(mutator)
+        class Documents(mutator: RecordStateHolder<StandardDocument>) :
+            Records<StandardDocument>(mutator)
 
         @Stable
-        class Documents(
-            mutator: RecordStateHolder<StandardDocument>,
-        ) : Records<StandardDocument>(mutator)
-
-        @Stable
-        class Publications(
-            mutator: RecordStateHolder<StandardPublication>,
-        ) : Records<StandardPublication>(mutator)
+        class Publications(mutator: RecordStateHolder<StandardPublication>) :
+            Records<StandardPublication>(mutator)
     }
 
     @Stable
-    class Timeline(
-        private val mutator: TimelineStateHolder,
-    ) : ProfileScreenStateHolders(),
-        TimelineStateHolder by mutator
+    class Timeline(private val mutator: TimelineStateHolder) :
+        ProfileScreenStateHolders(), TimelineStateHolder by mutator
 
     @Stable
-    class LabelerSettings(
-        private val mutator: LabelerSettingsStateHolder,
-    ) : ProfileScreenStateHolders(),
-        LabelerSettingsStateHolder by mutator {
+    class LabelerSettings(private val mutator: LabelerSettingsStateHolder) :
+        ProfileScreenStateHolders(), LabelerSettingsStateHolder by mutator {
 
         data class Settings(
             val subscribed: Boolean = false,
@@ -179,83 +160,86 @@ sealed class ProfileScreenStateHolders {
     }
 
     val key
-        get() = when (this) {
-            is Records.Feeds -> "Feeds"
-            is Records.Lists -> "Lists"
-            is Records.StarterPacks -> "StarterPacks"
-            is Records.Documents -> "Documents"
-            is Records.Publications -> "Publications"
-            is Timeline -> state.timeline.sourceId
-            is LabelerSettings -> "LabelerSettings"
-        }
+        get() =
+            when (this) {
+                is Records.Feeds -> "Feeds"
+                is Records.Lists -> "Lists"
+                is Records.StarterPacks -> "StarterPacks"
+                is Records.Documents -> "Documents"
+                is Records.Publications -> "Publications"
+                is Timeline -> state.timeline.sourceId
+                is LabelerSettings -> "LabelerSettings"
+            }
 
     val tab
-        get() = when (this) {
-            is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
-            is Records.Lists -> ProfileTab.Bluesky.Lists.All
-            is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
-            is Records.Documents -> ProfileTab.StandardSite.Documents
-            is Records.Publications -> ProfileTab.StandardSite.Publications
-            is Timeline -> when (val timeline = state.timeline) {
-                is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
-                    timeline.feedGenerator.uri,
-                )
+        get() =
+            when (this) {
+                is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
+                is Records.Lists -> ProfileTab.Bluesky.Lists.All
+                is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
+                is Records.Documents -> ProfileTab.StandardSite.Documents
+                is Records.Publications -> ProfileTab.StandardSite.Publications
+                is Timeline ->
+                    when (val timeline = state.timeline) {
+                        is com.tunjid.heron.data.core.models.Timeline.Home.Feed ->
+                            ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
+                                timeline.feedGenerator.uri
+                            )
 
-                is com.tunjid.heron.data.core.models.Timeline.Profile -> when (timeline.type) {
-                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Posts -> ProfileTab.Bluesky.Posts.Standard
-                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Replies -> ProfileTab.Bluesky.Posts.Replies
-                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Likes -> ProfileTab.Bluesky.Posts.Likes
-                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Media -> ProfileTab.Bluesky.Posts.Media
-                    com.tunjid.heron.data.core.models.Timeline.Profile.Type.Videos -> ProfileTab.Bluesky.Posts.Videos
-                }
-                is com.tunjid.heron.data.core.models.Timeline.Home.Following,
-                is com.tunjid.heron.data.core.models.Timeline.Home.List,
-                is com.tunjid.heron.data.core.models.Timeline.StarterPack,
-                -> null
+                        is com.tunjid.heron.data.core.models.Timeline.Profile ->
+                            when (timeline.type) {
+                                com.tunjid.heron.data.core.models.Timeline.Profile.Type.Posts ->
+                                    ProfileTab.Bluesky.Posts.Standard
+                                com.tunjid.heron.data.core.models.Timeline.Profile.Type.Replies ->
+                                    ProfileTab.Bluesky.Posts.Replies
+                                com.tunjid.heron.data.core.models.Timeline.Profile.Type.Likes ->
+                                    ProfileTab.Bluesky.Posts.Likes
+                                com.tunjid.heron.data.core.models.Timeline.Profile.Type.Media ->
+                                    ProfileTab.Bluesky.Posts.Media
+                                com.tunjid.heron.data.core.models.Timeline.Profile.Type.Videos ->
+                                    ProfileTab.Bluesky.Posts.Videos
+                            }
+                        is com.tunjid.heron.data.core.models.Timeline.Home.Following,
+                        is com.tunjid.heron.data.core.models.Timeline.Home.List,
+                        is com.tunjid.heron.data.core.models.Timeline.StarterPack -> null
+                    }
+                is LabelerSettings -> null
             }
-            is LabelerSettings -> null
+
+    fun refresh() =
+        when (this) {
+            is Records<*> -> accept(TilingState.Action.Refresh)
+
+            is Timeline ->
+                accept(TimelineState.Action.Tile(tilingAction = TilingState.Action.Refresh))
+            is LabelerSettings -> Unit
         }
-
-    fun refresh() = when (this) {
-        is Records<*> -> accept(
-            TilingState.Action.Refresh,
-        )
-
-        is Timeline -> accept(
-            TimelineState.Action.Tile(
-                tilingAction = TilingState.Action.Refresh,
-            ),
-        )
-        is LabelerSettings -> Unit
-    }
 }
 
 val ProfileScreenStateHolders?.isRefreshing
-    get() = when (this) {
-        is Records<*> -> state.isRefreshing
-        is ProfileScreenStateHolders.Timeline -> state.isRefreshing
-        is LabelerSettings,
-        null,
-        -> false
-    }
+    get() =
+        when (this) {
+            is Records<*> -> state.isRefreshing
+            is ProfileScreenStateHolders.Timeline -> state.isRefreshing
+            is LabelerSettings,
+            null -> false
+        }
 
 val ProfileScreenStateHolders?.canRefresh
-    get() = when (this) {
-        is Records<*>,
-        is ProfileScreenStateHolders.Timeline,
-        -> true
-        is LabelerSettings,
-        null,
-        -> false
-    }
+    get() =
+        when (this) {
+            is Records<*>,
+            is ProfileScreenStateHolders.Timeline -> true
+            is LabelerSettings,
+            null -> false
+        }
 
-typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
+typealias LabelerSettingsStateHolder =
+    ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
 
 sealed class Action(val key: String) {
 
-    data class BioLinkClicked(
-        val target: LinkTarget,
-    ) : Action(key = "BioLinkClicked")
+    data class BioLinkClicked(val target: LinkTarget) : Action(key = "BioLinkClicked")
 
     sealed class UpdateLiveStatus(key: String) : Action(key) {
         data class GoLive(
@@ -264,14 +248,10 @@ sealed class Action(val key: String) {
             val duration: Int,
         ) : UpdateLiveStatus(key = "GoLive")
 
-        data class EndLive(
-            val signedInProfileId: ProfileId,
-        ) : UpdateLiveStatus(key = "EndLive")
+        data class EndLive(val signedInProfileId: ProfileId) : UpdateLiveStatus(key = "EndLive")
     }
 
-    sealed class Moderation(
-        key: String,
-    ) : Action(key)
+    sealed class Moderation(key: String) : Action(key)
 
     sealed class Block : Moderation(key = "Block") {
         data class Add(
@@ -298,35 +278,25 @@ sealed class Action(val key: String) {
         ) : Mute()
     }
 
-    data class PageChanged(
-        val page: Int,
-    ) : Action(key = "PageChanged")
+    data class PageChanged(val page: Int) : Action(key = "PageChanged")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
+        data class Subscribe(val publicationUri: StandardPublicationUri) :
+            TogglePublicationSubscription()
 
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
+        data class Unsubscribe(val subscriptionUri: StandardSubscriptionUri) :
+            TogglePublicationSubscription()
     }
 
-    data class DeleteRecord(
-        val recordUri: RecordUri,
-    ) : Action(key = "DeleteRecord")
+    data class DeleteRecord(val recordUri: RecordUri) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data class UpdatePageWithUpdates(
         val sourceId: String,
@@ -340,23 +310,17 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
-    data class UpdatePreferences(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdatePreferences")
+    data class UpdatePreferences(val update: Timeline.Update) : Action(key = "UpdatePreferences")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
 
         data class ToAvatar(
             val profile: Profile,
@@ -364,17 +328,17 @@ sealed class Action(val key: String) {
         ) : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 routeString(
-                    path = "/profile/${profile.did.id}/avatar",
-                    queryParams = mapOf(
-                        "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
-                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                        referringRouteQueryParams(ReferringRouteOption.Current),
-                    ),
-                )
+                        path = "/profile/${profile.did.id}/avatar",
+                        queryParams =
+                            mapOf(
+                                "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
+                                "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                                referringRouteQueryParams(ReferringRouteOption.Current),
+                            ),
+                    )
                     .toRoute
                     .takeIf { it.id != currentRoute.id }
-                    ?.let(navState::push)
-                    ?: navState
+                    ?.let(navState::push) ?: navState
             }
         }
     }

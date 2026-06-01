@@ -69,10 +69,10 @@ internal fun NotificationPostScaffold(
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onPostClicked(notification)
-            },
+            }
     ) {
         PostAttribution(
             paneTransitionScope = paneTransitionScope,
@@ -85,47 +85,38 @@ internal fun NotificationPostScaffold(
             createdAt = notification.indexedAt,
         )
         Spacer(Modifier.height(4.dp))
-        Row(
-            horizontalArrangement = spacedBy(14.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(UiTokens.avatarSize),
-            ) {
-                if (!isRead) Badge(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(vertical = 8.dp)
-                        .size(4.dp),
-                )
+        Row(horizontalArrangement = spacedBy(14.dp)) {
+            Box(modifier = Modifier.width(UiTokens.avatarSize)) {
+                if (!isRead)
+                    Badge(
+                        modifier =
+                            Modifier.align(Alignment.Center).padding(vertical = 8.dp).size(4.dp)
+                    )
             }
             Column(
-                modifier = Modifier.padding(
-                    bottom = 8.dp,
-                ),
+                modifier = Modifier.padding(bottom = 8.dp),
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     paneTransitionScope = paneTransitionScope,
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
                     onLinkTargetClicked = { _, linkTarget ->
                         onLinkTargetClicked(notification, linkTarget)
                     },
                 )
-//                PostEmbed(
-//                    now = now,
-//                    embed = embed,
-//                    quote = post.quote,
-//                    postId = post.cid,
-//                    sharedElementPrefix = sharedElementPrefix,
-//                    sharedElementScope = sharedElementScope,
-//                    onPostMediaClicked = onPostMediaClicked,
-//                    onPostClicked = onPostClicked,
-//                )
+                //                PostEmbed(
+                //                    now = now,
+                //                    embed = embed,
+                //                    quote = post.quote,
+                //                    postId = post.cid,
+                //                    sharedElementPrefix = sharedElementPrefix,
+                //                    sharedElementScope = sharedElementScope,
+                //                    onPostMediaClicked = onPostMediaClicked,
+                //                    onPostClicked = onPostClicked,
+                //                )
 
                 PostInteractions(
                     post = notification.associatedPost,
@@ -152,55 +143,59 @@ private fun PostAttribution(
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
-) = with(paneTransitionScope) {
-    val post = notification.associatedPost
-    AttributionLayout(
-        avatar = {
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .shapedClickable(avatarShape) { onProfileClicked(notification, post.author) },
-                sharedContentState = with(paneTransitionScope) {
-                    rememberSharedContentState(
-                        key = post.avatarSharedElementKey(sharedElementPrefix),
-                    )
-                },
-                content = {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        args = remember(post.author.avatar) {
-                            ImageArgs(
-                                url = post.author.avatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = post.author.displayName ?: post.author.handle.id,
-                                shape = avatarShape,
+) =
+    with(paneTransitionScope) {
+        val post = notification.associatedPost
+        AttributionLayout(
+            avatar = {
+                PaneStickySharedElement(
+                    modifier =
+                        Modifier.size(UiTokens.avatarSize).shapedClickable(avatarShape) {
+                            onProfileClicked(notification, post.author)
+                        },
+                    sharedContentState =
+                        with(paneTransitionScope) {
+                            rememberSharedContentState(
+                                key = post.avatarSharedElementKey(sharedElementPrefix)
                             )
                         },
-                    )
-                },
-            )
-        },
-        label = {
-            PostHeadline(
-                now = now,
-                createdAt = createdAt,
-                author = post.author,
-                postId = post.cid,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                onPostClicked = {
-                    onPostClicked(notification)
-                },
-                onAuthorClicked = {
-                    onProfileClicked(notification, post.author)
-                },
-            )
-        },
-    )
-//    if (item is TimelineItem.Reply) {
-//                    PostReplyLine(item.parentPost.author, onProfileClicked)
-//                }
-}
+                    content = {
+                        AsyncImage(
+                            modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                            args =
+                                remember(post.author.avatar) {
+                                    ImageArgs(
+                                        url = post.author.avatar?.uri,
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription =
+                                            post.author.displayName ?: post.author.handle.id,
+                                        shape = avatarShape,
+                                    )
+                                },
+                        )
+                    },
+                )
+            },
+            label = {
+                PostHeadline(
+                    now = now,
+                    createdAt = createdAt,
+                    author = post.author,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneTransitionScope = paneTransitionScope,
+                    onPostClicked = {
+                        onPostClicked(notification)
+                    },
+                    onAuthorClicked = {
+                        onProfileClicked(notification, post.author)
+                    },
+                )
+            },
+        )
+        //    if (item is TimelineItem.Reply) {
+        //                    PostReplyLine(item.parentPost.author, onProfileClicked)
+        //                }
+    }
 
 fun Notification.PostAssociated.sharedElementPrefix(): String = "notification-${cid.id}"

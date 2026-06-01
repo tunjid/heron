@@ -124,9 +124,7 @@ internal class AVFoundationPlayerState(
     override var videoStill: ImageBitmap? by mutableStateOf(null)
 
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= 200 &&
-            totalDuration != 0L &&
-            !isLooping
+        get() = (totalDuration - lastPositionMs) <= 200 && totalDuration != 0L && !isLooping
 
     internal var player by mutableStateOf(AVPlayer())
         private set
@@ -179,10 +177,11 @@ internal class AVFoundationPlayerState(
 
     internal fun seekToNative(positionMs: Long) {
         try {
-            val time = CMTimeMakeWithSeconds(
-                seconds = positionMs.toDouble() / 1000.0,
-                preferredTimescale = 600,
-            )
+            val time =
+                CMTimeMakeWithSeconds(
+                    seconds = positionMs.toDouble() / 1000.0,
+                    preferredTimescale = 600,
+                )
             player.seekToTime(time)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR) { "seekToNative failed: ${e.loggableText()}" }
@@ -217,27 +216,33 @@ internal class AVFoundationPlayerState(
 
     private fun registerObservers() {
         // Periodic time observer (0.25s interval)
-        val interval = CMTimeMakeWithSeconds(
-            seconds = TIME_OBSERVER_INTERVAL_SECONDS,
-            preferredTimescale = 600,
-        )
-        timeObserver = player.addPeriodicTimeObserverForInterval(
-            interval = interval,
-            queue = null,
-            usingBlock = { time: CValue<CMTime>? ->
-                if (time == null) return@addPeriodicTimeObserverForInterval
-                val currentSeconds = CMTimeGetSeconds(time)
-                if (currentSeconds >= 0) {
-                    lastPositionMs = (currentSeconds * 1000).toLong()
-                }
-                player.currentItem?.let { item ->
-                    val durationSeconds = CMTimeGetSeconds(item.duration)
-                    if (durationSeconds > 0 && !durationSeconds.isNaN() && !durationSeconds.isInfinite()) {
-                        totalDuration = (durationSeconds * 1000).toLong()
+        val interval =
+            CMTimeMakeWithSeconds(
+                seconds = TIME_OBSERVER_INTERVAL_SECONDS,
+                preferredTimescale = 600,
+            )
+        timeObserver =
+            player.addPeriodicTimeObserverForInterval(
+                interval = interval,
+                queue = null,
+                usingBlock = { time: CValue<CMTime>? ->
+                    if (time == null) return@addPeriodicTimeObserverForInterval
+                    val currentSeconds = CMTimeGetSeconds(time)
+                    if (currentSeconds >= 0) {
+                        lastPositionMs = (currentSeconds * 1000).toLong()
                     }
-                }
-            },
-        )
+                    player.currentItem?.let { item ->
+                        val durationSeconds = CMTimeGetSeconds(item.duration)
+                        if (
+                            durationSeconds > 0 &&
+                                !durationSeconds.isNaN() &&
+                                !durationSeconds.isInfinite()
+                        ) {
+                            totalDuration = (durationSeconds * 1000).toLong()
+                        }
+                    }
+                },
+            )
 
         // KVO on player.timeControlStatus
         player.addObserver(
@@ -263,22 +268,24 @@ internal class AVFoundationPlayerState(
         observedPlayerItem = item
 
         // End of playback notification
-        endOfPlaybackObserver = NSNotificationCenter.defaultCenter.addObserverForName(
-            name = AVPlayerItemDidPlayToEndTimeNotification,
-            `object` = item,
-            queue = NSOperationQueue.mainQueue,
-        ) { _ ->
-            if (isLooping) {
-                val startTime = CMTimeMakeWithSeconds(
-                    seconds = 0.0,
-                    preferredTimescale = 600,
-                )
-                player.seekToTime(startTime)
-                player.play()
-            } else {
-                status = PlayerStatus.Pause.Confirmed
+        endOfPlaybackObserver =
+            NSNotificationCenter.defaultCenter.addObserverForName(
+                name = AVPlayerItemDidPlayToEndTimeNotification,
+                `object` = item,
+                queue = NSOperationQueue.mainQueue,
+            ) { _ ->
+                if (isLooping) {
+                    val startTime =
+                        CMTimeMakeWithSeconds(
+                            seconds = 0.0,
+                            preferredTimescale = 600,
+                        )
+                    player.seekToTime(startTime)
+                    player.play()
+                } else {
+                    status = PlayerStatus.Pause.Confirmed
+                }
             }
-        }
     }
 
     private fun removePlayerItemObservers() {
@@ -372,9 +379,7 @@ internal class AVFoundationPlayerState(
 
     private fun playerScope(): CoroutineScope =
         CoroutineScope(
-            appMainScope.coroutineContext + Job(
-                parent = appMainScope.coroutineContext[Job],
-            ),
+            appMainScope.coroutineContext + Job(parent = appMainScope.coroutineContext[Job])
         )
 
     private fun CoroutineScope.cancel() {
@@ -385,16 +390,13 @@ internal class AVFoundationPlayerState(
 /**
  * KVO observer for AVPlayer and AVPlayerItem property changes.
  *
- * Implements [NSKeyValueObservingProtocol] which is declared via a cinterop
- * `.def` file because `NSKeyValueObserving` is an informal protocol (ObjC
- * category on NSObject). K/N imports informal protocol methods as extension
- * functions which cannot be overridden. By declaring a formal `@protocol` in
- * the `.def` file, we get a Kotlin interface with an overridable method.
+ * Implements [NSKeyValueObservingProtocol] which is declared via a cinterop `.def` file because
+ * `NSKeyValueObserving` is an informal protocol (ObjC category on NSObject). K/N imports informal
+ * protocol methods as extension functions which cannot be overridden. By declaring a formal
+ * `@protocol` in the `.def` file, we get a Kotlin interface with an overridable method.
  */
-private class PlayerKVOObserver(
-    private val state: AVFoundationPlayerState,
-) : NSObject(),
-    NSKeyValueObservingProtocol {
+private class PlayerKVOObserver(private val state: AVFoundationPlayerState) :
+    NSObject(), NSKeyValueObservingProtocol {
 
     override fun observeValueForKeyPath(
         keyPath: String?,

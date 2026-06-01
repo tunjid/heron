@@ -38,24 +38,25 @@ import heron.ui.timeline.generated.resources.tidal
 import heron.ui.timeline.generated.resources.youtube
 import org.jetbrains.compose.resources.StringResource
 
-internal val SpotifyIconUri = ImageUri(
-    "https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Green.png",
-)
-internal val TidalIconUri = ImageUri(
-    "https://w7.pngwing.com/pngs/289/884/png-transparent-tidal-logos-brands-icon-thumbnail.png",
-)
-internal val YouTubeIconUri = ImageUri(
-    "https://www.gstatic.com/marketing-cms/assets/images/96/ff/14b02dc0467e8875e062e9565cbd/external-icon-core-1.png=n-w1860-h1047-fcrop64=1,00000000ffffffff-rw",
-)
+internal val SpotifyIconUri =
+    ImageUri(
+        "https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Green.png"
+    )
+internal val TidalIconUri =
+    ImageUri(
+        "https://w7.pngwing.com/pngs/289/884/png-transparent-tidal-logos-brands-icon-thumbnail.png"
+    )
+internal val YouTubeIconUri =
+    ImageUri(
+        "https://www.gstatic.com/marketing-cms/assets/images/96/ff/14b02dc0467e8875e062e9565cbd/external-icon-core-1.png=n-w1860-h1047-fcrop64=1,00000000ffffffff-rw"
+    )
 
 internal val RockskyAlbum.hasMusicServiceLink: Boolean
-    get() = spotifyLink != null ||
-        appleMusicLink != null ||
-        tidalLink != null ||
-        youtubeLink != null
+    get() =
+        spotifyLink != null || appleMusicLink != null || tidalLink != null || youtubeLink != null
 
 internal inline fun RockskyAlbum.forEachMusicServiceLink(
-    block: (label: StringResource, iconUri: ImageUri?, url: String) -> Unit,
+    block: (label: StringResource, iconUri: ImageUri?, url: String) -> Unit
 ) {
     spotifyLink?.let { block(Res.string.spotify, SpotifyIconUri, it) }
     // Apple's brand guidelines do not allow for showing the icon alone
@@ -65,65 +66,57 @@ internal inline fun RockskyAlbum.forEachMusicServiceLink(
 }
 
 @Composable
-internal fun MusicServiceIcon(
-    iconUri: ImageUri?,
-) {
-    if (iconUri != null) AsyncImage(
-        modifier = Modifier
-            .size(LabelIconSize),
-        args = remember(iconUri) {
-            ImageArgs(
-                url = iconUri.uri,
-                contentScale = ContentScale.Fit,
-                contentDescription = null,
-                shape = RoundedPolygonShape.Circle,
-            )
-        },
-    )
+internal fun MusicServiceIcon(iconUri: ImageUri?) {
+    if (iconUri != null)
+        AsyncImage(
+            modifier = Modifier.size(LabelIconSize),
+            args =
+                remember(iconUri) {
+                    ImageArgs(
+                        url = iconUri.uri,
+                        contentScale = ContentScale.Fit,
+                        contentDescription = null,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+        )
 }
 
 @Composable
 internal fun dotSeparatedText(
     preText: String?,
     postText: String?,
-): CharSequence? = when {
-    preText != null && postText != null -> {
-        val postTextColor = MaterialTheme.colorScheme.outline
-        remember(
-            key1 = preText,
-            key2 = postText,
-            key3 = postTextColor,
-        ) {
-            buildAnnotatedString {
-                append(preText)
-                withStyle(
-                    style = SpanStyle(
-                        color = postTextColor,
-                    ),
-                ) {
-                    append(" · ")
-                    append(postText)
+): CharSequence? =
+    when {
+        preText != null && postText != null -> {
+            val postTextColor = MaterialTheme.colorScheme.outline
+            remember(
+                key1 = preText,
+                key2 = postText,
+                key3 = postTextColor,
+            ) {
+                buildAnnotatedString {
+                    append(preText)
+                    withStyle(style = SpanStyle(color = postTextColor)) {
+                        append(" · ")
+                        append(postText)
+                    }
                 }
             }
         }
-    }
-    preText != null -> preText
-    postText != null -> {
-        val postTextColor = MaterialTheme.colorScheme.outline
-        remember(
-            key1 = postText,
-            key2 = postTextColor,
-        ) {
-            buildAnnotatedString {
-                withStyle(
-                    style = SpanStyle(
-                        color = postTextColor,
-                    ),
-                ) {
-                    append(postText)
+        preText != null -> preText
+        postText != null -> {
+            val postTextColor = MaterialTheme.colorScheme.outline
+            remember(
+                key1 = postText,
+                key2 = postTextColor,
+            ) {
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = postTextColor)) {
+                        append(postText)
+                    }
                 }
             }
         }
+        else -> null
     }
-    else -> null
-}

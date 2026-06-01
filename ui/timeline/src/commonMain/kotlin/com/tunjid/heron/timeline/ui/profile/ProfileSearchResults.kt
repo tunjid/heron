@@ -50,10 +50,11 @@ fun ProfileSearchResults(
 ) {
     LookaheadScope {
         ElevatedCard(
-            modifier = modifier
-                .animateBounds(this@LookaheadScope)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                modifier
+                    .animateBounds(this@LookaheadScope)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.elevatedCardColors(),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -64,18 +65,18 @@ fun ProfileSearchResults(
                         ProfileResultItem(
                             profile = profile,
                             onProfileClicked = onProfileClicked,
-                            modifier = Modifier
-                                .animateBounds(this@LookaheadScope)
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier =
+                                Modifier.animateBounds(this@LookaheadScope)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
                         )
                     }
 
                     if (index != results.lastIndex) {
                         key("${profile.did.id}-divider") {
                             HorizontalDivider(
-                                modifier = Modifier
-                                    .animateBounds(this@LookaheadScope)
-                                    .padding(horizontal = 12.dp),
+                                modifier =
+                                    Modifier.animateBounds(this@LookaheadScope)
+                                        .padding(horizontal = 12.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant,
                                 thickness = 0.8.dp,
                             )
@@ -94,21 +95,19 @@ private fun ProfileResultItem(
     modifier: Modifier = Modifier,
 ) {
     AttributionLayout(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onProfileClicked(profile) },
+        modifier = modifier.fillMaxWidth().clickable { onProfileClicked(profile) },
         avatar = {
             AsyncImage(
-                args = remember(profile.avatar) {
-                    ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-                modifier = Modifier
-                    .size(36.dp),
+                args =
+                    remember(profile.avatar) {
+                        ImageArgs(
+                            url = profile.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = profile.contentDescription,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
+                modifier = Modifier.size(36.dp),
             )
         },
         label = {

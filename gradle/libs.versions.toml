@@ -35,7 +35,6 @@ kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.7"
-ktlint-cli = "1.8.0"
 ktor = "3.4.3"
 lifecycle-android = "2.11.0-beta01"
 lifecycle-multiplatform = "2.11.0-beta01"
@@ -154,7 +153,6 @@ kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
-ktlint = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlint-cli" }
 ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
@@ -195,6 +193,9 @@ javafx-media = { group = "org.openjfx", name = "javafx-media", version.ref = "ja
 javafx-swing = { group = "org.openjfx", name = "javafx-swing", version.ref = "javafx" }
 gstreamer-java-core = { module = "org.freedesktop.gstreamer:gst1-java-core", version.ref = "gstreamer-java" }
 tink = { group = "com.google.crypto.tink", name = "tink", version.ref = "tink" }
+
+# Dummy to get renovate updates, the version is used in rootProject build.gradle with spotless.
+ktfmt = "com.facebook:ktfmt:0.63"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

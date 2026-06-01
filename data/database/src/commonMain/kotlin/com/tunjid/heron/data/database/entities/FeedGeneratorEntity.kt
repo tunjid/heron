@@ -32,28 +32,29 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "feedGenerators",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["indexedAt"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["cid"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["indexedAt"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class FeedGeneratorEntity(
     val cid: FeedGeneratorId,
     val did: ProfileId,
-    @PrimaryKey
-    val uri: FeedGeneratorUri,
+    @PrimaryKey val uri: FeedGeneratorUri,
     val avatar: ImageUri?,
     val likeCount: Long?,
     val creatorId: ProfileId,
@@ -66,8 +67,7 @@ data class FeedGeneratorEntity(
 )
 
 data class PopulatedFeedGeneratorEntity(
-    @Embedded
-    val entity: FeedGeneratorEntity,
+    @Embedded val entity: FeedGeneratorEntity,
     @Relation(
         parentColumn = "creatorId",
         entityColumn = "did",

@@ -169,13 +169,9 @@ internal interface RecordResolver {
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>>
 
-    suspend fun resolve(
-        uri: RecordUri,
-    ): Result<Record>
+    suspend fun resolve(uri: RecordUri): Result<Record>
 
-    suspend fun deleteRecord(
-        uri: RecordUri,
-    ): Outcome
+    suspend fun deleteRecord(uri: RecordUri): Outcome
 
     interface TimelineItemCreationContext {
         val top: TimelineItem?
@@ -185,6 +181,7 @@ internal interface RecordResolver {
         val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>>
 
         infix fun push(item: TimelineItem)
+
         infix fun swapTop(item: TimelineItem)
 
         fun threadedNode(
@@ -194,19 +191,21 @@ internal interface RecordResolver {
         ): TimelineItem.Threaded.Node
 
         fun record(recordUri: EmbeddableRecordUri): Record?
+
         fun profile(profileId: ProfileId): Profile?
+
         fun threadGate(postUri: PostUri): ThreadGate?
+
         fun isMuted(post: Post): Boolean
     }
 }
 
-internal class OfflineRecordResolver @Inject constructor(
-    @AppMainScope
-    appMainScope: CoroutineScope,
-    @param:DefaultDispatcher
-    private val defaultDispatcher: CoroutineDispatcher,
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+internal class OfflineRecordResolver
+@Inject
+constructor(
+    @AppMainScope appMainScope: CoroutineScope,
+    @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -221,50 +220,56 @@ internal class OfflineRecordResolver @Inject constructor(
 ) : RecordResolver {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            savedStateDataSource.savedState.map {
-                it.signedInProfileData
-                    ?.preferences
-                    ?.labelerPreferences
-                    ?.map(LabelerPreference::labelerCreatorId)
-                    ?.plus(Collections.DefaultLabelerProfileId)
-                    ?: listOf(Collections.DefaultLabelerProfileId)
-            }
-                .distinctUntilChanged()
-                .flatMapLatest { labelerCreatorIds ->
-                    labelDao.labelersByCreators(labelerCreatorIds)
-                        .map { it.map(PopulatedLabelerEntity::asExternalModel) }
-                        .withRefresh {
-                            networkService.runCatchingWithMonitoredNetworkRetry {
-                                getServices(
-                                    GetServicesQueryParams(
-                                        dids = labelerCreatorIds.map { Did(it.id) },
-                                        detailed = true,
-                                    ),
-                                )
-                            }
-                                .getOrNull()
-                                ?.views
-                                ?.let { responseViewUnionList ->
-                                    multipleEntitySaverProvider.saveInTransaction {
-                                        responseViewUnionList.forEach { responseViewUnion ->
-                                            when (responseViewUnion) {
-                                                is GetServicesResponseViewUnion.LabelerView -> add(
-                                                    viewingProfileId = signedInProfileId,
-                                                    labeler = responseViewUnion.value,
-                                                )
-                                                is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
-                                                    viewingProfileId = signedInProfileId,
-                                                    labeler = responseViewUnion.value,
-                                                )
-                                                is GetServicesResponseViewUnion.Unknown -> Unit
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                savedStateDataSource.savedState
+                    .map {
+                        it.signedInProfileData
+                            ?.preferences
+                            ?.labelerPreferences
+                            ?.map(LabelerPreference::labelerCreatorId)
+                            ?.plus(Collections.DefaultLabelerProfileId)
+                            ?: listOf(Collections.DefaultLabelerProfileId)
+                    }
+                    .distinctUntilChanged()
+                    .flatMapLatest { labelerCreatorIds ->
+                        labelDao
+                            .labelersByCreators(labelerCreatorIds)
+                            .map { it.map(PopulatedLabelerEntity::asExternalModel) }
+                            .withRefresh {
+                                networkService
+                                    .runCatchingWithMonitoredNetworkRetry {
+                                        getServices(
+                                            GetServicesQueryParams(
+                                                dids = labelerCreatorIds.map { Did(it.id) },
+                                                detailed = true,
+                                            )
+                                        )
+                                    }
+                                    .getOrNull()
+                                    ?.views
+                                    ?.let { responseViewUnionList ->
+                                        multipleEntitySaverProvider.saveInTransaction {
+                                            responseViewUnionList.forEach { responseViewUnion ->
+                                                when (responseViewUnion) {
+                                                    is GetServicesResponseViewUnion.LabelerView ->
+                                                        add(
+                                                            viewingProfileId = signedInProfileId,
+                                                            labeler = responseViewUnion.value,
+                                                        )
+                                                    is GetServicesResponseViewUnion.LabelerViewDetailed ->
+                                                        add(
+                                                            viewingProfileId = signedInProfileId,
+                                                            labeler = responseViewUnion.value,
+                                                        )
+                                                    is GetServicesResponseViewUnion.Unknown -> Unit
+                                                }
                                             }
                                         }
                                     }
-                                }
-                        }
-                }
-        }
+                            }
+                    }
+            }
             .stateIn(
                 scope = appMainScope + ioDispatcher,
                 started = SharingStarted.WhileSubscribed(1_000),
@@ -297,25 +302,22 @@ internal class OfflineRecordResolver @Inject constructor(
 
         return combine(
             listOf(
-                feedUris.list
-                    .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
-                listUris.list
-                    .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
-                postUris.list
-                    .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
-                starterPackUris.list
-                    .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
-                labelerUris.list
-                    .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
-                documentUris.list
-                    .toDistinctUntilChangedFlowOrEmpty {
-                        standardSiteDao.documents(viewingProfileId?.id, it)
-                    },
-                publicationUris.list
-                    .toDistinctUntilChangedFlowOrEmpty {
-                        standardSiteDao.publications(viewingProfileId?.id, it)
-                    },
-            ),
+                feedUris.list.toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
+                listUris.list.toDistinctUntilChangedFlowOrEmpty(listDao::lists),
+                postUris.list.toDistinctUntilChangedFlowOrEmpty {
+                    postDao.posts(viewingProfileId?.id, it)
+                },
+                starterPackUris.list.toDistinctUntilChangedFlowOrEmpty(
+                    starterPackDao::starterPacks
+                ),
+                labelerUris.list.toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
+                documentUris.list.toDistinctUntilChangedFlowOrEmpty {
+                    standardSiteDao.documents(viewingProfileId?.id, it)
+                },
+                publicationUris.list.toDistinctUntilChangedFlowOrEmpty {
+                    standardSiteDao.publications(viewingProfileId?.id, it)
+                },
+            )
         ) { populatedRecordLists ->
             val associatedRecords = buildMap {
                 populatedRecordLists.forEach { populatedRecords ->
@@ -330,329 +332,354 @@ internal class OfflineRecordResolver @Inject constructor(
                     is PopulatedStandardDocumentEntity -> recordEntity.asExternalModel()
                     is PopulatedStandardPublicationEntity -> recordEntity.asExternalModel()
                     is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
-                    is PopulatedPostEntity -> recordEntity.asExternalModel(
-                        embeddedRecords = listOfNotNull(
-                            when (
-                                val embeddedRecordEntity =
-                                    associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
-                            ) {
-                                is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedStandardDocumentEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedStandardPublicationEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
-                                    embeddedRecords = emptyList(),
+                    is PopulatedPostEntity ->
+                        recordEntity.asExternalModel(
+                            embeddedRecords =
+                                listOfNotNull(
+                                    when (
+                                        val embeddedRecordEntity =
+                                            associatedRecords[
+                                                recordEntity.entity.record?.embeddedRecordUri]
+                                    ) {
+                                        is PopulatedFeedGeneratorEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        is PopulatedLabelerEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        is PopulatedListEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        is PopulatedStandardDocumentEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        is PopulatedStandardPublicationEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        is PopulatedPostEntity ->
+                                            embeddedRecordEntity.asExternalModel(
+                                                embeddedRecords = emptyList()
+                                            )
+                                        is PopulatedStarterPackEntity ->
+                                            embeddedRecordEntity.asExternalModel()
+                                        null -> null
+                                    }
                                 )
-                                is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
-                                null -> null
-                            },
-                        ),
-                    )
+                        )
                 }
             }
         }
     }
 
-    override suspend fun resolve(
-        uri: RecordUri,
-    ): Result<Record> = runCatchingUnlessCancelled {
-        currentSessionContext()?.tokens
-            ?.authProfileId
-    }.mapToResult { viewingProfileId ->
-        when (uri) {
-            is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getFeedGenerator(
-                    GetFeedGeneratorQueryParams(
-                        feed = uri.uri.let(::AtUri),
-                    ),
-                )
+    override suspend fun resolve(uri: RecordUri): Result<Record> =
+        runCatchingUnlessCancelled {
+                currentSessionContext()?.tokens?.authProfileId
             }
-                .mapCatchingUnlessCancelled {
-                    multipleEntitySaverProvider.saveInTransaction { add(it.view) }
-                    it.view.asExternalModel()
-                }
-
-            is ListUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getList(
-                    GetListQueryParams(
-                        cursor = null,
-                        limit = 1,
-                        list = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    multipleEntitySaverProvider.saveInTransaction { add(it.list) }
-                    it.list.asExternalModel()
-                }
-
-            is ListMemberUri -> fetchRecordAndSaveCreator(
-                recordUri = uri,
-                viewingProfileId = viewingProfileId,
-            ).mapToResult { recordResponse ->
-                val bskyListMember = recordResponse.value.decodeAs<BskyListMember>()
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getProfile(
-                        GetProfileQueryParams(
-                            actor = bskyListMember.subject,
-                        ),
-                    )
-                }.mapCatchingUnlessCancelled { profileResponse ->
-                    ListMember(
-                        uri = uri,
-                        subject = profileResponse.profileEntity().asExternalModel(),
-                        listUri = bskyListMember.list.atUri.let(::ListUri),
-                        createdAt = bskyListMember.createdAt,
-                        viewerState = null,
-                    )
-                }
-            }
-
-            is PostUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getPosts(
-                    GetPostsQueryParams(
-                        uris = listOf(uri.uri.let(::AtUri)),
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    val postView = it.posts.first()
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            viewingProfileId = viewingProfileId,
-                            postView = postView,
-                        )
-                    }
-                    postView.post(viewingProfileId)
-                }
-
-            is StarterPackUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getStarterPack(
-                    GetStarterPackQueryParams(
-                        starterPack = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    multipleEntitySaverProvider.saveInTransaction { add(it.starterPack) }
-                    it.starterPack.asExternalModel()
-                }
-            is LabelerUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getServices(
-                    GetServicesQueryParams(
-                        dids = listOf(uri.profileId().id.let(::Did)),
-                        detailed = true,
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    val responseViewUnion = it.views.first()
-                    multipleEntitySaverProvider.saveInTransaction {
-                        when (responseViewUnion) {
-                            is GetServicesResponseViewUnion.LabelerView -> add(
-                                viewingProfileId = viewingProfileId,
-                                labeler = responseViewUnion.value,
-                            )
-                            is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
-                                viewingProfileId = viewingProfileId,
-                                labeler = responseViewUnion.value,
-                            )
-                            is GetServicesResponseViewUnion.Unknown -> Unit
-                        }
-                    }
-                    when (responseViewUnion) {
-                        is GetServicesResponseViewUnion.LabelerView -> responseViewUnion.value.asExternalModel()
-                        is GetServicesResponseViewUnion.LabelerViewDetailed -> responseViewUnion.value.asExternalModel()
-                        is GetServicesResponseViewUnion.Unknown -> throw UnresolvableRecordException(
-                            uri,
-                        )
-                    }
-                }
-            is FollowUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
-                .mapCatchingUnlessCancelled {
-                    Follow(
-                        uri = uri,
-                        cid = GenericId(requireNotNull(it.cid).cid),
-                    )
-                }
-
-            is LikeUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
-                .mapCatchingUnlessCancelled {
-                    val bskyLike = it.value.decodeAs<BskyLike>()
-                    val subjectUri = bskyLike.subject.uri.requireRecordUri()
-                    require(subjectUri is PostUri)
-                    val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
-                    require(resolvedRecord is Post)
-
-                    Like(
-                        uri = uri,
-                        cid = GenericId(requireNotNull(it.cid).cid),
-                        post = resolvedRecord,
-                        via = bskyLike.via?.uri?.requireRecordUri(),
-                    )
-                }
-
-            is RepostUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
-                .mapCatchingUnlessCancelled {
-                    val bskyRepost = it.value.decodeAs<BskyRepost>()
-                    val subjectUri = bskyRepost.subject.uri.requireRecordUri()
-                    require(subjectUri is PostUri)
-                    val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
-                    require(resolvedRecord is Post)
-
-                    Repost(
-                        uri = uri,
-                        cid = GenericId(requireNotNull(it.cid).cid),
-                        post = resolvedRecord,
-                        via = bskyRepost.via?.uri?.requireRecordUri(),
-                    )
-                }
-            is BlockUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
-                .mapCatchingUnlessCancelled {
-                    val bskyBlock = it.value.decodeAs<BskyBlock>()
-                    Block(
-                        uri = uri,
-                        cid = GenericId(requireNotNull(it.cid).cid),
-                        subject = bskyBlock.subject.did.let(::ProfileId),
-                    )
-                }
-
-            is StandardPublicationUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getPublication(
-                    GetPublicationQueryParams(
-                        uri = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled { response ->
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            publicationView = response.publication,
-                            viewingProfileId = viewingProfileId,
-                        )
-                    }
-
-                    standardSiteDao.publication(
-                        viewingProfileId = viewingProfileId?.id,
-                        publicationUri = uri.uri,
-                    )
-                        .first()
-                        .asExternalModel()
-                }
-
-            is StandardDocumentUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getDocument(
-                    GetDocumentQueryParams(
-                        uri = uri.uri.let(::AtUri),
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled { response ->
-                    val documentView = response.document
-                    val document = response.document.record.decodeAs<Document>()
-
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            documentView = response.document,
-                            viewingProfileId = viewingProfileId,
-                        )
-                    }
-
-                    StandardDocument(
-                        uri = uri,
-                        cid = documentView.cid.cid.let(::StandardDocumentId),
-                        authorId = documentView.author.did.did.let(::ProfileId),
-                        title = document.title,
-                        description = document.description,
-                        textContent = document.textContent,
-                        path = document.path,
-                        site = document.site.uri,
-                        publishedAt = document.publishedAt,
-                        updatedAt = document.updatedAt,
-                        coverImage = documentView.coverImageUrl?.uri?.let(::ImageUri),
-                        bskyPostRef = document.bskyPostRef?.let { ref ->
-                            Reference(
-                                id = ref.cid.cid.let(::PostId),
-                                uri = PostUri(ref.uri.atUri),
-                            )
-                        },
-                        tags = document.tags ?: emptyList(),
-                        publication = documentView.publication
-                            ?.uri
-                            ?.atUri
-                            ?.let {
-                                standardSiteDao.publication(
-                                    viewingProfileId = viewingProfileId?.id,
-                                    publicationUri = it,
+            .mapToResult { viewingProfileId ->
+                when (uri) {
+                    is FeedGeneratorUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getFeedGenerator(
+                                    GetFeedGeneratorQueryParams(feed = uri.uri.let(::AtUri))
                                 )
                             }
-                            ?.firstOrNull()
-                            ?.asExternalModel(),
-                    )
-                }
+                            .mapCatchingUnlessCancelled {
+                                multipleEntitySaverProvider.saveInTransaction { add(it.view) }
+                                it.view.asExternalModel()
+                            }
 
-            is StandardSubscriptionUri -> if (viewingProfileId != null) {
-                fetchRecordAndSaveCreator(uri, viewingProfileId)
-                    .mapCatchingUnlessCancelled { response ->
-                        val subscription = response.value.decodeAs<Subscription>()
-                        val cid = response.cid?.cid?.let(::StandardSubscriptionId)
-                        val sortedAt = uri.recordKey.tidInstant ?: Instant.DISTANT_PAST
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(
-                                subscriptionUri = uri,
-                                subscriptionCid = cid,
-                                subscription = subscription,
-                                sortedAt = sortedAt,
+                    is ListUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getList(
+                                    GetListQueryParams(
+                                        cursor = null,
+                                        limit = 1,
+                                        list = uri.uri.let(::AtUri),
+                                    )
+                                )
+                            }
+                            .mapCatchingUnlessCancelled {
+                                multipleEntitySaverProvider.saveInTransaction { add(it.list) }
+                                it.list.asExternalModel()
+                            }
+
+                    is ListMemberUri ->
+                        fetchRecordAndSaveCreator(
+                                recordUri = uri,
                                 viewingProfileId = viewingProfileId,
                             )
+                            .mapToResult { recordResponse ->
+                                val bskyListMember = recordResponse.value.decodeAs<BskyListMember>()
+                                networkService
+                                    .runCatchingWithMonitoredNetworkRetry {
+                                        getProfile(
+                                            GetProfileQueryParams(actor = bskyListMember.subject)
+                                        )
+                                    }
+                                    .mapCatchingUnlessCancelled { profileResponse ->
+                                        ListMember(
+                                            uri = uri,
+                                            subject =
+                                                profileResponse.profileEntity().asExternalModel(),
+                                            listUri = bskyListMember.list.atUri.let(::ListUri),
+                                            createdAt = bskyListMember.createdAt,
+                                            viewerState = null,
+                                        )
+                                    }
+                            }
+
+                    is PostUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getPosts(GetPostsQueryParams(uris = listOf(uri.uri.let(::AtUri))))
+                            }
+                            .mapCatchingUnlessCancelled {
+                                val postView = it.posts.first()
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    add(
+                                        viewingProfileId = viewingProfileId,
+                                        postView = postView,
+                                    )
+                                }
+                                postView.post(viewingProfileId)
+                            }
+
+                    is StarterPackUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getStarterPack(
+                                    GetStarterPackQueryParams(starterPack = uri.uri.let(::AtUri))
+                                )
+                            }
+                            .mapCatchingUnlessCancelled {
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    add(it.starterPack)
+                                }
+                                it.starterPack.asExternalModel()
+                            }
+                    is LabelerUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getServices(
+                                    GetServicesQueryParams(
+                                        dids = listOf(uri.profileId().id.let(::Did)),
+                                        detailed = true,
+                                    )
+                                )
+                            }
+                            .mapCatchingUnlessCancelled {
+                                val responseViewUnion = it.views.first()
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    when (responseViewUnion) {
+                                        is GetServicesResponseViewUnion.LabelerView ->
+                                            add(
+                                                viewingProfileId = viewingProfileId,
+                                                labeler = responseViewUnion.value,
+                                            )
+                                        is GetServicesResponseViewUnion.LabelerViewDetailed ->
+                                            add(
+                                                viewingProfileId = viewingProfileId,
+                                                labeler = responseViewUnion.value,
+                                            )
+                                        is GetServicesResponseViewUnion.Unknown -> Unit
+                                    }
+                                }
+                                when (responseViewUnion) {
+                                    is GetServicesResponseViewUnion.LabelerView ->
+                                        responseViewUnion.value.asExternalModel()
+                                    is GetServicesResponseViewUnion.LabelerViewDetailed ->
+                                        responseViewUnion.value.asExternalModel()
+                                    is GetServicesResponseViewUnion.Unknown ->
+                                        throw UnresolvableRecordException(uri)
+                                }
+                            }
+                    is FollowUri ->
+                        fetchRecordAndSaveCreator(uri, viewingProfileId)
+                            .mapCatchingUnlessCancelled {
+                                Follow(
+                                    uri = uri,
+                                    cid = GenericId(requireNotNull(it.cid).cid),
+                                )
+                            }
+
+                    is LikeUri ->
+                        fetchRecordAndSaveCreator(uri, viewingProfileId)
+                            .mapCatchingUnlessCancelled {
+                                val bskyLike = it.value.decodeAs<BskyLike>()
+                                val subjectUri = bskyLike.subject.uri.requireRecordUri()
+                                require(subjectUri is PostUri)
+                                val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
+                                require(resolvedRecord is Post)
+
+                                Like(
+                                    uri = uri,
+                                    cid = GenericId(requireNotNull(it.cid).cid),
+                                    post = resolvedRecord,
+                                    via = bskyLike.via?.uri?.requireRecordUri(),
+                                )
+                            }
+
+                    is RepostUri ->
+                        fetchRecordAndSaveCreator(uri, viewingProfileId)
+                            .mapCatchingUnlessCancelled {
+                                val bskyRepost = it.value.decodeAs<BskyRepost>()
+                                val subjectUri = bskyRepost.subject.uri.requireRecordUri()
+                                require(subjectUri is PostUri)
+                                val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
+                                require(resolvedRecord is Post)
+
+                                Repost(
+                                    uri = uri,
+                                    cid = GenericId(requireNotNull(it.cid).cid),
+                                    post = resolvedRecord,
+                                    via = bskyRepost.via?.uri?.requireRecordUri(),
+                                )
+                            }
+                    is BlockUri ->
+                        fetchRecordAndSaveCreator(uri, viewingProfileId)
+                            .mapCatchingUnlessCancelled {
+                                val bskyBlock = it.value.decodeAs<BskyBlock>()
+                                Block(
+                                    uri = uri,
+                                    cid = GenericId(requireNotNull(it.cid).cid),
+                                    subject = bskyBlock.subject.did.let(::ProfileId),
+                                )
+                            }
+
+                    is StandardPublicationUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getPublication(
+                                    GetPublicationQueryParams(uri = uri.uri.let(::AtUri))
+                                )
+                            }
+                            .mapCatchingUnlessCancelled { response ->
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    add(
+                                        publicationView = response.publication,
+                                        viewingProfileId = viewingProfileId,
+                                    )
+                                }
+
+                                standardSiteDao
+                                    .publication(
+                                        viewingProfileId = viewingProfileId?.id,
+                                        publicationUri = uri.uri,
+                                    )
+                                    .first()
+                                    .asExternalModel()
+                            }
+
+                    is StandardDocumentUri ->
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                                getDocument(GetDocumentQueryParams(uri = uri.uri.let(::AtUri)))
+                            }
+                            .mapCatchingUnlessCancelled { response ->
+                                val documentView = response.document
+                                val document = response.document.record.decodeAs<Document>()
+
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    add(
+                                        documentView = response.document,
+                                        viewingProfileId = viewingProfileId,
+                                    )
+                                }
+
+                                StandardDocument(
+                                    uri = uri,
+                                    cid = documentView.cid.cid.let(::StandardDocumentId),
+                                    authorId = documentView.author.did.did.let(::ProfileId),
+                                    title = document.title,
+                                    description = document.description,
+                                    textContent = document.textContent,
+                                    path = document.path,
+                                    site = document.site.uri,
+                                    publishedAt = document.publishedAt,
+                                    updatedAt = document.updatedAt,
+                                    coverImage = documentView.coverImageUrl?.uri?.let(::ImageUri),
+                                    bskyPostRef =
+                                        document.bskyPostRef?.let { ref ->
+                                            Reference(
+                                                id = ref.cid.cid.let(::PostId),
+                                                uri = PostUri(ref.uri.atUri),
+                                            )
+                                        },
+                                    tags = document.tags ?: emptyList(),
+                                    publication =
+                                        documentView.publication
+                                            ?.uri
+                                            ?.atUri
+                                            ?.let {
+                                                standardSiteDao.publication(
+                                                    viewingProfileId = viewingProfileId?.id,
+                                                    publicationUri = it,
+                                                )
+                                            }
+                                            ?.firstOrNull()
+                                            ?.asExternalModel(),
+                                )
+                            }
+
+                    is StandardSubscriptionUri ->
+                        if (viewingProfileId != null) {
+                            fetchRecordAndSaveCreator(uri, viewingProfileId)
+                                .mapCatchingUnlessCancelled { response ->
+                                    val subscription = response.value.decodeAs<Subscription>()
+                                    val cid = response.cid?.cid?.let(::StandardSubscriptionId)
+                                    val sortedAt = uri.recordKey.tidInstant ?: Instant.DISTANT_PAST
+                                    multipleEntitySaverProvider.saveInTransaction {
+                                        add(
+                                            subscriptionUri = uri,
+                                            subscriptionCid = cid,
+                                            subscription = subscription,
+                                            sortedAt = sortedAt,
+                                            viewingProfileId = viewingProfileId,
+                                        )
+                                    }
+                                    StandardSubscription(
+                                        uri = uri,
+                                        cid = cid,
+                                        sortedAt = sortedAt,
+                                        publicationUri =
+                                            StandardPublicationUri(subscription.publication.atUri),
+                                    )
+                                }
+                        } else {
+                            expiredSessionResult()
                         }
-                        StandardSubscription(
-                            uri = uri,
-                            cid = cid,
-                            sortedAt = sortedAt,
-                            publicationUri = StandardPublicationUri(
-                                subscription.publication.atUri,
-                            ),
+                    is AlbumUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+                    is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+                    is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+                    is TrackUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+                    is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
+                }
+            }
+            .onFailure { throwable ->
+                logcat(LogPriority.WARN) {
+                    "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
+                }
+                if (isNotFound(throwable)) {
+                    deleteLocalRecord(uri)
+                }
+            }
+
+    override suspend fun deleteRecord(uri: RecordUri) =
+        runCatchingUnlessCancelled {
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        deleteRecord(
+                            DeleteRecordRequest(
+                                repo = Did(uri.profileId().id),
+                                collection = Nsid(uri.requireCollection()),
+                                rkey = RKey(uri.recordKey.value),
+                            )
                         )
                     }
-            } else {
-                expiredSessionResult()
+                    .getOrThrow()
+
+                deleteLocalRecord(uri)
             }
-            is AlbumUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
-            is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
-            is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
-            is TrackUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
-            is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
-        }
-    }.onFailure { throwable ->
-        logcat(LogPriority.WARN) {
-            "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
-        }
-        if (isNotFound(throwable)) {
-            deleteLocalRecord(uri)
-        }
-    }
+            .toOutcome()
 
-    override suspend fun deleteRecord(
-        uri: RecordUri,
-    ) = runCatchingUnlessCancelled {
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            deleteRecord(
-                DeleteRecordRequest(
-                    repo = Did(uri.profileId().id),
-                    collection = Nsid(uri.requireCollection()),
-                    rkey = RKey(uri.recordKey.value),
-                ),
-            )
-        }.getOrThrow()
-
-        deleteLocalRecord(uri)
-    }.toOutcome()
-
-    private suspend fun deleteLocalRecord(
-        uri: RecordUri,
-    ) {
+    private suspend fun deleteLocalRecord(uri: RecordUri) {
         when (uri) {
             is BlockUri -> profileDao.deleteBlock(uri)
             is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
@@ -683,13 +710,15 @@ internal class OfflineRecordResolver @Inject constructor(
         associatedProfileIds: (T) -> List<ProfileId>,
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault()
+        savedStateDataSource
+            .distinctUntilChangedSignedProfilePreferencesOrDefault()
             .flatMapLatest { preferences ->
                 val allowAdultContent = preferences.allowAdultContent
-                val labelsVisibilityMap = preferences.contentLabelPreferences.associateBy(
-                    keySelector = ContentLabelPreference::label,
-                    valueTransform = ContentLabelPreference::visibility,
-                )
+                val labelsVisibilityMap =
+                    preferences.contentLabelPreferences.associateBy(
+                        keySelector = ContentLabelPreference::label,
+                        valueTransform = ContentLabelPreference::visibility,
+                    )
 
                 val recordUris = mutableSetOf<EmbeddableRecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
@@ -710,74 +739,87 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
 
                 combine(
-                    flow = embeddableRecords(
-                        uris = recordUris,
-                        viewingProfileId = signedInProfileId,
-                    )
-                        .distinctUntilChanged(),
-                    flow2 = threadGatePostUris
-                        .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
-                    flow3 = profileIds
-                        .toDistinctUntilChangedFlowOrEmpty {
-                            profileDao.profiles(
-                                signedInProfiledId = signedInProfileId?.id,
-                                ids = it,
-                            )
-                        },
-                    flow4 = subscribedLabelers,
-                    transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
-                        if (associatedRecords.isEmpty()) return@combine emptyList()
-                        withContext(defaultDispatcher) {
-                            items.fold(
-                                MutableTimelineItemCreationContext(
-                                    signedInProfileId = signedInProfileId,
-                                    preferences = preferences,
-                                    associatedRecords = associatedRecords,
-                                    associatedThreadGateEntities = threadGateEntities,
-                                    associatedProfileEntities = profileEntities,
-                                ),
-                            ) { context, item ->
-                                val post = context.record(postUri(item)) as? Post
-                                    ?: return@fold context
-
-                                // Always omit blocked users
-                                if (post.viewerState.isBlocked) return@fold context
-
-                                val postLabels = when {
-                                    post.labels.isEmpty() -> emptySet()
-                                    else -> post.labels.mapTo(
-                                        destination = mutableSetOf(),
-                                        transform = Label::value,
-                                    )
-                                }
-
-                                // Check for global hidden label
-                                if (postLabels.contains(Label.Hidden)) return@fold context
-
-                                // Check for global non authenticated label
-                                val isSignedIn = signedInProfileId != null
-                                if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@fold context
-
-                                val appliedLabels = AppliedLabels(
-                                    adultContentEnabled = allowAdultContent,
-                                    labels = post.labels + post.author.labels,
-                                    labelers = labelers,
-                                    preferenceLabelsVisibilityMap = labelsVisibilityMap,
+                        flow =
+                            embeddableRecords(
+                                    uris = recordUris,
+                                    viewingProfileId = signedInProfileId,
                                 )
-
-                                if (appliedLabels.shouldHide) return@fold context
-
-                                context.apply {
-                                    update(
-                                        currentPost = post,
-                                        appliedLabels = appliedLabels,
+                                .distinctUntilChanged(),
+                        flow2 =
+                            threadGatePostUris.toDistinctUntilChangedFlowOrEmpty(
+                                threadGateDao::threadGates
+                            ),
+                        flow3 =
+                            profileIds.toDistinctUntilChangedFlowOrEmpty {
+                                profileDao.profiles(
+                                    signedInProfiledId = signedInProfileId?.id,
+                                    ids = it,
+                                )
+                            },
+                        flow4 = subscribedLabelers,
+                        transform = {
+                            associatedRecords,
+                            threadGateEntities,
+                            profileEntities,
+                            labelers ->
+                            if (associatedRecords.isEmpty()) return@combine emptyList()
+                            withContext(defaultDispatcher) {
+                                items.fold(
+                                    MutableTimelineItemCreationContext(
+                                        signedInProfileId = signedInProfileId,
+                                        preferences = preferences,
+                                        associatedRecords = associatedRecords,
+                                        associatedThreadGateEntities = threadGateEntities,
+                                        associatedProfileEntities = profileEntities,
                                     )
-                                    block(item)
+                                ) { context, item ->
+                                    val post =
+                                        context.record(postUri(item)) as? Post
+                                            ?: return@fold context
+
+                                    // Always omit blocked users
+                                    if (post.viewerState.isBlocked) return@fold context
+
+                                    val postLabels =
+                                        when {
+                                            post.labels.isEmpty() -> emptySet()
+                                            else ->
+                                                post.labels.mapTo(
+                                                    destination = mutableSetOf(),
+                                                    transform = Label::value,
+                                                )
+                                        }
+
+                                    // Check for global hidden label
+                                    if (postLabels.contains(Label.Hidden)) return@fold context
+
+                                    // Check for global non authenticated label
+                                    val isSignedIn = signedInProfileId != null
+                                    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated))
+                                        return@fold context
+
+                                    val appliedLabels =
+                                        AppliedLabels(
+                                            adultContentEnabled = allowAdultContent,
+                                            labels = post.labels + post.author.labels,
+                                            labelers = labelers,
+                                            preferenceLabelsVisibilityMap = labelsVisibilityMap,
+                                        )
+
+                                    if (appliedLabels.shouldHide) return@fold context
+
+                                    context.apply {
+                                        update(
+                                            currentPost = post,
+                                            appliedLabels = appliedLabels,
+                                        )
+                                        block(item)
+                                    }
                                 }
                             }
-                        }
-                    },
-                ).distinctUntilChanged()
+                        },
+                    )
+                    .distinctUntilChanged()
             }
 
     private suspend fun fetchRecordAndSaveCreator(
@@ -786,11 +828,10 @@ internal class OfflineRecordResolver @Inject constructor(
     ): Result<GetRecordResponse> = coroutineScope {
         // Get the profile independently
         launch {
-            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getProfile(
-                    GetProfileQueryParams(actor = recordUri.profileId().id.let(::Did)),
-                )
-            }
+            networkService
+                .runCatchingWithMonitoredNetworkRetry(times = 2) {
+                    getProfile(GetProfileQueryParams(actor = recordUri.profileId().id.let(::Did)))
+                }
                 .mapCatchingUnlessCancelled { profileViewDetailed ->
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
@@ -806,7 +847,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     repo = recordUri.profileId().id.let(::Did),
                     collection = recordUri.requireCollection().let(::Nsid),
                     rkey = recordUri.recordKey.value.let(::RKey),
-                ),
+                )
             )
         }
     }
@@ -823,7 +864,8 @@ private fun isNotFound(throwable: Throwable): Boolean {
         NotFoundVariants.any { it in message }
 }
 
-private val NotFoundVariants = setOf(
-    "could not find",
-    "not found",
-)
+private val NotFoundVariants =
+    setOf(
+        "could not find",
+        "not found",
+    )

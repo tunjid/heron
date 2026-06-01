@@ -17,87 +17,63 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
-import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
 import com.tunjid.heron.data.database.entities.ThreadGateHiddenPostEntity
-import com.tunjid.heron.data.database.entities.TimelineItemEntity
-import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
-import com.tunjid.heron.data.database.entities.fetchedAtPartial
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ThreadGateDao {
 
-    @Transaction
-    @Upsert
-    suspend fun upsertThreadGates(
-        entities: List<ThreadGateEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertThreadGates(entities: List<ThreadGateEntity>)
 
     @Transaction
     @Upsert
-    suspend fun upsertThreadGateAllowedLists(
-        entities: List<ThreadGateAllowedListEntity>,
-    )
+    suspend fun upsertThreadGateAllowedLists(entities: List<ThreadGateAllowedListEntity>)
 
     @Transaction
     @Upsert
-    suspend fun upsertThreadGateHiddenPosts(
-        entities: List<ThreadGateHiddenPostEntity>,
-    )
+    suspend fun upsertThreadGateHiddenPosts(entities: List<ThreadGateHiddenPostEntity>)
 
     @Transaction
     @Query(
         """
         SELECT * FROM threadGates
         WHERE gatedPostUri IN (:postUris)
-    """,
+    """
     )
-    fun threadGates(
-        postUris: Collection<PostUri>,
-    ): Flow<List<PopulatedThreadGateEntity>>
+    fun threadGates(postUris: Collection<PostUri>): Flow<List<PopulatedThreadGateEntity>>
 
     @Transaction
     @Query(
         """
         DELETE FROM threadGates
         WHERE gatedPostUri IN (:postUris)
-    """,
+    """
     )
-    suspend fun deleteThreadGates(
-        postUris: Collection<PostUri>,
-    )
+    suspend fun deleteThreadGates(postUris: Collection<PostUri>)
 
     @Transaction
     @Query(
         """
         DELETE FROM threadGateAllowedLists
         WHERE threadGateUri IN (:threadGateUris)
-    """,
+    """
     )
-    suspend fun deleteThreadGateAllowedLists(
-        threadGateUris: Collection<ThreadGateUri>,
-    )
+    suspend fun deleteThreadGateAllowedLists(threadGateUris: Collection<ThreadGateUri>)
 
     @Transaction
     @Query(
         """
         DELETE FROM threadGateHiddenPosts
         WHERE threadGateUri IN (:threadGateUris)
-    """,
+    """
     )
-    suspend fun deleteThreadGateHiddenPosts(
-        threadGateUris: Collection<ThreadGateUri>,
-    )
+    suspend fun deleteThreadGateHiddenPosts(threadGateUris: Collection<ThreadGateUri>)
 }

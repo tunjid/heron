@@ -148,22 +148,21 @@ internal fun ListScreen(
     val pagerState = rememberPagerState { state.stateHolders.size }
     val scope = rememberCoroutineScope()
 
-    val collapsedHeight = with(density) {
-        UiTokens.tabsHeight.toPx()
-    }
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
-    )
+    val collapsedHeight =
+        with(density) {
+            UiTokens.tabsHeight.toPx()
+        }
+    val collapsingHeaderState =
+        rememberCollapsingHeaderState(
+            collapsedHeight = collapsedHeight,
+            initialExpandedHeight = with(density) { 800.dp.toPx() },
+        )
 
     val pullToRefreshState = rememberPullToRefreshState()
-    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)
-        ?.isRefreshing == true
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)?.isRefreshing == true
 
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize()
-            .paneClip(),
+        modifier = modifier.fillMaxSize().paneClip(),
         isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
@@ -171,9 +170,8 @@ internal fun ListScreen(
         },
         indicator = {
             DismissableRefreshIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = collapsingHeaderState.expandedHeight.roundToInt())
                     },
                 state = pullToRefreshState,
@@ -181,90 +179,84 @@ internal fun ListScreen(
                 onDismissRequest = {
                     when (val holder = state.stateHolders[pagerState.currentPage]) {
                         is ListScreenStateHolders.Members -> Unit
-                        is ListScreenStateHolders.Timeline -> holder.accept(
-                            TimelineState.Action.DismissRefresh,
-                        )
+                        is ListScreenStateHolders.Timeline ->
+                            holder.accept(TimelineState.Action.DismissRefresh)
                     }
                 },
             )
         },
     ) {
         CollapsingHeaderLayout(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             state = collapsingHeaderState,
             headerContent = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset {
+                    modifier =
+                        Modifier.fillMaxWidth().offset {
                             IntOffset(
                                 x = 0,
                                 y = -collapsingHeaderState.translation.roundToInt(),
                             )
-                        },
-                ) {
-                    state.timelineState
-                        ?.timeline
-                        ?.description
-                        ?.takeIf(String::isNotBlank)
-                        ?.let { description ->
-                            Text(
-                                modifier = Modifier
-                                    .padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp,
-                                    ),
-                                text = description,
-                            )
                         }
+                ) {
+                    state.timelineState?.timeline?.description?.takeIf(String::isNotBlank)?.let {
+                        description ->
+                        Text(
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 8.dp,
+                                ),
+                            text = description,
+                        )
+                    }
                     Tabs(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(CircleShape),
-                        tabsState = rememberTabsState(
-                            tabs = listTabs(
-                                hasUpdate = state.timelineState?.hasUpdates == true,
+                        modifier = Modifier.fillMaxWidth().clip(CircleShape),
+                        tabsState =
+                            rememberTabsState(
+                                tabs =
+                                    listTabs(hasUpdate = state.timelineState?.hasUpdates == true),
+                                selectedTabIndex = pagerState::tabIndex,
+                                onTabSelected = { page ->
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(page)
+                                    }
+                                },
+                                onTabReselected = { index ->
+                                    state.stateHolders.getOrNull(index = index)?.refresh()
+                                },
                             ),
-                            selectedTabIndex = pagerState::tabIndex,
-                            onTabSelected = { page ->
-                                scope.launch {
-                                    pagerState.animateScrollToPage(page)
-                                }
-                            },
-                            onTabReselected = { index ->
-                                state.stateHolders.getOrNull(index = index)
-                                    ?.refresh()
-                            },
-                        ),
                     )
                 }
             },
             body = {
                 HorizontalPager(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
                         when (val stateHolder = state.stateHolders[page]) {
-                            is ListScreenStateHolders.Members -> ListMembers(
-                                paneScaffoldState = paneScaffoldState,
-                                membersStateHolder = stateHolder,
-                                actions = actions,
-                            )
+                            is ListScreenStateHolders.Members ->
+                                ListMembers(
+                                    paneScaffoldState = paneScaffoldState,
+                                    membersStateHolder = stateHolder,
+                                    actions = actions,
+                                )
 
-                            is ListScreenStateHolders.Timeline -> ListTimeline(
-                                signedInProfileId = state.signedInProfileId,
-                                paneScaffoldState = paneScaffoldState,
-                                timelineStateHolder = stateHolder,
-                                actions = actions,
-                                recentLists = state.recentLists,
-                                recentConversations = state.recentConversations,
-                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
-                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            )
+                            is ListScreenStateHolders.Timeline ->
+                                ListTimeline(
+                                    signedInProfileId = state.signedInProfileId,
+                                    paneScaffoldState = paneScaffoldState,
+                                    timelineStateHolder = stateHolder,
+                                    actions = actions,
+                                    recentLists = state.recentLists,
+                                    recentConversations = state.recentConversations,
+                                    mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                                    autoPlayTimelineVideos =
+                                        state.preferences.local.autoPlayTimelineVideos,
+                                    showEngagementMetrics =
+                                        state.preferences.local.showPostEngagementMetrics,
+                                )
                         }
                     },
                 )
@@ -281,18 +273,17 @@ internal fun ListScreen(
 }
 
 @Composable
-private fun listTabs(
-    hasUpdate: Boolean,
-): List<Tab> = listOf(
-    Tab(
-        title = stringResource(Res.string.posts),
-        hasUpdate = hasUpdate,
-    ),
-    Tab(
-        title = stringResource(Res.string.people),
-        hasUpdate = false,
-    ),
-)
+private fun listTabs(hasUpdate: Boolean): List<Tab> =
+    listOf(
+        Tab(
+            title = stringResource(Res.string.posts),
+            hasUpdate = hasUpdate,
+        ),
+        Tab(
+            title = stringResource(Res.string.people),
+            hasUpdate = false,
+        ),
+    )
 
 @Composable
 private fun ListMembers(
@@ -308,15 +299,13 @@ private fun ListMembers(
     var listMemberToDelete by remember { mutableStateOf<ListMember?>(null) }
 
     LazyColumn(
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxSize()
-            .paneClip(),
+        modifier = modifier.padding(horizontal = 8.dp).fillMaxSize().paneClip(),
         state = listState,
-        contentPadding = bottomNavAndInsetPaddingValues(
-            horizontal = 8.dp,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                horizontal = 8.dp,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(
@@ -324,14 +313,11 @@ private fun ListMembers(
             key = { it.subject.did.id },
             itemContent = { item ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
+                    modifier = Modifier.fillMaxWidth().animateItem(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     ProfileWithViewerState(
-                        modifier = Modifier
-                            .weight(1f),
+                        modifier = Modifier.weight(1f),
                         paneTransitionScope = paneScaffoldState,
                         signedInProfileId = null,
                         profile = item.subject,
@@ -341,11 +327,13 @@ private fun ListMembers(
                             actions(
                                 Action.Navigate.To(
                                     profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
                                         profile = profile,
-                                        avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey(),
-                                    ),
-                                ),
+                                        avatarSharedElementKey =
+                                            item.subject.listMemberAvatarSharedElementKey(),
+                                    )
+                                )
                             )
                         },
                         onViewerStateClicked = { viewerState ->
@@ -356,7 +344,7 @@ private fun ListMembers(
                                         viewedProfileId = item.subject.did,
                                         following = viewerState?.following,
                                         followedBy = viewerState?.followedBy,
-                                    ),
+                                    )
                                 )
                             }
                         },
@@ -369,7 +357,8 @@ private fun ListMembers(
                             content = {
                                 Icon(
                                     imageVector = Icons.Rounded.RemoveCircle,
-                                    contentDescription = stringResource(Res.string.remove_list_member),
+                                    contentDescription =
+                                        stringResource(Res.string.remove_list_member),
                                     tint = MaterialTheme.colorScheme.error,
                                 )
                             },
@@ -386,22 +375,19 @@ private fun ListMembers(
                 listMemberToDelete = null
             },
             title = {
-                SimpleDialogTitle(
-                    text = stringResource(Res.string.remove_list_member),
-                )
+                SimpleDialogTitle(text = stringResource(Res.string.remove_list_member))
             },
             text = {
                 SimpleDialogText(
-                    text = stringResource(
-                        Res.string.remove_list_member_confirmation,
-                        member.subject.handle.id,
-                    ),
+                    text =
+                        stringResource(
+                            Res.string.remove_list_member_confirmation,
+                            member.subject.handle.id,
+                        )
                 )
             },
             confirmButton = {
-                DestructiveDialogButton(
-                    text = stringResource(CommonStrings.yes),
-                ) {
+                DestructiveDialogButton(text = stringResource(CommonStrings.yes)) {
                     actions(Action.DeleteRecord(member.uri))
                     listMemberToDelete = null
                 }
@@ -420,9 +406,7 @@ private fun ListMembers(
         items = updatedMembers,
         onQueryChanged = { query ->
             membersStateHolder.accept(
-                TilingState.Action.LoadAround(
-                    query ?: state.tilingData.currentQuery,
-                ),
+                TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery)
             )
         },
     )
@@ -449,128 +433,132 @@ private fun ListTimeline(
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-    )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordsPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.BlockAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = {
+                actions(Action.Navigate.To(signInDestination()))
+            },
+            onInteractionConfirmed = {
+                actions(Action.SendPostInteraction(it))
+            },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        )
                     )
+                )
+            },
+        )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = {
+                actions(Action.UpdateRecentLists)
+            },
+            onThreadGateUpdated = {
+                actions(Action.SendPostInteraction(it))
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = mutedWordsPreferences,
+            onSave = {
+                actions(Action.UpdateMutedWord(it))
+            },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.MuteAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.MuteAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = signedInProfileId,
-        recentConversations = recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = signedInProfileId,
+            recentConversations = recentConversations,
+            onShown = { actions(Action.UpdateRecentConversations) },
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
 
-                is PostOption.ThreadGate ->
-                    items.firstOrNull { it.post.uri == option.postUri }
-                        ?.let(threadGateSheetState::show)
+                    is PostOption.ThreadGate ->
+                        items
+                            .firstOrNull { it.post.uri == option.postUri }
+                            ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
-            }
-        },
-    )
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                    is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
+                }
+            },
+        )
 
     LookaheadScope {
         LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .padding(
-                    horizontal = animateDpAsState(
-                        displayState.horizontalPadding(presentation),
-                    ).value,
-                )
-                .fillMaxSize()
-                .paneClip()
-                .gridColumnCount(
-                    density = density,
-                    maxColumnWidth = displayState.cardSize(presentation),
-                ) { numColumns ->
-                    timelineStateHolder.accept(
-                        TimelineState.Action.Tile(
-                            tilingAction = TilingState.Action.GridSize(
-                                numColumns = numColumns,
-                            ),
-                        ),
+            modifier =
+                Modifier.padding(
+                        horizontal =
+                            animateDpAsState(displayState.horizontalPadding(presentation)).value
                     )
-                },
+                    .fillMaxSize()
+                    .paneClip()
+                    .gridColumnCount(
+                        density = density,
+                        maxColumnWidth = displayState.cardSize(presentation),
+                    ) { numColumns ->
+                        timelineStateHolder.accept(
+                            TimelineState.Action.Tile(
+                                tilingAction = TilingState.Action.GridSize(numColumns = numColumns)
+                            )
+                        )
+                    },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
             verticalItemSpacing = displayState.verticalItemSpacing(presentation),
-            contentPadding = bottomNavAndInsetPaddingValues(
-                isCompact = paneScaffoldState.prefersCompactBottomNav,
-            ),
-            horizontalArrangement = Arrangement.spacedBy(
-                displayState.horizontalItemSpacing(presentation),
-            ),
+            contentPadding =
+                bottomNavAndInsetPaddingValues(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav
+                ),
+            horizontalArrangement =
+                Arrangement.spacedBy(displayState.horizontalItemSpacing(presentation)),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
             items(
@@ -579,12 +567,12 @@ private fun ListTimeline(
                 contentType = TimelineItem::contentType,
                 itemContent = { item ->
                     TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item),
-                            ),
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .animateItem()
+                                .threadedVideoPosition(
+                                    state = videoStates.getOrCreateStateFor(item)
+                                ),
                         paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
@@ -592,130 +580,169 @@ private fun ListTimeline(
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         showEngagementMetrics = showEngagementMetrics,
                         presentation = presentation,
-                        postActions = remember(timelineState.timeline.sourceId) {
-                            PostActions { action ->
-                                when (action) {
-                                    is PostAction.OfLinkTarget -> {
-                                        val linkTarget = action.linkTarget
-                                        if (linkTarget is LinkTarget.Navigable) actions(
-                                            Action.Navigate.To(
-                                                pathDestination(
-                                                    path = linkTarget.path,
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                ),
-                                            ),
-                                        )
-                                    }
-
-                                    is PostAction.OfPost -> {
-                                        val post = action.post
-                                        actions(
-                                            Action.Navigate.To(
-                                                recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = buildList {
-                                                        action.warnedAppliedLabels?.let(::add)
-                                                        if (action.isMainPost) {
-                                                            add(timelineState.timeline.source)
-                                                            add(timelineState.tilingData.currentQuery.data)
-                                                        }
-                                                    },
-                                                    record = post,
-                                                ),
-                                            ),
-                                        )
-                                    }
-
-                                    is PostAction.OfProfile -> {
-                                        val profile = action.profile
-                                        val post = action.post
-                                        val quotingPostUri = action.quotingPostUri
-                                        actions(
-                                            Action.Navigate.To(
-                                                profileDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    profile = profile,
-                                                    avatarSharedElementKey = post
-                                                        .avatarSharedElementKey(
-                                                            prefix = timelineState.timeline.sourceId,
-                                                            quotingPostUri = quotingPostUri,
+                        postActions =
+                            remember(timelineState.timeline.sourceId) {
+                                PostActions { action ->
+                                    when (action) {
+                                        is PostAction.OfLinkTarget -> {
+                                            val linkTarget = action.linkTarget
+                                            if (linkTarget is LinkTarget.Navigable)
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = linkTarget.path,
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
                                                         )
-                                                        .takeIf { post.author.did == profile.did },
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                                    )
+                                                )
+                                        }
 
-                                    is PostAction.OfRecord -> {
-                                        val record = action.record
-                                        val owningPostUri = action.owningPostUri
-                                        actions(
-                                            Action.Navigate.To(
-                                                recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = owningPostUri,
-                                                    ),
-                                                    record = record,
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                        is PostAction.OfPost -> {
+                                            val post = action.post
+                                            actions(
+                                                Action.Navigate.To(
+                                                    recordDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Current,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix,
+                                                        otherModels =
+                                                            buildList {
+                                                                action.warnedAppliedLabels?.let(
+                                                                    ::add
+                                                                )
+                                                                if (action.isMainPost) {
+                                                                    add(
+                                                                        timelineState.timeline
+                                                                            .source
+                                                                    )
+                                                                    add(
+                                                                        timelineState.tilingData
+                                                                            .currentQuery
+                                                                            .data
+                                                                    )
+                                                                }
+                                                            },
+                                                        record = post,
+                                                    )
+                                                )
+                                            )
+                                        }
 
-                                    is PostAction.OfMedia -> {
-                                        val media = action.media
-                                        val index = action.index
-                                        val post = action.post
-                                        val quotingPostUri = action.quotingPostUri
-                                        actions(
-                                            Action.Navigate.To(
-                                                galleryDestination(
-                                                    post = post,
-                                                    media = media,
-                                                    startIndex = index,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = quotingPostUri,
-                                                    ),
-                                                    otherModels = when {
-                                                        action.isMainPost -> listOf(
-                                                            timelineState.timeline.source,
-                                                            timelineState.tilingData.currentQuery.data,
+                                        is PostAction.OfProfile -> {
+                                            val profile = action.profile
+                                            val post = action.post
+                                            val quotingPostUri = action.quotingPostUri
+                                            actions(
+                                                Action.Navigate.To(
+                                                    profileDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Current,
+                                                        profile = profile,
+                                                        avatarSharedElementKey =
+                                                            post
+                                                                .avatarSharedElementKey(
+                                                                    prefix =
+                                                                        timelineState.timeline
+                                                                            .sourceId,
+                                                                    quotingPostUri = quotingPostUri,
+                                                                )
+                                                                .takeIf {
+                                                                    post.author.did == profile.did
+                                                                },
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfRecord -> {
+                                            val record = action.record
+                                            val owningPostUri = action.owningPostUri
+                                            actions(
+                                                Action.Navigate.To(
+                                                    recordDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Current,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix(
+                                                                    quotingPostUri = owningPostUri
+                                                                ),
+                                                        record = record,
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfMedia -> {
+                                            val media = action.media
+                                            val index = action.index
+                                            val post = action.post
+                                            val quotingPostUri = action.quotingPostUri
+                                            actions(
+                                                Action.Navigate.To(
+                                                    galleryDestination(
+                                                        post = post,
+                                                        media = media,
+                                                        startIndex = index,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix(
+                                                                    quotingPostUri = quotingPostUri
+                                                                ),
+                                                        otherModels =
+                                                            when {
+                                                                action.isMainPost ->
+                                                                    listOf(
+                                                                        timelineState.timeline
+                                                                            .source,
+                                                                        timelineState.tilingData
+                                                                            .currentQuery
+                                                                            .data,
+                                                                    )
+                                                                else -> emptyList()
+                                                            },
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfReply -> {
+                                            val post = action.post
+                                            actions(
+                                                Action.Navigate.To(
+                                                    if (paneScaffoldState.isSignedOut)
+                                                        signInDestination()
+                                                    else
+                                                        composePostDestination(
+                                                            type = Post.Create.Reply(parent = post),
+                                                            sharedElementPrefix =
+                                                                timelineState.timeline
+                                                                    .sharedElementPrefix,
                                                         )
-                                                        else -> emptyList()
-                                                    },
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                                )
+                                            )
+                                        }
 
-                                    is PostAction.OfReply -> {
-                                        val post = action.post
-                                        actions(
-                                            Action.Navigate.To(
-                                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                                else composePostDestination(
-                                                    type = Post.Create.Reply(
-                                                        parent = post,
-                                                    ),
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                        is PostAction.OfInteraction -> {
+                                            postInteractionSheetState.onInteraction(action)
+                                        }
 
-                                    is PostAction.OfInteraction -> {
-                                        postInteractionSheetState.onInteraction(action)
-                                    }
+                                        is PostAction.OfMore -> {
+                                            postOptionsSheetState.showOptions(action.post)
+                                        }
 
-                                    is PostAction.OfMore -> {
-                                        postOptionsSheetState.showOptions(action.post)
+                                        else -> Unit
                                     }
-
-                                    else -> Unit
                                 }
-                            }
-                        },
+                            },
                     )
                 },
             )
@@ -730,12 +757,12 @@ private fun ListTimeline(
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
+            items
+                .getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
+                ?.let(videoPlayerController::play) ?: videoPlayerController.pauseActiveVideo()
         }
     }
 
@@ -744,10 +771,11 @@ private fun ListTimeline(
         onQueryChanged = { query ->
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query ?: timelineState.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(
+                            query ?: timelineState.tilingData.currentQuery
+                        )
+                )
             )
         },
     )
@@ -758,5 +786,4 @@ private fun ListTimeline(
     )
 }
 
-private fun Profile.listMemberAvatarSharedElementKey(): String =
-    "list-member-${did.id}"
+private fun Profile.listMemberAvatarSharedElementKey(): String = "list-member-${did.id}"

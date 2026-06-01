@@ -34,18 +34,13 @@ import kotlinx.coroutines.launch
 
 interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
 
-sealed class IdentityAction(
-    val key: String,
-) {
-    sealed class Switch :
-        IdentityAction(
-            key = "switch",
-        ) {
+sealed class IdentityAction(val key: String) {
+    sealed class Switch : IdentityAction(key = "switch") {
         data object Cancel : Switch()
+
         data object Choose : Switch()
-        data class Transition(
-            val summary: SessionSummary,
-        ) : Switch()
+
+        data class Transition(val summary: SessionSummary) : Switch()
     }
 }
 
@@ -55,15 +50,13 @@ interface IdentityState {
     sealed class SwitchStatus {
         sealed class Stable : SwitchStatus() {
             data object Idle : SwitchStatus.Stable()
-            data class Error(
-                val memo: Memo,
-            ) : SwitchStatus.Stable()
+
+            data class Error(val memo: Memo) : SwitchStatus.Stable()
         }
 
         data object Choosing : SwitchStatus()
-        data class Switching(
-            val session: SessionSummary,
-        ) : SwitchStatus()
+
+        data class Switching(val session: SessionSummary) : SwitchStatus()
     }
 
     @SnapshotSpec
@@ -83,88 +76,83 @@ internal val IdentityState.isStable
 
 @Inject
 class AppIdentityStateHolder(
-    @AppMainScope
-    appMainScope: CoroutineScope,
+    @AppMainScope appMainScope: CoroutineScope,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     databaseCleanup: DatabaseCleanup,
-) : IdentityStateHolder,
-    ActionSuspendingStateMutator<IdentityAction, IdentityState> by appMainScope.actionSuspendingStateMutator(
-        state = IdentityState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.Eagerly,
-        producer = { state, actions ->
-            authRepository.signedInUser.launchAndCollect(
-                state::signedInProfile::set,
-            )
-            authRepository.pastSessions.launchAndCollect(
-                state::pastSessions::set,
-            )
-            userDataRepository.preferences.launchAndCollect(
-                state::preferences::set,
-            )
-            launch {
-                writeQueue.drain()
-            }
-            launch {
-                databaseCleanup.cleanup()
-            }
-            actions.launchMutationsIn(
-                productionScope = this,
-            ) {
-                when (val action = type()) {
-                    is IdentityAction.Switch -> action.flow.launchSwitchSessionMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
+) :
+    IdentityStateHolder,
+    ActionSuspendingStateMutator<IdentityAction, IdentityState> by appMainScope
+        .actionSuspendingStateMutator(
+            state = IdentityState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.Eagerly,
+            producer = { state, actions ->
+                authRepository.signedInUser.launchAndCollect(state::signedInProfile::set)
+                authRepository.pastSessions.launchAndCollect(state::pastSessions::set)
+                userDataRepository.preferences.launchAndCollect(state::preferences::set)
+                launch {
+                    writeQueue.drain()
                 }
-            }
-        },
-    )
+                launch {
+                    databaseCleanup.cleanup()
+                }
+                actions.launchMutationsIn(productionScope = this) {
+                    when (val action = type()) {
+                        is IdentityAction.Switch ->
+                            action.flow.launchSwitchSessionMutations(
+                                state = state,
+                                authRepository = authRepository,
+                            )
+                    }
+                }
+            },
+        )
 
 context(productionScope: CoroutineScope)
 private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
     state: IdentityState.SnapshotMutable,
     authRepository: AuthRepository,
-) = debounce { action ->
-    when (action) {
-        IdentityAction.Switch.Cancel -> 0.seconds
-        IdentityAction.Switch.Choose -> 0.seconds
-        is IdentityAction.Switch.Transition -> 300.milliseconds
-    }
-}
-    .launchAndCollectLatest { action ->
-        when (action) {
-            IdentityAction.Switch.Cancel ->
-                state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
-            IdentityAction.Switch.Choose ->
-                state.switchStatus = IdentityState.SwitchStatus.Choosing
-            is IdentityAction.Switch.Transition ->
-                when (action.summary.profileId) {
-                    state.signedInProfile?.did -> {
-                        state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
-                    }
-                    else -> {
-                        state.switchStatus = IdentityState.SwitchStatus.Switching(
-                            session = action.summary,
-                        )
+) =
+    debounce { action ->
+            when (action) {
+                IdentityAction.Switch.Cancel -> 0.seconds
+                IdentityAction.Switch.Choose -> 0.seconds
+                is IdentityAction.Switch.Transition -> 300.milliseconds
+            }
+        }
+        .launchAndCollectLatest { action ->
+            when (action) {
+                IdentityAction.Switch.Cancel ->
+                    state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
+                IdentityAction.Switch.Choose ->
+                    state.switchStatus = IdentityState.SwitchStatus.Choosing
+                is IdentityAction.Switch.Transition ->
+                    when (action.summary.profileId) {
+                        state.signedInProfile?.did -> {
+                            state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
+                        }
+                        else -> {
+                            state.switchStatus =
+                                IdentityState.SwitchStatus.Switching(session = action.summary)
 
-                        when (val outcome = authRepository.switchSession(action.summary)) {
-                            is Outcome.Success -> {
-                                state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
-                            }
+                            when (val outcome = authRepository.switchSession(action.summary)) {
+                                is Outcome.Success -> {
+                                    state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
+                                }
 
-                            is Outcome.Failure -> {
-                                state.switchStatus = IdentityState.SwitchStatus.Stable.Error(
-                                    outcome.exception.message?.let(Memo::Text)
-                                        ?: Memo.Resource(CommonStrings.error_session_switch),
-                                )
-                                // Give the user 3 seconds to act, else revert
-                                delay(3.seconds)
-                                state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
+                                is Outcome.Failure -> {
+                                    state.switchStatus =
+                                        IdentityState.SwitchStatus.Stable.Error(
+                                            outcome.exception.message?.let(Memo::Text)
+                                                ?: Memo.Resource(CommonStrings.error_session_switch)
+                                        )
+                                    // Give the user 3 seconds to act, else revert
+                                    delay(3.seconds)
+                                    state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
+                                }
                             }
                         }
                     }
-                }
+            }
         }
-    }

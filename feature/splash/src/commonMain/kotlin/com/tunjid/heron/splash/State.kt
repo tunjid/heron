@@ -21,15 +21,9 @@ import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Serializable data class State(@Transient val messages: List<Memo> = emptyList())
 
 sealed class Action(val key: String) {
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction
 }

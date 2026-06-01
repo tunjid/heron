@@ -35,8 +35,7 @@ data class FeedList(
     val purpose: String,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel,
-    Record.Embeddable {
+) : UrlEncodableModel, Record.Embeddable {
 
     override val reference: Record.Reference =
         Record.Reference(

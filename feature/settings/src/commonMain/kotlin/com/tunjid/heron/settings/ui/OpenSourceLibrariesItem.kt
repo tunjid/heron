@@ -60,20 +60,13 @@ fun OpenSourceLibrariesItem(
     libraries: Libs?,
 ) {
     ExpandableSettingsItemRow(
-        modifier = modifier
-            .settingsItemPaddingAndMinHeight()
-            .fillMaxWidth(),
+        modifier = modifier.settingsItemPaddingAndMinHeight().fillMaxWidth(),
         title = stringResource(Res.string.open_source_licenses),
         icon = Icons.Rounded.Copyright,
     ) {
         LibrariesHorizontalGrid(
             libraries = libraries,
-            modifier = Modifier
-                .height(200.dp)
-                .padding(
-                    top = 8.dp,
-                )
-                .fillMaxWidth(),
+            modifier = Modifier.height(200.dp).padding(top = 8.dp).fillMaxWidth(),
         )
     }
 }
@@ -83,9 +76,10 @@ private fun LibrariesHorizontalGrid(
     modifier: Modifier = Modifier,
     libraries: Libs?,
 ) {
-    val libs = remember(libraries) {
-        libraries?.libraries.orEmpty().distinctBy(Library::name)
-    }
+    val libs =
+        remember(libraries) {
+            libraries?.libraries.orEmpty().distinctBy(Library::name)
+        }
     val selectedLibrary = remember { mutableStateOf<Library?>(null) }
 
     LazyHorizontalGrid(
@@ -121,14 +115,14 @@ private fun Library(
     onLibraryClicked: (Library) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .clip(LibraryShape)
-            .clickable {
-                if (library.licenses.none { it.htmlReadyLicenseContent.isNullOrBlank() }) {
-                    onLibraryClicked(library)
+        modifier =
+            Modifier.clip(LibraryShape)
+                .clickable {
+                    if (library.licenses.none { it.htmlReadyLicenseContent.isNullOrBlank() }) {
+                        onLibraryClicked(library)
+                    }
                 }
-            }
-            .padding(horizontal = 8.dp),
+                .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         content = {
             Text(
@@ -139,9 +133,7 @@ private fun Library(
                 text = library.author,
                 style = MaterialTheme.typography.bodySmall,
             )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 library.licenses.forEach {
                     Text(
                         text = it.name,

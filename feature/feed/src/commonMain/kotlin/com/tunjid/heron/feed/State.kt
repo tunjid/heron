@@ -54,59 +54,52 @@ interface State {
         val creator: Profile? = null,
         val sharedElementPrefix: String? = null,
         val scrollToTopRequestId: String? = null,
-        @Transient
-        val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
-        @Transient
-        val signedInProfileId: ProfileId? = null,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
-        val timelineStateHolder: TimelineStateHolder? = null,
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+        @Transient val signedInProfileId: ProfileId? = null,
+        @Transient val recentConversations: List<Conversation> = emptyList(),
+        @Transient val recentLists: List<FeedList> = emptyList(),
+        @Transient val timelineStateHolder: TimelineStateHolder? = null,
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        operator fun invoke(
-            route: Route,
-        ): Immutable = Immutable(
-            sharedElementPrefix = route.sharedElementPrefix,
-            timelineStateHolder = route.model<FeedGenerator>()
-                ?.let { model ->
-                    val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
-                    noOpActionSuspendingStateMutator(
-                        TimelineState(
-                            timeline = timeline,
-                            hasUpdates = false,
-                            tilingData = TilingState.Data(
-                                currentQuery = TimelineQuery(
-                                    data = CursorQuery.Data(
-                                        page = 0,
-                                        cursorAnchor = Clock.System.now(),
+        operator fun invoke(route: Route): Immutable =
+            Immutable(
+                sharedElementPrefix = route.sharedElementPrefix,
+                timelineStateHolder =
+                    route.model<FeedGenerator>()?.let { model ->
+                        val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
+                        noOpActionSuspendingStateMutator(
+                            TimelineState(
+                                timeline = timeline,
+                                hasUpdates = false,
+                                tilingData =
+                                    TilingState.Data(
+                                        currentQuery =
+                                            TimelineQuery(
+                                                data =
+                                                    CursorQuery.Data(
+                                                        page = 0,
+                                                        cursorAnchor = Clock.System.now(),
+                                                    ),
+                                                source = timeline.source,
+                                            )
                                     ),
-                                    source = timeline.source,
-                                ),
-                            ),
-                        ),
-                    )
-                },
-        )
+                            )
+                        )
+                    },
+            )
     }
 }
 
 val State.timelineState
-    get() = timelineStateHolder
-        ?.state
+    get() = timelineStateHolder?.state
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,
@@ -118,21 +111,15 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
 
-    data class DeleteRecord(
-        val recordUri: RecordUri,
-    ) : Action(key = "DeleteRecord")
+    data class DeleteRecord(val recordUri: RecordUri) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class UpdateFeedGeneratorStatus(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdateFeedGeneratorStatus")
+    data class UpdateFeedGeneratorStatus(val update: Timeline.Update) :
+        Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
 
@@ -140,14 +127,10 @@ sealed class Action(val key: String) {
 
     data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

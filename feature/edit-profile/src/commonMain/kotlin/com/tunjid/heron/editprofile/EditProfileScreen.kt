@@ -100,43 +100,40 @@ internal fun EditProfileScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val avatarPicker = rememberMediaPicker(
-        mediaType = MediaType.Photo,
-        maxItems = 1,
-    ) { mediaItems ->
-        mediaItems
-            .filterIsInstance<RestrictedFile.Media.Photo>()
-            .firstOrNull()
-            ?.let { actions(Action.AvatarPicked(it)) }
-    }
+    val avatarPicker =
+        rememberMediaPicker(
+            mediaType = MediaType.Photo,
+            maxItems = 1,
+        ) { mediaItems ->
+            mediaItems.filterIsInstance<RestrictedFile.Media.Photo>().firstOrNull()?.let {
+                actions(Action.AvatarPicked(it))
+            }
+        }
 
-    val bannerPicker = rememberMediaPicker(
-        mediaType = MediaType.Photo,
-        maxItems = 1,
-    ) { mediaItems ->
-        mediaItems
-            .filterIsInstance<RestrictedFile.Media.Photo>()
-            .firstOrNull()
-            ?.let { actions(Action.BannerPicked(it)) }
-    }
+    val bannerPicker =
+        rememberMediaPicker(
+            mediaType = MediaType.Photo,
+            maxItems = 1,
+        ) { mediaItems ->
+            mediaItems.filterIsInstance<RestrictedFile.Media.Photo>().firstOrNull()?.let {
+                actions(Action.BannerPicked(it))
+            }
+        }
 
     val density = LocalDensity.current
 
     val collapsedHeight = UiTokens.toolbarHeight + UiTokens.statusBarHeight
 
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = with(density) { collapsedHeight.toPx() },
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
-    )
+    val collapsingHeaderState =
+        rememberCollapsingHeaderState(
+            collapsedHeight = with(density) { collapsedHeight.toPx() },
+            initialExpandedHeight = with(density) { 800.dp.toPx() },
+        )
     collapsingHeaderState.headerZIndex = 1f
 
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         ProfileBannerEditableImage(
-            modifier = Modifier
-                .profileBannerSize()
-                .align(Alignment.TopCenter),
+            modifier = Modifier.profileBannerSize().align(Alignment.TopCenter),
             paneScaffoldState = paneScaffoldState,
             headerState = collapsingHeaderState,
             avatarSharedElementKey = state.avatarSharedElementKey,
@@ -148,8 +145,7 @@ internal fun EditProfileScreen(
             state = collapsingHeaderState,
             headerContent = {
                 EditProfileHeader(
-                    modifier = Modifier
-                        .zIndex(1f),
+                    modifier = Modifier.zIndex(1f),
                     paneScaffoldState = paneScaffoldState,
                     headerState = collapsingHeaderState,
                     avatarSharedElementKey = state.avatarSharedElementKey,
@@ -162,39 +158,37 @@ internal fun EditProfileScreen(
             body = {
                 val surfaceColor = MaterialTheme.colorScheme.surface
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .imePadding()
-                        .windowInsetsPadding(WindowInsets.navigationBars),
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .imePadding()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
                 ) {
-                    val bioTabColorState = animateColorAsState(
-                        if (paneScaffoldState.inPredictiveBack) Color.Transparent
-                        else surfaceColor,
-                    )
+                    val bioTabColorState =
+                        animateColorAsState(
+                            if (paneScaffoldState.inPredictiveBack) Color.Transparent
+                            else surfaceColor
+                        )
                     with(paneScaffoldState) {
                         PaneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
-                            ),
+                            sharedContentState =
+                                rememberSharedContentState(
+                                    key =
+                                        state.avatarSharedElementKey
+                                            .withProfileBioTabSharedElementPrefix()
+                                ),
                             zIndexInOverlay = SurfaceZIndex,
                         ) {
                             Box(
-                                Modifier
-                                    .zIndex(0f)
+                                Modifier.zIndex(0f)
                                     .profileBioTabBackground(bioTabColorState::value)
-                                    .fillParentAxisIfFixedOrWrap(),
+                                    .fillParentAxisIfFixedOrWrap()
                             )
                         }
                     }
                     val pagerState = rememberPagerState { state.tabs.size }
-                    Column(
-                        modifier = Modifier
-                            .background(surfaceColor),
-                    ) {
+                    Column(modifier = Modifier.background(surfaceColor)) {
                         EditProfileTabs(
-                            modifier = Modifier
-                                .screenHorizontalPadding()
-                                .padding(vertical = 24.dp),
+                            modifier = Modifier.screenHorizontalPadding().padding(vertical = 24.dp),
                             pagerState = pagerState,
                             tabs = rememberEditProfileTabs(state.tabs),
                         )
@@ -202,64 +196,67 @@ internal fun EditProfileScreen(
                             state = pagerState,
                             pageContent = { page ->
                                 when (val tab = state.tabs[page]) {
-                                    EditProfileScreenTabs.Bio -> ProfileBio(
-                                        modifier = Modifier
-                                            .screenHorizontalPadding(),
-                                        state = state,
-                                        actions = actions,
-                                    )
-                                    EditProfileScreenTabs.Editor -> TabEditor(
-                                        modifier = Modifier
-                                            .screenHorizontalPadding(),
-                                        editableTabs = state.editableTabs,
-                                        currentTabs = state.currentProfileTabs,
-                                        feedUrisToFeeds = state.feedUrisToFeeds,
-                                        onPinnedTabsChanged = {
-                                            actions(Action.UpdateTabsToSave(it))
-                                        },
-                                    )
-                                    is EditProfileScreenTabs.Feeds -> RecordList(
-                                        collectionStateHolder = tab,
-                                        prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                        itemKey = { it.uri.uri },
-                                        itemContent = { feedGenerator ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillParentMaxWidth()
-                                                    .animateItem()
-                                                    .shapedClickable {
-                                                        actions(
-                                                            Action.ToggleFeed(feedGenerator),
-                                                        )
-                                                    }
-                                                    .padding(all = 8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                FeedGenerator(
-                                                    modifier = Modifier
-                                                        .weight(1f),
-                                                    paneTransitionScope = paneScaffoldState,
-                                                    sharedElementPrefix = "",
-                                                    feedGenerator = feedGenerator,
-                                                    status = null,
-                                                    onFeedGeneratorStatusUpdated = {
-                                                        // No-op status is always null
-                                                    },
-                                                )
-                                                Checkbox(
-                                                    checked = state.feedUrisToFeeds.contains(
-                                                        feedGenerator.uri,
-                                                    ),
-                                                    onCheckedChange = {
-                                                        actions(
-                                                            Action.ToggleFeed(feedGenerator),
-                                                        )
-                                                    },
-                                                )
-                                            }
-                                        },
-                                    )
+                                    EditProfileScreenTabs.Bio ->
+                                        ProfileBio(
+                                            modifier = Modifier.screenHorizontalPadding(),
+                                            state = state,
+                                            actions = actions,
+                                        )
+                                    EditProfileScreenTabs.Editor ->
+                                        TabEditor(
+                                            modifier = Modifier.screenHorizontalPadding(),
+                                            editableTabs = state.editableTabs,
+                                            currentTabs = state.currentProfileTabs,
+                                            feedUrisToFeeds = state.feedUrisToFeeds,
+                                            onPinnedTabsChanged = {
+                                                actions(Action.UpdateTabsToSave(it))
+                                            },
+                                        )
+                                    is EditProfileScreenTabs.Feeds ->
+                                        RecordList(
+                                            collectionStateHolder = tab,
+                                            prefersCompactBottomNav =
+                                                paneScaffoldState.prefersCompactBottomNav,
+                                            itemKey = { it.uri.uri },
+                                            itemContent = { feedGenerator ->
+                                                Row(
+                                                    modifier =
+                                                        Modifier.fillParentMaxWidth()
+                                                            .animateItem()
+                                                            .shapedClickable {
+                                                                actions(
+                                                                    Action.ToggleFeed(feedGenerator)
+                                                                )
+                                                            }
+                                                            .padding(all = 8.dp),
+                                                    horizontalArrangement =
+                                                        Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                ) {
+                                                    FeedGenerator(
+                                                        modifier = Modifier.weight(1f),
+                                                        paneTransitionScope = paneScaffoldState,
+                                                        sharedElementPrefix = "",
+                                                        feedGenerator = feedGenerator,
+                                                        status = null,
+                                                        onFeedGeneratorStatusUpdated = {
+                                                            // No-op status is always null
+                                                        },
+                                                    )
+                                                    Checkbox(
+                                                        checked =
+                                                            state.feedUrisToFeeds.contains(
+                                                                feedGenerator.uri
+                                                            ),
+                                                        onCheckedChange = {
+                                                            actions(
+                                                                Action.ToggleFeed(feedGenerator)
+                                                            )
+                                                        },
+                                                    )
+                                                }
+                                            },
+                                        )
                                 }
                             },
                         )
@@ -278,36 +275,28 @@ private fun ProfileBio(
 ) {
     val focusManager = LocalFocusManager.current
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         state.fields.forEach { field ->
             key(field.id) {
                 FormField(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     field = field,
                     onValueChange = { field, newValue ->
                         actions(
                             Action.FieldChanged(
                                 id = field.id,
                                 text = newValue,
-                            ),
+                            )
                         )
                     },
                     keyboardActions = {
                         when (it.id) {
                             DisplayName,
-                            Pronouns,
-                            -> focusManager.moveFocus(
-                                focusDirection = FocusDirection.Next,
-                            )
+                            Pronouns -> focusManager.moveFocus(focusDirection = FocusDirection.Next)
 
-                            Description -> actions(
-                                state.saveProfileAction(),
-                            )
+                            Description -> actions(state.saveProfileAction())
                         }
                     },
                 )
@@ -327,64 +316,60 @@ fun EditProfileHeader(
     onAvatarEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-    ) {
-        Box(
-            modifier = Modifier
-                .profileBannerSize()
-                .align(Alignment.TopCenter),
-        ) {
+    Box(modifier = modifier.fillMaxWidth().wrapContentHeight()) {
+        Box(modifier = Modifier.profileBannerSize().align(Alignment.TopCenter)) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(
-                        fraction = 1f - headerState.progress,
-                    )
-                    .clickable(
-                        interactionSource = null,
-                        indication = null,
-                        onClick = onBannerEditClick,
-                    ),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .fillMaxHeight(fraction = 1f - headerState.progress)
+                        .clickable(
+                            interactionSource = null,
+                            indication = null,
+                            onClick = onBannerEditClick,
+                        )
             )
         }
 
         ProfileAvatarEditableImage(
-            modifier = Modifier
-                .align(
-                    BiasAlignment(
-                        horizontalBias = -1f + (headerState.progress * 2),
-                        verticalBias = 1f - (headerState.progress * 2),
-                    ),
-                )
-                .offset {
-                    Offset(
-                        x = lerp(
-                            start = 16.dp,
-                            stop = -(48).dp,
-                            fraction = headerState.progress,
-                        ).toPx(),
-                        y = lerp(
-                            start = 40.dp,
-                            stop = 80.dp,
-                            fraction = headerState.progress,
-                        ).toPx(),
-                    ).round()
-                }
-                .zIndex(2f),
+            modifier =
+                Modifier.align(
+                        BiasAlignment(
+                            horizontalBias = -1f + (headerState.progress * 2),
+                            verticalBias = 1f - (headerState.progress * 2),
+                        )
+                    )
+                    .offset {
+                        Offset(
+                                x =
+                                    lerp(
+                                            start = 16.dp,
+                                            stop = -(48).dp,
+                                            fraction = headerState.progress,
+                                        )
+                                        .toPx(),
+                                y =
+                                    lerp(
+                                            start = 40.dp,
+                                            stop = 80.dp,
+                                            fraction = headerState.progress,
+                                        )
+                                        .toPx(),
+                            )
+                            .round()
+                    }
+                    .zIndex(2f),
             paneScaffoldState = paneScaffoldState,
             headerState = headerState,
             avatarSharedElementKey = avatarSharedElementKey,
             profile = profile,
             shape = CircleShape,
             onEditClick = onAvatarEditClick,
-            size = lerp(
-                start = 96.dp,
-                stop = 30.dp,
-                fraction = headerState.progress,
-            ),
+            size =
+                lerp(
+                    start = 96.dp,
+                    stop = 30.dp,
+                    fraction = headerState.progress,
+                ),
             localFile = avatarFile,
         )
     }
@@ -401,69 +386,70 @@ fun ProfileAvatarEditableImage(
     size: Dp,
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit,
-) = with(paneScaffoldState) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clickable(
-                interactionSource = null,
-                indication = null,
-                onClick = onEditClick,
-            ),
-        contentAlignment = Alignment.BottomEnd,
-    ) {
-        PaneStickySharedElement(
-            modifier = Modifier
-                .matchParentSize(),
-            sharedContentState = rememberSharedContentState(
-                key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
-            ),
-            zIndexInOverlay = AvatarHaloZIndex,
+) =
+    with(paneScaffoldState) {
+        Box(
+            modifier =
+                modifier
+                    .size(size)
+                    .clickable(
+                        interactionSource = null,
+                        indication = null,
+                        onClick = onEditClick,
+                    ),
+            contentAlignment = Alignment.BottomEnd,
         ) {
-            Box(
-                Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = CircleShape,
-                    )
-                    .fillParentAxisIfFixedOrWrap(),
+            PaneStickySharedElement(
+                modifier = Modifier.matchParentSize(),
+                sharedContentState =
+                    rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix()
+                    ),
+                zIndexInOverlay = AvatarHaloZIndex,
+            ) {
+                Box(
+                    Modifier.background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape,
+                        )
+                        .fillParentAxisIfFixedOrWrap()
+                )
+            }
+            paneScaffoldState.UpdatedMovableStickySharedElementOf(
+                sharedContentState =
+                    with(paneScaffoldState) {
+                        rememberSharedContentState(key = avatarSharedElementKey)
+                    },
+                zIndexInOverlay = AvatarZIndex,
+                modifier =
+                    Modifier.matchParentSize()
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                state =
+                    rememberEditableImageArgs(
+                        profile = profile,
+                        localFile = localFile,
+                        remoteUri = profile.avatar?.uri,
+                        shape = RoundedPolygonShape.Circle,
+                    ),
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                },
+            )
+
+            EditButton(
+                modifier =
+                    Modifier.graphicsLayer {
+                            alpha = 1f - headerState.progress
+                        }
+                        .offset(x = (-4).dp, y = (-4).dp)
+                        .shapedClickable(
+                            shape = CircleShape,
+                            onClick = onEditClick,
+                        )
             )
         }
-        paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey,
-                )
-            },
-            zIndexInOverlay = AvatarZIndex,
-            modifier = Modifier
-                .matchParentSize()
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            state = rememberEditableImageArgs(
-                profile = profile,
-                localFile = localFile,
-                remoteUri = profile.avatar?.uri,
-                shape = RoundedPolygonShape.Circle,
-            ),
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            },
-        )
-
-        EditButton(
-            modifier = Modifier
-                .graphicsLayer {
-                    alpha = 1f - headerState.progress
-                }
-                .offset(x = (-4).dp, y = (-4).dp)
-                .shapedClickable(
-                    shape = CircleShape,
-                    onClick = onEditClick,
-                ),
-        )
     }
-}
 
 @Composable
 fun ProfileBannerEditableImage(
@@ -479,35 +465,36 @@ fun ProfileBannerEditableImage(
         contentAlignment = Alignment.BottomEnd,
     ) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
-                )
-            },
+            sharedContentState =
+                with(paneScaffoldState) {
+                    rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileBannerSharedElementPrefix()
+                    )
+                },
             zIndexInOverlay = BannerZIndex,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            state = rememberEditableImageArgs(
-                profile = profile,
-                localFile = localFile,
-                remoteUri = profile.banner?.uri,
-                shape = RoundedPolygonShape.Rectangle,
-            ),
+            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant),
+            state =
+                rememberEditableImageArgs(
+                    profile = profile,
+                    localFile = localFile,
+                    remoteUri = profile.banner?.uri,
+                    shape = RoundedPolygonShape.Rectangle,
+                ),
             sharedElement = { state, modifier ->
                 AsyncImage(state, modifier)
             },
         )
         Box(
-            modifier = Modifier
-                .background(
-                    color = lerp(
-                        start = Color.Transparent,
-                        stop = Color.Black.copy(alpha = 0.8f),
-                        fraction = headerState.progress,
-                    ),
-                )
-                .matchParentSize(),
+            modifier =
+                Modifier.background(
+                        color =
+                            lerp(
+                                start = Color.Transparent,
+                                stop = Color.Black.copy(alpha = 0.8f),
+                                fraction = headerState.progress,
+                            )
+                    )
+                    .matchParentSize()
         )
     }
 }
@@ -538,7 +525,4 @@ private fun rememberEditableImageArgs(
     }
 }
 
-private fun Modifier.screenHorizontalPadding() =
-    padding(
-        horizontal = 16.dp,
-    )
+private fun Modifier.screenHorizontalPadding() = padding(horizontal = 16.dp)

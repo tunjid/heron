@@ -43,9 +43,7 @@ class SimpleDialogState internal constructor() {
     }
 }
 
-@Composable
-fun rememberSimpleDialogState() =
-    remember(::SimpleDialogState)
+@Composable fun rememberSimpleDialogState() = remember(::SimpleDialogState)
 
 @Composable
 fun SimpleDialog(
@@ -57,15 +55,16 @@ fun SimpleDialog(
     title: @Composable (() -> Unit)? = null,
     text: @Composable (() -> Unit)? = null,
 ) {
-    if (state.showing) SimpleDialog(
-        onDismissRequest = state::hide,
-        modifier = modifier,
-        confirmButton = confirmButton,
-        dismissButton = dismissButton,
-        icon = icon,
-        title = title,
-        text = text,
-    )
+    if (state.showing)
+        SimpleDialog(
+            onDismissRequest = state::hide,
+            modifier = modifier,
+            confirmButton = confirmButton,
+            dismissButton = dismissButton,
+            icon = icon,
+            title = title,
+            text = text,
+        )
 }
 
 @Composable

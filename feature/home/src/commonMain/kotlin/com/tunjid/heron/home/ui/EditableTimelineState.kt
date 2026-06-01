@@ -29,28 +29,27 @@ import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState.Companion.select
 import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState.Companion.selectorDropTarget
 
 @Stable
-internal class EditableTimelineState private constructor(
-    val timelines: SnapshotStateList<Timeline.Home>,
-) {
-    private val dragAndDropSelectorState = DragAndDropSelectorState(
-        items = timelines,
-        id = Timeline.Home::sourceId,
-        selected = Timeline.Home::isPinned,
-    )
+internal class EditableTimelineState
+private constructor(val timelines: SnapshotStateList<Timeline.Home>) {
+    private val dragAndDropSelectorState =
+        DragAndDropSelectorState(
+            items = timelines,
+            id = Timeline.Home::sourceId,
+            selected = Timeline.Home::isPinned,
+        )
 
-    val isHintHovered get() = dragAndDropSelectorState.isHintHovered
-    val shouldShowHint get() = dragAndDropSelectorState.firstUnselectedIndex == timelines.size
-    val partitioned get() = dragAndDropSelectorState.partitioned
+    val isHintHovered
+        get() = dragAndDropSelectorState.isHintHovered
 
-    @Stable
-    fun isHoveredId(
-        id: String,
-    ) = dragAndDropSelectorState.isHoveredId(id)
+    val shouldShowHint
+        get() = dragAndDropSelectorState.firstUnselectedIndex == timelines.size
 
-    @Stable
-    fun isDraggedId(
-        id: String,
-    ) = dragAndDropSelectorState.isDraggedId(id)
+    val partitioned
+        get() = dragAndDropSelectorState.partitioned
+
+    @Stable fun isHoveredId(id: String) = dragAndDropSelectorState.isHoveredId(id)
+
+    @Stable fun isDraggedId(id: String) = dragAndDropSelectorState.isDraggedId(id)
 
     fun remove(timeline: Timeline.Home) {
         dragAndDropSelectorState.remove(timeline)
@@ -58,41 +57,39 @@ internal class EditableTimelineState private constructor(
 
     fun timelinesToSave() = timelines.mapIndexed { index, timeline ->
         when (timeline) {
-            is Timeline.Home.Feed -> timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
-            is Timeline.Home.Following -> timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
-            is Timeline.Home.List -> timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
+            is Timeline.Home.Feed ->
+                timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
+            is Timeline.Home.Following ->
+                timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
+            is Timeline.Home.List ->
+                timeline.copy(isPinned = index < dragAndDropSelectorState.firstUnselectedIndex)
         }
     }
 
     companion object {
 
         @Composable
-        fun rememberEditableTimelineState(
-            timelines: List<Timeline.Home>,
-        ): EditableTimelineState = remember(
-            // Only timeline order should recreate state
-            timelines.joinToString(
-                separator = "-",
-                transform = Timeline.Home::sourceId,
-            ),
-        ) {
-            EditableTimelineState(
-                timelines = timelines.toMutableStateList(),
-            )
-        }
+        fun rememberEditableTimelineState(timelines: List<Timeline.Home>): EditableTimelineState =
+            remember(
+                // Only timeline order should recreate state
+                timelines.joinToString(
+                    separator = "-",
+                    transform = Timeline.Home::sourceId,
+                )
+            ) {
+                EditableTimelineState(timelines = timelines.toMutableStateList())
+            }
 
         fun Modifier.timelineEditDragAndDrop(
             state: EditableTimelineState,
             sourceId: String,
-        ) = selectorDragAndDrop(
-            state = state.dragAndDropSelectorState,
-            id = sourceId,
-        )
+        ) =
+            selectorDragAndDrop(
+                state = state.dragAndDropSelectorState,
+                id = sourceId,
+            )
 
-        fun Modifier.timelineEditDropTarget(
-            state: EditableTimelineState,
-        ) = selectorDropTarget(
-            state = state.dragAndDropSelectorState,
-        )
+        fun Modifier.timelineEditDropTarget(state: EditableTimelineState) =
+            selectorDropTarget(state = state.dragAndDropSelectorState)
     }
 }

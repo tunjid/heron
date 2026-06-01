@@ -26,14 +26,12 @@ scmVersion {
     repository {
         pushTagsOnly.set(true)
     }
-    providers.gradleProperty("heron.releaseBranch")
-        .orNull
-        ?.let { releaseBranch ->
-            when {
-                releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
-                releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
-                releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
-                else -> throw IllegalArgumentException("Unknown release type")
-            }
+    providers.gradleProperty("heron.releaseBranch").orNull?.let { releaseBranch ->
+        when {
+            releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
+            releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
+            releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
+            else -> throw IllegalArgumentException("Unknown release type")
         }
+    }
 }

@@ -21,6 +21,7 @@ plugins {
     kotlin("plugin.serialization")
     alias(libs.plugins.buildConfig)
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.data"
@@ -107,9 +108,7 @@ buildConfig {
     }
 
     forClass("InternalEndpoints") {
-        val heronEndpoint = providers.gradleProperty("heron.endpoint")
-            .orNull
-            .orEmpty()
+        val heronEndpoint = providers.gradleProperty("heron.endpoint").orNull.orEmpty()
         buildConfigField("String", "HeronEndpoint", "\"${heronEndpoint}\"")
     }
 }

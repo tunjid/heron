@@ -36,52 +36,40 @@ import kotlinx.coroutines.flow.Flow
 interface ListDao {
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateLists(
-        entities: List<ListEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = ListEntity::partial,
-        insertEntities = ::insertOrIgnoreLists,
-        updatePartials = ::updatePartialLists,
-    )
+    suspend fun insertOrPartiallyUpdateLists(entities: List<ListEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = ListEntity::partial,
+            insertEntities = ::insertOrIgnoreLists,
+            updatePartials = ::updatePartialLists,
+        )
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreLists(
-        entities: List<ListEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreLists(entities: List<ListEntity>): List<Long>
 
     @Transaction
     @Update(entity = ListEntity::class)
-    suspend fun updatePartialLists(
-        entities: List<ListEntity.Partial>,
-    )
+    suspend fun updatePartialLists(entities: List<ListEntity.Partial>)
 
-    @Upsert
-    suspend fun upsertLists(
-        entities: List<ListEntity>,
-    )
+    @Upsert suspend fun upsertLists(entities: List<ListEntity>)
 
     @Query(
         """
             SELECT * FROM lists
             WHERE uri = :listUri
-        """,
+        """
     )
-    fun list(
-        listUri: String,
-    ): Flow<PopulatedListEntity?>
+    fun list(listUri: String): Flow<PopulatedListEntity?>
 
     @Transaction
     @Query(
         """
             SELECT * FROM lists
             WHERE uri IN (:listUris)
-        """,
+        """
     )
-    fun lists(
-        listUris: Collection<ListUri>,
-    ): Flow<List<PopulatedListEntity>>
+    fun lists(listUris: Collection<ListUri>): Flow<List<PopulatedListEntity>>
 
     @Transaction
     @Query(
@@ -95,7 +83,7 @@ interface ListDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun listMembers(
         listUri: String,
@@ -113,7 +101,7 @@ interface ListDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun profileLists(
         creatorId: String,
@@ -121,48 +109,37 @@ interface ListDao {
         offset: Long,
     ): Flow<List<PopulatedListEntity>>
 
-    @Upsert
-    suspend fun upsertListItems(
-        entities: List<ListMemberEntity>,
-    )
+    @Upsert suspend fun upsertListItems(entities: List<ListMemberEntity>)
 
     @Query(
         """
             DELETE FROM lists
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteList(
-        uri: ListUri,
-    )
+    suspend fun deleteList(uri: ListUri)
 
     @Query(
         """
             DELETE FROM listMembers
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteListMember(
-        uri: ListMemberUri,
-    )
+    suspend fun deleteListMember(uri: ListMemberUri)
 
     @Query(
         """
             DELETE FROM lists
             WHERE creatorId = :creatorId
-        """,
+        """
     )
-    suspend fun deleteListsForCreator(
-        creatorId: String,
-    )
+    suspend fun deleteListsForCreator(creatorId: String)
 
     @Query(
         """
             DELETE FROM listMembers
             WHERE listUri = :listUri
-        """,
+        """
     )
-    suspend fun deleteListMembersForList(
-        listUri: String,
-    )
+    suspend fun deleteListMembersForList(listUri: String)
 }

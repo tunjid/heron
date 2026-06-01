@@ -16,22 +16,16 @@ import org.freedesktop.gstreamer.Format
 import org.freedesktop.gstreamer.event.SeekFlags
 
 @Stable
-class GStreamerPlayerController(
-    private val appMainScope: CoroutineScope,
-) : VideoPlayerController {
+class GStreamerPlayerController(private val appMainScope: CoroutineScope) : VideoPlayerController {
 
-    private val states = VideoPlayerStates(
-        onEvicted = GStreamerPlayerState::dispose,
-    )
+    private val states = VideoPlayerStates(onEvicted = GStreamerPlayerState::dispose)
 
     override var isMuted: Boolean by states::isMuted
 
     init {
         GStreamer.initialized
 
-        snapshotFlow { isMuted }
-            .onEach { states.activeState?.applyMute() }
-            .launchIn(appMainScope)
+        snapshotFlow { isMuted }.onEach { states.activeState?.applyMute() }.launchIn(appMainScope)
     }
 
     override fun registerVideo(
@@ -40,19 +34,18 @@ class GStreamerPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState = states.registerOrGet(
-        videoId = videoId,
-    ) {
-        GStreamerPlayerState(
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf { isMuted },
-            appMainScope = appMainScope,
-        )
-    }
+    ): VideoPlayerState =
+        states.registerOrGet(videoId = videoId) {
+            GStreamerPlayerState(
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf { isMuted },
+                appMainScope = appMainScope,
+            )
+        }
 
     override fun play(
         videoId: String?,

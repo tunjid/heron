@@ -102,27 +102,31 @@ internal fun GalleryImage(
 ) {
     scaffoldState.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
-        sharedContentState = with(scaffoldState) {
-            rememberSharedContentState(
-                key = item.image.sharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                ),
-                config = viewportSharedContentConfig(
-                    item,
-                    isInViewport,
-                ),
-            )
-        },
-        state = remember(item.image) {
-            ImageArgs(
-                url = item.image.fullsize.uri,
-                thumbnailUrl = item.image.thumb.uri,
-                contentDescription = item.image.alt,
-                contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Rectangle,
-            )
-        },
+        sharedContentState =
+            with(scaffoldState) {
+                rememberSharedContentState(
+                    key =
+                        item.image.sharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postUri = postUri,
+                        ),
+                    config =
+                        viewportSharedContentConfig(
+                            item,
+                            isInViewport,
+                        ),
+                )
+            },
+        state =
+            remember(item.image) {
+                ImageArgs(
+                    url = item.image.fullsize.uri,
+                    thumbnailUrl = item.image.thumb.uri,
+                    contentDescription = item.image.alt,
+                    contentScale = ContentScale.Crop,
+                    shape = RoundedPolygonShape.Rectangle,
+                )
+            },
         sharedElement = { args, innerModifier ->
             AsyncImage(
                 modifier = innerModifier,
@@ -141,43 +145,49 @@ internal fun GalleryVideo(
     sharedElementPrefix: String,
     isInViewport: (GalleryItem.Media) -> Boolean,
 ) {
-    val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
-        videoUrl = item.video.playlist.uri,
-        thumbnail = item.video.thumbnail?.uri,
-        shape = RoundedPolygonShape.Rectangle,
-    )
-    if (!paneTransitionScope.isPrimaryOrActive) VideoStill(
-        modifier = modifier,
-        state = videoPlayerState,
-    )
-    else paneTransitionScope.UpdatedMovableStickySharedElementOf(
-        modifier = modifier,
-        sharedContentState = with(paneTransitionScope) {
-            rememberSharedContentState(
-                key = item.video.sharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                ),
-                config = viewportSharedContentConfig(
-                    item,
-                    isInViewport,
-                ),
-            )
-        },
-        state = videoPlayerState,
-        alternateOutgoingSharedElement = { state, innerModifier ->
-            VideoStill(
-                modifier = innerModifier,
-                state = state,
-            )
-        },
-        sharedElement = { state, innerModifier ->
-            VideoPlayer(
-                modifier = innerModifier,
-                state = state,
-            )
-        },
-    )
+    val videoPlayerState =
+        LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
+            videoUrl = item.video.playlist.uri,
+            thumbnail = item.video.thumbnail?.uri,
+            shape = RoundedPolygonShape.Rectangle,
+        )
+    if (!paneTransitionScope.isPrimaryOrActive)
+        VideoStill(
+            modifier = modifier,
+            state = videoPlayerState,
+        )
+    else
+        paneTransitionScope.UpdatedMovableStickySharedElementOf(
+            modifier = modifier,
+            sharedContentState =
+                with(paneTransitionScope) {
+                    rememberSharedContentState(
+                        key =
+                            item.video.sharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postUri = postUri,
+                            ),
+                        config =
+                            viewportSharedContentConfig(
+                                item,
+                                isInViewport,
+                            ),
+                    )
+                },
+            state = videoPlayerState,
+            alternateOutgoingSharedElement = { state, innerModifier ->
+                VideoStill(
+                    modifier = innerModifier,
+                    state = state,
+                )
+            },
+            sharedElement = { state, innerModifier ->
+                VideoPlayer(
+                    modifier = innerModifier,
+                    state = state,
+                )
+            },
+        )
 }
 
 @Composable
@@ -194,12 +204,12 @@ internal fun MediaActions(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            modifier = Modifier
-                .size(OverlayIconSize)
-                .shapedClickable(
-                    shape = CircleShape,
-                    onClick = onCloseClicked,
-                ),
+            modifier =
+                Modifier.size(OverlayIconSize)
+                    .shapedClickable(
+                        shape = CircleShape,
+                        onClick = onCloseClicked,
+                    ),
             imageVector = Icons.Rounded.Close,
             tint = MaterialTheme.colorScheme.outline,
             contentDescription = stringResource(CommonStrings.close),
@@ -236,50 +246,51 @@ internal fun MediaCreatorAndDescription(
                     Action.Navigate.To(
                         profileDestination(
                             profile = post.author,
-                            avatarSharedElementKey = post.avatarSharedElementKey(
-                                prefix = item.posterSharedElementPrefix,
-                            ),
+                            avatarSharedElementKey =
+                                post.avatarSharedElementKey(
+                                    prefix = item.posterSharedElementPrefix
+                                ),
                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        ),
-                    ),
+                        )
+                    )
                 )
             },
-            onViewerStateToggled = remember(signedInProfileId, viewedProfileId) {
-                { viewerState ->
-                    signedInProfileId?.let {
-                        actions(
-                            Action.ToggleViewerState(
-                                signedInProfileId = it,
-                                viewedProfileId = viewedProfileId,
-                                following = viewerState?.following,
-                                followedBy = viewerState?.followedBy,
-                            ),
-                        )
+            onViewerStateToggled =
+                remember(signedInProfileId, viewedProfileId) {
+                    { viewerState ->
+                        signedInProfileId?.let {
+                            actions(
+                                Action.ToggleViewerState(
+                                    signedInProfileId = it,
+                                    viewedProfileId = viewedProfileId,
+                                    following = viewerState?.following,
+                                    followedBy = viewerState?.followedBy,
+                                )
+                            )
+                        }
                     }
-                }
-            },
+                },
         )
         GalleryText(
             post = item.post,
             paneScaffoldState = paneScaffoldState,
             onClick = {},
             onLinkTargetClicked = { _, target ->
-                if (target is LinkTarget.Navigable) actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = target.path,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        ),
-                    ),
-                )
+                if (target is LinkTarget.Navigable)
+                    actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = target.path,
+                                referringRouteOption =
+                                    NavigationAction.ReferringRouteOption.Current,
+                            )
+                        )
+                    )
             },
         )
         val altText = (media as? GalleryItem.Media.Photo)?.image?.alt
         if (!altText.isNullOrBlank()) {
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth(),
-            ) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     text = altText,
@@ -302,10 +313,11 @@ internal fun MediaOverlayBox(
 ) {
     ScrimmedContent {
         val visible by rememberUpdatedState(media != null && isVisible)
-        val alphaState = animateFloatAsState(
-            targetValue = if (visible) 1f else 0f,
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        )
+        val alphaState =
+            animateFloatAsState(
+                targetValue = if (visible) 1f else 0f,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            )
         val zIndex by remember {
             derivedStateOf {
                 when {
@@ -322,11 +334,12 @@ internal fun MediaOverlayBox(
         // The Overlay is stateful, so it should not be removed from the composition.
         // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
         Box(
-            modifier = modifier
-                .zIndex(zIndex)
-                .fillMaxSize()
-                .graphicsLayer { alpha = alphaState.value }
-                .background(color = Color.Black.copy(alpha = 0.8f)),
+            modifier =
+                modifier
+                    .zIndex(zIndex)
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = alphaState.value }
+                    .background(color = Color.Black.copy(alpha = 0.8f)),
             content = {
                 if (media != null) content(media)
             },
@@ -404,9 +417,7 @@ internal fun MediaInteractions(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MediaActions(
-            modifier = Modifier
-                .weight(1f)
-                .padding(bottom = 8.dp),
+            modifier = Modifier.weight(1f).padding(bottom = 8.dp),
             media = media,
             imageDownloadState = imageDownloadState,
             videoPlayerController = videoPlayerController,
@@ -422,20 +433,17 @@ internal fun MediaInteractions(
             paneTransitionScope = paneScaffoldState,
             onInteraction = { interaction ->
                 when (interaction) {
-                    is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
-                        interaction,
-                    )
+                    is PostAction.OfInteraction ->
+                        postInteractionSheetState.onInteraction(interaction)
                     is PostAction.OfMetadata -> Unit
-                    is PostAction.OfMore -> postOptionsSheetState.showOptions(
-                        interaction.post,
-                    )
+                    is PostAction.OfMore -> postOptionsSheetState.showOptions(interaction.post)
                     is PostAction.OfReply -> {
                         commentsState.expand()
                         actions(
                             Action.LoadComments(
                                 post = item.post,
                                 order = null,
-                            ),
+                            )
                         )
                     }
                 }
@@ -459,21 +467,16 @@ private fun viewportSharedContentConfig(
 }
 
 @Composable
-private fun VideoPlayerController.MuteButton(
-    modifier: Modifier = Modifier,
-) {
+private fun VideoPlayerController.MuteButton(modifier: Modifier = Modifier) {
     Icon(
         imageVector =
-        if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-        else Icons.AutoMirrored.Rounded.VolumeUp,
-        contentDescription = stringResource(
-            if (isMuted) Res.string.mute_video
-            else Res.string.unmute_video,
-        ),
+            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+            else Icons.AutoMirrored.Rounded.VolumeUp,
+        contentDescription =
+            stringResource(if (isMuted) Res.string.mute_video else Res.string.unmute_video),
         tint = MaterialTheme.colorScheme.outline,
-        modifier = modifier
-            .size(OverlayIconSize)
-            .shapedClickable(CircleShape) {
+        modifier =
+            modifier.size(OverlayIconSize).shapedClickable(CircleShape) {
                 isMuted = !isMuted
             },
     )

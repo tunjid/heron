@@ -66,9 +66,7 @@ fun SocialGraphFilter(
                 selected = filter.operator,
                 options = Filter.Comparator.Set.entries,
                 onSelect = { comparator ->
-                    onUpdate(
-                        filter.copy(operator = comparator),
-                    )
+                    onUpdate(filter.copy(operator = comparator))
                 },
             )
         },
@@ -79,31 +77,23 @@ fun SocialGraphFilter(
                 options = Filter.Social.Graph.Direction.entries,
                 stringRes = Filter.Social.Graph.Direction::stringRes,
                 onSelect = { direction ->
-                    onUpdate(
-                        filter.copy(
-                            direction = direction,
-                        ),
-                    )
+                    onUpdate(filter.copy(direction = direction))
                 },
             )
         },
         additionalContent = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val selectTextSheetState = rememberSelectProfileHandleState(
-                    title = stringResource(Res.string.username),
-                    suggestedProfiles = results,
-                    onTextConfirmed = { profileHandle ->
-                        onUpdate(
-                            filter.copy(
-                                username = profileHandle,
-                            ),
-                        )
-                    },
-                )
+                val selectTextSheetState =
+                    rememberSelectProfileHandleState(
+                        title = stringResource(Res.string.username),
+                        suggestedProfiles = results,
+                        onTextConfirmed = { profileHandle ->
+                            onUpdate(filter.copy(username = profileHandle))
+                        },
+                    )
                 OutlinedTextField(
                     value = filter.username,
                     onValueChange = {},
@@ -111,24 +101,21 @@ fun SocialGraphFilter(
                     label = {
                         Text(text = stringResource(Res.string.username))
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 FilledTonalButton(
                     onClick = {
-                        selectTextSheetState.show(
-                            currentText = filter.username,
-                        )
+                        selectTextSheetState.show(currentText = filter.username)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = stringResource(
-                            if (filter.username.isBlank()) Res.string.add_profile
-                            else Res.string.edit_profile,
-                        ),
+                        text =
+                            stringResource(
+                                if (filter.username.isBlank()) Res.string.add_profile
+                                else Res.string.edit_profile
+                            )
                     )
                 }
 
@@ -160,24 +147,20 @@ fun SocialUserListFilter(
                 selected = filter.operator,
                 options = Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f),
             )
         },
-
         additionalContent = {
             val onItemsUpdated: (List<String>) -> Unit = {
-                onUpdate(
-                    filter.copy(dids = it),
-                )
+                onUpdate(filter.copy(dids = it))
             }
-            val selectTextSheetState = rememberSelectProfileHandleState(
-                title = stringResource(Res.string.username),
-                suggestedProfiles = results,
-                onItemsUpdated = onItemsUpdated,
-                items = filter.dids,
-            )
+            val selectTextSheetState =
+                rememberSelectProfileHandleState(
+                    title = stringResource(Res.string.username),
+                    suggestedProfiles = results,
+                    onItemsUpdated = onItemsUpdated,
+                    items = filter.dids,
+                )
             FilterTextChips(
                 selectTextSheetState = selectTextSheetState,
                 buttonStringResource = Res.string.add_profile,
@@ -185,8 +168,7 @@ fun SocialUserListFilter(
                 items = filter.dids,
             )
             LaunchedEffect(Unit) {
-                snapshotFlow { selectTextSheetState.options.text }
-                    .collect(onProfileQueryChanged)
+                snapshotFlow { selectTextSheetState.options.text }.collect(onProfileQueryChanged)
             }
         },
     )
@@ -216,14 +198,13 @@ fun SocialListMemberFilter(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberSelectListSheetState(
-        lists = recentLists,
-        onListSelected = { list ->
-            onUpdate(
-                filter.copy(url = list.uri.uri),
-            )
-        },
-    )
+    val sheetState =
+        rememberSelectListSheetState(
+            lists = recentLists,
+            onListSelected = { list ->
+                onUpdate(filter.copy(url = list.uri.uri))
+            },
+        )
     StandardFilter(
         modifier = modifier,
         tint = filter.validationTint(),
@@ -234,15 +215,12 @@ fun SocialListMemberFilter(
                 selected = filter.operator,
                 options = Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f),
             )
         },
         additionalContent = {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
@@ -252,8 +230,7 @@ fun SocialListMemberFilter(
                     label = {
                         Text(text = stringResource(Res.string.social_list_member))
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 FilledTonalButton(
@@ -261,14 +238,14 @@ fun SocialListMemberFilter(
                         onUpdateRecentLists()
                         sheetState.show()
                     },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = stringResource(
-                            if (filter.url.isBlank()) Res.string.add_profile
-                            else Res.string.edit_profile,
-                        ),
+                        text =
+                            stringResource(
+                                if (filter.url.isBlank()) Res.string.add_profile
+                                else Res.string.edit_profile
+                            )
                     )
                 }
             }
@@ -292,8 +269,9 @@ fun SocialMagicAudienceFilter(
 }
 
 private val Filter.Social.Graph.Direction.stringRes
-    get() = when (this) {
-        Filter.Social.Graph.Direction.Following -> Res.string.social_graph_direction_following
-        Filter.Social.Graph.Direction.Followers -> Res.string.social_graph_direction_followers
-        else -> Res.string.social_graph_direction_unknown
-    }
+    get() =
+        when (this) {
+            Filter.Social.Graph.Direction.Following -> Res.string.social_graph_direction_following
+            Filter.Social.Graph.Direction.Followers -> Res.string.social_graph_direction_followers
+            else -> Res.string.social_graph_direction_unknown
+        }

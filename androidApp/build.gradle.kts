@@ -28,9 +28,7 @@ android {
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = providers.gradleProperty("heron.versionCode")
-            .get()
-            .toInt()
+        versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
         versionName = scmVersion.version
     }
     packaging {
@@ -38,21 +36,21 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    val releaseSigning = when {
-        // Do not sign the build output, it will be signed on CI
-        providers.gradleProperty("heron.isRelease").orNull.toBoolean() -> null
-        file("debugKeystore.properties").exists() -> signingConfigs.create("release") {
-            val props = Properties()
-            file("debugKeystore.properties")
-                .inputStream()
-                .use(props::load)
-            storeFile = file(props.getProperty("keystore"))
-            storePassword = props.getProperty("keystore.password")
-            keyAlias = props.getProperty("keyAlias")
-            keyPassword = props.getProperty("keyPassword")
+    val releaseSigning =
+        when {
+            // Do not sign the build output, it will be signed on CI
+            providers.gradleProperty("heron.isRelease").orNull.toBoolean() -> null
+            file("debugKeystore.properties").exists() ->
+                signingConfigs.create("release") {
+                    val props = Properties()
+                    file("debugKeystore.properties").inputStream().use(props::load)
+                    storeFile = file(props.getProperty("keystore"))
+                    storePassword = props.getProperty("keystore.password")
+                    keyAlias = props.getProperty("keyAlias")
+                    keyPassword = props.getProperty("keyPassword")
+                }
+            else -> signingConfigs["debug"]
         }
-        else -> signingConfigs["debug"]
-    }
     buildTypes {
         all {
             signingConfig = releaseSigning

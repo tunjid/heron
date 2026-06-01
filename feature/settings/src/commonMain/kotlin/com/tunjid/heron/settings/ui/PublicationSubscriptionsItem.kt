@@ -16,12 +16,13 @@ fun PublicationSubscriptionsItem(
     onPublicationSubscriptionsClicked: () -> Unit,
 ) {
     SettingsItem(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                onPublicationSubscriptionsClicked()
-            }
-            .settingsItemPaddingAndMinHeight(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable {
+                    onPublicationSubscriptionsClicked()
+                }
+                .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.publication_subscriptions),
         icon = Icons.Rounded.Newspaper,
     )

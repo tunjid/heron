@@ -18,49 +18,50 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "rockskyScrobbles",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["did"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = RockskyTrackEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["trackUri"],
-            onDelete = ForeignKey.SET_NULL,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = RockskyArtistEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["artistUri"],
-            onDelete = ForeignKey.SET_NULL,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = RockskyAlbumEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["albumUri"],
-            onDelete = ForeignKey.SET_NULL,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["did"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["trackUri"]),
-        Index(value = ["artistUri"]),
-        Index(value = ["albumUri"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["did"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = RockskyTrackEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["trackUri"],
+                onDelete = ForeignKey.SET_NULL,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = RockskyArtistEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["artistUri"],
+                onDelete = ForeignKey.SET_NULL,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = RockskyAlbumEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["albumUri"],
+                onDelete = ForeignKey.SET_NULL,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["did"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["trackUri"]),
+            Index(value = ["artistUri"]),
+            Index(value = ["albumUri"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class RockskyScrobbleEntity(
-    @PrimaryKey
-    val uri: ScrobbleUri,
+    @PrimaryKey val uri: ScrobbleUri,
     val cid: ScrobbleId,
     val creatorId: ProfileId,
     val trackId: TrackId,
@@ -78,20 +79,21 @@ data class RockskyScrobbleEntity(
     val createdAt: Instant,
 )
 
-fun RockskyScrobbleEntity.asExternalModel() = RockskyScrobble(
-    cid = cid,
-    trackId = trackId,
-    title = title,
-    artist = artist,
-    albumArtist = albumArtist,
-    album = album,
-    albumArt = albumArt,
-    handle = handle,
-    did = did,
-    avatar = avatar,
-    uri = uri,
-    trackUri = trackUri,
-    artistUri = artistUri,
-    albumUri = albumUri,
-    createdAt = createdAt,
-)
+fun RockskyScrobbleEntity.asExternalModel() =
+    RockskyScrobble(
+        cid = cid,
+        trackId = trackId,
+        title = title,
+        artist = artist,
+        albumArtist = albumArtist,
+        album = album,
+        albumArt = albumArt,
+        handle = handle,
+        did = did,
+        avatar = avatar,
+        uri = uri,
+        trackUri = trackUri,
+        artistUri = artistUri,
+        albumUri = albumUri,
+        createdAt = createdAt,
+    )

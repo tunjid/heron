@@ -26,14 +26,13 @@ import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
-internal fun MultipleEntitySaver.add(
-    starterPack: StarterPackView,
-) {
-    val bskyStarterPack = try {
-        starterPack.record.decodeAs<BskyStarterPack>()
-    } catch (_: Exception) {
-        return
-    }
+internal fun MultipleEntitySaver.add(starterPack: StarterPackView) {
+    val bskyStarterPack =
+        try {
+            starterPack.record.decodeAs<BskyStarterPack>()
+        } catch (_: Exception) {
+            return
+        }
     starterPack.creator.profileEntity().let(::add)
     starterPack.feeds?.forEach(::add)
     starterPack.labels?.forEach(::add)
@@ -61,18 +60,17 @@ internal fun MultipleEntitySaver.add(
             joinedAllTimeCount = starterPack.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
             indexedAt = starterPack.indexedAt,
-        ),
+        )
     )
 }
 
-internal fun MultipleEntitySaver.add(
-    starterPackView: StarterPackViewBasic,
-) {
-    val bskyStarterPack = try {
-        starterPackView.record.decodeAs<BskyStarterPack>()
-    } catch (_: Exception) {
-        return
-    }
+internal fun MultipleEntitySaver.add(starterPackView: StarterPackViewBasic) {
+    val bskyStarterPack =
+        try {
+            starterPackView.record.decodeAs<BskyStarterPack>()
+        } catch (_: Exception) {
+            return
+        }
     starterPackView.creator.profileEntity().let(::add)
 
     add(
@@ -87,6 +85,6 @@ internal fun MultipleEntitySaver.add(
             joinedAllTimeCount = starterPackView.joinedAllTimeCount,
             createdAt = bskyStarterPack.createdAt,
             indexedAt = starterPackView.indexedAt,
-        ),
+        )
     )
 }

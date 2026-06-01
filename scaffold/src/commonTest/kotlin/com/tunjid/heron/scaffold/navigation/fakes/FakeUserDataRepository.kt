@@ -31,8 +31,7 @@ class FakeUserDataRepository : UserDataRepository {
 
     override suspend fun setCurrentThemeOrdinal(themeOrdinal: Int): Outcome = Outcome.Success
 
-    override suspend fun setCompactNavigation(compactNavigation: Boolean): Outcome =
-        Outcome.Success
+    override suspend fun setCompactNavigation(compactNavigation: Boolean): Outcome = Outcome.Success
 
     override suspend fun setAutoHideBottomNavigation(autoHideBottomNavigation: Boolean): Outcome =
         Outcome.Success
@@ -46,6 +45,7 @@ class FakeUserDataRepository : UserDataRepository {
     override suspend fun setShowTrendingTopics(showTrendingTopics: Boolean): Outcome =
         Outcome.Success
 
-    override suspend fun setAllowAllTimelinePresentations(allowAllTimelinePresentations: Boolean): Outcome =
-        Outcome.Success
+    override suspend fun setAllowAllTimelinePresentations(
+        allowAllTimelinePresentations: Boolean
+    ): Outcome = Outcome.Success
 }

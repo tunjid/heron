@@ -20,7 +20,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.configureKotlinMultiplatform(
-    kotlinMultiplatformExtension: KotlinMultiplatformExtension,
+    kotlinMultiplatformExtension: KotlinMultiplatformExtension
 ) {
     kotlinMultiplatformExtension.apply {
         jvm("desktop")

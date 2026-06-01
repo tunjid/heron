@@ -23,6 +23,6 @@ internal fun MultipleEntitySaver.add(
             playCount = artistView.playCount,
             uniqueListeners = artistView.uniqueListeners,
             tags = artistView.tags?.joinToString(","),
-        ),
+        )
     )
 }

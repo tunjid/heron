@@ -53,24 +53,17 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileId}/post/{postRecordKey}/gallery"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
-internal val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+internal val Route.postRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-internal val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileId,
-)
+internal val Route.profileId by mappedRoutePath(mapper = ::ProfileId)
 
-internal val Route.startIndex by mappedRouteQuery(
-    default = 0,
-    mapper = String::toInt,
-)
+internal val Route.startIndex by
+    mappedRouteQuery(
+        default = 0,
+        mapper = String::toInt,
+    )
 
 @BindingContainer
 object GalleryNavigationBindings {
@@ -97,44 +90,47 @@ class GalleryBindings(
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry(
-        contentTransform = navigationContentTransformer::contentTransform,
-        render = { route ->
-            val stateHolder: GalleryStateHolder = viewModel<ActualGalleryViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    ) =
+        threePaneEntry(
+            contentTransform = navigationContentTransformer::contentTransform,
+            render = { route ->
+                val stateHolder: GalleryStateHolder =
+                    viewModel<ActualGalleryViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                containerColor = Color.Transparent,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    GalleryScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
-            )
-        },
-    )
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = false,
+                    containerColor = Color.Transparent,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
+                    },
+                    content = {
+                        GalleryScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

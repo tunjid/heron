@@ -71,36 +71,32 @@ internal fun AtmosphereAppScreen(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val collapsedHeight = with(density) {
-        UiTokens.tabsHeight.toPx()
-    }
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
-    )
+    val collapsedHeight =
+        with(density) {
+            UiTokens.tabsHeight.toPx()
+        }
+    val collapsingHeaderState =
+        rememberCollapsingHeaderState(
+            collapsedHeight = collapsedHeight,
+            initialExpandedHeight = with(density) { 800.dp.toPx() },
+        )
 
     val pagerState = rememberPagerState { state.stateHolders.size }
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val isRefreshing = state.stateHolders
-        .getOrNull(pagerState.currentPage)
-        .isRefreshing
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage).isRefreshing
 
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
-            state.stateHolders
-                .getOrNull(pagerState.currentPage)
-                ?.refresh()
+            state.stateHolders.getOrNull(pagerState.currentPage)?.refresh()
         },
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(
                             x = 0,
                             y = collapsingHeaderState.expandedHeight.roundToInt(),
@@ -112,14 +108,11 @@ internal fun AtmosphereAppScreen(
         },
     ) {
         CollapsingHeaderLayout(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             state = collapsingHeaderState,
             headerContent = {
                 AtmosphereAppHeader(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     paneScaffoldState = paneScaffoldState,
                     headerState = collapsingHeaderState,
                     pagerState = pagerState,
@@ -132,186 +125,213 @@ internal fun AtmosphereAppScreen(
             body = {
                 val uriHandler = LocalUriHandler.current
                 HorizontalPager(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
                         when (val stateHolder = state.stateHolders[page]) {
-                            is AppScreenStateHolders.StandardSite.Documents -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { document ->
-                                    Document(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .animateItem()
-                                            .shapedClickable {
-                                                runCatching {
-                                                    document.link
-                                                        ?.takeIfIs(Uri.Host.Https)
-                                                        ?.let(uriHandler::openUri)
-                                                }
-                                            }
-                                            .padding(8.dp),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = document.uri.uri,
-                                        document = document,
-                                        onPublicationClicked = {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    standardPublicationDestination(
-                                                        publication = it,
-                                                        sharedElementPrefix = document.uri.uri,
-                                                    ),
-                                                ),
-                                            )
-                                        },
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                            is AppScreenStateHolders.StandardSite.Publications -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { publication ->
-                                    Publication(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(8.dp)
-                                            .animateItem()
-                                            .shapedClickable {
+                            is AppScreenStateHolders.StandardSite.Documents ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { document ->
+                                        Document(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .animateItem()
+                                                    .shapedClickable {
+                                                        runCatching {
+                                                            document.link
+                                                                ?.takeIfIs(Uri.Host.Https)
+                                                                ?.let(uriHandler::openUri)
+                                                        }
+                                                    }
+                                                    .padding(8.dp),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix = document.uri.uri,
+                                            document = document,
+                                            onPublicationClicked = {
                                                 actions(
                                                     Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = publication.uri.path,
-                                                            models = listOf(publication),
-                                                            sharedElementPrefix = publication.uri.uri,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
+                                                        standardPublicationDestination(
+                                                            publication = it,
+                                                            sharedElementPrefix = document.uri.uri,
+                                                        )
+                                                    )
                                                 )
                                             },
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = publication.uri.uri,
-                                        publication = publication,
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
+                                            onSubscriptionToggled = { publication, subscription ->
+                                                actions(
+                                                    if (subscription != null)
+                                                        Action.TogglePublicationSubscription
+                                                            .Unsubscribe(
+                                                                subscriptionUri = subscription.uri
+                                                            )
+                                                    else
+                                                        Action.TogglePublicationSubscription
+                                                            .Subscribe(
+                                                                publicationUri = publication.uri
+                                                            )
                                                 )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                            is AppScreenStateHolders.Rocksky.Albums -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { album ->
-                                    RockskyAlbum(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .shapedClickable {
-                                                uriHandler.openRockskyLink(
-                                                    recordUri = album.uri,
-                                                    collection = "album",
+                                            },
+                                        )
+                                    },
+                                )
+                            is AppScreenStateHolders.StandardSite.Publications ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { publication ->
+                                        Publication(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .padding(8.dp)
+                                                    .animateItem()
+                                                    .shapedClickable {
+                                                        actions(
+                                                            Action.Navigate.To(
+                                                                pathDestination(
+                                                                    path = publication.uri.path,
+                                                                    models = listOf(publication),
+                                                                    sharedElementPrefix =
+                                                                        publication.uri.uri,
+                                                                    referringRouteOption =
+                                                                        NavigationAction
+                                                                            .ReferringRouteOption
+                                                                            .Current,
+                                                                )
+                                                            )
+                                                        )
+                                                    },
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix = publication.uri.uri,
+                                            publication = publication,
+                                            onSubscriptionToggled = { publication, subscription ->
+                                                actions(
+                                                    if (subscription != null)
+                                                        Action.TogglePublicationSubscription
+                                                            .Unsubscribe(
+                                                                subscriptionUri = subscription.uri
+                                                            )
+                                                    else
+                                                        Action.TogglePublicationSubscription
+                                                            .Subscribe(
+                                                                publicationUri = publication.uri
+                                                            )
                                                 )
-                                            }
-                                            .padding(8.dp)
-                                            .animateItem(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
-                                        album = album,
-                                        onMusicServiceLinkClicked = { url ->
-                                            runCatching {
-                                                uriHandler.openUri(url)
-                                            }
-                                        },
-                                    )
-                                },
-                            )
-                            is AppScreenStateHolders.Rocksky.Tracks -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { track ->
-                                    RockskyTrack(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .shapedClickable {
-                                                uriHandler.openRockskyLink(
-                                                    recordUri = track.uri,
-                                                    collection = "song",
-                                                )
-                                            }
-                                            .padding(8.dp)
-                                            .animateItem(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
-                                        track = track,
-                                    )
-                                },
-                            )
-                            is AppScreenStateHolders.Rocksky.Artists -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { artist ->
-                                    RockskyArtist(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .shapedClickable {
-                                                uriHandler.openRockskyLink(
-                                                    recordUri = artist.uri,
-                                                    collection = "artist",
-                                                )
-                                            }
-                                            .padding(8.dp)
-                                            .animateItem(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
-                                        artist = artist,
-                                    )
-                                },
-                            )
-                            is AppScreenStateHolders.Rocksky.Scrobbles -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { scrobble ->
-                                    RockskyScrobble(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .shapedClickable {
-                                                uriHandler.openRockskyLink(
-                                                    recordUri = scrobble.uri,
-                                                    collection = "scrobble",
-                                                )
-                                            }
-                                            .padding(8.dp)
-                                            .animateItem(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
-                                        scrobble = scrobble,
-                                    )
-                                },
-                            )
+                                            },
+                                        )
+                                    },
+                                )
+                            is AppScreenStateHolders.Rocksky.Albums ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { album ->
+                                        RockskyAlbum(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .shapedClickable {
+                                                        uriHandler.openRockskyLink(
+                                                            recordUri = album.uri,
+                                                            collection = "album",
+                                                        )
+                                                    }
+                                                    .padding(8.dp)
+                                                    .animateItem(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                AtmosphereScreenSharedElementPrefix,
+                                            album = album,
+                                            onMusicServiceLinkClicked = { url ->
+                                                runCatching {
+                                                    uriHandler.openUri(url)
+                                                }
+                                            },
+                                        )
+                                    },
+                                )
+                            is AppScreenStateHolders.Rocksky.Tracks ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { track ->
+                                        RockskyTrack(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .shapedClickable {
+                                                        uriHandler.openRockskyLink(
+                                                            recordUri = track.uri,
+                                                            collection = "song",
+                                                        )
+                                                    }
+                                                    .padding(8.dp)
+                                                    .animateItem(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                AtmosphereScreenSharedElementPrefix,
+                                            track = track,
+                                        )
+                                    },
+                                )
+                            is AppScreenStateHolders.Rocksky.Artists ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { artist ->
+                                        RockskyArtist(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .shapedClickable {
+                                                        uriHandler.openRockskyLink(
+                                                            recordUri = artist.uri,
+                                                            collection = "artist",
+                                                        )
+                                                    }
+                                                    .padding(8.dp)
+                                                    .animateItem(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                AtmosphereScreenSharedElementPrefix,
+                                            artist = artist,
+                                        )
+                                    },
+                                )
+                            is AppScreenStateHolders.Rocksky.Scrobbles ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { scrobble ->
+                                        RockskyScrobble(
+                                            modifier =
+                                                Modifier.fillMaxWidth()
+                                                    .shapedClickable {
+                                                        uriHandler.openRockskyLink(
+                                                            recordUri = scrobble.uri,
+                                                            collection = "scrobble",
+                                                        )
+                                                    }
+                                                    .padding(8.dp)
+                                                    .animateItem(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                AtmosphereScreenSharedElementPrefix,
+                                            scrobble = scrobble,
+                                        )
+                                    },
+                                )
                         }
                     },
                 )
@@ -320,10 +340,11 @@ internal fun AtmosphereAppScreen(
     }
     LaunchedEffect(Unit) {
         snapshotFlow {
-            (pagerState.currentPage + pagerState.currentPageOffsetFraction).fastRoundToInt()
-        }.collect { page ->
-            actions(Action.PageChanged(page))
-        }
+                (pagerState.currentPage + pagerState.currentPageOffsetFraction).fastRoundToInt()
+            }
+            .collect { page ->
+                actions(Action.PageChanged(page))
+            }
     }
 }
 
@@ -333,7 +354,7 @@ private fun UriHandler.openRockskyLink(
 ) {
     runCatching {
         openUri(
-            "https://rocksky.app/${recordUri.profileId().id}/$collection/${recordUri.recordKey.value}",
+            "https://rocksky.app/${recordUri.profileId().id}/$collection/${recordUri.recordKey.value}"
         )
     }
 }

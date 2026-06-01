@@ -116,16 +116,12 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class AddFilterSheetState(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class AddFilterSheetState(scope: BottomSheetScope) : BottomSheetState(scope) {
     override fun onHidden() = Unit
 }
 
 @Composable
-fun rememberAddFilterSheetState(
-    onFilterSelected: (Filter) -> Unit,
-): AddFilterSheetState {
+fun rememberAddFilterSheetState(onFilterSelected: (Filter) -> Unit): AddFilterSheetState {
     val state = rememberBottomSheetState {
         AddFilterSheetState(it)
     }
@@ -143,16 +139,14 @@ private fun AddFilterBottomSheet(
 ) {
     state.ModalBottomSheet {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(SheetHeightFraction)
-                .padding(bottom = 16.dp),
+            modifier =
+                Modifier.fillMaxWidth().fillMaxHeight(SheetHeightFraction).padding(bottom = 16.dp)
         ) {
             Text(
                 text = stringResource(Res.string.add_filter),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .padding(
+                modifier =
+                    Modifier.padding(
                         horizontal = 16.dp,
                         vertical = 12.dp,
                     ),
@@ -163,17 +157,14 @@ private fun AddFilterBottomSheet(
                 coroutineScope.launch { pagerState.animateScrollToPage(page) }
             }
             Tabs(
-                modifier = Modifier
-                    .padding(
-                        horizontal = 16.dp,
-                    )
-                    .fillMaxWidth(),
-                tabsState = rememberTabsState(
-                    tabs = filterTabs(),
-                    selectedTabIndex = pagerState::tabIndex,
-                    onTabSelected = onTabSelected,
-                    onTabReselected = onTabSelected,
-                ),
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
+                tabsState =
+                    rememberTabsState(
+                        tabs = filterTabs(),
+                        selectedTabIndex = pagerState::tabIndex,
+                        onTabSelected = onTabSelected,
+                        onTabReselected = onTabSelected,
+                    ),
             )
             val selectFilter: (Filter) -> Unit = {
                 onFilterSelected(it)
@@ -181,18 +172,13 @@ private fun AddFilterBottomSheet(
             }
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
             ) { page ->
                 when (page) {
-                    0 -> SimpleFilterList(
-                        onFilterSelected = selectFilter,
-                    )
+                    0 -> SimpleFilterList(onFilterSelected = selectFilter)
 
-                    1 -> AdvancedFilterList(
-                        onFilterSelected = selectFilter,
-                    )
+                    1 -> AdvancedFilterList(onFilterSelected = selectFilter)
                 }
             }
         }
@@ -218,20 +204,14 @@ private fun filterTabs(): List<Tab> {
 }
 
 @Composable
-private fun SimpleFilterList(
-    onFilterSelected: (Filter) -> Unit,
-) {
+private fun SimpleFilterList(onFilterSelected: (Filter) -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         SimpleFilterOptions.forEach { option ->
             ListItem(
-                colors = ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                ),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {
                     Icon(
                         imageVector = option.icon,
@@ -244,24 +224,18 @@ private fun SimpleFilterList(
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onFilterSelected(option.factory()) },
+                modifier = Modifier.fillMaxWidth().clickable { onFilterSelected(option.factory()) },
             )
         }
     }
 }
 
 @Composable
-private fun AdvancedFilterList(
-    onFilterSelected: (Filter) -> Unit,
-) {
+private fun AdvancedFilterList(onFilterSelected: (Filter) -> Unit) {
     val expandedGroupIndices = remember { mutableStateListOf<Int>() }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         AllFilterGroups.forEachIndexed { index, group ->
@@ -288,9 +262,7 @@ private fun FilterGroupItem(
 ) {
     Column {
         ListItem(
-            colors = ListItemDefaults.colors(
-                containerColor = Color.Transparent,
-            ),
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             leadingContent = {
                 Icon(
                     imageVector = group.icon,
@@ -306,22 +278,17 @@ private fun FilterGroupItem(
             trailingContent = {
                 Icon(
                     imageVector =
-                    if (isExpanded) Icons.Rounded.ExpandLess
-                    else Icons.Rounded.ExpandMore,
+                        if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
                     contentDescription = null,
                 )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onHeaderClick),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onHeaderClick),
         )
         AnimatedVisibility(visible = isExpanded) {
             Column {
                 group.options.forEach { option ->
                     ListItem(
-                        colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
-                        ),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         leadingContent = {
                             Icon(
                                 imageVector = option.icon,
@@ -334,10 +301,10 @@ private fun FilterGroupItem(
                                 style = MaterialTheme.typography.titleSmall,
                             )
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp)
-                            .clickable { onFilterSelected(option.factory()) },
+                        modifier =
+                            Modifier.fillMaxWidth().padding(start = 16.dp).clickable {
+                                onFilterSelected(option.factory())
+                            },
                     )
                 }
             }
@@ -358,219 +325,228 @@ private class FilterOption(
     val factory: () -> Filter,
 )
 
-private val SimpleFilterOptions: List<FilterOption> = listOf(
-    FilterOption(
-        titleRes = Res.string.images_only,
-        icon = Icons.Rounded.Image,
-        factory = {
-            Filter.Attribute.Embed(
-                embedType = Filter.Attribute.Embed.Kind.Image,
-                operator = Filter.Comparator.Equality.Equal,
-            )
-        },
-    ),
-    FilterOption(
-        titleRes = Res.string.images_and_videos_only,
-        icon = Icons.Rounded.PermMedia,
-        factory = {
-            Filter.Or(
-                filters = listOf(
-                    Filter.Attribute.Embed(
-                        embedType = Filter.Attribute.Embed.Kind.Image,
-                        operator = Filter.Comparator.Equality.Equal,
+private val SimpleFilterOptions: List<FilterOption> =
+    listOf(
+        FilterOption(
+            titleRes = Res.string.images_only,
+            icon = Icons.Rounded.Image,
+            factory = {
+                Filter.Attribute.Embed(
+                    embedType = Filter.Attribute.Embed.Kind.Image,
+                    operator = Filter.Comparator.Equality.Equal,
+                )
+            },
+        ),
+        FilterOption(
+            titleRes = Res.string.images_and_videos_only,
+            icon = Icons.Rounded.PermMedia,
+            factory = {
+                Filter.Or(
+                    filters =
+                        listOf(
+                            Filter.Attribute.Embed(
+                                embedType = Filter.Attribute.Embed.Kind.Image,
+                                operator = Filter.Comparator.Equality.Equal,
+                            ),
+                            Filter.Attribute.Embed(
+                                embedType = Filter.Attribute.Embed.Kind.Video,
+                                operator = Filter.Comparator.Equality.Equal,
+                            ),
+                        )
+                )
+            },
+        ),
+        FilterOption(
+            titleRes = Res.string.posts_from_profiles,
+            icon = Icons.Rounded.Person,
+            factory = Filter.Social.UserList::empty,
+        ),
+        FilterOption(
+            titleRes = Res.string.posts_with_hashtags,
+            icon = Icons.Rounded.Tag,
+            factory = Filter.Entity.Matches::empty,
+        ),
+    )
+
+private val AllFilterGroups: List<FilterGroup> =
+    listOf(
+        FilterGroup(
+            nameRes = Res.string.filter_group_logic,
+            icon = Icons.Rounded.AccountTree,
+            options =
+                listOf(
+                    FilterOption(
+                        titleRes = Res.string.all_of_these_and,
+                        icon = Icons.Rounded.SelectAll,
+                        factory = Filter.And::empty,
                     ),
-                    Filter.Attribute.Embed(
-                        embedType = Filter.Attribute.Embed.Kind.Video,
-                        operator = Filter.Comparator.Equality.Equal,
+                    FilterOption(
+                        titleRes = Res.string.any_of_these_or,
+                        icon = Icons.AutoMirrored.Rounded.CallSplit,
+                        factory = Filter.Or::empty,
                     ),
                 ),
-            )
-        },
-    ),
-    FilterOption(
-        titleRes = Res.string.posts_from_profiles,
-        icon = Icons.Rounded.Person,
-        factory = Filter.Social.UserList::empty,
-    ),
-    FilterOption(
-        titleRes = Res.string.posts_with_hashtags,
-        icon = Icons.Rounded.Tag,
-        factory = Filter.Entity.Matches::empty,
-    ),
-)
-
-private val AllFilterGroups: List<FilterGroup> = listOf(
-    FilterGroup(
-        nameRes = Res.string.filter_group_logic,
-        icon = Icons.Rounded.AccountTree,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.all_of_these_and,
-                icon = Icons.Rounded.SelectAll,
-                factory = Filter.And::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.any_of_these_or,
-                icon = Icons.AutoMirrored.Rounded.CallSplit,
-                factory = Filter.Or::empty,
-            ),
         ),
-    ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_entity,
-        icon = Icons.AutoMirrored.Rounded.ManageSearch,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.entity_matches,
-                icon = Icons.Rounded.Search,
-                factory = Filter.Entity.Matches::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.entity_excludes,
-                icon = Icons.Rounded.Block,
-                factory = Filter.Entity.Excludes::empty,
-            ),
+        FilterGroup(
+            nameRes = Res.string.filter_group_entity,
+            icon = Icons.AutoMirrored.Rounded.ManageSearch,
+            options =
+                listOf(
+                    FilterOption(
+                        titleRes = Res.string.entity_matches,
+                        icon = Icons.Rounded.Search,
+                        factory = Filter.Entity.Matches::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.entity_excludes,
+                        icon = Icons.Rounded.Block,
+                        factory = Filter.Entity.Excludes::empty,
+                    ),
+                ),
         ),
-    ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_attribute,
-        icon = Icons.Rounded.Tune,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.attribute_compare,
-                icon = Icons.AutoMirrored.Rounded.CompareArrows,
-                factory = Filter.Attribute.Compare::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.embed_type,
-                icon = Icons.Rounded.PermMedia,
-                factory = Filter.Attribute.Embed::empty,
-            ),
+        FilterGroup(
+            nameRes = Res.string.filter_group_attribute,
+            icon = Icons.Rounded.Tune,
+            options =
+                listOf(
+                    FilterOption(
+                        titleRes = Res.string.attribute_compare,
+                        icon = Icons.AutoMirrored.Rounded.CompareArrows,
+                        factory = Filter.Attribute.Compare::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.embed_type,
+                        icon = Icons.Rounded.PermMedia,
+                        factory = Filter.Attribute.Embed::empty,
+                    ),
+                ),
         ),
-    ),
-    // No regular expression support for now
-//    FilterGroup(
-//        nameRes = Res.string.filter_group_regex,
-//        icon = Icons.Rounded.RegularExpression,
-//        options = listOf(
-//            FilterOption(
-//                titleRes = Res.string.regex_matches,
-//                factory = Filter.Regex.Matches::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_negation,
-//                factory = Filter.Regex.Negation::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_any,
-//                factory = Filter.Regex.Any::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_none,
-//                factory = Filter.Regex.None::empty,
-//            ),
-//        ),
-//    ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_social,
-        icon = Icons.Rounded.Diversity3,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.social_graph,
-                icon = Icons.Rounded.Share,
-                factory = Filter.Social.Graph::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.social_user_list,
-                icon = Icons.Rounded.Group,
-                factory = Filter.Social.UserList::empty,
-            ),
-//            FilterOption(
-//                titleRes = Res.string.social_starter_pack,
-//                factory = Filter.Social.StarterPack::empty,
-//            ),
-            FilterOption(
-                titleRes = Res.string.social_list_member,
-                icon = Icons.Rounded.Groups,
-                factory = Filter.Social.ListMember::empty,
-            ),
-//            FilterOption(
-//                titleRes = Res.string.social_magic_audience,
-//                factory = Filter.Social.MagicAudience::empty,
-//            ),
+        // No regular expression support for now
+        //    FilterGroup(
+        //        nameRes = Res.string.filter_group_regex,
+        //        icon = Icons.Rounded.RegularExpression,
+        //        options = listOf(
+        //            FilterOption(
+        //                titleRes = Res.string.regex_matches,
+        //                factory = Filter.Regex.Matches::empty,
+        //            ),
+        //            FilterOption(
+        //                titleRes = Res.string.regex_negation,
+        //                factory = Filter.Regex.Negation::empty,
+        //            ),
+        //            FilterOption(
+        //                titleRes = Res.string.regex_any,
+        //                factory = Filter.Regex.Any::empty,
+        //            ),
+        //            FilterOption(
+        //                titleRes = Res.string.regex_none,
+        //                factory = Filter.Regex.None::empty,
+        //            ),
+        //        ),
+        //    ),
+        FilterGroup(
+            nameRes = Res.string.filter_group_social,
+            icon = Icons.Rounded.Diversity3,
+            options =
+                listOf(
+                    FilterOption(
+                        titleRes = Res.string.social_graph,
+                        icon = Icons.Rounded.Share,
+                        factory = Filter.Social.Graph::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.social_user_list,
+                        icon = Icons.Rounded.Group,
+                        factory = Filter.Social.UserList::empty,
+                    ),
+                    //            FilterOption(
+                    //                titleRes = Res.string.social_starter_pack,
+                    //                factory = Filter.Social.StarterPack::empty,
+                    //            ),
+                    FilterOption(
+                        titleRes = Res.string.social_list_member,
+                        icon = Icons.Rounded.Groups,
+                        factory = Filter.Social.ListMember::empty,
+                    ),
+                    //            FilterOption(
+                    //                titleRes = Res.string.social_magic_audience,
+                    //                factory = Filter.Social.MagicAudience::empty,
+                    //            ),
+                ),
         ),
-    ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_ml,
-        icon = Icons.Rounded.Psychology,
-        options = listOf(
-            // Unsupported for now
-//            FilterOption(
-//                titleRes = Res.string.text_similarity,
-//                factory = Filter.ML.Similarity::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.model_probability,
-//                factory = Filter.ML.Probability::empty,
-//            ),
-            FilterOption(
-                titleRes = Res.string.content_moderation,
-                icon = Icons.Rounded.Gavel,
-                factory = Filter.ML.Moderation::empty,
-            ),
+        FilterGroup(
+            nameRes = Res.string.filter_group_ml,
+            icon = Icons.Rounded.Psychology,
+            options =
+                listOf(
+                    // Unsupported for now
+                    //            FilterOption(
+                    //                titleRes = Res.string.text_similarity,
+                    //                factory = Filter.ML.Similarity::empty,
+                    //            ),
+                    //            FilterOption(
+                    //                titleRes = Res.string.model_probability,
+                    //                factory = Filter.ML.Probability::empty,
+                    //            ),
+                    FilterOption(
+                        titleRes = Res.string.content_moderation,
+                        icon = Icons.Rounded.Gavel,
+                        factory = Filter.ML.Moderation::empty,
+                    )
+                ),
         ),
-    ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_analysis,
-        icon = Icons.Rounded.Analytics,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.language_analysis,
-                icon = Icons.Rounded.Language,
-                factory = Filter.Analysis.Language::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.sentiment_analysis,
-                icon = Icons.Rounded.Mood,
-                factory = Filter.Analysis.Sentiment::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.financial_sentiment,
-                icon = Icons.Rounded.AttachMoney,
-                factory = Filter.Analysis.FinancialSentiment::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.emotion_analysis,
-                icon = Icons.Rounded.Face,
-                factory = Filter.Analysis.Emotion::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.toxicity_analysis,
-                icon = Icons.Rounded.Warning,
-                factory = Filter.Analysis.Toxicity::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.topic_analysis,
-                icon = Icons.Rounded.Topic,
-                factory = Filter.Analysis.Topic::empty,
-            ),
-            // Unsupported for now
-//            FilterOption(
-//                titleRes = Res.string.text_arbitrary,
-//                factory = Filter.Analysis.TextArbitrary::empty,
-//            ),
-            FilterOption(
-                titleRes = Res.string.image_nsfw,
-                icon = Icons.Rounded.VisibilityOff,
-                factory = Filter.Analysis.ImageNsfw::empty,
-            ),
-            // Unsupported for now
-//            FilterOption(
-//                titleRes = Res.string.image_arbitrary,
-//                factory = Filter.Analysis.ImageArbitrary::empty,
-//            ),
+        FilterGroup(
+            nameRes = Res.string.filter_group_analysis,
+            icon = Icons.Rounded.Analytics,
+            options =
+                listOf(
+                    FilterOption(
+                        titleRes = Res.string.language_analysis,
+                        icon = Icons.Rounded.Language,
+                        factory = Filter.Analysis.Language::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.sentiment_analysis,
+                        icon = Icons.Rounded.Mood,
+                        factory = Filter.Analysis.Sentiment::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.financial_sentiment,
+                        icon = Icons.Rounded.AttachMoney,
+                        factory = Filter.Analysis.FinancialSentiment::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.emotion_analysis,
+                        icon = Icons.Rounded.Face,
+                        factory = Filter.Analysis.Emotion::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.toxicity_analysis,
+                        icon = Icons.Rounded.Warning,
+                        factory = Filter.Analysis.Toxicity::empty,
+                    ),
+                    FilterOption(
+                        titleRes = Res.string.topic_analysis,
+                        icon = Icons.Rounded.Topic,
+                        factory = Filter.Analysis.Topic::empty,
+                    ),
+                    // Unsupported for now
+                    //            FilterOption(
+                    //                titleRes = Res.string.text_arbitrary,
+                    //                factory = Filter.Analysis.TextArbitrary::empty,
+                    //            ),
+                    FilterOption(
+                        titleRes = Res.string.image_nsfw,
+                        icon = Icons.Rounded.VisibilityOff,
+                        factory = Filter.Analysis.ImageNsfw::empty,
+                    ),
+                    // Unsupported for now
+                    //            FilterOption(
+                    //                titleRes = Res.string.image_arbitrary,
+                    //                factory = Filter.Analysis.ImageArbitrary::empty,
+                    //            ),
+                ),
         ),
-    ),
-)
+    )
 
 private const val SheetHeightFraction = 0.8f

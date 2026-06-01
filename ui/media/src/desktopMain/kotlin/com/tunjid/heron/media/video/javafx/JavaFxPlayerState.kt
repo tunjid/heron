@@ -31,7 +31,6 @@ import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import javafx.beans.value.ChangeListener
-import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
 import javafx.scene.media.MediaView
 import javafx.util.Duration
@@ -82,52 +81,58 @@ internal class JavaFxPlayerState(
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
 
-    override var videoStill by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
+    override var videoStill by
+        mutableStateOf<ImageBitmap?>(
+            value = null,
+            policy = referentialEqualityPolicy(),
+        )
 
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= 200 &&
-            totalDuration != 0L &&
-            !isLooping
+        get() = (totalDuration - lastPositionMs) <= 200 && totalDuration != 0L && !isLooping
 
     internal var mediaPlayer: MediaPlayer? = null
     internal var mediaView: MediaView? = null
 
-    internal val statusListener = ChangeListener<MediaPlayer.Status> { _, _, newStatus ->
-        when (newStatus) {
-            MediaPlayer.Status.PLAYING -> {
-                status = PlayerStatus.Play.Confirmed
-                if (!hasRenderedFirstFrame) {
-                    hasRenderedFirstFrame = true
+    internal val statusListener =
+        ChangeListener<MediaPlayer.Status> { _, _, newStatus ->
+            when (newStatus) {
+                MediaPlayer.Status.PLAYING -> {
+                    status = PlayerStatus.Play.Confirmed
+                    if (!hasRenderedFirstFrame) {
+                        hasRenderedFirstFrame = true
+                    }
+                    updateFromPlayer()
                 }
-                updateFromPlayer()
-            }
 
-            MediaPlayer.Status.PAUSED -> {
-                status = PlayerStatus.Pause.Confirmed
-                updateFromPlayer()
-            }
+                MediaPlayer.Status.PAUSED -> {
+                    status = PlayerStatus.Pause.Confirmed
+                    updateFromPlayer()
+                }
 
-            MediaPlayer.Status.STOPPED -> {
-                status = PlayerStatus.Idle.Initial
-                updateFromPlayer()
-            }
+                MediaPlayer.Status.STOPPED -> {
+                    status = PlayerStatus.Idle.Initial
+                    updateFromPlayer()
+                }
 
-            else -> {}
+                else -> {}
+            }
         }
-    }
-    internal val currentTimeListener = ChangeListener<Duration> { _, _, newTime ->
-        if (newTime != null) {
-            lastPositionMs = newTime.toMillis().toLong()
+    internal val currentTimeListener =
+        ChangeListener<Duration> { _, _, newTime ->
+            if (newTime != null) {
+                lastPositionMs = newTime.toMillis().toLong()
+            }
         }
-    }
-    internal val durationListener = ChangeListener<Duration> { _, _, newDuration ->
-        if (newDuration != null && newDuration != Duration.UNKNOWN && newDuration != Duration.INDEFINITE) {
-            totalDuration = newDuration.toMillis().toLong()
+    internal val durationListener =
+        ChangeListener<Duration> { _, _, newDuration ->
+            if (
+                newDuration != null &&
+                    newDuration != Duration.UNKNOWN &&
+                    newDuration != Duration.INDEFINITE
+            ) {
+                totalDuration = newDuration.toMillis().toLong()
+            }
         }
-    }
 
     internal fun updateFromPlayer() {
         val player = mediaPlayer ?: return

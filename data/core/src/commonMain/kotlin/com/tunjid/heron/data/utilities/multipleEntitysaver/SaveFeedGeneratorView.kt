@@ -25,9 +25,7 @@ import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.tidInstant
 
-internal fun MultipleEntitySaver.add(
-    feedGeneratorView: GeneratorView,
-) {
+internal fun MultipleEntitySaver.add(feedGeneratorView: GeneratorView) {
     feedGeneratorView.creator.profileEntity().let(::add)
     feedGeneratorView.labels?.forEach(::add)
     add(
@@ -44,6 +42,6 @@ internal fun MultipleEntitySaver.add(
             contentMode = feedGeneratorView.contentMode,
             indexedAt = feedGeneratorView.indexedAt,
             createdAt = feedGeneratorView.uri.tidInstant ?: feedGeneratorView.indexedAt,
-        ),
+        )
     )
 }

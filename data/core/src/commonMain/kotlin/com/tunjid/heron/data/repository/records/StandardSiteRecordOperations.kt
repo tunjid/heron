@@ -84,9 +84,7 @@ data class StandardPublicationDocumentsQuery(
 
 interface StandardSiteRecordOperations {
 
-    fun publication(
-        uri: StandardPublicationUri,
-    ): Flow<StandardPublication>
+    fun publication(uri: StandardPublicationUri): Flow<StandardPublication>
 
     fun authorDocuments(
         query: ProfilesQuery,
@@ -108,14 +106,13 @@ interface StandardSiteRecordOperations {
         cursor: Cursor,
     ): Flow<CursorList<StandardPublication>>
 
-    suspend fun createSubscription(
-        create: StandardSubscription.Create,
-    ): Outcome
+    suspend fun createSubscription(create: StandardSubscription.Create): Outcome
 }
 
-internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+internal class OfflineFirstStandardSiteRecordOperations
+@Inject
+constructor(
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileLookup: ProfileLookup,
@@ -125,267 +122,281 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
     private val cursorQueryRefreshTracker: CursorQueryRefreshTracker,
 ) : StandardSiteRecordOperations {
 
-    override fun publication(
-        uri: StandardPublicationUri,
-    ): Flow<StandardPublication> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            standardSiteDao.publication(
-                viewingProfileId = signedInProfileId?.id,
-                publicationUri = uri.uri,
-            )
-                .map(PopulatedStandardPublicationEntity::asExternalModel)
-                .withRefresh {
-                    recordResolver.resolve(uri)
-                }
-        }
+    override fun publication(uri: StandardPublicationUri): Flow<StandardPublication> =
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                standardSiteDao
+                    .publication(
+                        viewingProfileId = signedInProfileId?.id,
+                        publicationUri = uri.uri,
+                    )
+                    .map(PopulatedStandardPublicationEntity::asExternalModel)
+                    .withRefresh {
+                        recordResolver.resolve(uri)
+                    }
+            }
             .flowOn(ioDispatcher)
 
     override fun authorDocuments(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardDocument>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                standardSiteDao.authorDocuments(
-                    viewingProfileId = signedInProfileId?.id,
-                    authorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
-                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getDocuments(
-                            params = GetDocumentsQueryParams(
-                                author = profileDid,
+                combine(
+                        standardSiteDao
+                            .authorDocuments(
+                                viewingProfileId = signedInProfileId?.id,
+                                authorId = profileDid.did,
+                                offset = query.data.offset,
                                 limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetDocumentsResponse::cursor,
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::authorDocumentsIdentity,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) {
-                                standardSiteDao.deleteDocumentsForAuthor(profileDid.did)
-                            }
-                            documents.forEach {
-                                add(
-                                    documentView = it,
-                                    viewingProfileId = signedInProfileId,
+                            .distinctUntilChangedMap { populatedStandardDocumentEntities ->
+                                populatedStandardDocumentEntities.map(
+                                    PopulatedStandardDocumentEntity::asExternalModel
                                 )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getDocuments(
+                                    params =
+                                        GetDocumentsQueryParams(
+                                            author = profileDid,
+                                            limit = query.data.limit,
+                                            cursor = cursor.value,
+                                        )
+                                )
+                            },
+                            nextCursor = GetDocumentsResponse::cursor,
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::authorDocumentsIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh) {
+                                        standardSiteDao.deleteDocumentsForAuthor(profileDid.did)
+                                    }
+                                    documents.forEach {
+                                        add(
+                                            documentView = it,
+                                            viewingProfileId = signedInProfileId,
+                                        )
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun publicationDocuments(
         query: StandardPublicationDocumentsQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardDocument>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            combine(
-                standardSiteDao.publicationDocuments(
-                    viewingProfileId = signedInProfileId?.id,
-                    publicationUri = query.publicationUri.uri,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
-                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getDocuments(
-                            params = GetDocumentsQueryParams(
-                                publication = AtUri(query.publicationUri.uri),
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                combine(
+                        standardSiteDao
+                            .publicationDocuments(
+                                viewingProfileId = signedInProfileId?.id,
+                                publicationUri = query.publicationUri.uri,
+                                offset = query.data.offset,
                                 limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetDocumentsResponse::cursor,
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::publicationDocumentsIdentity,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) {
-                                standardSiteDao.deleteDocumentsForPublication(
-                                    query.publicationUri.uri,
+                            .distinctUntilChangedMap { populatedStandardDocumentEntities ->
+                                populatedStandardDocumentEntities.map(
+                                    PopulatedStandardDocumentEntity::asExternalModel
                                 )
-                            }
-                            documents.forEach {
-                                add(
-                                    documentView = it,
-                                    viewingProfileId = signedInProfileId,
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getDocuments(
+                                    params =
+                                        GetDocumentsQueryParams(
+                                            publication = AtUri(query.publicationUri.uri),
+                                            limit = query.data.limit,
+                                            cursor = cursor.value,
+                                        )
                                 )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            },
+                            nextCursor = GetDocumentsResponse::cursor,
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::publicationDocumentsIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh) {
+                                        standardSiteDao.deleteDocumentsForPublication(
+                                            query.publicationUri.uri
+                                        )
+                                    }
+                                    documents.forEach {
+                                        add(
+                                            documentView = it,
+                                            viewingProfileId = signedInProfileId,
+                                        )
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun authorPublications(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardPublication>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                standardSiteDao.authorPublications(
-                    viewingProfileId = signedInProfileId?.id,
-                    publisherId = profileDid.did,
-                    limit = query.data.limit,
-                    offset = query.data.offset,
-                )
-                    .distinctUntilChangedMap { populatedStandardPublicationEntities ->
-                        populatedStandardPublicationEntities.map(
-                            PopulatedStandardPublicationEntity::asExternalModel,
-                        )
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getPublications(
-                            params = GetPublicationsQueryParams(
-                                author = profileDid,
+                combine(
+                        standardSiteDao
+                            .authorPublications(
+                                viewingProfileId = signedInProfileId?.id,
+                                publisherId = profileDid.did,
                                 limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetPublicationsResponse::cursor,
-                    onResponse = {
-                        // Notably, this does not delete on refresh as
-                        // subscriptions for non-signed in users may accidentally
-                        // be deleted and not restored causing them to miss notifications
-                        multipleEntitySaverProvider.saveInTransaction {
-                            publications.forEach {
-                                add(
-                                    publicationView = it,
-                                    viewingProfileId = signedInProfileId,
+                                offset = query.data.offset,
+                            )
+                            .distinctUntilChangedMap { populatedStandardPublicationEntities ->
+                                populatedStandardPublicationEntities.map(
+                                    PopulatedStandardPublicationEntity::asExternalModel
                                 )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getPublications(
+                                    params =
+                                        GetPublicationsQueryParams(
+                                            author = profileDid,
+                                            limit = query.data.limit,
+                                            cursor = cursor.value,
+                                        )
+                                )
+                            },
+                            nextCursor = GetPublicationsResponse::cursor,
+                            onResponse = {
+                                // Notably, this does not delete on refresh as
+                                // subscriptions for non-signed in users may accidentally
+                                // be deleted and not restored causing them to miss notifications
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    publications.forEach {
+                                        add(
+                                            publicationView = it,
+                                            viewingProfileId = signedInProfileId,
+                                        )
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun subscribedPublications(
         query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardPublication>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            combine(
-                standardSiteDao.subscribedPublications(
-                    viewingProfileId = signedInProfileId.id,
-                    limit = query.data.limit,
-                    offset = query.data.offset,
-                )
-                    .distinctUntilChangedMap { populatedStandardPublicationEntities ->
-                        populatedStandardPublicationEntities.map(
-                            PopulatedStandardPublicationEntity::asExternalModel,
-                        )
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getSubscribedPublications(
-                            params = GetSubscribedPublicationsQueryParams(
+        savedStateDataSource
+            .singleAuthorizedSessionFlow { signedInProfileId ->
+                combine(
+                        standardSiteDao
+                            .subscribedPublications(
+                                viewingProfileId = signedInProfileId.id,
                                 limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetSubscribedPublicationsResponse::cursor,
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::subscribedPublicationsIdentity,
+                                offset = query.data.offset,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) {
-                                standardSiteDao.deleteSubscriptionsForViewer(
-                                    signedInProfileId.id,
+                            .distinctUntilChangedMap { populatedStandardPublicationEntities ->
+                                populatedStandardPublicationEntities.map(
+                                    PopulatedStandardPublicationEntity::asExternalModel
                                 )
-                            }
-                            publications.forEach {
-                                add(
-                                    publicationView = it,
-                                    viewingProfileId = signedInProfileId,
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getSubscribedPublications(
+                                    params =
+                                        GetSubscribedPublicationsQueryParams(
+                                            limit = query.data.limit,
+                                            cursor = cursor.value,
+                                        )
                                 )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            },
+                            nextCursor = GetSubscribedPublicationsResponse::cursor,
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::subscribedPublicationsIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh) {
+                                        standardSiteDao.deleteSubscriptionsForViewer(
+                                            signedInProfileId.id
+                                        )
+                                    }
+                                    publications.forEach {
+                                        add(
+                                            publicationView = it,
+                                            viewingProfileId = signedInProfileId,
+                                        )
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
-    override suspend fun createSubscription(
-        create: StandardSubscription.Create,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+    override suspend fun createSubscription(create: StandardSubscription.Create): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        val subscription = Subscription(
-            publication = AtUri(create.publicationUri.uri),
-        )
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            createRecord(
-                CreateRecordRequest(
-                    repo = Did(signedInProfileId.id),
-                    collection = Nsid(StandardSubscriptionUri.NAMESPACE),
-                    rkey = RKey(create.recordKey.value),
-                    record = subscription
-                        .asJsonContent(Subscription.serializer()),
-                ),
-            )
-        }.mapCatchingUnlessCancelled { response ->
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    subscriptionUri = response.uri.atUri.let(::StandardSubscriptionUri),
-                    subscriptionCid = response.cid.cid.let(::StandardSubscriptionId),
-                    subscription = subscription,
-                    viewingProfileId = signedInProfileId,
-                    sortedAt = create.sortedAt,
-                )
-            }
-        }
-            .toOutcome()
-    } ?: expiredSessionOutcome()
+            val subscription = Subscription(publication = AtUri(create.publicationUri.uri))
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    createRecord(
+                        CreateRecordRequest(
+                            repo = Did(signedInProfileId.id),
+                            collection = Nsid(StandardSubscriptionUri.NAMESPACE),
+                            rkey = RKey(create.recordKey.value),
+                            record = subscription.asJsonContent(Subscription.serializer()),
+                        )
+                    )
+                }
+                .mapCatchingUnlessCancelled { response ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            subscriptionUri = response.uri.atUri.let(::StandardSubscriptionUri),
+                            subscriptionCid = response.cid.cid.let(::StandardSubscriptionId),
+                            subscription = subscription,
+                            viewingProfileId = signedInProfileId,
+                            sortedAt = create.sortedAt,
+                        )
+                    }
+                }
+                .toOutcome()
+        } ?: expiredSessionOutcome()
 }

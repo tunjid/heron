@@ -88,157 +88,152 @@ fun GrazeEditorScreen(
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
-) = with(paneScaffoldState) {
-    paneScaffoldState.NestedNavigation(
-        modifier = modifier
-            .ifTrue(
-                predicate = state.isLoading,
-                block = Modifier::blockClickEvents,
-            ),
-        key = remember(state.currentPath) {
-            NestedNavigationKey(path = state.currentPath)
-        },
-    ) { key ->
-        val currentPath = key.path
-        val currentFilter = state.grazeFeed.filter.rootFilterAt(currentPath)
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    horizontal = 16.dp,
+) =
+    with(paneScaffoldState) {
+        paneScaffoldState.NestedNavigation(
+            modifier =
+                modifier.ifTrue(
+                    predicate = state.isLoading,
+                    block = Modifier::blockClickEvents,
                 ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            RootFilterDescription(
-                modifier = Modifier,
-                isAnd = currentFilter is Filter.And,
-                size = currentFilter.filters.size,
-                level = currentPath.size + 1,
-                animatedVisibilityScope = this@NestedNavigation,
-                paneScaffoldState = paneScaffoldState,
-                id = currentFilter.id,
-                onRemove = null,
-                onFlipClicked = {
-                    actions(
-                        Action.EditFilter.FlipRootFilter(
-                            path = currentPath,
-                        ),
-                    )
+            key =
+                remember(state.currentPath) {
+                    NestedNavigationKey(path = state.currentPath)
                 },
-            )
-            LazyColumn(
-                modifier = Modifier
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(currentFilter.backgroundSharedElementKey()),
-                        animatedVisibilityScope = this@NestedNavigation,
-                    )
-                    .fillMaxWidth()
-                    .weight(1f),
+        ) { key ->
+            val currentPath = key.path
+            val currentFilter = state.grazeFeed.filter.rootFilterAt(currentPath)
+
+            Column(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ),
             ) {
-                itemsIndexed(
-                    currentFilter.filters,
-                    key = { _, child -> child.id.value },
-                    itemContent = { index, child ->
-                        Filter(
-                            modifier = Modifier
-                                .animateItem()
-                                .fillMaxWidth(),
-                            animatedVisibilityScope = this@NestedNavigation,
-                            paneScaffoldState = paneScaffoldState,
-                            profileSearchResults = state.suggestedProfiles,
-                            recentLists = state.recentLists,
-                            onUpdateRecentLists = {
-                                actions(Action.UpdateRecentLists)
-                            },
-                            filter = child,
-                            atTopLevel = true,
-                            onProfileQueryChanged = { query ->
-                                actions(Action.SearchProfiles(query))
-                            },
-                            enterFilter = { enteredIndex ->
-                                actions(Action.EditorNavigation.EnterFilter(enteredIndex))
-                            },
-                            onFlipClicked = { flippedPath ->
-                                actions(
-                                    Action.EditFilter.FlipRootFilter(
-                                        path = flippedPath,
+                RootFilterDescription(
+                    modifier = Modifier,
+                    isAnd = currentFilter is Filter.And,
+                    size = currentFilter.filters.size,
+                    level = currentPath.size + 1,
+                    animatedVisibilityScope = this@NestedNavigation,
+                    paneScaffoldState = paneScaffoldState,
+                    id = currentFilter.id,
+                    onRemove = null,
+                    onFlipClicked = {
+                        actions(Action.EditFilter.FlipRootFilter(path = currentPath))
+                    },
+                )
+                LazyColumn(
+                    modifier =
+                        Modifier.sharedBounds(
+                                sharedContentState =
+                                    rememberSharedContentState(
+                                        currentFilter.backgroundSharedElementKey()
                                     ),
-                                )
-                            },
-                            onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
-                                actions(
-                                    Action.EditFilter.UpdateFilter(
-                                        filter = updatedFilter,
-                                        path = path,
-                                        index = updatedIndex,
-                                    ),
-                                )
-                            },
-                            onRemoveFilter = { path: List<Int>, removedIndex: Int ->
-                                // Prevents removing a filter when the animation
-                                // depends on it
-                                if (!transition.isRunning) actions(
-                                    Action.EditFilter.RemoveFilter(
-                                        path = path,
-                                        index = removedIndex,
-                                    ),
-                                )
-                            },
-                            index = index,
-                            path = currentPath,
+                                animatedVisibilityScope = this@NestedNavigation,
+                            )
+                            .fillMaxWidth()
+                            .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding =
+                        UiTokens.bottomNavAndInsetPaddingValues(
+                            isCompact = paneScaffoldState.prefersCompactBottomNav
+                        ),
+                ) {
+                    itemsIndexed(
+                        currentFilter.filters,
+                        key = { _, child -> child.id.value },
+                        itemContent = { index, child ->
+                            Filter(
+                                modifier = Modifier.animateItem().fillMaxWidth(),
+                                animatedVisibilityScope = this@NestedNavigation,
+                                paneScaffoldState = paneScaffoldState,
+                                profileSearchResults = state.suggestedProfiles,
+                                recentLists = state.recentLists,
+                                onUpdateRecentLists = {
+                                    actions(Action.UpdateRecentLists)
+                                },
+                                filter = child,
+                                atTopLevel = true,
+                                onProfileQueryChanged = { query ->
+                                    actions(Action.SearchProfiles(query))
+                                },
+                                enterFilter = { enteredIndex ->
+                                    actions(Action.EditorNavigation.EnterFilter(enteredIndex))
+                                },
+                                onFlipClicked = { flippedPath ->
+                                    actions(Action.EditFilter.FlipRootFilter(path = flippedPath))
+                                },
+                                onUpdateFilter = {
+                                    updatedFilter: Filter,
+                                    path: List<Int>,
+                                    updatedIndex: Int ->
+                                    actions(
+                                        Action.EditFilter.UpdateFilter(
+                                            filter = updatedFilter,
+                                            path = path,
+                                            index = updatedIndex,
+                                        )
+                                    )
+                                },
+                                onRemoveFilter = { path: List<Int>, removedIndex: Int ->
+                                    // Prevents removing a filter when the animation
+                                    // depends on it
+                                    if (!transition.isRunning)
+                                        actions(
+                                            Action.EditFilter.RemoveFilter(
+                                                path = path,
+                                                index = removedIndex,
+                                            )
+                                        )
+                                },
+                                index = index,
+                                path = currentPath,
+                            )
+                        },
+                    )
+                }
+            }
+        }
+        if (state.isLoading)
+            Dialog(
+                onDismissRequest = {},
+                properties =
+                    remember {
+                        DialogProperties(
+                            dismissOnBackPress = false,
+                            dismissOnClickOutside = false,
                         )
                     },
-                )
-            }
-        }
-    }
-    if (state.isLoading) Dialog(
-        onDismissRequest = {},
-        properties = remember {
-            DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false,
-            )
-        },
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(56.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircularProgressIndicator()
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(56.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        CircularProgressIndicator()
 
-                FilledTonalButton(
-                    onClick = {
-                        actions(Action.Navigate.Pop)
-                    },
-                    content = {
-                        Text(stringResource(CommonStrings.go_back))
-                    },
-                )
+                        FilledTonalButton(
+                            onClick = {
+                                actions(Action.Navigate.Pop)
+                            },
+                            content = {
+                                Text(stringResource(CommonStrings.go_back))
+                            },
+                        )
+                    }
+                }
             }
+
+        val hasList = state.currentFilter.filters.any { it is Filter.Social.ListMember }
+
+        // Using Disposable effect as there's no need for a CoroutineScope
+        DisposableEffect(hasList) {
+            if (hasList) actions(Action.UpdateRecentLists)
+            onDispose {}
         }
     }
-
-    val hasList = state.currentFilter
-        .filters
-        .any { it is Filter.Social.ListMember }
-
-    // Using Disposable effect as there's no need for a CoroutineScope
-    DisposableEffect(hasList) {
-        if (hasList) actions(Action.UpdateRecentLists)
-        onDispose { }
-    }
-}
 
 @Composable
 private fun Filter(
@@ -258,44 +253,46 @@ private fun Filter(
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     index: Int,
 ) {
-    if (filter is Filter.Root) FilterRow(
-        animatedVisibilityScope = animatedVisibilityScope,
-        paneScaffoldState = paneScaffoldState,
-        atTopLevel = atTopLevel,
-        modifier = modifier,
-        filter = filter,
-        profileSearchResults = profileSearchResults,
-        recentLists = recentLists,
-        onUpdateRecentLists = onUpdateRecentLists,
-        index = index,
-        path = path,
-        onProfileQueryChanged = onProfileQueryChanged,
-        enterFilter = enterFilter,
-        onFlipClicked = onFlipClicked,
-        onUpdateFilter = onUpdateFilter,
-        onRemoveFilter = onRemoveFilter,
-    )
-    else FilterLeaf(
-        modifier = modifier,
-        filter = filter,
-        profileSearchResults = profileSearchResults,
-        recentLists = recentLists,
-        onUpdateRecentLists = onUpdateRecentLists,
-        onProfileQueryChanged = onProfileQueryChanged,
-        onUpdate = { updatedFilter ->
-            onUpdateFilter(
-                updatedFilter,
-                path,
-                index,
-            )
-        },
-        onRemove = {
-            onRemoveFilter(
-                path,
-                index,
-            )
-        },
-    )
+    if (filter is Filter.Root)
+        FilterRow(
+            animatedVisibilityScope = animatedVisibilityScope,
+            paneScaffoldState = paneScaffoldState,
+            atTopLevel = atTopLevel,
+            modifier = modifier,
+            filter = filter,
+            profileSearchResults = profileSearchResults,
+            recentLists = recentLists,
+            onUpdateRecentLists = onUpdateRecentLists,
+            index = index,
+            path = path,
+            onProfileQueryChanged = onProfileQueryChanged,
+            enterFilter = enterFilter,
+            onFlipClicked = onFlipClicked,
+            onUpdateFilter = onUpdateFilter,
+            onRemoveFilter = onRemoveFilter,
+        )
+    else
+        FilterLeaf(
+            modifier = modifier,
+            filter = filter,
+            profileSearchResults = profileSearchResults,
+            recentLists = recentLists,
+            onUpdateRecentLists = onUpdateRecentLists,
+            onProfileQueryChanged = onProfileQueryChanged,
+            onUpdate = { updatedFilter ->
+                onUpdateFilter(
+                    updatedFilter,
+                    path,
+                    index,
+                )
+            },
+            onRemove = {
+                onRemoveFilter(
+                    path,
+                    index,
+                )
+            },
+        )
 }
 
 @Composable
@@ -315,90 +312,82 @@ fun FilterRow(
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
-) = with(paneScaffoldState) {
-    Card(
-        modifier = modifier
-            .sharedBounds(
-                sharedContentState = rememberSharedContentState(filter.backgroundSharedElementKey()),
-                animatedVisibilityScope = animatedVisibilityScope,
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = filter.validationTint(),
-        ),
-        onClick = {
-            enterFilter(index)
-        },
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+) =
+    with(paneScaffoldState) {
+        Card(
+            modifier =
+                modifier.sharedBounds(
+                    sharedContentState =
+                        rememberSharedContentState(filter.backgroundSharedElementKey()),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
+            colors = CardDefaults.cardColors(containerColor = filter.validationTint()),
+            onClick = {
+                enterFilter(index)
+            },
         ) {
-            RootFilterDescription(
-                animatedVisibilityScope = animatedVisibilityScope,
-                paneScaffoldState = paneScaffoldState,
-                id = filter.id,
-                modifier = Modifier
-                    .fillMaxWidth(),
-                isAnd = filter is Filter.And,
-                size = filter.filters.size,
-                level = path.size + 2,
-                onFlipClicked = {
-                    onFlipClicked(path + index)
-                },
-                onRemove = {
-                    onRemoveFilter(path, index)
-                },
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                RootFilterDescription(
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    paneScaffoldState = paneScaffoldState,
+                    id = filter.id,
+                    modifier = Modifier.fillMaxWidth(),
+                    isAnd = filter is Filter.And,
+                    size = filter.filters.size,
+                    level = path.size + 2,
+                    onFlipClicked = {
+                        onFlipClicked(path + index)
+                    },
+                    onRemove = {
+                        onRemoveFilter(path, index)
+                    },
+                )
 
-            if (atTopLevel) {
-                val lazyListState = rememberLazyListState()
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    flingBehavior = rememberSnapFlingBehavior(
+                if (atTopLevel) {
+                    val lazyListState = rememberLazyListState()
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        flingBehavior = rememberSnapFlingBehavior(lazyListState = lazyListState),
+                        state = lazyListState,
+                    ) {
+                        itemsIndexed(
+                            items = filter.filters,
+                            key = { _, child -> child.id.value },
+                            itemContent = { childIndex, child ->
+                                Filter(
+                                    modifier =
+                                        Modifier.animateItem().fillParentMaxWidth().padding(8.dp),
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    paneScaffoldState = paneScaffoldState,
+                                    profileSearchResults = profileSearchResults,
+                                    recentLists = recentLists,
+                                    onUpdateRecentLists = onUpdateRecentLists,
+                                    filter = child,
+                                    atTopLevel = false,
+                                    index = childIndex,
+                                    path = path + index,
+                                    enterFilter = enterFilter,
+                                    onProfileQueryChanged = onProfileQueryChanged,
+                                    onFlipClicked = onFlipClicked,
+                                    onUpdateFilter = onUpdateFilter,
+                                    onRemoveFilter = onRemoveFilter,
+                                )
+                            },
+                        )
+                    }
+                    Indicator(
                         lazyListState = lazyListState,
-                    ),
-                    state = lazyListState,
-                ) {
-                    itemsIndexed(
-                        items = filter.filters,
-                        key = { _, child -> child.id.value },
-                        itemContent = { childIndex, child ->
-                            Filter(
-                                modifier = Modifier
-                                    .animateItem()
-                                    .fillParentMaxWidth()
-                                    .padding(8.dp),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                paneScaffoldState = paneScaffoldState,
-                                profileSearchResults = profileSearchResults,
-                                recentLists = recentLists,
-                                onUpdateRecentLists = onUpdateRecentLists,
-                                filter = child,
-                                atTopLevel = false,
-                                index = childIndex,
-                                path = path + index,
-                                enterFilter = enterFilter,
-                                onProfileQueryChanged = onProfileQueryChanged,
-                                onFlipClicked = onFlipClicked,
-                                onUpdateFilter = onUpdateFilter,
-                                onRemoveFilter = onRemoveFilter,
-                            )
-                        },
+                        indicatorSize = 4.dp,
                     )
                 }
-                Indicator(
-                    lazyListState = lazyListState,
-                    indicatorSize = 4.dp,
-                )
             }
         }
     }
-}
 
 @Composable
 private fun RootFilterDescription(
@@ -411,68 +400,67 @@ private fun RootFilterDescription(
     level: Int,
     onFlipClicked: () -> Unit,
     onRemove: (() -> Unit)?,
-) = with(paneScaffoldState) {
-    Column(
-        modifier = modifier,
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+) =
+    with(paneScaffoldState) {
+        Column(modifier = modifier) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    modifier =
+                        Modifier.sharedElement(
+                                sharedContentState = rememberSharedContentState("$id-title"),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                            )
+                            .weight(1f),
+                    text =
+                        stringResource(
+                            if (isAnd) Res.string.all_of_these_and else Res.string.any_of_these_or
+                        ),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                IconButton(
+                    modifier =
+                        Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState("$id-icon"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        ),
+                    onClick = {
+                        onFlipClicked()
+                    },
+                    content = {
+                        Icon(
+                            imageVector = Icons.Rounded.SwapHoriz,
+                            contentDescription = "Flip",
+                        )
+                    },
+                )
+                if (onRemove != null)
+                    IconButton(onClick = onRemove) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = stringResource(Res.string.remove_filter),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+            }
             Text(
-                modifier = Modifier
-                    .sharedElement(
-                        sharedContentState = rememberSharedContentState("$id-title"),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                    )
-                    .weight(1f),
-                text = stringResource(
-                    if (isAnd) Res.string.all_of_these_and
-                    else Res.string.any_of_these_or,
-                ),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            IconButton(
-                modifier = Modifier
-                    .sharedElement(
-                        sharedContentState = rememberSharedContentState("$id-icon"),
+                modifier =
+                    Modifier.sharedElement(
+                        sharedContentState = rememberSharedContentState("$id-description"),
                         animatedVisibilityScope = animatedVisibilityScope,
                     ),
-                onClick = {
-                    onFlipClicked()
-                },
-                content = {
-                    Icon(
-                        imageVector = Icons.Rounded.SwapHoriz,
-                        contentDescription = "Flip",
-                    )
-                },
+                text =
+                    stringResource(
+                        Res.string.items_count,
+                        level,
+                        size,
+                    ),
+                style = MaterialTheme.typography.bodyMedium,
             )
-            if (onRemove != null) IconButton(
-                onClick = onRemove,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = stringResource(Res.string.remove_filter),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
-        Text(
-            modifier = Modifier
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState("$id-description"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                ),
-            text = stringResource(
-                Res.string.items_count,
-                level,
-                size,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-        )
     }
-}
 
 @Composable
 fun FilterLeaf(
@@ -486,101 +474,108 @@ fun FilterLeaf(
     modifier: Modifier = Modifier,
 ) {
     when (filter) {
-        is Filter.Attribute.Compare -> AttributeCompareFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Attribute.Embed -> AttributeEmbedFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
+        is Filter.Attribute.Compare ->
+            AttributeCompareFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Attribute.Embed ->
+            AttributeEmbedFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
         is Filter.Entity.Matches,
-        is Filter.Entity.Excludes,
-        -> EntityFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
+        is Filter.Entity.Excludes ->
+            EntityFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
         is Filter.Regex.Matches,
         is Filter.Regex.Negation,
         is Filter.Regex.Any,
-        is Filter.Regex.None,
-        ->
+        is Filter.Regex.None ->
             RegexFilter(
                 modifier = modifier,
                 filter = filter,
                 onRemove = onRemove,
             )
 
-        is Filter.Social.Graph -> SocialGraphFilter(
-            modifier = modifier,
-            filter = filter,
-            results = profileSearchResults,
-            onProfileQueryChanged = onProfileQueryChanged,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Social.UserList -> SocialUserListFilter(
-            modifier = modifier,
-            filter = filter,
-            results = profileSearchResults,
-            onProfileQueryChanged = onProfileQueryChanged,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Social.StarterPack -> SocialStarterPackFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Social.ListMember -> SocialListMemberFilter(
-            modifier = modifier,
-            filter = filter,
-            recentLists = recentLists,
-            onUpdateRecentLists = onUpdateRecentLists,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Social.MagicAudience -> SocialMagicAudienceFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.ML.Similarity -> UnsupportedFilter(
-            modifier = modifier,
-            title = stringResource(Res.string.text_similarity),
-            onRemove = onRemove,
-        )
-        is Filter.ML.Probability -> UnsupportedFilter(
-            modifier = modifier,
-            title = stringResource(Res.string.model_probability),
-            onRemove = onRemove,
-        )
-        is Filter.ML.Moderation -> MLModerationFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Analysis -> AnalysisFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
+        is Filter.Social.Graph ->
+            SocialGraphFilter(
+                modifier = modifier,
+                filter = filter,
+                results = profileSearchResults,
+                onProfileQueryChanged = onProfileQueryChanged,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Social.UserList ->
+            SocialUserListFilter(
+                modifier = modifier,
+                filter = filter,
+                results = profileSearchResults,
+                onProfileQueryChanged = onProfileQueryChanged,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Social.StarterPack ->
+            SocialStarterPackFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Social.ListMember ->
+            SocialListMemberFilter(
+                modifier = modifier,
+                filter = filter,
+                recentLists = recentLists,
+                onUpdateRecentLists = onUpdateRecentLists,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Social.MagicAudience ->
+            SocialMagicAudienceFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.ML.Similarity ->
+            UnsupportedFilter(
+                modifier = modifier,
+                title = stringResource(Res.string.text_similarity),
+                onRemove = onRemove,
+            )
+        is Filter.ML.Probability ->
+            UnsupportedFilter(
+                modifier = modifier,
+                title = stringResource(Res.string.model_probability),
+                onRemove = onRemove,
+            )
+        is Filter.ML.Moderation ->
+            MLModerationFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        is Filter.Analysis ->
+            AnalysisFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
         else -> {
             Card(modifier = modifier) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp),
-                ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = stringResource(Res.string.unknown_filter),
                         style = MaterialTheme.typography.bodyMedium,
@@ -593,9 +588,8 @@ fun FilterLeaf(
 
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
 
-private data class NestedNavigationKey(
-    val path: List<Int>,
-) : PaneScaffoldState.NestedNavigationKey {
+private data class NestedNavigationKey(val path: List<Int>) :
+    PaneScaffoldState.NestedNavigationKey {
     override val isRoot: Boolean
         get() = path.isEmpty()
 }

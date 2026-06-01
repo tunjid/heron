@@ -7,9 +7,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 context(scope: CoroutineScope)
-inline fun <T> Flow<T>.launchAndCollect(
-    crossinline block: suspend (T) -> Unit,
-) {
+inline fun <T> Flow<T>.launchAndCollect(crossinline block: suspend (T) -> Unit) {
     scope.launch {
         collect {
             block(it)
@@ -39,9 +37,7 @@ suspend inline fun <T, S> Flow<T>.collectWithState(
 }
 
 context(scope: CoroutineScope)
-inline fun <T> Flow<T>.launchAndCollectLatest(
-    crossinline block: suspend (T) -> Unit,
-) {
+inline fun <T> Flow<T>.launchAndCollectLatest(crossinline block: suspend (T) -> Unit) {
     scope.launch {
         collectLatest {
             block(it)
@@ -74,13 +70,13 @@ fun <Action : Any, State : Any> ActionSuspendingStateMutator<Action, State>?.isN
     this == null || this is NoOpActionSuspendingStateMutator
 
 fun <Action : Any, State : Any> noOpActionSuspendingStateMutator(
-    state: State,
-): ActionSuspendingStateMutator<Action, State> =
-    NoOpActionSuspendingStateMutator(state)
+    state: State
+): ActionSuspendingStateMutator<Action, State> = NoOpActionSuspendingStateMutator(state)
 
 private class NoOpActionSuspendingStateMutator<Action : Any, State : Any>(
-    override val state: State,
+    override val state: State
 ) : ActionSuspendingStateMutator<Action, State> {
     override val accept: (Action) -> Unit = {}
+
     override suspend fun collect() = Unit
 }

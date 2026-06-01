@@ -25,9 +25,7 @@ import logcat.LogcatLogger
 import logcat.asLog as squareAsLog
 import logcat.logcat as squareLogcat
 
-class AndroidLogger(
-    private val context: Context,
-) : Logger {
+class AndroidLogger(private val context: Context) : Logger {
 
     override fun install() {
         val shouldLog = !Platform.current.isRelease
@@ -44,14 +42,15 @@ actual inline fun Any.logcat(
     message: () -> String,
 ) {
     this.squareLogcat(
-        priority = when (priority) {
-            LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
-            LogPriority.DEBUG -> SquareLogPriority.DEBUG
-            LogPriority.INFO -> SquareLogPriority.INFO
-            LogPriority.WARN -> SquareLogPriority.WARN
-            LogPriority.ERROR -> SquareLogPriority.ERROR
-            LogPriority.ASSERT -> SquareLogPriority.ASSERT
-        },
+        priority =
+            when (priority) {
+                LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
+                LogPriority.DEBUG -> SquareLogPriority.DEBUG
+                LogPriority.INFO -> SquareLogPriority.INFO
+                LogPriority.WARN -> SquareLogPriority.WARN
+                LogPriority.ERROR -> SquareLogPriority.ERROR
+                LogPriority.ASSERT -> SquareLogPriority.ASSERT
+            },
         tag = tag,
         message = message,
     )

@@ -22,9 +22,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.tunjid.heron.scaffold.scaffold.AppState
 
 @Suppress("FunctionName")
-fun MainViewController(
-    appState: AppState,
-) = ComposeUIViewController {
+fun MainViewController(appState: AppState) = ComposeUIViewController {
     com.tunjid.heron.scaffold.scaffold.App(
         appState = appState,
         modifier = Modifier.fillMaxSize(),

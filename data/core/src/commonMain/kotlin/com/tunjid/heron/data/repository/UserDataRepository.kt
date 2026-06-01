@@ -19,50 +19,30 @@ interface UserDataRepository {
 
     val navigation: Flow<SavedState.Navigation>
 
-    suspend fun persistNavigationState(
-        navigation: SavedState.Navigation,
-    ): Outcome
+    suspend fun persistNavigationState(navigation: SavedState.Navigation): Outcome
 
-    suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    ): Outcome
+    suspend fun setLastViewedHomeTimelineUri(uri: Uri): Outcome
 
-    suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    ): Outcome
+    suspend fun setRefreshedHomeTimelineOnLaunch(refreshOnLaunch: Boolean): Outcome
 
-    suspend fun setCurrentThemeOrdinal(
-        themeOrdinal: Int,
-    ): Outcome
+    suspend fun setCurrentThemeOrdinal(themeOrdinal: Int): Outcome
 
-    suspend fun setCompactNavigation(
-        compactNavigation: Boolean,
-    ): Outcome
+    suspend fun setCompactNavigation(compactNavigation: Boolean): Outcome
 
-    suspend fun setAutoHideBottomNavigation(
-        autoHideBottomNavigation: Boolean,
-    ): Outcome
+    suspend fun setAutoHideBottomNavigation(autoHideBottomNavigation: Boolean): Outcome
 
-    suspend fun setAutoPlayTimelineVideos(
-        autoPlayTimelineVideos: Boolean,
-    ): Outcome
+    suspend fun setAutoPlayTimelineVideos(autoPlayTimelineVideos: Boolean): Outcome
 
-    suspend fun setShowPostEngagementMetrics(
-        showEngagementMetrics: Boolean,
-    ): Outcome
+    suspend fun setShowPostEngagementMetrics(showEngagementMetrics: Boolean): Outcome
 
-    suspend fun setShowTrendingTopics(
-        showTrendingTopics: Boolean,
-    ): Outcome
+    suspend fun setShowTrendingTopics(showTrendingTopics: Boolean): Outcome
 
-    suspend fun setAllowAllTimelinePresentations(
-        allowAllTimelinePresentations: Boolean,
-    ): Outcome
+    suspend fun setAllowAllTimelinePresentations(allowAllTimelinePresentations: Boolean): Outcome
 }
 
-internal class OfflineUserDataRepository @Inject constructor(
-    private val savedStateDataSource: SavedStateDataSource,
-) : UserDataRepository {
+internal class OfflineUserDataRepository
+@Inject
+constructor(private val savedStateDataSource: SavedStateDataSource) : UserDataRepository {
 
     override val notificationPreferences: Flow<NotificationPreferences> =
         savedStateDataSource.savedState
@@ -75,78 +55,66 @@ internal class OfflineUserDataRepository @Inject constructor(
             .distinctUntilChanged()
 
     override val navigation: Flow<SavedState.Navigation>
-        get() = savedStateDataSource.savedState
-            .map { it.navigation }
-            .distinctUntilChanged()
+        get() = savedStateDataSource.savedState.map { it.navigation }.distinctUntilChanged()
 
-    override suspend fun persistNavigationState(
-        navigation: SavedState.Navigation,
-    ): Outcome = runCatchingUnlessCancelled {
-        if (navigation != InitialNavigation) savedStateDataSource.setNavigationState(
-            navigation = navigation,
-        )
-    }.toOutcome()
+    override suspend fun persistNavigationState(navigation: SavedState.Navigation): Outcome =
+        runCatchingUnlessCancelled {
+                if (navigation != InitialNavigation)
+                    savedStateDataSource.setNavigationState(navigation = navigation)
+            }
+            .toOutcome()
 
-    override suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    ): Outcome = updatePreferences {
+    override suspend fun setLastViewedHomeTimelineUri(uri: Uri): Outcome = updatePreferences {
         copy(local = local.copy(lastViewedHomeTimelineUri = uri))
     }
 
-    override suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
-    }
+    override suspend fun setRefreshedHomeTimelineOnLaunch(refreshOnLaunch: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
+        }
 
-    override suspend fun setCurrentThemeOrdinal(
-        themeOrdinal: Int,
-    ): Outcome = updatePreferences {
+    override suspend fun setCurrentThemeOrdinal(themeOrdinal: Int): Outcome = updatePreferences {
         copy(local = local.copy(currentThemeOrdinal = themeOrdinal))
     }
 
-    override suspend fun setCompactNavigation(
-        compactNavigation: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(useCompactNavigation = compactNavigation))
-    }
+    override suspend fun setCompactNavigation(compactNavigation: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(useCompactNavigation = compactNavigation))
+        }
 
-    override suspend fun setAutoHideBottomNavigation(
-        autoHideBottomNavigation: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(autoHideBottomNavigation = autoHideBottomNavigation))
-    }
+    override suspend fun setAutoHideBottomNavigation(autoHideBottomNavigation: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(autoHideBottomNavigation = autoHideBottomNavigation))
+        }
 
-    override suspend fun setAutoPlayTimelineVideos(
-        autoPlayTimelineVideos: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
-    }
+    override suspend fun setAutoPlayTimelineVideos(autoPlayTimelineVideos: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
+        }
 
-    override suspend fun setShowPostEngagementMetrics(
-        showEngagementMetrics: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(showPostEngagementMetrics = showEngagementMetrics))
-    }
+    override suspend fun setShowPostEngagementMetrics(showEngagementMetrics: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(showPostEngagementMetrics = showEngagementMetrics))
+        }
 
-    override suspend fun setShowTrendingTopics(
-        showTrendingTopics: Boolean,
-    ): Outcome = updatePreferences {
-        copy(local = local.copy(showTrendingTopics = showTrendingTopics))
-    }
+    override suspend fun setShowTrendingTopics(showTrendingTopics: Boolean): Outcome =
+        updatePreferences {
+            copy(local = local.copy(showTrendingTopics = showTrendingTopics))
+        }
 
     override suspend fun setAllowAllTimelinePresentations(
-        allowAllTimelinePresentations: Boolean,
+        allowAllTimelinePresentations: Boolean
     ): Outcome = updatePreferences {
         copy(local = local.copy(allowAllTimelinePresentations = allowAllTimelinePresentations))
     }
 
     private suspend inline fun updatePreferences(
-        crossinline updater: suspend Preferences.() -> Preferences,
+        crossinline updater: suspend Preferences.() -> Preferences
     ): Outcome =
         runCatchingUnlessCancelled {
-            savedStateDataSource.updateSignedInProfileData {
-                copy(preferences = preferences.updater())
+                savedStateDataSource.updateSignedInProfileData {
+                    copy(preferences = preferences.updater())
+                }
             }
-        }.toOutcome()
+            .toOutcome()
 }

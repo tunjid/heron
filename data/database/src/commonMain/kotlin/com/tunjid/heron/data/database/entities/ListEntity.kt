@@ -35,27 +35,28 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "lists",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["indexedAt"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["cid"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["indexedAt"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class ListEntity(
     val cid: ListId,
-    @PrimaryKey
-    val uri: ListUri,
+    @PrimaryKey val uri: ListUri,
     val creatorId: ProfileId,
     val name: String,
     val description: String?,
@@ -77,8 +78,7 @@ data class ListEntity(
 }
 
 data class PopulatedListEntity(
-    @Embedded
-    val entity: ListEntity,
+    @Embedded val entity: ListEntity,
     @Relation(
         parentColumn = "creatorId",
         entityColumn = "did",

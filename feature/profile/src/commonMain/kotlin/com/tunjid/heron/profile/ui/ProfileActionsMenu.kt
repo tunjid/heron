@@ -53,9 +53,7 @@ internal fun ProfileActionsMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = modifier.wrapContentSize(Alignment.TopEnd),
-    ) {
+    Box(modifier = modifier.wrapContentSize(Alignment.TopEnd)) {
         FilterChip(
             selected = false,
             onClick = { expanded = true },
@@ -67,9 +65,7 @@ internal fun ProfileActionsMenu(
                     contentDescription = stringResource(CommonStrings.more_options),
                 )
             },
-            modifier = Modifier
-                .size(35.dp)
-                .clip(CircleShape),
+            modifier = Modifier.size(35.dp).clip(CircleShape),
         )
 
         DropdownMenu(
@@ -77,22 +73,23 @@ internal fun ProfileActionsMenu(
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(12.dp),
             tonalElevation = 6.dp,
-            modifier = Modifier
-                .widthIn(min = 200.dp),
+            modifier = Modifier.widthIn(min = 200.dp),
         ) {
             items.forEach { item ->
                 when (item) {
-                    is ProfileActionMenu.Item -> ProfileActionMenuItemRow(
-                        item = item,
-                        onClick = {
-                            expanded = false
-                            onItemClicked(item)
-                        },
-                    )
-                    ProfileActionMenu.Divider -> HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        thickness = 0.5.dp,
-                    )
+                    is ProfileActionMenu.Item ->
+                        ProfileActionMenuItemRow(
+                            item = item,
+                            onClick = {
+                                expanded = false
+                                onItemClicked(item)
+                            },
+                        )
+                    ProfileActionMenu.Divider ->
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            thickness = 0.5.dp,
+                        )
                 }
             }
         }
@@ -110,10 +107,9 @@ private fun ProfileActionMenuItemRow(
             Text(
                 text = stringResource(item.title),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (item.isDestructive)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onSurface,
+                color =
+                    if (item.isDestructive) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface,
             )
         },
         leadingIcon = {
@@ -121,14 +117,12 @@ private fun ProfileActionMenuItemRow(
                 imageVector = item.icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = if (item.isDestructive)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
+                tint =
+                    if (item.isDestructive) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
-        modifier = Modifier
-            .height(48.dp),
+        modifier = Modifier.height(48.dp),
     )
 }
 
@@ -149,35 +143,41 @@ internal fun ProfileViewerState?.profileActionMenuItems(
     isLive: Boolean,
 ) = buildList {
     when {
-        isSignedInProfile -> add(
-            when {
-                isLive -> ProfileActionMenu.Item(
-                    title = CommonStrings.action_edit_live_status,
-                    icon = Icons.Rounded.Videocam,
-                )
-                else -> ProfileActionMenu.Item(
-                    title = CommonStrings.action_go_live,
-                    icon = Icons.Rounded.Videocam,
-                )
-            },
-        )
-        this@profileActionMenuItems != null -> {
-            if (!isBlocked) add(
-                ProfileActionMenu.Item(
-                    title = CommonStrings.viewer_state_block_account,
-                    icon = Icons.Rounded.PersonOff,
-                    isDestructive = true,
-                ),
-            )
+        isSignedInProfile ->
             add(
-                if (isMuted) ProfileActionMenu.Item(
-                    title = CommonStrings.viewer_state_unmute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                when {
+                    isLive ->
+                        ProfileActionMenu.Item(
+                            title = CommonStrings.action_edit_live_status,
+                            icon = Icons.Rounded.Videocam,
+                        )
+                    else ->
+                        ProfileActionMenu.Item(
+                            title = CommonStrings.action_go_live,
+                            icon = Icons.Rounded.Videocam,
+                        )
+                }
+            )
+        this@profileActionMenuItems != null -> {
+            if (!isBlocked)
+                add(
+                    ProfileActionMenu.Item(
+                        title = CommonStrings.viewer_state_block_account,
+                        icon = Icons.Rounded.PersonOff,
+                        isDestructive = true,
+                    )
                 )
-                else ProfileActionMenu.Item(
-                    title = CommonStrings.viewer_state_mute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeOff,
-                ),
+            add(
+                if (isMuted)
+                    ProfileActionMenu.Item(
+                        title = CommonStrings.viewer_state_unmute_account,
+                        icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                    )
+                else
+                    ProfileActionMenu.Item(
+                        title = CommonStrings.viewer_state_mute_account,
+                        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                    )
             )
         }
     }

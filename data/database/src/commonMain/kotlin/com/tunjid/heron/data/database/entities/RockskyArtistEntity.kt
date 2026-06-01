@@ -11,14 +11,14 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "rockskyArtists",
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["creatorId"]),
-    ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["creatorId"]),
+        ],
 )
 data class RockskyArtistEntity(
-    @PrimaryKey
-    val uri: ArtistUri,
+    @PrimaryKey val uri: ArtistUri,
     val cid: ArtistId,
     val creatorId: ProfileId,
     val name: String,
@@ -28,15 +28,16 @@ data class RockskyArtistEntity(
     val tags: String?,
 )
 
-fun RockskyArtistEntity.asExternalModel() = RockskyArtist(
-    cid = cid,
-    name = name,
-    picture = picture,
-    uri = uri,
-    playCount = playCount,
-    uniqueListeners = uniqueListeners,
-    tags = tags?.deserializeArtistTags(),
-)
+fun RockskyArtistEntity.asExternalModel() =
+    RockskyArtist(
+        cid = cid,
+        name = name,
+        picture = picture,
+        uri = uri,
+        playCount = playCount,
+        uniqueListeners = uniqueListeners,
+        tags = tags?.deserializeArtistTags(),
+    )
 
 private fun String.deserializeArtistTags(): List<String> =
     split(",").map(String::trim).filter(String::isNotEmpty)

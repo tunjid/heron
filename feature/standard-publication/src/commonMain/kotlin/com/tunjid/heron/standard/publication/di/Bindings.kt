@@ -70,14 +70,11 @@ private const val StandardPublicationRoutePattern =
 private const val StandardPublicationUriRoutePattern =
     "/{did}/site.standard.publication/{publicationUriSuffix}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
 internal sealed class PublicationRequest {
     data class WithProfile(
@@ -85,32 +82,32 @@ internal sealed class PublicationRequest {
         val publicationUriSuffix: String,
     ) : PublicationRequest()
 
-    data class WithUri(
-        val uri: StandardPublicationUri,
-    ) : PublicationRequest()
+    data class WithUri(val uri: StandardPublicationUri) : PublicationRequest()
 }
 
-private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+private val Route.profileId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 private val Route.publicationUriSuffix by routePath()
 
-private val RequestTrie = trieOf(
-    StandardPublicationRoutePattern to { route: Route ->
-        PublicationRequest.WithProfile(
-            profileHandleOrId = route.profileId,
-            publicationUriSuffix = route.publicationUriSuffix,
-        )
-    },
-    StandardPublicationUriRoutePattern to { route: Route ->
-        PublicationRequest.WithUri(
-            uri = route.routeParams.pathAndQueries
-                .getAsRawUri(Uri.Host.AtProto)
-                .let(::StandardPublicationUri),
-        )
-    },
-)
+private val RequestTrie =
+    trieOf(
+        StandardPublicationRoutePattern to
+            { route: Route ->
+                PublicationRequest.WithProfile(
+                    profileHandleOrId = route.profileId,
+                    publicationUriSuffix = route.publicationUriSuffix,
+                )
+            },
+        StandardPublicationUriRoutePattern to
+            { route: Route ->
+                PublicationRequest.WithUri(
+                    uri =
+                        route.routeParams.pathAndQueries
+                            .getAsRawUri(Uri.Host.AtProto)
+                            .let(::StandardPublicationUri)
+                )
+            },
+    )
 
 internal val Route.publicationRequest: PublicationRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -150,11 +147,12 @@ class StandardPublicationBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     @Provides
     @IntoMap
@@ -163,92 +161,94 @@ class StandardPublicationBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry<Route>(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: StandardPublicationStateHolder = viewModel<ActualStandardPublicationViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val stateHolder: StandardPublicationStateHolder =
+                    viewModel<ActualStandardPublicationViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            PublicationTitle(
-                                paneTransitionScope = this,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                publication = state.publication,
-                            )
-                        },
-                        actions = {
-                            state.publication?.let {
-                                SubscribeButton(
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp),
-                                    publication = it,
-                                    onSubscriptionToggled = { publication, subscription ->
-                                        stateHolder.accept(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
-                                            ),
-                                        )
-                                    },
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
+                    },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                PublicationTitle(
+                                    paneTransitionScope = this,
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    publication = state.publication,
                                 )
-                            }
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                content = { paddingValues ->
-                    StandardPublicationScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                            },
+                            actions = {
+                                state.publication?.let {
+                                    SubscribeButton(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        publication = it,
+                                        onSubscriptionToggled = { publication, subscription ->
+                                            stateHolder.accept(
+                                                if (subscription != null)
+                                                    Action.TogglePublicationSubscription
+                                                        .Unsubscribe(
+                                                            subscriptionUri = subscription.uri
+                                                        )
+                                                else
+                                                    Action.TogglePublicationSubscription.Subscribe(
+                                                        publicationUri = publication.uri
+                                                    )
+                                            )
+                                        },
+                                    )
+                                }
+                            },
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                        )
+                    },
+                    content = { paddingValues ->
+                        StandardPublicationScreen(
+                            paneScaffoldState = this,
+                            modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
+                            state = state,
+                            actions = stateHolder.accept,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * Handles OAuth redirect callbacks. On desktop, this is a loopback HTTP server
- * that listens for the OAuth redirect. On other platforms, redirects are handled
- * externally by the OS (e.g., deep links on Android).
+ * Handles OAuth redirect callbacks. On desktop, this is a loopback HTTP server that listens for the
+ * OAuth redirect. On other platforms, redirects are handled externally by the OS (e.g., deep links
+ * on Android).
  */
 abstract class OauthRedirect {
 
@@ -35,8 +35,8 @@ abstract class OauthRedirect {
     abstract suspend fun initializeOAuthClient(): OAuthClient
 
     /**
-     * Redirects are handled externally by the OS (e.g., deep links on Android,
-     * universal links on iOS).
+     * Redirects are handled externally by the OS (e.g., deep links on Android, universal links on
+     * iOS).
      */
     data object ExternalRedirect : OauthRedirect() {
 
@@ -54,7 +54,8 @@ abstract class OauthRedirect {
 
 internal expect fun oauthRedirect(): OauthRedirect
 
-private val HeronOauthClient = OAuthClient(
-    clientId = "https://heron.tunji.dev/oauth-client.json",
-    redirectUri = "https://heron.tunji.dev/oauth/callback",
-)
+private val HeronOauthClient =
+    OAuthClient(
+        clientId = "https://heron.tunji.dev/oauth-client.json",
+        redirectUri = "https://heron.tunji.dev/oauth/callback",
+    )

@@ -70,28 +70,25 @@ internal fun StandardPublicationScreen(
 ) {
     val density = LocalDensity.current
 
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = 0f,
-        initialExpandedHeight = with(density) { 200.dp.toPx() },
-    )
+    val collapsingHeaderState =
+        rememberCollapsingHeaderState(
+            collapsedHeight = 0f,
+            initialExpandedHeight = with(density) { 200.dp.toPx() },
+        )
 
     val pullToRefreshState = rememberPullToRefreshState()
 
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize()
-            .paneClip(),
+        modifier = modifier.fillMaxSize().paneClip(),
         isRefreshing = state.isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
-            state.documentsTilingStateHolder
-                ?.accept(TilingState.Action.Refresh)
+            state.documentsTilingStateHolder?.accept(TilingState.Action.Refresh)
         },
         indicator = {
             DismissableRefreshIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = collapsingHeaderState.expandedHeight.roundToInt())
                     },
                 state = pullToRefreshState,
@@ -101,52 +98,55 @@ internal fun StandardPublicationScreen(
         },
     ) {
         CollapsingHeaderLayout(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             state = collapsingHeaderState,
             headerContent = {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset {
-                            IntOffset(
-                                x = 0,
-                                y = -collapsingHeaderState.translation.roundToInt(),
-                            )
-                        }
-                        .padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp,
-                        ),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .offset {
+                                IntOffset(
+                                    x = 0,
+                                    y = -collapsingHeaderState.translation.roundToInt(),
+                                )
+                            }
+                            .padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp,
+                            ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    state.publication?.description
-                        ?.takeIf(String::isNotBlank)
-                        ?.let { description ->
-                            val textLinks = remember(description) {
+                    state.publication?.description?.takeIf(String::isNotBlank)?.let { description ->
+                        val textLinks =
+                            remember(description) {
                                 AnnotatedString(description).links()
                             }
-                            val annotatedText = rememberFormattedTextPost(
+                        val annotatedText =
+                            rememberFormattedTextPost(
                                 text = description,
                                 textLinks = textLinks,
-                                onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
-                                    actions(
-                                        Action.Navigate.To(
-                                            pathDestination(
-                                                path = navigable.path,
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            ),
-                                        ),
-                                    )
-                                },
+                                onLinkTargetClicked =
+                                    navigableLinkTargetHandler { navigable ->
+                                        actions(
+                                            Action.Navigate.To(
+                                                pathDestination(
+                                                    path = navigable.path,
+                                                    referringRouteOption =
+                                                        NavigationAction.ReferringRouteOption
+                                                            .Current,
+                                                )
+                                            )
+                                        )
+                                    },
                             )
-                            Text(
-                                text = annotatedText,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
+                        Text(
+                            text = annotatedText,
+                            style =
+                                MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface
                                 ),
-                            )
-                        }
+                        )
+                    }
                 }
             },
             body = {
@@ -170,20 +170,15 @@ private fun Documents(
     val gridState = rememberLazyStaggeredGridState()
 
     LazyVerticalStaggeredGrid(
-        modifier = Modifier
-            .fillMaxSize()
-            .paneClip()
-            .gridColumnCount(LocalDensity.current) { numColumns ->
-                holder.accept(
-                    TilingState.Action.GridSize(numColumns = numColumns),
-                )
+        modifier =
+            Modifier.fillMaxSize().paneClip().gridColumnCount(LocalDensity.current) { numColumns ->
+                holder.accept(TilingState.Action.GridSize(numColumns = numColumns))
             },
         state = gridState,
         columns = StaggeredGridCells.Adaptive(360.dp),
         verticalItemSpacing = 8.dp,
-        contentPadding = bottomNavAndInsetPaddingValues(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(isCompact = paneScaffoldState.prefersCompactBottomNav),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
@@ -193,16 +188,16 @@ private fun Documents(
             itemContent = { document ->
                 val uriHandler = LocalUriHandler.current
                 Document(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                        .animateItem()
-                        .shapedClickable {
-                            document.link?.let { link ->
-                                runCatching { uriHandler.openUri(link) }
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .animateItem()
+                            .shapedClickable {
+                                document.link?.let { link ->
+                                    runCatching { uriHandler.openUri(link) }
+                                }
                             }
-                        }
-                        .padding(horizontal = 8.dp),
+                            .padding(horizontal = 8.dp),
                     paneTransitionScope = paneScaffoldState,
                     sharedElementPrefix = StandardPublicationSharedElementPrefix,
                     document = document,
@@ -216,9 +211,7 @@ private fun Documents(
         items = state.tiledItems,
         onQueryChanged = { query ->
             holder.accept(
-                TilingState.Action.LoadAround(
-                    query = query ?: state.tilingData.currentQuery,
-                ),
+                TilingState.Action.LoadAround(query = query ?: state.tilingData.currentQuery)
             )
         },
     )

@@ -19,14 +19,10 @@ package com.tunjid.heron.data.utilities.cursorQueryRefreshTracker
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfilesQuery
 
-internal fun ProfilesQuery.starterPacksIdentity(): String =
-    "bsky.starterPacks:${profileId.id}"
+internal fun ProfilesQuery.starterPacksIdentity(): String = "bsky.starterPacks:${profileId.id}"
 
-internal fun ProfilesQuery.listsIdentity(): String =
-    "bsky.lists:${profileId.id}"
+internal fun ProfilesQuery.listsIdentity(): String = "bsky.lists:${profileId.id}"
 
-internal fun ListMemberQuery.listMembersIdentity(): String =
-    "bsky.listMembers:${listUri.uri}"
+internal fun ListMemberQuery.listMembersIdentity(): String = "bsky.listMembers:${listUri.uri}"
 
-internal fun ProfilesQuery.feedGeneratorsIdentity(): String =
-    "bsky.feedGenerators:${profileId.id}"
+internal fun ProfilesQuery.feedGeneratorsIdentity(): String = "bsky.feedGenerators:${profileId.id}"

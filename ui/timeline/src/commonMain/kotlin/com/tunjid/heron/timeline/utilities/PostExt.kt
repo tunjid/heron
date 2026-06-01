@@ -19,6 +19,8 @@ package com.tunjid.heron.timeline.utilities
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.isMuted
 
-val Post.createdAt get() = record?.createdAt ?: indexedAt
+val Post.createdAt
+    get() = record?.createdAt ?: indexedAt
 
-val Post.authorMuted get() = viewerState.isMuted
+val Post.authorMuted
+    get() = viewerState.isMuted

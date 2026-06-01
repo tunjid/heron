@@ -51,10 +51,11 @@ fun appTypography(fontFamily: FontFamily): Typography {
         titleLarge = base.titleLarge.copy(fontFamily = fontFamily),
         titleMedium = base.titleMedium.copy(fontFamily = fontFamily),
         titleSmall = base.titleSmall.copy(fontFamily = fontFamily),
-        bodyLarge = base.bodyLarge.copy(
-            fontFamily = fontFamily,
-            fontSize = base.bodyLarge.fontSize * 0.95f,
-        ),
+        bodyLarge =
+            base.bodyLarge.copy(
+                fontFamily = fontFamily,
+                fontSize = base.bodyLarge.fontSize * 0.95f,
+            ),
         bodyMedium = base.bodyMedium.copy(fontFamily = fontFamily),
         bodySmall = base.bodySmall.copy(fontFamily = fontFamily),
         labelLarge = base.labelLarge.copy(fontFamily = fontFamily),

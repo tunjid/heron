@@ -25,32 +25,32 @@ import com.tunjid.heron.data.database.entities.PostEntity
 
 sealed interface PostEmbed
 
-/**
- * Cross reference for many to many relationship between [Post] and another [Post].
- */
+/** Cross reference for many to many relationship between [Post] and another [Post]. */
 @Entity(
     tableName = "postPosts",
     primaryKeys = ["postUri", "embeddedPostUri"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["embeddedPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["embeddedPostUri"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["embeddedPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["postUri"]),
+            Index(value = ["embeddedPostUri"]),
+        ],
 )
 data class PostPostEntity(
     val postUri: PostUri,

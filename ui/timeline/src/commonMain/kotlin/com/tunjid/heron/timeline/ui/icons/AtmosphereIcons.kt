@@ -31,35 +31,49 @@ import heron.ui.timeline.generated.resources.pckt_server
 import org.jetbrains.compose.resources.StringResource
 
 data object AtmosphereIcons {
-    val Bluesky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Bluesky
-    val Blacksky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Blacksky
-    val Eurosky: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Eurosky
-    val Leaflet: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Leaflet
-    val Pckt: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Pckt
-    val Help: ImageVector get() = com.tunjid.heron.timeline.ui.icons.Help
+    val Bluesky: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Bluesky
+
+    val Blacksky: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Blacksky
+
+    val Eurosky: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Eurosky
+
+    val Leaflet: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Leaflet
+
+    val Pckt: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Pckt
+
+    val Help: ImageVector
+        get() = com.tunjid.heron.timeline.ui.icons.Help
 }
 
-val AtProtoServer = Server(
-    endpoint = "https://atproto.com/",
-    supportsOauth = false,
-)
+val AtProtoServer =
+    Server(
+        endpoint = "https://atproto.com/",
+        supportsOauth = false,
+    )
 
 val Server.logo: ImageVector
-    get() = when (endpoint) {
-        Server.BlueSky.endpoint -> AtmosphereIcons.Bluesky
-        Server.BlackSky.endpoint -> AtmosphereIcons.Blacksky
-        Server.EuroSky.endpoint -> AtmosphereIcons.Eurosky
-        Server.Pckt.endpoint -> AtmosphereIcons.Pckt
-        AtProtoServer.endpoint -> Icons.Rounded.AlternateEmail
-        else -> Icons.Rounded.Public
-    }
+    get() =
+        when (endpoint) {
+            Server.BlueSky.endpoint -> AtmosphereIcons.Bluesky
+            Server.BlackSky.endpoint -> AtmosphereIcons.Blacksky
+            Server.EuroSky.endpoint -> AtmosphereIcons.Eurosky
+            Server.Pckt.endpoint -> AtmosphereIcons.Pckt
+            AtProtoServer.endpoint -> Icons.Rounded.AlternateEmail
+            else -> Icons.Rounded.Public
+        }
 
 val Server.stringResource: StringResource
-    get() = when (endpoint) {
-        Server.BlueSky.endpoint -> Res.string.bluesky_server
-        Server.BlackSky.endpoint -> Res.string.blacksky_server
-        Server.EuroSky.endpoint -> Res.string.eurosky_server
-        Server.Pckt.endpoint -> Res.string.pckt_server
-        AtProtoServer.endpoint -> Res.string.at_proto
-        else -> Res.string.custom_server
-    }
+    get() =
+        when (endpoint) {
+            Server.BlueSky.endpoint -> Res.string.bluesky_server
+            Server.BlackSky.endpoint -> Res.string.blacksky_server
+            Server.EuroSky.endpoint -> Res.string.eurosky_server
+            Server.Pckt.endpoint -> Res.string.pckt_server
+            AtProtoServer.endpoint -> Res.string.at_proto
+            else -> Res.string.custom_server
+        }

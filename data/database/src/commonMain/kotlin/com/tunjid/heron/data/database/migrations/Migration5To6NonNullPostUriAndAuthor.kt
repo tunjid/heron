@@ -28,26 +28,28 @@ internal object Migration5To6NonNullPostUriAndAuthor : Migration(5, 6) {
             """
            INSERT INTO profiles (did, handle, displayName, description, avatar, banner, followersCount, followsCount, postsCount, joinedViaStarterPack, indexedAt, createdAt)
            VALUES ('${Constants.UNKNOWN}', '${Constants.UNKNOWN}', '', '', NULL, NULL, 0, 0, 0, NULL, 0, 0);
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
 
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS posts_new (
-                cid TEXT NOT NULL,
-                uri TEXT NOT NULL,
-                authorId TEXT NOT NULL,
-                replyCount INTEGER,
-                repostCount INTEGER,
-                likeCount INTEGER,
-                quoteCount INTEGER,
-                indexedAt INTEGER NOT NULL,
-                text TEXT,
-                base64EncodedRecord TEXT,
-                createdAt INTEGER,
-                PRIMARY KEY(cid)
-              )
-            """.trimIndent(),
+              CREATE TABLE IF NOT EXISTS posts_new (
+              cid TEXT NOT NULL,
+              uri TEXT NOT NULL,
+              authorId TEXT NOT NULL,
+              replyCount INTEGER,
+              repostCount INTEGER,
+              likeCount INTEGER,
+              quoteCount INTEGER,
+              indexedAt INTEGER NOT NULL,
+              text TEXT,
+              base64EncodedRecord TEXT,
+              createdAt INTEGER,
+              PRIMARY KEY(cid)
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL(
@@ -78,7 +80,8 @@ internal object Migration5To6NonNullPostUriAndAuthor : Migration(5, 6) {
                 base64EncodedRecord,
                 createdAt
                 FROM posts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
 
         // Remove the old table

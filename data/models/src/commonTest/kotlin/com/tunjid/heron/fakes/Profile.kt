@@ -19,14 +19,13 @@ fun sampleProfile(): Profile {
         joinedViaStarterPack = null,
         indexedAt = Instant.parse("2024-01-01T00:00:00Z"),
         createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-        metadata = Profile.Metadata(
-            createdListCount = 0,
-            createdFeedGeneratorCount = 0,
-            createdStarterPackCount = 0,
-            chat = Profile.ChatInfo(
-                allowed = Profile.ChatInfo.Allowed.NoOne,
+        metadata =
+            Profile.Metadata(
+                createdListCount = 0,
+                createdFeedGeneratorCount = 0,
+                createdStarterPackCount = 0,
+                chat = Profile.ChatInfo(allowed = Profile.ChatInfo.Allowed.NoOne),
             ),
-        ),
         labels = emptyList(),
         isLabeler = false,
     )

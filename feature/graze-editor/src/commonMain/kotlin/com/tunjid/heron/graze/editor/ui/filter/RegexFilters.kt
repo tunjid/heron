@@ -34,14 +34,15 @@ fun RegexFilter(
 ) {
     UnsupportedFilter(
         modifier = modifier,
-        title = stringResource(
-            when (filter) {
-                is Filter.Regex.Any -> Res.string.regex_any
-                is Filter.Regex.Matches -> Res.string.regex_matches
-                is Filter.Regex.Negation -> Res.string.regex_negation
-                is Filter.Regex.None -> Res.string.regex_none
-            },
-        ),
+        title =
+            stringResource(
+                when (filter) {
+                    is Filter.Regex.Any -> Res.string.regex_any
+                    is Filter.Regex.Matches -> Res.string.regex_matches
+                    is Filter.Regex.Negation -> Res.string.regex_negation
+                    is Filter.Regex.None -> Res.string.regex_none
+                }
+            ),
         onRemove = onRemove,
     )
 }

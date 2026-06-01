@@ -35,23 +35,20 @@ import heron.feature.edit_profile.generated.resources.edit_banner_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun EditButton(
-    modifier: Modifier = Modifier,
-) {
+fun EditButton(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .shadow(elevation = 4.dp, shape = CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            .size(30.dp),
+        modifier =
+            modifier
+                .shadow(elevation = 4.dp, shape = CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                .size(30.dp)
     ) {
         Icon(
             imageVector = Icons.Rounded.Edit,
             contentDescription = stringResource(Res.string.edit_banner_icon),
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(18.dp),
+            modifier = Modifier.align(Alignment.Center).size(18.dp),
         )
     }
 }

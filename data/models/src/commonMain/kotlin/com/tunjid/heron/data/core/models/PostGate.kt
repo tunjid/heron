@@ -25,10 +25,7 @@ data class PostGate(
     val gatedPostUri: PostUri,
     val allowed: AllowedEmbeds?,
 ) {
-    @Serializable
-    data class AllowedEmbeds(
-        val none: Boolean = false,
-    )
+    @Serializable data class AllowedEmbeds(val none: Boolean = false)
 
     companion object {
         val AllowedEmbeds?.embedsDisabled: Boolean

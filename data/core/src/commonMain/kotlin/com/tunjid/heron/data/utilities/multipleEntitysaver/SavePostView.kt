@@ -49,10 +49,12 @@ internal fun MultipleEntitySaver.add(
         )
     }
 
-    postView.viewer?.postViewerStatisticsEntity(
-        postUri = postEntity.uri,
-        viewingProfileId = viewingProfileId,
-    )?.let(::add)
+    postView.viewer
+        ?.postViewerStatisticsEntity(
+            postUri = postEntity.uri,
+            viewingProfileId = viewingProfileId,
+        )
+        ?.let(::add)
 
     postView.threadgate?.let(::add)
 
@@ -62,7 +64,7 @@ internal fun MultipleEntitySaver.add(
             PostPostEntity(
                 postUri = postEntity.uri,
                 embeddedPostUri = embeddedPostEntity.uri,
-            ),
+            )
         )
         postView.quotedPostEmbedEntities().forEach { embedEntity ->
             associatePostEmbeds(
@@ -72,19 +74,17 @@ internal fun MultipleEntitySaver.add(
         }
     }
 
-    val recordUnion = when (val embed = postView.embed) {
-        is PostViewEmbedUnion.RecordView -> embed.value.record
-        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
-        else -> null
-    }
+    val recordUnion =
+        when (val embed = postView.embed) {
+            is PostViewEmbedUnion.RecordView -> embed.value.record
+            is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
+            else -> null
+        }
 
     when (recordUnion) {
-        is RecordViewRecordUnion.FeedGeneratorView ->
-            add(recordUnion.value)
-        is RecordViewRecordUnion.GraphListView ->
-            add(recordUnion.value)
-        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-            add(recordUnion.value)
+        is RecordViewRecordUnion.FeedGeneratorView -> add(recordUnion.value)
+        is RecordViewRecordUnion.GraphListView -> add(recordUnion.value)
+        is RecordViewRecordUnion.GraphStarterPackViewBasic -> add(recordUnion.value)
         is RecordViewRecordUnion.LabelerLabelerView ->
             add(
                 viewingProfileId = viewingProfileId,
@@ -95,8 +95,7 @@ internal fun MultipleEntitySaver.add(
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewNotFound,
         is RecordViewRecordUnion.ViewRecord,
-        null,
-        -> Unit
+        null -> Unit
     }
     postView.quotedPostProfileView()?.let {
         add(

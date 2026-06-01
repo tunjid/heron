@@ -22,10 +22,9 @@ import androidx.sqlite.execSQL
 import com.tunjid.heron.data.core.models.Constants
 
 internal object UnknownProfileInsertionCallback : RoomDatabase.Callback() {
-    override fun onCreate(
-        connection: SQLiteConnection,
-    ) = connection.execSQL(
-        """
+    override fun onCreate(connection: SQLiteConnection) =
+        connection.execSQL(
+            """
         INSERT OR IGNORE INTO profiles (
             did,
             handle,
@@ -64,6 +63,7 @@ internal object UnknownProfileInsertionCallback : RoomDatabase.Callback() {
             NULL,
             NULL
        );
-        """.trimIndent(),
-    )
+        """
+                .trimIndent()
+        )
 }

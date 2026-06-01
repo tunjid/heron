@@ -30,39 +30,23 @@ data class Link(
 
 @Serializable
 sealed interface LinkTarget {
-    @Serializable
-    data class UserHandleMention(
-        val handle: ProfileHandle,
-    ) : OfProfile,
-        Navigable
+    @Serializable data class UserHandleMention(val handle: ProfileHandle) : OfProfile, Navigable
 
-    @Serializable
-    data class UserDidMention(
-        val did: ProfileId,
-    ) : OfProfile,
-        Navigable
+    @Serializable data class UserDidMention(val did: ProfileId) : OfProfile, Navigable
 
-    @Serializable
-    sealed interface OfProfile : LinkTarget
+    @Serializable sealed interface OfProfile : LinkTarget
 
-    @Serializable
-    sealed interface Navigable : LinkTarget
+    @Serializable sealed interface Navigable : LinkTarget
 
-    @Serializable
-    data class ExternalLink(
-        val uri: GenericUri,
-    ) : LinkTarget
+    @Serializable data class ExternalLink(val uri: GenericUri) : LinkTarget
 
-    @Serializable
-    data class Hashtag(
-        val tag: String,
-    ) : LinkTarget,
-        Navigable
+    @Serializable data class Hashtag(val tag: String) : LinkTarget, Navigable
 }
 
 val LinkTarget.Navigable.path: String
-    get() = when (this) {
-        is LinkTarget.UserDidMention -> "/profile/${did.id}"
-        is LinkTarget.UserHandleMention -> "/profile/${handle.id}"
-        is LinkTarget.Hashtag -> "/search/#$tag"
-    }
+    get() =
+        when (this) {
+            is LinkTarget.UserDidMention -> "/profile/${did.id}"
+            is LinkTarget.UserHandleMention -> "/profile/${handle.id}"
+            is LinkTarget.Hashtag -> "/search/#$tag"
+        }

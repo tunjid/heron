@@ -24,9 +24,7 @@ internal fun MultipleEntitySaver.add(
     val albumArt = scrobbleView.albumArt?.let { ImageUri(it.uri) }
     // Album requires a non-null artistUri FK; if we don't have one, drop the
     // scrobble's albumUri rather than stubbing an album we can't satisfy.
-    val albumUri = scrobbleView.albumUri
-        ?.takeIf { artistUri != null }
-        ?.let { AlbumUri(it.atUri) }
+    val albumUri = scrobbleView.albumUri?.takeIf { artistUri != null }?.let { AlbumUri(it.atUri) }
 
     if (artistUri != null) {
         add(
@@ -34,7 +32,7 @@ internal fun MultipleEntitySaver.add(
                 uri = artistUri,
                 creatorId = creatorId,
                 name = scrobbleView.artist,
-            ),
+            )
         )
     }
 
@@ -47,7 +45,7 @@ internal fun MultipleEntitySaver.add(
                 title = scrobbleView.album ?: scrobbleView.title,
                 artist = scrobbleView.albumArtist ?: scrobbleView.artist,
                 albumArt = albumArt,
-            ),
+            )
         )
     }
 
@@ -64,7 +62,7 @@ internal fun MultipleEntitySaver.add(
                 albumArt = albumArt,
                 albumUri = albumUri,
                 artistUri = artistUri,
-            ),
+            )
         )
     }
 
@@ -86,6 +84,6 @@ internal fun MultipleEntitySaver.add(
             artistUri = artistUri,
             albumUri = albumUri,
             createdAt = scrobbleView.createdAt,
-        ),
+        )
     )
 }

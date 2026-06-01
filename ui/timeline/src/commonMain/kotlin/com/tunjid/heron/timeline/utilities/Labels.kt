@@ -69,27 +69,28 @@ inline fun Label(
     crossinline onClick: () -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .background(
-                color =
-                if (isElevated) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                else Color.Transparent,
-                shape = CircleShape,
-            )
-            .shapedClickable(CircleShape) {
-                onClick()
-            }
-            .ifTrue(isElevated) {
-                // Add padding bc of the background
-                padding(
-                    horizontal = 6.dp,
-                    vertical = 2.dp,
+        modifier =
+            modifier
+                .background(
+                    color =
+                        if (isElevated) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                        else Color.Transparent,
+                    shape = CircleShape,
                 )
-            }
-            .semantics {
-                this.role = Role.Button
-                this.contentDescription = contentDescription
-            },
+                .shapedClickable(CircleShape) {
+                    onClick()
+                }
+                .ifTrue(isElevated) {
+                    // Add padding bc of the background
+                    padding(
+                        horizontal = 6.dp,
+                        vertical = 2.dp,
+                    )
+                }
+                .semantics {
+                    this.role = Role.Button
+                    this.contentDescription = contentDescription
+                },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -99,9 +100,7 @@ inline fun Label(
 }
 
 @Composable
-fun LabelText(
-    text: String,
-) {
+fun LabelText(text: String) {
     Text(
         text = text,
         overflow = TextOverflow.Ellipsis,
@@ -111,20 +110,15 @@ fun LabelText(
     )
 }
 
-fun Label.Definition.locale(
-    currentLanguageTag: String,
-) = locales.list
-    .firstOrNull { it.lang == currentLanguageTag }
-    ?: locales.list
-        .firstOrNull()
+fun Label.Definition.locale(currentLanguageTag: String) =
+    locales.list.firstOrNull { it.lang == currentLanguageTag } ?: locales.list.firstOrNull()
 
 internal fun Label.Severity?.icon() =
     when (this) {
         Label.Severity.Alert -> Icons.Rounded.Report
         Label.Severity.Inform -> Icons.Rounded.Warning
         Label.Severity.None,
-        null,
-        -> null
+        null -> null
     }
 
 internal val LabelIconSize = 12.dp

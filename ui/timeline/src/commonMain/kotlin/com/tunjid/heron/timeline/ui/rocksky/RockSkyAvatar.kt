@@ -38,23 +38,21 @@ internal fun PaneTransitionScope.RockSkyAvatar(
 ) {
     val resolved = image?.uri ?: "https://rocksky.app/favicon.ico"
     PaneStickySharedElement(
-        modifier = Modifier
-            .size(44.dp),
-        sharedContentState = rememberSharedContentState(
-            key = uri.avatarSharedElementKey(sharedElementPrefix),
-        ),
+        modifier = Modifier.size(44.dp),
+        sharedContentState =
+            rememberSharedContentState(key = uri.avatarSharedElementKey(sharedElementPrefix)),
     ) {
         AsyncImage(
-            modifier = Modifier
-                .fillParentAxisIfFixedOrWrap(),
-            args = remember(resolved) {
-                ImageArgs(
-                    url = resolved,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    shape = RockSkyCollectionShape,
-                )
-            },
+            modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+            args =
+                remember(resolved) {
+                    ImageArgs(
+                        url = resolved,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        shape = RockSkyCollectionShape,
+                    )
+                },
         )
     }
 }

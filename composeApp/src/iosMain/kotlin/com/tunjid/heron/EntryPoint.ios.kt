@@ -35,7 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -57,9 +56,7 @@ fun createAppState(): AppState =
             IOSLogger()
         },
         videoPlayerController = { appMainScope ->
-            AVFoundationPlayerController(
-                appMainScope = appMainScope,
-            )
+            AVFoundationPlayerController(appMainScope = appMainScope)
         },
         args = { appMainScope ->
             DataBindingArgs(
@@ -73,35 +70,30 @@ fun createAppState(): AppState =
         },
     )
 
-/**
- * Called from Swift when Firebase provides a new FCM token.
- */
+/** Called from Swift when Firebase provides a new FCM token. */
 fun onNewFcmToken(appState: AppState, token: String) {
     appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
 }
 
 /**
- * Called from Swift when the app foregrounds, to re-sync the system notification
- * permission state into appState.
+ * Called from Swift when the app foregrounds, to re-sync the system notification permission state
+ * into appState.
  */
 fun onNotificationPermissionsUpdated(appState: AppState, hasPermissions: Boolean) {
     appState.onNotificationAction(
-        NotificationAction.UpdatePermissions(hasNotificationPermissions = hasPermissions),
+        NotificationAction.UpdatePermissions(hasNotificationPermissions = hasPermissions)
     )
 }
 
-/**
- * Called from Swift when a notification is tapped to deep link into the app.
- */
+/** Called from Swift when a notification is tapped to deep link into the app. */
 fun onNotificationTapped(appState: AppState, scheme: String, path: String) {
     appState.onDeepLink(GenericUri("$scheme$path"))
 }
 
 /**
- * Called from Swift when a data push notification arrives.
- * Processing runs on a background thread to avoid blocking the main thread.
- * The [onComplete] callback is invoked when processing finishes, and should be
- * used to call the iOS background fetch completion handler.
+ * Called from Swift when a data push notification arrives. Processing runs on a background thread
+ * to avoid blocking the main thread. The [onComplete] callback is invoked when processing finishes,
+ * and should be used to call the iOS background fetch completion handler.
  */
 fun onPushNotificationReceived(
     appState: AppState,
@@ -140,7 +132,7 @@ private object IosNotificationBridge {
             } finally {
                 withContext(Dispatchers.Main) {
                     appState.onNotificationAction(
-                        NotificationAction.NotificationProcessedOrDropped(recordUri),
+                        NotificationAction.NotificationProcessedOrDropped(recordUri)
                     )
                     onComplete()
                 }
@@ -151,12 +143,13 @@ private object IosNotificationBridge {
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {
-    val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
-        directory = NSDocumentDirectory,
-        inDomain = NSUserDomainMask,
-        appropriateForURL = null,
-        create = false,
-        error = null,
-    )
+    val documentDirectory: NSURL? =
+        NSFileManager.defaultManager.URLForDirectory(
+            directory = NSDocumentDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = false,
+            error = null,
+        )
     return (requireNotNull(documentDirectory).path + "/heron").toPath()
 }

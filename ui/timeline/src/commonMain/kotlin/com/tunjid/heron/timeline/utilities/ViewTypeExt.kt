@@ -41,45 +41,44 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import kotlin.math.abs
 
 val TimelineItem.contentType: String
-    get() = when (this) {
-        is TimelineItem.Pinned,
-        is TimelineItem.Repost,
-        is TimelineItem.Single,
-        -> "post"
+    get() =
+        when (this) {
+            is TimelineItem.Pinned,
+            is TimelineItem.Repost,
+            is TimelineItem.Single -> "post"
 
-        is TimelineItem.Threaded -> "threaded"
-        is TimelineItem.Loading -> "loading"
-        is TimelineItem.Empty -> "empty"
-    }
+            is TimelineItem.Threaded -> "threaded"
+            is TimelineItem.Loading -> "loading"
+            is TimelineItem.Empty -> "empty"
+        }
 
-internal fun Modifier.sensitiveContentBlur(
-    shape: Shape,
-) = drawWithCache {
-    val density = Density(density)
-    val color = Color.Black.copy(alpha = 0.5f)
-    onDrawWithContent {
-        drawContent()
-        drawOutline(
-            outline = shape.createOutline(
-                size = size,
-                layoutDirection = layoutDirection,
-                density = density,
-            ),
-            color = color,
+internal fun Modifier.sensitiveContentBlur(shape: Shape) =
+    drawWithCache {
+            val density = Density(density)
+            val color = Color.Black.copy(alpha = 0.5f)
+            onDrawWithContent {
+                drawContent()
+                drawOutline(
+                    outline =
+                        shape.createOutline(
+                            size = size,
+                            layoutDirection = layoutDirection,
+                            density = density,
+                        ),
+                    color = color,
+                )
+            }
+        }
+        .blur(
+            shape = shape,
+            radius = ::SensitiveContentBlurRadius,
+            clip = ::SensitiveContentBlurClip,
+            progress = { 1f },
         )
-    }
-}
-    .blur(
-        shape = shape,
-        radius = ::SensitiveContentBlurRadius,
-        clip = ::SensitiveContentBlurClip,
-        progress = { 1f },
-    )
 
-internal fun AspectRatio.bucketedRatio() =
-    AspectRatioBuckets.minBy {
-        abs(it - aspectRatioOrSquare)
-    }
+internal fun AspectRatio.bucketedRatio() = AspectRatioBuckets.minBy {
+    abs(it - aspectRatioOrSquare)
+}
 
 @Composable
 internal fun SensitiveContentBox(
@@ -95,8 +94,8 @@ internal fun SensitiveContentBox(
         modifier = modifier,
         content = {
             Box(
-                modifier = Modifier
-                    .ifTrue(
+                modifier =
+                    Modifier.ifTrue(
                         predicate = isBlurred,
                         block = Modifier::blockClickEvents,
                     ),
@@ -107,8 +106,7 @@ internal fun SensitiveContentBox(
 
             if (isBlurred && canUnblur) {
                 SensitiveContentButton(
-                    modifier = Modifier
-                        .align(Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center),
                     icon = icon,
                     label = label,
                     onClick = onUnblurClicked,
@@ -135,23 +133,23 @@ private fun SensitiveContentButton(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (icon != null) Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                )
-                Text(
-                    text = label,
-                )
+                if (icon != null)
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                    )
+                Text(text = label)
             }
         },
     )
 }
 
-private val AspectRatioBuckets = listOf(
-    Wide,
-    Square,
-    Tall,
-)
+private val AspectRatioBuckets =
+    listOf(
+        Wide,
+        Square,
+        Tall,
+    )
 
 private val SensitiveContentBlurRadius = 120.dp
 private const val SensitiveContentBlurClip = true

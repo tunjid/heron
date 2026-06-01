@@ -54,55 +54,57 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     paneScaffoldState.NestedNavigation(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         key = state.section.key,
         content = { key ->
             Column(
-                modifier = Modifier
-                    .padding(
-                        horizontal = 16.dp,
-                    )
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                modifier =
+                    Modifier.padding(horizontal = 16.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 when (key) {
-                    Section.Main -> MainSection(
-                        state = state,
-                        actions = actions,
-                        paneScaffoldState = paneScaffoldState,
-                    )
-                    Section.FeedPreferences -> FeedPreferencesSection(
-                        feedPreference = state.signedInProfilePreferences
-                            ?.feedPreferences
-                            .orEmpty()
-                            .homeFeedOrDefault(),
-                        onFeedPreferenceUpdated = {
-                            actions(Action.UpdateFeedPreference(it))
-                        },
-                    )
-                    Section.ThreadPreferences -> ThreadPreferencesSection(
-                        threadViewPreference = state.signedInProfilePreferences
-                            ?.threadViewPreferences,
-                        onPreferenceUpdated = {
-                            actions(Action.UpdateThreadViewPreference(it))
-                        },
-                    )
-                    Section.Appearance -> state.signedInProfilePreferences?.let { preferences ->
-                        AppearanceSection(
-                            signedInProfilePreferences = preferences,
-                            setCurrentThemeOrdinal = {
-                                actions(Action.SetCurrentThemeOrdinal(it))
-                            },
-                            setCompactNavigation = {
-                                actions(Action.SetCompactNavigation(it))
-                            },
-                            setAutoHideBottomNavigation = {
-                                actions(Action.SetAutoHideBottomNavigation(it))
+                    Section.Main ->
+                        MainSection(
+                            state = state,
+                            actions = actions,
+                            paneScaffoldState = paneScaffoldState,
+                        )
+                    Section.FeedPreferences ->
+                        FeedPreferencesSection(
+                            feedPreference =
+                                state.signedInProfilePreferences
+                                    ?.feedPreferences
+                                    .orEmpty()
+                                    .homeFeedOrDefault(),
+                            onFeedPreferenceUpdated = {
+                                actions(Action.UpdateFeedPreference(it))
                             },
                         )
-                    }
+                    Section.ThreadPreferences ->
+                        ThreadPreferencesSection(
+                            threadViewPreference =
+                                state.signedInProfilePreferences?.threadViewPreferences,
+                            onPreferenceUpdated = {
+                                actions(Action.UpdateThreadViewPreference(it))
+                            },
+                        )
+                    Section.Appearance ->
+                        state.signedInProfilePreferences?.let { preferences ->
+                            AppearanceSection(
+                                signedInProfilePreferences = preferences,
+                                setCurrentThemeOrdinal = {
+                                    actions(Action.SetCurrentThemeOrdinal(it))
+                                },
+                                setCompactNavigation = {
+                                    actions(Action.SetCompactNavigation(it))
+                                },
+                                setAutoHideBottomNavigation = {
+                                    actions(Action.SetAutoHideBottomNavigation(it))
+                                },
+                            )
+                        }
                 }
             }
         },
@@ -132,8 +134,8 @@ private fun MainSection(
         )
         if (state.switchPhase == AccountSwitchPhase.IDLE) {
             ContentAndMediaItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
                     ),
@@ -158,35 +160,35 @@ private fun MainSection(
                 },
             )
             ModerationItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
-                    ),
+                    )
             ) {
                 actions(Action.Navigate.To(moderationDestination()))
             }
             NotificationSettingsItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
-                    ),
+                    )
             ) {
                 actions(Action.Navigate.To(notificationSettingsDestination()))
             }
             PublicationSubscriptionsItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
-                    ),
+                    )
             ) {
                 actions(Action.Navigate.To(standardSubscriptionsDestination()))
             }
             AppearanceItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
                     ),
@@ -195,26 +197,26 @@ private fun MainSection(
                 },
             )
             FeedbackItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
-                    ),
+                    )
             )
             OpenSourceLibrariesItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
                     ),
                 libraries = state.openSourceLibraries,
             )
             SignOutItem(
-                modifier = Modifier
-                    .animateBounds(
+                modifier =
+                    Modifier.animateBounds(
                         lookaheadScope = paneScaffoldState,
                         boundsTransform = paneScaffoldState.childBoundsTransform,
-                    ),
+                    )
             ) {
                 actions(Action.SignOut)
             }

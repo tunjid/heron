@@ -20,30 +20,26 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface Embed {
-    @Serializable
-    sealed interface Media :
-        Embed,
-        UrlEncodableModel
+    @Serializable sealed interface Media : Embed, UrlEncodableModel
 }
 
-/**
- * Provides the width and height of an item if available.
- *
- */
+/** Provides the width and height of an item if available. */
 sealed interface AspectRatio {
     val width: Long?
     val height: Long?
 }
 
 val AspectRatio.aspectRatioOrSquare: Float
-    get() = withWidthAndHeight(1f) { width, height ->
-        width.toFloat() / height
-    }
+    get() =
+        withWidthAndHeight(1f) { width, height ->
+            width.toFloat() / height
+        }
 
 val AspectRatio.isLandscape
-    get() = withWidthAndHeight(false) { width, height ->
-        width > height
-    }
+    get() =
+        withWidthAndHeight(false) { width, height ->
+            width > height
+        }
 
 private inline fun <T> AspectRatio.withWidthAndHeight(
     default: T,
@@ -54,5 +50,4 @@ private inline fun <T> AspectRatio.withWidthAndHeight(
     return block(currentWidth, currentHeight)
 }
 
-@Serializable
-data object UnknownEmbed : Embed
+@Serializable data object UnknownEmbed : Embed

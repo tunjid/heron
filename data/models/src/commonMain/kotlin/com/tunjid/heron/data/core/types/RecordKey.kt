@@ -25,9 +25,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @JvmInline
-value class RecordKey(
-    val value: String,
-) {
+value class RecordKey(val value: String) {
     companion object {
         private const val ALPHABET = "234567abcdefghijklmnopqrstuvwxyz"
         private const val MASK = 0x1FL // Binary 11111, used to get the 5 least significant bits.
@@ -52,13 +50,14 @@ value class RecordKey(
                 // The timestamp part of the last generated TID
                 val lastTimestampPart = last and ((-1L) shl 10)
 
-                nextTid = if (timestampPart > lastTimestampPart) {
-                    // Current time is ahead, we can use it with the static clockId
-                    timestampPart or clockId.toLong()
-                } else {
-                    // Same millisecond or clock went backwards, increment the last TID
-                    last + 1
-                }
+                nextTid =
+                    if (timestampPart > lastTimestampPart) {
+                        // Current time is ahead, we can use it with the static clockId
+                        timestampPart or clockId.toLong()
+                    } else {
+                        // Same millisecond or clock went backwards, increment the last TID
+                        last + 1
+                    }
             } while (!lastTid.compareAndSet(last, nextTid))
 
             return RecordKey(encode(nextTid))
@@ -86,7 +85,8 @@ value class RecordKey(
                 val index = (current and MASK).toInt()
                 buffer[i] = ALPHABET[index]
                 // Right-shift by 5 to process the next 5 bits in the next iteration.
-                // `ushr` is an unsigned shift, which is important for handling the sign bit correctly.
+                // `ushr` is an unsigned shift, which is important for handling the sign bit
+                // correctly.
                 current = current ushr 5
             }
             return buffer.concatToString()

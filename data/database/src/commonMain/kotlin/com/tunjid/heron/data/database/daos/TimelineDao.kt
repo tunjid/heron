@@ -37,36 +37,26 @@ interface TimelineDao {
         """
         DELETE FROM timelineItems
         WHERE sourceId = :sourceId
-    """,
+    """
     )
-    suspend fun deleteAllFeedsFor(
-        sourceId: String,
-    )
+    suspend fun deleteAllFeedsFor(sourceId: String)
 
-    @Upsert
-    suspend fun upsertTimelineItems(
-        entities: List<TimelineItemEntity>,
-    )
+    @Upsert suspend fun upsertTimelineItems(entities: List<TimelineItemEntity>)
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateTimelineItems(
-        entities: List<TimelineItemEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = TimelineItemEntity::withoutSort,
-        insertEntities = ::insertOrIgnoreTimelineItems,
-        updatePartials = ::updateTimelineItemsKeepingSort,
-    )
+    suspend fun insertOrPartiallyUpdateTimelineItems(entities: List<TimelineItemEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = TimelineItemEntity::withoutSort,
+            insertEntities = ::insertOrIgnoreTimelineItems,
+            updatePartials = ::updateTimelineItemsKeepingSort,
+        )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreTimelineItems(
-        entities: List<TimelineItemEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreTimelineItems(entities: List<TimelineItemEntity>): List<Long>
 
     @Update(entity = TimelineItemEntity::class)
-    suspend fun updateTimelineItemsKeepingSort(
-        entities: List<TimelineItemEntity.WithoutSort>,
-    )
+    suspend fun updateTimelineItemsKeepingSort(entities: List<TimelineItemEntity.WithoutSort>)
 
     @Query(
         """
@@ -94,7 +84,7 @@ interface TimelineDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun feedItems(
         viewingProfileId: String?,
@@ -115,7 +105,7 @@ interface TimelineDao {
             (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
             OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
         )
-    """,
+    """
     )
     fun count(
         viewingProfileId: String?,
@@ -131,7 +121,7 @@ interface TimelineDao {
                 ELSE viewingProfileId IS NULL
             END
             LIMIT 1
-        """,
+        """
     )
     fun lastFetchKey(
         viewingProfileId: String?,
@@ -140,29 +130,30 @@ interface TimelineDao {
 
     @Transaction
     suspend fun insertOrPartiallyUpdateTimelineFetchedAt(
-        entities: List<TimelinePreferencesEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
-        insertEntities = ::insertOrIgnoreTimelinePreferences,
-        updatePartials = ::updatePartialTimelinePreferencesFetchedAt,
-    )
+        entities: List<TimelinePreferencesEntity>
+    ) =
+        partialUpsert(
+            items = entities,
+            partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
+            insertEntities = ::insertOrIgnoreTimelinePreferences,
+            updatePartials = ::updatePartialTimelinePreferencesFetchedAt,
+        )
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnoreTimelinePreferences(
-        entities: List<TimelinePreferencesEntity>,
+        entities: List<TimelinePreferencesEntity>
     ): List<Long>
 
     @Transaction
     @Update(entity = TimelinePreferencesEntity::class)
     suspend fun updatePartialTimelinePreferencesFetchedAt(
-        entities: List<TimelinePreferencesEntity.Partial.FetchedAt>,
+        entities: List<TimelinePreferencesEntity.Partial.FetchedAt>
     )
 
     @Transaction
     @Update(entity = TimelinePreferencesEntity::class)
     suspend fun updatePreferredTimelinePresentation(
-        partial: TimelinePreferencesEntity.Partial.PreferredPresentation,
+        partial: TimelinePreferencesEntity.Partial.PreferredPresentation
     )
 }

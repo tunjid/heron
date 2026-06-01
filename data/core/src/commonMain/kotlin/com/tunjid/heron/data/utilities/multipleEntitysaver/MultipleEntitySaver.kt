@@ -85,7 +85,9 @@ import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
-class MultipleEntitySaverProvider @Inject constructor(
+class MultipleEntitySaverProvider
+@Inject
+constructor(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -101,33 +103,31 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val rockskyDao: RockskyDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    internal suspend fun saveInTransaction(
-        block: suspend MultipleEntitySaver.() -> Unit,
-    ) = transactionWriter.inTransaction {
-        MultipleEntitySaver(
-            postDao = postDao,
-            labelDao = labelDao,
-            listDao = listDao,
-            embedDao = embedDao,
-            profileDao = profileDao,
-            timelineDao = timelineDao,
-            feedGeneratorDao = feedGeneratorDao,
-            notificationsDao = notificationsDao,
-            starterPackDao = starterPackDao,
-            messageDao = messageDao,
-            threadGateDao = threadGateDao,
-            standardSiteDao = standardSiteDao,
-            rockskyDao = rockskyDao,
-        ).apply {
-            block()
-            flushPendingOperations()
+    internal suspend fun saveInTransaction(block: suspend MultipleEntitySaver.() -> Unit) =
+        transactionWriter.inTransaction {
+            MultipleEntitySaver(
+                    postDao = postDao,
+                    labelDao = labelDao,
+                    listDao = listDao,
+                    embedDao = embedDao,
+                    profileDao = profileDao,
+                    timelineDao = timelineDao,
+                    feedGeneratorDao = feedGeneratorDao,
+                    notificationsDao = notificationsDao,
+                    starterPackDao = starterPackDao,
+                    messageDao = messageDao,
+                    threadGateDao = threadGateDao,
+                    standardSiteDao = standardSiteDao,
+                    rockskyDao = rockskyDao,
+                )
+                .apply {
+                    block()
+                    flushPendingOperations()
+                }
         }
-    }
 }
 
-/**
- * Utility class for persisting multiple entities in a transaction.
- */
+/** Utility class for persisting multiple entities in a transaction. */
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
@@ -224,26 +224,27 @@ internal class MultipleEntitySaver(
     /**
      * Flushes all queued entities to the database.
      *
-     * This must be called from within a [TransactionWriter.inTransaction] block; the
-     * owning [MultipleEntitySaverProvider.saveInTransaction] opens the transaction so
-     * that any direct DAO calls made inside the caller's block participate in the same
-     * atomic unit as the batched writes performed here.
+     * This must be called from within a [TransactionWriter.inTransaction] block; the owning
+     * [MultipleEntitySaverProvider.saveInTransaction] opens the transaction so that any direct DAO
+     * calls made inside the caller's block participate in the same atomic unit as the batched
+     * writes performed here.
      */
     internal suspend fun flushPendingOperations() {
         // Order matters to satisfy foreign key constraints
         if (profileEntities.isNotEmpty) {
-            val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
-                firstPredicate = {
-                    !it.handle.isUnknown() &&
-                        it.followersCount != null &&
-                        it.followsCount != null &&
-                        it.postsCount != null
-                },
-                // Profiles from messages may just be empty profiles with Dids
-                secondPredicate = {
-                    !it.handle.isUnknown() && it.displayName != null
-                },
-            )
+            val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) =
+                profileEntities.list.triage(
+                    firstPredicate = {
+                        !it.handle.isUnknown() &&
+                            it.followersCount != null &&
+                            it.followsCount != null &&
+                            it.postsCount != null
+                    },
+                    // Profiles from messages may just be empty profiles with Dids
+                    secondPredicate = {
+                        !it.handle.isUnknown() && it.displayName != null
+                    },
+                )
             profileDao.upsertProfiles(fullProfileEntities)
             profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
             profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
@@ -258,10 +259,11 @@ internal class MultipleEntitySaver(
         }
 
         if (postEntities.isNotEmpty) {
-            val (fullPostEntities, partialPostEntities, stubbedPostEntities) = postEntities.list.triage(
-                firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
-                secondPredicate = { !it.cid.isStubbedId() },
-            )
+            val (fullPostEntities, partialPostEntities, stubbedPostEntities) =
+                postEntities.list.triage(
+                    firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
+                    secondPredicate = { !it.cid.isStubbedId() },
+                )
             postDao.upsertPosts(fullPostEntities)
             postDao.insertOrPartiallyUpdatePosts(partialPostEntities)
             postDao.insertOrIgnorePosts(stubbedPostEntities)
@@ -305,16 +307,12 @@ internal class MultipleEntitySaver(
         }
 
         if (profileViewerEntities.isNotEmpty) {
-            val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
-                .partition {
+            val (fullProfileViewerEntities, partialProfileViewerEntities) =
+                profileViewerEntities.list.partition {
                     it.commonFollowersCount != null
                 }
-            profileDao.upsertProfileViewers(
-                fullProfileViewerEntities,
-            )
-            profileDao.insertOrPartiallyUpdateProfileViewers(
-                partialProfileViewerEntities,
-            )
+            profileDao.upsertProfileViewers(fullProfileViewerEntities)
+            profileDao.insertOrPartiallyUpdateProfileViewers(partialProfileViewerEntities)
         }
 
         if (notificationEntities.isNotEmpty) {
@@ -323,9 +321,10 @@ internal class MultipleEntitySaver(
 
         // Order matters to satisfy foreign key constraints
         if (listEntities.isNotEmpty) {
-            val (fullListEntities, partialListEntities) = listEntities.list.partition {
-                it.description != null && it.indexedAt != Instant.DISTANT_PAST
-            }
+            val (fullListEntities, partialListEntities) =
+                listEntities.list.partition {
+                    it.description != null && it.indexedAt != Instant.DISTANT_PAST
+                }
             listDao.upsertLists(fullListEntities)
             listDao.insertOrPartiallyUpdateLists(partialListEntities)
         }
@@ -370,7 +369,7 @@ internal class MultipleEntitySaver(
                 messageEntities.list.mapTo(
                     mutableSetOf(),
                     MessageEntity::id,
-                ),
+                )
             )
         }
         if (messageReactionEntities.isNotEmpty) {
@@ -391,18 +390,19 @@ internal class MultipleEntitySaver(
 
         if (postEntities.isNotEmpty) {
             threadGateDao.deleteThreadGates(
-                postUris = postEntities.list.mapNotNull {
-                    if (it.hasThreadGate == false) it.uri
-                    else null
-                },
+                postUris =
+                    postEntities.list.mapNotNull {
+                        if (it.hasThreadGate == false) it.uri else null
+                    }
             )
         }
 
         // Standard site entities: publications before documents/subscriptions (FK ordering)
         if (standardPublicationEntities.isNotEmpty) {
-            val (fullPublicationEntities, partialPublicationEntities) = standardPublicationEntities.list.partition {
-                it.url != Collections.PLACEHOLDER_URL && it.cid != null
-            }
+            val (fullPublicationEntities, partialPublicationEntities) =
+                standardPublicationEntities.list.partition {
+                    it.url != Collections.PLACEHOLDER_URL && it.cid != null
+                }
             standardSiteDao.insertOrIgnorePublications(partialPublicationEntities)
             standardSiteDao.upsertPublications(fullPublicationEntities)
         }
@@ -431,9 +431,7 @@ internal class MultipleEntitySaver(
 
         if (threadGateEntities.isNotEmpty) {
             threadGateDao.upsertThreadGates(threadGateEntities.list)
-            val threadGateUris = threadGateEntities.list.map(
-                ThreadGateEntity::uri,
-            )
+            val threadGateUris = threadGateEntities.list.map(ThreadGateEntity::uri)
             // keep thread gates in sync
             threadGateDao.deleteThreadGateAllowedLists(threadGateUris)
             threadGateDao.deleteThreadGateHiddenPosts(threadGateUris)
@@ -532,11 +530,15 @@ internal class MultipleEntitySaver(
 
     fun add(entity: StandardSubscriptionEntity) = standardSubscriptionEntities.add(entity)
 
-    fun remove(entity: StandardSubscriptionEntity.Deletion) = standardSubscriptionDeletions.add(entity)
+    fun remove(entity: StandardSubscriptionEntity.Deletion) =
+        standardSubscriptionDeletions.add(entity)
 
     fun add(entity: RockskyAlbumEntity) = rockskyAlbumEntities.add(entity)
+
     fun add(entity: RockskyTrackEntity) = rockskyTrackEntities.add(entity)
+
     fun add(entity: RockskyScrobbleEntity) = rockskyScrobbleEntities.add(entity)
+
     fun add(entity: RockskyArtistEntity) = rockskyArtistEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)

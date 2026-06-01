@@ -29,22 +29,22 @@ import platform.Foundation.NSURLErrorNetworkConnectionLost
 import platform.Foundation.NSURLErrorNotConnectedToInternet
 import platform.Foundation.NSURLErrorTimedOut
 
-internal actual fun Throwable.isNetworkConnectionError(): Boolean = when (this) {
-    is DarwinHttpRequestException ->
-        origin.domain == NSURLErrorDomain && when (origin.code) {
-            NSURLErrorNotConnectedToInternet,
-            NSURLErrorCannotConnectToHost,
-            NSURLErrorCannotFindHost,
-            NSURLErrorNetworkConnectionLost,
-            NSURLErrorTimedOut,
-            NSURLErrorDataNotAllowed,
-            NSURLErrorInternationalRoamingOff,
-            -> true
-            else -> false
-        }
-    is UnresolvedAddressException,
-    is SocketTimeoutException,
-    is ConnectTimeoutException,
-    -> true
-    else -> false
-}
+internal actual fun Throwable.isNetworkConnectionError(): Boolean =
+    when (this) {
+        is DarwinHttpRequestException ->
+            origin.domain == NSURLErrorDomain &&
+                when (origin.code) {
+                    NSURLErrorNotConnectedToInternet,
+                    NSURLErrorCannotConnectToHost,
+                    NSURLErrorCannotFindHost,
+                    NSURLErrorNetworkConnectionLost,
+                    NSURLErrorTimedOut,
+                    NSURLErrorDataNotAllowed,
+                    NSURLErrorInternationalRoamingOff -> true
+                    else -> false
+                }
+        is UnresolvedAddressException,
+        is SocketTimeoutException,
+        is ConnectTimeoutException -> true
+        else -> false
+    }

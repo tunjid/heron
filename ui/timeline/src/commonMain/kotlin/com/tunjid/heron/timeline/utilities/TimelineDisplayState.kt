@@ -34,7 +34,8 @@ import com.tunjid.heron.ui.UiTokens
  * the window.
  */
 @Stable
-class TimelineDisplayState internal constructor(
+class TimelineDisplayState
+internal constructor(
     private val density: () -> Density,
     private val windowWidthPx: () -> Int,
 ) {
@@ -45,32 +46,27 @@ class TimelineDisplayState internal constructor(
      * width, so a narrower pane simply renders fewer columns.
      */
     @Stable
-    fun cardSize(
-        presentation: Timeline.Presentation,
-    ): Dp = when (val widthDp = with(density()) { windowWidthPx().toDp() }) {
-        in 0.dp..UiTokens.SecondaryPaneMinWidthBreakpoint -> presentation.cardSize
-        else -> maxOf(
-            a = presentation.cardSize,
-            b = widthDp
-                .minus(UiTokens.NavRailWidth)
-                .div(presentation.maxColumns),
-        )
-    }
+    fun cardSize(presentation: Timeline.Presentation): Dp =
+        when (val widthDp = with(density()) { windowWidthPx().toDp() }) {
+            in 0.dp..UiTokens.SecondaryPaneMinWidthBreakpoint -> presentation.cardSize
+            else ->
+                maxOf(
+                    a = presentation.cardSize,
+                    b = widthDp.minus(UiTokens.NavRailWidth).div(presentation.maxColumns),
+                )
+        }
 
     @Stable
-    fun horizontalPadding(
-        presentation: Timeline.Presentation,
-    ): Dp = presentation.timelineHorizontalPadding
+    fun horizontalPadding(presentation: Timeline.Presentation): Dp =
+        presentation.timelineHorizontalPadding
 
     @Stable
-    fun horizontalItemSpacing(
-        presentation: Timeline.Presentation,
-    ): Dp = presentation.lazyGridHorizontalItemSpacing
+    fun horizontalItemSpacing(presentation: Timeline.Presentation): Dp =
+        presentation.lazyGridHorizontalItemSpacing
 
     @Stable
-    fun verticalItemSpacing(
-        presentation: Timeline.Presentation,
-    ): Dp = presentation.lazyGridVerticalItemSpacing
+    fun verticalItemSpacing(presentation: Timeline.Presentation): Dp =
+        presentation.lazyGridVerticalItemSpacing
 }
 
 @Composable

@@ -25,27 +25,21 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion4(
-    @Suppress("unused")
-    @ProtoNumber(1)
-    private val version: Int,
+    @Suppress("unused") @ProtoNumber(1) private val version: Int,
     // @ProtoNumber(2) is deliberately not used, its deprecated.
     // It used to be auth: SavedState.AuthTokens?
-    @ProtoNumber(3)
-    private val navigation: SavedState.Navigation,
-    @ProtoNumber(4)
-    private val profileData: Map<ProfileId, ProfileDataV4>,
-    @ProtoNumber(5)
-    private val activeProfileId: ProfileId?,
+    @ProtoNumber(3) private val navigation: SavedState.Navigation,
+    @ProtoNumber(4) private val profileData: Map<ProfileId, ProfileDataV4>,
+    @ProtoNumber(5) private val activeProfileId: ProfileId?,
 ) : SavedStateVersion {
 
-    override fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState = VersionedSavedState(
-        version = currentVersion,
-        navigation = navigation,
-        profileData = profileData.mapValues { it.value.asProfileData() },
-        activeProfileId = activeProfileId,
-    )
+    override fun toVersionedSavedState(currentVersion: Int): VersionedSavedState =
+        VersionedSavedState(
+            version = currentVersion,
+            navigation = navigation,
+            profileData = profileData.mapValues { it.value.asProfileData() },
+            activeProfileId = activeProfileId,
+        )
 
     @Serializable
     @SerialName("com.tunjid.heron.data.repository.SavedState.ProfileData")
@@ -55,12 +49,13 @@ internal class SavedStateVersion4(
         val writes: SavedState.Writes = SavedState.Writes(),
         val auth: SavedState.AuthTokens? = null,
     ) {
-        fun asProfileData() = SavedState.ProfileData(
-            preferences = preferences.asPreferences(),
-            notifications = notifications,
-            writes = writes,
-            auth = auth,
-        )
+        fun asProfileData() =
+            SavedState.ProfileData(
+                preferences = preferences.asPreferences(),
+                notifications = notifications,
+                writes = writes,
+                auth = auth,
+            )
     }
 
     companion object {

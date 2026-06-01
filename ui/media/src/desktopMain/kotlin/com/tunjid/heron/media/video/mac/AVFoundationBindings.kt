@@ -14,9 +14,7 @@ import com.sun.jna.Callback
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 
-/**
- * JNA callback interfaces for native AVFoundation player events.
- */
+/** JNA callback interfaces for native AVFoundation player events. */
 internal fun interface StatusCallback : Callback {
     fun invoke(context: Pointer?, status: Int)
 }
@@ -33,9 +31,7 @@ internal fun interface EndOfPlaybackCallback : Callback {
     fun invoke(context: Pointer?)
 }
 
-/**
- * JNA direct mapping to the AVFoundationVideoPlayer library (AVFoundation on macOS).
- */
+/** JNA direct mapping to the AVFoundationVideoPlayer library (AVFoundation on macOS). */
 internal object AVFoundationVideoPlayer {
     init {
         Native.register("AVFoundationVideoPlayer")
@@ -69,7 +65,8 @@ internal object AVFoundationVideoPlayer {
 
     // Callback registration
 
-    @JvmStatic external fun registerStatusCallback(
+    @JvmStatic
+    external fun registerStatusCallback(
         context: Pointer?,
         callbackCtx: Pointer?,
         callback: StatusCallback?,
@@ -77,7 +74,8 @@ internal object AVFoundationVideoPlayer {
 
     @JvmStatic external fun unregisterStatusCallback(context: Pointer?)
 
-    @JvmStatic external fun registerTimeCallback(
+    @JvmStatic
+    external fun registerTimeCallback(
         context: Pointer?,
         callbackCtx: Pointer?,
         callback: TimeCallback?,
@@ -86,7 +84,8 @@ internal object AVFoundationVideoPlayer {
 
     @JvmStatic external fun unregisterTimeCallback(context: Pointer?)
 
-    @JvmStatic external fun registerFrameCallback(
+    @JvmStatic
+    external fun registerFrameCallback(
         context: Pointer?,
         callbackCtx: Pointer?,
         callback: FrameCallback?,
@@ -94,7 +93,8 @@ internal object AVFoundationVideoPlayer {
 
     @JvmStatic external fun unregisterFrameCallback(context: Pointer?)
 
-    @JvmStatic external fun registerEndOfPlaybackCallback(
+    @JvmStatic
+    external fun registerEndOfPlaybackCallback(
         context: Pointer?,
         callbackCtx: Pointer?,
         callback: EndOfPlaybackCallback?,

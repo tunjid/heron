@@ -50,12 +50,10 @@ class TrackingOverlayClip : SharedTransitionScope.OverlayClip {
 }
 
 /**
- * Used to track the bounds of a Composable so it may be used for clipping later.
- * There should be a 1:1 use of this Modifier to [TrackingOverlayClip], it should not be
- * reused.
+ * Used to track the bounds of a Composable so it may be used for clipping later. There should be a
+ * 1:1 use of this Modifier to [TrackingOverlayClip], it should not be reused.
  */
-fun Modifier.trackOverlayClipBounds(
-    trackingOverlayClip: TrackingOverlayClip,
-) = onLayoutRectChanged { bounds ->
-    trackingOverlayClip.parentBounds = bounds.boundsInScreen
-}
+fun Modifier.trackOverlayClipBounds(trackingOverlayClip: TrackingOverlayClip) =
+    onLayoutRectChanged { bounds ->
+        trackingOverlayClip.parentBounds = bounds.boundsInScreen
+    }

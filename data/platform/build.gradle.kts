@@ -35,9 +35,8 @@ buildConfig {
     forClass("Build") {
         buildConfigField(
             name = "isRelease",
-            value = providers.gradleProperty("heron.isRelease")
-                .map(String::toBoolean)
-                .orElse(false),
+            value =
+                providers.gradleProperty("heron.isRelease").map(String::toBoolean).orElse(false),
         )
     }
 }

@@ -20,7 +20,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
@@ -42,7 +41,7 @@ dependencies {
     lexicons(
         fileTree("schemas") {
             include("**/*.json")
-        },
+        }
     )
 }
 
@@ -55,7 +54,7 @@ lexicons {
             BinaryDataType.Custom(
                 packageName = "io.ktor.utils.io",
                 simpleNames = listOf("ByteReadChannel"),
-            ),
+            )
         )
     }
 

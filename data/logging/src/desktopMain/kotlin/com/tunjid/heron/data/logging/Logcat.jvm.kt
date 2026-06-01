@@ -40,14 +40,15 @@ actual inline fun Any.logcat(
     message: () -> String,
 ) {
     this.squareLogcat(
-        priority = when (priority) {
-            LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
-            LogPriority.DEBUG -> SquareLogPriority.DEBUG
-            LogPriority.INFO -> SquareLogPriority.INFO
-            LogPriority.WARN -> SquareLogPriority.WARN
-            LogPriority.ERROR -> SquareLogPriority.ERROR
-            LogPriority.ASSERT -> SquareLogPriority.ASSERT
-        },
+        priority =
+            when (priority) {
+                LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
+                LogPriority.DEBUG -> SquareLogPriority.DEBUG
+                LogPriority.INFO -> SquareLogPriority.INFO
+                LogPriority.WARN -> SquareLogPriority.WARN
+                LogPriority.ERROR -> SquareLogPriority.ERROR
+                LogPriority.ASSERT -> SquareLogPriority.ASSERT
+            },
         tag = tag,
         message = message,
     )

@@ -25,16 +25,19 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 /**
- * Custom serializer that uses the `value` property for both serialization and deserialization.
- * This ensures a single source of truth for the operator strings.
+ * Custom serializer that uses the `value` property for both serialization and deserialization. This
+ * ensures a single source of truth for the operator strings.
  */
 object ComparatorSerializer : KSerializer<Filter.Comparator> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("Comparator", PrimitiveKind.STRING)
 
-    // Pre-aggregated list of all possible comparators to avoid recreating it on every deserialize call
+    // Pre-aggregated list of all possible comparators to avoid recreating it on every deserialize
+    // call
     private val allComparators: List<Filter.Comparator> =
-        Filter.Comparator.Equality.entries + Filter.Comparator.Range.entries + Filter.Comparator.Set.entries
+        Filter.Comparator.Equality.entries +
+            Filter.Comparator.Range.entries +
+            Filter.Comparator.Set.entries
 
     override fun serialize(encoder: Encoder, value: Filter.Comparator) {
         encoder.encodeString(value.value)

@@ -32,9 +32,7 @@ import org.jetbrains.skia.AnimationFrameInfo
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Codec
 
-internal class AnimatedSkiaImage(
-    internal val codec: Codec,
-) : Image {
+internal class AnimatedSkiaImage(internal val codec: Codec) : Image {
 
     override val size: Long
         get() {

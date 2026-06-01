@@ -28,29 +28,30 @@ import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState.Companion.select
 import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState.Companion.selectorDropTarget
 
 @Stable
-internal class TabEditorState private constructor(
+internal class TabEditorState
+private constructor(
     val tabs: SnapshotStateList<ProfileTab>,
     val selected: (ProfileTab) -> Boolean,
 ) {
-    private val dragAndDropSelectorState = DragAndDropSelectorState(
-        items = tabs,
-        id = ProfileTab::id,
-        selected = selected,
-    )
+    private val dragAndDropSelectorState =
+        DragAndDropSelectorState(
+            items = tabs,
+            id = ProfileTab::id,
+            selected = selected,
+        )
 
-    val isHintHovered get() = dragAndDropSelectorState.isHintHovered
-    val shouldShowHint get() = dragAndDropSelectorState.firstUnselectedIndex == tabs.size
-    val partitioned get() = dragAndDropSelectorState.partitioned
+    val isHintHovered
+        get() = dragAndDropSelectorState.isHintHovered
 
-    @Stable
-    fun isHoveredId(
-        tab: ProfileTab,
-    ) = dragAndDropSelectorState.isHoveredId(tab.id)
+    val shouldShowHint
+        get() = dragAndDropSelectorState.firstUnselectedIndex == tabs.size
 
-    @Stable
-    fun isDragged(
-        tab: ProfileTab,
-    ) = dragAndDropSelectorState.isDraggedId(tab.id)
+    val partitioned
+        get() = dragAndDropSelectorState.partitioned
+
+    @Stable fun isHoveredId(tab: ProfileTab) = dragAndDropSelectorState.isHoveredId(tab.id)
+
+    @Stable fun isDragged(tab: ProfileTab) = dragAndDropSelectorState.isDraggedId(tab.id)
 
     companion object {
 
@@ -58,34 +59,34 @@ internal class TabEditorState private constructor(
         fun rememberTabEditorState(
             tabs: List<ProfileTab>,
             currentTabs: Set<ProfileTab>,
-        ): TabEditorState = remember(
-            key1 = tabs,
-            key2 = currentTabs,
-        ) {
-            TabEditorState(
-                tabs = tabs.toMutableStateList(),
-                selected = currentTabs::contains,
-            )
-        }
+        ): TabEditorState =
+            remember(
+                key1 = tabs,
+                key2 = currentTabs,
+            ) {
+                TabEditorState(
+                    tabs = tabs.toMutableStateList(),
+                    selected = currentTabs::contains,
+                )
+            }
 
         fun Modifier.tabEditorDragAndDrop(
             state: TabEditorState,
             tab: ProfileTab,
-        ) = selectorDragAndDrop(
-            state = state.dragAndDropSelectorState,
-            id = tab.id,
-        )
+        ) =
+            selectorDragAndDrop(
+                state = state.dragAndDropSelectorState,
+                id = tab.id,
+            )
 
-        fun Modifier.tabEditorDropTarget(
-            state: TabEditorState,
-        ) = selectorDropTarget(
-            state = state.dragAndDropSelectorState,
-        )
+        fun Modifier.tabEditorDropTarget(state: TabEditorState) =
+            selectorDropTarget(state = state.dragAndDropSelectorState)
     }
 }
 
 internal val ProfileTab.id
-    get() = when (this) {
-        is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> uri.uri
-        else -> this::class.toString()
-    }
+    get() =
+        when (this) {
+            is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> uri.uri
+            else -> this::class.toString()
+        }

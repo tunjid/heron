@@ -26,19 +26,14 @@ import kotlinx.serialization.Transient
 data class State(
     val avatarSharedElementKey: String? = null,
     val profile: Profile?,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 sealed class Action(val key: String) {
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 }

@@ -16,89 +16,61 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RockskyDao {
 
-    @Transaction
-    @Upsert
-    suspend fun upsertAlbums(
-        entities: List<RockskyAlbumEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertAlbums(entities: List<RockskyAlbumEntity>)
 
-    @Transaction
-    @Upsert
-    suspend fun upsertArtists(
-        entities: List<RockskyArtistEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertArtists(entities: List<RockskyArtistEntity>)
 
-    @Transaction
-    @Upsert
-    suspend fun upsertTracks(
-        entities: List<RockskyTrackEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertTracks(entities: List<RockskyTrackEntity>)
 
-    @Transaction
-    @Upsert
-    suspend fun upsertScrobbles(
-        entities: List<RockskyScrobbleEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertScrobbles(entities: List<RockskyScrobbleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreArtists(
-        entities: List<RockskyArtistEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreArtists(entities: List<RockskyArtistEntity>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreAlbums(
-        entities: List<RockskyAlbumEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreAlbums(entities: List<RockskyAlbumEntity>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreTracks(
-        entities: List<RockskyTrackEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreTracks(entities: List<RockskyTrackEntity>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreScrobbles(
-        entities: List<RockskyScrobbleEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreScrobbles(entities: List<RockskyScrobbleEntity>): List<Long>
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateArtists(
-        entities: List<RockskyArtistEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = { it },
-        insertEntities = ::insertOrIgnoreArtists,
-        updatePartials = ::upsertArtists,
-    )
+    suspend fun insertOrPartiallyUpdateArtists(entities: List<RockskyArtistEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = { it },
+            insertEntities = ::insertOrIgnoreArtists,
+            updatePartials = ::upsertArtists,
+        )
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateAlbums(
-        entities: List<RockskyAlbumEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = { it },
-        insertEntities = ::insertOrIgnoreAlbums,
-        updatePartials = ::upsertAlbums,
-    )
+    suspend fun insertOrPartiallyUpdateAlbums(entities: List<RockskyAlbumEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = { it },
+            insertEntities = ::insertOrIgnoreAlbums,
+            updatePartials = ::upsertAlbums,
+        )
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateTracks(
-        entities: List<RockskyTrackEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = { it },
-        insertEntities = ::insertOrIgnoreTracks,
-        updatePartials = ::upsertTracks,
-    )
+    suspend fun insertOrPartiallyUpdateTracks(entities: List<RockskyTrackEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = { it },
+            insertEntities = ::insertOrIgnoreTracks,
+            updatePartials = ::upsertTracks,
+        )
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateScrobbles(
-        entities: List<RockskyScrobbleEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = { it },
-        insertEntities = ::insertOrIgnoreScrobbles,
-        updatePartials = ::upsertScrobbles,
-    )
+    suspend fun insertOrPartiallyUpdateScrobbles(entities: List<RockskyScrobbleEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = { it },
+            insertEntities = ::insertOrIgnoreScrobbles,
+            updatePartials = ::upsertScrobbles,
+        )
 
     @Query(
         """
@@ -106,7 +78,7 @@ interface RockskyDao {
     WHERE creatorId = :profileId
     ORDER BY COALESCE(playCount, 0) DESC, title ASC
     LIMIT :limit OFFSET :offset
-    """,
+    """
     )
     fun albums(
         profileId: String,
@@ -120,7 +92,7 @@ interface RockskyDao {
     WHERE creatorId = :profileId
     ORDER BY COALESCE(playCount, 0) DESC, title ASC
     LIMIT :limit OFFSET :offset
-    """,
+    """
     )
     fun tracks(
         profileId: String,
@@ -134,7 +106,7 @@ interface RockskyDao {
     WHERE creatorId = :profileId
     ORDER BY COALESCE(playCount, 0) DESC, name ASC
     LIMIT :limit OFFSET :offset
-    """,
+    """
     )
     fun artists(
         profileId: String,
@@ -148,7 +120,7 @@ interface RockskyDao {
         WHERE creatorId = :profileId
         ORDER BY createdAt DESC
         LIMIT :limit OFFSET :offset
-    """,
+    """
     )
     fun scrobbles(
         profileId: String,

@@ -36,9 +36,8 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 
 @Stable
-internal class PaneNestedNavigationState internal constructor(
-    val paneScaffoldState: PaneScaffoldState,
-) {
+internal class PaneNestedNavigationState
+internal constructor(val paneScaffoldState: PaneScaffoldState) {
     internal var key: PaneScaffoldState.NestedNavigationKey? by mutableStateOf(null)
 
     internal class NestedNavigationEventInfo : NavigationEventInfo()
@@ -61,9 +60,7 @@ fun <T : PaneScaffoldState.NestedNavigationKey> PaneScaffoldState.NestedNavigati
         targetState = key,
         transitionSpec = transitionSpec,
         content = { currentKey ->
-            saveableStateHolder.SaveableStateProvider(
-                key = currentKey.toString(),
-            ) {
+            saveableStateHolder.SaveableStateProvider(key = currentKey.toString()) {
                 content(currentKey)
             }
         },
@@ -71,15 +68,15 @@ fun <T : PaneScaffoldState.NestedNavigationKey> PaneScaffoldState.NestedNavigati
 }
 
 @Composable
-fun PaneScaffoldState.NestedNavigationEventHandler(
-    onBackCompleted: () -> Unit,
-) {
+fun PaneScaffoldState.NestedNavigationEventHandler(onBackCompleted: () -> Unit) {
     NavigationBackHandler(
-        state = rememberNavigationEventState(
-            currentInfo = remember(nestedNavigationState.key) {
-                PaneNestedNavigationState.NestedNavigationEventInfo()
-            },
-        ),
+        state =
+            rememberNavigationEventState(
+                currentInfo =
+                    remember(nestedNavigationState.key) {
+                        PaneNestedNavigationState.NestedNavigationEventInfo()
+                    }
+            ),
         isBackEnabled = nestedNavigationState.key?.isRoot == false,
         onBackCompleted = onBackCompleted,
     )

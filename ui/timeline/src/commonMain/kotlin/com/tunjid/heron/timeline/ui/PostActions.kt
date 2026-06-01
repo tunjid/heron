@@ -59,22 +59,16 @@ sealed interface PostAction {
 
     sealed interface Options : PostAction
 
-    data class OfReply(
-        val post: Post,
-    ) : Options
+    data class OfReply(val post: Post) : Options
 
     data class OfInteraction(
         val interaction: Post.Interaction,
         val viewerStats: Post.ViewerStats?,
     ) : Options
 
-    data class OfMetadata(
-        val metadata: PostMetadata,
-    ) : Options
+    data class OfMetadata(val metadata: PostMetadata) : Options
 
-    data class OfMore(
-        val post: Post,
-    ) : Options
+    data class OfMore(val post: Post) : Options
 }
 
 @Stable

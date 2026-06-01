@@ -71,35 +71,40 @@ sealed class ProfileFabState(
     val icon: ImageVector,
 ) {
 
-    data object SignedOut : ProfileFabState(
-        text = CommonStrings.sign_in,
-        icon = Icons.AutoMirrored.Rounded.Login,
-    )
+    data object SignedOut :
+        ProfileFabState(
+            text = CommonStrings.sign_in,
+            icon = Icons.AutoMirrored.Rounded.Login,
+        )
 
     sealed class SignedIn(
         text: StringResource,
         icon: ImageVector,
     ) : ProfileFabState(text, icon) {
 
-        data object Feed : SignedIn(
-            text = CommonStrings.feed_generator_create,
-            icon = Icons.Rounded.Add,
-        )
+        data object Feed :
+            SignedIn(
+                text = CommonStrings.feed_generator_create,
+                icon = Icons.Rounded.Add,
+            )
 
-        data object Edit : SignedIn(
-            text = Res.string.post,
-            icon = Icons.Rounded.Edit,
-        )
+        data object Edit :
+            SignedIn(
+                text = Res.string.post,
+                icon = Icons.Rounded.Edit,
+            )
 
-        data object Mention : SignedIn(
-            text = Res.string.mention,
-            icon = Icons.Rounded.AlternateEmail,
-        )
+        data object Mention :
+            SignedIn(
+                text = Res.string.mention,
+                icon = Icons.Rounded.AlternateEmail,
+            )
 
-        data object Writing : SignedIn(
-            text = Res.string.write_something,
-            icon = Icons.Rounded.Edit,
-        )
+        data object Writing :
+            SignedIn(
+                text = Res.string.write_something,
+                icon = Icons.Rounded.Edit,
+            )
     }
 }
 
@@ -110,26 +115,27 @@ private data class WritingItem(
     val matchesParentWidth: Boolean,
 ) {
     companion object {
-        val items = listOf(
-            WritingItem(
-                icon = Icons.Rounded.RssFeed,
-                stringRes = Res.string.import_rss_blog,
-                url = HeronImportBlog,
-                matchesParentWidth = false,
-            ),
-            WritingItem(
-                icon = AtmosphereIcons.Leaflet,
-                stringRes = Res.string.publish_with_leaflet,
-                url = LeafletPage,
-                matchesParentWidth = true,
-            ),
-            WritingItem(
-                icon = AtmosphereIcons.Pckt,
-                stringRes = Res.string.publish_with_pckt,
-                url = PcktPage,
-                matchesParentWidth = true,
-            ),
-        )
+        val items =
+            listOf(
+                WritingItem(
+                    icon = Icons.Rounded.RssFeed,
+                    stringRes = Res.string.import_rss_blog,
+                    url = HeronImportBlog,
+                    matchesParentWidth = false,
+                ),
+                WritingItem(
+                    icon = AtmosphereIcons.Leaflet,
+                    stringRes = Res.string.publish_with_leaflet,
+                    url = LeafletPage,
+                    matchesParentWidth = true,
+                ),
+                WritingItem(
+                    icon = AtmosphereIcons.Pckt,
+                    stringRes = Res.string.publish_with_pckt,
+                    url = PcktPage,
+                    matchesParentWidth = true,
+                ),
+            )
     }
 }
 
@@ -150,68 +156,62 @@ fun PaneScaffoldState.ProfileFab(
         modifier = modifier,
         targetState = isExpanded,
     ) { showOptions ->
-        if (showOptions) Surface(
-            modifier = Modifier
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = WritingsFabSharedElementKey,
+        if (showOptions)
+            Surface(
+                modifier =
+                    Modifier.sharedBounds(
+                        sharedContentState =
+                            rememberSharedContentState(key = WritingsFabSharedElementKey),
+                        animatedVisibilityScope = this@AnimatedContent,
                     ),
-                    animatedVisibilityScope = this@AnimatedContent,
-                ),
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 6.dp,
-            shadowElevation = 6.dp,
-            content = {
-                val uriHandler = LocalUriHandler.current
-                SameWidthColumn(
-                    modifier = Modifier
-                        .wrapContentWidth(),
-                ) {
-                    WritingItem.items.forEach { item ->
-                        // Items with `matchesParentWidth` will match the
-                        // width of the container, which will be the width
-                        // of the item without `matchesParentWidth`
-                        WritingsOptionItem(
-                            modifier = Modifier
-                                .ifTrue(
-                                    predicate = item.matchesParentWidth,
-                                    block = Modifier::fillMaxWidth,
-                                ),
-                            icon = item.icon,
-                            text = stringResource(item.stringRes),
-                            onClick = {
-                                isExpanded = false
-                                uriHandler.openUri(
-                                    item.url.withHandleHint(profileHandle),
-                                )
-                            },
-                        )
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                content = {
+                    val uriHandler = LocalUriHandler.current
+                    SameWidthColumn(modifier = Modifier.wrapContentWidth()) {
+                        WritingItem.items.forEach { item ->
+                            // Items with `matchesParentWidth` will match the
+                            // width of the container, which will be the width
+                            // of the item without `matchesParentWidth`
+                            WritingsOptionItem(
+                                modifier =
+                                    Modifier.ifTrue(
+                                        predicate = item.matchesParentWidth,
+                                        block = Modifier::fillMaxWidth,
+                                    ),
+                                icon = item.icon,
+                                text = stringResource(item.stringRes),
+                                onClick = {
+                                    isExpanded = false
+                                    uriHandler.openUri(item.url.withHandleHint(profileHandle))
+                                },
+                            )
+                        }
                     }
-                }
-            },
-        )
-        else PaneFab(
-            modifier = Modifier
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = WritingsFabSharedElementKey,
+                },
+            )
+        else
+            PaneFab(
+                modifier =
+                    Modifier.sharedBounds(
+                        sharedContentState =
+                            rememberSharedContentState(key = WritingsFabSharedElementKey),
+                        animatedVisibilityScope = this@AnimatedContent,
                     ),
-                    animatedVisibilityScope = this@AnimatedContent,
-                ),
-            text = stringResource(state.text),
-            icon = state.icon,
-            expanded = fabExpanded,
-            onClick = {
-                when (state) {
-                    ProfileFabState.SignedOut,
-                    ProfileFabState.SignedIn.Feed,
-                    ProfileFabState.SignedIn.Edit,
-                    ProfileFabState.SignedIn.Mention,
-                    -> onStateClicked(state)
-                    ProfileFabState.SignedIn.Writing -> isExpanded = true
-                }
-            },
-        )
+                text = stringResource(state.text),
+                icon = state.icon,
+                expanded = fabExpanded,
+                onClick = {
+                    when (state) {
+                        ProfileFabState.SignedOut,
+                        ProfileFabState.SignedIn.Feed,
+                        ProfileFabState.SignedIn.Edit,
+                        ProfileFabState.SignedIn.Mention -> onStateClicked(state)
+                        ProfileFabState.SignedIn.Writing -> isExpanded = true
+                    }
+                },
+            )
     }
 }
 
@@ -223,13 +223,14 @@ private fun WritingsOptionItem(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(
-                vertical = 8.dp,
-                horizontal = 16.dp,
-            )
-            .heightIn(min = 32.dp),
+        modifier =
+            modifier
+                .clickable(onClick = onClick)
+                .padding(
+                    vertical = 8.dp,
+                    horizontal = 16.dp,
+                )
+                .heightIn(min = 32.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = {
@@ -271,9 +272,8 @@ fun SameWidthColumn(
     }
 }
 
-private fun String.withHandleHint(
-    handle: ProfileHandle?,
-) = if (handle != null) "$this?login_hint=${handle.id}" else this
+private fun String.withHandleHint(handle: ProfileHandle?) =
+    if (handle != null) "$this?login_hint=${handle.id}" else this
 
 private const val HeronImportBlog = "https://heron.tunji.dev/import/writing"
 private const val LeafletPage = "https://leaflet.pub/home"

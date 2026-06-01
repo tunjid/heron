@@ -64,9 +64,7 @@ import heron.ui.core.generated.resources.dismiss
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun NoAccountButton(
-    modifier: Modifier = Modifier,
-) {
+fun NoAccountButton(modifier: Modifier = Modifier) {
     var showNoAccountDialog by remember { mutableStateOf(false) }
 
     TextButton(
@@ -75,10 +73,11 @@ fun NoAccountButton(
         content = {
             val contentDescription = stringResource(Res.string.no_account_help_content_description)
             Row(
-                modifier = Modifier.semantics {
-                    this.role = Role.Button
-                    this.contentDescription = contentDescription
-                },
+                modifier =
+                    Modifier.semantics {
+                        this.role = Role.Button
+                        this.contentDescription = contentDescription
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -90,37 +89,31 @@ fun NoAccountButton(
             }
         },
     )
-    if (showNoAccountDialog) NoAccountDialog {
-        showNoAccountDialog = false
-    }
+    if (showNoAccountDialog)
+        NoAccountDialog {
+            showNoAccountDialog = false
+        }
 }
 
 @Composable
-private fun NoAccountDialog(
-    onDismiss: () -> Unit,
-) {
+private fun NoAccountDialog(onDismiss: () -> Unit) {
     var selectedServer by remember {
         mutableStateOf(AtProtoServer)
     }
     SimpleDialog(
         onDismissRequest = onDismiss,
         title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.no_account_dialog_title),
-            )
+            SimpleDialogTitle(text = stringResource(Res.string.no_account_dialog_title))
         },
         text = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SimpleDialogText(
-                    text = stringResource(Res.string.no_account_dialog_details),
-                )
+                SimpleDialogText(text = stringResource(Res.string.no_account_dialog_details))
 
                 Row(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     LearnMoreServers.forEach { server ->
@@ -130,13 +123,13 @@ private fun NoAccountDialog(
                             },
                             content = {
                                 Icon(
-                                    modifier = Modifier
-                                        .size(30.dp),
+                                    modifier = Modifier.size(30.dp),
                                     imageVector = server.logo,
                                     contentDescription = stringResource(server.stringResource),
                                     tint =
-                                    if (selectedServer == server) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline,
+                                        if (selectedServer == server)
+                                            MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outline,
                                 )
                             },
                         )
@@ -159,10 +152,11 @@ private fun NoAccountDialog(
                 },
             ) { server ->
                 PrimaryDialogButton(
-                    text = stringResource(
-                        Res.string.learn_more,
-                        stringResource(server.stringResource),
-                    ),
+                    text =
+                        stringResource(
+                            Res.string.learn_more,
+                            stringResource(server.stringResource),
+                        ),
                     onClick = {
                         runCatching {
                             uriHandler.openUri(server.webPage())
@@ -174,12 +168,13 @@ private fun NoAccountDialog(
     )
 }
 
-private fun Server.webPage(): String = when (this) {
-    Server.BlueSky -> "https://bsky.social"
-    Server.BlackSky -> "https://blacksky.community"
-    Server.EuroSky -> "https://eurosky.tech"
-    Server.Pckt -> "https://pckt.blog"
-    else -> endpoint
-}
+private fun Server.webPage(): String =
+    when (this) {
+        Server.BlueSky -> "https://bsky.social"
+        Server.BlackSky -> "https://blacksky.community"
+        Server.EuroSky -> "https://eurosky.tech"
+        Server.Pckt -> "https://pckt.blog"
+        else -> endpoint
+    }
 
 private val LearnMoreServers = listOf(AtProtoServer) + Server.KnownServers

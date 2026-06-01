@@ -32,12 +32,13 @@ fun ModerationItem(
     onModerationSettingsClicked: () -> Unit,
 ) {
     SettingsItem(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                onModerationSettingsClicked()
-            }
-            .settingsItemPaddingAndMinHeight(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable {
+                    onModerationSettingsClicked()
+                }
+                .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.moderation),
         icon = Icons.Rounded.Shield,
     )

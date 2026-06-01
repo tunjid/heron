@@ -69,14 +69,11 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/settings"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
 @BindingContainer
 object SettingsNavigationBindings {
@@ -104,97 +101,96 @@ class SettingsBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry<Route>(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: SettingsStateHolder = viewModel<ActualSettingsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
-
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.settings),
-                            )
-                        },
-                        onBackPressed = {
-                            if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                                stateHolder.accept(
-                                    if (state.section == Section.Main) Action.Navigate.Pop
-                                    else Action.UpdateSection(Section.Main),
-                                )
-                            }
-                        },
-                    )
-                },
-                navigationBar = {
-                    if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                        PaneNavigationBar(
-                            modifier = Modifier.offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
+            },
+            render = { route ->
+                val stateHolder: SettingsStateHolder =
+                    viewModel<ActualSettingsViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
                         )
                     }
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    SettingsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
+                val state by stateHolder.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            paneScaffoldState.NestedNavigationEventHandler {
-                stateHolder.accept(Action.UpdateSection(Section.Main))
-            }
-        },
-    )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
+
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
+                    },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                AppBarTitle(title = stringResource(Res.string.settings))
+                            },
+                            onBackPressed = {
+                                if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                                    stateHolder.accept(
+                                        if (state.section == Section.Main) Action.Navigate.Pop
+                                        else Action.UpdateSection(Section.Main)
+                                    )
+                                }
+                            },
+                        )
+                    },
+                    navigationBar = {
+                        if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                            PaneNavigationBar(
+                                modifier =
+                                    Modifier.offset {
+                                        bottomNavigationNestedScrollConnection.offset.round()
+                                    }
+                            )
+                        }
+                    },
+                    navigationRail = {
+                        PaneNavigationRail()
+                    },
+                    content = { paddingValues ->
+                        SettingsScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                            modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+
+                paneScaffoldState.NestedNavigationEventHandler {
+                    stateHolder.accept(Action.UpdateSection(Section.Main))
+                }
+            },
+        )
 }

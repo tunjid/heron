@@ -39,13 +39,11 @@ internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
     if (currentCursor == Cursor.Pending) return@flow
 
     runCatchingWithMonitoredNetworkRetry {
-        currentRequestWithNextCursor()
-    }
+            currentRequestWithNextCursor()
+        }
         .getOrNull()
         ?.let { response ->
-            response.nextCursor()
-                ?.let(Cursor::Next)
-                ?.let { emit(it) }
+            response.nextCursor()?.let(Cursor::Next)?.let { emit(it) }
             onResponse(response)
         }
 }
