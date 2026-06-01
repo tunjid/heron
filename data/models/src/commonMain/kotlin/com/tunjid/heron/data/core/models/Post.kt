@@ -45,13 +45,13 @@ data class Post(
     val record: Record?,
     val viewerStats: ViewerStats?,
     val labels: List<Label>,
-    val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
     @Deprecated(
         message = "Use embeddedRecords / Post.primaryEmbeddedRecord",
         replaceWith = ReplaceWith("primaryEmbeddedRecord"),
     )
     val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable? = null,
     val viewerState: ProfileViewerState? = null,
+    val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
 ) : UrlEncodableModel,
     Record,
     Record.Embeddable {
