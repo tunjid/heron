@@ -51,6 +51,8 @@ import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
+import com.tunjid.heron.timeline.di.SheetBindings
+import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -95,6 +97,7 @@ interface AppGraph {
             @Includes standardPublicationBindings: StandardPublicationBindings,
             @Includes standardSubscriptionBindings: StandardSubscriptionBindings,
             @Includes settingsBindings: SettingsBindings,
+            @Includes sheetBindings: SheetBindings,
         ): AppGraph
     }
 
@@ -112,6 +115,7 @@ interface AppGraph {
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
         databaseCleanup: DatabaseCleanup,
+        sheetInitializer: SheetsViewModelInitializers,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -119,6 +123,7 @@ interface AppGraph {
         notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
+        sheetsViewModelInitializers = sheetInitializer,
     )
 
     val appState: AppState
