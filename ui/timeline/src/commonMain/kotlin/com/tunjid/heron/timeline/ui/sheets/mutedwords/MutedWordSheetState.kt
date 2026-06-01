@@ -160,13 +160,19 @@ private fun MutedWordsScreen(
 
     val state by stateHolder.state.collectAsStateWithLifecycle()
 
-    // stateHolder.state.value reads the live StateFlow value,
-    // avoiding stale capture from the time DisposableEffect was set up
+    val initialMutedWords = remember { androidx.compose.runtime.mutableStateOf<List<MutedWordPreference>?>(null) }
+    if (state.preferencesLoaded && initialMutedWords.value == null) {
+        initialMutedWords.value = state.mutedWords
+    }
+
     DisposableEffect(Unit) {
         onDispose {
-            stateHolder.accept(
-                MutedWordsAction.UpdateMutedWord(stateHolder.state.value.mutedWords),
-            )
+            val currentWords = stateHolder.state.value.mutedWords
+            if (initialMutedWords.value != null && initialMutedWords.value != currentWords) {
+                stateHolder.accept(
+                    MutedWordsAction.UpdateMutedWord(currentWords),
+                )
+            }
         }
     }
 
