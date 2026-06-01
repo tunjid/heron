@@ -423,7 +423,7 @@ internal class OfflinePostRepository @Inject constructor(
             )
                 .distinctUntilChangedMapNotNull {
                     it.firstOrNull()?.asExternalModel(
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     )
                 }
         }

@@ -56,6 +56,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isFollowing
 import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.models.offset
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericId
@@ -681,7 +682,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 associatedPost = it.entity.associatedPostUri
                     ?.let(urisToPosts::get)
                     ?.asExternalModel(
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     ),
             )
         }
@@ -725,8 +726,8 @@ private fun Post.isReply(
 private fun Post.isQuote(
     signedInProfileId: ProfileId?,
 ): Boolean {
-    val embeddedRecord = embeddedRecord
-    return embeddedRecord is Post && embeddedRecord.author.did == signedInProfileId
+    val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+    return records.any { it is Post && it.author.did == signedInProfileId }
 }
 
 private fun Post.isMention(

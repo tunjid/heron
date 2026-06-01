@@ -127,7 +127,7 @@ interface State {
                         record = null,
                         viewerStats = null,
                         labels = emptyList(),
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     ),
                 ),
             ),

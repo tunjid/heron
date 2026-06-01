@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isMuted
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -113,6 +114,13 @@ internal class MutableTimelineItemCreationContext(
     ): Boolean = with(post) {
         if (viewerState.isMuted) return true
 
+        val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+        if (
+            records.any { embedded ->
+                embedded is Post && isMuted(embedded)
+            }
+        ) return true
+
         val record = this.record ?: return false
         if (preferences.mutedWordPreferences.isEmpty()) return false
 
@@ -146,10 +154,7 @@ internal class MutableTimelineItemCreationContext(
                 }
             }
         }
-        return when (val embedded = embeddedRecord) {
-            is Post -> isMuted(embedded)
-            else -> false
-        }
+        return@with false
     }
 
     /**
