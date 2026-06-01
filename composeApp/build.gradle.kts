@@ -93,6 +93,7 @@ kotlin {
             implementation(project(":feature:standard-subscription"))
             implementation(project(":feature:splash"))
             implementation(project(":ui:media"))
+            implementation(project(":ui:timeline"))
 
             implementation(libs.androidx.room.runtime)
 
