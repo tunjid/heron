@@ -121,7 +121,7 @@ internal fun PostView.post(
         )
         else null
 
-    val embeddedRecords = listOfNotNull(quotedPost ?: nonPostEmbeddedRecord())
+    val embeddedRecords = listOfNotNull(quotedPost, nonPostEmbeddedRecord())
 
     return post(
         postEntity = postEntity,

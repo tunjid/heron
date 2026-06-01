@@ -114,6 +114,13 @@ internal class MutableTimelineItemCreationContext(
     ): Boolean = with(post) {
         if (viewerState.isMuted) return true
 
+        val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+        if (
+            records.any { embedded ->
+                embedded is Post && isMuted(embedded)
+            }
+        ) return true
+
         val record = this.record ?: return false
         if (preferences.mutedWordPreferences.isEmpty()) return false
 
@@ -147,10 +154,7 @@ internal class MutableTimelineItemCreationContext(
                 }
             }
         }
-        val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
-        return records.any { embedded ->
-            embedded is Post && isMuted(embedded)
-        }
+        return@with false
     }
 
     /**
