@@ -45,7 +45,7 @@ class MutedWordsViewModel(
 ) : ViewModel(viewModelScope = scope),
     MutedWordsStateHolder by scope.actionStateFlowMutator(
         initialState = MutedWordsState(),
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Lazily,
         inputs = listOf(
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
@@ -74,13 +74,16 @@ private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MutedWordsState>> =
     userDataRepository.preferences
-        .take(1) // only seed on first load, never overwrite local edits
+        .take(1)
         .mapToMutation {
-            copy(mutedWords = it.mutedWordPreferences)
+            copy(
+                mutedWords = it.mutedWordPreferences,
+                preferencesLoaded = true,
+            )
         }
 
 private fun Flow<MutedWordsAction.UpdateNewWord>.updateNewWordMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(newWord = it.value) }
+    mapToMutation { copy(newWord = it.value, error = null) }
 
 private fun Flow<MutedWordsAction.UpdateDuration>.updateDurationMutations(): Flow<Mutation<MutedWordsState>> =
     mapToMutation { copy(newWordDuration = it.duration) }
@@ -107,16 +110,17 @@ private fun Flow<MutedWordsAction.ResetErrors>.resetErrorsMutations(): Flow<Muta
 
 private fun Flow<MutedWordsAction.AddMutedWord>.addWordMutations(): Flow<Mutation<MutedWordsState>> =
     mapToMutation {
-        if (newWord.isBlank()) return@mapToMutation this
+        val trimmedWord = newWord.trim()
+        if (trimmedWord.isBlank()) return@mapToMutation this
 
-        if (mutedWords.any { it.value.contentEquals(newWord, ignoreCase = true) }) {
+        if (mutedWords.any { it.value.contentEquals(trimmedWord, ignoreCase = true) }) {
             return@mapToMutation copy(error = "Word already muted")
         }
 
         val expiresAt = newWordDuration?.let { Clock.System.now().plus(it) }
         copy(
             mutedWords = mutedWords + MutedWordPreference(
-                value = newWord,
+                value = trimmedWord,
                 targets = newWordTargets.map { MutedWordPreference.Target(it) },
                 actorTarget = if (newWordExcludeNonFollowers)
                     MutedWordPreference.Target("non_followers") else null,
