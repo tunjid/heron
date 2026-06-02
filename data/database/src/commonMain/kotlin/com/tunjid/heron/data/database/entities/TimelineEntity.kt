@@ -22,9 +22,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import kotlin.time.Instant
 
 @Entity(
@@ -110,6 +112,16 @@ data class TimelineItemEntity(
         val indexedAt: Instant,
     )
 }
+
+data class PopulatedTimelineItemEntity(
+    @Embedded
+    val entity: TimelineItemEntity,
+    @Relation(
+        parentColumn = "postUri",
+        entityColumn = "postUri",
+    )
+    val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+)
 
 internal fun TimelineItemEntity.withoutSort() = TimelineItemEntity.WithoutSort(
     id = id,

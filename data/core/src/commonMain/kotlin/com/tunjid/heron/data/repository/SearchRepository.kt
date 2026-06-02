@@ -37,16 +37,15 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.canRequestData
-import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
@@ -55,7 +54,8 @@ import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.post
+import com.tunjid.heron.data.network.models.blueskyEmbeddedRecords
+import com.tunjid.heron.data.network.models.externalEmbeddedRecordUris
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -187,22 +187,19 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
             }
 
-            val posts = response.posts.map { postView ->
-                postView.post(signedInProfileId)
-            }
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
             // Using the network call as a base, observe the db for user interactions
             recordResolver.timelineItems(
-                items = posts,
+                items = response.posts,
                 signedInProfileId = signedInProfileId,
-                postUri = Post::uri,
-                associatedRecordUris = {
-                    it.embeddedRecords
+                postUri = { PostUri(it.uri.atUri) },
+                associatedRecordUris = { postView ->
+                    postView.blueskyEmbeddedRecords(
+                        viewingProfileId = signedInProfileId,
+                    )
                         .map(Record.Embeddable::embeddableRecordUri)
-                        .ifEmpty {
-                            listOfNotNull(it.primaryEmbeddedRecord?.embeddableRecordUri)
-                        }
+                        .plus(postView.externalEmbeddedRecordUris())
                 },
                 associatedProfileIds = {
                     emptyList()
@@ -212,10 +209,10 @@ internal class OfflineSearchRepository @Inject constructor(
                     if (isMuted(post)) return@block
                     push(
                         TimelineItem.Single(
-                            id = item.uri.uri,
+                            id = item.uri.atUri,
                             post = post,
                             isMuted = false,
-                            threadGate = threadGate(item.uri),
+                            threadGate = threadGate(PostUri(item.uri.atUri)),
                             appliedLabels = appliedLabels,
                             signedInProfileId = signedInProfileId,
                         ),

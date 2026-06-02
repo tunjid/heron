@@ -22,6 +22,7 @@ import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
+import com.tunjid.heron.data.network.models.externalAssociatedView
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
@@ -46,6 +47,12 @@ internal fun MultipleEntitySaver.add(
         associatePostEmbeds(
             postEntity = postEntity,
             embedEntity = embedEntity,
+        )
+    }
+    postView.externalAssociatedView()?.let { externalView ->
+        addExternalAssociatedRecords(
+            externalView = externalView,
+            postUri = postEntity.uri,
         )
     }
 

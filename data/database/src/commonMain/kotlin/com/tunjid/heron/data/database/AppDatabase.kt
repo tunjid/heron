@@ -75,6 +75,8 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -106,13 +108,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 43,
+    version = 44,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
         ImageEntity::class,
         VideoEntity::class,
         PostExternalEmbedEntity::class,
+        PostExternalAssociatedRecordEntity::class,
+        PostExternalAssociatedProfilesEntity::class,
         PostImageEntity::class,
         PostVideoEntity::class,
         PostPostEntity::class,
@@ -241,6 +245,9 @@ import kotlinx.coroutines.IO
         // Add ProfileAtmosphereAppEntity
         AutoMigration(from = 41, to = 42),
         // Migration 42-43 is a manual migration
+        // Add standard-site external embed support: PostExternalAssociatedRecordEntity,
+        // PostExternalAssociatedProfilesEntity, and readingTime/createdAt/updatedAt on externalEmbeds
+        AutoMigration(from = 43, to = 44),
     ],
     exportSchema = true,
 )

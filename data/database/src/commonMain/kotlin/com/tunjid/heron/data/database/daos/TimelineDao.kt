@@ -23,6 +23,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.tunjid.heron.data.database.entities.PopulatedTimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.fetchedAtPartial
@@ -68,6 +69,7 @@ interface TimelineDao {
         entities: List<TimelineItemEntity.WithoutSort>,
     )
 
+    @Transaction
     @Query(
         """
             SELECT * FROM timelineItems
@@ -105,7 +107,7 @@ interface TimelineDao {
         hideReplies: Boolean,
         hideReposts: Boolean,
         hideQuotePosts: Boolean,
-    ): Flow<List<TimelineItemEntity>>
+    ): Flow<List<PopulatedTimelineItemEntity>>
 
     @Query(
         """

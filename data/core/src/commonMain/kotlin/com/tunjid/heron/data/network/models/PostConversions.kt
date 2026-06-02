@@ -102,6 +102,32 @@ internal fun PostView.post(
     viewingProfileId: ProfileId?,
 ): Post {
     val postEntity = postEntity()
+    return post(
+        postEntity = postEntity,
+        profileEntity = profileEntity(),
+        embeds = embedEntities(),
+        viewerStateEntity =
+        if (viewingProfileId == null) null
+        else author.profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+        ),
+        viewerStatisticsEntity = viewer
+            ?.postViewerStatisticsEntity(
+                postUri = postEntity.uri,
+                viewingProfileId = viewingProfileId,
+            ),
+        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
+        // It's not worth extracting non bluesky embedded records here as they will be missing
+        // metadata from joins. These values will be seen when the db is observed.
+        embeddedRecords = blueskyEmbeddedRecords(
+            viewingProfileId = viewingProfileId,
+        ),
+    )
+}
+
+internal fun PostView.blueskyEmbeddedRecords(
+    viewingProfileId: ProfileId?,
+): List<Record.Embeddable> {
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileView = quotedPostProfileView()
 
@@ -121,26 +147,40 @@ internal fun PostView.post(
         )
         else null
 
-    val embeddedRecords = listOfNotNull(quotedPost, nonPostEmbeddedRecord())
-
-    return post(
-        postEntity = postEntity,
-        profileEntity = profileEntity(),
-        embeds = embedEntities(),
-        viewerStateEntity =
-        if (viewingProfileId == null) null
-        else author.profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-        ),
-        viewerStatisticsEntity = viewer
-            ?.postViewerStatisticsEntity(
-                postUri = postEntity.uri,
-                viewingProfileId = viewingProfileId,
-            ),
-        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
-        embeddedRecords = embeddedRecords,
+    val embeddedRecords = listOfNotNull(
+        quotedPost,
+        nonPostEmbeddedRecord(),
     )
+    return embeddedRecords
 }
+
+internal fun PostView.externalEmbeddedRecordUris() = when (val embed = embed) {
+    is PostViewEmbedUnion.ExternalView ->
+        embed.value
+            .external
+            .associatedRefs
+            ?.map { it.uri }
+            .orEmpty()
+    is PostViewEmbedUnion.ImagesView -> emptyList()
+    is PostViewEmbedUnion.RecordView -> emptyList()
+    is PostViewEmbedUnion.RecordWithMediaView -> when (val media = embed.value.media) {
+        is RecordWithMediaViewMediaUnion.ExternalView ->
+            media.value
+                .external
+                .associatedRefs
+                ?.map { it.uri }
+                .orEmpty()
+        is RecordWithMediaViewMediaUnion.ImagesView -> emptyList()
+        is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
+        is RecordWithMediaViewMediaUnion.VideoView -> emptyList()
+    }
+    is PostViewEmbedUnion.Unknown -> emptyList()
+    is PostViewEmbedUnion.VideoView -> emptyList()
+    null -> emptyList()
+}
+    .mapNotNull {
+        it.atUri.asEmbeddableRecordUriOrNull()
+    }
 
 private fun post(
     postEntity: PostEntity,
@@ -196,12 +236,7 @@ internal fun PostView.profileEntity(): ProfileEntity =
 internal fun PostView.embedEntities(): List<PostEmbed> =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> listOf(
-            ExternalEmbedEntity(
-                uri = GenericUri(embed.value.external.uri.uri),
-                title = embed.value.external.title,
-                description = embed.value.external.description,
-                thumb = embed.value.external.thumb?.uri?.let(::ImageUri),
-            ),
+            embed.value.external.asExternalEmbedEntity(),
         )
 
         is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
@@ -217,12 +252,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
         is PostViewEmbedUnion.RecordView -> emptyList()
         is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
             is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
-                ExternalEmbedEntity(
-                    uri = GenericUri(mediaEmbed.value.external.uri.uri),
-                    title = mediaEmbed.value.external.title,
-                    description = mediaEmbed.value.external.description,
-                    thumb = mediaEmbed.value.external.thumb?.uri?.let(::ImageUri),
-                ),
+                mediaEmbed.value.external.asExternalEmbedEntity(),
             )
 
             is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {

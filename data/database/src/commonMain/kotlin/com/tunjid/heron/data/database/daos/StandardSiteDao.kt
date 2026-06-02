@@ -286,6 +286,12 @@ interface StandardSiteDao {
         entities: List<StandardDocumentEntity>,
     )
 
+    @Transaction
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreDocuments(
+        entities: List<StandardDocumentEntity>,
+    ): List<Long>
+
     @Query(
         """
             DELETE FROM standardDocuments
