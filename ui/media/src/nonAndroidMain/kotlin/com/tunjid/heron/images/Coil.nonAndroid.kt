@@ -30,24 +30,19 @@ import coil3.ComponentRegistry
 import coil3.PlatformContext
 import kotlinx.coroutines.launch
 
-internal actual fun coil3.Image.renderInto(
-    canvas: Canvas,
-) {
+internal actual fun coil3.Image.renderInto(canvas: Canvas) {
     when (this) {
-        is BitmapImage -> canvas.drawImage(
-            image = bitmap.asComposeImageBitmap(),
-            topLeftOffset = Offset.Zero,
-            paint = DefaultPaint,
-        )
-        else -> draw(
-            canvas = canvas.skiaCanvas,
-        )
+        is BitmapImage ->
+            canvas.drawImage(
+                image = bitmap.asComposeImageBitmap(),
+                topLeftOffset = Offset.Zero,
+                paint = DefaultPaint,
+            )
+        else -> draw(canvas = canvas.skiaCanvas)
     }
 }
 
-fun imageLoader(): ImageLoader = CoilImageLoader.create(
-    context = PlatformContext.INSTANCE,
-)
+fun imageLoader(): ImageLoader = CoilImageLoader.create(context = PlatformContext.INSTANCE)
 
 internal actual fun ComponentRegistry.Builder.addPlatformDecoders() {
     add(AnimatedSkiaImageDecoder.Factory())
@@ -87,11 +82,12 @@ internal actual fun coil3.Image.AnimationEffect() {
 
                     // binarySearch returns index if found, or -(insertionPoint + 1) if not.
                     // The frame to show is the one whose cumulative end time exceeds elapsed.
-                    val frameIndex = if (searchResult >= 0) {
-                        (searchResult + 1).coerceAtMost(cumulative.lastIndex)
-                    } else {
-                        -(searchResult + 1)
-                    }
+                    val frameIndex =
+                        if (searchResult >= 0) {
+                            (searchResult + 1).coerceAtMost(cumulative.lastIndex)
+                        } else {
+                            -(searchResult + 1)
+                        }
 
                     image.currentFrameIndex = frameIndex.coerceIn(0, cumulative.lastIndex)
                 }

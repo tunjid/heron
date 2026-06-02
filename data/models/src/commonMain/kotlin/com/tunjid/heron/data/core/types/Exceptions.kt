@@ -22,57 +22,48 @@ import kotlinx.io.IOException
 
 sealed interface HeronException
 
-class UnresolvableProfileException(
-    profileId: Id.Profile,
-) : IllegalArgumentException("The profile with $profileId is not resolvable"),
-    HeronException
+class UnresolvableProfileException(profileId: Id.Profile) :
+    IllegalArgumentException("The profile with $profileId is not resolvable"), HeronException
 
-class UnresolvableRecordException(
-    uri: RecordUri,
-) : IllegalArgumentException("The record URI $uri is not resolvable"),
-    HeronException
+class UnresolvableRecordException(uri: RecordUri) :
+    IllegalArgumentException("The record URI $uri is not resolvable"), HeronException
 
 class RestrictedProfileException(
     profileId: ProfileId,
     profileViewerState: ProfileViewerState,
-) : IllegalArgumentException("The profile with did $profileId is restricted $profileViewerState"),
+) :
+    IllegalArgumentException("The profile with did $profileId is restricted $profileViewerState"),
     HeronException
 
-class UnknownNotificationException(
-    uri: RecordUri,
-) : IllegalArgumentException("The record URI $uri does not have a known notification"),
+class UnknownNotificationException(uri: RecordUri) :
+    IllegalArgumentException("The record URI $uri does not have a known notification"),
     HeronException
 
-class NotificationFilteredOutException(
-    val reason: Notification.Reason,
-) : IllegalArgumentException("Notification filtered out by user preferences: $reason"),
+class NotificationFilteredOutException(val reason: Notification.Reason) :
+    IllegalArgumentException("Notification filtered out by user preferences: $reason"),
     HeronException
 
-class MutedThreadException(
-    postUri: PostUri,
-) : IllegalArgumentException("The post with URI $postUri has been muted"),
-    HeronException
+class MutedThreadException(postUri: PostUri) :
+    IllegalArgumentException("The post with URI $postUri has been muted"), HeronException
 
 class RecordCreationException(
     profileId: ProfileId,
     collection: String,
-) : IllegalArgumentException("Record creation for $profileId in collection $collection failed"),
+) :
+    IllegalArgumentException("Record creation for $profileId in collection $collection failed"),
     HeronException
 
-class SessionSwitchException(
-    profileId: Id.Profile,
-) : Exception("Unable to switch sessions to $profileId"),
-    HeronException
+class SessionSwitchException(profileId: Id.Profile) :
+    Exception("Unable to switch sessions to $profileId"), HeronException
 
 class UnauthorizedException(
     signedInProfileId: ProfileId,
     profileId: ProfileId,
-) : Exception("Tried to perform an action restricted to $profileId as $signedInProfileId"),
+) :
+    Exception("Tried to perform an action restricted to $profileId as $signedInProfileId"),
     HeronException
 
-class ExpiredSessionException :
-    IOException(),
-    HeronException
+class ExpiredSessionException : IOException(), HeronException
 
 // This is deliberately not an IOException.
 // Otherwise, the retry semantics will kick in.
@@ -80,9 +71,6 @@ class AtProtoException(
     val statusCode: Int,
     val error: String?,
     override val message: String?,
-) : Exception(message),
-    HeronException
+) : Exception(message), HeronException
 
-class InvalidTokenException :
-    Exception("Invalid tokens"),
-    HeronException
+class InvalidTokenException : Exception("Invalid tokens"), HeronException

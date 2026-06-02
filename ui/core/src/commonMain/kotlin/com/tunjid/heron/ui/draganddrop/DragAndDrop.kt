@@ -20,12 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 
-expect fun selectorDragAndDropTransferData(
-    title: String,
-): DragAndDropTransferData
+expect fun selectorDragAndDropTransferData(title: String): DragAndDropTransferData
 
 expect fun DragAndDropEvent.draggedId(): String?
 
-expect fun Modifier.selectorDragAndDropSource(
-    id: String,
-): Modifier
+expect fun Modifier.selectorDragAndDropSource(id: String): Modifier

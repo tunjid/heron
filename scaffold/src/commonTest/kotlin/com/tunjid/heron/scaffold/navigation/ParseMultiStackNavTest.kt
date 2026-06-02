@@ -12,43 +12,49 @@ class ParseMultiStackNavTest {
 
     // Route parser with explicit matchers mirroring real app route patterns.
     // Each matcher maps matched paths back to a simple routeOf(path).
-    private val routeParser = routeParserFrom(
-        *listOf(
-            "/home",
-            "/search",
-            "/messages",
-            "/notifications",
-            "/auth",
-            "/profile/{profileHandleOrId}",
-            "/profile/{profileHandleOrId}/post/{postRecordKey}",
-        ).map { pattern ->
-            urlRouteMatcher(
-                routePattern = pattern,
-                routeMapper = { routeParams: RouteParams ->
-                    routeOf(routeParams.pathAndQueries)
-                },
-            )
-        }.toTypedArray(),
-    )
+    private val routeParser =
+        routeParserFrom(
+            *listOf(
+                    "/home",
+                    "/search",
+                    "/messages",
+                    "/notifications",
+                    "/auth",
+                    "/profile/{profileHandleOrId}",
+                    "/profile/{profileHandleOrId}/post/{postRecordKey}",
+                )
+                .map { pattern ->
+                    urlRouteMatcher(
+                        routePattern = pattern,
+                        routeMapper = { routeParams: RouteParams ->
+                            routeOf(routeParams.pathAndQueries)
+                        },
+                    )
+                }
+                .toTypedArray()
+        )
 
     // region Signed-in user
 
     @Test
     fun signedIn_restores_navigation_with_signedIn_stack_names() {
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf("/home"),
-                listOf("/search"),
-                listOf("/messages"),
-                listOf("/notifications"),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks =
+                    listOf(
+                        listOf("/home"),
+                        listOf("/search"),
+                        listOf("/messages"),
+                        listOf("/notifications"),
+                    ),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = true,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = true,
+            )
 
         assertEquals(
             expected = 4,
@@ -78,17 +84,17 @@ class ParseMultiStackNavTest {
 
     @Test
     fun signedIn_on_auth_route_redirects_to_signedIn_navigation() {
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf(AppStack.Auth.rootRoute.id),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks = listOf(listOf(AppStack.Auth.rootRoute.id)),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = true,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = true,
+            )
 
         // Should redirect to SignedInNavigationState (4 stacks)
         assertEquals(
@@ -108,17 +114,17 @@ class ParseMultiStackNavTest {
     @Test
     fun signedOut_restores_navigation_with_signedOut_stack_names() {
         // Push a profile route on top of /auth to avoid the auth-route redirect guard
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf("/auth", "/profile/alice.bsky.social"),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks = listOf(listOf("/auth", "/profile/alice.bsky.social")),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = false,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = false,
+            )
 
         assertEquals(
             expected = 1,
@@ -138,17 +144,17 @@ class ParseMultiStackNavTest {
     @Test
     fun signedOut_on_auth_root_route_redirects_to_signedIn_navigation() {
         // When the only route is /auth, the guard redirects to SignedInNavigationState
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf(AppStack.Auth.rootRoute.id),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks = listOf(listOf(AppStack.Auth.rootRoute.id)),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = false,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = false,
+            )
 
         // The guard prevents anyone from being restored to the bare auth screen
         assertEquals(
@@ -167,21 +173,24 @@ class ParseMultiStackNavTest {
 
     @Test
     fun guest_restores_navigation_with_signedIn_stack_names() {
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf("/home"),
-                listOf("/search"),
-                listOf("/messages"),
-                listOf("/notifications"),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks =
+                    listOf(
+                        listOf("/home"),
+                        listOf("/search"),
+                        listOf("/messages"),
+                        listOf("/notifications"),
+                    ),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = false,
-            isGuest = true,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = false,
+                isGuest = true,
+            )
 
         // Guest should get SignedInNavigationState template (4 stacks)
         assertEquals(
@@ -208,18 +217,18 @@ class ParseMultiStackNavTest {
 
     @Test
     fun guest_on_auth_route_redirects_to_signedIn_navigation() {
-        val navigation = SavedState.Navigation(
-            activeNav = 0,
-            backStacks = listOf(
-                listOf(AppStack.Auth.rootRoute.id),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 0,
+                backStacks = listOf(listOf(AppStack.Auth.rootRoute.id)),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = false,
-            isGuest = true,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = false,
+                isGuest = true,
+            )
 
         // Should not leave guest on the sign-in screen
         assertEquals(
@@ -234,21 +243,24 @@ class ParseMultiStackNavTest {
 
     @Test
     fun guest_with_deep_navigation_preserves_back_stack() {
-        val navigation = SavedState.Navigation(
-            activeNav = 1,
-            backStacks = listOf(
-                listOf("/home", "/profile/alice.bsky.social/post/3abc123"),
-                listOf("/search", "/profile/bob.bsky.social"),
-                listOf("/messages"),
-                listOf("/notifications"),
-            ),
-        )
+        val navigation =
+            SavedState.Navigation(
+                activeNav = 1,
+                backStacks =
+                    listOf(
+                        listOf("/home", "/profile/alice.bsky.social/post/3abc123"),
+                        listOf("/search", "/profile/bob.bsky.social"),
+                        listOf("/messages"),
+                        listOf("/notifications"),
+                    ),
+            )
 
-        val result = routeParser.parseMultiStackNav(
-            navigation = navigation,
-            isSignedIn = false,
-            isGuest = true,
-        )
+        val result =
+            routeParser.parseMultiStackNav(
+                navigation = navigation,
+                isSignedIn = false,
+                isGuest = true,
+            )
 
         assertEquals(
             expected = 4,

@@ -36,13 +36,15 @@ import sh.christian.ozone.api.Handle
 
 internal interface PdsResolver {
     suspend fun resolve(did: Did): Url?
+
     suspend fun resolveServer(handle: Handle): Server?
 }
 
-internal class PlcDirectoryPdsResolver @Inject constructor(
+internal class PlcDirectoryPdsResolver
+@Inject
+constructor(
     private val httpClient: HttpClient,
-    @param:AppMainScope
-    private val scope: kotlinx.coroutines.CoroutineScope,
+    @param:AppMainScope private val scope: kotlinx.coroutines.CoroutineScope,
 ) : PdsResolver {
 
     private val cache = LinkedHashMap<Did, kotlinx.coroutines.Deferred<Url?>>()
@@ -51,17 +53,22 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
     override suspend fun resolve(did: Did): Url? {
         val deferred = cacheMutex.withLock {
             val existing = cache.remove(did)
-            val deferred = existing ?: scope.async {
-                runCatchingUnlessCancelled {
-                    val responseText = httpClient.get("$PlcDirectoryUrl/${did.did}")
-                        .bodyAsText()
-                    BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
-                        .service
-                        .firstOrNull()
-                        ?.serviceEndpoint
-                        ?.let(::Url)
-                }.getOrNull()
-            }
+            val deferred =
+                existing
+                    ?: scope.async {
+                        runCatchingUnlessCancelled {
+                                val responseText =
+                                    httpClient.get("$PlcDirectoryUrl/${did.did}").bodyAsText()
+                                BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(
+                                        responseText
+                                    )
+                                    .service
+                                    .firstOrNull()
+                                    ?.serviceEndpoint
+                                    ?.let(::Url)
+                            }
+                            .getOrNull()
+                    }
             // Place at the end to mark as most recently used
             cache[did] = deferred
 
@@ -74,39 +81,40 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
         return deferred.await()
     }
 
-    override suspend fun resolveServer(
-        handle: Handle,
-    ): Server? = runCatchingUnlessCancelled {
-        val handleResponse: ResolveHandleResponse = httpClient.get(
-            urlString = "$PublicApiUrl/xrpc/com.atproto.identity.resolveHandle?handle=${handle.handle}",
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.bodyAsText()
-            ?.let(BlueskyJson::decodeFromString)
-            ?: return@runCatchingUnlessCancelled null
+    override suspend fun resolveServer(handle: Handle): Server? =
+        runCatchingUnlessCancelled {
+                val handleResponse: ResolveHandleResponse =
+                    httpClient
+                        .get(
+                            urlString =
+                                "$PublicApiUrl/xrpc/com.atproto.identity.resolveHandle?handle=${handle.handle}"
+                        )
+                        .takeIf { it.status.isSuccess() }
+                        ?.bodyAsText()
+                        ?.let(BlueskyJson::decodeFromString)
+                        ?: return@runCatchingUnlessCancelled null
 
-        val didDoc: SavedState.AuthTokens.DidDoc = httpClient.get(
-            urlString = "$PlcDirectoryUrl/${handleResponse.did.did}",
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.bodyAsText()
-            ?.let(BlueskyJson::decodeFromString)
-            ?: return@runCatchingUnlessCancelled null
+                val didDoc: SavedState.AuthTokens.DidDoc =
+                    httpClient
+                        .get(urlString = "$PlcDirectoryUrl/${handleResponse.did.did}")
+                        .takeIf { it.status.isSuccess() }
+                        ?.bodyAsText()
+                        ?.let(BlueskyJson::decodeFromString)
+                        ?: return@runCatchingUnlessCancelled null
 
-        val endpoint = didDoc.service
-            .firstOrNull()
-            ?.serviceEndpoint ?: return null
+                val endpoint = didDoc.service.firstOrNull()?.serviceEndpoint ?: return null
 
-        Server.KnownServers
-            .firstOrNull { it.endpoint == endpoint }
-            ?: endpoint.takeIf { it.startsWith(Uri.Host.Https.prefix) }
-                ?.let {
-                    Server(
-                        endpoint = it,
-                        supportsOauth = true,
-                    )
-                }
-    }.getOrNull()
+                Server.KnownServers.firstOrNull { it.endpoint == endpoint }
+                    ?: endpoint
+                        .takeIf { it.startsWith(Uri.Host.Https.prefix) }
+                        ?.let {
+                            Server(
+                                endpoint = it,
+                                supportsOauth = true,
+                            )
+                        }
+            }
+            .getOrNull()
 }
 
 private const val PublicApiUrl = "https://public.api.bsky.app"

@@ -32,14 +32,9 @@ internal fun SplashScreen(
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         paneScaffoldState.AppLogo(
-            modifier = Modifier
-                .size(128.dp)
-                .align(Alignment.Center),
+            modifier = Modifier.size(128.dp).align(Alignment.Center),
             presentation = LogoPresentation.Splash,
         )
     }

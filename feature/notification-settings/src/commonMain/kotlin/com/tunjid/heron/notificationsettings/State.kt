@@ -27,34 +27,25 @@ import kotlinx.serialization.Transient
 data class State(
     val notificationPreferences: NotificationPreferences? = null,
     val pendingUpdates: Map<Notification.Reason, NotificationPreferences.Update> = emptyMap(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 fun State.updates() = pendingUpdates.values.toList()
 
 sealed class Action(val key: String) {
 
-    data class UpdateNotificationPreferences(
-        val updates: List<NotificationPreferences.Update>,
-    ) : Action(key = "UpdateNotificationPreferences")
+    data class UpdateNotificationPreferences(val updates: List<NotificationPreferences.Update>) :
+        Action(key = "UpdateNotificationPreferences")
 
-    data class CacheNotificationPreferenceUpdate(
-        val update: NotificationPreferences.Update,
-    ) : Action(key = "CacheNotificationPreferenceUpdate")
+    data class CacheNotificationPreferenceUpdate(val update: NotificationPreferences.Update) :
+        Action(key = "CacheNotificationPreferenceUpdate")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

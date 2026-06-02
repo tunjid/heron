@@ -23,9 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-fun Modifier.chipBackground(
-    backgroundColor: () -> Color,
-) = drawBehind {
+fun Modifier.chipBackground(backgroundColor: () -> Color) = drawBehind {
     val chipHeight = ChipHeight.toPx()
     drawRoundRect(
         color = backgroundColor(),

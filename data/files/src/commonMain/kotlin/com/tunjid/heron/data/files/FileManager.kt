@@ -20,22 +20,13 @@ import com.tunjid.heron.data.core.utilities.File
 import kotlinx.io.Source
 
 interface FileManager {
-    suspend fun cacheWithoutRestrictions(
-        restrictedFile: RestrictedFile,
-    ): File?
+    suspend fun cacheWithoutRestrictions(restrictedFile: RestrictedFile): File?
 
-    suspend fun source(
-        file: File,
-    ): Source
+    suspend fun source(file: File): Source
 
-    suspend fun size(
-        file: File,
-    ): Long
+    suspend fun size(file: File): Long
 
-    suspend fun delete(
-        file: File,
-    )
+    suspend fun delete(file: File)
 }
 
-fun createFileManager(): FileManager =
-    FileKitFileManager()
+fun createFileManager(): FileManager = FileKitFileManager()

@@ -1,5 +1,3 @@
-import java.net.URI
-
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -17,7 +15,9 @@ import java.net.URI
  */
 
 rootProject.name = "heron"
+
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

@@ -94,70 +94,64 @@ fun PaneScaffoldState.PaneFab(
     onClick: () -> Unit,
 ) {
     val density = LocalDensity.current
-    val sharedContentState = rememberSharedContentState(
-        key = FabSharedElementKey,
-    )
+    val sharedContentState = rememberSharedContentState(key = FabSharedElementKey)
     var fabWidth by remember {
         mutableStateOf(DefaultFabSize)
     }
     val clickable = enabled && appState.identityState.isStable
     AnimatedVisibility(
-        modifier = Modifier
-            // Use the enter and exit transition on navigation
-            // level changes if in predictive back.
-            // This prevents the fab from suddenly appearing over content
-            .ifTrue(inPredictiveBack) {
-                animateEnterExit(enterTransition, exitTransition)
-            }
-            .onSizeChanged {
-                if (!splitPaneState.paneAnchorState.hasInteractions) {
-                    fabWidth = with(density) { it.width.toDp() }
+        modifier =
+            Modifier
+                // Use the enter and exit transition on navigation
+                // level changes if in predictive back.
+                // This prevents the fab from suddenly appearing over content
+                .ifTrue(inPredictiveBack) {
+                    animateEnterExit(enterTransition, exitTransition)
                 }
-            }
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
-                renderInOverlay = {
-                    val isVisible = transition.targetState == EnterExitState.Visible
-                    val isVisibleInPredictiveBack = isVisible && inPredictiveBack
-                    (isVisibleInPredictiveBack || isActive) &&
-                        !sharedContentState.isMatchFound &&
-                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
-                },
-            )
-            .constrainedSizePlacement(
-                orientation = Orientation.Horizontal,
-                minSize = fabWidth,
-                atStart = false,
-            ),
+                .onSizeChanged {
+                    if (!splitPaneState.paneAnchorState.hasInteractions) {
+                        fabWidth = with(density) { it.width.toDp() }
+                    }
+                }
+                .renderInSharedTransitionScopeOverlay(
+                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                    renderInOverlay = {
+                        val isVisible = transition.targetState == EnterExitState.Visible
+                        val isVisibleInPredictiveBack = isVisible && inPredictiveBack
+                        (isVisibleInPredictiveBack || isActive) &&
+                            !sharedContentState.isMatchFound &&
+                            navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
+                    },
+                )
+                .constrainedSizePlacement(
+                    orientation = Orientation.Horizontal,
+                    minSize = fabWidth,
+                    atStart = false,
+                ),
         visible = canShowFab,
         // Always use the enter and exit transition
         // on changes to canShowFab
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            val fabAlpha = animateFloatAsState(
-                if (clickable) 1f else 0.6f,
-            )
+            val fabAlpha = animateFloatAsState(if (clickable) 1f else 0.6f)
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
             PaneStickySharedElement(
-                modifier = Modifier
-                    .animateFabSize()
-                    .then(modifier),
+                modifier = Modifier.animateFabSize().then(modifier),
                 sharedContentState = sharedContentState,
                 zIndexInOverlay = UiTokens.fabSharedElementZIndex,
             ) {
                 FloatingActionButton(
-                    modifier = Modifier
-                        .requiredHeight(DefaultFabSize)
-                        .graphicsLayer { alpha = fabAlpha.value },
+                    modifier =
+                        Modifier.requiredHeight(DefaultFabSize).graphicsLayer {
+                            alpha = fabAlpha.value
+                        },
                     onClick = { if (clickable) onClick() },
                     shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
                     content = {
                         Row(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .animateFabSize(),
+                            modifier = Modifier.padding(horizontal = 16.dp).animateFabSize(),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (icon != null) FabIcon(icon)
@@ -202,30 +196,29 @@ private fun FabIcon(icon: ImageVector) {
 }
 
 @Composable
-fun PaneScaffoldState.isFabExpanded(
-    offset: () -> Offset,
-): Boolean {
-    val derivedState = remember(splitPaneState.density) {
-        derivedStateOf {
-            offset().y < with(splitPaneState.density) { DefaultFabSize.toPx() }
+fun PaneScaffoldState.isFabExpanded(offset: () -> Offset): Boolean {
+    val derivedState =
+        remember(splitPaneState.density) {
+            derivedStateOf {
+                offset().y < with(splitPaneState.density) { DefaultFabSize.toPx() }
+            }
         }
-    }
     return derivedState.value
 }
 
 fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
     return if (isMediumScreenWidthOrWider) IntOffset.Zero
-    else IntOffset(
-        x = offset.x.roundToInt(),
-        y = min(
-            offset.y.roundToInt(),
-            with(splitPaneState.density) {
-                UiTokens.bottomNavHeight(
-                    isCompact = prefersCompactBottomNav,
-                ).roundToPx()
-            },
-        ),
-    )
+    else
+        IntOffset(
+            x = offset.x.roundToInt(),
+            y =
+                min(
+                    offset.y.roundToInt(),
+                    with(splitPaneState.density) {
+                        UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav).roundToPx()
+                    },
+                ),
+        )
 }
 
 private data object FabSharedElementKey
@@ -235,10 +228,11 @@ private data object FabSharedElementKey
 // See the following convo for why this is necessary:
 // https://slack-chats.kotlinlang.org/t/507386/is-there-an-animatecontentsize-modifier-that-does-not-clip-t
 private fun Modifier.animateFabSize(
-    animationSpec: FiniteAnimationSpec<IntSize> = spring(
-        stiffness = Spring.StiffnessMediumLow,
-        visibilityThreshold = IntSize.VisibilityThreshold,
-    ),
+    animationSpec: FiniteAnimationSpec<IntSize> =
+        spring(
+            stiffness = Spring.StiffnessMediumLow,
+            visibilityThreshold = IntSize.VisibilityThreshold,
+        ),
     alignment: Alignment = Alignment.TopStart,
     finishedListener: ((initialValue: IntSize, targetValue: IntSize) -> Unit)? = null,
 ): Modifier =
@@ -290,6 +284,7 @@ private class SizeAnimationModifierNode(
             field = value
             lookaheadConstraintsAvailable = true
         }
+
     private var lookaheadConstraintsAvailable: Boolean = false
 
     private fun targetConstraints(default: Constraints) =
@@ -323,25 +318,27 @@ private class SizeAnimationModifierNode(
         measurable: Measurable,
         constraints: Constraints,
     ): MeasureResult {
-        val placeable = if (isLookingAhead) {
-            lookaheadConstraints = constraints
-            measurable.measure(constraints)
-        } else {
-            // Measure with lookahead constraints when available, to avoid unnecessary relayout
-            // in child during the lookahead animation.
-            measurable.measure(targetConstraints(constraints))
-        }
-        val measuredSize = IntSize(placeable.width, placeable.height)
-        val (width, height) = if (isLookingAhead) {
-            lookaheadSize = measuredSize
-            measuredSize
-        } else {
-            animateTo(if (lookaheadSize.isValid) lookaheadSize else measuredSize).let {
-                // Constrain the measure result to incoming constraints, so that parent doesn't
-                // force center this layout.
-                constraints.constrain(it)
+        val placeable =
+            if (isLookingAhead) {
+                lookaheadConstraints = constraints
+                measurable.measure(constraints)
+            } else {
+                // Measure with lookahead constraints when available, to avoid unnecessary relayout
+                // in child during the lookahead animation.
+                measurable.measure(targetConstraints(constraints))
             }
-        }
+        val measuredSize = IntSize(placeable.width, placeable.height)
+        val (width, height) =
+            if (isLookingAhead) {
+                lookaheadSize = measuredSize
+                measuredSize
+            } else {
+                animateTo(if (lookaheadSize.isValid) lookaheadSize else measuredSize).let {
+                    // Constrain the measure result to incoming constraints, so that parent doesn't
+                    // force center this layout.
+                    constraints.constrain(it)
+                }
+            }
         return layout(width, height) {
             val offset =
                 alignment.align(
@@ -354,28 +351,31 @@ private class SizeAnimationModifierNode(
     }
 
     fun animateTo(targetSize: IntSize): IntSize {
-        val data = animData?.apply {
-            // TODO(b/322878517): Figure out a way to seamlessly continue the animation after
-            //  re-attach. Note that in some cases restarting the animation is the correct behavior.
-            val wasInterrupted = (targetSize != anim.value && !anim.isRunning)
+        val data =
+            animData?.apply {
+                // TODO(b/322878517): Figure out a way to seamlessly continue the animation after
+                //  re-attach. Note that in some cases restarting the animation is the correct
+                // behavior.
+                val wasInterrupted = (targetSize != anim.value && !anim.isRunning)
 
-            if (targetSize != anim.targetValue || wasInterrupted) {
-                startSize = anim.value
-                coroutineScope.launch {
-                    val result = anim.animateTo(targetSize, animationSpec)
-                    if (result.endReason == AnimationEndReason.Finished) {
-                        listener?.invoke(startSize, result.endState.value)
+                if (targetSize != anim.targetValue || wasInterrupted) {
+                    startSize = anim.value
+                    coroutineScope.launch {
+                        val result = anim.animateTo(targetSize, animationSpec)
+                        if (result.endReason == AnimationEndReason.Finished) {
+                            listener?.invoke(startSize, result.endState.value)
+                        }
                     }
                 }
             }
-        } ?: AnimData(
-            Animatable(
-                targetSize,
-                IntSize.VectorConverter,
-                IntSize(1, 1),
-            ),
-            targetSize,
-        )
+                ?: AnimData(
+                    Animatable(
+                        targetSize,
+                        IntSize.VectorConverter,
+                        IntSize(1, 1),
+                    ),
+                    targetSize,
+                )
 
         animData = data
         return data.anim.value
@@ -383,8 +383,7 @@ private class SizeAnimationModifierNode(
 }
 
 private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
-    Modifier.Node(),
-    LayoutModifierNode {
+    Modifier.Node(), LayoutModifierNode {
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
         height: Int,
@@ -406,10 +405,8 @@ private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
     ) = measurable.maxIntrinsicHeight(width)
 }
 
-private val DefaultEnterTransition: EnterTransition =
-    slideInVertically(initialOffsetY = { it })
+private val DefaultEnterTransition: EnterTransition = slideInVertically(initialOffsetY = { it })
 
-private val DefaultExitTransition: ExitTransition =
-    slideOutVertically(targetOffsetY = { it * 2 })
+private val DefaultExitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it * 2 })
 
 private val DefaultFabSize = 56.dp

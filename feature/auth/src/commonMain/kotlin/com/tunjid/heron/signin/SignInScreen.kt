@@ -73,10 +73,8 @@ internal fun SignInScreen(
 ) {
     val scrollState = rememberScrollState()
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 56.dp)
-            .verticalScroll(state = scrollState),
+        modifier =
+            modifier.fillMaxSize().padding(horizontal = 56.dp).verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -91,22 +89,20 @@ internal fun SignInScreen(
                 Action.OauthFlowResultAvailable(
                     handle = currentProfileHandle.value,
                     result = result,
-                ),
+                )
             )
         }
 
         state.fields.forEach { field ->
             key(field.id) {
                 AnimatedVisibility(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     visible = state.isVisible(field),
                     enter = EnterTransition,
                     exit = ExitTransition,
                 ) {
                     FormField(
-                        modifier = Modifier
-                            .fillMaxRestrictedWidth(),
+                        modifier = Modifier.fillMaxRestrictedWidth(),
                         field = field,
                         leadingIcon = {
                             LoadingIcon(
@@ -119,51 +115,54 @@ internal fun SignInScreen(
                                 Action.FieldChanged(
                                     id = field.id,
                                     text = newValue,
-                                ),
+                                )
                             )
                         },
                         keyboardActions = {
                             when (it.id) {
-                                Username -> focusManager.moveFocus(
-                                    focusDirection = FocusDirection.Next,
-                                )
+                                Username ->
+                                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
 
-                                Password -> if (state.submitButtonEnabled) {
-                                    actions(state.createSessionAction())
-                                    keyboardController?.hide()
-                                }
+                                Password ->
+                                    if (state.submitButtonEnabled) {
+                                        actions(state.createSessionAction())
+                                        keyboardController?.hide()
+                                    }
                             }
                         },
                     )
 
                     // Try to resolve the initial handle
-                    if (field.id == Username) LaunchedEffect(state.mostRecentSession) {
-                        if (state.mostRecentSession != null && field.value.isNotBlank()) actions(
-                            Action.FieldChanged(
-                                id = Username,
-                                text = field.value,
-                            ),
-                        )
-                    }
+                    if (field.id == Username)
+                        LaunchedEffect(state.mostRecentSession) {
+                            if (state.mostRecentSession != null && field.value.isNotBlank())
+                                actions(
+                                    Action.FieldChanged(
+                                        id = Username,
+                                        text = field.value,
+                                    )
+                                )
+                        }
                 }
             }
         }
 
-        val serverSelectionSheetState = rememberUpdatedServerSelectionState(
-            onServerConfirmed = {
-                actions(Action.SetServer(it))
-            },
-        )
+        val serverSelectionSheetState =
+            rememberUpdatedServerSelectionState(
+                onServerConfirmed = {
+                    actions(Action.SetServer(it))
+                }
+            )
 
         ServerSelection(
-            modifier = Modifier
-                .padding(vertical = 32.dp)
-                .align(Alignment.CenterHorizontally)
-                .widthIn(max = UiTokens.restrictedPaneWidth)
-                .animateBounds(
-                    lookaheadScope = paneScaffoldState,
-                    boundsTransform = paneScaffoldState.childBoundsTransform,
-                ),
+            modifier =
+                Modifier.padding(vertical = 32.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = UiTokens.restrictedPaneWidth)
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
@@ -192,31 +191,31 @@ private fun LoadingIcon(
     field: FormField,
     mostRecentSession: SessionSummary?,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         // Always show the default leading icon
         // in case the avatar does not load
         field.LeadingIcon()
 
         val sessionAvatar = mostRecentSession?.profileAvatar
 
-        val isAvatarForField = field.id == Username &&
-            sessionAvatar != null &&
-            mostRecentSession.profileHandle.id == field.value
+        val isAvatarForField =
+            field.id == Username &&
+                sessionAvatar != null &&
+                mostRecentSession.profileHandle.id == field.value
 
         if (isAvatarForField) {
             val avatarDescription = stringResource(CommonStrings.profile_avatar)
             AsyncImage(
                 modifier = FormField.LeadingIconSizeModifier,
-                args = remember(sessionAvatar) {
-                    ImageArgs(
-                        url = sessionAvatar.uri,
-                        contentDescription = avatarDescription,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
+                args =
+                    remember(sessionAvatar) {
+                        ImageArgs(
+                            url = sessionAvatar.uri,
+                            contentDescription = avatarDescription,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
             )
         }
     }

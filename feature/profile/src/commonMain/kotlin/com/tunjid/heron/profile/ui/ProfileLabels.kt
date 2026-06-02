@@ -69,58 +69,59 @@ internal fun ProfileLabels(
     var selectedLabel by remember {
         mutableStateOf<Label?>(null)
     }
-    val appliedLabels = remember(
-        adultContentEnabled,
-        labels,
-        labelers,
-        contentLabelPreferences,
-    ) {
-        AppliedLabels(
-            adultContentEnabled = adultContentEnabled,
-            labels = labels,
-            labelers = labelers,
-            contentLabelPreferences = contentLabelPreferences,
-        )
-    }
-    LabelFlowRow(
-        modifier = modifier,
-    ) {
-        if (viewerState.isBlocked) IconLabel(
-            icon = Icons.Rounded.Block,
-            contentDescription = stringResource(CommonStrings.viewer_state_blocked),
-            onClick = {},
-        )
-        if (viewerState.isMuted) IconLabel(
-            icon = Icons.AutoMirrored.Rounded.VolumeOff,
-            contentDescription = stringResource(CommonStrings.viewer_state_muted),
-            onClick = { },
-        )
+    val appliedLabels =
+        remember(
+            adultContentEnabled,
+            labels,
+            labelers,
+            contentLabelPreferences,
+        ) {
+            AppliedLabels(
+                adultContentEnabled = adultContentEnabled,
+                labels = labels,
+                labelers = labelers,
+                contentLabelPreferences = contentLabelPreferences,
+            )
+        }
+    LabelFlowRow(modifier = modifier) {
+        if (viewerState.isBlocked)
+            IconLabel(
+                icon = Icons.Rounded.Block,
+                contentDescription = stringResource(CommonStrings.viewer_state_blocked),
+                onClick = {},
+            )
+        if (viewerState.isMuted)
+            IconLabel(
+                icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                contentDescription = stringResource(CommonStrings.viewer_state_muted),
+                onClick = {},
+            )
 
         appliedLabels.forEach(
             languageTag = languageTag,
             labels = labels,
         ) { label, labelerSummary, localeInfo ->
-            val authorLabelContentDescription = stringResource(
-                CommonStrings.post_author_label,
-                localeInfo.description,
-            )
+            val authorLabelContentDescription =
+                stringResource(
+                    CommonStrings.post_author_label,
+                    localeInfo.description,
+                )
             Label(
                 isElevated = true,
-                modifier = Modifier
-                    .padding(2.dp),
+                modifier = Modifier.padding(2.dp),
                 contentDescription = authorLabelContentDescription,
                 icon = {
                     AsyncImage(
-                        args = remember(labelerSummary.creatorAvatar) {
-                            ImageArgs(
-                                url = labelerSummary.creatorAvatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = null,
-                                shape = RoundedPolygonShape.Circle,
-                            )
-                        },
-                        modifier = Modifier
-                            .size(ProfileLabelIconSize),
+                        args =
+                            remember(labelerSummary.creatorAvatar) {
+                                ImageArgs(
+                                    url = labelerSummary.creatorAvatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                        modifier = Modifier.size(ProfileLabelIconSize),
                     )
                 },
                 description = {
@@ -158,18 +159,15 @@ private fun IconLabel(
         isElevated = true,
         contentDescription = contentDescription,
         icon = {
-            if (icon != null) Icon(
-                modifier = Modifier
-                    .size(ProfileLabelIconSize),
-                imageVector = icon,
-                contentDescription = null,
-            )
+            if (icon != null)
+                Icon(
+                    modifier = Modifier.size(ProfileLabelIconSize),
+                    imageVector = icon,
+                    contentDescription = null,
+                )
         },
         description = {
-            Box(
-                modifier = Modifier
-                    .clearAndSetSemantics {},
-            ) {
+            Box(modifier = Modifier.clearAndSetSemantics {}) {
                 LabelText(contentDescription)
             }
         },

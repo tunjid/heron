@@ -43,11 +43,7 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/splash"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object SplashNavigationBindings {
@@ -72,27 +68,25 @@ class SplashBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        render = { route ->
-            val stateHolder: SplashStateHolder = viewModel<ActualSplashViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            render = { route ->
+                val stateHolder: SplashStateHolder =
+                    viewModel<ActualSplashViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                stateHolder.state.collectAsStateWithLifecycle()
+
+                SplashScreen(
+                    paneScaffoldState = rememberPaneScaffoldState(),
+                    modifier = Modifier,
                 )
             }
-            stateHolder.state.collectAsStateWithLifecycle()
-
-            SplashScreen(
-                paneScaffoldState = rememberPaneScaffoldState(),
-                modifier = Modifier,
-            )
-        },
-    )
+        )
 }

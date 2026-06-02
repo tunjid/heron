@@ -72,11 +72,10 @@ class ActualPostsViewModel(
     recordRepository: RecordRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     PostsStateHolder by scope.actionSuspendingStateMutator(
         state = State(route.postsRequest).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -90,43 +89,53 @@ class ActualPostsViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.Tile -> action.flow.launchPostsLoadMutations(
-                        state = state,
-                        request = route.postsRequest,
-                        postsRepository = postsRepository,
-                    )
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.Navigate ->
+                        action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                    is Action.Tile ->
+                        action.flow.launchPostsLoadMutations(
+                            state = state,
+                            request = route.postsRequest,
+                            postsRepository = postsRepository,
+                        )
+                    is Action.SendPostInteraction ->
+                        action.flow.launchPostInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.UpdateMutedWord ->
+                        action.flow.launchUpdateMutedWordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.BlockAccount ->
+                        action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.MuteAccount ->
+                        action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.UpdateRecentConversations ->
+                        action.flow.launchRecentConversationMutations(
+                            state = state,
+                            messageRepository = messageRepository,
+                        )
+                    is Action.UpdateRecentLists ->
+                        action.flow.launchRecentListsMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                        )
+                    is Action.DeleteRecord ->
+                        action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                 }
             }
         },
@@ -137,19 +146,20 @@ private fun Flow<Action.Tile>.launchPostsLoadMutations(
     state: State.SnapshotMutable,
     request: PostsRequest,
     postsRepository: PostRepository,
-) = map { it.tilingAction }
-    .launchTilingMutations(
-        state = state,
-        updateQueryData = PostDataQuery::updateData,
-        refreshQuery = PostDataQuery::refresh,
-        cursorListLoader = { query, cursor ->
-            when (request) {
-                is PostsRequest.Quotes -> postsRepository.quotes(query, cursor)
-                PostsRequest.Saved -> postsRepository.saved(query, cursor)
-            }
-        },
-        onNewItems = { items -> items.distinctBy(TimelineItem::id) },
-    )
+) =
+    map { it.tilingAction }
+        .launchTilingMutations(
+            state = state,
+            updateQueryData = PostDataQuery::updateData,
+            refreshQuery = PostDataQuery::refresh,
+            cursorListLoader = { query, cursor ->
+                when (request) {
+                    is PostsRequest.Quotes -> postsRepository.quotes(query, cursor)
+                    PostsRequest.Saved -> postsRepository.saved(query, cursor)
+                }
+            },
+            onNewItems = { items -> items.distinctBy(TimelineItem::id) },
+        )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
@@ -175,93 +185,99 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
-    state.preferences = it
-}
+) =
+    userDataRepository.preferences.launchAndCollect {
+        state.preferences = it
+    }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.Interaction(it.interaction) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = {
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = it.mutedWordPreference
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        Writable.Restriction(
-            Profile.Restriction.Block.Add(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.Restriction(
+                Profile.Restriction.Block.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        Writable.Restriction(
-            Profile.Restriction.Mute.Add(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.Restriction(
+                Profile.Restriction.Mute.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
@@ -269,5 +285,4 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
     copy(data = newData)
 
-private fun PostDataQuery.refresh(): PostDataQuery =
-    copy(data = data.reset())
+private fun PostDataQuery.refresh(): PostDataQuery = copy(data = data.reset())

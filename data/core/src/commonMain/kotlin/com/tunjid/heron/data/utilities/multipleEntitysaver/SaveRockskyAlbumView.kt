@@ -23,7 +23,7 @@ internal fun MultipleEntitySaver.add(
             uri = artistUri,
             creatorId = creatorId,
             name = albumView.artist,
-        ),
+        )
     )
 
     add(
@@ -43,6 +43,6 @@ internal fun MultipleEntitySaver.add(
             spotifyLink = albumView.spotifyLink?.uri,
             tidalLink = albumView.tidalLink?.uri,
             youtubeLink = albumView.youtubeLink?.uri,
-        ),
+        )
     )
 }

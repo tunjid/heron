@@ -29,71 +29,67 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "timelineItems",
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["rootPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["parentPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["grandParentPostAuthorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["indexedAt"]),
-        Index(value = ["viewingProfileId"]),
-        Index(value = ["sourceId"]),
-        Index(value = ["rootPostUri"]),
-        Index(value = ["parentPostUri"]),
-        Index(value = ["grandParentPostAuthorId"]),
-        Index(value = ["itemSort"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["rootPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["parentPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["grandParentPostAuthorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["postUri"]),
+            Index(value = ["indexedAt"]),
+            Index(value = ["viewingProfileId"]),
+            Index(value = ["sourceId"]),
+            Index(value = ["rootPostUri"]),
+            Index(value = ["parentPostUri"]),
+            Index(value = ["grandParentPostAuthorId"]),
+            Index(value = ["itemSort"]),
+        ],
 )
 data class TimelineItemEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId?,
     val sourceId: String,
     val embeddedRecordUri: EmbeddableRecordUri?,
-    @Embedded
-    val reply: FeedReplyEntity?,
+    @Embedded val reply: FeedReplyEntity?,
     val reposter: ProfileId?,
-    @ColumnInfo(
-        defaultValue = "false",
-    )
-    val hasMedia: Boolean,
+    @ColumnInfo(defaultValue = "false") val hasMedia: Boolean,
     val isPinned: Boolean,
     val itemSort: Long,
     val indexedAt: Instant,
     // Timeline items are unique to the profile viewing them, and these other fields
-    @PrimaryKey
-    val id: String = "${viewingProfileId?.id}-$sourceId-${postUri.uri}-${reposter?.id}",
+    @PrimaryKey val id: String = "${viewingProfileId?.id}-$sourceId-${postUri.uri}-${reposter?.id}",
 ) {
     /**
-     * Partial update class that includes all fields except [itemSort].
-     * Used with [partialUpsert] to preserve the existing sort key on conflict,
-     * preventing sort key jumbling from concurrent writers (polling, pagination, refresh)
-     * that use different cursor anchors.
+     * Partial update class that includes all fields except [itemSort]. Used with [partialUpsert] to
+     * preserve the existing sort key on conflict, preventing sort key jumbling from concurrent
+     * writers (polling, pagination, refresh) that use different cursor anchors.
      */
     data class WithoutSort(
         val id: String,
@@ -101,35 +97,32 @@ data class TimelineItemEntity(
         val viewingProfileId: ProfileId?,
         val sourceId: String,
         val embeddedRecordUri: EmbeddableRecordUri?,
-        @Embedded
-        val reply: FeedReplyEntity?,
+        @Embedded val reply: FeedReplyEntity?,
         val reposter: ProfileId?,
-        @ColumnInfo(defaultValue = "false")
-        val hasMedia: Boolean,
+        @ColumnInfo(defaultValue = "false") val hasMedia: Boolean,
         val isPinned: Boolean,
         val indexedAt: Instant,
     )
 }
 
-internal fun TimelineItemEntity.withoutSort() = TimelineItemEntity.WithoutSort(
-    id = id,
-    postUri = postUri,
-    viewingProfileId = viewingProfileId,
-    sourceId = sourceId,
-    embeddedRecordUri = embeddedRecordUri,
-    reply = reply,
-    reposter = reposter,
-    hasMedia = hasMedia,
-    isPinned = isPinned,
-    indexedAt = indexedAt,
-)
+internal fun TimelineItemEntity.withoutSort() =
+    TimelineItemEntity.WithoutSort(
+        id = id,
+        postUri = postUri,
+        viewingProfileId = viewingProfileId,
+        sourceId = sourceId,
+        embeddedRecordUri = embeddedRecordUri,
+        reply = reply,
+        reposter = reposter,
+        hasMedia = hasMedia,
+        isPinned = isPinned,
+        indexedAt = indexedAt,
+    )
 
 data class FeedReplyEntity(
     val rootPostUri: PostUri,
-    @ColumnInfo(defaultValue = "NULL")
-    val rootPostEmbeddedRecordUri: EmbeddableRecordUri?,
+    @ColumnInfo(defaultValue = "NULL") val rootPostEmbeddedRecordUri: EmbeddableRecordUri?,
     val parentPostUri: PostUri,
-    @ColumnInfo(defaultValue = "NULL")
-    val parentPostEmbeddedRecordUri: EmbeddableRecordUri?,
+    @ColumnInfo(defaultValue = "NULL") val parentPostEmbeddedRecordUri: EmbeddableRecordUri?,
     val grandParentPostAuthorId: ProfileId?,
 )

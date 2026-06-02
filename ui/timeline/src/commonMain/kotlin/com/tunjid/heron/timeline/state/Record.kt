@@ -44,8 +44,7 @@ interface RecordState<T : HeronRecord> : TilingState<ProfilesQuery, T> {
     @SnapshotSpec
     data class Immutable<T : HeronRecord>(
         val stringResource: StringResource,
-        @Transient
-        override val tilingData: TilingState.Data<ProfilesQuery, T>,
+        @Transient override val tilingData: TilingState.Data<ProfilesQuery, T>,
     ) : RecordState<T>
 }
 
@@ -55,15 +54,18 @@ inline fun <reified T : HeronRecord> CoroutineScope.recordStateHolder(
     crossinline itemId: (T) -> Any,
     crossinline cursorListLoader: (ProfilesQuery, Cursor) -> Flow<CursorList<T>>,
 ): RecordStateHolder<T> {
-    val state: RecordState<T> = RecordState.SnapshotMutable<T>(
-        stringResource = stringResource,
-        tilingData = TilingState.Data(
-            currentQuery = ProfilesQuery(
-                profileId = profileId,
-                data = CursorQuery.defaultStartData(),
-            ),
-        ),
-    )
+    val state: RecordState<T> =
+        RecordState.SnapshotMutable<T>(
+            stringResource = stringResource,
+            tilingData =
+                TilingState.Data(
+                    currentQuery =
+                        ProfilesQuery(
+                            profileId = profileId,
+                            data = CursorQuery.defaultStartData(),
+                        )
+                ),
+        )
     return actionSuspendingStateMutator<TilingState.Action, RecordState<T>>(
         state = state,
         producer = { state, actions ->

@@ -35,22 +35,24 @@ internal inline fun FeatureContainer(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val clickableModifier = if (onClick != null) {
-        Modifier.shapedClickable(FeatureContainerShape) { onClick() }
-    } else {
-        Modifier
-    }
+    val clickableModifier =
+        if (onClick != null) {
+            Modifier.shapedClickable(FeatureContainerShape) { onClick() }
+        } else {
+            Modifier
+        }
 
     Column(
-        modifier = clickableModifier then Modifier
-            .fillMaxWidth()
-            .clip(FeatureContainerShape)
-            .border(
-                width = Dp.Hairline,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                shape = FeatureContainerShape,
-            )
-            .then(modifier),
+        modifier =
+            clickableModifier then
+                Modifier.fillMaxWidth()
+                    .clip(FeatureContainerShape)
+                    .border(
+                        width = Dp.Hairline,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                        shape = FeatureContainerShape,
+                    )
+                    .then(modifier)
     ) {
         content()
     }

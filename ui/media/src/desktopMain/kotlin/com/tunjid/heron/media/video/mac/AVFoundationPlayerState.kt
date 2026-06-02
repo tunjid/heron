@@ -88,20 +88,17 @@ internal class AVFoundationPlayerState(
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
 
-    override var videoStill by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
+    override var videoStill by
+        mutableStateOf<ImageBitmap?>(
+            value = null,
+            policy = referentialEqualityPolicy(),
+        )
 
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= 200 &&
-            totalDuration != 0L &&
-            !isLooping
+        get() = (totalDuration - lastPositionMs) <= 200 && totalDuration != 0L && !isLooping
 
     // Native player pointer — initialized eagerly since JNA calls are synchronous.
-    private val playerPointer = AtomicReference(
-        AVFoundationVideoPlayer.createVideoPlayer(),
-    )
+    private val playerPointer = AtomicReference(AVFoundationVideoPlayer.createVideoPlayer())
     private var playerScope = playerScope()
     internal var mediaOpenCalled: Boolean = false
 
@@ -112,9 +109,7 @@ internal class AVFoundationPlayerState(
     private var skiaBitmapB: Bitmap? = null
     private var nextSkiaBitmapA: Boolean = true
     private var lastFrameUpdateTime: Long = 0
-    private val serialDispatcher = Dispatchers.Default.limitedParallelism(
-        parallelism = 1,
-    )
+    private val serialDispatcher = Dispatchers.Default.limitedParallelism(parallelism = 1)
 
     // Callback properties — held as fields to prevent GC.
     // Compose mutableStateOf writes are thread-safe via the snapshot system.
@@ -142,12 +137,13 @@ internal class AVFoundationPlayerState(
     }
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
-        if (isLooping) tryWithPlayerPointer("endOfPlayback") { pointer ->
-            AVFoundationVideoPlayer.seekTo(
-                context = pointer,
-                time = 0.0,
-            )
-        }
+        if (isLooping)
+            tryWithPlayerPointer("endOfPlayback") { pointer ->
+                AVFoundationVideoPlayer.seekTo(
+                    context = pointer,
+                    time = 0.0,
+                )
+            }
         else status = PlayerStatus.Pause.Confirmed
     }
 
@@ -172,15 +168,15 @@ internal class AVFoundationPlayerState(
             val duration = AVFoundationVideoPlayer.getVideoDuration(pointer)
 
             if (duration > 0) totalDuration = duration.secondsToMs()
-            if (displayWidth > 0 && displayHeight > 0) videoSize = IntSize(
-                width = displayWidth,
-                height = displayHeight,
-            )
+            if (displayWidth > 0 && displayHeight > 0)
+                videoSize =
+                    IntSize(
+                        width = displayWidth,
+                        height = displayHeight,
+                    )
         }
 
-    /**
-     * Registers native callbacks for status, time, frame, and end-of-playback events.
-     */
+    /** Registers native callbacks for status, time, frame, and end-of-playback events. */
     internal fun registerCallbacks() =
         tryWithPlayerPointer("registerCallbacks") { pointer ->
             AVFoundationVideoPlayer.registerStatusCallback(
@@ -206,9 +202,7 @@ internal class AVFoundationPlayerState(
             )
         }
 
-    /**
-     * Unregisters all native callbacks.
-     */
+    /** Unregisters all native callbacks. */
     internal fun unregisterCallbacks() =
         tryWithPlayerPointer("unregisterCallbacks") { pointer ->
             AVFoundationVideoPlayer.unregisterStatusCallback(pointer)
@@ -247,10 +241,11 @@ internal class AVFoundationPlayerState(
 
     private suspend fun updateFrameAsync(): Unit =
         tryWithPlayerPointer("updateFrameAsync") { pointer ->
-            val latestFrameSize = IntSize(
-                width = AVFoundationVideoPlayer.getFrameWidth(pointer),
-                height = AVFoundationVideoPlayer.getFrameHeight(pointer),
-            )
+            val latestFrameSize =
+                IntSize(
+                    width = AVFoundationVideoPlayer.getFrameWidth(pointer),
+                    height = AVFoundationVideoPlayer.getFrameHeight(pointer),
+                )
             if (latestFrameSize.width <= 0 || latestFrameSize.height <= 0) return
 
             withContext(serialDispatcher) {
@@ -264,12 +259,13 @@ internal class AVFoundationPlayerState(
                             skiaBitmapA?.close()
                             skiaBitmapB?.close()
 
-                            val imageInfo = ImageInfo(
-                                width = latestFrameSize.width,
-                                height = latestFrameSize.height,
-                                colorType = ColorType.BGRA_8888,
-                                alphaType = ColorAlphaType.OPAQUE,
-                            )
+                            val imageInfo =
+                                ImageInfo(
+                                    width = latestFrameSize.width,
+                                    height = latestFrameSize.height,
+                                    colorType = ColorType.BGRA_8888,
+                                    alphaType = ColorAlphaType.OPAQUE,
+                                )
                             skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
                             skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
                             currentFrameSize = latestFrameSize
@@ -310,9 +306,7 @@ internal class AVFoundationPlayerState(
             }
         }
 
-    /**
-     * Re-creates the native player after [dispose]. Used by retry flows.
-     */
+    /** Re-creates the native player after [dispose]. Used by retry flows. */
     internal fun reinitialize() {
         // Clean up old player resources before creating new ones
         dispose()
@@ -350,9 +344,7 @@ internal class AVFoundationPlayerState(
 
     private fun playerScope(): CoroutineScope =
         CoroutineScope(
-            appMainScope.coroutineContext + Job(
-                parent = appMainScope.coroutineContext[Job],
-            ),
+            appMainScope.coroutineContext + Job(parent = appMainScope.coroutineContext[Job])
         )
 
     private inline fun tryWithPlayerPointer(

@@ -63,24 +63,23 @@ interface State {
         val profile: Profile?,
         val avatarSharedElementKey: String,
         val currentPage: Int = 0,
-        @Transient
-        val stateHolders: List<AppScreenStateHolders> = emptyList(),
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val stateHolders: List<AppScreenStateHolders> = emptyList(),
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        operator fun invoke(
-            route: Route,
-        ): Immutable = Immutable(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            app = route.model<AtmosphereApp>(),
-            profile = route.model<Profile>() ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
-            ),
-        )
+        operator fun invoke(route: Route): Immutable =
+            Immutable(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                app = route.model<AtmosphereApp>(),
+                profile =
+                    route.model<Profile>()
+                        ?: stubProfile(
+                            did = ProfileId(route.profileHandleOrId.id),
+                            handle = ProfileHandle(route.profileHandleOrId.id),
+                            avatar = null,
+                        ),
+            )
     }
 }
 
@@ -90,100 +89,77 @@ internal typealias AtmosphereAppStateHolder = ActionSuspendingStateMutator<Actio
 sealed class AppScreenStateHolders {
 
     @Stable
-    sealed class Records<T : Record>(
-        private val mutator: RecordStateHolder<T>,
-    ) : AppScreenStateHolders(),
-        RecordStateHolder<T> by mutator
+    sealed class Records<T : Record>(private val mutator: RecordStateHolder<T>) :
+        AppScreenStateHolders(), RecordStateHolder<T> by mutator
 
     @Stable
-    sealed class StandardSite<T : Record>(
-        mutator: RecordStateHolder<T>,
-    ) : Records<T>(mutator) {
+    sealed class StandardSite<T : Record>(mutator: RecordStateHolder<T>) : Records<T>(mutator) {
 
         @Stable
-        class Documents(
-            mutator: RecordStateHolder<StandardDocument>,
-        ) : StandardSite<StandardDocument>(mutator)
+        class Documents(mutator: RecordStateHolder<StandardDocument>) :
+            StandardSite<StandardDocument>(mutator)
 
         @Stable
-        class Publications(
-            mutator: RecordStateHolder<StandardPublication>,
-        ) : StandardSite<StandardPublication>(mutator)
+        class Publications(mutator: RecordStateHolder<StandardPublication>) :
+            StandardSite<StandardPublication>(mutator)
     }
 
     @Stable
-    sealed class Rocksky<T : Record>(
-        mutator: RecordStateHolder<T>,
-    ) : Records<T>(mutator) {
+    sealed class Rocksky<T : Record>(mutator: RecordStateHolder<T>) : Records<T>(mutator) {
 
         @Stable
-        class Albums(
-            mutator: RecordStateHolder<RockskyAlbum>,
-        ) : Rocksky<RockskyAlbum>(mutator)
+        class Albums(mutator: RecordStateHolder<RockskyAlbum>) : Rocksky<RockskyAlbum>(mutator)
 
         @Stable
-        class Tracks(
-            mutator: RecordStateHolder<RockskyTrack>,
-        ) : Rocksky<RockskyTrack>(mutator)
+        class Tracks(mutator: RecordStateHolder<RockskyTrack>) : Rocksky<RockskyTrack>(mutator)
 
         @Stable
-        class Artists(
-            mutator: RecordStateHolder<RockskyArtist>,
-        ) : Rocksky<RockskyArtist>(mutator)
+        class Artists(mutator: RecordStateHolder<RockskyArtist>) : Rocksky<RockskyArtist>(mutator)
 
         @Stable
-        class Scrobbles(
-            mutator: RecordStateHolder<RockskyScrobble>,
-        ) : Rocksky<RockskyScrobble>(mutator)
+        class Scrobbles(mutator: RecordStateHolder<RockskyScrobble>) :
+            Rocksky<RockskyScrobble>(mutator)
     }
 
     val key: String
-        get() = when (this) {
-            is StandardSite.Documents -> StandardDocumentUri.NAMESPACE
-            is StandardSite.Publications -> StandardPublicationUri.NAMESPACE
-            is Rocksky.Albums -> AlbumUri.NAMESPACE
-            is Rocksky.Tracks -> TrackUri.NAMESPACE
-            is Rocksky.Artists -> ArtistUri.NAMESPACE
-            is Rocksky.Scrobbles -> ScrobbleUri.NAMESPACE
-        }
+        get() =
+            when (this) {
+                is StandardSite.Documents -> StandardDocumentUri.NAMESPACE
+                is StandardSite.Publications -> StandardPublicationUri.NAMESPACE
+                is Rocksky.Albums -> AlbumUri.NAMESPACE
+                is Rocksky.Tracks -> TrackUri.NAMESPACE
+                is Rocksky.Artists -> ArtistUri.NAMESPACE
+                is Rocksky.Scrobbles -> ScrobbleUri.NAMESPACE
+            }
 
     fun refresh() = (this as Records<*>).accept(TilingState.Action.Refresh)
 }
 
 val AppScreenStateHolders?.isRefreshing: Boolean
-    get() = when (this) {
-        is Records<*> -> state.isRefreshing
-        null -> false
-    }
+    get() =
+        when (this) {
+            is Records<*> -> state.isRefreshing
+            null -> false
+        }
 
 sealed class Action(val key: String) {
 
-    data class PageChanged(
-        val page: Int,
-    ) : Action(key = "PageChanged")
+    data class PageChanged(val page: Int) : Action(key = "PageChanged")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
+        data class Subscribe(val publicationUri: StandardPublicationUri) :
+            TogglePublicationSubscription()
 
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
+        data class Unsubscribe(val subscriptionUri: StandardSubscriptionUri) :
+            TogglePublicationSubscription()
     }
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

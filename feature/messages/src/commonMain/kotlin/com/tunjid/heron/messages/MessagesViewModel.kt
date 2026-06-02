@@ -79,12 +79,10 @@ class ActualMessagesViewModel(
     messagesRepository: MessageRepository,
     searchRepository: SearchRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     MessagesStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -98,20 +96,24 @@ class ActualMessagesViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.Navigate ->
+                        action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
                     is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
-                    is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
-                        state = state,
-                        navActions = navActions,
-                        messagesRepository = messagesRepository,
-                    )
+                    is Action.SearchQueryChanged ->
+                        action.flow.launchSearchQueryChangeMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                    is Action.ResolveConversation ->
+                        action.flow.launchResolveConversationMutations(
+                            state = state,
+                            navActions = navActions,
+                            messagesRepository = messagesRepository,
+                        )
                     is Action.Tile ->
                         action.flow
                             .map { it.tilingAction }
@@ -133,20 +135,21 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
-    state.signedInProfile = it
-}
+) =
+    authRepository.signedInUser.launchAndCollect {
+        state.signedInProfile = it
+    }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetIsSearching>.launchSetIsSearchingMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.isSearching = event.isSearching
 }
@@ -158,29 +161,29 @@ private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
     messagesRepository: MessageRepository,
 ) = launchAndCollectLatest { action ->
     try {
-        withTimeout(2.seconds) {
-            messagesRepository.resolveConversation(
-                with = action.with.did,
-            )
+            withTimeout(2.seconds) {
+                messagesRepository.resolveConversation(with = action.with.did)
+            }
+        } catch (e: TimeoutCancellationException) {
+            Result.failure(e)
         }
-    } catch (e: TimeoutCancellationException) {
-        Result.failure(e)
-    }
         .onSuccess { conversationId ->
             navActions(
                 conversationDestination(
-                    id = conversationId,
-                    members = listOf(action.with),
-                    sharedElementPrefix = ConversationSearchResult,
-                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                ).navigationMutation,
+                        id = conversationId,
+                        members = listOf(action.with),
+                        sharedElementPrefix = ConversationSearchResult,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    )
+                    .navigationMutation
             )
         }
         .onFailure {
-            state.messages += Memo.Resource(
-                Res.string.error_conversation_not_found,
-                listOf(action.with.contentDescription),
-            )
+            state.messages +=
+                Memo.Resource(
+                    Res.string.error_conversation_not_found,
+                    listOf(action.with.contentDescription),
+                )
         }
 }
 
@@ -189,33 +192,35 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
 ) {
-    val sharedActions = shareIn(
-        scope = productionScope,
-        started = SharingStarted.WhileSubscribed(),
-        replay = 1,
-    )
+    val sharedActions =
+        shareIn(
+            scope = productionScope,
+            started = SharingStarted.WhileSubscribed(),
+            replay = 1,
+        )
     sharedActions.launchAndCollectLatest {
         state.searchQuery = it.query
     }
     sharedActions
         .debounce {
-            if (it.query.isBlank()) 0.milliseconds
-            else 300.milliseconds
+            if (it.query.isBlank()) 0.milliseconds else 300.milliseconds
         }
         .flatMapLatest { action ->
             if (action.query.isBlank()) flowOf(emptyList())
-            else searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
-                    query = action.query,
-                    isLocalOnly = false,
-                    data = chatSearchData(),
-                ),
-                cursor = Cursor.Initial,
-            )
-        }.launchAndCollect {
-            state.autoCompletedProfiles = it.sortedByDescending(
-                ProfileWithViewerState::canBeMessaged,
-            )
+            else
+                searchRepository.autoCompleteProfileSearch(
+                    query =
+                        SearchQuery.OfProfiles(
+                            query = action.query,
+                            isLocalOnly = false,
+                            data = chatSearchData(),
+                        ),
+                    cursor = Cursor.Initial,
+                )
+        }
+        .launchAndCollect {
+            state.autoCompletedProfiles =
+                it.sortedByDescending(ProfileWithViewerState::canBeMessaged)
         }
 }
 
@@ -226,8 +231,9 @@ fun ProfileWithViewerState.canBeMessaged() =
         Profile.ChatInfo.Allowed.NoOne -> false
     }
 
-private fun chatSearchData() = CursorQuery.Data(
-    page = 0,
-    cursorAnchor = Clock.System.now(),
-    limit = 30,
-)
+private fun chatSearchData() =
+    CursorQuery.Data(
+        page = 0,
+        cursorAnchor = Clock.System.now(),
+        limit = 30,
+    )

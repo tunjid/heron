@@ -20,9 +20,7 @@ internal fun MultipleEntitySaver.add(
     val albumArt = trackView.albumArt?.let { ImageUri(it.uri) }
     // Album requires a non-null artistUri FK; if we don't have one, drop the
     // track's albumUri rather than stubbing an album we can't satisfy.
-    val albumUri = trackView.albumUri
-        ?.takeIf { artistUri != null }
-        ?.let { AlbumUri(it.atUri) }
+    val albumUri = trackView.albumUri?.takeIf { artistUri != null }?.let { AlbumUri(it.atUri) }
 
     if (artistUri != null) {
         add(
@@ -30,7 +28,7 @@ internal fun MultipleEntitySaver.add(
                 uri = artistUri,
                 creatorId = creatorId,
                 name = trackView.artist,
-            ),
+            )
         )
     }
 
@@ -43,7 +41,7 @@ internal fun MultipleEntitySaver.add(
                 title = trackView.album ?: trackView.title,
                 artist = trackView.albumArtist ?: trackView.artist,
                 albumArt = albumArt,
-            ),
+            )
         )
     }
 
@@ -65,6 +63,6 @@ internal fun MultipleEntitySaver.add(
             createdAt = trackView.createdAt,
             playCount = trackView.playCount,
             uniqueListeners = trackView.uniqueListeners,
-        ),
+        )
     )
 }

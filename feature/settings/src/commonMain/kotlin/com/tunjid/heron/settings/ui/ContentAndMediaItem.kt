@@ -53,81 +53,71 @@ fun ContentAndMediaItem(
     onSectionSelected: (Section) -> Unit,
 ) {
     ExpandableSettingsItemRow(
-        modifier = modifier
-            .settingsItemPaddingAndMinHeight()
-            .fillMaxWidth(),
+        modifier = modifier.settingsItemPaddingAndMinHeight().fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
         icon = Icons.AutoMirrored.Rounded.Article,
     ) {
         SettingsItem(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onSectionSelected(
-                        Section.FeedPreferences(
-                            signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
-                        ),
-                    )
-                }
-                .settingsItemPaddingAndMinHeight(),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .clickable {
+                        onSectionSelected(
+                            Section.FeedPreferences(
+                                signedInProfilePreferences.feedPreferences.homeFeedOrDefault()
+                            )
+                        )
+                    }
+                    .settingsItemPaddingAndMinHeight(),
             icon = Icons.Rounded.Home,
             title = stringResource(Res.string.following_feed_preferences),
         )
         SettingsItem(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onSectionSelected(
-                        Section.ThreadPreferences(
-                            signedInProfilePreferences.threadViewPreferences,
-                        ),
-                    )
-                }
-                .settingsItemPaddingAndMinHeight(),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .clickable {
+                        onSectionSelected(
+                            Section.ThreadPreferences(
+                                signedInProfilePreferences.threadViewPreferences
+                            )
+                        )
+                    }
+                    .settingsItemPaddingAndMinHeight(),
             icon = Icons.Rounded.Forum,
             title = stringResource(Res.string.thread_preferences),
         )
 
-        HorizontalDivider(
-            modifier = Modifier
-                .padding(vertical = 8.dp),
-        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.refresh_timelines_on_launch),
             enabled = true,
             checked = signedInProfilePreferences.local.refreshHomeTimelineOnLaunch,
             onCheckedChange = setRefreshHomeTimelineOnLaunch,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.auto_play_timeline_videos),
             enabled = true,
             checked = signedInProfilePreferences.local.autoPlayTimelineVideos,
             onCheckedChange = setAutoplayTimelineVideos,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.show_post_engagement_metrics),
             enabled = true,
             checked = signedInProfilePreferences.local.showPostEngagementMetrics,
             onCheckedChange = setShowPostEngagementMetrics,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.show_trending_topics),
             enabled = true,
             checked = signedInProfilePreferences.local.showTrendingTopics,
             onCheckedChange = setShowTrendingTopics,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.allow_all_timeline_presentations),
             enabled = true,
             checked = signedInProfilePreferences.local.allowAllTimelinePresentations,

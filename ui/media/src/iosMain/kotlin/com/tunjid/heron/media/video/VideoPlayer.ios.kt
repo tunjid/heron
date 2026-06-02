@@ -60,8 +60,7 @@ private fun AVFoundationVideoPlayer(
                         playerLayer.videoGravity = state.contentScale.toVideoGravity()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 update = { view ->
                     view.playerLayer.player = state.player
                     view.playerLayer.videoGravity = state.contentScale.toVideoGravity()
@@ -71,10 +70,11 @@ private fun AVFoundationVideoPlayer(
                     state.status = PlayerStatus.Idle.Evicted
                 },
                 // Handle UI interactivity in Compose
-                properties = UIKitInteropProperties(
-                    isInteractive = false,
-                    isNativeAccessibilityEnabled = false,
-                ),
+                properties =
+                    UIKitInteropProperties(
+                        isInteractive = false,
+                        isNativeAccessibilityEnabled = false,
+                    ),
             )
         }
         if (state.canShowStill) {
@@ -109,33 +109,34 @@ private class VideoPlayerView : UIView(frame = CGRectZero.readValue()) {
 }
 
 private fun ContentScale.toVideoGravity(): String {
-    val gravity = when (this) {
-        ContentScale.Crop -> AVLayerVideoGravityResizeAspectFill
-        ContentScale.Fit,
-        ContentScale.Inside,
-        -> AVLayerVideoGravityResizeAspect
-        ContentScale.FillBounds,
-        ContentScale.FillWidth,
-        ContentScale.FillHeight,
-        -> AVLayerVideoGravityResize
-        else -> AVLayerVideoGravityResizeAspectFill
-    }
+    val gravity =
+        when (this) {
+            ContentScale.Crop -> AVLayerVideoGravityResizeAspectFill
+            ContentScale.Fit,
+            ContentScale.Inside -> AVLayerVideoGravityResizeAspect
+            ContentScale.FillBounds,
+            ContentScale.FillWidth,
+            ContentScale.FillHeight -> AVLayerVideoGravityResize
+            else -> AVLayerVideoGravityResizeAspectFill
+        }
     return gravity ?: "AVLayerVideoGravityResizeAspectFill"
 }
 
 private val AVFoundationPlayerState.canShowVideo
-    get() = when (status) {
-        is PlayerStatus.Idle -> false
-        is PlayerStatus.Play -> true
-        is PlayerStatus.Pause -> true
-    }
+    get() =
+        when (status) {
+            is PlayerStatus.Idle -> false
+            is PlayerStatus.Play -> true
+            is PlayerStatus.Pause -> true
+        }
 
 private val AVFoundationPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
-        !hasRenderedFirstFrame ||
-        when (status) {
-            is PlayerStatus.Idle -> true
-            is PlayerStatus.Pause -> false
-            PlayerStatus.Play.Requested -> true
-            PlayerStatus.Play.Confirmed -> false
-        }
+    get() =
+        videoSize == IntSize.Zero ||
+            !hasRenderedFirstFrame ||
+            when (status) {
+                is PlayerStatus.Idle -> true
+                is PlayerStatus.Pause -> false
+                PlayerStatus.Play.Requested -> true
+                PlayerStatus.Play.Confirmed -> false
+            }

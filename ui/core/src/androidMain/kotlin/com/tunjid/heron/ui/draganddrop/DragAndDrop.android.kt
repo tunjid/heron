@@ -24,32 +24,26 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 
-actual fun selectorDragAndDropTransferData(
-    title: String,
-): DragAndDropTransferData =
+actual fun selectorDragAndDropTransferData(title: String): DragAndDropTransferData =
     DragAndDropTransferData(
         clipData = ClipData.newPlainText("Drag timeline", title),
         localState = title,
     )
 
-actual fun DragAndDropEvent.draggedId(): String? =
-    toAndroidDragEvent().localState as? String
+actual fun DragAndDropEvent.draggedId(): String? = toAndroidDragEvent().localState as? String
 
 // The non deprecated overload of dragAndDropSource does
 // not allow for defining the start trigger for the drag
 // and drop operation
 @Suppress("DEPRECATION")
-actual fun Modifier.selectorDragAndDropSource(
-    id: String,
-): Modifier = dragAndDropSource(
-    block = {
-        detectDragGesturesAfterLongPress(
-            onDragStart = {
-                startTransfer(
-                    selectorDragAndDropTransferData(id),
-                )
-            },
-            onDrag = { _, _ -> },
-        )
-    },
-)
+actual fun Modifier.selectorDragAndDropSource(id: String): Modifier =
+    dragAndDropSource(
+        block = {
+            detectDragGesturesAfterLongPress(
+                onDragStart = {
+                    startTransfer(selectorDragAndDropTransferData(id))
+                },
+                onDrag = { _, _ -> },
+            )
+        }
+    )

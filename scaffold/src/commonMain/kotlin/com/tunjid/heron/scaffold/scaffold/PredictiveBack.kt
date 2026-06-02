@@ -31,46 +31,42 @@ import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 
-fun Modifier.predictiveBackPlacement(
-    paneScaffoldState: PaneScaffoldState,
-): Modifier = with(paneScaffoldState) {
-    val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
-        inPredictiveBack &&
-        isActive &&
-        appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
+fun Modifier.predictiveBackPlacement(paneScaffoldState: PaneScaffoldState): Modifier =
+    with(paneScaffoldState) {
+        val shouldDrawBackground =
+            paneState.pane == ThreePane.Primary &&
+                inPredictiveBack &&
+                isActive &&
+                appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
 
-    ifTrue(shouldDrawBackground) {
-        backPreview(backPreviewState)
+        ifTrue(shouldDrawBackground) {
+                backPreview(backPreviewState)
+            }
+            .animatedRoundedCornerClip(cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp)
     }
-        .animatedRoundedCornerClip(
-            cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp,
-        )
-}
 
 interface NavigationContentTransformer {
-    fun contentTransform(
-        scope: PaneScope<ThreePane, *>,
-    ): ContentTransform
+    fun contentTransform(scope: PaneScope<ThreePane, *>): ContentTransform
 }
 
 @Stable
 internal object PredictiveBackContentTransformer : NavigationContentTransformer {
-    override fun contentTransform(
-        scope: PaneScope<ThreePane, *>,
-    ): ContentTransform = with(scope) {
-        ContentTransform(
-            targetContentEnter =
-            fadeIn(
-                animationSpec = NavigationAnimationSpec,
-                initialAlpha = if (isStillVisible) Opaque else Transparent,
-            ),
-            initialContentExit =
-            fadeOut(
-                animationSpec = NavigationAnimationSpec,
-                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else Transparent,
-            ),
-        )
-    }
+    override fun contentTransform(scope: PaneScope<ThreePane, *>): ContentTransform =
+        with(scope) {
+            ContentTransform(
+                targetContentEnter =
+                    fadeIn(
+                        animationSpec = NavigationAnimationSpec,
+                        initialAlpha = if (isStillVisible) Opaque else Transparent,
+                    ),
+                initialContentExit =
+                    fadeOut(
+                        animationSpec = NavigationAnimationSpec,
+                        targetAlpha =
+                            if (inPredictiveBack) PredictiveBackTargetAlpha else Transparent,
+                    ),
+            )
+        }
 }
 
 private val PaneScope<ThreePane, *>.isStillVisible: Boolean

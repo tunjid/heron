@@ -68,13 +68,16 @@ import sh.christian.ozone.api.model.JsonContent
 
 interface SavedStateEncryption {
     fun encrypt(data: ByteArray): ByteArray
+
     fun decrypt(data: ByteArray): ByteArray
 
     companion object {
-        val None = object : SavedStateEncryption {
-            override fun encrypt(data: ByteArray): ByteArray = data
-            override fun decrypt(data: ByteArray): ByteArray = data
-        }
+        val None =
+            object : SavedStateEncryption {
+                override fun encrypt(data: ByteArray): ByteArray = data
+
+                override fun decrypt(data: ByteArray): ByteArray = data
+            }
     }
 }
 
@@ -86,18 +89,14 @@ abstract class SavedState {
 
     abstract val pastSessions: List<SessionSummary>?
 
-    abstract fun profileData(
-        profileId: ProfileId,
-    ): ProfileData?
+    abstract fun profileData(profileId: ProfileId): ProfileData?
 
     @Serializable
     sealed class AuthTokens {
         abstract val authProfileId: ProfileId
 
         @Serializable
-        data class Guest(
-            val server: Server,
-        ) : AuthTokens() {
+        data class Guest(val server: Server) : AuthTokens() {
             override val authProfileId: ProfileId = Constants.guestProfileId
         }
 
@@ -122,14 +121,12 @@ abstract class SavedState {
         sealed class Authenticated : AuthTokens() {
 
             internal val serviceUrl: String?
-                get() = when (this) {
-                    is Bearer ->
-                        didDoc.service
-                            .firstOrNull()
-                            ?.serviceEndpoint
+                get() =
+                    when (this) {
+                        is Bearer -> didDoc.service.firstOrNull()?.serviceEndpoint
 
-                    is DPoP -> pdsUrl
-                }
+                        is DPoP -> pdsUrl
+                    }
 
             @Serializable
             data class Bearer(
@@ -185,8 +182,7 @@ abstract class SavedState {
                         jsonContent?.decodeAs<DidDoc>()
                     } catch (_: Exception) {
                         null
-                    }
-                        ?: DidDoc()
+                    } ?: DidDoc()
             }
         }
     }
@@ -221,26 +217,29 @@ abstract class SavedState {
         val sessionSummary: SessionSummary? = null,
     ) {
         companion object {
-            val defaultGuestData = ProfileData(
-                preferences = Preferences.BlueSkyGuestPreferences,
-                notifications = Notifications(),
-                auth = AuthTokens.Guest(Server.BlueSky),
-            )
+            val defaultGuestData =
+                ProfileData(
+                    preferences = Preferences.BlueSkyGuestPreferences,
+                    notifications = Notifications(),
+                    auth = AuthTokens.Guest(Server.BlueSky),
+                )
 
-            fun fromTokens(auth: AuthTokens) = ProfileData(
-                // With the exception of guest and pending tokens, other
-                // preferences will eventually become consistent with their PDS.
-                preferences = preferencesForUrl(
-                    when (auth) {
-                        is AuthTokens.Authenticated.Bearer -> auth.authEndpoint
-                        is AuthTokens.Authenticated.DPoP -> auth.pdsUrl
-                        is AuthTokens.Guest -> auth.server.endpoint
-                        is AuthTokens.Pending.DPoP -> auth.endpoint
-                    },
-                ),
-                notifications = Notifications(),
-                auth = auth,
-            )
+            fun fromTokens(auth: AuthTokens) =
+                ProfileData(
+                    // With the exception of guest and pending tokens, other
+                    // preferences will eventually become consistent with their PDS.
+                    preferences =
+                        preferencesForUrl(
+                            when (auth) {
+                                is AuthTokens.Authenticated.Bearer -> auth.authEndpoint
+                                is AuthTokens.Authenticated.DPoP -> auth.pdsUrl
+                                is AuthTokens.Guest -> auth.server.endpoint
+                                is AuthTokens.Pending.DPoP -> auth.endpoint
+                            }
+                        ),
+                    notifications = Notifications(),
+                    auth = auth,
+                )
         }
     }
 }
@@ -253,16 +252,12 @@ val InitialNavigation: SavedState.Navigation = InitialSavedState.navigation
 
 val EmptyNavigation: SavedState.Navigation = EmptySavedState.navigation
 
-fun SavedState.isSignedIn(): Boolean =
-    auth.ifSignedIn() != null
+fun SavedState.isSignedIn(): Boolean = auth.ifSignedIn() != null
 
-internal fun SavedState.signedInProfilePreferences() =
-    signedInProfileData?.preferences
+internal fun SavedState.signedInProfilePreferences() = signedInProfileData?.preferences
 
 internal val SavedStateDataSource.signedInAuth
-    get() = savedState
-        .map { it.auth.ifSignedIn() }
-        .distinctUntilChanged()
+    get() = savedState.map { it.auth.ifSignedIn() }.distinctUntilChanged()
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
     signedInProfilePreferences()
@@ -282,17 +277,14 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Authenticated -> this
         is SavedState.AuthTokens.Guest,
         is SavedState.AuthTokens.Pending,
-        null,
-        -> null
+        null -> null
     }
 
 private val SavedState.signedInProfileId: ProfileId?
     get() = auth.ifSignedIn()?.authProfileId
 
 private val SavedStateDataSource.observedSignedInProfileId
-    get() = savedState
-        .map { it.auth.ifSignedIn()?.authProfileId }
-        .distinctUntilChanged()
+    get() = savedState.map { it.auth.ifSignedIn()?.authProfileId }.distinctUntilChanged()
 
 private fun preferencesForUrl(url: String) =
     when (url) {
@@ -304,22 +296,16 @@ private fun preferencesForUrl(url: String) =
 internal sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
 
-    abstract suspend fun setNavigationState(
-        navigation: SavedState.Navigation,
-    )
+    abstract suspend fun setNavigationState(navigation: SavedState.Navigation)
 
-    internal abstract suspend fun setAuth(
-        auth: SavedState.AuthTokens?,
-    )
+    internal abstract suspend fun setAuth(auth: SavedState.AuthTokens?)
 
     internal abstract suspend fun updateAuth(
         profileId: ProfileId,
         auth: SavedState.AuthTokens,
     )
 
-    internal abstract suspend fun removeAuth(
-        profileId: ProfileId,
-    )
+    internal abstract suspend fun removeAuth(profileId: ProfileId)
 
     internal abstract suspend fun switchSession(
         profileId: ProfileId,
@@ -327,7 +313,8 @@ internal sealed class SavedStateDataSource {
     )
 
     internal abstract suspend fun updateSignedInProfileData(
-        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+        block:
+            suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData
     )
 }
 
@@ -337,69 +324,72 @@ internal class DataStoreSavedStateDataSource(
     fileSystem: FileSystem,
     protoBuf: ProtoBuf,
     encryption: SavedStateEncryption,
-    @AppMainScope
-    appMainScope: CoroutineScope,
-    @IODispatcher
-    ioDispatcher: CoroutineDispatcher,
+    @AppMainScope appMainScope: CoroutineScope,
+    @IODispatcher ioDispatcher: CoroutineDispatcher,
 ) : SavedStateDataSource() {
 
     private val scope = appMainScope + ioDispatcher
 
-    private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
-        storage = OkioStorage(
-            fileSystem = fileSystem,
-            serializer = VersionedSavedStateOkioSerializer(
-                protoBuf = protoBuf,
-                encryption = encryption,
-            ),
-            producePath = { path },
-        ),
-        scope = scope,
-    )
+    private val dataStore: DataStore<VersionedSavedState> =
+        DataStoreFactory.create(
+            storage =
+                OkioStorage(
+                    fileSystem = fileSystem,
+                    serializer =
+                        VersionedSavedStateOkioSerializer(
+                            protoBuf = protoBuf,
+                            encryption = encryption,
+                        ),
+                    producePath = { path },
+                ),
+            scope = scope,
+        )
 
-    override val savedState = dataStore.data.stateIn(
-        scope = scope,
-        started = SharingStarted.Eagerly,
-        initialValue = InitialSavedState,
-    )
+    override val savedState =
+        dataStore.data.stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = InitialSavedState,
+        )
 
-    override suspend fun setNavigationState(
-        navigation: SavedState.Navigation,
-    ) = updateState {
+    override suspend fun setNavigationState(navigation: SavedState.Navigation) = updateState {
         copy(navigation = navigation)
     }
 
-    override suspend fun setAuth(
-        auth: SavedState.AuthTokens?,
-    ) = updateState {
+    override suspend fun setAuth(auth: SavedState.AuthTokens?) = updateState {
         copy(
             activeProfileId = auth?.authProfileId,
-            profileData = when (auth) {
-                null -> when (activeProfileId) {
-                    null -> profileData
-                    else -> profileData.updateOrPutValue(
-                        key = activeProfileId,
-                        update = { copy(auth = null) },
-                    )
-                }
+            profileData =
+                when (auth) {
+                    null ->
+                        when (activeProfileId) {
+                            null -> profileData
+                            else ->
+                                profileData.updateOrPutValue(
+                                    key = activeProfileId,
+                                    update = { copy(auth = null) },
+                                )
+                        }
 
-                is SavedState.AuthTokens.Guest -> profileData.updateOrPutValue(
-                    key = auth.authProfileId,
-                    update = {
-                        copy(
-                            auth = auth,
-                            preferences = preferencesForUrl(auth.server.endpoint),
+                    is SavedState.AuthTokens.Guest ->
+                        profileData.updateOrPutValue(
+                            key = auth.authProfileId,
+                            update = {
+                                copy(
+                                    auth = auth,
+                                    preferences = preferencesForUrl(auth.server.endpoint),
+                                )
+                            },
+                            put = { SavedState.ProfileData.fromTokens(auth) },
                         )
-                    },
-                    put = { SavedState.ProfileData.fromTokens(auth) },
-                )
 
-                else -> profileData.updateOrPutValue(
-                    key = auth.authProfileId,
-                    update = { copy(auth = auth) },
-                    put = { SavedState.ProfileData.fromTokens(auth) },
-                )
-            },
+                    else ->
+                        profileData.updateOrPutValue(
+                            key = auth.authProfileId,
+                            update = { copy(auth = auth) },
+                            put = { SavedState.ProfileData.fromTokens(auth) },
+                        )
+                },
         )
     }
 
@@ -409,19 +399,13 @@ internal class DataStoreSavedStateDataSource(
     ) = updateState {
         val currentProfileData = profileData[profileId] ?: return@updateState this
         val updatedProfileData = currentProfileData.copy(auth = auth)
-        copy(
-            profileData = profileData + (profileId to updatedProfileData),
-        )
+        copy(profileData = profileData + (profileId to updatedProfileData))
     }
 
-    override suspend fun removeAuth(
-        profileId: ProfileId,
-    ) = updateState {
+    override suspend fun removeAuth(profileId: ProfileId) = updateState {
         val currentProfileData = profileData[profileId] ?: return@updateState this
         val updatedProfileData = currentProfileData.copy(auth = null)
-        copy(
-            profileData = profileData + (profileId to updatedProfileData),
-        )
+        copy(profileData = profileData + (profileId to updatedProfileData))
     }
 
     override suspend fun switchSession(
@@ -432,85 +416,86 @@ internal class DataStoreSavedStateDataSource(
         val authenticated = savedStateProfileData?.auth as? SavedState.AuthTokens.Authenticated
 
         if (savedStateProfileData == null || authenticated == null) this
-        else copy(
-            activeProfileId = profileId,
-            profileData = profileData + (
-                profileId to savedStateProfileData.copy(
-                    auth = freshAuth,
-                    sessionSummary = savedStateProfileData.sessionSummary?.copy(
-                        lastSeen = Clock.System.now(),
-                    ),
-                )
-                ),
-        )
+        else
+            copy(
+                activeProfileId = profileId,
+                profileData =
+                    profileData +
+                        (profileId to
+                            savedStateProfileData.copy(
+                                auth = freshAuth,
+                                sessionSummary =
+                                    savedStateProfileData.sessionSummary?.copy(
+                                        lastSeen = Clock.System.now()
+                                    ),
+                            )),
+            )
     }
 
     override suspend fun updateSignedInProfileData(
-        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+        block:
+            suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData
     ) = updateState {
         val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
-        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
-            notifications = SavedState.Notifications(),
-            preferences = Preferences.EmptyPreferences,
-            writes = SavedState.Writes(),
-        )
+        val signedInProfileData =
+            profileData[signedInProfileId]
+                ?: SavedState.ProfileData(
+                    notifications = SavedState.Notifications(),
+                    preferences = Preferences.EmptyPreferences,
+                    writes = SavedState.Writes(),
+                )
         val update = signedInProfileId to signedInProfileData.block(signedInProfileId)
-        copy(
-            profileData = profileData + update,
-        )
+        copy(profileData = profileData + update)
     }
 
-    private suspend fun updateState(
-        update: suspend VersionedSavedState.() -> VersionedSavedState,
-    ) {
+    private suspend fun updateState(update: suspend VersionedSavedState.() -> VersionedSavedState) {
         dataStore.updateData(update)
     }
 }
 
-internal fun SavedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault(): Flow<Preferences> =
-    savedState
-        .map(SavedState::signedProfilePreferencesOrDefault)
-        .distinctUntilChanged()
+internal fun SavedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault():
+    Flow<Preferences> =
+    savedState.map(SavedState::signedProfilePreferencesOrDefault).distinctUntilChanged()
 
 internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
-    block: SavedState.Notifications.() -> SavedState.Notifications,
+    block: SavedState.Notifications.() -> SavedState.Notifications
 ) = updateSignedInProfileData {
     copy(notifications = notifications.block())
 }
 
-/**
- * Runs the [block] in the context of a single profile's session
- */
+/** Runs the [block] in the context of a single profile's session */
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
-    crossinline block: suspend SessionContext.Current.(ProfileId?) -> T,
+    crossinline block: suspend SessionContext.Current.(ProfileId?) -> T
 ): T? {
     val state = savedState.first { it != InitialSavedState }
     val currentProfileId = state.signedInProfileId
     val profileData = currentProfileId?.let { state.profileData(it) }
-    val context = SessionContext.Current(
-        tokens = profileData?.auth,
-        profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
-    )
+    val context =
+        SessionContext.Current(
+            tokens = profileData?.auth,
+            profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
+        )
     return withContext(context) {
         coroutineScope {
             select {
-                async {
-                    savedState.first { it.signedInProfileId != currentProfileId }
-                    null
-                }.onAwait { it }
-                async {
-                    block(context, currentProfileId)
-                }.onAwait { it }
-            }.also { coroutineContext.cancelChildren() }
+                    async {
+                            savedState.first { it.signedInProfileId != currentProfileId }
+                            null
+                        }
+                        .onAwait { it }
+                    async {
+                            block(context, currentProfileId)
+                        }
+                        .onAwait { it }
+                }
+                .also { coroutineContext.cancelChildren() }
         }
     }
 }
 
-/**
- * Repeats [block] for each signed in user
- */
+/** Repeats [block] for each signed in user */
 internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
-    crossinline block: suspend () -> Unit,
+    crossinline block: suspend () -> Unit
 ) = observedSignedInProfileId.collectLatest { profileId ->
     if (profileId == null) return@collectLatest
     val profileData = savedState.value.signedInProfileData ?: return@collectLatest
@@ -519,51 +504,47 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
         SessionContext.Current(
             tokens = profileData.auth,
             profileData = profileData,
-        ),
+        )
     ) {
         block()
     }
 }
 
-/**
- * Returns a new [Flow] on each authorized session change or an empty flow
- */
+/** Returns a new [Flow] on each authorized session change or an empty flow */
 internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
-    crossinline block: suspend (ProfileId) -> Flow<T>,
-): Flow<T> = observedSignedInProfileId
-    .flatMapLatest { profileId ->
-        if (profileId == null) return@flatMapLatest emptyFlow()
-        val profileData = savedState.value.signedInProfileData ?: return@flatMapLatest emptyFlow()
+    crossinline block: suspend (ProfileId) -> Flow<T>
+): Flow<T> = observedSignedInProfileId.flatMapLatest { profileId ->
+    if (profileId == null) return@flatMapLatest emptyFlow()
+    val profileData = savedState.value.signedInProfileData ?: return@flatMapLatest emptyFlow()
 
-        block(profileId)
-            .flowOn(
-                contextWithExistingDispatcher() + SessionContext.Current(
+    block(profileId)
+        .flowOn(
+            contextWithExistingDispatcher() +
+                SessionContext.Current(
                     tokens = profileData.auth,
                     profileData = profileData,
-                ),
-            )
-    }
+                )
+        )
+}
 
-/**
- * Returns a new [Flow] on each session change
- */
+/** Returns a new [Flow] on each session change */
 internal inline fun <T> SavedStateDataSource.singleSessionFlow(
-    crossinline block: suspend (ProfileId?) -> Flow<T>,
-): Flow<T> = observedSignedInProfileId
-    .flatMapLatest { profileId ->
-        val profileData = profileId?.let { savedState.value.profileData(it) }
-        block(profileId)
-            .flowOn(
-                contextWithExistingDispatcher() + SessionContext.Current(
+    crossinline block: suspend (ProfileId?) -> Flow<T>
+): Flow<T> = observedSignedInProfileId.flatMapLatest { profileId ->
+    val profileData = profileId?.let { savedState.value.profileData(it) }
+    block(profileId)
+        .flowOn(
+            contextWithExistingDispatcher() +
+                SessionContext.Current(
                     tokens = profileData?.auth,
                     profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
-                ),
-            )
-    }
+                )
+        )
+}
 
 /**
- * Runs [block] in the context of a past (non-active) session.
- * Cancels if the auth is missing or the session becomes invalid.
+ * Runs [block] in the context of a past (non-active) session. Cancels if the auth is missing or the
+ * session becomes invalid.
  */
 internal suspend inline fun <T> SavedStateDataSource.inPastSession(
     profileId: ProfileId,
@@ -573,10 +554,11 @@ internal suspend inline fun <T> SavedStateDataSource.inPastSession(
 
     val profileData = state.profileData(profileId) ?: return null
     val auth = profileData.auth as? SavedState.AuthTokens.Authenticated ?: return null
-    val context = SessionContext.Previous(
-        tokens = auth,
-        profileData = profileData,
-    )
+    val context =
+        SessionContext.Previous(
+            tokens = auth,
+            profileData = profileData,
+        )
     return withContext(context) {
         block(context)
     }
@@ -589,12 +571,14 @@ internal suspend inline fun <T> SavedStateDataSource.inProfileSession(
     val state = savedState.first { it != InitialSavedState }
     val currentProfileId = state.signedInProfileId
 
-    return if (currentProfileId == profileId) inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) null else block(profileId)
-    }
-    else inPastSession(profileId) {
-        block(profileId)
-    }
+    return if (currentProfileId == profileId)
+        inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) null else block(profileId)
+        }
+    else
+        inPastSession(profileId) {
+            block(profileId)
+        }
 }
 
 internal fun expiredSessionOutcome() = ExpiredSessionException().asFailureOutcome()

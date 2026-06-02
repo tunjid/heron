@@ -25,15 +25,9 @@ import androidx.compose.ui.graphics.nativeCanvas
 import coil3.ComponentRegistry
 import coil3.DrawableImage
 
-internal actual fun coil3.Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
+internal actual fun coil3.Image.renderInto(canvas: Canvas) = draw(canvas.nativeCanvas)
 
-fun imageLoader(
-    context: Context,
-): ImageLoader = CoilImageLoader.create(
-    context = context,
-)
+fun imageLoader(context: Context): ImageLoader = CoilImageLoader.create(context = context)
 
 internal actual fun ComponentRegistry.Builder.addPlatformDecoders() = Unit
 

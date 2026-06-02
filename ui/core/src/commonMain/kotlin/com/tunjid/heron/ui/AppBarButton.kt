@@ -53,8 +53,7 @@ fun AppBarIconButton(
         IconButton(
             enabled = enabled,
             onClick = onClick,
-            modifier = Modifier
-                .size(UiTokens.appBarButtonSize),
+            modifier = Modifier.size(UiTokens.appBarButtonSize),
         ) {
             content()
         }
@@ -119,17 +118,10 @@ fun AppBarElevatedCard(
 }
 
 @Composable
-private fun AppBarRow(
-    content: @Composable (RowScope.() -> Unit),
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .height(UiTokens.appBarButtonSize),
-    ) {
+private fun AppBarRow(content: @Composable (RowScope.() -> Unit)) {
+    Box(modifier = Modifier.padding(horizontal = 16.dp).height(UiTokens.appBarButtonSize)) {
         Row(
-            modifier = Modifier
-                .align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {

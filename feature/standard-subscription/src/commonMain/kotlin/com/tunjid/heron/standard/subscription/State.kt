@@ -39,16 +39,18 @@ interface State : TilingState<DataQuery, StandardPublication> {
     @SnapshotSpec
     data class Immutable(
         @Transient
-        override val tilingData: TilingState.Data<DataQuery, StandardPublication> = TilingState.Data(
-            currentQuery = DataQuery(
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                ),
+        override val tilingData: TilingState.Data<DataQuery, StandardPublication> =
+            TilingState.Data(
+                currentQuery =
+                    DataQuery(
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                            )
+                    )
             ),
-        ),
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
@@ -61,32 +63,22 @@ val State.isRefreshing: Boolean
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action("Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action("Tile")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
+        data class Subscribe(val publicationUri: StandardPublicationUri) :
+            TogglePublicationSubscription()
 
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
+        data class Unsubscribe(val subscriptionUri: StandardSubscriptionUri) :
+            TogglePublicationSubscription()
     }
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

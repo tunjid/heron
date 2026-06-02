@@ -34,7 +34,4 @@ sealed class OauthFlowResult {
     data object Failure : OauthFlowResult()
 }
 
-@Composable
-expect fun rememberOauthFlowState(
-    onResult: (OauthFlowResult) -> Unit,
-): OauthFlowState
+@Composable expect fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState

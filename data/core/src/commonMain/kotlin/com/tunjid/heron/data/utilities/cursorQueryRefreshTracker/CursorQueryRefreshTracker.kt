@@ -23,26 +23,25 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Tracks the [CursorQuery.Data.cursorAnchor] last observed for each caller-supplied
- * identity, entirely in memory. Used to detect "first page with a new anchor" events
- * so repositories can drop stale rows before inserting a fresh page.
+ * Tracks the [CursorQuery.Data.cursorAnchor] last observed for each caller-supplied identity,
+ * entirely in memory. Used to detect "first page with a new anchor" events so repositories can drop
+ * stale rows before inserting a fresh page.
  *
- * State is process-local: on cold start the tracker has no knowledge of prior anchors
- * and the first call for any identity will return `false`. Deletion must only be
- * triggered by an explicit refresh within the current session.
+ * State is process-local: on cold start the tracker has no knowledge of prior anchors and the first
+ * call for any identity will return `false`. Deletion must only be triggered by an explicit refresh
+ * within the current session.
  */
 internal interface CursorQueryRefreshTracker {
 
     /**
      * Returns `true` if
-     *     - [query] is a first page (`page == 0`)
-     *     - AND a prior anchor was recorded for [identity]
-     *     - AND that prior anchor differs from [query]'s current anchor.
-     * Always records the current anchor before returning, so the
-     * next call compares against this one.
+     * - [query] is a first page (`page == 0`)
+     * - AND a prior anchor was recorded for [identity]
+     * - AND that prior anchor differs from [query]'s current anchor. Always records the current
+     *   anchor before returning, so the next call compares against this one.
      *
-     * The first call for a given identity returns `false` — on cold start the tracker
-     * has no state, and deletion must be triggered by an explicit refresh only.
+     * The first call for a given identity returns `false` — on cold start the tracker has no state,
+     * and deletion must be triggered by an explicit refresh only.
      */
     suspend fun isFirstPageForDifferentAnchor(
         query: CursorQuery,

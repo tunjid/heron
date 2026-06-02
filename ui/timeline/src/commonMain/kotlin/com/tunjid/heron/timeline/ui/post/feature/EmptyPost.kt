@@ -67,53 +67,63 @@ internal fun EmptyPost(
     )
 }
 
-private fun TimelineItem.Empty.emptyTextRes(): StringResource = when (this) {
-    is TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread
-    is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
-        is Timeline.Home.Following -> Res.string.empty_timeline_generic
-        is Timeline.Home.Feed -> Res.string.empty_timeline_feed
-        is Timeline.Home.List -> Res.string.empty_timeline_list
-        is Timeline.StarterPack -> Res.string.empty_timeline_list
-        is Timeline.Profile -> when (timeline.type) {
-            Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts
-            Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies
-            Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes
-            Timeline.Profile.Type.Media -> Res.string.empty_timeline_media
-            Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos
-        }
+private fun TimelineItem.Empty.emptyTextRes(): StringResource =
+    when (this) {
+        is TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread
+        is TimelineItem.Empty.Timeline ->
+            when (val timeline = timeline) {
+                is Timeline.Home.Following -> Res.string.empty_timeline_generic
+                is Timeline.Home.Feed -> Res.string.empty_timeline_feed
+                is Timeline.Home.List -> Res.string.empty_timeline_list
+                is Timeline.StarterPack -> Res.string.empty_timeline_list
+                is Timeline.Profile ->
+                    when (timeline.type) {
+                        Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts
+                        Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies
+                        Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes
+                        Timeline.Profile.Type.Media -> Res.string.empty_timeline_media
+                        Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos
+                    }
+            }
     }
-}
 
-private fun TimelineItem.Empty.emptyDescriptionRes(): StringResource = when (this) {
-    TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread_description
-    is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
-        is Timeline.Home.Following -> Res.string.empty_timeline_generic_description
-        is Timeline.Home.Feed -> Res.string.empty_timeline_feed_description
-        is Timeline.Home.List -> Res.string.empty_timeline_list_description
-        is Timeline.StarterPack -> Res.string.empty_timeline_list_description
-        is Timeline.Profile -> when (timeline.type) {
-            Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts_description
-            Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies_description
-            Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes_description
-            Timeline.Profile.Type.Media -> Res.string.empty_timeline_media_description
-            Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos_description
-        }
+private fun TimelineItem.Empty.emptyDescriptionRes(): StringResource =
+    when (this) {
+        TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread_description
+        is TimelineItem.Empty.Timeline ->
+            when (val timeline = timeline) {
+                is Timeline.Home.Following -> Res.string.empty_timeline_generic_description
+                is Timeline.Home.Feed -> Res.string.empty_timeline_feed_description
+                is Timeline.Home.List -> Res.string.empty_timeline_list_description
+                is Timeline.StarterPack -> Res.string.empty_timeline_list_description
+                is Timeline.Profile ->
+                    when (timeline.type) {
+                        Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts_description
+                        Timeline.Profile.Type.Replies ->
+                            Res.string.empty_timeline_replies_description
+                        Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes_description
+                        Timeline.Profile.Type.Media -> Res.string.empty_timeline_media_description
+                        Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos_description
+                    }
+            }
     }
-}
 
-private fun TimelineItem.Empty.emptyIcon(): ImageVector = when (this) {
-    TimelineItem.Empty.Thread -> Icons.Rounded.ModeComment
-    is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
-        is Timeline.Home.Following -> Icons.Rounded.Dashboard
-        is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
-        is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
-        is Timeline.StarterPack -> Icons.Rounded.Group
-        is Timeline.Profile -> when (timeline.type) {
-            Timeline.Profile.Type.Posts -> Icons.AutoMirrored.Rounded.Article
-            Timeline.Profile.Type.Replies -> Icons.Rounded.Forum
-            Timeline.Profile.Type.Likes -> Icons.Rounded.Favorite
-            Timeline.Profile.Type.Media -> Icons.Rounded.Image
-            Timeline.Profile.Type.Videos -> Icons.Rounded.Videocam
-        }
+private fun TimelineItem.Empty.emptyIcon(): ImageVector =
+    when (this) {
+        TimelineItem.Empty.Thread -> Icons.Rounded.ModeComment
+        is TimelineItem.Empty.Timeline ->
+            when (val timeline = timeline) {
+                is Timeline.Home.Following -> Icons.Rounded.Dashboard
+                is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
+                is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
+                is Timeline.StarterPack -> Icons.Rounded.Group
+                is Timeline.Profile ->
+                    when (timeline.type) {
+                        Timeline.Profile.Type.Posts -> Icons.AutoMirrored.Rounded.Article
+                        Timeline.Profile.Type.Replies -> Icons.Rounded.Forum
+                        Timeline.Profile.Type.Likes -> Icons.Rounded.Favorite
+                        Timeline.Profile.Type.Media -> Icons.Rounded.Image
+                        Timeline.Profile.Type.Videos -> Icons.Rounded.Videocam
+                    }
+            }
     }
-}

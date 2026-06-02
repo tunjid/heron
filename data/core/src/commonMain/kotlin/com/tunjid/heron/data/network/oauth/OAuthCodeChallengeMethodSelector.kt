@@ -25,8 +25,8 @@
 package com.tunjid.heron.data.network.oauth
 
 /**
- * Interface for selecting an OAuth code challenge method based on the supported methods provided by the OAuth
- * authorization server.
+ * Interface for selecting an OAuth code challenge method based on the supported methods provided by
+ * the OAuth authorization server.
  */
 fun interface OAuthCodeChallengeMethodSelector {
     fun selectCodeChallengeMethod(supportedChallengeMethods: List<String>): OAuthCodeChallengeMethod

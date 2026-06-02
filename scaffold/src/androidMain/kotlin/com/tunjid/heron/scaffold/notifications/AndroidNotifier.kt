@@ -31,10 +31,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.domain.navigation.R
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.notification_channel_likes
@@ -49,9 +46,7 @@ import heron.scaffold.generated.resources.notification_channel_reposts
 import heron.scaffold.generated.resources.notification_channel_standard_publications
 import org.jetbrains.compose.resources.getString
 
-class AndroidNotifier(
-    private val context: Context,
-) : Notifier {
+class AndroidNotifier(private val context: Context) : Notifier {
 
     private val notificationManager = NotificationManagerCompat.from(context)
 
@@ -59,78 +54,72 @@ class AndroidNotifier(
         // TODO: When in app notifications are supported, check process lifecycle
         //  before displaying in the notifications tray. Till then, display in tray.
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) == PackageManager.PERMISSION_GRANTED
+        if (
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED
         ) {
-            val showingNotifications = notificationManager.activeNotifications
-                .mapTo(mutableSetOf(), StatusBarNotification::getId)
+            val showingNotifications =
+                notificationManager.activeNotifications.mapTo(
+                    mutableSetOf(),
+                    StatusBarNotification::getId,
+                )
 
             for (notification in notifications) {
                 if (notification.androidNotificationId in showingNotifications) continue
 
                 notification.createChannelIfNeeded()
 
-                val builder = NotificationCompat.Builder(
-                    context,
-                    notification.channelId,
-                ).apply {
-                    setSmallIcon(R.drawable.ic_heron_notification)
-                    setContentTitle(notification.title())
-                    notification.body()?.let(::setContentText)
-                    setContentIntent(notification.deepLinkPendingIntent())
-                    setDeleteIntent(notification.dismissalPendingIntent())
-                    setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    setAutoCancel(true)
-                }
+                val builder =
+                    NotificationCompat.Builder(
+                            context,
+                            notification.channelId,
+                        )
+                        .apply {
+                            setSmallIcon(R.drawable.ic_heron_notification)
+                            setContentTitle(notification.title())
+                            notification.body()?.let(::setContentText)
+                            setContentIntent(notification.deepLinkPendingIntent())
+                            setDeleteIntent(notification.dismissalPendingIntent())
+                            setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                            setAutoCancel(true)
+                        }
 
                 notificationManager.notify(
-                    /* tag = */
-                    notification.androidNotificationTag,
-                    /* id = */
-                    notification.androidNotificationId,
-                    /* notification = */
-                    builder.build(),
+                    /* tag = */ notification.androidNotificationTag,
+                    /* id = */ notification.androidNotificationId,
+                    /* notification = */ builder.build(),
                 )
             }
         }
     }
 
-    private fun Notification.deepLinkPendingIntent(): PendingIntent? = PendingIntent.getActivity(
-        /* context = */
-        context,
-        /* requestCode = */
-        androidPendingDeepLinkRequestCode,
-        /* intent = */
-        Intent().apply {
-            component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
-            data = AndroidUri.Builder()
-                .scheme(deepLinkScheme())
-                .path(deepLinkPath())
-                .build()
-            putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
-        },
-        /* flags = */
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
+    private fun Notification.deepLinkPendingIntent(): PendingIntent? =
+        PendingIntent.getActivity(
+            /* context = */ context,
+            /* requestCode = */ androidPendingDeepLinkRequestCode,
+            /* intent = */ Intent().apply {
+                component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
+                data = AndroidUri.Builder().scheme(deepLinkScheme()).path(deepLinkPath()).build()
+                putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
+            },
+            /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
 
-    private fun Notification.dismissalPendingIntent(): PendingIntent? = PendingIntent.getBroadcast(
-        /* context = */
-        context,
-        /* requestCode = */
-        androidPendingDismissRequestCode,
-        /* intent = */
-        Intent().apply {
-            action = DISMISSAL_ACTION
-            component = ComponentName(context.packageName, NOTIFICATION_DISMISS_RECEIVER)
-            putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
-            putExtra(DISMISSAL_INSTANT_EXTRA, indexedAt.toEpochMilliseconds())
-        },
-        /* flags = */
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
+    private fun Notification.dismissalPendingIntent(): PendingIntent? =
+        PendingIntent.getBroadcast(
+            /* context = */ context,
+            /* requestCode = */ androidPendingDismissRequestCode,
+            /* intent = */ Intent().apply {
+                action = DISMISSAL_ACTION
+                component = ComponentName(context.packageName, NOTIFICATION_DISMISS_RECEIVER)
+                putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
+                putExtra(DISMISSAL_INSTANT_EXTRA, indexedAt.toEpochMilliseconds())
+            },
+            /* flags = */ PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
 
     private suspend fun Notification.createChannelIfNeeded() {
         if (notificationManager.getNotificationChannel(channelId) == null) {
@@ -164,23 +153,23 @@ private val Notification.androidNotificationTag: String
     get() = uri.uri
 
 private val Notification.channelId: String
-    get() = when (this) {
-        is Notification.Liked.Post -> "channel-liked-post"
-        is Notification.Liked.Repost -> "channel-liked-repost"
-        is Notification.Reposted.Post -> "channel-reposted-post"
-        is Notification.Reposted.Repost -> "channel-reposted-repost"
-        is Notification.Followed -> "channel-followed"
-        is Notification.Mentioned -> "channel-mentioned"
-        is Notification.RepliedTo -> "channel-replied"
-        is Notification.Quoted -> "channel-quoted"
-        is Notification.DocumentPublished -> "channel-standard-publications"
-        is Notification.JoinedStarterPack,
-        is Notification.SubscribedPost,
-        is Notification.Verified,
-        is Notification.Unverified,
-        is Notification.Unknown,
-        -> "channel-misc"
-    }
+    get() =
+        when (this) {
+            is Notification.Liked.Post -> "channel-liked-post"
+            is Notification.Liked.Repost -> "channel-liked-repost"
+            is Notification.Reposted.Post -> "channel-reposted-post"
+            is Notification.Reposted.Repost -> "channel-reposted-repost"
+            is Notification.Followed -> "channel-followed"
+            is Notification.Mentioned -> "channel-mentioned"
+            is Notification.RepliedTo -> "channel-replied"
+            is Notification.Quoted -> "channel-quoted"
+            is Notification.DocumentPublished -> "channel-standard-publications"
+            is Notification.JoinedStarterPack,
+            is Notification.SubscribedPost,
+            is Notification.Verified,
+            is Notification.Unverified,
+            is Notification.Unknown -> "channel-misc"
+        }
 
 private suspend fun Notification.channelName(): String =
     when (this) {
@@ -192,11 +181,11 @@ private suspend fun Notification.channelName(): String =
         is Notification.Mentioned -> getString(Res.string.notification_channel_mentions)
         is Notification.RepliedTo -> getString(Res.string.notification_channel_replies)
         is Notification.Quoted -> getString(Res.string.notification_channel_quotes)
-        is Notification.DocumentPublished -> getString(Res.string.notification_channel_standard_publications)
+        is Notification.DocumentPublished ->
+            getString(Res.string.notification_channel_standard_publications)
         is Notification.JoinedStarterPack,
         is Notification.SubscribedPost,
         is Notification.Verified,
         is Notification.Unverified,
-        is Notification.Unknown,
-        -> getString(Res.string.notification_channel_misc)
+        is Notification.Unknown -> getString(Res.string.notification_channel_misc)
     }

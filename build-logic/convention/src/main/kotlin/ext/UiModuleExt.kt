@@ -17,47 +17,46 @@
 import ext.libs
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-fun org.gradle.api.Project.configureUiModule(
-    extension: KotlinMultiplatformExtension,
-) = extension.apply {
-    sourceSets.apply {
-        named("commonMain") {
-            dependencies {
-                implementation(project(":data:core"))
-                implementation(project(":data:models"))
-                implementation(project(":data:logging"))
-                implementation(project(":data:platform"))
+fun org.gradle.api.Project.configureUiModule(extension: KotlinMultiplatformExtension) =
+    extension.apply {
+        sourceSets.apply {
+            named("commonMain") {
+                dependencies {
+                    implementation(project(":data:core"))
+                    implementation(project(":data:models"))
+                    implementation(project(":data:logging"))
+                    implementation(project(":data:platform"))
 
-                api(libs.lifecycle.multiplatform.runtime)
-                api(libs.lifecycle.multiplatform.runtime.compose)
+                    api(libs.lifecycle.multiplatform.runtime)
+                    api(libs.lifecycle.multiplatform.runtime.compose)
 
-                api(libs.compose.multiplatform.components.resources)
-                api(libs.compose.multiplatform.runtime)
-                api(libs.compose.multiplatform.animation)
-                api(libs.compose.multiplatform.material.icons.extended)
-                api(libs.compose.multiplatform.material3)
-                api(libs.compose.multiplatform.foundation.layout)
-                api(libs.compose.multiplatform.foundation.foundation)
-                api(libs.compose.multiplatform.ui.ui)
+                    api(libs.compose.multiplatform.components.resources)
+                    api(libs.compose.multiplatform.runtime)
+                    api(libs.compose.multiplatform.animation)
+                    api(libs.compose.multiplatform.material.icons.extended)
+                    api(libs.compose.multiplatform.material3)
+                    api(libs.compose.multiplatform.foundation.layout)
+                    api(libs.compose.multiplatform.foundation.foundation)
+                    api(libs.compose.multiplatform.ui.ui)
 
-                api(libs.androidx.graphics.shapes)
+                    api(libs.androidx.graphics.shapes)
 
-                api(libs.kotlinx.coroutines.core)
+                    api(libs.kotlinx.coroutines.core)
 
-                api(libs.savedstate.multiplatform.savedstate)
-                api(libs.savedstate.multiplatform.compose)
+                    api(libs.savedstate.multiplatform.savedstate)
+                    api(libs.savedstate.multiplatform.compose)
 
-                api(libs.tunjid.mutator.core.common)
-                api(libs.tunjid.mutator.coroutines.common)
-                api(libs.tunjid.mutator.compose)
+                    api(libs.tunjid.mutator.core.common)
+                    api(libs.tunjid.mutator.coroutines.common)
+                    api(libs.tunjid.mutator.compose)
 
-                api(libs.tunjid.composables)
+                    api(libs.tunjid.composables)
 
-                api(libs.tunjid.treenav.compose)
-                api(libs.tunjid.treenav.compose.threepane)
-                api(libs.tunjid.treenav.core)
-                api(libs.tunjid.treenav.strings)
+                    api(libs.tunjid.treenav.compose)
+                    api(libs.tunjid.treenav.compose.threepane)
+                    api(libs.tunjid.treenav.core)
+                    api(libs.tunjid.treenav.strings)
+                }
             }
         }
     }
-}

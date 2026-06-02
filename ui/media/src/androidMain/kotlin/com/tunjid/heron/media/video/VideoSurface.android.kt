@@ -59,9 +59,7 @@ internal fun VideoSurface(
     }
 
     EmbeddedExternalSurface(
-        modifier = modifier
-            .clip(shape)
-            .onSizeChanged { surfaceSize = it },
+        modifier = modifier.clip(shape).onSizeChanged { surfaceSize = it },
         transform = videoMatrix,
     ) {
         onSurface { createdSurface, initialWidth, initialHeight ->
@@ -80,7 +78,12 @@ internal fun VideoSurface(
         }
     }
 
-    if (videoSize.height != 0 && videoSize.width != 0 && surfaceSize.height != 0 && surfaceSize.width != 0) {
+    if (
+        videoSize.height != 0 &&
+            videoSize.width != 0 &&
+            surfaceSize.height != 0 &&
+            surfaceSize.width != 0
+    ) {
         // Recalculate the video matrix
         videoMatrix.scaleAndAlignTo(
             srcSize = videoSize,
@@ -91,9 +94,7 @@ internal fun VideoSurface(
     }
 }
 
-/**
- * Scales and aligns a matrix into [destSize] from [srcSize].
- */
+/** Scales and aligns a matrix into [destSize] from [srcSize]. */
 private fun Matrix.scaleAndAlignTo(
     srcSize: IntSize,
     destSize: IntSize,
@@ -103,10 +104,11 @@ private fun Matrix.scaleAndAlignTo(
     // Reset the matrix to identity
     reset()
     // TextureView defaults to Fill bounds, first remove that transform
-    val fillBoundsScaleFactor = ContentScale.FillBounds.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
+    val fillBoundsScaleFactor =
+        ContentScale.FillBounds.computeScaleFactor(
+            srcSize = srcSize.toSize(),
+            dstSize = destSize.toSize(),
+        )
     scale(
         x = fillBoundsScaleFactor.scaleX,
         y = fillBoundsScaleFactor.scaleY,
@@ -115,10 +117,11 @@ private fun Matrix.scaleAndAlignTo(
     invert()
 
     // Next apply the desired contentScale
-    val desiredScaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
+    val desiredScaleFactor =
+        contentScale.computeScaleFactor(
+            srcSize = srcSize.toSize(),
+            dstSize = destSize.toSize(),
+        )
     scale(
         x = desiredScaleFactor.scaleX,
         y = desiredScaleFactor.scaleY,
@@ -127,21 +130,24 @@ private fun Matrix.scaleAndAlignTo(
     // Finally apply the desired alignment
     val scaledSrcSize = srcSize.toSize() * desiredScaleFactor
 
-    val alignmentOffset = alignment.align(
-        size = IntSize(
-            width = scaledSrcSize.width.toInt(),
-            height = scaledSrcSize.height.toInt(),
-        ),
-        space = destSize,
-        layoutDirection = LayoutDirection.Ltr,
-    )
+    val alignmentOffset =
+        alignment.align(
+            size =
+                IntSize(
+                    width = scaledSrcSize.width.toInt(),
+                    height = scaledSrcSize.height.toInt(),
+                ),
+            space = destSize,
+            layoutDirection = LayoutDirection.Ltr,
+        )
 
     // Translate by the alignment, taking into account the desired scale factor and
     // the implicit fill bounds.
-    val translationOffset = Offset(
-        x = alignmentOffset.x / desiredScaleFactor.scaleX * fillBoundsScaleFactor.scaleX,
-        y = alignmentOffset.y / desiredScaleFactor.scaleY * fillBoundsScaleFactor.scaleY,
-    )
+    val translationOffset =
+        Offset(
+            x = alignmentOffset.x / desiredScaleFactor.scaleX * fillBoundsScaleFactor.scaleX,
+            y = alignmentOffset.y / desiredScaleFactor.scaleY * fillBoundsScaleFactor.scaleY,
+        )
 
     translate(
         x = translationOffset.x,

@@ -16,5 +16,4 @@
 
 package com.tunjid.heron.data.network.oauth
 
-internal actual fun oauthRedirect(): OauthRedirect =
-    OauthRedirect.ExternalRedirect
+internal actual fun oauthRedirect(): OauthRedirect = OauthRedirect.ExternalRedirect

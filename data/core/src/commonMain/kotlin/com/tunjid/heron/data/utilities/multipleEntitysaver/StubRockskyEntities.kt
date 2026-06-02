@@ -16,16 +16,17 @@ internal fun stubRockskyArtistEntity(
     uri: ArtistUri,
     creatorId: ProfileId,
     name: String,
-) = RockskyArtistEntity(
-    uri = uri,
-    cid = ArtistId(uri.uri),
-    creatorId = creatorId,
-    name = name,
-    picture = null,
-    playCount = null,
-    uniqueListeners = null,
-    tags = null,
-)
+) =
+    RockskyArtistEntity(
+        uri = uri,
+        cid = ArtistId(uri.uri),
+        creatorId = creatorId,
+        name = name,
+        picture = null,
+        playCount = null,
+        uniqueListeners = null,
+        tags = null,
+    )
 
 internal fun stubRockskyAlbumEntity(
     uri: AlbumUri,
@@ -34,19 +35,20 @@ internal fun stubRockskyAlbumEntity(
     title: String,
     artist: String,
     albumArt: ImageUri?,
-) = RockskyAlbumEntity(
-    uri = uri,
-    cid = AlbumId(uri.uri),
-    creatorId = creatorId,
-    title = title,
-    artist = artist,
-    releaseDate = null,
-    year = null,
-    albumArt = albumArt,
-    artistUri = artistUri,
-    playCount = null,
-    uniqueListeners = null,
-)
+) =
+    RockskyAlbumEntity(
+        uri = uri,
+        cid = AlbumId(uri.uri),
+        creatorId = creatorId,
+        title = title,
+        artist = artist,
+        releaseDate = null,
+        year = null,
+        albumArt = albumArt,
+        artistUri = artistUri,
+        playCount = null,
+        uniqueListeners = null,
+    )
 
 internal fun stubRockskyTrackEntity(
     uri: TrackUri,
@@ -59,21 +61,22 @@ internal fun stubRockskyTrackEntity(
     albumArt: ImageUri?,
     albumUri: AlbumUri?,
     artistUri: ArtistUri?,
-) = RockskyTrackEntity(
-    uri = uri,
-    cid = cid,
-    creatorId = creatorId,
-    title = title,
-    artist = artist,
-    albumArtist = albumArtist,
-    album = album,
-    albumArt = albumArt,
-    trackNumber = null,
-    discNumber = null,
-    duration = null,
-    albumUri = albumUri,
-    artistUri = artistUri,
-    createdAt = null,
-    playCount = null,
-    uniqueListeners = null,
-)
+) =
+    RockskyTrackEntity(
+        uri = uri,
+        cid = cid,
+        creatorId = creatorId,
+        title = title,
+        artist = artist,
+        albumArtist = albumArtist,
+        album = album,
+        albumArt = albumArt,
+        trackNumber = null,
+        discNumber = null,
+        duration = null,
+        albumUri = albumUri,
+        artistUri = artistUri,
+        createdAt = null,
+        playCount = null,
+        uniqueListeners = null,
+    )

@@ -37,7 +37,7 @@ interface NotificationsDao {
             ORDER BY indexedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun notifications(
         ownerId: String,
@@ -56,22 +56,19 @@ interface NotificationsDao {
             AND isRead = 0
             AND indexedAt >= :after
             ORDER BY indexedAt DESC
-        """,
+        """
     )
     fun unreadNotifications(
         ownerId: String,
         after: Instant,
     ): Flow<List<PopulatedNotificationEntity>>
 
-    @Upsert
-    suspend fun upsertNotifications(
-        entities: List<NotificationEntity>,
-    )
+    @Upsert suspend fun upsertNotifications(entities: List<NotificationEntity>)
 
     @Query(
         """
         DELETE FROM notifications
-    """,
+    """
     )
     suspend fun deleteAllNotifications()
 }

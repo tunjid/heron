@@ -33,30 +33,25 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val grazeFeed: GrazeFeed.Editable = GrazeFeed.Pending(
-        recordKey = RecordKey.generate(),
-        filter = Filter.And(
-            filters = emptyList(),
+    val grazeFeed: GrazeFeed.Editable =
+        GrazeFeed.Pending(
+            recordKey = RecordKey.generate(),
+            filter = Filter.And(filters = emptyList()),
         ),
-    ),
     val currentPath: List<Int> = emptyList(),
     val feedGenerator: FeedGenerator? = null,
     val sharedElementPrefix: String,
     val isLoading: Boolean = false,
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val suggestedProfiles: List<Profile> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
+    @Transient val suggestedProfiles: List<Profile> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 ) {
     companion object {
-        operator fun invoke(
-            route: Route,
-        ) = State(
-            feedGenerator = route.model(),
-            sharedElementPrefix = route.sharedElementPrefix,
-        )
+        operator fun invoke(route: Route) =
+            State(
+                feedGenerator = route.model(),
+                sharedElementPrefix = route.sharedElementPrefix,
+            )
     }
 }
 
@@ -71,15 +66,14 @@ fun Filter.Root.rootFilterAt(path: List<Int>) =
 sealed class Action(val key: String) {
     sealed class EditorNavigation : Action("EditorNavigation") {
         data class EnterFilter(val index: Int) : EditorNavigation()
+
         data object ExitFilter : EditorNavigation()
     }
 
     sealed class EditFilter : Action("EditFilter") {
         abstract val path: List<Int>
 
-        data class FlipRootFilter(
-            override val path: List<Int>,
-        ) : EditFilter()
+        data class FlipRootFilter(override val path: List<Int>) : EditFilter()
 
         data class AddFilter(
             override val path: List<Int>,
@@ -98,23 +92,15 @@ sealed class Action(val key: String) {
         ) : EditFilter()
     }
 
-    data class SearchProfiles(
-        val query: String,
-    ) : Action("SearchProfiles")
+    data class SearchProfiles(val query: String) : Action("SearchProfiles")
 
     sealed class Update : Action("Load") {
 
-        data class InitialLoad(
-            val recordKey: RecordKey,
-        ) : Update()
+        data class InitialLoad(val recordKey: RecordKey) : Update()
 
-        data class Save(
-            val feed: GrazeFeed.Editable,
-        ) : Update()
+        data class Save(val feed: GrazeFeed.Editable) : Update()
 
-        data class Delete(
-            val recordKey: RecordKey,
-        ) : Update()
+        data class Delete(val recordKey: RecordKey) : Update()
     }
 
     data class Metadata(
@@ -124,25 +110,22 @@ sealed class Action(val key: String) {
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class PopFeed(
-            val recordKey: RecordKey,
-        ) : Navigate() {
+        data class PopFeed(val recordKey: RecordKey) : Navigate() {
             override val navigationMutation: NavigationMutation = {
                 navState.copy(
-                    stacks = navState.stacks.map { stackNav ->
-                        stackNav.copy(
-                            children = stackNav.children.filterNot { route ->
-                                route.id
-                                    .substringBefore('?')
-                                    .substringAfterLast('/') == recordKey.value
-                            },
-                        )
-                    },
+                    stacks =
+                        navState.stacks.map { stackNav ->
+                            stackNav.copy(
+                                children =
+                                    stackNav.children.filterNot { route ->
+                                        route.id.substringBefore('?').substringAfterLast('/') ==
+                                            recordKey.value
+                                    }
+                            )
+                        }
                 )
             }
         }

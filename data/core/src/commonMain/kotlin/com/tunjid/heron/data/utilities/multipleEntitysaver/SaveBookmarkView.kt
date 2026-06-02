@@ -11,13 +11,13 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId,
     bookmarkView: BookmarkView,
 ) {
-    val postView = when (val item = bookmarkView.item) {
-        is BookmarkViewItemUnion.PostView -> item.value
-        is BookmarkViewItemUnion.BlockedPost,
-        is BookmarkViewItemUnion.NotFoundPost,
-        is BookmarkViewItemUnion.Unknown,
-        -> return
-    }
+    val postView =
+        when (val item = bookmarkView.item) {
+            is BookmarkViewItemUnion.PostView -> item.value
+            is BookmarkViewItemUnion.BlockedPost,
+            is BookmarkViewItemUnion.NotFoundPost,
+            is BookmarkViewItemUnion.Unknown -> return
+        }
 
     add(
         viewingProfileId = viewingProfileId,
@@ -29,6 +29,6 @@ internal fun MultipleEntitySaver.add(
             bookmarkedUri = bookmarkView.subject.uri.atUri.let(::GenericUri),
             createdAt = bookmarkView.createdAt ?: Clock.System.now(),
             viewingProfileId = viewingProfileId,
-        ),
+        )
     )
 }

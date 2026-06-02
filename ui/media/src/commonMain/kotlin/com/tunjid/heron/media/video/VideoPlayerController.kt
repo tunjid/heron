@@ -19,17 +19,15 @@ package com.tunjid.heron.media.video
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 
-/**
- * Controller for videos.
- */
+/** Controller for videos. */
 @Stable
 interface VideoPlayerController {
 
     var isMuted: Boolean
 
     /**
-     * Registers a video for playback. If a unique ID is not specified, it
-     * is defaulted to [videoUrl].
+     * Registers a video for playback. If a unique ID is not specified, it is defaulted to
+     * [videoUrl].
      *
      * Registering a video is not enough to play it; it must be explicitly played.
      */
@@ -52,14 +50,10 @@ interface VideoPlayerController {
         seekToMs: Long? = null,
     )
 
-    /**
-     * Pauses the currently active video.
-     */
+    /** Pauses the currently active video. */
     fun pauseActiveVideo()
 
-    /**
-     * Seeks to a position specified in milliseconds in the currently active video.
-     */
+    /** Seeks to a position specified in milliseconds in the currently active video. */
     fun seekTo(position: Long)
 
     /**
@@ -70,12 +64,13 @@ interface VideoPlayerController {
     fun getVideoStateById(videoId: String): VideoPlayerState?
 
     /**
-     * Tries to reload a video, normally used after an error has occurred. If the currently active video
-     * is different, sets the active video to the one with the given [videoId].
+     * Tries to reload a video, normally used after an error has occurred. If the currently active
+     * video is different, sets the active video to the one with the given [videoId].
      */
     fun retry(videoId: String)
 }
 
-val LocalVideoPlayerController = staticCompositionLocalOf<VideoPlayerController> {
-    StubVideoPlayerController
-}
+val LocalVideoPlayerController =
+    staticCompositionLocalOf<VideoPlayerController> {
+        StubVideoPlayerController
+    }

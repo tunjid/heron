@@ -44,7 +44,6 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 import okio.FileSystem
-import okio.Path
 import okio.Path.Companion.toOkioPath
 
 fun createAppState(): AppState =
@@ -58,15 +57,9 @@ fun createAppState(): AppState =
         },
         videoPlayerController = { appMainScope ->
             when ((Platform.current as JVMPlatform).variant) {
-                JvmVariant.Mac -> AVFoundationPlayerController(
-                    appMainScope = appMainScope,
-                )
-                JvmVariant.Linux -> GStreamerPlayerController(
-                    appMainScope = appMainScope,
-                )
-                else -> JavaFxPlayerController(
-                    appMainScope = appMainScope,
-                )
+                JvmVariant.Mac -> AVFoundationPlayerController(appMainScope = appMainScope)
+                JvmVariant.Linux -> GStreamerPlayerController(appMainScope = appMainScope)
+                else -> JavaFxPlayerController(appMainScope = appMainScope)
             }
         },
         args = { appMainScope ->
@@ -74,10 +67,12 @@ fun createAppState(): AppState =
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = File(
-                    appDataDir,
-                    SAVED_STATE_FILE_NAME,
-                ).toOkioPath(),
+                savedStatePath =
+                    File(
+                            appDataDir,
+                            SAVED_STATE_FILE_NAME,
+                        )
+                        .toOkioPath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
@@ -88,24 +83,25 @@ fun createAppState(): AppState =
 private fun appDataDirectory(): File {
     val platform = Platform.current as JVMPlatform
     val userHome = System.getProperty(USER_HOME_PROPERTY)
-    val dir = when (platform.variant) {
-        JvmVariant.Mac -> File(
-            userHome,
-            "$MAC_APP_SUPPORT_PATH/$APP_NAME",
-        )
-        JvmVariant.Windows -> File(
-            System.getenv(APPDATA_ENV) ?: userHome,
-            APP_NAME,
-        )
-        JvmVariant.Linux,
-        JvmVariant.Unknown,
-        ->
-            File(
-                System.getenv(XDG_DATA_HOME_ENV)
-                    ?: "$userHome/$LINUX_DEFAULT_DATA_PATH",
-                APP_NAME,
-            )
-    }
+    val dir =
+        when (platform.variant) {
+            JvmVariant.Mac ->
+                File(
+                    userHome,
+                    "$MAC_APP_SUPPORT_PATH/$APP_NAME",
+                )
+            JvmVariant.Windows ->
+                File(
+                    System.getenv(APPDATA_ENV) ?: userHome,
+                    APP_NAME,
+                )
+            JvmVariant.Linux,
+            JvmVariant.Unknown ->
+                File(
+                    System.getenv(XDG_DATA_HOME_ENV) ?: "$userHome/$LINUX_DEFAULT_DATA_PATH",
+                    APP_NAME,
+                )
+        }
     dir.mkdirs()
     return dir
 }
@@ -122,19 +118,17 @@ private fun tinkEncryption(appDataDir: File): SavedStateEncryption {
     val keysetHandle = loadOrCreateKeyset(kek, keysetFile)
     val aead = keysetHandle.getPrimitive(Aead::class.java)
     return object : SavedStateEncryption {
-        override fun encrypt(data: ByteArray): ByteArray =
-            aead.encrypt(data, ASSOCIATED_DATA)
+        override fun encrypt(data: ByteArray): ByteArray = aead.encrypt(data, ASSOCIATED_DATA)
 
-        override fun decrypt(data: ByteArray): ByteArray =
-            aead.decrypt(data, ASSOCIATED_DATA)
+        override fun decrypt(data: ByteArray): ByteArray = aead.decrypt(data, ASSOCIATED_DATA)
     }
 }
 
 /**
- * Loads an existing Tink keyset or creates a new one. If the existing keyset cannot be
- * decrypted (e.g., KEK changed due to hardware/user changes, or file corruption),
- * the old keyset is deleted and a fresh one is generated. This means the user will
- * need to re-authenticate, but the app will not crash.
+ * Loads an existing Tink keyset or creates a new one. If the existing keyset cannot be decrypted
+ * (e.g., KEK changed due to hardware/user changes, or file corruption), the old keyset is deleted
+ * and a fresh one is generated. This means the user will need to re-authenticate, but the app will
+ * not crash.
  */
 private fun loadOrCreateKeyset(
     kek: SecretKeySpec,
@@ -156,24 +150,24 @@ private fun loadOrCreateKeyset(
         }
     }
     return KeysetHandle.generateNew(PredefinedAeadParameters.AES256_GCM).also { handle ->
-        val serialized = TinkJsonProtoKeysetFormat.serializeKeyset(
-            handle,
-            InsecureSecretKeyAccess.get(),
-        )
+        val serialized =
+            TinkJsonProtoKeysetFormat.serializeKeyset(
+                handle,
+                InsecureSecretKeyAccess.get(),
+            )
         keysetFile.writeBytes(encryptWithKek(kek, serialized.toByteArray()))
     }
 }
 
 /**
- * Derives a key-encryption-key from stable machine-specific data
- * (username, home directory).
+ * Derives a key-encryption-key from stable machine-specific data (username, home directory).
  *
- * This is a alpha-level measure that prevents the Tink keyset from being stored in plaintext.
- * It stops casual file copying and opportunistic scanning, but a targeted attacker with
- * access to this source code and the same machine can reproduce the key.
+ * This is a alpha-level measure that prevents the Tink keyset from being stored in plaintext. It
+ * stops casual file copying and opportunistic scanning, but a targeted attacker with access to this
+ * source code and the same machine can reproduce the key.
  *
  * TODO: For production, replace with OS credential store (macOS Keychain, Windows Credential
- *  Manager, Linux Secret Service) via java-keyring or similar.
+ *   Manager, Linux Secret Service) via java-keyring or similar.
  */
 private fun deriveKeyEncryptionKey(): SecretKeySpec {
     val machineIdentity = buildString {
@@ -181,12 +175,13 @@ private fun deriveKeyEncryptionKey(): SecretKeySpec {
         append(System.getProperty(USER_HOME_PROPERTY))
     }
     val factory = SecretKeyFactory.getInstance(KEK_ALGORITHM)
-    val spec = PBEKeySpec(
-        machineIdentity.toCharArray(),
-        KEK_SALT,
-        KEK_ITERATIONS,
-        KEK_KEY_LENGTH_BITS,
-    )
+    val spec =
+        PBEKeySpec(
+            machineIdentity.toCharArray(),
+            KEK_SALT,
+            KEK_ITERATIONS,
+            KEK_KEY_LENGTH_BITS,
+        )
     val keyBytes = factory.generateSecret(spec).encoded
     return SecretKeySpec(keyBytes, AES_ALGORITHM)
 }

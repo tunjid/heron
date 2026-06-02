@@ -89,23 +89,23 @@ private fun <T : ScrollableState> interpolatedVisibleIndexEffect(
 ) {
     LaunchedEffect(scrollableState, itemsAvailable) {
         snapshotFlow {
-            if (!scrollableState.isScrollInProgress) return@snapshotFlow Float.NaN
-            if (itemsAvailable == 0) return@snapshotFlow Float.NaN
+                if (!scrollableState.isScrollInProgress) return@snapshotFlow Float.NaN
+                if (itemsAvailable == 0) return@snapshotFlow Float.NaN
 
-            if (scrollableState.isEmpty()) return@snapshotFlow Float.NaN
+                if (scrollableState.isEmpty()) return@snapshotFlow Float.NaN
 
-            val firstIndex = min(
-                a = scrollableState.interpolatedFirstItemIndex(),
-                b = itemsAvailable.toFloat(),
-            )
+                val firstIndex =
+                    min(
+                        a = scrollableState.interpolatedFirstItemIndex(),
+                        b = itemsAvailable.toFloat(),
+                    )
 
-            if (firstIndex.isNaN()) Float.NaN else firstIndex.inDenominationsOf(denominator)
-        }
+                if (firstIndex.isNaN()) Float.NaN else firstIndex.inDenominationsOf(denominator)
+            }
             .distinctUntilChanged()
             .collect { if (!it.isNaN()) onIndex(it) }
     }
 }
 
-private fun Float.inDenominationsOf(
-    denominator: Int,
-): Float = (round(this * denominator) / denominator.toFloat())
+private fun Float.inDenominationsOf(denominator: Int): Float =
+    (round(this * denominator) / denominator.toFloat())

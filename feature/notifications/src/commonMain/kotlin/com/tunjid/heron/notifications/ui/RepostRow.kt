@@ -59,8 +59,8 @@ fun RepostRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onPostClicked(notification)
             },
         isRead = isRead,
@@ -71,12 +71,15 @@ fun RepostRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Repeat),
                 tint = RepostGreen,
-                contentDescription = stringResource(
-                    when (notification) {
-                        is Notification.Reposted.Post -> CommonStrings.notifications_reposted_your_post_description
-                        is Notification.Reposted.Repost -> CommonStrings.notifications_reposted_your_repost_description
-                    },
-                ),
+                contentDescription =
+                    stringResource(
+                        when (notification) {
+                            is Notification.Reposted.Post ->
+                                CommonStrings.notifications_reposted_your_post_description
+                            is Notification.Reposted.Repost ->
+                                CommonStrings.notifications_reposted_your_repost_description
+                        }
+                    ),
             )
         },
         content = {
@@ -84,18 +87,26 @@ fun RepostRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = when (notification) {
-                                is Notification.Reposted.Post -> CommonStrings.notifications_reposted_your_post
-                                is Notification.Reposted.Repost -> CommonStrings.notifications_reposted_your_repost
-                            },
-                            pluralResource = when (notification) {
-                                is Notification.Reposted.Post -> CommonStrings.notifications_multiple_reposted_your_post
-                                is Notification.Reposted.Repost -> CommonStrings.notifications_multiple_reposted_your_repost
-                            },
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource =
+                                    when (notification) {
+                                        is Notification.Reposted.Post ->
+                                            CommonStrings.notifications_reposted_your_post
+                                        is Notification.Reposted.Repost ->
+                                            CommonStrings.notifications_reposted_your_repost
+                                    },
+                                pluralResource =
+                                    when (notification) {
+                                        is Notification.Reposted.Post ->
+                                            CommonStrings.notifications_multiple_reposted_your_post
+                                        is Notification.Reposted.Repost ->
+                                            CommonStrings
+                                                .notifications_multiple_reposted_your_repost
+                                    },
+                            ),
                     )
 
                     TimeDelta(

@@ -47,15 +47,13 @@ internal fun ProfilesScreen(
 ) {
     val listState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxSize()
-            .paneClip(),
+        modifier = modifier.padding(horizontal = 8.dp).fillMaxSize().paneClip(),
         state = listState,
-        contentPadding = bottomNavAndInsetPaddingValues(
-            horizontal = 4.dp,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                horizontal = 4.dp,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
@@ -67,28 +65,29 @@ internal fun ProfilesScreen(
                     actions(
                         Action.Navigate.To(
                             profileDestination(
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                referringRouteOption =
+                                    NavigationAction.ReferringRouteOption.Current,
                                 profile = profile,
-                                avatarSharedElementKey = item
-                                    .profile
-                                    .profileWithRelationshipAvatarSharedElementKey(),
-                            ),
-                        ),
+                                avatarSharedElementKey =
+                                    item.profile.profileWithRelationshipAvatarSharedElementKey(),
+                            )
+                        )
                     )
                 }
                 ProfileWithViewerState(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shapedClickable {
-                            onProfileClicked(item.profile)
-                        }
-                        .padding(horizontal = 4.dp)
-                        .animateItem(),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .shapedClickable {
+                                onProfileClicked(item.profile)
+                            }
+                            .padding(horizontal = 4.dp)
+                            .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     signedInProfileId = state.signedInProfileId,
                     profile = item.profile,
                     viewerState = item.viewerState,
-                    profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
+                    profileSharedElementKey =
+                        Profile::profileWithRelationshipAvatarSharedElementKey,
                     onProfileClicked = onProfileClicked,
                     onViewerStateClicked = { viewerState ->
                         state.signedInProfileId?.let {
@@ -98,7 +97,7 @@ internal fun ProfilesScreen(
                                     viewedProfileId = item.profile.did,
                                     following = viewerState?.following,
                                     followedBy = viewerState?.followedBy,
-                                ),
+                                )
                             )
                         }
                     },
@@ -111,15 +110,10 @@ internal fun ProfilesScreen(
         items = state.tiledItems,
         onQueryChanged = { query ->
             actions(
-                Action.Tile(
-                    TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                Action.Tile(TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery))
             )
         },
     )
 }
 
-private fun Profile.profileWithRelationshipAvatarSharedElementKey() =
-    "profiles-$did"
+private fun Profile.profileWithRelationshipAvatarSharedElementKey() = "profiles-$did"

@@ -20,6 +20,7 @@ plugins {
     kotlin("plugin.serialization")
     id("androidx.room")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.data.database"
@@ -55,7 +56,7 @@ room {
 }
 
 dependencies {
-//    kspCommonMainMetadata(libs.androidx.room.compiler)
+    //    kspCommonMainMetadata(libs.androidx.room.compiler)
     kspAndroid(libs.androidx.room.compiler)
     kspDesktop(libs.androidx.room.compiler)
     kspIosSimulatorArm64(libs.androidx.room.compiler)

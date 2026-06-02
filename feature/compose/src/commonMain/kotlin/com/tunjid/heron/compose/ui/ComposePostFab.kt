@@ -50,24 +50,23 @@ fun PaneScaffoldState.TopAppBarFab(
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
     FloatingActionButton(
-        modifier = modifier
-            .height(36.dp)
-            .run {
-                if (isActive) sharedElementWithCallerManagedVisibility(
-                    sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
-                    visible = state.hasLongPost,
-                    zIndexInOverlay = UiTokens.fabSharedElementZIndex,
-                )
+        modifier =
+            modifier.height(36.dp).run {
+                if (isActive)
+                    sharedElementWithCallerManagedVisibility(
+                        sharedContentState =
+                            rememberSharedContentState(ComposePostFabSharedElementKey),
+                        visible = state.hasLongPost,
+                        zIndexInOverlay = UiTokens.fabSharedElementZIndex,
+                    )
                 else this
             },
         shape = CircleShape,
         onClick = onClick@{
-            state.createPostAction()?.let(onCreatePost)
-        },
+                state.createPostAction()?.let(onCreatePost)
+            },
         content = {
-            Text(
-                text = stringResource(Res.string.post),
-            )
+            Text(text = stringResource(Res.string.post))
         },
     )
 }
@@ -79,14 +78,10 @@ fun PaneScaffoldState.ComposePostFabRow(
     onAction: (Action) -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom,
     ) {
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 32.dp),
-        ) {
+        Box(modifier = Modifier.padding(horizontal = 32.dp)) {
             ComposeThreadGate(
                 interactionSettingsPreference = state.interactionsPreference,
                 onInteractionSettingsUpdated = {
@@ -100,10 +95,11 @@ fun PaneScaffoldState.ComposePostFabRow(
         }
         Spacer(Modifier.weight(1f))
         val show = if (inPredictiveBack) !state.hasLongPost else true
-        if (show) ComposePostFab(
-            state = state,
-            onCreatePost = onAction,
-        )
+        if (show)
+            ComposePostFab(
+                state = state,
+                onCreatePost = onAction,
+            )
     }
 }
 
@@ -114,19 +110,20 @@ private fun PaneScaffoldState.ComposePostFab(
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
     PaneFab(
-        modifier = modifier
-            .sharedElementWithCallerManagedVisibility(
-                sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
-                visible = !state.hasLongPost,
-                zIndexInOverlay = UiTokens.fabSharedElementZIndex,
-            )
-            .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
+        modifier =
+            modifier
+                .sharedElementWithCallerManagedVisibility(
+                    sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
+                    visible = !state.hasLongPost,
+                    zIndexInOverlay = UiTokens.fabSharedElementZIndex,
+                )
+                .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
         text = stringResource(Res.string.post),
         icon = Icons.AutoMirrored.Rounded.Send,
         expanded = state.fabExpanded,
         onClick = onClick@{
-            state.createPostAction()?.let(onCreatePost)
-        },
+                state.createPostAction()?.let(onCreatePost)
+            },
     )
 }
 

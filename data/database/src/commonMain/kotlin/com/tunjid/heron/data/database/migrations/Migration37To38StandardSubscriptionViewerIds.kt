@@ -27,59 +27,72 @@ internal object Migration37To38StandardSubscriptionViewerIds : Migration(37, 38)
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             """
-                ALTER TABLE standardPublications
-                ADD COLUMN `sortedAt` INTEGER NOT NULL DEFAULT 0
-            """.trimIndent(),
-        )
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_standardPublications_sortedAt` ON `standardPublications` (`sortedAt`)")
-
-        connection.execSQL(
+            ALTER TABLE standardPublications
+            ADD COLUMN `sortedAt` INTEGER NOT NULL DEFAULT 0
             """
-                CREATE TABLE IF NOT EXISTS `standardSubscriptions_new` (
-                    `uri` TEXT NOT NULL,
-                    `cid` TEXT,
-                    `publicationUri` TEXT NOT NULL,
-                    `viewingProfileId` TEXT NOT NULL,
-                    `sortedAt` INTEGER NOT NULL DEFAULT 0,
-                    PRIMARY KEY(`publicationUri`, `viewingProfileId`),
-                    FOREIGN KEY(`publicationUri`)
-                        REFERENCES `standardPublications`(`uri`)
-                        ON UPDATE CASCADE
-                        ON DELETE CASCADE,
-                    FOREIGN KEY(`viewingProfileId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE CASCADE
-                        ON DELETE CASCADE
-                    )
-
-            """.trimIndent(),
+                .trimIndent()
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_standardPublications_sortedAt` ON `standardPublications` (`sortedAt`)"
         )
 
         connection.execSQL(
             """
-                INSERT OR IGNORE INTO standardSubscriptions_new (
-                    uri,
-                    cid,
-                    publicationUri,
-                    viewingProfileId,
-                    sortedAt
+            CREATE TABLE IF NOT EXISTS `standardSubscriptions_new` (
+                `uri` TEXT NOT NULL,
+                `cid` TEXT,
+                `publicationUri` TEXT NOT NULL,
+                `viewingProfileId` TEXT NOT NULL,
+                `sortedAt` INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(`publicationUri`, `viewingProfileId`),
+                FOREIGN KEY(`publicationUri`)
+                    REFERENCES `standardPublications`(`uri`)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE,
+                FOREIGN KEY(`viewingProfileId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE CASCADE
+                    ON DELETE CASCADE
                 )
-                SELECT
-                    uri,
-                    NULL,
-                    publicationUri,
-                    viewingProfileId,
-                    0
-                FROM standardSubscriptions
-            """.trimIndent(),
+
+            """
+                .trimIndent()
+        )
+
+        connection.execSQL(
+            """
+            INSERT OR IGNORE INTO standardSubscriptions_new (
+                uri,
+                cid,
+                publicationUri,
+                viewingProfileId,
+                sortedAt
+            )
+            SELECT
+                uri,
+                NULL,
+                publicationUri,
+                viewingProfileId,
+                0
+            FROM standardSubscriptions
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE standardSubscriptions")
         connection.execSQL("ALTER TABLE standardSubscriptions_new RENAME TO standardSubscriptions")
 
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_uri` ON `standardSubscriptions` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_publicationUri` ON `standardSubscriptions` (`publicationUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_viewingProfileId` ON `standardSubscriptions` (`viewingProfileId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_sortedAt` ON `standardSubscriptions` (`sortedAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_uri` ON `standardSubscriptions` (`uri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_publicationUri` ON `standardSubscriptions` (`publicationUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_viewingProfileId` ON `standardSubscriptions` (`viewingProfileId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_standardSubscriptions_sortedAt` ON `standardSubscriptions` (`sortedAt`)"
+        )
     }
 }

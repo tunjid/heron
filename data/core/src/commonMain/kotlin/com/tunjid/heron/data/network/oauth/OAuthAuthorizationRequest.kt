@@ -30,7 +30,8 @@ import kotlinx.serialization.Serializable
 /**
  * Represents an OAuth authorization request.
  *
- * @param authorizeRequestUrl The URL to which the user should be redirected to authorize the request.
+ * @param authorizeRequestUrl The URL to which the user should be redirected to authorize the
+ *   request.
  * @param expiresIn The duration for which the authorization request is valid.
  * @param codeVerifier A unique string that will be used to verify the token request.
  * @param state A unique string to maintain state between the request and callback.

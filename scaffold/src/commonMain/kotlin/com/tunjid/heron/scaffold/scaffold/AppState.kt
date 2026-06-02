@@ -132,18 +132,15 @@ class AppState(
             )
         }
 
-    private val entryTrie = entryMap
-        .mapKeys { (template) -> PathPattern(template) }
-        .toRouteTrie()
+    private val entryTrie = entryMap.mapKeys { (template) -> PathPattern(template) }.toRouteTrie()
 
     @Composable
     internal fun rememberMultiPaneDisplayState(
-        paneDecorators: List<PaneDecorator<MultiStackNav, Route, ThreePane>>,
+        paneDecorators: List<PaneDecorator<MultiStackNav, Route, ThreePane>>
     ): MultiPaneDisplayState<MultiStackNav, Route, ThreePane> {
         val saveableStateHolderNavEntryDecorator =
             rememberSaveableStateHolderNavEntryDecorator<Route>()
-        val viewModelStoreNavEntryDecorator =
-            rememberViewModelStoreNavEntryDecorator<Route>()
+        val viewModelStoreNavEntryDecorator = rememberViewModelStoreNavEntryDecorator<Route>()
 
         val displayState = remember {
             MultiPaneDisplayState(
@@ -158,15 +155,14 @@ class AppState(
                         poppedNavigationState
                     }
                 },
-                navEntryDecorators = listOf(
-                    saveableStateHolderNavEntryDecorator,
-                    viewModelStoreNavEntryDecorator,
-                    splashVisibilityNavEntryDecorator(),
-                ),
+                navEntryDecorators =
+                    listOf(
+                        saveableStateHolderNavEntryDecorator,
+                        viewModelStoreNavEntryDecorator,
+                        splashVisibilityNavEntryDecorator(),
+                    ),
                 entryProvider = { node ->
-                    entryTrie[node] ?: threePaneEntry(
-                        render = { },
-                    )
+                    entryTrie[node] ?: threePaneEntry(render = {})
                 },
             )
         }
@@ -174,11 +170,12 @@ class AppState(
         identityStateHolder.produceState()
 
         DisposableEffect(Unit) {
-            val job = CoroutineScope(Dispatchers.Main.immediate).launch {
-                navigationStateHolder.state.collect { multiStackNav ->
-                    multiStackNavState.value = multiStackNav
+            val job =
+                CoroutineScope(Dispatchers.Main.immediate).launch {
+                    navigationStateHolder.state.collect { multiStackNav ->
+                        multiStackNavState.value = multiStackNav
+                    }
                 }
-            }
             onDispose { job.cancel() }
         }
 
@@ -192,11 +189,11 @@ class AppState(
         }
         LifecycleResumeEffect(Unit) {
             notificationStateHolder.accept(
-                NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
+                NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true)
             )
             onPauseOrDispose {
                 notificationStateHolder.accept(
-                    NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false),
+                    NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false)
                 )
             }
         }
@@ -205,25 +202,30 @@ class AppState(
             onStopOrDispose { videoPlayerController.pauseActiveVideo() }
         }
 
-        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
-            .navigationEventDispatcher
+        val navigationEventDispatcher =
+            LocalNavigationEventDispatcherOwner.current!!.navigationEventDispatcher
 
         LaunchedEffect(navigationEventDispatcher) {
             combine(
-                navigationEventDispatcher.transitionState,
-                navigationEventDispatcher.history,
-            ) { transitionState, navigationEventHistory ->
-                val navigationEventInfo = navigationEventHistory.mergedHistory
-                    .getOrNull(navigationEventHistory.currentIndex)
-                when (transitionState) {
-                    NavigationEventTransitionState.Idle -> DismissBehavior.None
-                    is NavigationEventTransitionState.InProgress -> when {
-                        navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DismissBehavior.Gesture.SlideToPop
-                        transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DismissBehavior.Gesture.DragToPop
-                        else -> DismissBehavior.Gesture.ScaleToPop
+                    navigationEventDispatcher.transitionState,
+                    navigationEventDispatcher.history,
+                ) { transitionState, navigationEventHistory ->
+                    val navigationEventInfo =
+                        navigationEventHistory.mergedHistory.getOrNull(
+                            navigationEventHistory.currentIndex
+                        )
+                    when (transitionState) {
+                        NavigationEventTransitionState.Idle -> DismissBehavior.None
+                        is NavigationEventTransitionState.InProgress ->
+                            when {
+                                navigationEventInfo is SecondaryPaneCloseNavigationEventInfo ->
+                                    DismissBehavior.Gesture.SlideToPop
+                                transitionState.latestEvent.swipeEdge ==
+                                    NavigationEvent.EDGE_NONE -> DismissBehavior.Gesture.DragToPop
+                                else -> DismissBehavior.Gesture.ScaleToPop
+                            }
                     }
                 }
-            }
                 .collectLatest(::dismissBehavior::set)
         }
 
@@ -234,18 +236,13 @@ class AppState(
         navigationStateHolder.accept { navState.navItemSelected(item = navItem) }
     }
 
-    internal fun pop() =
-        navigationStateHolder.accept {
-            navState.pop()
-        }
+    internal fun pop() = navigationStateHolder.accept {
+        navState.pop()
+    }
 
     internal fun addAccount() {
-        identityStateHolder.accept(
-            IdentityAction.Switch.Cancel,
-        )
-        navigationStateHolder.accept(
-            signInDestination().navigationMutation,
-        )
+        identityStateHolder.accept(IdentityAction.Switch.Cancel)
+        navigationStateHolder.accept(signInDestination().navigationMutation)
     }
 
     internal fun onPaneAnchorChanged(
@@ -256,14 +253,11 @@ class AppState(
         lastPaneAnchor = anchor
     }
 
-    fun onDeepLink(uri: GenericUri) =
-        navigationStateHolder.accept(deepLinkTo(uri))
+    fun onDeepLink(uri: GenericUri) = navigationStateHolder.accept(deepLinkTo(uri))
 
-    fun onNotificationAction(action: NotificationAction) =
-        notificationStateHolder.accept(action)
+    fun onNotificationAction(action: NotificationAction) = notificationStateHolder.accept(action)
 
-    fun onIdentityAction(action: IdentityAction) =
-        identityStateHolder.accept(action)
+    fun onIdentityAction(action: IdentityAction) = identityStateHolder.accept(action)
 
     suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
         notificationStateHolder.state.first { state ->
@@ -273,34 +267,37 @@ class AppState(
 
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value
-        return multiStackNav.stacks
-            .map(StackNav::name)
-            .mapIndexedNotNull { index, name ->
-                val stack = AppStack.entries.firstOrNull { stack ->
+        return multiStackNav.stacks.map(StackNav::name).mapIndexedNotNull { index, name ->
+            val stack =
+                AppStack.entries.firstOrNull { stack ->
                     when (stack) {
                         AppStack.Home -> stack.stackName == name
                         AppStack.Search -> stack.stackName == name
                         AppStack.Messages -> identityState.isSignedIn && stack.stackName == name
-                        AppStack.Notifications -> identityState.isSignedIn && stack.stackName == name
+                        AppStack.Notifications ->
+                            identityState.isSignedIn && stack.stackName == name
                         AppStack.Auth -> stack.stackName == name
                         AppStack.Splash -> stack.stackName == name
                     }
                 } ?: return@mapIndexedNotNull null
 
-                NavItem(
-                    stack = stack,
-                    index = index,
-                    selected = multiStackNav.currentIndex == index,
-                    badgeCount = if (stack == AppStack.Notifications) notificationCount else 0L,
-                )
-            }
+            NavItem(
+                stack = stack,
+                index = index,
+                selected = multiStackNav.currentIndex == index,
+                badgeCount = if (stack == AppStack.Notifications) notificationCount else 0L,
+            )
+        }
     }
 
     sealed class DismissBehavior {
         data object None : DismissBehavior()
+
         sealed class Gesture : DismissBehavior() {
             data object DragToPop : Gesture()
+
             data object SlideToPop : Gesture()
+
             data object ScaleToPop : Gesture()
         }
     }
@@ -313,15 +310,16 @@ class AppState(
 val AppState.isShowingSplashScreen: Boolean
     get() = navigation.isShowingSplashScreen
 
-private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Route> = NavEntryDecorator { entry ->
-    entry.Content()
-    LifecycleStartEffect(Unit) {
-        if (entry.contentKey == AppStack.Splash.rootRoute.id) {
-            showPlatformSplashScreen = false
+private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Route> =
+    NavEntryDecorator { entry ->
+        entry.Content()
+        LifecycleStartEffect(Unit) {
+            if (entry.contentKey == AppStack.Splash.rootRoute.id) {
+                showPlatformSplashScreen = false
+            }
+            onStopOrDispose {}
         }
-        onStopOrDispose { }
     }
-}
 
 @Stable
 internal class SplitPaneState(
@@ -333,38 +331,37 @@ internal class SplitPaneState(
 ) {
     internal var density by mutableStateOf(density)
 
-    internal val paneAnchorState = PaneAnchorState(
-        initialMaxWidth = with(density) { windowWidth.value.roundToPx() },
-        initialAnchor = initialAnchor,
-    )
+    internal val paneAnchorState =
+        PaneAnchorState(
+            initialMaxWidth = with(density) { windowWidth.value.roundToPx() },
+            initialAnchor = initialAnchor,
+        )
 
     internal val filteredPaneOrder by derivedStateOf {
         PaneRenderOrder.filter { paneNavigationState().destinationIn(it) != null }
     }
 
     internal val minPaneWidth: Dp
-        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight(
-            isCompact = hasCompatBottomNav(),
-        )
+        get() =
+            (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight(isCompact = hasCompatBottomNav())
 
-    internal val splitLayoutState = SplitLayoutState(
-        orientation = Orientation.Horizontal,
-        maxCount = PaneRenderOrder.size,
-        minSize = MinPaneWidth,
-        visibleCount = {
-            filteredPaneOrder.size
-        },
-        keyAtIndex = { index ->
-            filteredPaneOrder[index]
-        },
-    )
+    internal val splitLayoutState =
+        SplitLayoutState(
+            orientation = Orientation.Horizontal,
+            maxCount = PaneRenderOrder.size,
+            minSize = MinPaneWidth,
+            visibleCount = {
+                filteredPaneOrder.size
+            },
+            keyAtIndex = { index ->
+                filteredPaneOrder[index]
+            },
+        )
 
     internal val isMediumScreenWidthOrWider
         get() = windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
-    fun update(
-        density: Density,
-    ) {
+    fun update(density: Density) {
         this.density = density
         paneAnchorState.updateMaxWidth(
             density = density,
@@ -379,16 +376,19 @@ internal val AppState.prefersCompactBottomNav: Boolean
 internal val AppState.prefersAutoHidingBottomNav: Boolean
     get() = identityState.preferences?.local?.autoHideBottomNavigation ?: true
 
-private val PaneRenderOrder = listOf(
-    ThreePane.Tertiary,
-    ThreePane.Secondary,
-    ThreePane.Primary,
-)
+private val PaneRenderOrder =
+    listOf(
+        ThreePane.Tertiary,
+        ThreePane.Secondary,
+        ThreePane.Primary,
+    )
 
-internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
-    throw IllegalStateException("No SplitPaneState provided")
-}
+internal val LocalSplitPaneState =
+    staticCompositionLocalOf<SplitPaneState> {
+        throw IllegalStateException("No SplitPaneState provided")
+    }
 
-internal val LocalAppState = staticCompositionLocalOf<AppState> {
-    throw IllegalStateException("No AppState provided")
-}
+internal val LocalAppState =
+    staticCompositionLocalOf<AppState> {
+        throw IllegalStateException("No AppState provided")
+    }

@@ -35,18 +35,17 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Stable
-class JavaFxPlayerController(
-    appMainScope: CoroutineScope,
-) : VideoPlayerController {
+class JavaFxPlayerController(appMainScope: CoroutineScope) : VideoPlayerController {
 
     private val mediaPlayers = mutableMapOf<String, MediaPlayer>()
-    private val states = VideoPlayerStates<JavaFxPlayerState>(
-        onEvicted = { state ->
-            Platform.runLater {
-                mediaPlayers.remove(state.videoId)?.dispose()
+    private val states =
+        VideoPlayerStates<JavaFxPlayerState>(
+            onEvicted = { state ->
+                Platform.runLater {
+                    mediaPlayers.remove(state.videoId)?.dispose()
+                }
             }
-        },
-    )
+        )
 
     override var isMuted: Boolean by states::isMuted
 
@@ -74,18 +73,17 @@ class JavaFxPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState = states.registerOrGet(
-        videoId = videoId,
-    ) {
-        JavaFxPlayerState(
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf { isMuted },
-        )
-    }
+    ): VideoPlayerState =
+        states.registerOrGet(videoId = videoId) {
+            JavaFxPlayerState(
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf { isMuted },
+            )
+        }
 
     override fun play(
         videoId: String?,
@@ -180,9 +178,10 @@ class JavaFxPlayerController(
         }
 
         val media = Media(state.videoUrl)
-        val player = MediaPlayer(media).apply {
-            isMute = this@JavaFxPlayerController.isMuted
-        }
+        val player =
+            MediaPlayer(media).apply {
+                isMute = this@JavaFxPlayerController.isMuted
+            }
         mediaPlayers[state.videoId] = player
         player.bind(state)
         return player

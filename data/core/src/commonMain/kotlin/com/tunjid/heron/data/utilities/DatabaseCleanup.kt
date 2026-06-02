@@ -30,25 +30,24 @@ import kotlinx.coroutines.withContext
 @Inject
 @SingleIn(AppScope::class)
 class DatabaseCleanup(
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val databaseCleanupDao: DatabaseCleanupDao,
 ) {
     /**
      * Cleans up stale posts when the database exceeds [MaxPosts].
      *
-     * Waits [StartupDelay] to avoid competing with initial data loads, then runs
-     * on the IO dispatcher to keep cleanup off the main thread.
+     * Waits [StartupDelay] to avoid competing with initial data loads, then runs on the IO
+     * dispatcher to keep cleanup off the main thread.
      *
-     * Deletes the least important posts (by engagement score and age) down to [TargetPosts],
-     * then removes orphaned media entities and profiles left behind.
+     * Deletes the least important posts (by engagement score and age) down to [TargetPosts], then
+     * removes orphaned media entities and profiles left behind.
      *
-     * Each batch deletion and orphan cleanup runs as its own implicit Room transaction
-     * rather than wrapping everything in a single large transaction. This avoids blocking
-     * concurrent writes (e.g., timeline fetches) during startup while still being safe:
-     * partial progress is valid since each batch is independently consistent, and any
-     * posts that sneak in between the count check and deletion simply mean slightly fewer
-     * posts are removed — the next cleanup cycle will catch up.
+     * Each batch deletion and orphan cleanup runs as its own implicit Room transaction rather than
+     * wrapping everything in a single large transaction. This avoids blocking concurrent writes
+     * (e.g., timeline fetches) during startup while still being safe: partial progress is valid
+     * since each batch is independently consistent, and any posts that sneak in between the count
+     * check and deletion simply mean slightly fewer posts are removed — the next cleanup cycle will
+     * catch up.
      */
     suspend fun cleanup() {
         delay(StartupDelay)
@@ -64,40 +63,38 @@ class DatabaseCleanup(
         if (count <= MaxPosts) return
 
         val deleteCount = (count - TargetPosts).toInt()
-        val candidates = databaseCleanupDao.findDeletablePostUris(
-            sentinelPostUris = listOf(
-                Constants.unknownPostUri,
-            ),
-            limit = deleteCount,
-        )
+        val candidates =
+            databaseCleanupDao.findDeletablePostUris(
+                sentinelPostUris = listOf(Constants.unknownPostUri),
+                limit = deleteCount,
+            )
 
         candidates.chunked(BatchSize).forEach { batch ->
             databaseCleanupDao.deletePostsByUri(batch)
         }
     }
 
-    /**
-     * Caps notifications per owner to [MaxNotificationsPerOwner], keeping the newest.
-     */
+    /** Caps notifications per owner to [MaxNotificationsPerOwner], keeping the newest. */
     private suspend fun cleanupNotifications() {
         databaseCleanupDao.deleteOldNotifications(maxPerOwner = MaxNotificationsPerOwner)
     }
 
     /**
-     * Cleans up orphaned entities left behind after post and notification deletion:
-     * standalone media entities whose junction rows were cascade-deleted,
-     * and profiles no longer referenced by any table.
+     * Cleans up orphaned entities left behind after post and notification deletion: standalone
+     * media entities whose junction rows were cascade-deleted, and profiles no longer referenced by
+     * any table.
      */
     private suspend fun cleanupOrphans() {
         databaseCleanupDao.deleteOrphanedImages()
         databaseCleanupDao.deleteOrphanedVideos()
         databaseCleanupDao.deleteOrphanedExternalEmbeds()
         databaseCleanupDao.deleteOrphanedProfiles(
-            sentinelProfileIds = listOf(
-                Constants.unknownAuthorId,
-                Constants.guestProfileId,
-                Constants.pendingProfileId,
-            ),
+            sentinelProfileIds =
+                listOf(
+                    Constants.unknownAuthorId,
+                    Constants.guestProfileId,
+                    Constants.pendingProfileId,
+                )
         )
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RecordLayout(
@@ -46,55 +47,51 @@ fun RecordLayout(
     sharedElementType: RecordUri,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
-) = with(paneTransitionScope) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AttributionLayout(
-            modifier = Modifier
-                .fillMaxWidth(),
-            avatar = avatar,
-            label = {
-                PaneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = titleSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            type = sharedElementType,
-                        ),
-                    ),
-                ) {
-                    RecordTitle(
-                        title = title,
-                    )
-                }
-                PaneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = subtitleSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            type = sharedElementType,
-                        ),
-                    ),
-                ) {
-                    RecordSubtitle(
-                        subtitle = subtitle,
-                    )
-                }
-            },
-            action = action,
-        )
-        description.takeUnless(CharSequence?::isNullOrEmpty)?.let {
-            RecordText(
-                text = it,
+) =
+    with(paneTransitionScope) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AttributionLayout(
+                modifier = Modifier.fillMaxWidth(),
+                avatar = avatar,
+                label = {
+                    PaneStickySharedElement(
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    titleSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        type = sharedElementType,
+                                    )
+                            )
+                    ) {
+                        RecordTitle(title = title)
+                    }
+                    PaneStickySharedElement(
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    subtitleSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        type = sharedElementType,
+                                    )
+                            )
+                    ) {
+                        RecordSubtitle(subtitle = subtitle)
+                    }
+                },
+                action = action,
             )
-        }
-        blurb.takeUnless(String?::isNullOrEmpty)?.let {
-            RecordBlurb(
-                blurb = it,
-            )
+            description.takeUnless(CharSequence?::isNullOrEmpty)?.let {
+                RecordText(text = it)
+            }
+            blurb.takeUnless(String?::isNullOrEmpty)?.let {
+                RecordBlurb(blurb = it)
+            }
         }
     }
-}
 
 @Composable
 fun RecordTitle(
@@ -133,13 +130,15 @@ fun RecordText(
 ) {
     Text(
         modifier = modifier,
-        text = when (text) {
-            is String -> rememberFormattedTextPost(text)
-            is AnnotatedString -> text
-            else -> remember(text) {
-                buildAnnotatedString { append(text) }
-            }
-        },
+        text =
+            when (text) {
+                is String -> rememberFormattedTextPost(text)
+                is AnnotatedString -> text
+                else ->
+                    remember(text) {
+                        buildAnnotatedString { append(text) }
+                    }
+            },
         style = MaterialTheme.typography.bodySmall,
         maxLines = 3,
         overflow = TextOverflow.Ellipsis,

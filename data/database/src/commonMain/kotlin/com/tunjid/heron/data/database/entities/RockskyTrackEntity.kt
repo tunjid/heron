@@ -15,33 +15,34 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "rockskyTracks",
-    foreignKeys = [
-        ForeignKey(
-            entity = RockskyAlbumEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["albumUri"],
-            onDelete = ForeignKey.SET_NULL,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = RockskyArtistEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["artistUri"],
-            onDelete = ForeignKey.SET_NULL,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["albumUri"]),
-        Index(value = ["artistUri"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = RockskyAlbumEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["albumUri"],
+                onDelete = ForeignKey.SET_NULL,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = RockskyArtistEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["artistUri"],
+                onDelete = ForeignKey.SET_NULL,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["albumUri"]),
+            Index(value = ["artistUri"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class RockskyTrackEntity(
-    @PrimaryKey
-    val uri: TrackUri,
+    @PrimaryKey val uri: TrackUri,
     val cid: TrackId,
     val creatorId: ProfileId,
     val title: String,
@@ -59,20 +60,21 @@ data class RockskyTrackEntity(
     val uniqueListeners: Long?,
 )
 
-fun RockskyTrackEntity.asExternalModel() = RockskyTrack(
-    cid = cid,
-    title = title,
-    artist = artist,
-    albumArtist = albumArtist,
-    album = album,
-    albumArt = albumArt,
-    trackNumber = trackNumber,
-    discNumber = discNumber,
-    duration = duration,
-    uri = uri,
-    albumUri = albumUri,
-    artistUri = artistUri,
-    createdAt = createdAt,
-    playCount = playCount,
-    uniqueListeners = uniqueListeners,
-)
+fun RockskyTrackEntity.asExternalModel() =
+    RockskyTrack(
+        cid = cid,
+        title = title,
+        artist = artist,
+        albumArtist = albumArtist,
+        album = album,
+        albumArt = albumArt,
+        trackNumber = trackNumber,
+        discNumber = discNumber,
+        duration = duration,
+        uri = uri,
+        albumUri = albumUri,
+        artistUri = artistUri,
+        createdAt = createdAt,
+        playCount = playCount,
+        uniqueListeners = uniqueListeners,
+    )

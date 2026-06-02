@@ -56,35 +56,46 @@ internal class GStreamerPlayerState(
     override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
     override var videoId by mutableStateOf(videoId)
         internal set
+
     override var videoUrl by mutableStateOf(videoUrl)
         internal set
+
     override var isLooping by mutableStateOf(isLooping)
         internal set
+
     override val isMuted by isMuted
     override var autoplay by mutableStateOf(autoplay)
         internal set
+
     override var hasRenderedFirstFrame by mutableStateOf(false)
     override var videoSize by mutableStateOf(IntSize.Zero)
         internal set
+
     override var lastPositionMs by mutableLongStateOf(0L)
         internal set
+
     override var totalDuration by mutableLongStateOf(0L)
         internal set
+
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
-    override var videoStill by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
-    override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= ReplayThresholdMs &&
-            totalDuration != 0L &&
-            !isLooping
 
-    internal var currentFrame by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
+    override var videoStill by
+        mutableStateOf<ImageBitmap?>(
+            value = null,
+            policy = referentialEqualityPolicy(),
+        )
+    override val shouldReplay: Boolean
+        get() =
+            (totalDuration - lastPositionMs) <= ReplayThresholdMs &&
+                totalDuration != 0L &&
+                !isLooping
+
+    internal var currentFrame by
+        mutableStateOf<ImageBitmap?>(
+            value = null,
+            policy = referentialEqualityPolicy(),
+        )
 
     internal var playBin: PlayBin? = null
     private var appSink: AppSink? = null
@@ -107,36 +118,44 @@ internal class GStreamerPlayerState(
         val sink = buildAppSink()
         appSink = sink
 
-        val pb = PlayBin("playbin-$videoId").apply {
-            setURI(java.net.URI.create(url))
-            setVideoSink(sink)
-            set("mute", isMuted)
-            connectBus(this)
-        }
+        val pb =
+            PlayBin("playbin-$videoId").apply {
+                setURI(java.net.URI.create(url))
+                setVideoSink(sink)
+                set("mute", isMuted)
+                connectBus(this)
+            }
         playBin = pb
         isPipelineInitialized = true
     }
 
-    private fun buildAppSink(): AppSink = AppSink("videosink").apply {
-        set("emit-signals", true)
-        caps = Caps.fromString("video/x-raw,format=BGRA")
-        newSampleConnection = AppSink.NEW_SAMPLE { sink -> onNewSample(sink) }
-            .also { connect(it) }
-    }
+    private fun buildAppSink(): AppSink =
+        AppSink("videosink").apply {
+            set("emit-signals", true)
+            caps = Caps.fromString("video/x-raw,format=BGRA")
+            newSampleConnection =
+                AppSink.NEW_SAMPLE { sink -> onNewSample(sink) }.also { connect(it) }
+        }
 
     private fun connectBus(pb: PlayBin) {
-        stateChangedConnection = Bus.STATE_CHANGED { source, old, current, _ ->
-            if (source === pb) onStateChanged(pb, old, current)
-        }.also { pb.bus.connect(it) }
+        stateChangedConnection =
+            Bus.STATE_CHANGED { source, old, current, _ ->
+                    if (source === pb) onStateChanged(pb, old, current)
+                }
+                .also { pb.bus.connect(it) }
 
-        eosConnection = Bus.EOS { _ ->
-            onEndOfStream(pb)
-        }.also { pb.bus.connect(it) }
+        eosConnection =
+            Bus.EOS { _ ->
+                    onEndOfStream(pb)
+                }
+                .also { pb.bus.connect(it) }
 
-        errorConnection = Bus.ERROR { _, _, _ ->
-            stopPositionPolling()
-            status = PlayerStatus.Idle.Initial
-        }.also { pb.bus.connect(it) }
+        errorConnection =
+            Bus.ERROR { _, _, _ ->
+                    stopPositionPolling()
+                    status = PlayerStatus.Idle.Initial
+                }
+                .also { pb.bus.connect(it) }
     }
 
     private fun disconnectBus(pb: PlayBin) {
@@ -162,8 +181,7 @@ internal class GStreamerPlayerState(
                 stopPositionPolling()
             }
             State.READY,
-            State.NULL,
-            -> {
+            State.NULL -> {
                 if (old == State.PLAYING || old == State.PAUSED) syncPosition(pb)
                 stopPositionPolling()
             }
@@ -205,12 +223,13 @@ internal class GStreamerPlayerState(
             if (skiaBitmapA == null || skiaBitmapWidth != width || skiaBitmapHeight != height) {
                 skiaBitmapA?.close()
                 skiaBitmapB?.close()
-                val imageInfo = ImageInfo(
-                    width = width,
-                    height = height,
-                    colorType = ColorType.BGRA_8888,
-                    alphaType = ColorAlphaType.OPAQUE,
-                )
+                val imageInfo =
+                    ImageInfo(
+                        width = width,
+                        height = height,
+                        colorType = ColorType.BGRA_8888,
+                        alphaType = ColorAlphaType.OPAQUE,
+                    )
                 skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
                 skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
                 skiaBitmapWidth = width
@@ -218,16 +237,15 @@ internal class GStreamerPlayerState(
                 nextSkiaBitmapA = true
             }
 
-            val target = if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
-            else requireNotNull(skiaBitmapB)
+            val target =
+                if (nextSkiaBitmapA) requireNotNull(skiaBitmapA) else requireNotNull(skiaBitmapB)
             nextSkiaBitmapA = !nextSkiaBitmapA
 
             val pixmap = target.peekPixels() ?: return@withContext
             if (pixmap.addr == 0L) return@withContext
 
             val dstRowBytes = pixmap.rowBytes
-            val dst = Pointer(pixmap.addr)
-                .getByteBuffer(0, dstRowBytes.toLong() * height)
+            val dst = Pointer(pixmap.addr).getByteBuffer(0, dstRowBytes.toLong() * height)
 
             copyBgraFrame(
                 src = ByteBuffer.wrap(bytes),

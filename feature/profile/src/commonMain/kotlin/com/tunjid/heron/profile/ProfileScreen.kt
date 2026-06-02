@@ -232,60 +232,54 @@ internal fun ProfileScreen(
 
     val collapsedHeight = UiTokens.toolbarHeight + UiTokens.statusBarHeight
 
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = with(density) { collapsedHeight.toPx() },
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
-    )
-    val headerState = remember(collapsingHeaderState) {
-        HeaderState(collapsingHeaderState)
-    }
+    val collapsingHeaderState =
+        rememberCollapsingHeaderState(
+            collapsedHeight = with(density) { collapsedHeight.toPx() },
+            initialExpandedHeight = with(density) { 800.dp.toPx() },
+        )
+    val headerState =
+        remember(collapsingHeaderState) {
+            HeaderState(collapsingHeaderState)
+        }
     val pagerState = rememberPagerState {
         state.stateHolders.size
     }
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val isRefreshing = state.stateHolders
-        .getOrNull(pagerState.currentPage)
-        .isRefreshing
+    val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage).isRefreshing
 
-    val profileUpdateLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
-        profile = state.profile,
-        onGoLive = { streamUrl, duration ->
-            actions(
-                Action.UpdateLiveStatus.GoLive(
-                    signedInProfileId = state.profile.did,
-                    streamUrl = streamUrl,
-                    duration = duration,
-                ),
-            )
-        },
-        onEndLive = {
-            actions(
-                Action.UpdateLiveStatus.EndLive(
-                    signedInProfileId = state.profile.did,
-                ),
-            )
-        },
-    )
+    val profileUpdateLiveStatusSheetState =
+        rememberUpdatedProfileLiveStatusSheetState(
+            profile = state.profile,
+            onGoLive = { streamUrl, duration ->
+                actions(
+                    Action.UpdateLiveStatus.GoLive(
+                        signedInProfileId = state.profile.did,
+                        streamUrl = streamUrl,
+                        duration = duration,
+                    )
+                )
+            },
+            onEndLive = {
+                actions(Action.UpdateLiveStatus.EndLive(signedInProfileId = state.profile.did))
+            },
+        )
 
     CollapsingHeaderLayout(
-        modifier = modifier
-            .fillMaxSize()
-            .onSizeChanged {
-                headerState.width = with(density) { it.width.toDp() }
-            }
-            .pullToRefresh(
-                enabled = state.stateHolders
-                    .getOrNull(pagerState.currentPage)
-                    .canRefresh,
-                isRefreshing = isRefreshing,
-                state = pullToRefreshState,
-                onRefresh = {
-                    state.stateHolders
-                        .getOrNull(pagerState.currentPage)
-                        ?.refresh()
-                },
-            ),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .onSizeChanged {
+                    headerState.width = with(density) { it.width.toDp() }
+                }
+                .pullToRefresh(
+                    enabled = state.stateHolders.getOrNull(pagerState.currentPage).canRefresh,
+                    isRefreshing = isRefreshing,
+                    state = pullToRefreshState,
+                    onRefresh = {
+                        state.stateHolders.getOrNull(pagerState.currentPage)?.refresh()
+                    },
+                ),
         state = headerState.headerState,
         headerContent = {
             ProfileHeader(
@@ -293,12 +287,12 @@ internal fun ProfileScreen(
                 pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = timelineTabs(
-                    stateHolders = state.stateHolders,
-                    sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth(),
+                timelineTabs =
+                    timelineTabs(
+                        stateHolders = state.stateHolders,
+                        sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
@@ -308,20 +302,21 @@ internal fun ProfileScreen(
                 supportedApps = state.supportedApps,
                 isSignedInProfile = state.isSignedInProfile,
                 signedInProfileId = state.signedInProfileId,
-                isSubscribedToLabeler = remember(
-                    state.profile.isLabeler,
-                    state.subscribedLabelers,
-                ) {
-                    state.isSubscribedToLabeler
-                },
+                isSubscribedToLabeler =
+                    remember(
+                        state.profile.isLabeler,
+                        state.subscribedLabelers,
+                    ) {
+                        state.isSubscribedToLabeler
+                    },
                 viewerState = state.viewerState,
-                timelineStateHolders = remember(state.stateHolders) {
-                    state.stateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
-                },
+                timelineStateHolders =
+                    remember(state.stateHolders) {
+                        state.stateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
+                    },
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
-                    state.stateHolders.getOrNull(index = index)
-                        ?.refresh()
+                    state.stateHolders.getOrNull(index = index)?.refresh()
                 },
                 onViewerStateClicked = { viewerState ->
                     state.signedInProfileId?.let {
@@ -331,7 +326,7 @@ internal fun ProfileScreen(
                                 viewedProfileId = state.profile.did,
                                 following = viewerState?.following,
                                 followedBy = viewerState?.followedBy,
-                            ),
+                            )
                         )
                     }
                 },
@@ -343,27 +338,29 @@ internal fun ProfileScreen(
                         Action.Navigate.ToAvatar(
                             profile = state.profile,
                             avatarSharedElementKey = state.avatarSharedElementKey,
-                        ),
+                        )
                     )
                 },
-                onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
-                    actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = navigable.path,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
-                },
+                onLinkTargetClicked =
+                    navigableLinkTargetHandler { navigable ->
+                        actions(
+                            Action.Navigate.To(
+                                pathDestination(
+                                    path = navigable.path,
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
+                    },
                 onEditClick = {
                     actions(
                         Action.Navigate.To(
                             editProfileDestination(
                                 profile = state.profile,
                                 avatarSharedElementKey = state.avatarSharedElementKey,
-                            ),
-                        ),
+                            )
+                        )
                     )
                 },
                 onToggleLabelerSubscription = { labelerProfileId, isSubscribed ->
@@ -372,8 +369,8 @@ internal fun ProfileScreen(
                             Timeline.Update.OfLabeler.Subscription(
                                 labelCreatorId = labelerProfileId,
                                 subscribed = !isSubscribed,
-                            ),
-                        ),
+                            )
+                        )
                     )
                 },
                 onModerationAction = actions,
@@ -381,218 +378,263 @@ internal fun ProfileScreen(
             )
         },
         body = {
-            Box(
-                modifier = Modifier,
-            ) {
+            Box(modifier = Modifier) {
                 HorizontalPager(
-                    modifier = Modifier
-                        .paneClip(),
+                    modifier = Modifier.paneClip(),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->
                         when (val stateHolder = state.stateHolders[page]) {
-                            is ProfileScreenStateHolders.Records.Feeds -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { feedGenerator ->
-                                    FeedGenerator(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = feedGenerator.uri.path,
-                                                            models = listOf(feedGenerator),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        feedGenerator = feedGenerator,
-                                        status = state.timelineRecordUrisToPinnedStatus.status(
-                                            feedGenerator.uri,
-                                        ),
-                                        onFeedGeneratorStatusUpdated = { update ->
-                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                                            else actions(Action.UpdatePreferences(update))
-                                        },
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.StarterPacks -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { starterPack ->
-                                    StarterPack(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = starterPack.uri.path,
-                                                            models = listOf(starterPack),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        starterPack = starterPack,
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.Lists -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { list ->
-                                    FeedList(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = list.uri.path,
-                                                            models = listOf(list),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        list = list,
-                                        status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
-                                        onListStatusUpdated = { update ->
-                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                                            else actions(Action.UpdatePreferences(update))
-                                        },
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.Documents -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { document ->
-                                    val uriHandler = LocalUriHandler.current
-                                    Document(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                runCatching {
-                                                    document.link
-                                                        ?.takeIfIs(Uri.Host.Https)
-                                                        ?.let(uriHandler::openUri)
-                                                }
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = document.uri.uri,
-                                        document = document,
-                                        onPublicationClicked = {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    standardPublicationDestination(
-                                                        publication = it,
-                                                        sharedElementPrefix = document.uri.uri,
-                                                    ),
+                            is ProfileScreenStateHolders.Records.Feeds ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.cid.id },
+                                    itemContent = { feedGenerator ->
+                                        FeedGenerator(
+                                            modifier =
+                                                Modifier.fillParentMaxWidth()
+                                                    .clip(RecordShape)
+                                                    .animateItem()
+                                                    .clickable {
+                                                        actions(
+                                                            Action.Navigate.To(
+                                                                pathDestination(
+                                                                    path = feedGenerator.uri.path,
+                                                                    models = listOf(feedGenerator),
+                                                                    sharedElementPrefix =
+                                                                        ProfileCollectionSharedElementPrefix,
+                                                                    referringRouteOption =
+                                                                        NavigationAction
+                                                                            .ReferringRouteOption
+                                                                            .Current,
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                    .recordPadding(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                ProfileCollectionSharedElementPrefix,
+                                            feedGenerator = feedGenerator,
+                                            status =
+                                                state.timelineRecordUrisToPinnedStatus.status(
+                                                    feedGenerator.uri
                                                 ),
-                                            )
-                                        },
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
+                                            onFeedGeneratorStatusUpdated = { update ->
+                                                if (paneScaffoldState.isSignedOut)
+                                                    signInPopUpState.show()
+                                                else actions(Action.UpdatePreferences(update))
+                                            },
+                                        )
+                                    },
+                                )
+
+                            is ProfileScreenStateHolders.Records.StarterPacks ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.cid.id },
+                                    itemContent = { starterPack ->
+                                        StarterPack(
+                                            modifier =
+                                                Modifier.fillParentMaxWidth()
+                                                    .clip(RecordShape)
+                                                    .animateItem()
+                                                    .clickable {
+                                                        actions(
+                                                            Action.Navigate.To(
+                                                                pathDestination(
+                                                                    path = starterPack.uri.path,
+                                                                    models = listOf(starterPack),
+                                                                    sharedElementPrefix =
+                                                                        ProfileCollectionSharedElementPrefix,
+                                                                    referringRouteOption =
+                                                                        NavigationAction
+                                                                            .ReferringRouteOption
+                                                                            .Current,
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                    .recordPadding(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                ProfileCollectionSharedElementPrefix,
+                                            starterPack = starterPack,
+                                        )
+                                    },
+                                )
+
+                            is ProfileScreenStateHolders.Records.Lists ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.cid.id },
+                                    itemContent = { list ->
+                                        FeedList(
+                                            modifier =
+                                                Modifier.fillParentMaxWidth()
+                                                    .clip(RecordShape)
+                                                    .animateItem()
+                                                    .clickable {
+                                                        actions(
+                                                            Action.Navigate.To(
+                                                                pathDestination(
+                                                                    path = list.uri.path,
+                                                                    models = listOf(list),
+                                                                    sharedElementPrefix =
+                                                                        ProfileCollectionSharedElementPrefix,
+                                                                    referringRouteOption =
+                                                                        NavigationAction
+                                                                            .ReferringRouteOption
+                                                                            .Current,
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                    .recordPadding(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix =
+                                                ProfileCollectionSharedElementPrefix,
+                                            list = list,
+                                            status =
+                                                state.timelineRecordUrisToPinnedStatus.status(
+                                                    list.uri
                                                 ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                            is ProfileScreenStateHolders.Records.Publications -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { publication ->
-                                    Publication(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .animateItem()
-                                            .shapedClickable {
+                                            onListStatusUpdated = { update ->
+                                                if (paneScaffoldState.isSignedOut)
+                                                    signInPopUpState.show()
+                                                else actions(Action.UpdatePreferences(update))
+                                            },
+                                        )
+                                    },
+                                )
+
+                            is ProfileScreenStateHolders.Records.Documents ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { document ->
+                                        val uriHandler = LocalUriHandler.current
+                                        Document(
+                                            modifier =
+                                                Modifier.fillParentMaxWidth()
+                                                    .clip(RecordShape)
+                                                    .animateItem()
+                                                    .clickable {
+                                                        runCatching {
+                                                            document.link
+                                                                ?.takeIfIs(Uri.Host.Https)
+                                                                ?.let(uriHandler::openUri)
+                                                        }
+                                                    }
+                                                    .recordPadding(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix = document.uri.uri,
+                                            document = document,
+                                            onPublicationClicked = {
                                                 actions(
                                                     Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = publication.uri.path,
-                                                            models = listOf(publication),
-                                                            sharedElementPrefix = publication.uri.uri,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
+                                                        standardPublicationDestination(
+                                                            publication = it,
+                                                            sharedElementPrefix = document.uri.uri,
+                                                        )
+                                                    )
                                                 )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = publication.uri.uri,
-                                        publication = publication,
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
+                                            },
+                                            onSubscriptionToggled = { publication, subscription ->
+                                                actions(
+                                                    if (subscription != null)
+                                                        Action.TogglePublicationSubscription
+                                                            .Unsubscribe(
+                                                                subscriptionUri = subscription.uri
+                                                            )
+                                                    else
+                                                        Action.TogglePublicationSubscription
+                                                            .Subscribe(
+                                                                publicationUri = publication.uri
+                                                            )
                                                 )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
+                                            },
+                                        )
+                                    },
+                                )
+                            is ProfileScreenStateHolders.Records.Publications ->
+                                RecordList(
+                                    collectionStateHolder = stateHolder,
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    itemKey = { it.uri.uri },
+                                    itemContent = { publication ->
+                                        Publication(
+                                            modifier =
+                                                Modifier.fillParentMaxWidth()
+                                                    .animateItem()
+                                                    .shapedClickable {
+                                                        actions(
+                                                            Action.Navigate.To(
+                                                                pathDestination(
+                                                                    path = publication.uri.path,
+                                                                    models = listOf(publication),
+                                                                    sharedElementPrefix =
+                                                                        publication.uri.uri,
+                                                                    referringRouteOption =
+                                                                        NavigationAction
+                                                                            .ReferringRouteOption
+                                                                            .Current,
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                    .recordPadding(),
+                                            paneTransitionScope = paneScaffoldState,
+                                            sharedElementPrefix = publication.uri.uri,
+                                            publication = publication,
+                                            onSubscriptionToggled = { publication, subscription ->
+                                                actions(
+                                                    if (subscription != null)
+                                                        Action.TogglePublicationSubscription
+                                                            .Unsubscribe(
+                                                                subscriptionUri = subscription.uri
+                                                            )
+                                                    else
+                                                        Action.TogglePublicationSubscription
+                                                            .Subscribe(
+                                                                publicationUri = publication.uri
+                                                            )
+                                                )
+                                            },
+                                        )
+                                    },
+                                )
 
-                            is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
-                                bottomPadding = collapsedHeight,
-                                signedInProfileId = state.signedInProfileId,
-                                paneScaffoldState = paneScaffoldState,
-                                timelineStateHolder = stateHolder,
-                                actions = actions,
-                                recentLists = state.recentLists,
-                                recentConversations = state.recentConversations,
-                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
-                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            )
-                            is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                stateHolder = stateHolder,
-                            )
+                            is ProfileScreenStateHolders.Timeline ->
+                                ProfileTimeline(
+                                    bottomPadding = collapsedHeight,
+                                    signedInProfileId = state.signedInProfileId,
+                                    paneScaffoldState = paneScaffoldState,
+                                    timelineStateHolder = stateHolder,
+                                    actions = actions,
+                                    recentLists = state.recentLists,
+                                    recentConversations = state.recentConversations,
+                                    mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                                    autoPlayTimelineVideos =
+                                        state.preferences.local.autoPlayTimelineVideos,
+                                    showEngagementMetrics =
+                                        state.preferences.local.showPostEngagementMetrics,
+                                )
+                            is ProfileScreenStateHolders.LabelerSettings ->
+                                LabelerSettings(
+                                    prefersCompactBottomNav =
+                                        paneScaffoldState.prefersCompactBottomNav,
+                                    stateHolder = stateHolder,
+                                )
                         }
                     },
                 )
@@ -602,8 +644,8 @@ internal fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         snapshotFlow {
-            (pagerState.currentPage + pagerState.currentPageOffsetFraction).fastRoundToInt()
-        }
+                (pagerState.currentPage + pagerState.currentPageOffsetFraction).fastRoundToInt()
+            }
             .collect {
                 actions(Action.PageChanged(it))
             }
@@ -616,22 +658,25 @@ private fun timelineTabs(
     sourceIdsToHasUpdates: Map<String, Boolean>,
 ): List<Tab> = stateHolders.map { holder ->
     when (holder) {
-        is ProfileScreenStateHolders.Records<*> -> Tab(
-            title = stringResource(holder.state.stringResource),
-            id = holder.key,
-            hasUpdate = false,
-        )
+        is ProfileScreenStateHolders.Records<*> ->
+            Tab(
+                title = stringResource(holder.state.stringResource),
+                id = holder.key,
+                hasUpdate = false,
+            )
 
-        is ProfileScreenStateHolders.Timeline -> Tab(
-            title = holder.state.timeline.displayName(),
-            id = holder.key,
-            hasUpdate = sourceIdsToHasUpdates[holder.state.timeline.source.id] == true,
-        )
-        is ProfileScreenStateHolders.LabelerSettings -> Tab(
-            title = stringResource(Res.string.labels),
-            id = holder.key,
-            hasUpdate = false,
-        )
+        is ProfileScreenStateHolders.Timeline ->
+            Tab(
+                title = holder.state.timeline.displayName(),
+                id = holder.key,
+                hasUpdate = sourceIdsToHasUpdates[holder.state.timeline.source.id] == true,
+            )
+        is ProfileScreenStateHolders.LabelerSettings ->
+            Tab(
+                title = stringResource(Res.string.labels),
+                id = holder.key,
+                hasUpdate = false,
+            )
     }
 }
 
@@ -665,167 +710,161 @@ private fun ProfileHeader(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
-) = with(paneScaffoldState) {
-    Box(
-        modifier = modifier
-            .animateContentSize()
-            .fillMaxWidth(),
-    ) {
-        ProfileBanner(
-            modifier = Modifier
-                .align(Alignment.TopCenter),
-            paneScaffoldState = paneScaffoldState,
-            headerState = headerState,
-            profile = profile,
-            avatarSharedElementKey = avatarSharedElementKey,
-        )
-        val surfaceColor = MaterialTheme.colorScheme.surface
-        Box(
-            modifier = Modifier
-                .offset {
-                    headerState.bioOffset()
-                }
-                .padding(top = headerState.bioTopPadding),
-        ) {
-            PaneStickySharedElement(
-                sharedContentState = rememberSharedContentState(
-                    key = avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
-                ),
-                zIndexInOverlay = SurfaceZIndex,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .profileBioTabBackground {
-                            surfaceColor.copy(alpha = headerState.bioAlpha)
+) =
+    with(paneScaffoldState) {
+        Box(modifier = modifier.animateContentSize().fillMaxWidth()) {
+            ProfileBanner(
+                modifier = Modifier.align(Alignment.TopCenter),
+                paneScaffoldState = paneScaffoldState,
+                headerState = headerState,
+                profile = profile,
+                avatarSharedElementKey = avatarSharedElementKey,
+            )
+            val surfaceColor = MaterialTheme.colorScheme.surface
+            Box(
+                modifier =
+                    Modifier.offset {
+                            headerState.bioOffset()
                         }
-                        .fillParentAxisIfFixedOrWrap(),
-                )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .padding(top = headerState.bioTopPadding)
-                .offset {
-                    headerState.bioOffset()
-                },
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .drawBehind {
-                        drawRect(
-                            color = surfaceColor.copy(alpha = headerState.bioAlpha),
-                            topLeft = Offset(x = 0f, y = ProfileBioTabHeight.toPx()),
-                        )
-                    }
-                    .padding(horizontal = 16.dp)
-                    .graphicsLayer {
-                        alpha = headerState.bioAlpha
-                    },
+                        .padding(top = headerState.bioTopPadding)
             ) {
-                Spacer(Modifier.height(24.dp))
-                ProfileHeadline(
-                    modifier = Modifier.fillMaxWidth(),
-                    profile = profile,
-                    isSignedInProfile = isSignedInProfile,
-                    isSubscribedToLabeler = isSubscribedToLabeler,
-                    viewerState = viewerState,
-                    signedInProfileId = signedInProfileId,
-                    onViewerStateClicked = onViewerStateClicked,
-                    onEditClick = onEditClick,
-                    onToggleLabelerSubscription = onToggleLabelerSubscription,
-                    onModerationAction = onModerationAction,
-                    onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
-                )
-                ProfileStats(
-                    modifier = Modifier.fillMaxWidth(),
-                    profile = profile,
-                    followsSignInProfile = viewerState?.followedBy != null,
-                    onNavigateToProfiles = onNavigate,
-                )
-                ProfileBio(
-                    description = profile.description ?: "",
-                    onLinkTargetClicked = onLinkTargetClicked,
-                )
-                if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
-                    CommonFollowers(
-                        commonFollowerCount = commonFollowerCount,
-                        commonFollowers = commonFollowers,
+                PaneStickySharedElement(
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = avatarSharedElementKey.withProfileBioTabSharedElementPrefix()
+                        ),
+                    zIndexInOverlay = SurfaceZIndex,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier.profileBioTabBackground {
+                                    surfaceColor.copy(alpha = headerState.bioAlpha)
+                                }
+                                .fillParentAxisIfFixedOrWrap()
                     )
                 }
-                if (supportedApps.isNotEmpty()) {
-                    ProfileApps(
-                        paneScaffoldState = paneScaffoldState,
-                        apps = supportedApps,
-                        onAppClicked = { app ->
+            }
+            Column(
+                modifier =
+                    Modifier.padding(top = headerState.bioTopPadding).offset {
+                        headerState.bioOffset()
+                    }
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier =
+                        Modifier.drawBehind {
+                                drawRect(
+                                    color = surfaceColor.copy(alpha = headerState.bioAlpha),
+                                    topLeft = Offset(x = 0f, y = ProfileBioTabHeight.toPx()),
+                                )
+                            }
+                            .padding(horizontal = 16.dp)
+                            .graphicsLayer {
+                                alpha = headerState.bioAlpha
+                            },
+                ) {
+                    Spacer(Modifier.height(24.dp))
+                    ProfileHeadline(
+                        modifier = Modifier.fillMaxWidth(),
+                        profile = profile,
+                        isSignedInProfile = isSignedInProfile,
+                        isSubscribedToLabeler = isSubscribedToLabeler,
+                        viewerState = viewerState,
+                        signedInProfileId = signedInProfileId,
+                        onViewerStateClicked = onViewerStateClicked,
+                        onEditClick = onEditClick,
+                        onToggleLabelerSubscription = onToggleLabelerSubscription,
+                        onModerationAction = onModerationAction,
+                        onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
+                    )
+                    ProfileStats(
+                        modifier = Modifier.fillMaxWidth(),
+                        profile = profile,
+                        followsSignInProfile = viewerState?.followedBy != null,
+                        onNavigateToProfiles = onNavigate,
+                    )
+                    ProfileBio(
+                        description = profile.description ?: "",
+                        onLinkTargetClicked = onLinkTargetClicked,
+                    )
+                    if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
+                        CommonFollowers(
+                            commonFollowerCount = commonFollowerCount,
+                            commonFollowers = commonFollowers,
+                        )
+                    }
+                    if (supportedApps.isNotEmpty()) {
+                        ProfileApps(
+                            paneScaffoldState = paneScaffoldState,
+                            apps = supportedApps,
+                            onAppClicked = { app ->
+                                onNavigate(
+                                    atmosphereAppDestination(
+                                        profile = profile,
+                                        app = app,
+                                        avatarSharedElementKey = avatarSharedElementKey,
+                                    )
+                                )
+                            },
+                        )
+                    }
+                    ProfileLabels(
+                        modifier = Modifier.animateContentSize(),
+                        adultContentEnabled = preferences.allowAdultContent,
+                        viewerState = viewerState,
+                        labels = profile.labels,
+                        labelers = subscribedLabelers,
+                        contentLabelPreferences = preferences.contentLabelPreferences,
+                        onLabelerSummaryClicked = { labelerSummary ->
+                            val labelerCreator =
+                                stubProfile(
+                                    did = labelerSummary.creatorId,
+                                    handle = labelerSummary.creatorHandle,
+                                    avatar = labelerSummary.creatorAvatar,
+                                )
                             onNavigate(
-                                atmosphereAppDestination(
-                                    profile = profile,
-                                    app = app,
-                                    avatarSharedElementKey = avatarSharedElementKey,
-                                ),
+                                profileDestination(
+                                    profile = labelerCreator,
+                                    avatarSharedElementKey =
+                                        labelerCreator.avatarSharedElementKey(prefix = null),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
                             )
                         },
                     )
                 }
-                ProfileLabels(
-                    modifier = Modifier
-                        .animateContentSize(),
-                    adultContentEnabled = preferences.allowAdultContent,
-                    viewerState = viewerState,
-                    labels = profile.labels,
-                    labelers = subscribedLabelers,
-                    contentLabelPreferences = preferences.contentLabelPreferences,
-                    onLabelerSummaryClicked = { labelerSummary ->
-                        val labelerCreator = stubProfile(
-                            did = labelerSummary.creatorId,
-                            handle = labelerSummary.creatorHandle,
-                            avatar = labelerSummary.creatorAvatar,
-                        )
-                        onNavigate(
-                            profileDestination(
-                                profile = labelerCreator,
-                                avatarSharedElementKey = labelerCreator.avatarSharedElementKey(
-                                    prefix = null,
-                                ),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        )
-                    },
+                ProfileTabs(
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .padding(horizontal = headerState.tabsHorizontalPadding),
+                    pagerState = pagerState,
+                    tabs = timelineTabs,
+                    timelineStateHolders = timelineStateHolders,
+                    onRefreshTabClicked = onRefreshTabClicked,
                 )
+                Spacer(Modifier.height(8.dp))
             }
-            ProfileTabs(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = headerState.tabsHorizontalPadding,
+            ProfileAvatar(
+                paneScaffoldState = paneScaffoldState,
+                pullToRefreshState = pullToRefreshState,
+                modifier =
+                    Modifier.align(
+                        lerp(
+                            start = Alignment.TopCenter,
+                            stop = Alignment.TopEnd,
+                            fraction = headerState.avatarAlignmentLerp,
+                        )
                     ),
-                pagerState = pagerState,
-                tabs = timelineTabs,
-                timelineStateHolders = timelineStateHolders,
-                onRefreshTabClicked = onRefreshTabClicked,
+                headerState = headerState,
+                isRefreshing = isRefreshing,
+                profile = profile,
+                avatarSharedElementKey = avatarSharedElementKey,
+                onProfileAvatarClicked = onProfileAvatarClicked,
             )
-            Spacer(Modifier.height(8.dp))
         }
-        ProfileAvatar(
-            paneScaffoldState = paneScaffoldState,
-            pullToRefreshState = pullToRefreshState,
-            modifier = Modifier
-                .align(
-                    lerp(
-                        start = Alignment.TopCenter,
-                        stop = Alignment.TopEnd,
-                        fraction = headerState.avatarAlignmentLerp,
-                    ),
-                ),
-            headerState = headerState,
-            isRefreshing = isRefreshing,
-            profile = profile,
-            avatarSharedElementKey = avatarSharedElementKey,
-            onProfileAvatarClicked = onProfileAvatarClicked,
-        )
     }
-}
 
 @Composable
 private fun ProfileBio(
@@ -835,17 +874,17 @@ private fun ProfileBio(
     val bio = description.orEmpty()
     val textLinks = AnnotatedString(bio).links()
 
-    val annotatedText = rememberFormattedTextPost(
-        text = bio,
-        textLinks = textLinks,
-        onLinkTargetClicked = onLinkTargetClicked,
-    )
+    val annotatedText =
+        rememberFormattedTextPost(
+            text = bio,
+            textLinks = textLinks,
+            onLinkTargetClicked = onLinkTargetClicked,
+        )
 
     Text(
         text = annotatedText,
-        style = MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-        ),
+        style =
+            MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
     )
 }
 
@@ -856,39 +895,43 @@ private fun ProfileBanner(
     headerState: HeaderState,
     profile: Profile,
     avatarSharedElementKey: String,
-) = with(paneScaffoldState) {
-    paneScaffoldState.UpdatedMovableStickySharedElementOf(
-        sharedContentState = rememberSharedContentState(
-            key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
-        ),
-        zIndexInOverlay = BannerZIndex,
-        modifier = modifier
-            .profileBannerSize()
-            .graphicsLayer {
-                alpha = headerState.bannerAlpha
-            }
-            .blur(
-                shape = RectangleShape,
-                radius = ::BannerBlurRadius,
-                progress = headerState::progress,
-            ),
-        state = remember(
-            key1 = profile.banner?.uri,
-            key2 = profile.displayName,
-            key3 = profile.handle,
-        ) {
-            ImageArgs(
-                url = profile.banner?.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = profile.displayName ?: profile.handle.id,
-                shape = RoundedPolygonShape.Rectangle,
-            )
-        },
-        sharedElement = { state, modifier ->
-            AsyncImage(state, modifier)
-        },
-    )
-}
+) =
+    with(paneScaffoldState) {
+        paneScaffoldState.UpdatedMovableStickySharedElementOf(
+            sharedContentState =
+                rememberSharedContentState(
+                    key = avatarSharedElementKey.withProfileBannerSharedElementPrefix()
+                ),
+            zIndexInOverlay = BannerZIndex,
+            modifier =
+                modifier
+                    .profileBannerSize()
+                    .graphicsLayer {
+                        alpha = headerState.bannerAlpha
+                    }
+                    .blur(
+                        shape = RectangleShape,
+                        radius = ::BannerBlurRadius,
+                        progress = headerState::progress,
+                    ),
+            state =
+                remember(
+                    key1 = profile.banner?.uri,
+                    key2 = profile.displayName,
+                    key3 = profile.handle,
+                ) {
+                    ImageArgs(
+                        url = profile.banner?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = profile.displayName ?: profile.handle.id,
+                        shape = RoundedPolygonShape.Rectangle,
+                    )
+                },
+            sharedElement = { state, modifier ->
+                AsyncImage(state, modifier)
+            },
+        )
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -901,86 +944,91 @@ private fun ProfileAvatar(
     profile: Profile,
     avatarSharedElementKey: String,
     onProfileAvatarClicked: () -> Unit,
-) = with(paneScaffoldState) {
-    val statusBarHeight = UiTokens.statusBarHeight
-    val isLive = profile.status?.isLive == true
-    Box(
-        modifier = modifier
-            .padding(top = headerState.avatarTopPadding)
-            .size(headerState.avatarSize + 2.dp)
-            .offset {
-                headerState.avatarOffset(
-                    density = this,
-                    statusBarHeight = statusBarHeight,
-                )
-            },
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
-        val scale = animateFloatAsState(
-            if (showWave) 1.2f else 1f,
-        )
-        PaneStickySharedElement(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    scaleX = scale.value
-                    scaleY = scale.value
-                },
-            sharedContentState = rememberSharedContentState(
-                key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
-            ),
-            zIndexInOverlay = AvatarHaloZIndex,
+) =
+    with(paneScaffoldState) {
+        val statusBarHeight = UiTokens.statusBarHeight
+        val isLive = profile.status?.isLive == true
+        Box(
+            modifier =
+                modifier
+                    .padding(top = headerState.avatarTopPadding)
+                    .size(headerState.avatarSize + 2.dp)
+                    .offset {
+                        headerState.avatarOffset(
+                            density = this,
+                            statusBarHeight = statusBarHeight,
+                        )
+                    },
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            CircularWavyProgressIndicator(
-                progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
-                trackColor = MaterialTheme.colorScheme.surface,
-                amplitude = { if (showWave) 1f else 0f },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(key = avatarSharedElementKey)
-            },
-            zIndexInOverlay = AvatarZIndex,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(headerState.avatarPadding)
-                .ifTrue(
-                    predicate = isLive,
-                    block = Modifier::profileLiveAvatarBorder,
-                )
-                .shapedClickable(CircleShape) { onProfileAvatarClicked() },
-            state = remember(
-                key1 = profile.avatar?.uri,
-                key2 = profile.displayName ?: profile.handle,
-                key3 = profile.isLabeler,
+            val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
+            val scale = animateFloatAsState(if (showWave) 1.2f else 1f)
+            PaneStickySharedElement(
+                modifier =
+                    Modifier.fillMaxSize().graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                    },
+                sharedContentState =
+                    rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix()
+                    ),
+                zIndexInOverlay = AvatarHaloZIndex,
             ) {
-                ImageArgs(
-                    url = profile.avatar.orDefault.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
-                    else RoundedPolygonShape.Circle,
+                CircularWavyProgressIndicator(
+                    progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
+                    trackColor = MaterialTheme.colorScheme.surface,
+                    amplitude = { if (showWave) 1f else 0f },
+                    modifier = Modifier.fillMaxSize(),
                 )
-            },
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            },
-        )
-        if (isLive) PaneStickySharedElement(
-            modifier = Modifier
-                .align(Alignment.BottomCenter),
-            sharedContentState = rememberSharedContentState(
-                key = avatarSharedElementKey.withProfileAvatarLiveSharedElementPrefix(),
-            ),
-            zIndexInOverlay = AvatarLiveZIndex,
-        ) {
-            ProfileLiveChip()
+            }
+            paneScaffoldState.UpdatedMovableStickySharedElementOf(
+                sharedContentState =
+                    with(paneScaffoldState) {
+                        rememberSharedContentState(key = avatarSharedElementKey)
+                    },
+                zIndexInOverlay = AvatarZIndex,
+                modifier =
+                    Modifier.fillMaxSize()
+                        .padding(headerState.avatarPadding)
+                        .ifTrue(
+                            predicate = isLive,
+                            block = Modifier::profileLiveAvatarBorder,
+                        )
+                        .shapedClickable(CircleShape) { onProfileAvatarClicked() },
+                state =
+                    remember(
+                        key1 = profile.avatar?.uri,
+                        key2 = profile.displayName ?: profile.handle,
+                        key3 = profile.isLabeler,
+                    ) {
+                        ImageArgs(
+                            url = profile.avatar.orDefault.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = profile.displayName ?: profile.handle.id,
+                            shape =
+                                if (profile.isLabeler)
+                                    profile.did.asSelfLabelerUri().collectionShape()
+                                else RoundedPolygonShape.Circle,
+                        )
+                    },
+                sharedElement = { state, modifier ->
+                    AsyncImage(state, modifier)
+                },
+            )
+            if (isLive)
+                PaneStickySharedElement(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = avatarSharedElementKey.withProfileAvatarLiveSharedElementPrefix()
+                        ),
+                    zIndexInOverlay = AvatarLiveZIndex,
+                ) {
+                    ProfileLiveChip()
+                }
         }
     }
-}
 
 @Composable
 private fun ProfileHeadline(
@@ -996,9 +1044,8 @@ private fun ProfileHeadline(
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
 ) {
-    val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
-        onApproved = onModerationAction,
-    )
+    val profileRestrictionsDialogState =
+        rememberProfileRestrictionsDialogState(onApproved = onModerationAction)
     AttributionLayout(
         modifier = modifier,
         avatar = null,
@@ -1018,17 +1065,15 @@ private fun ProfileHeadline(
                         modifier = Modifier,
                         profile = profile,
                     )
-                    profile.pronouns
-                        ?.takeIf(String::isNotBlank)
-                        ?.let { pronouns ->
-                            Label(
-                                isElevated = true,
-                                contentDescription = pronouns,
-                                icon = {},
-                                description = { LabelText(pronouns) },
-                                onClick = {},
-                            )
-                        }
+                    profile.pronouns?.takeIf(String::isNotBlank)?.let { pronouns ->
+                        Label(
+                            isElevated = true,
+                            contentDescription = pronouns,
+                            icon = {},
+                            description = { LabelText(pronouns) },
+                            onClick = {},
+                        )
+                    }
                 }
             }
         },
@@ -1037,7 +1082,7 @@ private fun ProfileHeadline(
             val blockUri = viewerState?.blocking
 
             AnimatedVisibility(
-                visible = viewerState != null || isSignedInProfile || profile.isLabeler,
+                visible = viewerState != null || isSignedInProfile || profile.isLabeler
             ) {
                 when {
                     profile.isLabeler -> {
@@ -1060,12 +1105,13 @@ private fun ProfileHeadline(
                                         signedInProfileId = signedInProfileId,
                                         profileId = profile.did,
                                         blockUri = blockUri,
-                                    ),
+                                    )
                                 )
                             },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                            ),
+                            colors =
+                                ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
                         ) {
                             Text(stringResource(CommonStrings.viewer_state_unblock_account))
                         }
@@ -1085,35 +1131,36 @@ private fun ProfileHeadline(
                             )
                             if (signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(
-                                        isSignedInProfile = isSignedInProfile,
-                                        isLive = profile.status?.isLive == true,
-                                    ),
+                                    items =
+                                        viewerState.profileActionMenuItems(
+                                            isSignedInProfile = isSignedInProfile,
+                                            isLive = profile.status?.isLive == true,
+                                        ),
                                     onItemClicked = { item ->
                                         when (item.title) {
                                             CommonStrings.action_go_live,
-                                            CommonStrings.action_edit_live_status,
-                                            -> onUpdateProfileLiveStatus()
+                                            CommonStrings.action_edit_live_status ->
+                                                onUpdateProfileLiveStatus()
                                             CommonStrings.viewer_state_block_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Block.Add(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
-                                                    ),
+                                                    )
                                                 )
                                             CommonStrings.viewer_state_mute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Add(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
-                                                    ),
+                                                    )
                                                 )
                                             CommonStrings.viewer_state_unmute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Remove(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
-                                                    ),
+                                                    )
                                                 )
                                         }
                                     },
@@ -1143,22 +1190,14 @@ private fun ProfileStats(
             value = profile.followersCount ?: 0,
             description = stringResource(CommonStrings.followers),
             onClick = {
-                onNavigateToProfiles(
-                    profileFollowersDestination(
-                        profileId = profile.did,
-                    ),
-                )
+                onNavigateToProfiles(profileFollowersDestination(profileId = profile.did))
             },
         )
         Statistic(
             value = profile.followsCount ?: 0,
             description = stringResource(CommonStrings.following),
             onClick = {
-                onNavigateToProfiles(
-                    profileFollowsDestination(
-                        profileId = profile.did,
-                    ),
-                )
+                onNavigateToProfiles(profileFollowsDestination(profileId = profile.did))
             },
         )
         Statistic(
@@ -1166,17 +1205,14 @@ private fun ProfileStats(
             description = stringResource(Res.string.posts),
             onClick = {},
         )
-        Box(
-            Modifier
-                .weight(1f),
-        ) {
-            if (followsSignInProfile) Text(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd),
-                text = stringResource(Res.string.follows_you),
-                maxLines = 2,
-                style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
-            )
+        Box(Modifier.weight(1f)) {
+            if (followsSignInProfile)
+                Text(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    text = stringResource(Res.string.follows_you),
+                    maxLines = 2,
+                    style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
+                )
         }
     }
 }
@@ -1188,8 +1224,8 @@ fun Statistic(
     onClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .clickable(
+        modifier =
+            Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick,
@@ -1201,10 +1237,11 @@ fun Statistic(
             modifier = Modifier,
             text = format(value),
             maxLines = 1,
-            style = LocalTextStyle.current.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-            ),
+            style =
+                LocalTextStyle.current.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                ),
         )
         Text(
             modifier = Modifier,
@@ -1225,48 +1262,52 @@ private fun CommonFollowers(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         OverlappingAvatarRow(
-            modifier = Modifier
-                .width(20.dp * commonFollowers.size),
+            modifier = Modifier.width(20.dp * commonFollowers.size),
             overlap = 16.dp,
             maxItems = commonFollowers.size,
             content = {
                 commonFollowers.forEachIndexed { index, profile ->
                     AsyncImage(
-                        modifier = Modifier
-                            .zIndex(-index.toFloat()),
-                        args = remember(profile.avatar) {
-                            ImageArgs(
-                                url = profile.avatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = profile.displayName
-                                    ?: profile.handle.id,
-                                shape = RoundedPolygonShape.Circle,
-                            )
-                        },
+                        modifier = Modifier.zIndex(-index.toFloat()),
+                        args =
+                            remember(profile.avatar) {
+                                ImageArgs(
+                                    url = profile.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = profile.displayName ?: profile.handle.id,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
                     )
                 }
             },
         )
         Text(
-            text = stringResource(
-                Res.string.followed_by_profiles,
-                when (val size = commonFollowers.size) {
-                    1 -> commonFollowers.first().displayName ?: ""
-                    2 -> commonFollowers.joinToString(
-                        separator = ", ",
-                        transform = { it.displayName ?: "" },
-                    )
+            text =
+                stringResource(
+                    Res.string.followed_by_profiles,
+                    when (val size = commonFollowers.size) {
+                        1 -> commonFollowers.first().displayName ?: ""
+                        2 ->
+                            commonFollowers.joinToString(
+                                separator = ", ",
+                                transform = { it.displayName ?: "" },
+                            )
 
-                    else -> commonFollowers.take(2).joinToString(
-                        separator = ", ",
-                        transform = { it.displayName ?: "" },
-                        postfix = stringResource(
-                            Res.string.followed_by_others,
-                            (commonFollowerCount?.toInt() ?: size) - 2,
-                        ),
-                    )
-                },
-            ),
+                        else ->
+                            commonFollowers
+                                .take(2)
+                                .joinToString(
+                                    separator = ", ",
+                                    transform = { it.displayName ?: "" },
+                                    postfix =
+                                        stringResource(
+                                            Res.string.followed_by_others,
+                                            (commonFollowerCount?.toInt() ?: size) - 2,
+                                        ),
+                                )
+                    },
+                ),
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -1282,26 +1323,23 @@ private fun ProfileTabs(
 ) {
     val scope = rememberCoroutineScope()
     Row(
-        modifier = modifier
-            .clip(CircleShape),
+        modifier = modifier.clip(CircleShape),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tabs(
-            modifier = Modifier
-                .animateContentSize()
-                .weight(1f)
-                .clip(CircleShape),
-            tabsState = rememberTabsState(
-                tabs = tabs,
-                selectedTabIndex = pagerState::tabIndex,
-                onTabSelected = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(it)
-                    }
-                },
-                onTabReselected = onRefreshTabClicked,
-            ),
+            modifier = Modifier.animateContentSize().weight(1f).clip(CircleShape),
+            tabsState =
+                rememberTabsState(
+                    tabs = tabs,
+                    selectedTabIndex = pagerState::tabIndex,
+                    onTabSelected = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(it)
+                        }
+                    },
+                    onTabReselected = onRefreshTabClicked,
+                ),
         )
         TimelinePresentationSelector(
             page = pagerState.currentPage,
@@ -1332,128 +1370,136 @@ private fun ProfileTimeline(
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-    )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordsPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.Block.Add(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = {
+                actions(Action.Navigate.To(signInDestination()))
+            },
+            onInteractionConfirmed = {
+                actions(Action.SendPostInteraction(it))
+            },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        )
                     )
+                )
+            },
+        )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = {
+                actions(Action.UpdateRecentLists)
+            },
+            onThreadGateUpdated = {
+                actions(Action.SendPostInteraction(it))
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = mutedWordsPreferences,
+            onSave = {
+                actions(Action.UpdateMutedWord(it))
+            },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.Block.Add(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.Mute.Add(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.Mute.Add(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = signedInProfileId,
-        recentConversations = recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = signedInProfileId,
+            recentConversations = recentConversations,
+            onShown = { actions(Action.UpdateRecentConversations) },
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
 
-                is PostOption.ThreadGate ->
-                    items.firstOrNull { it.post.uri == option.postUri }
-                        ?.let(threadGateSheetState::show)
+                    is PostOption.ThreadGate ->
+                        items
+                            .firstOrNull { it.post.uri == option.postUri }
+                            ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
-            }
-        },
-    )
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                    is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
+                }
+            },
+        )
 
     LookaheadScope {
         LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .padding(
-                    horizontal = animateDpAsState(
-                        displayState.horizontalPadding(presentation),
-                    ).value,
-                )
-                .fillMaxSize()
-                .onSizeChanged {
-                    val itemWidth = with(density) {
-                        displayState.cardSize(presentation).toPx()
-                    }
-                    timelineStateHolder.accept(
-                        TimelineState.Action.Tile(
-                            tilingAction = TilingState.Action.GridSize(
-                                numColumns = floor(it.width / itemWidth).roundToInt(),
-                            ),
-                        ),
+            modifier =
+                Modifier.padding(
+                        horizontal =
+                            animateDpAsState(displayState.horizontalPadding(presentation)).value
                     )
-                },
+                    .fillMaxSize()
+                    .onSizeChanged {
+                        val itemWidth =
+                            with(density) {
+                                displayState.cardSize(presentation).toPx()
+                            }
+                        timelineStateHolder.accept(
+                            TimelineState.Action.Tile(
+                                tilingAction =
+                                    TilingState.Action.GridSize(
+                                        numColumns = floor(it.width / itemWidth).roundToInt()
+                                    )
+                            )
+                        )
+                    },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
-            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                isCompact = paneScaffoldState.prefersCompactBottomNav,
-                extraBottom = bottomPadding,
-            ),
+            contentPadding =
+                UiTokens.bottomNavAndInsetPaddingValues(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    extraBottom = bottomPadding,
+                ),
             verticalItemSpacing = displayState.verticalItemSpacing(presentation),
-            horizontalArrangement = Arrangement.spacedBy(
-                displayState.horizontalItemSpacing(presentation),
-            ),
+            horizontalArrangement =
+                Arrangement.spacedBy(displayState.horizontalItemSpacing(presentation)),
         ) {
             items(
                 items = items,
@@ -1461,12 +1507,12 @@ private fun ProfileTimeline(
                 contentType = TimelineItem::contentType,
                 itemContent = { item ->
                     TimelineItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item),
-                            ),
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .animateItem()
+                                .threadedVideoPosition(
+                                    state = videoStates.getOrCreateStateFor(item)
+                                ),
                         paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
@@ -1474,119 +1520,166 @@ private fun ProfileTimeline(
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         showEngagementMetrics = showEngagementMetrics,
                         presentation = presentation,
-                        postActions = remember(timelineState.timeline.source.id) {
-                            PostActions { action ->
-                                when (action) {
-                                    is PostAction.OfLinkTarget -> {
-                                        val linkTarget = action.linkTarget
-                                        if (linkTarget is LinkTarget.Navigable) actions(
-                                            Action.Navigate.To(
-                                                pathDestination(
-                                                    path = linkTarget.path,
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                ),
-                                            ),
-                                        )
-                                    }
-
-                                    is PostAction.OfPost -> {
-                                        actions(
-                                            Action.Navigate.To(
-                                                recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = buildList {
-                                                        action.warnedAppliedLabels?.let(::add)
-                                                        if (action.isMainPost) {
-                                                            add(timelineState.timeline.source)
-                                                            add(timelineState.tilingData.currentQuery.data)
-                                                        }
-                                                    },
-                                                    record = action.post,
-                                                ),
-                                            ),
-                                        )
-                                    }
-
-                                    is PostAction.OfProfile -> {
-                                        actions(
-                                            Action.Navigate.To(
-                                                profileDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                    profile = action.profile,
-                                                    avatarSharedElementKey = action.post
-                                                        .avatarSharedElementKey(
-                                                            prefix = timelineState.timeline.source.id,
-                                                            quotingPostUri = action.quotingPostUri,
+                        postActions =
+                            remember(timelineState.timeline.source.id) {
+                                PostActions { action ->
+                                    when (action) {
+                                        is PostAction.OfLinkTarget -> {
+                                            val linkTarget = action.linkTarget
+                                            if (linkTarget is LinkTarget.Navigable)
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = linkTarget.path,
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
                                                         )
-                                                        .takeIf { action.post.author.did == action.profile.did },
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                                    )
+                                                )
+                                        }
 
-                                    is PostAction.OfRecord -> {
-                                        actions(
-                                            Action.Navigate.To(
-                                                recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = action.owningPostUri,
-                                                    ),
-                                                    record = action.record,
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                        is PostAction.OfPost -> {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    recordDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Current,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix,
+                                                        otherModels =
+                                                            buildList {
+                                                                action.warnedAppliedLabels?.let(
+                                                                    ::add
+                                                                )
+                                                                if (action.isMainPost) {
+                                                                    add(
+                                                                        timelineState.timeline
+                                                                            .source
+                                                                    )
+                                                                    add(
+                                                                        timelineState.tilingData
+                                                                            .currentQuery
+                                                                            .data
+                                                                    )
+                                                                }
+                                                            },
+                                                        record = action.post,
+                                                    )
+                                                )
+                                            )
+                                        }
 
-                                    is PostAction.OfMedia -> {
-                                        actions(
-                                            Action.Navigate.To(
-                                                galleryDestination(
-                                                    post = action.post,
-                                                    media = action.media,
-                                                    startIndex = action.index,
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                        quotingPostUri = action.quotingPostUri,
-                                                    ),
-                                                    otherModels = when {
-                                                        action.isMainPost -> listOf(
-                                                            timelineState.timeline.source,
-                                                            timelineState.tilingData.currentQuery.data,
+                                        is PostAction.OfProfile -> {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    profileDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Parent,
+                                                        profile = action.profile,
+                                                        avatarSharedElementKey =
+                                                            action.post
+                                                                .avatarSharedElementKey(
+                                                                    prefix =
+                                                                        timelineState.timeline
+                                                                            .source
+                                                                            .id,
+                                                                    quotingPostUri =
+                                                                        action.quotingPostUri,
+                                                                )
+                                                                .takeIf {
+                                                                    action.post.author.did ==
+                                                                        action.profile.did
+                                                                },
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfRecord -> {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    recordDestination(
+                                                        referringRouteOption =
+                                                            NavigationAction.ReferringRouteOption
+                                                                .Current,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix(
+                                                                    quotingPostUri =
+                                                                        action.owningPostUri
+                                                                ),
+                                                        record = action.record,
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfMedia -> {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    galleryDestination(
+                                                        post = action.post,
+                                                        media = action.media,
+                                                        startIndex = action.index,
+                                                        sharedElementPrefix =
+                                                            timelineState.timeline
+                                                                .sharedElementPrefix(
+                                                                    quotingPostUri =
+                                                                        action.quotingPostUri
+                                                                ),
+                                                        otherModels =
+                                                            when {
+                                                                action.isMainPost ->
+                                                                    listOf(
+                                                                        timelineState.timeline
+                                                                            .source,
+                                                                        timelineState.tilingData
+                                                                            .currentQuery
+                                                                            .data,
+                                                                    )
+                                                                else -> emptyList()
+                                                            },
+                                                    )
+                                                )
+                                            )
+                                        }
+
+                                        is PostAction.OfReply -> {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    if (paneScaffoldState.isSignedOut)
+                                                        signInDestination()
+                                                    else
+                                                        composePostDestination(
+                                                            type =
+                                                                Post.Create.Reply(
+                                                                    parent = action.post
+                                                                ),
+                                                            sharedElementPrefix =
+                                                                timelineState.timeline
+                                                                    .sharedElementPrefix,
                                                         )
-                                                        else -> emptyList()
-                                                    },
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                                )
+                                            )
+                                        }
 
-                                    is PostAction.OfReply -> {
-                                        actions(
-                                            Action.Navigate.To(
-                                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                                else composePostDestination(
-                                                    type = Post.Create.Reply(
-                                                        parent = action.post,
-                                                    ),
-                                                    sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                ),
-                                            ),
-                                        )
-                                    }
+                                        is PostAction.OfInteraction -> {
+                                            postInteractionSheetState.onInteraction(action)
+                                        }
 
-                                    is PostAction.OfInteraction -> {
-                                        postInteractionSheetState.onInteraction(action)
-                                    }
+                                        is PostAction.OfMore -> {
+                                            postOptionsSheetState.showOptions(action.post)
+                                        }
 
-                                    is PostAction.OfMore -> {
-                                        postOptionsSheetState.showOptions(action.post)
+                                        else -> Unit
                                     }
-
-                                    else -> Unit
                                 }
-                            }
-                        },
+                            },
                     )
                 },
             )
@@ -1601,12 +1694,12 @@ private fun ProfileTimeline(
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
+            items
+                .getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
+                ?.let(videoPlayerController::play) ?: videoPlayerController.pauseActiveVideo()
         }
     }
 
@@ -1615,10 +1708,11 @@ private fun ProfileTimeline(
         onQueryChanged = { query ->
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: timelineState.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(
+                            query = query ?: timelineState.tilingData.currentQuery
+                        )
+                )
             )
         },
     )
@@ -1635,11 +1729,12 @@ private fun TimelinePresentationSelector(
     page: Int,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
 ) {
-    val timeline by remember(page, timelineStateHolders) {
-        derivedStateOf {
-            timelineStateHolders.getOrNull(page)?.state?.timeline
+    val timeline by
+        remember(page, timelineStateHolders) {
+            derivedStateOf {
+                timelineStateHolders.getOrNull(page)?.state?.timeline
+            }
         }
-    }
 
     timeline?.let { currentTimeline ->
         TimelinePresentationSelector(
@@ -1647,31 +1742,29 @@ private fun TimelinePresentationSelector(
             selected = currentTimeline.presentation,
             available = currentTimeline.supportedPresentations,
             onPresentationSelected = { presentation ->
-                timelineStateHolders.getOrNull(page)
+                timelineStateHolders
+                    .getOrNull(page)
                     ?.accept
                     ?.invoke(
                         TimelineState.Action.UpdatePreferredPresentation(
                             timeline = currentTimeline,
                             presentation = presentation,
-                        ),
+                        )
                     )
             },
         )
     }
 }
 
-private fun Map<RecordUri?, Boolean>.status(
-    recordUri: RecordUri,
-) = when (this[recordUri]) {
-    true -> Timeline.Home.Status.Pinned
-    false -> Timeline.Home.Status.Saved
-    null -> Timeline.Home.Status.None
-}
+private fun Map<RecordUri?, Boolean>.status(recordUri: RecordUri) =
+    when (this[recordUri]) {
+        true -> Timeline.Home.Status.Pinned
+        false -> Timeline.Home.Status.Saved
+        null -> Timeline.Home.Status.None
+    }
 
 @Stable
-private class HeaderState(
-    val headerState: CollapsingHeaderState,
-) {
+private class HeaderState(val headerState: CollapsingHeaderState) {
     var width by mutableStateOf(160.dp * 3)
     private val profileBannerHeight by derivedStateOf {
         min(
@@ -1680,37 +1773,54 @@ private class HeaderState(
         )
     }
 
-    val bioTopPadding get() = profileBannerHeight - sizeToken
-    val bioAlpha get() = 1f - headerState.progress
+    val bioTopPadding
+        get() = profileBannerHeight - sizeToken
 
-    val bannerAlpha get() = 1f - min(0.9f, (headerState.progress * 1.6f))
+    val bioAlpha
+        get() = 1f - headerState.progress
 
-    val avatarTopPadding get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
-    val avatarSize get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
-    val avatarPadding get() = 4.dp * max(0f, 1f - progress)
-    val avatarAlignmentLerp get() = progress
-    val tabsHorizontalPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
+    val bannerAlpha
+        get() = 1f - min(0.9f, (headerState.progress * 1.6f))
 
-    fun bioOffset() = IntOffset(
-        x = 0,
-        y = -headerState.translation.roundToInt(),
-    )
+    val avatarTopPadding
+        get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
+
+    val avatarSize
+        get() = ExpandedProfilePhotoSize - (expandedToCollapsedAvatar * progress)
+
+    val avatarPadding
+        get() = 4.dp * max(0f, 1f - progress)
+
+    val avatarAlignmentLerp
+        get() = progress
+
+    val tabsHorizontalPadding
+        get() = sizeToken + (CollapsedProfilePhotoSize * progress)
+
+    fun bioOffset() =
+        IntOffset(
+            x = 0,
+            y = -headerState.translation.roundToInt(),
+        )
 
     fun avatarOffset(
         density: Density,
         statusBarHeight: Dp,
-    ) = with(density) {
-        IntOffset(
-            x = -(16.dp * progress).roundToPx(),
-            y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx(),
-        )
-    }
+    ) =
+        with(density) {
+            IntOffset(
+                x = -(16.dp * progress).roundToPx(),
+                y = -((topToAnchoredCollapsedAvatar - statusBarHeight) * progress).roundToPx(),
+            )
+        }
 
     val sizeToken = 24.dp
 
-    val progress get() = max(0f, headerState.progress)
+    val progress
+        get() = max(0f, headerState.progress)
 
-    private val screenTopToAvatarTop get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
+    private val screenTopToAvatarTop
+        get() = bioTopPadding - (ExpandedProfilePhotoSize / 2)
 
     private val screenTopToCollapsedAvatarAppBarCenter
         get() = (UiTokens.toolbarHeight - CollapsedProfilePhotoSize) / 2
@@ -1724,8 +1834,7 @@ private class HeaderState(
 
 private val RecordShape = RoundedCornerShape(8.dp)
 
-private fun Modifier.recordPadding() =
-    padding(8.dp)
+private fun Modifier.recordPadding() = padding(8.dp)
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = UiTokens.appBarButtonSize

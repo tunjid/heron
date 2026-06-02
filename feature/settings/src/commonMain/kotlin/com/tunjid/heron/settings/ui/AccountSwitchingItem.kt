@@ -88,45 +88,48 @@ fun AccountSwitchingItem(
             SettingsItem(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
-                modifier = modifier
-                    .shapedClickable(onClick = onAddAccountClick)
-                    .settingsItemPaddingAndMinHeight(),
+                modifier =
+                    modifier
+                        .shapedClickable(onClick = onAddAccountClick)
+                        .settingsItemPaddingAndMinHeight(),
             )
         }
         else -> {
-            val state = rememberAnimationData(
-                activeProfileId = activeProfileId,
-                sessionSummaries = remember(sessionSummaries) {
-                    when (sessionSummaries.size) {
-                        in 0..MaxSessionsDisplayed -> sessionSummaries
-                        else -> sessionSummaries.take(MaxSessionsDisplayed)
-                    }
-                },
-                switchingSession = switchingSession,
-                switchPhase = switchPhase,
-            )
+            val state =
+                rememberAnimationData(
+                    activeProfileId = activeProfileId,
+                    sessionSummaries =
+                        remember(sessionSummaries) {
+                            when (sessionSummaries.size) {
+                                in 0..MaxSessionsDisplayed -> sessionSummaries
+                                else -> sessionSummaries.take(MaxSessionsDisplayed)
+                            }
+                        },
+                    switchingSession = switchingSession,
+                    switchPhase = switchPhase,
+                )
             AnimatedContent(
                 modifier = modifier,
                 targetState = switchingSession,
             ) { session ->
-                if (session == null) MultiSessionLayout(
-                    modifier = Modifier
-                        .shapedClickable(onClick = state::toggleExpansion),
-                    paneTransitionScope = paneScaffoldState,
-                    animatedVisibilityScope = this,
-                    accountSwitchState = state,
-                    onAddAccountClick = onAddAccountClick,
-                    onAccountSelected = onAccountSelected,
-                    onExpansionToggled = state::toggleExpansion,
-                )
-                else AccountSwitchingTransitionLayer(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    paneScaffoldState = paneScaffoldState,
-                    animatedVisibilityScope = this,
-                    phase = switchPhase,
-                    session = session,
-                )
+                if (session == null)
+                    MultiSessionLayout(
+                        modifier = Modifier.shapedClickable(onClick = state::toggleExpansion),
+                        paneTransitionScope = paneScaffoldState,
+                        animatedVisibilityScope = this,
+                        accountSwitchState = state,
+                        onAddAccountClick = onAddAccountClick,
+                        onAccountSelected = onAccountSelected,
+                        onExpansionToggled = state::toggleExpansion,
+                    )
+                else
+                    AccountSwitchingTransitionLayer(
+                        modifier = Modifier.fillMaxSize(),
+                        paneScaffoldState = paneScaffoldState,
+                        animatedVisibilityScope = this,
+                        phase = switchPhase,
+                        session = session,
+                    )
             }
         }
     }
@@ -143,15 +146,13 @@ private fun MultiSessionLayout(
     onExpansionToggled: () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .settingsItemPaddingAndMinHeight(),
+        modifier = modifier.settingsItemPaddingAndMinHeight(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val settingsItemRow = remember {
             movableContentOf { modifier: Modifier ->
                 SettingsItem(
-                    modifier = modifier
-                        .settingsItemMinHeight(),
+                    modifier = modifier.settingsItemMinHeight(),
                     title = stringResource(Res.string.switch_account),
                     icon = Icons.Default.SwitchAccount,
                 )
@@ -159,13 +160,15 @@ private fun MultiSessionLayout(
         }
         val expandButtonContent = remember {
             movableContentWithReceiverOf<PaneTransitionScope, AccountSwitchState> { state ->
-                ExpandButton(
-                    accountSwitchState = state,
-                )
+                ExpandButton(accountSwitchState = state)
             }
         }
         val sessionSummariesContent = remember {
-            movableContentWithReceiverOf<PaneTransitionScope, AccountSwitchState, AnimatedVisibilityScope> { state, scope ->
+            movableContentWithReceiverOf<
+                PaneTransitionScope,
+                AccountSwitchState,
+                AnimatedVisibilityScope,
+            > { state, scope ->
                 SessionSummaries(
                     animatedVisibilityScope = scope,
                     accountSwitchState = state,
@@ -176,40 +179,41 @@ private fun MultiSessionLayout(
         }
         with(paneTransitionScope) {
             Box(
-                modifier = Modifier
-                    .animateBounds(
-                        lookaheadScope = this,
-                        boundsTransform = childBoundsTransform,
-                    )
-                    .clip(ExpandableAvatarRowShape),
+                modifier =
+                    Modifier.animateBounds(
+                            lookaheadScope = this,
+                            boundsTransform = childBoundsTransform,
+                        )
+                        .clip(ExpandableAvatarRowShape)
             ) {
-                if (accountSwitchState.isExpanded) ExpandedSummaries(
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    accountSwitchState = accountSwitchState,
-                    settingsItemRow = settingsItemRow,
-                    expandButtonContent = expandButtonContent,
-                    sessionSummariesContent = sessionSummariesContent,
-                )
-                else CollapsedSummaries(
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    accountSwitchState = accountSwitchState,
-                    settingsItemRow = settingsItemRow,
-                    expandButtonContent = expandButtonContent,
-                    sessionSummariesContent = sessionSummariesContent,
-                )
+                if (accountSwitchState.isExpanded)
+                    ExpandedSummaries(
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        accountSwitchState = accountSwitchState,
+                        settingsItemRow = settingsItemRow,
+                        expandButtonContent = expandButtonContent,
+                        sessionSummariesContent = sessionSummariesContent,
+                    )
+                else
+                    CollapsedSummaries(
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        accountSwitchState = accountSwitchState,
+                        settingsItemRow = settingsItemRow,
+                        expandButtonContent = expandButtonContent,
+                        sessionSummariesContent = sessionSummariesContent,
+                    )
             }
         }
         AnimatedVisibility(
-            modifier = Modifier
-                .settingsItemChildPadding(),
+            modifier = Modifier.settingsItemChildPadding(),
             visible = accountSwitchState.isExpanded,
         ) {
             SettingsItem(
                 title = stringResource(Res.string.add_or_reauthenticate_account),
                 icon = Icons.Default.PersonAdd,
-                modifier = Modifier
-                    .clickable(onClick = onAddAccountClick)
-                    .settingsItemPaddingAndMinHeight(),
+                modifier =
+                    Modifier.clickable(onClick = onAddAccountClick)
+                        .settingsItemPaddingAndMinHeight(),
             )
         }
     }
@@ -221,26 +225,24 @@ private fun PaneTransitionScope.CollapsedSummaries(
     accountSwitchState: AccountSwitchState,
     settingsItemRow: @Composable (Modifier) -> Unit,
     expandButtonContent: @Composable PaneTransitionScope.(AccountSwitchState) -> Unit,
-    sessionSummariesContent: @Composable PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
+    sessionSummariesContent:
+        @Composable
+        PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        settingsItemRow(
-            Modifier
-                .weight(1f),
-        )
+        settingsItemRow(Modifier.weight(1f))
         Row(
             modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OverlappingAvatarRow(
-                modifier = Modifier
-                    .width(accountSwitchState.sessionSummaries.collapsedAvatarsWidth()),
+                modifier =
+                    Modifier.width(accountSwitchState.sessionSummaries.collapsedAvatarsWidth()),
                 overlap = CollapsedAvatarOverlap,
                 maxItems = accountSwitchState.sessionSummaries.size,
                 content = {
@@ -258,32 +260,25 @@ private fun PaneTransitionScope.ExpandedSummaries(
     accountSwitchState: AccountSwitchState,
     settingsItemRow: @Composable (Modifier) -> Unit,
     expandButtonContent: @Composable PaneTransitionScope.(AccountSwitchState) -> Unit,
-    sessionSummariesContent: @Composable PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
+    sessionSummariesContent:
+        @Composable
+        PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            settingsItemRow(
-                Modifier
-                    .weight(1f),
-            )
-            Box(
-                Modifier
-                    .padding(horizontal = 1.dp),
-            ) {
+            settingsItemRow(Modifier.weight(1f))
+            Box(Modifier.padding(horizontal = 1.dp)) {
                 expandButtonContent(accountSwitchState)
             }
         }
         Column(
-            modifier = Modifier
-                .settingsItemChildPadding(),
+            modifier = Modifier.settingsItemChildPadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             sessionSummariesContent(accountSwitchState, animatedVisibilityScope)
@@ -292,19 +287,17 @@ private fun PaneTransitionScope.ExpandedSummaries(
 }
 
 @Composable
-private fun PaneTransitionScope.ExpandButton(
-    accountSwitchState: AccountSwitchState,
-) {
+private fun PaneTransitionScope.ExpandButton(accountSwitchState: AccountSwitchState) {
     val rotation = animateFloatAsState(if (accountSwitchState.isExpanded) 180f else 0f)
     Icon(
-        modifier = Modifier
-            .animateBounds(
-                lookaheadScope = this@ExpandButton,
-                boundsTransform = childBoundsTransform,
-            )
-            .graphicsLayer {
-                rotationZ = rotation.value
-            },
+        modifier =
+            Modifier.animateBounds(
+                    lookaheadScope = this@ExpandButton,
+                    boundsTransform = childBoundsTransform,
+                )
+                .graphicsLayer {
+                    rotationZ = rotation.value
+                },
         imageVector = Icons.Rounded.KeyboardArrowDown,
         contentDescription = null,
     )
@@ -319,51 +312,53 @@ private fun PaneTransitionScope.SessionSummaries(
 ) {
     accountSwitchState.sessionSummaries.forEach { summary ->
         Row(
-            modifier = Modifier
-                .animateBounds(
-                    lookaheadScope = this@SessionSummaries,
-                    boundsTransform = childBoundsTransform,
-                )
-                .shapedClickable {
-                    if (accountSwitchState.isExpanded) onAccountSelected(summary)
-                    else onExpansionToggled()
-                }
-                .ifTrue(accountSwitchState.isExpanded) {
-                    settingsItemPaddingAndMinHeight()
-                },
+            modifier =
+                Modifier.animateBounds(
+                        lookaheadScope = this@SessionSummaries,
+                        boundsTransform = childBoundsTransform,
+                    )
+                    .shapedClickable {
+                        if (accountSwitchState.isExpanded) onAccountSelected(summary)
+                        else onExpansionToggled()
+                    }
+                    .ifTrue(accountSwitchState.isExpanded) {
+                        settingsItemPaddingAndMinHeight()
+                    },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val isActive = summary.profileId == accountSwitchState.activeProfileId
             AsyncImage(
-                modifier = Modifier
-                    .sharedElement(
-                        sharedContentState = rememberSharedContentState(summary.sharedElementKey),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                    )
-                    .size(ExpandableAvatarSize)
-                    .clip(CircleShape),
-                args = remember(summary.profileAvatar) {
-                    ImageArgs(
-                        url = summary.profileAvatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = summary.profileHandle.id,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
+                modifier =
+                    Modifier.sharedElement(
+                            sharedContentState =
+                                rememberSharedContentState(summary.sharedElementKey),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        )
+                        .size(ExpandableAvatarSize)
+                        .clip(CircleShape),
+                args =
+                    remember(summary.profileAvatar) {
+                        ImageArgs(
+                            url = summary.profileAvatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = summary.profileHandle.id,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
             )
 
             AnimatedVisibility(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 visible = accountSwitchState.isExpanded,
                 exit = fadeOut(),
             ) {
                 Row(
-                    modifier = Modifier
-                        // Fill max width is needed so the text measuring doesn't cause
-                        // animation glitches.
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                    modifier =
+                        Modifier
+                            // Fill max width is needed so the text measuring doesn't cause
+                            // animation glitches.
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                 ) {
                     Text(
                         modifier = Modifier,
@@ -393,77 +388,75 @@ private fun AccountSwitchingTransitionLayer(
     animatedVisibilityScope: AnimatedVisibilityScope,
     phase: AccountSwitchPhase,
     session: SessionSummary,
-) = with(paneScaffoldState) {
-    val transition = updateTransition(phase, label = "accountSwitch")
+) =
+    with(paneScaffoldState) {
+        val transition = updateTransition(phase, label = "accountSwitch")
 
-    val scale by transition.animateFloat(
-        label = "scale",
-        transitionSpec = {
-            when (targetState) {
-                AccountSwitchPhase.SUCCESS ->
-                    spring(dampingRatio = 0.5f, stiffness = 400f)
+        val scale by
+            transition.animateFloat(
+                label = "scale",
+                transitionSpec = {
+                    when (targetState) {
+                        AccountSwitchPhase.SUCCESS -> spring(dampingRatio = 0.5f, stiffness = 400f)
 
-                else ->
-                    tween(220, easing = FastOutSlowInEasing)
-            }
-        },
-    ) {
-        when (it) {
-            AccountSwitchPhase.MORPHING -> 1.15f
-            AccountSwitchPhase.SUCCESS -> 1.2f
-            else -> 1f
-        }
-    }
-
-    val haptic = LocalHapticFeedback.current
-    LaunchedEffect(phase) {
-        if (phase == AccountSwitchPhase.SUCCESS) {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .padding(
-                vertical = 32.dp,
-            )
-            .fillMaxSize()
-            .clickable(enabled = false) {},
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            PaneSharedElement(
-                modifier = Modifier
-                    .size(88.dp * scale),
-                sharedContentState = rememberSharedContentState(
-                    key = UiTokens.SignedInUserAvatarSharedElementKey,
-                ),
+                        else -> tween(220, easing = FastOutSlowInEasing)
+                    }
+                },
             ) {
-                AsyncImage(
-                    args = remember(session.profileAvatar) {
-                        ImageArgs(
-                            url = session.profileAvatar?.uri,
-                            contentDescription = session.profileHandle.id,
-                            shape = RoundedPolygonShape.Circle,
-                            contentScale = ContentScale.Crop,
-                        )
-                    },
-                    modifier = Modifier
-                        .sharedElement(
-                            sharedContentState = rememberSharedContentState(session.sharedElementKey),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                        )
-                        .fillParentAxisIfFixedOrWrap(),
+                when (it) {
+                    AccountSwitchPhase.MORPHING -> 1.15f
+                    AccountSwitchPhase.SUCCESS -> 1.2f
+                    else -> 1f
+                }
+            }
+
+        val haptic = LocalHapticFeedback.current
+        LaunchedEffect(phase) {
+            if (phase == AccountSwitchPhase.SUCCESS) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+        }
+
+        Box(
+            modifier =
+                modifier.padding(vertical = 32.dp).fillMaxSize().clickable(enabled = false) {},
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                PaneSharedElement(
+                    modifier = Modifier.size(88.dp * scale),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = UiTokens.SignedInUserAvatarSharedElementKey
+                        ),
+                ) {
+                    AsyncImage(
+                        args =
+                            remember(session.profileAvatar) {
+                                ImageArgs(
+                                    url = session.profileAvatar?.uri,
+                                    contentDescription = session.profileHandle.id,
+                                    shape = RoundedPolygonShape.Circle,
+                                    contentScale = ContentScale.Crop,
+                                )
+                            },
+                        modifier =
+                            Modifier.sharedElement(
+                                    sharedContentState =
+                                        rememberSharedContentState(session.sharedElementKey),
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                )
+                                .fillParentAxisIfFixedOrWrap(),
+                    )
+                }
+
+                AccountSwitchIndicator(
+                    phase = phase,
+                    modifier = Modifier.matchParentSize(),
                 )
             }
-
-            AccountSwitchIndicator(
-                phase = phase,
-                modifier = Modifier.matchParentSize(),
-            )
         }
     }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -485,23 +478,21 @@ private fun AccountSwitchIndicator(
 }
 
 @Composable
-private fun SuccessCheckmarkOverlay(
-    modifier: Modifier = Modifier,
-) {
-    val scale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 500f),
-        label = "checkScale",
-    )
+private fun SuccessCheckmarkOverlay(modifier: Modifier = Modifier) {
+    val scale by
+        animateFloatAsState(
+            targetValue = 1f,
+            animationSpec = spring(dampingRatio = 0.55f, stiffness = 500f),
+            label = "checkScale",
+        )
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .size(36.dp)
-                .graphicsLayer {
+            modifier =
+                Modifier.size(36.dp).graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 },
@@ -517,18 +508,19 @@ private fun rememberAnimationData(
     switchPhase: AccountSwitchPhase,
 ): AccountSwitchState {
     return remember {
-        AccountSwitchState(
-            activeProfileId = activeProfileId,
-            sessionSummaries = sessionSummaries,
-            switchingSession = switchingSession,
-            switchPhase = switchPhase,
-        )
-    }.also {
-        it.activeProfileId = activeProfileId
-        it.sessionSummaries = sessionSummaries
-        it.switchingSession = switchingSession
-        it.switchPhase = switchPhase
-    }
+            AccountSwitchState(
+                activeProfileId = activeProfileId,
+                sessionSummaries = sessionSummaries,
+                switchingSession = switchingSession,
+                switchPhase = switchPhase,
+            )
+        }
+        .also {
+            it.activeProfileId = activeProfileId
+            it.sessionSummaries = sessionSummaries
+            it.switchingSession = switchingSession
+            it.switchPhase = switchPhase
+        }
 }
 
 @Stable

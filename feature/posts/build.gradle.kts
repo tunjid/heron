@@ -19,6 +19,7 @@ plugins {
     id("feature-module-convention")
     id("ksp-convention")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.feature.posts"

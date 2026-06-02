@@ -30,8 +30,8 @@ suspend fun <T, R> partialUpsert(
 ) {
     val insertResults = insertEntities(items)
 
-    val updateList = items.zip(insertResults)
-        .mapNotNull { (item, insertResult) ->
+    val updateList =
+        items.zip(insertResults).mapNotNull { (item, insertResult) ->
             if (insertResult == -1L) item else null
         }
     if (updateList.isNotEmpty()) updatePartials(updateList.map(partialMapper))

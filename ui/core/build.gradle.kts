@@ -48,10 +48,10 @@ kotlin {
                 implementation(libs.ktor.client.java)
             }
         }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        //        iosMain {
+        //            dependencies {
+        //                implementation(libs.ktor.client.darwin)
+        //            }
+        //        }
     }
 }

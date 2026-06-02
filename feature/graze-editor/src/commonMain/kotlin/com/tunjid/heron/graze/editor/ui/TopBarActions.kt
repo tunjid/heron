@@ -81,13 +81,14 @@ fun TopBarActions(
                     onEditClicked()
                 },
             )
-            if (grazeFeed is GrazeFeed.Created) DropdownMenuItem(
-                text = { Text(stringResource(Res.string.delete_feed)) },
-                onClick = {
-                    showMenu = false
-                    onDeleteClicked()
-                },
-            )
+            if (grazeFeed is GrazeFeed.Created)
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.delete_feed)) },
+                    onClick = {
+                        showMenu = false
+                        onDeleteClicked()
+                    },
+                )
         }
     }
 }

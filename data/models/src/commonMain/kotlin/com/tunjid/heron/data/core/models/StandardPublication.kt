@@ -34,8 +34,7 @@ data class StandardPublication(
     val showInDiscover: Boolean,
     val basicTheme: BasicTheme?,
     val subscription: StandardSubscription?,
-) : Record.Embeddable,
-    UrlEncodableModel {
+) : Record.Embeddable, UrlEncodableModel {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,

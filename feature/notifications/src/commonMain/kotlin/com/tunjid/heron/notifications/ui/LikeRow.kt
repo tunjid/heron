@@ -59,8 +59,8 @@ fun LikeRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onPostClicked(notification)
             },
         isRead = isRead,
@@ -71,12 +71,15 @@ fun LikeRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
                 tint = LikeRed,
-                contentDescription = stringResource(
-                    when (notification) {
-                        is Notification.Liked.Post -> CommonStrings.notifications_liked_your_post_description
-                        is Notification.Liked.Repost -> CommonStrings.notifications_liked_your_repost_description
-                    },
-                ),
+                contentDescription =
+                    stringResource(
+                        when (notification) {
+                            is Notification.Liked.Post ->
+                                CommonStrings.notifications_liked_your_post_description
+                            is Notification.Liked.Repost ->
+                                CommonStrings.notifications_liked_your_repost_description
+                        }
+                    ),
             )
         },
         content = {
@@ -84,18 +87,25 @@ fun LikeRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = when (notification) {
-                                is Notification.Liked.Post -> CommonStrings.notifications_liked_your_post
-                                is Notification.Liked.Repost -> CommonStrings.notifications_liked_your_repost
-                            },
-                            pluralResource = when (notification) {
-                                is Notification.Liked.Post -> CommonStrings.notifications_multiple_liked_your_post
-                                is Notification.Liked.Repost -> CommonStrings.notifications_multiple_liked_your_repost
-                            },
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource =
+                                    when (notification) {
+                                        is Notification.Liked.Post ->
+                                            CommonStrings.notifications_liked_your_post
+                                        is Notification.Liked.Repost ->
+                                            CommonStrings.notifications_liked_your_repost
+                                    },
+                                pluralResource =
+                                    when (notification) {
+                                        is Notification.Liked.Post ->
+                                            CommonStrings.notifications_multiple_liked_your_post
+                                        is Notification.Liked.Repost ->
+                                            CommonStrings.notifications_multiple_liked_your_repost
+                                    },
+                            ),
                     )
 
                     TimeDelta(

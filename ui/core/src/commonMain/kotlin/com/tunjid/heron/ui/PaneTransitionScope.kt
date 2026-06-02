@@ -43,16 +43,17 @@ val PaneTransitionScope.isPrimaryOrActive
 inline val PaneTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
     @ReadOnlyComposable @Composable get() = LocalSharedElementOverlayClip.current
 
-val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip {
-    override fun getClipPath(
-        sharedContentState: SharedTransitionScope.SharedContentState,
-        bounds: Rect,
-        layoutDirection: LayoutDirection,
-        density: Density,
-    ): Path? {
-        return sharedContentState.parentSharedContentState?.clipPathInOverlay
+val DefaultSharedElementOverlayClip =
+    object : SharedTransitionScope.OverlayClip {
+        override fun getClipPath(
+            sharedContentState: SharedTransitionScope.SharedContentState,
+            bounds: Rect,
+            layoutDirection: LayoutDirection,
+            density: Density,
+        ): Path? {
+            return sharedContentState.parentSharedContentState?.clipPathInOverlay
+        }
     }
-}
 
 val LocalSharedElementOverlayClip = staticCompositionLocalOf {
     DefaultSharedElementOverlayClip

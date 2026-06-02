@@ -53,17 +53,14 @@ fun AppliedLabelDialog(
                 SimpleDialogTitle(text = localeInfo.name)
             },
             text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SimpleDialogText(text = localeInfo.description)
                     SimpleDialogText(
-                        text = localeInfo.description,
-                    )
-                    SimpleDialogText(
-                        text = stringResource(
-                            Res.string.label_source,
-                            summary.creatorHandle.id,
-                        ),
+                        text =
+                            stringResource(
+                                Res.string.label_source,
+                                summary.creatorHandle.id,
+                            )
                     )
                 }
             },

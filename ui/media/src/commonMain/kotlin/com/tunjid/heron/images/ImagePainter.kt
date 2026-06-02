@@ -29,17 +29,15 @@ import com.tunjid.heron.scaleAndAlignTo
 /**
  * A [Painter] that draws the latest image available to it.
  *
- * The Compose snapshot system invalidates on the next tick. For
- * image loads that are async, this often results in images not being
- * drawn on the first frame if it backed by snapshot state.
+ * The Compose snapshot system invalidates on the next tick. For image loads that are async, this
+ * often results in images not being drawn on the first frame if it backed by snapshot state.
  *
- * To work around this, an [com.tunjid.heron.images.ImagePainter]
- * can be remembered in composition, while the image driving [currentImage] can be updated
- * async. If the image is updated before the first frame deadline, the image will be drawn
- * in the first frame.
+ * To work around this, an [com.tunjid.heron.images.ImagePainter] can be remembered in composition,
+ * while the image driving [currentImage] can be updated async. If the image is updated before the
+ * first frame deadline, the image will be drawn in the first frame.
  *
- * The [com.tunjid.heron.images.ImagePainter] should used with the [Image] composable.
- * as the scaling and alignment logic used in the Painter depends on the [Image] composable.
+ * The [com.tunjid.heron.images.ImagePainter] should used with the [Image] composable. as the
+ * scaling and alignment logic used in the Painter depends on the [Image] composable.
  *
  * @param currentImage a means of reading an image that is updated async.
  * @param contentScale the content scale used to render the image.
@@ -69,8 +67,9 @@ internal class ImagePainter(
     }
 
     override val intrinsicSize: Size
-        get() = when (val image = currentImage()) {
-            is CoilImage -> image.size.toSize()
-            null -> Size.Unspecified
-        }
+        get() =
+            when (val image = currentImage()) {
+                is CoilImage -> image.size.toSize()
+                null -> Size.Unspecified
+            }
 }

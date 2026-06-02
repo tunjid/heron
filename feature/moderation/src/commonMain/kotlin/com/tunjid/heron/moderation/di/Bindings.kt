@@ -66,14 +66,11 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/moderation"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
 @BindingContainer
 object ModerationNavigationBindings {
@@ -101,84 +98,83 @@ class ModerationBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry<Route>(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: ModerationStateHolder = viewModel<ActualModerationViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val stateHolder: ModerationStateHolder =
+                    viewModel<ActualModerationViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by stateHolder.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.moderation_settings),
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    ModerationScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                AppBarTitle(title = stringResource(Res.string.moderation_settings))
+                            },
+                            onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                }
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail()
+                    },
+                    content = { paddingValues ->
+                        ModerationScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                            modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

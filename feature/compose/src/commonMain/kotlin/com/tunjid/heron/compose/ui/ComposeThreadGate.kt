@@ -35,11 +35,12 @@ fun ComposeThreadGate(
     interactionSettingsPreference: PostInteractionSettingsPreference?,
     onInteractionSettingsUpdated: (PostInteractionSettingsPreference) -> Unit,
 ) {
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = recentLists,
-        onRequestRecentLists = onRequestRecentLists,
-        onDefaultThreadGateUpdated = onInteractionSettingsUpdated,
-    )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = onRequestRecentLists,
+            onDefaultThreadGateUpdated = onInteractionSettingsUpdated,
+        )
 
     ElevatedCard(
         modifier = modifier,
@@ -49,8 +50,8 @@ fun ComposeThreadGate(
         },
     ) {
         PostInteractionStatus(
-            modifier = Modifier
-                .padding(
+            modifier =
+                Modifier.padding(
                     vertical = 4.dp,
                     horizontal = 8.dp,
                 ),

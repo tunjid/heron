@@ -38,16 +38,17 @@ object StubVideoPlayerController : VideoPlayerController {
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState = idsToStates.getOrPut(videoId) {
-        NoOpVideoPlayerState(
-            videoId = videoId,
-            thumbnailUrl = thumbnail,
-            autoplay = autoplay,
-            videoUrl = videoUrl,
-            isLooping = isLooping,
-            isMuted = isMuted,
-        )
-    }
+    ): VideoPlayerState =
+        idsToStates.getOrPut(videoId) {
+            NoOpVideoPlayerState(
+                videoId = videoId,
+                thumbnailUrl = thumbnail,
+                autoplay = autoplay,
+                videoUrl = videoUrl,
+                isLooping = isLooping,
+                isMuted = isMuted,
+            )
+        }
 
     override fun play(
         videoId: String?,

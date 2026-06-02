@@ -32,12 +32,10 @@ import org.jetbrains.skia.Data
 /**
  * A [Decoder] that uses Skia to decode animated images (GIF, WebP).
  *
- * @param bufferedFramesCount The number of frames to be pre-buffered before the animation
- * starts playing.
+ * @param bufferedFramesCount The number of frames to be pre-buffered before the animation starts
+ *   playing.
  */
-class AnimatedSkiaImageDecoder(
-    private val source: ImageSource,
-) : Decoder {
+class AnimatedSkiaImageDecoder(private val source: ImageSource) : Decoder {
 
     override suspend fun decode(): DecodeResult {
         val bytes = source.source().use { it.readByteArray() }
@@ -60,9 +58,7 @@ class AnimatedSkiaImageDecoder(
             imageLoader: ImageLoader,
         ): Decoder? {
             if (!isApplicable(result.source.source())) return null
-            return AnimatedSkiaImageDecoder(
-                source = result.source,
-            )
+            return AnimatedSkiaImageDecoder(source = result.source)
         }
 
         private fun isApplicable(source: BufferedSource): Boolean {
@@ -70,8 +66,7 @@ class AnimatedSkiaImageDecoder(
         }
 
         private fun isGif(source: BufferedSource): Boolean {
-            return source.rangeEquals(0, GIF_HEADER_89A) ||
-                source.rangeEquals(0, GIF_HEADER_87A)
+            return source.rangeEquals(0, GIF_HEADER_89A) || source.rangeEquals(0, GIF_HEADER_87A)
         }
 
         private fun isAnimatedWebP(source: BufferedSource): Boolean {

@@ -39,9 +39,7 @@ fun main() {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            state = rememberWindowState(
-                size = DpSize(1000.dp, 800.dp),
-            ),
+            state = rememberWindowState(size = DpSize(1000.dp, 800.dp)),
             title = "heron",
             icon = painterResource("icon.png"),
         ) {

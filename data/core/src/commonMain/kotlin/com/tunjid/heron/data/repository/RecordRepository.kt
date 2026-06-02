@@ -51,25 +51,20 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 
 interface RecordRepository :
-    BlueskyRecordOperations,
-    RockskyRecordOperations,
-    StandardSiteRecordOperations {
+    BlueskyRecordOperations, RockskyRecordOperations, StandardSiteRecordOperations {
 
-    fun embeddableRecord(
-        uri: EmbeddableRecordUri,
-    ): Flow<Record.Embeddable>
+    fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable>
 
-    suspend fun deleteRecord(
-        uri: RecordUri,
-    ): Outcome
+    suspend fun deleteRecord(uri: RecordUri): Outcome
 }
 
-internal class OfflineFirstRecordRepository @Inject constructor(
+internal class OfflineFirstRecordRepository
+@Inject
+constructor(
     blueskyRecordOperations: BlueskyRecordOperations,
     rockSkyRecordOperations: RockskyRecordOperations,
     standardSiteRecordOperations: StandardSiteRecordOperations,
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val labelDao: LabelDao,
@@ -78,83 +73,83 @@ internal class OfflineFirstRecordRepository @Inject constructor(
     private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
-) : RecordRepository,
+) :
+    RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
     RockskyRecordOperations by rockSkyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
 
     override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {
-            is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is FeedGeneratorUri ->
+                    feedGeneratorDao.feedGenerators(listOf(uri)).distinctUntilChangedMap {
+                        it.firstOrNull()?.asExternalModel()
+                    }
 
-            is ListUri -> listDao.lists(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is ListUri ->
+                    listDao.lists(listOf(uri)).distinctUntilChangedMap {
+                        it.firstOrNull()?.asExternalModel()
+                    }
 
-            is StarterPackUri -> starterPackDao.starterPacks(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
-            is LabelerUri -> labelDao.labelers(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is StarterPackUri ->
+                    starterPackDao.starterPacks(listOf(uri)).distinctUntilChangedMap {
+                        it.firstOrNull()?.asExternalModel()
+                    }
+                is LabelerUri ->
+                    labelDao.labelers(listOf(uri)).distinctUntilChangedMap {
+                        it.firstOrNull()?.asExternalModel()
+                    }
 
-            is PostUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        postDao.posts(
-                            viewingProfileId = profileId?.id,
-                            postUris = listOf(uri),
-                        )
+                is PostUri ->
+                    savedStateDataSource.singleSessionFlow { profileId ->
+                        postDao
+                            .posts(
+                                viewingProfileId = profileId?.id,
+                                postUris = listOf(uri),
+                            )
                             .distinctUntilChangedMap {
-                                it.firstOrNull()?.asExternalModel(
-                                    embeddedRecords = emptyList(),
-                                )
+                                it.firstOrNull()?.asExternalModel(embeddedRecords = emptyList())
                             }
                     }
 
-            is StandardDocumentUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        standardSiteDao.documents(
-                            viewingProfileId = profileId?.id,
-                            uris = listOf(uri),
-                        )
+                is StandardDocumentUri ->
+                    savedStateDataSource.singleSessionFlow { profileId ->
+                        standardSiteDao
+                            .documents(
+                                viewingProfileId = profileId?.id,
+                                uris = listOf(uri),
+                            )
                             .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
                     }
 
-            is StandardPublicationUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        standardSiteDao.publications(
-                            viewingProfileId = profileId?.id,
-                            uris = listOf(uri),
-                        )
+                is StandardPublicationUri ->
+                    savedStateDataSource.singleSessionFlow { profileId ->
+                        standardSiteDao
+                            .publications(
+                                viewingProfileId = profileId?.id,
+                                uris = listOf(uri),
+                            )
                             .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
                     }
-        }
+            }
             .filterNotNull()
             .withRefresh {
                 recordResolver.resolve(uri)
             }
             .flowOn(ioDispatcher)
 
-    override suspend fun deleteRecord(
-        uri: RecordUri,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+    override suspend fun deleteRecord(uri: RecordUri): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        val recordOwnerId = uri.profileId()
-        if (recordOwnerId != signedInProfileId) return@inCurrentProfileSession UnauthorizedException(
-            signedInProfileId = signedInProfileId,
-            profileId = recordOwnerId,
-        ).asFailureOutcome()
+            val recordOwnerId = uri.profileId()
+            if (recordOwnerId != signedInProfileId)
+                return@inCurrentProfileSession UnauthorizedException(
+                        signedInProfileId = signedInProfileId,
+                        profileId = recordOwnerId,
+                    )
+                    .asFailureOutcome()
 
-        recordResolver.deleteRecord(uri)
-    } ?: expiredSessionOutcome()
+            recordResolver.deleteRecord(uri)
+        } ?: expiredSessionOutcome()
 }

@@ -60,26 +60,25 @@ import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.compose.resources.StringResource
 
 /**
- * Enqueues a [Writable] created from each emission of this [Flow] into the [WriteQueue],
- * and invokes [postEnqueue] with the result.
+ * Enqueues a [Writable] created from each emission of this [Flow] into the [WriteQueue], and
+ * invokes [postEnqueue] with the result.
  *
  * @param writeQueue the [WriteQueue] use to enqueue the [Writable] produced by [toWritable].
  * @param toWritable creates the [Writable] from each emission.
  * @param postEnqueue callback invoked after the enqueue with the action and a [Memo] that is
- * non-null if the enqueue failed. Use the presence of a [Memo] to signify an error and update
- * the state appropriately.
+ *   non-null if the enqueue failed. Use the presence of a [Memo] to signify an error and update the
+ *   state appropriately.
  */
 inline fun <T, S> Flow<T>.enqueueMutations(
     writeQueue: WriteQueue,
     crossinline toWritable: (T) -> Writable,
     crossinline postEnqueue: suspend FlowCollector<Mutation<S>>.(T, Memo?) -> Unit = { _, _ -> },
-): Flow<Mutation<S>> =
-    mapToManyMutations { action ->
-        val writable = toWritable(action)
-        val status = writeQueue.enqueue(writable)
-        val memo = writable.writeStatusMessage(status)
-        postEnqueue(action, memo)
-    }
+): Flow<Mutation<S>> = mapToManyMutations { action ->
+    val writable = toWritable(action)
+    val status = writeQueue.enqueue(writable)
+    val memo = writable.writeStatusMessage(status)
+    postEnqueue(action, memo)
+}
 
 context(scope: CoroutineScope)
 inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
@@ -95,110 +94,134 @@ inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
     }
 }
 
-fun Writable.writeStatusMessage(
-    status: WriteQueue.Status,
-) = when (status) {
-    WriteQueue.Status.Enqueued -> null
-    else -> {
-        val isDropped = status == WriteQueue.Status.Dropped
-        when (this) {
-            is Writable.Connection -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(
-                    when (connection) {
-                        is Profile.Connection.Follow -> Res.string.writable_follow
-                        is Profile.Connection.Unfollow -> Res.string.writable_unfollow
-                    },
-                ),
-            )
+fun Writable.writeStatusMessage(status: WriteQueue.Status) =
+    when (status) {
+        WriteQueue.Status.Enqueued -> null
+        else -> {
+            val isDropped = status == WriteQueue.Status.Dropped
+            when (this) {
+                is Writable.Connection ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args =
+                            listOf(
+                                when (connection) {
+                                    is Profile.Connection.Follow -> Res.string.writable_follow
+                                    is Profile.Connection.Unfollow -> Res.string.writable_unfollow
+                                }
+                            ),
+                    )
 
-            is Writable.Create -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_post),
-            )
+                is Writable.Create ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_post),
+                    )
 
-            is Writable.Interaction -> when {
-                isDropped -> Memo.Resource(
-                    stringResource = Res.string.writable_failed_post_interaction,
-                )
-                else -> Memo.Resource(
-                    stringResource = Res.string.writable_duplicate_post_interaction,
-                    args = listOf(
-                        when (interaction) {
-                            is Post.Interaction.Create.Bookmark -> Res.string.writable_bookmark
-                            is Post.Interaction.Create.Like -> Res.string.writable_like
-                            is Post.Interaction.Create.Repost -> Res.string.writable_repost
-                            is Post.Interaction.Delete.RemoveBookmark -> Res.string.writable_bookmark_removal
-                            is Post.Interaction.Delete.RemoveRepost -> Res.string.writable_repost_removal
-                            is Post.Interaction.Delete.Unlike -> Res.string.writable_unlike
-                            is Post.Interaction.Upsert.Gate -> Res.string.writable_thread_gate_update
-                        },
-                    ),
-                )
+                is Writable.Interaction ->
+                    when {
+                        isDropped ->
+                            Memo.Resource(
+                                stringResource = Res.string.writable_failed_post_interaction
+                            )
+                        else ->
+                            Memo.Resource(
+                                stringResource = Res.string.writable_duplicate_post_interaction,
+                                args =
+                                    listOf(
+                                        when (interaction) {
+                                            is Post.Interaction.Create.Bookmark ->
+                                                Res.string.writable_bookmark
+                                            is Post.Interaction.Create.Like ->
+                                                Res.string.writable_like
+                                            is Post.Interaction.Create.Repost ->
+                                                Res.string.writable_repost
+                                            is Post.Interaction.Delete.RemoveBookmark ->
+                                                Res.string.writable_bookmark_removal
+                                            is Post.Interaction.Delete.RemoveRepost ->
+                                                Res.string.writable_repost_removal
+                                            is Post.Interaction.Delete.Unlike ->
+                                                Res.string.writable_unlike
+                                            is Post.Interaction.Upsert.Gate ->
+                                                Res.string.writable_thread_gate_update
+                                        }
+                                    ),
+                            )
+                    }
+
+                is Writable.ProfileUpdate ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_profile_update),
+                    )
+
+                is Writable.Reaction ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args =
+                            listOf(
+                                when (update) {
+                                    is Message.UpdateReaction.Add -> Res.string.writable_reaction
+                                    is Message.UpdateReaction.Remove ->
+                                        Res.string.writable_reaction_removal
+                                }
+                            ),
+                    )
+
+                is Writable.Restriction ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args =
+                            listOf(
+                                when (restriction) {
+                                    is Profile.Restriction.Block.Add -> Res.string.writable_block
+                                    is Profile.Restriction.Block.Remove ->
+                                        Res.string.writable_unblock
+                                    is Profile.Restriction.Mute.Add -> Res.string.writable_mute
+                                    is Profile.Restriction.Mute.Remove -> Res.string.writable_unmute
+                                }
+                            ),
+                    )
+
+                is Writable.Send ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_message),
+                    )
+
+                is Writable.TimelineUpdate ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_timeline_update),
+                    )
+                is Writable.NotificationUpdate ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_notification_update),
+                    )
+                is Writable.RecordDeletion ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_record_deletion),
+                    )
+                is Writable.FeedList.AddMember ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_add_list_member),
+                    )
+                is Writable.StandardSite.Subscribe ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_subscribe_standard_publication),
+                    )
+                is Writable.StatusUpdate ->
+                    Memo.Resource(
+                        stringResource = genericDroppedOrDuplicateResource(isDropped),
+                        args = listOf(Res.string.writable_profile_status_update),
+                    )
             }
-
-            is Writable.ProfileUpdate -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_profile_update),
-            )
-
-            is Writable.Reaction -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(
-                    when (update) {
-                        is Message.UpdateReaction.Add -> Res.string.writable_reaction
-                        is Message.UpdateReaction.Remove -> Res.string.writable_reaction_removal
-                    },
-                ),
-            )
-
-            is Writable.Restriction -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(
-                    when (restriction) {
-                        is Profile.Restriction.Block.Add -> Res.string.writable_block
-                        is Profile.Restriction.Block.Remove -> Res.string.writable_unblock
-                        is Profile.Restriction.Mute.Add -> Res.string.writable_mute
-                        is Profile.Restriction.Mute.Remove -> Res.string.writable_unmute
-                    },
-                ),
-            )
-
-            is Writable.Send -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_message),
-            )
-
-            is Writable.TimelineUpdate -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_timeline_update),
-            )
-            is Writable.NotificationUpdate -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_notification_update),
-            )
-            is Writable.RecordDeletion -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_record_deletion),
-            )
-            is Writable.FeedList.AddMember -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_add_list_member),
-            )
-            is Writable.StandardSite.Subscribe -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_subscribe_standard_publication),
-            )
-            is Writable.StatusUpdate -> Memo.Resource(
-                stringResource = genericDroppedOrDuplicateResource(isDropped),
-                args = listOf(Res.string.writable_profile_status_update),
-            )
         }
     }
-}
 
-private fun genericDroppedOrDuplicateResource(
-    isDropped: Boolean,
-): StringResource =
-    if (isDropped) Res.string.writable_failed
-    else Res.string.writable_duplicate
+private fun genericDroppedOrDuplicateResource(isDropped: Boolean): StringResource =
+    if (isDropped) Res.string.writable_failed else Res.string.writable_duplicate

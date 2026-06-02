@@ -66,18 +66,17 @@ fun AtmosphereAppHeader(
     stateHolders: List<AppScreenStateHolders>,
 ) {
     Column(
-        modifier = modifier
-            .offset {
+        modifier =
+            modifier.offset {
                 IntOffset(
                     x = 0,
                     y = -headerState.translation.roundToInt(),
                 )
-            },
+            }
     ) {
         Row(
-            modifier = Modifier
-                .height(AvatarSize * 1.5f)
-                .offset {
+            modifier =
+                Modifier.height(AvatarSize * 1.5f).offset {
                     IntOffset(
                         x = (AvatarOffset * headerState.progress).roundToPx(),
                         y = 0,
@@ -86,17 +85,17 @@ fun AtmosphereAppHeader(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             OverlappingAvatars(
-                modifier = Modifier
-                    .align(
-                        BiasAlignment.Vertical(
-                            lerp(
-                                start = -1f,
-                                stop = 0f,
-                                fraction = headerState.progress,
-                            ),
-                        ),
-                    )
-                    .align(Alignment.Top),
+                modifier =
+                    Modifier.align(
+                            BiasAlignment.Vertical(
+                                lerp(
+                                    start = -1f,
+                                    stop = 0f,
+                                    fraction = headerState.progress,
+                                )
+                            )
+                        )
+                        .align(Alignment.Top),
                 paneScaffoldState = paneScaffoldState,
                 headerState = headerState,
                 avatarSharedElementKey = avatarSharedElementKey,
@@ -104,43 +103,46 @@ fun AtmosphereAppHeader(
                 profile = profile,
             )
             Text(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .offset {
-                        IntOffset(
-                            headerState.horizontalOffset.roundToPx(),
-                            0,
-                        )
-                    }
-                    .graphicsLayer {
-                        alpha = 1f - headerState.progress
-                    },
-                text = stringResource(
-                    Res.string.profiles_apps,
-                    profile.nameOrHandleOrUnknown,
-                    app.displayName(),
-                ),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight(
-                        lerp(
-                            start = FontWeight.Bold.weight,
-                            stop = FontWeight.Normal.weight,
-                            fraction = headerState.progress,
-                        ),
+                modifier =
+                    Modifier.align(Alignment.CenterVertically)
+                        .offset {
+                            IntOffset(
+                                headerState.horizontalOffset.roundToPx(),
+                                0,
+                            )
+                        }
+                        .graphicsLayer {
+                            alpha = 1f - headerState.progress
+                        },
+                text =
+                    stringResource(
+                        Res.string.profiles_apps,
+                        profile.nameOrHandleOrUnknown,
+                        app.displayName(),
                     ),
-                ),
+                style =
+                    MaterialTheme.typography.titleLarge.copy(
+                        fontWeight =
+                            FontWeight(
+                                lerp(
+                                    start = FontWeight.Bold.weight,
+                                    stop = FontWeight.Normal.weight,
+                                    fraction = headerState.progress,
+                                )
+                            )
+                    ),
             )
         }
         AtmosphereAppTabs(
-            modifier = Modifier
-                .fillMaxWidth(),
-            tabs = stateHolders.map { holder ->
-                Tab(
-                    title = holder.tabTitle(),
-                    id = holder.key,
-                    hasUpdate = false,
-                )
-            },
+            modifier = Modifier.fillMaxWidth(),
+            tabs =
+                stateHolders.map { holder ->
+                    Tab(
+                        title = holder.tabTitle(),
+                        id = holder.key,
+                        hasUpdate = false,
+                    )
+                },
             pagerState = pagerState,
         )
     }
@@ -154,67 +156,62 @@ fun OverlappingAvatars(
     avatarSharedElementKey: String,
     app: AtmosphereApp?,
     profile: Profile?,
-) = with(paneScaffoldState) {
-    val appDisplayName = app.displayName()
+) =
+    with(paneScaffoldState) {
+        val appDisplayName = app.displayName()
 
-    Row(
-        modifier = modifier,
-    ) {
-        PaneStickySharedElement(
-            modifier = Modifier
-                .zIndex(1f)
-                .size(AvatarSize)
-                .clip(CircleShape),
-            sharedContentState = rememberSharedContentState(
-                key = avatarSharedElementKey,
-            ),
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap(),
-                args = remember(profile?.avatar) {
-                    ImageArgs(
-                        url = profile?.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile?.displayName ?: profile?.handle?.id,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-            )
-        }
+        Row(modifier = modifier) {
+            PaneStickySharedElement(
+                modifier = Modifier.zIndex(1f).size(AvatarSize).clip(CircleShape),
+                sharedContentState = rememberSharedContentState(key = avatarSharedElementKey),
+            ) {
+                AsyncImage(
+                    modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                    args =
+                        remember(profile?.avatar) {
+                            ImageArgs(
+                                url = profile?.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = profile?.displayName ?: profile?.handle?.id,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
+                )
+            }
 
-        if (app != null) PaneStickySharedElement(
-            modifier = Modifier
-                .zIndex(1f)
-                .size(AvatarSize)
-                .offset {
-                    IntOffset(
-                        headerState.horizontalOffset.roundToPx(),
-                        headerState.verticalOffset.roundToPx(),
+            if (app != null)
+                PaneStickySharedElement(
+                    modifier =
+                        Modifier.zIndex(1f)
+                            .size(AvatarSize)
+                            .offset {
+                                IntOffset(
+                                    headerState.horizontalOffset.roundToPx(),
+                                    headerState.verticalOffset.roundToPx(),
+                                )
+                            }
+                            .clip(CircleShape),
+                    sharedContentState = rememberSharedContentState(app.id),
+                    zIndexInOverlay = AppLogoZIndex,
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(
+                                app.id,
+                                appDisplayName,
+                            ) {
+                                ImageArgs(
+                                    url = app.logo.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = appDisplayName,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
                     )
                 }
-                .clip(CircleShape),
-            sharedContentState = rememberSharedContentState(app.id),
-            zIndexInOverlay = AppLogoZIndex,
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap(),
-                args = remember(
-                    app.id,
-                    appDisplayName,
-                ) {
-                    ImageArgs(
-                        url = app.logo.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = appDisplayName,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-            )
         }
     }
-}
 
 @Composable
 private fun AtmosphereAppTabs(
@@ -225,42 +222,46 @@ private fun AtmosphereAppTabs(
     val scope = rememberCoroutineScope()
     Tabs(
         modifier = modifier.clip(CircleShape),
-        tabsState = rememberTabsState(
-            tabs = tabs,
-            selectedTabIndex = pagerState::tabIndex,
-            onTabSelected = {
-                scope.launch { pagerState.animateScrollToPage(it) }
-            },
-            onTabReselected = {},
-        ),
+        tabsState =
+            rememberTabsState(
+                tabs = tabs,
+                selectedTabIndex = pagerState::tabIndex,
+                onTabSelected = {
+                    scope.launch { pagerState.animateScrollToPage(it) }
+                },
+                onTabReselected = {},
+            ),
     )
 }
 
 private val CollapsingHeaderState.horizontalOffset: Dp
-    get() = lerp(
-        start = -AvatarSize / 2,
-        stop = 0.dp,
-        fraction = progress,
-    )
+    get() =
+        lerp(
+            start = -AvatarSize / 2,
+            stop = 0.dp,
+            fraction = progress,
+        )
 
 private val CollapsingHeaderState.verticalOffset: Dp
-    get() = lerp(
-        start = AvatarSize / 2,
-        stop = 0.dp,
-        fraction = progress,
-    )
+    get() =
+        lerp(
+            start = AvatarSize / 2,
+            stop = 0.dp,
+            fraction = progress,
+        )
 
 @Composable
-private fun AppScreenStateHolders.tabTitle(): String = stringResource(
-    when (this) {
-        is AppScreenStateHolders.StandardSite.Documents -> Res.string.tab_documents
-        is AppScreenStateHolders.StandardSite.Publications -> Res.string.tab_publications
-        is AppScreenStateHolders.Rocksky.Albums -> Res.string.tab_albums
-        is AppScreenStateHolders.Rocksky.Tracks -> Res.string.tab_tracks
-        is AppScreenStateHolders.Rocksky.Artists -> Res.string.tab_artists
-        is AppScreenStateHolders.Rocksky.Scrobbles -> Res.string.tab_scrobbles
-    },
-)
+private fun AppScreenStateHolders.tabTitle(): String =
+    stringResource(
+        when (this) {
+            is AppScreenStateHolders.StandardSite.Documents -> Res.string.tab_documents
+            is AppScreenStateHolders.StandardSite.Publications -> Res.string.tab_publications
+            is AppScreenStateHolders.Rocksky.Albums -> Res.string.tab_albums
+            is AppScreenStateHolders.Rocksky.Tracks -> Res.string.tab_tracks
+            is AppScreenStateHolders.Rocksky.Artists -> Res.string.tab_artists
+            is AppScreenStateHolders.Rocksky.Scrobbles -> Res.string.tab_scrobbles
+        }
+    )
 
 private val AvatarSize = 44.dp
 private val AvatarOffset = 48.dp

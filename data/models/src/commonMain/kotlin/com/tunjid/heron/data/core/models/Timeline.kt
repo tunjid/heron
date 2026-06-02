@@ -40,23 +40,15 @@ sealed interface Timeline {
 
     @Serializable
     sealed interface Source : UrlEncodableModel {
-        @Serializable
-        sealed interface Reference : Source
+        @Serializable sealed interface Reference : Source
 
-        @Serializable
-        data object Following : Reference
+        @Serializable data object Following : Reference
 
         @Serializable
         sealed interface Record : Reference {
-            @Serializable
-            data class List(
-                val uri: ListUri,
-            ) : Record
+            @Serializable data class List(val uri: ListUri) : Record
 
-            @Serializable
-            data class Feed(
-                val uri: FeedGeneratorUri,
-            ) : Record
+            @Serializable data class Feed(val uri: FeedGeneratorUri) : Record
         }
 
         @Serializable
@@ -67,9 +59,7 @@ sealed interface Timeline {
     }
 
     @Serializable
-    sealed class Home(
-        override val source: Source.Reference,
-    ) : Timeline {
+    sealed class Home(override val source: Source.Reference) : Timeline {
 
         abstract val position: Int
 
@@ -85,10 +75,9 @@ sealed interface Timeline {
             override val itemsAvailable: Long,
             override val presentation: Presentation,
             override val isPinned: Boolean,
-        ) : Home(
-            source = Source.Following,
-        ) {
-            override val supportedPresentations get() = TextOnlyPresentations
+        ) : Home(source = Source.Following) {
+            override val supportedPresentations
+                get() = TextOnlyPresentations
         }
 
         @Serializable
@@ -102,28 +91,23 @@ sealed interface Timeline {
             // This needs a default argument as
             // it may have been previously serialized.
             val allowAllPresentations: Boolean = false,
-        ) : Home(
-            source = Source.Record.List(feedList.uri),
-        ) {
+        ) : Home(source = Source.Record.List(feedList.uri)) {
             override val name: String
                 get() = feedList.name
 
             override val supportedPresentations
-                get() =
-                    if (allowAllPresentations) AllPresentations
-                    else TextOnlyPresentations
+                get() = if (allowAllPresentations) AllPresentations else TextOnlyPresentations
 
             companion object {
-                fun stub(
-                    list: FeedList,
-                ) = List(
-                    position = 0,
-                    lastRefreshed = null,
-                    itemsAvailable = list.listItemCount ?: 0,
-                    presentation = Text.WithEmbed,
-                    isPinned = false,
-                    feedList = list,
-                )
+                fun stub(list: FeedList) =
+                    List(
+                        position = 0,
+                        lastRefreshed = null,
+                        itemsAvailable = list.listItemCount ?: 0,
+                        presentation = Text.WithEmbed,
+                        isPinned = false,
+                        feedList = list,
+                    )
             }
         }
 
@@ -136,24 +120,21 @@ sealed interface Timeline {
             override val supportedPresentations: kotlin.collections.List<Presentation>,
             override val isPinned: Boolean,
             val feedGenerator: FeedGenerator,
-        ) : Home(
-            source = Source.Record.Feed(feedGenerator.uri),
-        ) {
+        ) : Home(source = Source.Record.Feed(feedGenerator.uri)) {
             override val name: String
                 get() = feedGenerator.displayName
 
             companion object {
-                fun stub(
-                    feedGenerator: FeedGenerator,
-                ) = Feed(
-                    position = 0,
-                    lastRefreshed = null,
-                    itemsAvailable = 0,
-                    presentation = Text.WithEmbed,
-                    supportedPresentations = emptyList(),
-                    isPinned = false,
-                    feedGenerator = feedGenerator,
-                )
+                fun stub(feedGenerator: FeedGenerator) =
+                    Feed(
+                        position = 0,
+                        lastRefreshed = null,
+                        itemsAvailable = 0,
+                        presentation = Text.WithEmbed,
+                        supportedPresentations = emptyList(),
+                        isPinned = false,
+                        feedGenerator = feedGenerator,
+                    )
             }
         }
 
@@ -177,23 +158,21 @@ sealed interface Timeline {
             get() = Source.Profile(profileId, type)
 
         override val supportedPresentations: List<Presentation>
-            get() = when (type) {
-                Type.Posts -> TextOnlyPresentations
-                Type.Replies -> TextOnlyPresentations
-                Type.Likes -> TextOnlyPresentations
-                Type.Media -> AllPresentations
-                Type.Videos -> AllPresentations
-            }
+            get() =
+                when (type) {
+                    Type.Posts -> TextOnlyPresentations
+                    Type.Replies -> TextOnlyPresentations
+                    Type.Likes -> TextOnlyPresentations
+                    Type.Media -> AllPresentations
+                    Type.Videos -> AllPresentations
+                }
 
-        enum class Type(
-            val suffix: String,
-        ) {
+        enum class Type(val suffix: String) {
             Posts(suffix = "posts"),
             Replies(suffix = "posts-and-replies"),
             Likes(suffix = "likes"),
             Media(suffix = "media"),
-            Videos(suffix = "videos"),
-            ;
+            Videos(suffix = "videos");
 
             fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
         }
@@ -208,10 +187,11 @@ sealed interface Timeline {
             fun stub(
                 starterPack: com.tunjid.heron.data.core.models.StarterPack,
                 list: FeedList,
-            ) = StarterPack(
-                starterPack = starterPack,
-                listTimeline = Home.List.stub(list),
-            )
+            ) =
+                StarterPack(
+                    starterPack = starterPack,
+                    listTimeline = Home.List.stub(list),
+                )
         }
     }
 
@@ -224,58 +204,36 @@ sealed interface Timeline {
             }
 
             sealed interface Pin : Single
+
             sealed interface Save : Single
+
             sealed interface Remove : Single
         }
 
-        @Serializable
-        data class Bulk(
-            val timelines: List<Home>,
-        ) : Update,
-            HomeFeed
+        @Serializable data class Bulk(val timelines: List<Home>) : Update, HomeFeed
 
         @Serializable
         sealed class OfFeedGenerator : Update {
 
             @Serializable
-            data class Pin(
-                override val uri: FeedGeneratorUri,
-            ) : OfFeedGenerator(),
-                HomeFeed.Pin
+            data class Pin(override val uri: FeedGeneratorUri) : OfFeedGenerator(), HomeFeed.Pin
 
             @Serializable
-            data class Save(
-                override val uri: FeedGeneratorUri,
-            ) : OfFeedGenerator(),
-                HomeFeed.Save
+            data class Save(override val uri: FeedGeneratorUri) : OfFeedGenerator(), HomeFeed.Save
 
             @Serializable
-            data class Remove(
-                override val uri: FeedGeneratorUri,
-            ) : OfFeedGenerator(),
-                HomeFeed.Remove
+            data class Remove(override val uri: FeedGeneratorUri) :
+                OfFeedGenerator(), HomeFeed.Remove
         }
 
         @Serializable
         sealed class OfList : Update {
 
-            @Serializable
-            data class Pin(
-                override val uri: ListUri,
-            ) : OfList(),
-                HomeFeed.Pin
+            @Serializable data class Pin(override val uri: ListUri) : OfList(), HomeFeed.Pin
 
-            @Serializable
-            data class Save(
-                override val uri: ListUri,
-            ) : OfList(),
-                HomeFeed.Save
+            @Serializable data class Save(override val uri: ListUri) : OfList(), HomeFeed.Save
 
-            @Serializable
-            data class Remove(
-                override val uri: ListUri,
-            ) : OfList(),
-                HomeFeed.Remove
+            @Serializable data class Remove(override val uri: ListUri) : OfList(), HomeFeed.Remove
         }
 
         @Serializable
@@ -303,39 +261,29 @@ sealed interface Timeline {
             ) : OfLabeler()
         }
 
-        @Serializable
-        data class OfAdultContent(
-            val enabled: Boolean,
-        ) : Update
+        @Serializable data class OfAdultContent(val enabled: Boolean) : Update
 
         @Serializable
         sealed class OfMutedWord : Update {
 
             @Serializable
-            data class ReplaceAll(
-                val mutedWordPreferences: List<MutedWordPreference>,
-            ) : OfMutedWord()
+            data class ReplaceAll(val mutedWordPreferences: List<MutedWordPreference>) :
+                OfMutedWord()
         }
 
         @Serializable
-        data class OfInteractionSettings(
-            val preference: PostInteractionSettingsPreference,
-        ) : Update
+        data class OfInteractionSettings(val preference: PostInteractionSettingsPreference) : Update
 
         @Serializable
         sealed class OfFeedPreference : Update {
-            @Serializable
-            data class Add(
-                val feedPreference: FeedPreference,
-            ) : OfFeedPreference()
+            @Serializable data class Add(val feedPreference: FeedPreference) : OfFeedPreference()
         }
 
         @Serializable
         sealed class OfThreadViewPreference : Update {
             @Serializable
-            data class ThreadView(
-                val threadViewPreference: ThreadViewPreference,
-            ) : OfThreadViewPreference()
+            data class ThreadView(val threadViewPreference: ThreadViewPreference) :
+                OfThreadViewPreference()
         }
     }
 
@@ -344,50 +292,35 @@ sealed interface Timeline {
         abstract val key: String
 
         @Serializable
-        sealed class Text(
-            override val key: String,
-        ) : Presentation() {
-            @Serializable
-            data object WithEmbed : Text(
-                key = "presentation-text-and-embed",
-            )
+        sealed class Text(override val key: String) : Presentation() {
+            @Serializable data object WithEmbed : Text(key = "presentation-text-and-embed")
         }
 
         @Serializable
-        sealed class Media(
-            override val key: String,
-        ) : Presentation() {
-            @Serializable
-            data object Expanded : Media(
-                key = "presentation-expanded-media",
-            )
+        sealed class Media(override val key: String) : Presentation() {
+            @Serializable data object Expanded : Media(key = "presentation-expanded-media")
 
-            @Serializable
-            data object Condensed : Media(
-                key = "presentation-condensed-media",
-            )
+            @Serializable data object Condensed : Media(key = "presentation-condensed-media")
 
-            @Serializable
-            data object Grid : Media(
-                key = "presentation-grid-media",
-            )
+            @Serializable data object Grid : Media(key = "presentation-grid-media")
         }
 
         companion object {
-            val All: List<Presentation> get() = AllPresentations
+            val All: List<Presentation>
+                get() = AllPresentations
 
-            val TextOnly: List<Presentation> get() = TextOnlyPresentations
+            val TextOnly: List<Presentation>
+                get() = TextOnlyPresentations
         }
     }
 }
 
-private val TextOnlyPresentations: List<Timeline.Presentation> = listOf(
-    Text.WithEmbed,
-)
+private val TextOnlyPresentations: List<Timeline.Presentation> = listOf(Text.WithEmbed)
 
-private val AllPresentations: List<Timeline.Presentation> = listOf(
-    Text.WithEmbed,
-    Media.Expanded,
-    Media.Condensed,
-    Media.Grid,
-)
+private val AllPresentations: List<Timeline.Presentation> =
+    listOf(
+        Text.WithEmbed,
+        Media.Expanded,
+        Media.Condensed,
+        Media.Grid,
+    )

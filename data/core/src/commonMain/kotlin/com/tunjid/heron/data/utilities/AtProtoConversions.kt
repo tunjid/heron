@@ -59,17 +59,20 @@ internal sealed class MediaBlob {
     }
 }
 
-internal fun File.Media.with(blob: Blob) = when (this) {
-    is File.Media.Photo -> MediaBlob.Image.Local(
-        file = this,
-        blob = blob,
-    )
+internal fun File.Media.with(blob: Blob) =
+    when (this) {
+        is File.Media.Photo ->
+            MediaBlob.Image.Local(
+                file = this,
+                blob = blob,
+            )
 
-    is File.Media.Video -> MediaBlob.Video.Local(
-        file = this,
-        blob = blob,
-    )
-}
+        is File.Media.Video ->
+            MediaBlob.Video.Local(
+                file = this,
+                blob = blob,
+            )
+    }
 
 internal fun postEmbedUnion(
     embeddedRecordReference: Record.Reference?,
@@ -80,19 +83,19 @@ internal fun postEmbedUnion(
     val images = mediaBlobs.images()
 
     return when {
-        record != null && (video != null || images != null) -> PostEmbedUnion.RecordWithMedia(
-            value = RecordWithMedia(
-                record = record,
-                media = video
-                    ?.let { RecordWithMediaMediaUnion.Video(it) }
-                    ?: images?.let { RecordWithMediaMediaUnion.Images(it) }
-                    ?: throw IllegalArgumentException("Media should exist"),
-            ),
-        )
+        record != null && (video != null || images != null) ->
+            PostEmbedUnion.RecordWithMedia(
+                value =
+                    RecordWithMedia(
+                        record = record,
+                        media =
+                            video?.let { RecordWithMediaMediaUnion.Video(it) }
+                                ?: images?.let { RecordWithMediaMediaUnion.Images(it) }
+                                ?: throw IllegalArgumentException("Media should exist"),
+                    )
+            )
 
-        record != null -> PostEmbedUnion.Record(
-            value = record,
-        )
+        record != null -> PostEmbedUnion.Record(value = record)
 
         video != null -> PostEmbedUnion.Video(video)
         images != null -> PostEmbedUnion.Images(images)
@@ -102,67 +105,69 @@ internal fun postEmbedUnion(
 
 internal fun List<Link>.facet(): List<Facet> = map { link ->
     Facet(
-        index = FacetByteSlice(
-            byteStart = link.start.toLong(),
-            byteEnd = link.end.toLong(),
-        ),
-        features = when (val target = link.target) {
-            is LinkTarget.ExternalLink -> listOf(
-                FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri))),
-            )
+        index =
+            FacetByteSlice(
+                byteStart = link.start.toLong(),
+                byteEnd = link.end.toLong(),
+            ),
+        features =
+            when (val target = link.target) {
+                is LinkTarget.ExternalLink ->
+                    listOf(FacetFeatureLink(FacetLink(target.uri.uri.let(::BskyUri))))
 
-            is LinkTarget.UserDidMention -> listOf(
-                FacetFeatureMention(FacetMention(target.did.id.let(::Did))),
-            )
+                is LinkTarget.UserDidMention ->
+                    listOf(FacetFeatureMention(FacetMention(target.did.id.let(::Did))))
 
-            is LinkTarget.Hashtag -> listOf(
-                FacetFeatureTag(FacetTag(target.tag)),
-            )
+                is LinkTarget.Hashtag -> listOf(FacetFeatureTag(FacetTag(target.tag)))
 
-            is LinkTarget.UserHandleMention -> emptyList()
-        },
+                is LinkTarget.UserHandleMention -> emptyList()
+            },
     )
 }
 
 internal fun Record.Reference.toStrongReferencedRecord(): BskyRecord? =
     when (val id = id) {
         null -> null
-        else -> BskyRecord(
-            record = StrongRef(
-                uri = AtUri(uri.uri),
-                cid = Cid(id.id),
-            ),
-        )
+        else ->
+            BskyRecord(
+                record =
+                    StrongRef(
+                        uri = AtUri(uri.uri),
+                        cid = Cid(id.id),
+                    )
+            )
     }
 
 private fun List<MediaBlob>.video(): BskyVideo? =
-    filterIsInstance<MediaBlob.Video>()
-        .firstOrNull()
-        ?.let { videoFile ->
-            when (videoFile) {
-                is MediaBlob.Video.Local -> BskyVideo(
+    filterIsInstance<MediaBlob.Video>().firstOrNull()?.let { videoFile ->
+        when (videoFile) {
+            is MediaBlob.Video.Local ->
+                BskyVideo(
                     video = videoFile.blob,
                     alt = videoFile.file.altText,
-                    aspectRatio = AspectRatio(
-                        videoFile.file.width.toLong(),
-                        videoFile.file.height.toLong(),
-                    ),
+                    aspectRatio =
+                        AspectRatio(
+                            videoFile.file.width.toLong(),
+                            videoFile.file.height.toLong(),
+                        ),
                 )
-            }
         }
+    }
 
 private fun List<MediaBlob>.images(): BskyImages? =
     filterIsInstance<MediaBlob.Image>()
         .map { photoFile ->
             when (photoFile) {
-                is MediaBlob.Image.Local -> ImagesImage(
-                    image = photoFile.blob,
-                    alt = photoFile.file.altText ?: "",
-                    aspectRatio = AspectRatio(
-                        photoFile.file.width.toLong(),
-                        photoFile.file.height.toLong(),
-                    ),
-                )
+                is MediaBlob.Image.Local ->
+                    ImagesImage(
+                        image = photoFile.blob,
+                        alt = photoFile.file.altText ?: "",
+                        aspectRatio =
+                            AspectRatio(
+                                photoFile.file.width.toLong(),
+                                photoFile.file.height.toLong(),
+                            ),
+                    )
             }
         }
         .takeUnless(List<ImagesImage>::isEmpty)

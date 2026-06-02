@@ -19,11 +19,8 @@ package com.tunjid.heron.scaffold.notifications
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun notificationPermissionsLauncher(
-    onPermissionResult: (Boolean) -> Unit,
-): () -> Unit = {
+actual fun notificationPermissionsLauncher(onPermissionResult: (Boolean) -> Unit): () -> Unit = {
     // No op for desktop, no need to ask this permission
 }
 
-@Composable
-actual fun hasNotificationPermissions(): Boolean = true
+@Composable actual fun hasNotificationPermissions(): Boolean = true

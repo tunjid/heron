@@ -33,16 +33,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * A loopback HTTP server that listens on 127.0.0.1 for OAuth redirects.
- * The port is dynamically assigned by the OS.
+ * A loopback HTTP server that listens on 127.0.0.1 for OAuth redirects. The port is dynamically
+ * assigned by the OS.
  */
 private class LoopbackRedirect : OauthRedirect() {
 
     private var server: EmbeddedServer<*, *>? = null
     private val mutex = Mutex()
-    private val requests = MutableSharedFlow<SessionRequest.Oauth>(
-        extraBufferCapacity = 1,
-    )
+    private val requests = MutableSharedFlow<SessionRequest.Oauth>(extraBufferCapacity = 1)
 
     override val clientId: String = HeronDesktopOauthClient.clientId
 
@@ -53,46 +51,49 @@ private class LoopbackRedirect : OauthRedirect() {
     override suspend fun initializeOAuthClient(): OAuthClient = mutex.withLock {
         stop()
 
-        val embeddedServer = embeddedServer(
-            factory = CIO,
-            host = LoopbackHost,
-            port = 0,
-        ) {
-            routing {
-                get(CallbackPath) {
-                    val issuer = call.parameters[IssuerParameter] ?: return@get call.respondText(
-                        text = ErrorHtml,
-                        contentType = ContentType.Text.Html,
-                        status = HttpStatusCode.BadRequest,
-                    )
-                    call.respondText(
-                        text = SuccessHtml,
-                        contentType = ContentType.Text.Html,
-                    )
-                    requests.tryEmit(
-                        SessionRequest.Oauth(
-                            callbackUri = GenericUri(call.request.local.uri),
-                            server = Server(
-                                endpoint = issuer,
-                                supportsOauth = true,
-                            ),
-                        ),
-                    )
-                    stop()
+        val embeddedServer =
+            embeddedServer(
+                factory = CIO,
+                host = LoopbackHost,
+                port = 0,
+            ) {
+                routing {
+                    get(CallbackPath) {
+                        val issuer =
+                            call.parameters[IssuerParameter]
+                                ?: return@get call.respondText(
+                                    text = ErrorHtml,
+                                    contentType = ContentType.Text.Html,
+                                    status = HttpStatusCode.BadRequest,
+                                )
+                        call.respondText(
+                            text = SuccessHtml,
+                            contentType = ContentType.Text.Html,
+                        )
+                        requests.tryEmit(
+                            SessionRequest.Oauth(
+                                callbackUri = GenericUri(call.request.local.uri),
+                                server =
+                                    Server(
+                                        endpoint = issuer,
+                                        supportsOauth = true,
+                                    ),
+                            )
+                        )
+                        stop()
+                    }
                 }
             }
-        }
         embeddedServer.start()
         server = embeddedServer
 
-        val resolvedPort = embeddedServer.engine.resolvedConnectors()
-            .first()
-            .port
+        val resolvedPort = embeddedServer.engine.resolvedConnectors().first().port
 
         return OAuthClient(
-            clientId = clientId,
-            redirectUri = "http://$LoopbackHost:$resolvedPort$CallbackPath",
-        ).also(::initializedClient::set)
+                clientId = clientId,
+                redirectUri = "http://$LoopbackHost:$resolvedPort$CallbackPath",
+            )
+            .also(::initializedClient::set)
     }
 
     private suspend fun stop() {
@@ -104,31 +105,35 @@ private class LoopbackRedirect : OauthRedirect() {
     }
 }
 
-internal actual fun oauthRedirect(): OauthRedirect =
-    LoopbackRedirect()
+internal actual fun oauthRedirect(): OauthRedirect = LoopbackRedirect()
 
-private val HeronDesktopOauthClient = OAuthClient(
-    clientId = "https://heron.tunji.dev/oauth-client-metadata.json",
-    redirectUri = "http://$LoopbackHost$CallbackPath",
-)
+private val HeronDesktopOauthClient =
+    OAuthClient(
+        clientId = "https://heron.tunji.dev/oauth-client-metadata.json",
+        redirectUri = "http://$LoopbackHost$CallbackPath",
+    )
 
-private val SuccessHtml = """
+private val SuccessHtml =
+    """
     <!DOCTYPE html>
     <html>
     <body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;">
     <p>Sign-in successful. You can close this tab and return to Heron.</p>
     </body>
     </html>
-""".trimIndent()
+    """
+        .trimIndent()
 
-private val ErrorHtml = """
+private val ErrorHtml =
+    """
     <!DOCTYPE html>
     <html>
     <body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;">
     <p>Sign-in failed. Please close this tab and try again.</p>
     </body>
     </html>
-""".trimIndent()
+    """
+        .trimIndent()
 
 private const val LoopbackHost = "127.0.0.1"
 private const val CallbackPath = "/oauth/callback"

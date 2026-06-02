@@ -81,9 +81,7 @@ fun NotificationAggregateScaffold(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier.width(UiTokens.avatarSize),
                 contentAlignment = Alignment.TopCenter,
@@ -98,12 +96,13 @@ fun NotificationAggregateScaffold(
             // TODO: Consider moving this to the VM.
             var isExpanded by rememberSaveable { mutableStateOf(false) }
 
-            val renderedProfiles = remember(profiles) {
-                when (profiles.size) {
-                    in 0..6 -> profiles
-                    else -> profiles.take(6)
+            val renderedProfiles =
+                remember(profiles) {
+                    when (profiles.size) {
+                        in 0..6 -> profiles
+                        else -> profiles.take(6)
+                    }
                 }
-            }
             val expandButton = remember {
                 movableContentWithReceiverOf<PaneTransitionScope, Boolean> { expanded ->
                     ExpandButton(
@@ -118,8 +117,7 @@ fun NotificationAggregateScaffold(
                     Boolean,
                     Notification,
                     List<Profile>,
-                    >
-                { isExpanded, notification, renderedProfiles ->
+                > { isExpanded, notification, renderedProfiles ->
                     ExpandableProfiles(
                         isExpanded = isExpanded,
                         notification = notification,
@@ -130,39 +128,40 @@ fun NotificationAggregateScaffold(
             }
             with(paneTransitionScope) {
                 Box(
-                    modifier = Modifier
-                        .animateBounds(
-                            lookaheadScope = this,
-                            boundsTransform = childBoundsTransform,
-                        )
-                        .clip(ExpandableAvatarRowShape),
+                    modifier =
+                        Modifier.animateBounds(
+                                lookaheadScope = this,
+                                boundsTransform = childBoundsTransform,
+                            )
+                            .clip(ExpandableAvatarRowShape)
                 ) {
-                    if (isExpanded) Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isExpanded = !isExpanded },
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        if (renderedProfiles.size > 1) expandButton(isExpanded)
-                        items(isExpanded, notification, renderedProfiles)
-                    }
-                    else Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isExpanded = !isExpanded },
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(isExpanded, notification, renderedProfiles)
-                        Spacer(Modifier.weight(1f))
-                        if (renderedProfiles.size > 1) expandButton(isExpanded)
-                    }
+                    if (isExpanded)
+                        Column(
+                            modifier =
+                                Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (renderedProfiles.size > 1) expandButton(isExpanded)
+                            items(isExpanded, notification, renderedProfiles)
+                        }
+                    else
+                        Row(
+                            modifier =
+                                Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(isExpanded, notification, renderedProfiles)
+                            Spacer(Modifier.weight(1f))
+                            if (renderedProfiles.size > 1) expandButton(isExpanded)
+                        }
                 }
             }
             Box(
-                modifier = Modifier.animateBounds(
-                    lookaheadScope = paneTransitionScope,
-                    boundsTransform = paneTransitionScope.childBoundsTransform,
-                ),
+                modifier =
+                    Modifier.animateBounds(
+                        lookaheadScope = paneTransitionScope,
+                        boundsTransform = paneTransitionScope.childBoundsTransform,
+                    )
             ) {
                 content()
             }
@@ -177,15 +176,15 @@ private fun PaneTransitionScope.ExpandButton(
 ) {
     val rotationState = animateFloatAsState(if (isExpanded) 180f else 0f)
     IconButton(
-        modifier = Modifier
-            .animateBounds(
-                lookaheadScope = this@ExpandButton,
-                boundsTransform = childBoundsTransform,
-            )
-            .size(32.dp)
-            .graphicsLayer {
-                rotationZ = rotationState.value
-            },
+        modifier =
+            Modifier.animateBounds(
+                    lookaheadScope = this@ExpandButton,
+                    boundsTransform = childBoundsTransform,
+                )
+                .size(32.dp)
+                .graphicsLayer {
+                    rotationZ = rotationState.value
+                },
         onClick = {
             onExpansionToggled(!isExpanded)
         },
@@ -207,32 +206,32 @@ private fun PaneTransitionScope.ExpandableProfiles(
 ) {
     renderedProfiles.forEach { profile ->
         Row(
-            modifier = Modifier.animateBounds(
-                lookaheadScope = this@ExpandableProfiles,
-                boundsTransform = childBoundsTransform,
-            ),
+            modifier =
+                Modifier.animateBounds(
+                    lookaheadScope = this@ExpandableProfiles,
+                    boundsTransform = childBoundsTransform,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PaneStickySharedElement(
-                modifier = Modifier
-                    .size(ExpandableAvatarSize)
-                    .clip(CircleShape)
-                    .shapedClickable(CircleShape) {
+                modifier =
+                    Modifier.size(ExpandableAvatarSize).clip(CircleShape).shapedClickable(
+                        CircleShape
+                    ) {
                         onProfileClicked(notification, profile)
                     },
-                sharedContentState = rememberSharedContentState(
-                    key = notification.avatarSharedElementKey(profile),
-                ),
+                sharedContentState =
+                    rememberSharedContentState(key = notification.avatarSharedElementKey(profile)),
             ) {
                 AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Circle,
-                    ),
+                    modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                    args =
+                        ImageArgs(
+                            url = profile.avatar?.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = profile.displayName ?: profile.handle.id,
+                            shape = RoundedPolygonShape.Circle,
+                        ),
                 )
             }
             AnimatedVisibility(
@@ -240,25 +239,28 @@ private fun PaneTransitionScope.ExpandableProfiles(
                 exit = fadeOut(),
             ) {
                 Text(
-                    modifier = Modifier
-                        // Fill max width is needed so the text measuring doesn't cause
-                        // animation glitches. This is also why the link is used for clicking
-                        // as opposed to the full text.
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    text = remember {
-                        buildAnnotatedString {
-                            val profileText = profile.displayName ?: ""
-                            append(profileText)
-                            addLink(
-                                clickable = LinkAnnotation.Clickable(profileText) {
-                                    onProfileClicked(notification, profile)
-                                },
-                                start = 0,
-                                end = profileText.length,
-                            )
-                        }
-                    },
+                    modifier =
+                        Modifier
+                            // Fill max width is needed so the text measuring doesn't cause
+                            // animation glitches. This is also why the link is used for clicking
+                            // as opposed to the full text.
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                    text =
+                        remember {
+                            buildAnnotatedString {
+                                val profileText = profile.displayName ?: ""
+                                append(profileText)
+                                addLink(
+                                    clickable =
+                                        LinkAnnotation.Clickable(profileText) {
+                                            onProfileClicked(notification, profile)
+                                        },
+                                    start = 0,
+                                    end = profileText.length,
+                                )
+                            }
+                        },
                     overflow = TextOverflow.Visible,
                     maxLines = 1,
                 )
@@ -280,9 +282,8 @@ internal fun notificationText(
     else stringResource(pluralResource, profileText, aggregatedSize)
 }
 
-internal fun Notification.avatarSharedElementKey(
-    profile: Profile,
-): String = "notification-${cid.id}-${profile.did.id}"
+internal fun Notification.avatarSharedElementKey(profile: Profile): String =
+    "notification-${cid.id}-${profile.did.id}"
 
 private val ExpandableAvatarSize = 32.dp
 private val ExpandableAvatarRowShape = RoundedCornerShape(8.dp)

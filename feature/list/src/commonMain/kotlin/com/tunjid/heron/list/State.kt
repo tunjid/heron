@@ -66,122 +66,110 @@ interface State {
     data class Immutable(
         val creator: Profile? = null,
         val sharedElementPrefix: String? = null,
-        @Transient
-        val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
-        @Transient
-        val signedInProfileId: ProfileId? = null,
-        @Transient
-        val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val stateHolders: List<ListScreenStateHolders> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
-        val isOnProfilesTab: Boolean = false,
-        @Transient
-        val suggestedProfiles: List<Profile> = emptyList(),
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+        @Transient val signedInProfileId: ProfileId? = null,
+        @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient val recentConversations: List<Conversation> = emptyList(),
+        @Transient val stateHolders: List<ListScreenStateHolders> = emptyList(),
+        @Transient val recentLists: List<FeedList> = emptyList(),
+        @Transient val isOnProfilesTab: Boolean = false,
+        @Transient val suggestedProfiles: List<Profile> = emptyList(),
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        operator fun invoke(
-            route: Route,
-        ): Immutable = Immutable(
-            sharedElementPrefix = route.sharedElementPrefix,
-            stateHolders = listOfNotNull(
-                route.model<FeedList>()?.let { model ->
-                    val timeline = Timeline.Home.List.stub(list = model)
-                    TimelineState(
-                        timeline = timeline,
-                        hasUpdates = false,
-                        tilingData = TilingState.Data(
-                            currentQuery = TimelineQuery(
-                                data = CursorQuery.Data(
-                                    page = 0,
-                                    cursorAnchor = Clock.System.now(),
-                                ),
-                                source = timeline.source,
-                            ),
-                        ),
-                    )
-                },
-                route.model<StarterPack>()?.let { model ->
-                    val starterPackList = model.list ?: return@let null
-                    val timeline = Timeline.StarterPack.stub(
-                        starterPack = model,
-                        list = starterPackList,
-                    )
-                    TimelineState(
-                        timeline = timeline,
-                        hasUpdates = false,
-                        tilingData = TilingState.Data(
-                            currentQuery = TimelineQuery(
-                                data = CursorQuery.Data(
-                                    page = 0,
-                                    cursorAnchor = Clock.System.now(),
-                                ),
-                                source = timeline.source,
-                            ),
-                        ),
-                    )
-                },
-            ).map {
-                ListScreenStateHolders.Timeline(
-                    noOpActionSuspendingStateMutator(it),
-                )
-            }
-                .take(1),
-        )
+        operator fun invoke(route: Route): Immutable =
+            Immutable(
+                sharedElementPrefix = route.sharedElementPrefix,
+                stateHolders =
+                    listOfNotNull(
+                            route.model<FeedList>()?.let { model ->
+                                val timeline = Timeline.Home.List.stub(list = model)
+                                TimelineState(
+                                    timeline = timeline,
+                                    hasUpdates = false,
+                                    tilingData =
+                                        TilingState.Data(
+                                            currentQuery =
+                                                TimelineQuery(
+                                                    data =
+                                                        CursorQuery.Data(
+                                                            page = 0,
+                                                            cursorAnchor = Clock.System.now(),
+                                                        ),
+                                                    source = timeline.source,
+                                                )
+                                        ),
+                                )
+                            },
+                            route.model<StarterPack>()?.let { model ->
+                                val starterPackList = model.list ?: return@let null
+                                val timeline =
+                                    Timeline.StarterPack.stub(
+                                        starterPack = model,
+                                        list = starterPackList,
+                                    )
+                                TimelineState(
+                                    timeline = timeline,
+                                    hasUpdates = false,
+                                    tilingData =
+                                        TilingState.Data(
+                                            currentQuery =
+                                                TimelineQuery(
+                                                    data =
+                                                        CursorQuery.Data(
+                                                            page = 0,
+                                                            cursorAnchor = Clock.System.now(),
+                                                        ),
+                                                    source = timeline.source,
+                                                )
+                                        ),
+                                )
+                            },
+                        )
+                        .map {
+                            ListScreenStateHolders.Timeline(noOpActionSuspendingStateMutator(it))
+                        }
+                        .take(1),
+            )
     }
 }
 
 val State.timelineState
-    get() = stateHolders
-        .filterIsInstance<ListScreenStateHolders.Timeline>()
-        .firstOrNull()
-        ?.state
+    get() = stateHolders.filterIsInstance<ListScreenStateHolders.Timeline>().firstOrNull()?.state
 
 @Stable
 sealed class ListScreenStateHolders {
 
     @Stable
-    class Members(
-        val mutator: MembersStateHolder,
-    ) : ListScreenStateHolders(),
-        MembersStateHolder by mutator
+    class Members(val mutator: MembersStateHolder) :
+        ListScreenStateHolders(), MembersStateHolder by mutator
 
     @Stable
-    class Timeline(
-        val mutator: TimelineStateHolder,
-    ) : ListScreenStateHolders(),
-        TimelineStateHolder by mutator
+    class Timeline(val mutator: TimelineStateHolder) :
+        ListScreenStateHolders(), TimelineStateHolder by mutator
 
     val key
-        get() = when (this) {
-            is Members -> "Members"
-            is Timeline -> "Timeline"
-        }
+        get() =
+            when (this) {
+                is Members -> "Members"
+                is Timeline -> "Timeline"
+            }
 
     val isRefreshing: Boolean
-        get() = when (this) {
-            is Members -> state.isRefreshing
-            is Timeline -> state.isRefreshing
+        get() =
+            when (this) {
+                is Members -> state.isRefreshing
+                is Timeline -> state.isRefreshing
+            }
+
+    fun refresh() =
+        when (this) {
+            is Members -> accept(TilingState.Action.Refresh)
+
+            is Timeline ->
+                accept(TimelineState.Action.Tile(tilingAction = TilingState.Action.Refresh))
         }
-
-    fun refresh() = when (this) {
-        is Members -> accept(
-            TilingState.Action.Refresh,
-        )
-
-        is Timeline -> accept(
-            TimelineState.Action.Tile(
-                tilingAction = TilingState.Action.Refresh,
-            ),
-        )
-    }
 }
 
 @Stable
@@ -192,8 +180,7 @@ interface MemberState : TilingState<ListMemberQuery, ListMember> {
     data class Immutable(
         val signedInProfileId: ProfileId?,
         val listUri: ListUri,
-        @Transient
-        override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
+        @Transient override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
     ) : MemberState
 
     companion object {
@@ -201,21 +188,22 @@ interface MemberState : TilingState<ListMemberQuery, ListMember> {
             signedInProfileId: ProfileId?,
             listUri: ListUri,
             tilingData: TilingState.Data<ListMemberQuery, ListMember>,
-        ): Immutable = Immutable(
-            signedInProfileId = signedInProfileId,
-            listUri = listUri,
-            tilingData = tilingData,
-        )
+        ): Immutable =
+            Immutable(
+                signedInProfileId = signedInProfileId,
+                listUri = listUri,
+                tilingData = tilingData,
+            )
     }
 }
 
-typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, MemberState.SnapshotMutable>
+typealias MembersStateHolder =
+    ActionSuspendingStateMutator<TilingState.Action, MemberState.SnapshotMutable>
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,
@@ -227,17 +215,12 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
 
-    data class DeleteRecord(
-        val recordUri: RecordUri,
-    ) : Action(key = "DeleteRecord")
+    data class DeleteRecord(val recordUri: RecordUri) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
@@ -251,30 +234,21 @@ sealed class Action(val key: String) {
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
 
-    data class SearchProfiles(
-        val query: String,
-    ) : Action(key = "SearchProfiles")
+    data class SearchProfiles(val query: String) : Action(key = "SearchProfiles")
 
-    data class CurrentPageChanged(
-        val currentPage: Int,
-    ) : Action(key = "CurrentPageChanged")
+    data class CurrentPageChanged(val currentPage: Int) : Action(key = "CurrentPageChanged")
 
-    data class UpdateFeedListStatus(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdateFeedGeneratorStatus")
+    data class UpdateFeedListStatus(val update: Timeline.Update) :
+        Action(key = "UpdateFeedGeneratorStatus")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

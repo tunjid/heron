@@ -38,38 +38,39 @@ import heron.ui.profile.generated.resources.tab_replies
 import heron.ui.profile.generated.resources.tab_starter_packs
 import heron.ui.profile.generated.resources.tab_video
 
-fun Modifier.profileBioTabBackground(
-    color: () -> Color,
-) = background(
-    color = color(),
-    shape = ProfileBioBackgroundShape,
-)
-    .fillMaxWidth()
-    .height(ProfileBioTabHeight)
+fun Modifier.profileBioTabBackground(color: () -> Color) =
+    background(
+            color = color(),
+            shape = ProfileBioBackgroundShape,
+        )
+        .fillMaxWidth()
+        .height(ProfileBioTabHeight)
 
 val ProfileTab.stringResource
-    get() = when (this) {
-        ProfileTab.Bluesky.Posts.Likes -> Res.string.tab_likes
-        ProfileTab.Bluesky.Posts.Media -> Res.string.tab_media
-        ProfileTab.Bluesky.Posts.Replies -> Res.string.tab_replies
-        ProfileTab.Bluesky.Posts.Standard -> Res.string.tab_posts
-        ProfileTab.Bluesky.Posts.Videos -> Res.string.tab_video
-        is ProfileTab.Bluesky.FeedGenerators -> Res.string.tab_feeds
-        is ProfileTab.Bluesky.Lists -> Res.string.tab_lists
-        ProfileTab.Bluesky.StarterPacks -> Res.string.tab_starter_packs
-        ProfileTab.StandardSite.Documents -> Res.string.tab_documents
-        ProfileTab.StandardSite.Publications -> Res.string.tab_publications
-    }
+    get() =
+        when (this) {
+            ProfileTab.Bluesky.Posts.Likes -> Res.string.tab_likes
+            ProfileTab.Bluesky.Posts.Media -> Res.string.tab_media
+            ProfileTab.Bluesky.Posts.Replies -> Res.string.tab_replies
+            ProfileTab.Bluesky.Posts.Standard -> Res.string.tab_posts
+            ProfileTab.Bluesky.Posts.Videos -> Res.string.tab_video
+            is ProfileTab.Bluesky.FeedGenerators -> Res.string.tab_feeds
+            is ProfileTab.Bluesky.Lists -> Res.string.tab_lists
+            ProfileTab.Bluesky.StarterPacks -> Res.string.tab_starter_packs
+            ProfileTab.StandardSite.Documents -> Res.string.tab_documents
+            ProfileTab.StandardSite.Publications -> Res.string.tab_publications
+        }
 
 fun String.withProfileBannerSharedElementPrefix() = "banner-$this"
+
 fun String.withProfileBioTabSharedElementPrefix() = "bio-tab-$this"
+
 fun String.withProfileAvatarHaloSharedElementPrefix() = "avatar-halo-$this"
+
 fun String.withProfileAvatarLiveSharedElementPrefix() = "avatar-live-$this"
 
 fun Modifier.profileBannerSize() =
-    heightIn(max = MaxBannerHeight)
-        .fillMaxWidth()
-        .aspectRatio(BannerAspectRatio)
+    heightIn(max = MaxBannerHeight).fillMaxWidth().aspectRatio(BannerAspectRatio)
 
 val ProfileBioTabHeight = 32.dp
 val MaxBannerHeight = 240.dp
@@ -84,7 +85,8 @@ const val AppLogoZIndex = 5f
 const val SurfaceZIndex = 4f
 const val BannerZIndex = 3f
 
-private val ProfileBioBackgroundShape = RoundedCornerShape(
-    topStart = 16.dp,
-    topEnd = 16.dp,
-)
+private val ProfileBioBackgroundShape =
+    RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+    )

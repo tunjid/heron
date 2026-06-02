@@ -66,8 +66,7 @@ internal fun StandardSubscriptionScreen(
     val pullToRefreshState = rememberPullToRefreshState()
 
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         isRefreshing = state.isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
@@ -75,9 +74,8 @@ internal fun StandardSubscriptionScreen(
         },
         indicator = {
             DismissableRefreshIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
                     },
                 state = pullToRefreshState,
@@ -87,71 +85,73 @@ internal fun StandardSubscriptionScreen(
         },
     ) {
         LazyVerticalStaggeredGrid(
-            modifier = Modifier
-                .fillMaxSize()
-                .gridColumnCount(density) { numColumns ->
-                    actions(
-                        Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)),
-                    )
+            modifier =
+                Modifier.fillMaxSize().gridColumnCount(density) { numColumns ->
+                    actions(Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)))
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(360.dp),
             verticalItemSpacing = 8.dp,
-            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                isCompact = paneScaffoldState.prefersCompactBottomNav,
-            ),
+            contentPadding =
+                UiTokens.bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
-            if (state.tiledItems.isEmpty()) item {
-                EmptyContent(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
-                    titleRes = Res.string.empty_subscriptions,
-                    descriptionRes = Res.string.empty_subscriptions_description,
-                    icon = Icons.Rounded.NotificationsOff,
-                )
-            }
-            else items(
-                items = state.tiledItems,
-                key = { it.uri.uri },
-                itemContent = { publication ->
-                    Publication(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                            .animateItem()
-                            .shapedClickable {
-                                actions(
-                                    Action.Navigate.To(
-                                        pathDestination(
-                                            path = publication.uri.path,
-                                            models = listOf(publication),
-                                            sharedElementPrefix = SharedElementPrefix,
-                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                        ),
-                                    ),
-                                )
-                            }
-                            .padding(horizontal = 8.dp),
-                        paneTransitionScope = paneScaffoldState,
-                        sharedElementPrefix = SharedElementPrefix,
-                        publication = publication,
-                        onSubscriptionToggled = { publication, subscription ->
-                            actions(
-                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                    subscriptionUri = subscription.uri,
-                                )
-                                else Action.TogglePublicationSubscription.Subscribe(
-                                    publicationUri = publication.uri,
-                                ),
-                            )
-                        },
+            if (state.tiledItems.isEmpty())
+                item {
+                    EmptyContent(
+                        modifier = Modifier.fillMaxWidth().animateItem(),
+                        titleRes = Res.string.empty_subscriptions,
+                        descriptionRes = Res.string.empty_subscriptions_description,
+                        icon = Icons.Rounded.NotificationsOff,
                     )
-                },
-            )
+                }
+            else
+                items(
+                    items = state.tiledItems,
+                    key = { it.uri.uri },
+                    itemContent = { publication ->
+                        Publication(
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .padding(horizontal = 8.dp)
+                                    .animateItem()
+                                    .shapedClickable {
+                                        actions(
+                                            Action.Navigate.To(
+                                                pathDestination(
+                                                    path = publication.uri.path,
+                                                    models = listOf(publication),
+                                                    sharedElementPrefix = SharedElementPrefix,
+                                                    referringRouteOption =
+                                                        NavigationAction.ReferringRouteOption
+                                                            .Current,
+                                                )
+                                            )
+                                        )
+                                    }
+                                    .padding(horizontal = 8.dp),
+                            paneTransitionScope = paneScaffoldState,
+                            sharedElementPrefix = SharedElementPrefix,
+                            publication = publication,
+                            onSubscriptionToggled = { publication, subscription ->
+                                actions(
+                                    if (subscription != null)
+                                        Action.TogglePublicationSubscription.Unsubscribe(
+                                            subscriptionUri = subscription.uri
+                                        )
+                                    else
+                                        Action.TogglePublicationSubscription.Subscribe(
+                                            publicationUri = publication.uri
+                                        )
+                                )
+                            },
+                        )
+                    },
+                )
         }
     }
 
@@ -160,10 +160,8 @@ internal fun StandardSubscriptionScreen(
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
-                    TilingState.Action.LoadAround(
-                        query = query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    TilingState.Action.LoadAround(query = query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )

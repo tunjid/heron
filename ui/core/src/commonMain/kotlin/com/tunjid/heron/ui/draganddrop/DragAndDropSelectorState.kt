@@ -40,12 +40,13 @@ class DragAndDropSelectorState<T>(
     private var hoveredId by mutableStateOf<String?>(null)
     private var draggedId by mutableStateOf<String?>(null)
 
-    var firstUnselectedIndex by mutableStateOf(
-        when (val index = items.indexOfFirst { !selected(it) }) {
-            -1 -> items.size
-            else -> index
-        },
-    )
+    var firstUnselectedIndex by
+        mutableStateOf(
+            when (val index = items.indexOfFirst { !selected(it) }) {
+                -1 -> items.size
+                else -> index
+            }
+        )
         private set
 
     var isHintHovered by mutableStateOf(false)
@@ -56,30 +57,32 @@ class DragAndDropSelectorState<T>(
         val index = firstUnselectedIndex.coerceIn(0, snapshot.size)
 
         if (index < 0) snapshot to emptyList()
-        else snapshot.subList(0, index) to snapshot.subList(
-            index,
-            snapshot.size,
-        )
+        else
+            snapshot.subList(0, index) to
+                snapshot.subList(
+                    index,
+                    snapshot.size,
+                )
     }
 
     private val tabTargets = mutableStateMapOf<String, TabTarget>()
     private val hintTarget = HintTarget()
 
-    @Stable
-    fun isHoveredId(id: String) = id == hoveredId
+    @Stable fun isHoveredId(id: String) = id == hoveredId
 
-    @Stable
-    fun isDraggedId(id: String) = id == draggedId
+    @Stable fun isDraggedId(id: String) = id == draggedId
 
     fun remove(item: T) {
         val index = items.indexOfFirst { it.id() == item.id() }
         if (index < 0) return
 
         items.removeAt(index)
-        if (index <= firstUnselectedIndex) firstUnselectedIndex = max(
-            a = firstUnselectedIndex - 1,
-            b = 0,
-        )
+        if (index <= firstUnselectedIndex)
+            firstUnselectedIndex =
+                max(
+                    a = firstUnselectedIndex - 1,
+                    b = 0,
+                )
     }
 
     private fun DragAndDropEvent.draggedIndex() =
@@ -98,25 +101,30 @@ class DragAndDropSelectorState<T>(
                     index = min(items.lastIndex, droppedIndex),
                     element = items.removeAt(draggedIndex),
                 )
-                firstUnselectedIndex = when {
-                    // Moved last saved item to pinned items
-                    draggedIndex == firstUnselectedIndex && draggedIndex == items.lastIndex -> items.size
-                    // Dropped in hint box
-                    droppedIndex >= items.size -> items.lastIndex
-                    else -> when (firstUnselectedIndex) {
-                        // Moved out of pinned items
-                        in draggedIndex..droppedIndex -> max(
-                            a = firstUnselectedIndex - 1,
-                            b = 0,
-                        )
-                        // Moved into pinned items
-                        in droppedIndex..draggedIndex -> min(
-                            a = firstUnselectedIndex + 1,
-                            b = items.lastIndex,
-                        )
-                        else -> firstUnselectedIndex
+                firstUnselectedIndex =
+                    when {
+                        // Moved last saved item to pinned items
+                        draggedIndex == firstUnselectedIndex && draggedIndex == items.lastIndex ->
+                            items.size
+                        // Dropped in hint box
+                        droppedIndex >= items.size -> items.lastIndex
+                        else ->
+                            when (firstUnselectedIndex) {
+                                // Moved out of pinned items
+                                in draggedIndex..droppedIndex ->
+                                    max(
+                                        a = firstUnselectedIndex - 1,
+                                        b = 0,
+                                    )
+                                // Moved into pinned items
+                                in droppedIndex..draggedIndex ->
+                                    min(
+                                        a = firstUnselectedIndex + 1,
+                                        b = items.lastIndex,
+                                    )
+                                else -> firstUnselectedIndex
+                            }
                     }
-                }
             }
             hoveredId = null
             draggedId = null
@@ -124,9 +132,7 @@ class DragAndDropSelectorState<T>(
     }
 
     @Stable
-    private inner class TabTarget(
-        id: String,
-    ) : DragAndDropTarget {
+    private inner class TabTarget(id: String) : DragAndDropTarget {
 
         var id by mutableStateOf(id)
 
@@ -210,23 +216,26 @@ class DragAndDropSelectorState<T>(
         fun <T> Modifier.selectorDragAndDrop(
             state: DragAndDropSelectorState<T>,
             id: String,
-        ) = selectorDragAndDropSource(id)
-            .dragAndDropTarget(
+        ) =
+            selectorDragAndDropSource(id)
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        event.draggedId() != null
+                    },
+                    target =
+                        state.tabTargets
+                            .getOrPut(id) {
+                                state.TabTarget(id)
+                            }
+                            .also { it.id = id },
+                )
+
+        fun <T> Modifier.selectorDropTarget(state: DragAndDropSelectorState<T>) =
+            dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event.draggedId() != null
                 },
-                target = state.tabTargets.getOrPut(id) {
-                    state.TabTarget(id)
-                }.also { it.id = id },
+                target = state.hintTarget,
             )
-
-        fun <T> Modifier.selectorDropTarget(
-            state: DragAndDropSelectorState<T>,
-        ) = dragAndDropTarget(
-            shouldStartDragAndDrop = { event ->
-                event.draggedId() != null
-            },
-            target = state.hintTarget,
-        )
     }
 }

@@ -32,10 +32,11 @@ data class ListMember(
 ) : Record {
 
     override val reference: Record.Reference
-        get() = Record.Reference(
-            id = null,
-            uri = uri,
-        )
+        get() =
+            Record.Reference(
+                id = null,
+                uri = uri,
+            )
 
     @Serializable
     data class Create(

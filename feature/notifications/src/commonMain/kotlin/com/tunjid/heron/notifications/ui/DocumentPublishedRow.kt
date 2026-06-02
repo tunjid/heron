@@ -58,12 +58,10 @@ fun DocumentPublishedRow(
     val uriHandler = LocalUriHandler.current
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 runCatching {
-                    notification.associatedDocument
-                        .link
-                        ?.let(uriHandler::openUri)
+                    notification.associatedDocument.link?.let(uriHandler::openUri)
                 }
             },
         isRead = isRead,
@@ -74,7 +72,8 @@ fun DocumentPublishedRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Description),
                 tint = BookmarkBlue,
-                contentDescription = stringResource(CommonStrings.notifications_document_published_description),
+                contentDescription =
+                    stringResource(CommonStrings.notifications_document_published_description),
             )
         },
         content = {
@@ -82,12 +81,14 @@ fun DocumentPublishedRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = CommonStrings.notifications_document_published,
-                            pluralResource = CommonStrings.notifications_multiple_document_published,
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource = CommonStrings.notifications_document_published,
+                                pluralResource =
+                                    CommonStrings.notifications_multiple_document_published,
+                            ),
                     )
 
                     TimeDelta(

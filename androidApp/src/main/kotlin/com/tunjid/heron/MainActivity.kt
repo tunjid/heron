@@ -59,10 +59,11 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val windowInsetsController = WindowCompat.getInsetsController(
-            window,
-            window.decorView,
-        )
+        val windowInsetsController =
+            WindowCompat.getInsetsController(
+                window,
+                window.decorView,
+            )
         setContent {
             App(
                 appState = appState,
@@ -71,8 +72,7 @@ class MainActivity : ComponentActivity() {
             // Something, somewhere is toggling this flag, and I'm not sure where
             val isSystemInDarkTheme = isSystemInDarkTheme()
             LaunchedEffect(isSystemInDarkTheme) {
-                snapshotFlow { appState.isShowingSplashScreen }
-                    .first { !it }
+                snapshotFlow { appState.isShowingSplashScreen }.first { !it }
                 delay(STATUS_BAR_ICON_DELAY_MS)
                 windowInsetsController.isAppearanceLightStatusBars = !isSystemInDarkTheme
             }
@@ -86,24 +86,18 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         updateNotificationPermissions()
 
-        FirebaseMessaging.getInstance()
-            .getToken()
-            .addOnSuccessListener { token ->
-                // appState will check if notification permissions are available
-                appState.onNotificationAction(NotificationAction.RegisterToken(token))
-            }
+        FirebaseMessaging.getInstance().getToken().addOnSuccessListener { token ->
+            // appState will check if notification permissions are available
+            appState.onNotificationAction(NotificationAction.RegisterToken(token))
+        }
     }
 
     private fun updateNotificationPermissions() {
-        NotificationManagerCompat.from(this)
-            .areNotificationsEnabled()
-            .let {
-                appState.onNotificationAction(
-                    NotificationAction.UpdatePermissions(
-                        hasNotificationPermissions = it,
-                    ),
-                )
-            }
+        NotificationManagerCompat.from(this).areNotificationsEnabled().let {
+            appState.onNotificationAction(
+                NotificationAction.UpdatePermissions(hasNotificationPermissions = it)
+            )
+        }
     }
 
     private fun handleDeepLink(intent: Intent) {

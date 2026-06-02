@@ -78,33 +78,36 @@ fun PaneScaffoldState.PaneNavigationBar(
 ) {
     val sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey)
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
-                sharedContentState = sharedContentState,
-                animatedVisibilityScope = this,
-                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-            )
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-                renderInOverlay = {
-                    isActive &&
-                        isTransitionActive &&
-                        !sharedContentState.isMatchFound &&
-                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
-                },
-            ),
+        modifier =
+            modifier
+                .sharedElement(
+                    sharedContentState = sharedContentState,
+                    animatedVisibilityScope = this,
+                    zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+                )
+                .renderInSharedTransitionScopeOverlay(
+                    zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+                    renderInOverlay = {
+                        isActive &&
+                            isTransitionActive &&
+                            !sharedContentState.isMatchFound &&
+                            navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
+                    },
+                ),
         visible = canShowNavigationBar,
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationBar) appState.movableNavigationBar(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationBar(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            if (canUseMovableNavigationBar)
+                appState.movableNavigationBar(
+                    Modifier,
+                    onNavItemReselected,
+                )
+            else
+                appState.PaneNavigationBar(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
         },
     )
 }
@@ -117,28 +120,33 @@ fun PaneScaffoldState.PaneNavigationRail(
     onNavItemReselected: () -> Boolean = { false },
 ) {
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
+        modifier =
+            modifier.sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey),
                 animatedVisibilityScope = this,
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
                 boundsTransform = NavigationRailBoundsTransform,
             ),
         visible = canShowNavigationRail,
-        enter = if (
-            canShowNavigationRail &&
-            paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
-        ) enterTransition else EnterTransition.None,
+        enter =
+            if (
+                canShowNavigationRail &&
+                    paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
+            )
+                enterTransition
+            else EnterTransition.None,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationRail) appState.movableNavigationRail(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationRail(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            if (canUseMovableNavigationRail)
+                appState.movableNavigationRail(
+                    Modifier,
+                    onNavItemReselected,
+                )
+            else
+                appState.PaneNavigationRail(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
         },
     )
 }
@@ -150,26 +158,21 @@ internal fun AppState.PaneNavigationBar(
 ) {
     LookaheadScope {
         Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .animateBounds(
-                    lookaheadScope = this@LookaheadScope,
-                ),
+            modifier = modifier.fillMaxWidth().animateBounds(lookaheadScope = this@LookaheadScope),
             color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
             shape = navigationBarShape(prefersCompactBottomNav),
         ) {
             Row(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .fillMaxWidth()
-                    .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
+                modifier =
+                    Modifier.navigationBarsPadding()
+                        .fillMaxWidth()
+                        .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 navItems.forEach { item ->
                     NavigationBarItem(
-                        modifier = Modifier
-                            .weight(1f),
+                        modifier = Modifier.weight(1f),
                         icon = {
                             BadgedBox(
                                 badge = {
@@ -201,28 +204,26 @@ internal fun AppState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    Box(
-        modifier = modifier
-            .padding(start = 8.dp)
-            .fillMaxSize(),
-    ) {
-        val color by animateColorAsState(
-            if (LocalSplitPaneState.current.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
-            else MaterialTheme.colorScheme.surface,
-        )
+    Box(modifier = modifier.padding(start = 8.dp).fillMaxSize()) {
+        val color by
+            animateColorAsState(
+                if (LocalSplitPaneState.current.shouldElevateNavRail())
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                else MaterialTheme.colorScheme.surface
+            )
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .constrainedSizePlacement(
-                    orientation = Orientation.Horizontal,
-                    minSize = UiTokens.NavRailWidth,
-                    atStart = true,
-                )
-                .background(
-                    color = color,
-                    shape = NavRailShape,
-                )
-                .padding(vertical = 32.dp),
+            modifier =
+                Modifier.align(Alignment.Center)
+                    .constrainedSizePlacement(
+                        orientation = Orientation.Horizontal,
+                        minSize = UiTokens.NavRailWidth,
+                        atStart = true,
+                    )
+                    .background(
+                        color = color,
+                        shape = NavRailShape,
+                    )
+                    .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -254,9 +255,7 @@ internal fun AppState.PaneNavigationRail(
 }
 
 @Composable
-private fun Badge(
-    count: Long,
-) {
+private fun Badge(count: Long) {
     when (count) {
         in 1..<MaxBadgeCount -> Badge { Text("$count") }
         in MaxBadgeCount..Long.MAX_VALUE -> Badge(Modifier.size(4.dp))
@@ -264,30 +263,29 @@ private fun Badge(
 }
 
 @Composable
-fun Modifier.bottomNavigationSharedBounds(
-    paneScaffoldState: PaneScaffoldState,
-): Modifier = with(paneScaffoldState) {
-    when (paneState.pane) {
-        ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
-            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
-            animatedVisibilityScope = this,
-        )
+fun Modifier.bottomNavigationSharedBounds(paneScaffoldState: PaneScaffoldState): Modifier =
+    with(paneScaffoldState) {
+        when (paneState.pane) {
+            ThreePane.Primary ->
+                if (inPredictiveBack) this@bottomNavigationSharedBounds
+                else
+                    sharedBounds(
+                        sharedContentState =
+                            rememberSharedContentState(NavigationBarSharedElementKey),
+                        animatedVisibilityScope = this,
+                    )
 
-        ThreePane.Secondary,
-        ThreePane.Tertiary,
-        ThreePane.Overlay,
-        null,
-        -> this@bottomNavigationSharedBounds
+            ThreePane.Secondary,
+            ThreePane.Tertiary,
+            ThreePane.Overlay,
+            null -> this@bottomNavigationSharedBounds
+        }
     }
-}
 
 @Composable
-fun navigationBarShape(
-    prefersCompactBottomNav: Boolean,
-): Shape {
-    val topCornerSize by animateDpAsState(
-        if (prefersCompactBottomNav) CompactCornerSize else RegularCornerSize,
-    )
+fun navigationBarShape(prefersCompactBottomNav: Boolean): Shape {
+    val topCornerSize by
+        animateDpAsState(if (prefersCompactBottomNav) CompactCornerSize else RegularCornerSize)
 
     return RoundedCornerShape(
         topStart = topCornerSize,
@@ -296,15 +294,19 @@ fun navigationBarShape(
 }
 
 @Composable
-private fun SplitPaneState.shouldElevateNavRail(): Boolean = remember(this) {
-    derivedStateOf {
-        splitLayoutState.weightAt(0)
-            .times(splitLayoutState.size)
-            .minus(UiTokens.NavRailWidth) < minPaneWidth
-    }
-}.value
+private fun SplitPaneState.shouldElevateNavRail(): Boolean =
+    remember(this) {
+            derivedStateOf {
+                splitLayoutState
+                    .weightAt(0)
+                    .times(splitLayoutState.size)
+                    .minus(UiTokens.NavRailWidth) < minPaneWidth
+            }
+        }
+        .value
 
 private data object NavigationBarSharedElementKey
+
 private data object NavigationRailSharedElementKey
 
 private val CompactCornerSize = 0.dp

@@ -35,8 +35,7 @@ fun FeedPreferencesSection(
     onFeedPreferenceUpdated: (FeedPreference) -> Unit,
 ) {
     SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_replies),
         enabled = true,
         checked = feedPreference.shouldHideReplies,
@@ -45,8 +44,7 @@ fun FeedPreferencesSection(
         },
     )
     SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_reposts),
         enabled = true,
         checked = feedPreference.shouldHideReposts,
@@ -55,8 +53,7 @@ fun FeedPreferencesSection(
         },
     )
     SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_quote_reposts),
         enabled = true,
         checked = feedPreference.shouldHideQuotes,

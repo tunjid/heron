@@ -37,26 +37,25 @@ fun DismissableRefreshIndicator(
     onDismissRequest: () -> Unit,
 ) {
     val maxDistance = PullToRefreshDefaults.IndicatorMaxDistance
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         PullToRefreshDefaults.LoadingIndicator(
             state = state,
             isRefreshing = isRefreshing,
             maxDistance = maxDistance,
         )
-        if (isRefreshing) Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset {
-                    val indicatorHeight = LoadingIndicatorDefaults.ContainerHeight.toPx()
-                    val indicatorTranslation = state.distanceFraction * maxDistance.toPx()
-                    IntOffset(
-                        x = 0,
-                        y = (indicatorTranslation - indicatorHeight).roundToInt(),
-                    )
-                }
-                .clickable { onDismissRequest() },
-        )
+        if (isRefreshing)
+            Box(
+                modifier =
+                    Modifier.matchParentSize()
+                        .offset {
+                            val indicatorHeight = LoadingIndicatorDefaults.ContainerHeight.toPx()
+                            val indicatorTranslation = state.distanceFraction * maxDistance.toPx()
+                            IntOffset(
+                                x = 0,
+                                y = (indicatorTranslation - indicatorHeight).roundToInt(),
+                            )
+                        }
+                        .clickable { onDismissRequest() }
+            )
     }
 }

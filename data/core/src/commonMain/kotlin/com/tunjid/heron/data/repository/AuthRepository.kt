@@ -87,17 +87,11 @@ interface AuthRepository {
 
     fun isSignedInProfile(id: ProfileId): Flow<Boolean>
 
-    suspend fun oauthRequestUri(
-        request: OauthUriRequest,
-    ): Result<GenericUri>
+    suspend fun oauthRequestUri(request: OauthUriRequest): Result<GenericUri>
 
-    suspend fun createSession(
-        request: SessionRequest,
-    ): Outcome
+    suspend fun createSession(request: SessionRequest): Outcome
 
-    suspend fun switchSession(
-        sessionSummary: SessionSummary,
-    ): Outcome
+    suspend fun switchSession(sessionSummary: SessionSummary): Outcome
 
     suspend fun signOut()
 
@@ -108,11 +102,9 @@ interface AuthRepository {
 
 @Inject
 internal class AuthTokenRepository(
-    @AppMainScope
-    appMainScope: CoroutineScope,
+    @AppMainScope appMainScope: CoroutineScope,
     oauthRedirect: OauthRedirect,
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -125,35 +117,39 @@ internal class AuthTokenRepository(
 
     init {
         appMainScope.launch {
-            oauthRedirect.sessionRequests
-                .collectLatest(::createSession)
+            oauthRedirect.sessionRequests.collectLatest(::createSession)
         }
     }
 
     override val isSignedIn: Flow<Boolean> =
-        savedStateDataSource.signedInAuth.map {
-            it != null
-        }
+        savedStateDataSource.signedInAuth
+            .map {
+                it != null
+            }
             .distinctUntilChanged()
 
     override val isGuest: Flow<Boolean> =
-        savedStateDataSource.savedState.map { savedState ->
-            savedState.auth is SavedState.AuthTokens.Guest
-        }
+        savedStateDataSource.savedState
+            .map { savedState ->
+                savedState.auth is SavedState.AuthTokens.Guest
+            }
             .distinctUntilChanged()
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            if (signedInProfileId == null) flowOf(null)
-            else profileDao.profiles(
-                signedInProfiledId = signedInProfileId.id,
-                ids = listOf(signedInProfileId),
-            )
-                .distinctUntilChanged()
-                .filter(List<PopulatedProfileEntity>::isNotEmpty)
-                .map { it.first().asExternalModel() }
-                .withRefresh(::updateSignedInUser)
-        }
+        savedStateDataSource
+            .singleSessionFlow { signedInProfileId ->
+                if (signedInProfileId == null) flowOf(null)
+                else
+                    profileDao
+                        .profiles(
+                            signedInProfiledId = signedInProfileId.id,
+                            ids = listOf(signedInProfileId),
+                        )
+                        .distinctUntilChanged()
+                        .filter(List<PopulatedProfileEntity>::isNotEmpty)
+                        .map { it.first().asExternalModel() }
+                        .withRefresh(::updateSignedInUser)
+            }
             .shareIn(
                 scope = appMainScope + ioDispatcher,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -175,92 +171,89 @@ internal class AuthTokenRepository(
             flowOf(signedInProfileId == id)
         }
 
-    override suspend fun oauthRequestUri(
-        request: OauthUriRequest,
-    ): Result<GenericUri> = runCatchingUnlessCancelled {
-        when (val pendingToken = sessionManager.initiateOauthSession(request)) {
-            is SavedState.AuthTokens.Pending.DPoP -> {
-                savedStateDataSource.setAuth(pendingToken)
+    override suspend fun oauthRequestUri(request: OauthUriRequest): Result<GenericUri> =
+        runCatchingUnlessCancelled {
+            when (val pendingToken = sessionManager.initiateOauthSession(request)) {
+                is SavedState.AuthTokens.Pending.DPoP -> {
+                    savedStateDataSource.setAuth(pendingToken)
+                    // Suspend till auth token has been saved and is readable
+                    savedStateDataSource.savedState.first { it.auth == pendingToken }
+                    pendingToken.authorizeRequestUrl.let(::GenericUri)
+                }
+            }
+        }
+
+    override suspend fun createSession(request: SessionRequest): Outcome =
+        runCatchingUnlessCancelled {
+                sessionManager.createSession(request)
+            }
+            .mapCatchingUnlessCancelled { authToken ->
+                savedStateDataSource.setAuth(authToken)
                 // Suspend till auth token has been saved and is readable
-                savedStateDataSource.savedState.first { it.auth == pendingToken }
-                pendingToken.authorizeRequestUrl
-                    .let(::GenericUri)
+                savedStateDataSource.savedState.first { it.auth != null }
+
+                // Check if it is an authenticated session. Guest sessions are valid.
+                when (authToken) {
+                    is SavedState.AuthTokens.Authenticated ->
+                        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                            if (authToken.authProfileId == signedInProfileId)
+                                updateSignedInUser(did = signedInProfileId.id.let(::Did))
+                            else expiredSessionOutcome()
+                        } ?: expiredSessionOutcome()
+                    else -> Outcome.Success
+                }
             }
-        }
-    }
-
-    override suspend fun createSession(
-        request: SessionRequest,
-    ): Outcome = runCatchingUnlessCancelled {
-        sessionManager.createSession(request)
-    }
-        .mapCatchingUnlessCancelled { authToken ->
-            savedStateDataSource.setAuth(authToken)
-            // Suspend till auth token has been saved and is readable
-            savedStateDataSource.savedState.first { it.auth != null }
-
-            // Check if it is an authenticated session. Guest sessions are valid.
-            when (authToken) {
-                is SavedState.AuthTokens.Authenticated ->
-                    savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                        if (authToken.authProfileId == signedInProfileId) updateSignedInUser(
-                            did = signedInProfileId.id.let(::Did),
-                        )
-                        else expiredSessionOutcome()
-                    }
-                        ?: expiredSessionOutcome()
-                else ->
-                    Outcome.Success
-            }
-        }
-        .fold(
-            onSuccess = { it },
-            onFailure = Outcome::Failure,
-        )
-
-    override suspend fun switchSession(
-        sessionSummary: SessionSummary,
-    ): Outcome = runCatchingUnlessCancelled {
-        savedStateDataSource.inCurrentProfileSession { currentProfileId ->
-            if (currentProfileId == sessionSummary.profileId) {
-                return@inCurrentProfileSession
-            }
-
-            val freshAuth = savedStateDataSource.inPastSession(sessionSummary.profileId) {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getSession()
-                }.getOrNull()
-
-                val authenticatedToken = savedStateDataSource.savedState
-                    .value
-                    .profileData(sessionSummary.profileId)
-                    ?.auth
-
-                authenticatedToken as? SavedState.AuthTokens.Authenticated
-            }
-                ?: return@inCurrentProfileSession
-
-            // Switching should cause the current session to expire
-            savedStateDataSource.switchSession(
-                profileId = sessionSummary.profileId,
-                freshAuth = freshAuth,
+            .fold(
+                onSuccess = { it },
+                onFailure = Outcome::Failure,
             )
 
-            logcat(LogPriority.WARN) {
-                """
+    override suspend fun switchSession(sessionSummary: SessionSummary): Outcome =
+        runCatchingUnlessCancelled {
+                savedStateDataSource.inCurrentProfileSession { currentProfileId ->
+                    if (currentProfileId == sessionSummary.profileId) {
+                        return@inCurrentProfileSession
+                    }
+
+                    val freshAuth =
+                        savedStateDataSource.inPastSession(sessionSummary.profileId) {
+                            networkService
+                                .runCatchingWithMonitoredNetworkRetry {
+                                    getSession()
+                                }
+                                .getOrNull()
+
+                            val authenticatedToken =
+                                savedStateDataSource.savedState.value
+                                    .profileData(sessionSummary.profileId)
+                                    ?.auth
+
+                            authenticatedToken as? SavedState.AuthTokens.Authenticated
+                        } ?: return@inCurrentProfileSession
+
+                    // Switching should cause the current session to expire
+                    savedStateDataSource.switchSession(
+                        profileId = sessionSummary.profileId,
+                        freshAuth = freshAuth,
+                    )
+
+                    logcat(LogPriority.WARN) {
+                        """
                     Session was successfully switched to ${sessionSummary.profileId},
                      this coroutine should have been cancelled.
-                """.trimIndent()
-            }
-        }
+                """
+                            .trimIndent()
+                    }
+                }
 
-        savedStateDataSource.inCurrentProfileSession { newProfileId ->
-            when (newProfileId) {
-                sessionSummary.profileId -> updateSignedInUser()
-                else -> throw SessionSwitchException(sessionSummary.profileHandle)
+                savedStateDataSource.inCurrentProfileSession { newProfileId ->
+                    when (newProfileId) {
+                        sessionSummary.profileId -> updateSignedInUser()
+                        else -> throw SessionSwitchException(sessionSummary.profileHandle)
+                    }
+                } ?: expiredSessionOutcome()
             }
-        } ?: expiredSessionOutcome()
-    }.toOutcome()
+            .toOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
@@ -270,136 +263,139 @@ internal class AuthTokenRepository(
             // Clear any pending writes
             copy(writes = writes.copy(pendingWrites = emptyList()))
         }
-        savedStateDataSource.setAuth(
-            auth = null,
-        )
+        savedStateDataSource.setAuth(auth = null)
     }
 
     override suspend fun updateSignedInUser(): Outcome =
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getSession()
-            }.fold(
-                onSuccess = { updateSignedInUser(it.did) },
-                onFailure = Outcome::Failure,
-            )
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    getSession()
+                }
+                .fold(
+                    onSuccess = { updateSignedInUser(it.did) },
+                    onFailure = Outcome::Failure,
+                )
         } ?: expiredSessionOutcome()
 
-    private suspend fun updateSignedInUser(
-        did: Did,
-    ): Outcome = supervisorScope {
-        val succeeded = listOf(
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getProfile(GetProfileQueryParams(actor = did))
-                }
-                    .getOrNull()
-                    ?.profileEntity()
-                    ?.let { profileEntity ->
-                        profileDao.upsertProfiles(listOf(profileEntity))
-                        savedStateDataSource.updateSignedInProfileData {
-                            copy(
-                                sessionSummary = SessionSummary(
-                                    lastSeen = Clock.System.now(),
-                                    profileId = profileEntity.did,
-                                    profileHandle = profileEntity.handle,
-                                    profileAvatar = profileEntity.avatar,
-                                ),
-                            )
-                        }
-                    } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForActor()
-                }
-                    .getOrNull()
-                    ?.let { savePreferences(it) } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForNotification()
-                }
-                    .getOrNull()
-                    ?.let { saveNotificationPreferences(it) } != null
-            },
-        ).awaitAll().all(true::equals)
+    private suspend fun updateSignedInUser(did: Did): Outcome = supervisorScope {
+        val succeeded =
+            listOf(
+                    async {
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry {
+                                getProfile(GetProfileQueryParams(actor = did))
+                            }
+                            .getOrNull()
+                            ?.profileEntity()
+                            ?.let { profileEntity ->
+                                profileDao.upsertProfiles(listOf(profileEntity))
+                                savedStateDataSource.updateSignedInProfileData {
+                                    copy(
+                                        sessionSummary =
+                                            SessionSummary(
+                                                lastSeen = Clock.System.now(),
+                                                profileId = profileEntity.did,
+                                                profileHandle = profileEntity.handle,
+                                                profileAvatar = profileEntity.avatar,
+                                            )
+                                    )
+                                }
+                            } != null
+                    },
+                    async {
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry {
+                                getPreferencesForActor()
+                            }
+                            .getOrNull()
+                            ?.let { savePreferences(it) } != null
+                    },
+                    async {
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry {
+                                getPreferencesForNotification()
+                            }
+                            .getOrNull()
+                            ?.let { saveNotificationPreferences(it) } != null
+                    },
+                )
+                .awaitAll()
+                .all(true::equals)
 
         if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
     }
 
-    private suspend fun savePreferences(
-        preferencesResponse: GetPreferencesResponse,
-    ) = supervisorScope {
-        val preferences = preferenceUpdater.update(
-            networkPreferences = preferencesResponse.preferences,
-            preferences = savedStateDataSource.savedState
-                .map(SavedState::signedProfilePreferencesOrDefault)
-                .first(),
-        )
+    private suspend fun savePreferences(preferencesResponse: GetPreferencesResponse) =
+        supervisorScope {
+            val preferences =
+                preferenceUpdater.update(
+                    networkPreferences = preferencesResponse.preferences,
+                    preferences =
+                        savedStateDataSource.savedState
+                            .map(SavedState::signedProfilePreferencesOrDefault)
+                            .first(),
+                )
 
-        val saveTimelinePreferences = async {
-            savedStateDataSource.updateSignedInProfileData {
-                copy(preferences = preferences)
-            }
-        }
-        val types = preferences.timelinePreferences.groupBy(
-            keySelector = TimelinePreference::type,
-        )
-
-        val feeds = types[SavedFeedType.Feed.value]?.map {
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                    getFeedGenerator(
-                        GetFeedGeneratorQueryParams(
-                            feed = AtUri(it.value),
-                        ),
-                    )
+            val saveTimelinePreferences = async {
+                savedStateDataSource.updateSignedInProfileData {
+                    copy(preferences = preferences)
                 }
             }
-        } ?: emptyList()
-        val lists = types[SavedFeedType.List.value]?.map {
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                    getList(
-                        GetListQueryParams(
-                            cursor = null,
-                            limit = 1,
-                            list = AtUri(it.value),
-                        ),
-                    )
-                }
+            val types =
+                preferences.timelinePreferences.groupBy(keySelector = TimelinePreference::type)
+
+            val feeds =
+                types[SavedFeedType.Feed.value]?.map {
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                            getFeedGenerator(GetFeedGeneratorQueryParams(feed = AtUri(it.value)))
+                        }
+                    }
+                } ?: emptyList()
+            val lists =
+                types[SavedFeedType.List.value]?.map {
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                            getList(
+                                GetListQueryParams(
+                                    cursor = null,
+                                    limit = 1,
+                                    list = AtUri(it.value),
+                                )
+                            )
+                        }
+                    }
+                } ?: emptyList()
+
+            saveTimelinePreferences.await()
+
+            // Await the network results before opening the DB transaction so the
+            // writer connection is not held during I/O.
+            val resolvedFeeds =
+                feeds.awaitAll().mapNotNull(Result<GetFeedGeneratorResponse>::getOrNull)
+            val resolvedLists = lists.awaitAll().mapNotNull(Result<GetListResponse>::getOrNull)
+
+            multipleEntitySaverProvider.saveInTransaction {
+                resolvedFeeds.forEach { add(it.view) }
+                resolvedLists.forEach { add(it.list) }
             }
-        } ?: emptyList()
-
-        saveTimelinePreferences.await()
-
-        // Await the network results before opening the DB transaction so the
-        // writer connection is not held during I/O.
-        val resolvedFeeds = feeds.awaitAll()
-            .mapNotNull(Result<GetFeedGeneratorResponse>::getOrNull)
-        val resolvedLists = lists.awaitAll()
-            .mapNotNull(Result<GetListResponse>::getOrNull)
-
-        multipleEntitySaverProvider.saveInTransaction {
-            resolvedFeeds.forEach { add(it.view) }
-            resolvedLists.forEach { add(it.list) }
         }
-    }
 
     private suspend fun saveNotificationPreferences(
-        notificationPreferencesResponse: app.bsky.notification.GetPreferencesResponse,
+        notificationPreferencesResponse: app.bsky.notification.GetPreferencesResponse
     ) {
-        val currentNotifications = savedStateDataSource.savedState
-            .map { it.signedInProfileData?.notifications }
-            .first() ?: SavedState.Notifications()
+        val currentNotifications =
+            savedStateDataSource.savedState.map { it.signedInProfileData?.notifications }.first()
+                ?: SavedState.Notifications()
 
-        val updatedNotifications = notificationPreferenceUpdater.update(
-            notificationPreferences = notificationPreferencesResponse.preferences,
-            notifications = currentNotifications,
-        )
+        val updatedNotifications =
+            notificationPreferenceUpdater.update(
+                notificationPreferences = notificationPreferencesResponse.preferences,
+                notifications = currentNotifications,
+            )
 
         savedStateDataSource.updateSignedInUserNotifications {
             copy(
@@ -409,10 +405,9 @@ internal class AuthTokenRepository(
         }
     }
 
-    override suspend fun resolveServer(
-        handle: ProfileHandle,
-    ): Result<Server> = runCatchingUnlessCancelled {
-        pdsResolver.resolveServer(Handle(handle.id))
-            ?: throw IllegalStateException("Could not resolve server for handle: ${handle.id}")
-    }
+    override suspend fun resolveServer(handle: ProfileHandle): Result<Server> =
+        runCatchingUnlessCancelled {
+            pdsResolver.resolveServer(Handle(handle.id))
+                ?: throw IllegalStateException("Could not resolve server for handle: ${handle.id}")
+        }
 }

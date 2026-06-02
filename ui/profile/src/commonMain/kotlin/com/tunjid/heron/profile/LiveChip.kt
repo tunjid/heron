@@ -35,19 +35,18 @@ import heron.ui.core.generated.resources.live_badge
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ProfileLiveChip(
-    modifier: Modifier = Modifier,
-) {
+fun ProfileLiveChip(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .background(
-                color = LiveStatusColor,
-                shape = RoundedCornerShape(LiveChipCorner),
-            )
-            .padding(
-                horizontal = 5.dp,
-                vertical = 1.5.dp,
-            ),
+        modifier =
+            modifier
+                .background(
+                    color = LiveStatusColor,
+                    shape = RoundedCornerShape(LiveChipCorner),
+                )
+                .padding(
+                    horizontal = 5.dp,
+                    vertical = 1.5.dp,
+                ),
         contentAlignment = Alignment.Center,
     ) {
         Text(

@@ -9,10 +9,11 @@ import heron.ui.timeline.generated.resources.app_name_unknown
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun AtmosphereApp?.displayName(): String = stringResource(
-    when (this?.id) {
-        AtmosphereApp.StandardSiteId -> Res.string.app_name_standard_site
-        AtmosphereApp.RockskyId -> Res.string.app_name_rocksky
-        else -> Res.string.app_name_unknown
-    },
-)
+fun AtmosphereApp?.displayName(): String =
+    stringResource(
+        when (this?.id) {
+            AtmosphereApp.StandardSiteId -> Res.string.app_name_standard_site
+            AtmosphereApp.RockskyId -> Res.string.app_name_rocksky
+            else -> Res.string.app_name_unknown
+        }
+    )

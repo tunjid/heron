@@ -91,11 +91,10 @@ class ActualListViewModel(
     searchRepository: SearchRepository,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ListStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -129,59 +128,74 @@ class ActualListViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.SendPostInteraction ->
+                        action.flow.launchPostInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
 
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateFeedListStatus -> action.flow.launchFeedListStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.AddListMember -> action.flow.launchAddListMemberMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.CurrentPageChanged -> action.flow.collect { event ->
-                        state.isOnProfilesTab =
-                            state.stateHolders.getOrNull(event.currentPage) is ListScreenStateHolders.Members
-                    }
+                    is Action.ToggleViewerState ->
+                        action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.UpdateFeedListStatus ->
+                        action.flow.launchFeedListStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.Navigate ->
+                        action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                    is Action.UpdateMutedWord ->
+                        action.flow.launchUpdateMutedWordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.BlockAccount ->
+                        action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.MuteAccount ->
+                        action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.UpdateRecentConversations ->
+                        action.flow.launchRecentConversationMutations(
+                            state = state,
+                            messageRepository = messageRepository,
+                        )
+                    is Action.UpdateRecentLists ->
+                        action.flow.launchRecentListsMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                        )
+                    is Action.DeleteRecord ->
+                        action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.AddListMember ->
+                        action.flow.launchAddListMemberMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.SearchProfiles ->
+                        action.flow.launchSearchMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                    is Action.CurrentPageChanged ->
+                        action.flow.collect { event ->
+                            state.isOnProfilesTab =
+                                state.stateHolders.getOrNull(event.currentPage) is
+                                    ListScreenStateHolders.Members
+                        }
                 }
             }
         },
@@ -191,9 +205,10 @@ context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
-    state.signedInProfileId = signedInProfile?.did
-}
+) =
+    authRepository.signedInUser.launchAndCollect { signedInProfile ->
+        state.signedInProfileId = signedInProfile?.did
+    }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
@@ -209,9 +224,10 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
-    state.preferences = it
-}
+) =
+    userDataRepository.preferences.launchAndCollect {
+        state.preferences = it
+    }
 
 context(productionScope: CoroutineScope)
 private fun launchTimelineStateHolderMutations(
@@ -237,34 +253,35 @@ private fun launchTimelineStateHolderMutations(
         return
     }
 
-    timelineRepository.timeline(request)
-        .take(1)
-        .launchAndCollect { timeline ->
-            if (state.existingTimelineStateHolder() != null) return@launchAndCollect
+    timelineRepository.timeline(request).take(1).launchAndCollect { timeline ->
+        if (state.existingTimelineStateHolder() != null) return@launchAndCollect
 
-            val createdHolder = ListScreenStateHolders.Timeline(
-                mutator = viewModelScope.timelineStateHolder(
-                    initialItems = TimelineItem.LoadingItems,
-                    refreshOnStart = true,
-                    timeline = timeline,
-                    startNumColumns = 1,
-                    timelineRepository = timelineRepository,
-                ),
+        val createdHolder =
+            ListScreenStateHolders.Timeline(
+                mutator =
+                    viewModelScope.timelineStateHolder(
+                        initialItems = TimelineItem.LoadingItems,
+                        refreshOnStart = true,
+                        timeline = timeline,
+                        startNumColumns = 1,
+                        timelineRepository = timelineRepository,
+                    )
             )
-            state.stateHolders = listOf(createdHolder) + state.stateHolders
-                .filterIsInstance<ListScreenStateHolders.Members>()
+        state.stateHolders =
+            listOf(createdHolder) +
+                state.stateHolders.filterIsInstance<ListScreenStateHolders.Members>()
 
-            launchListStatusMutations(
-                state = state,
-                timeline = timeline,
-                timelineRepository = timelineRepository,
-            )
-            launchTimelineCreatorMutations(
-                state = state,
-                timeline = timeline,
-                profileRepository = profileRepository,
-            )
-        }
+        launchListStatusMutations(
+            state = state,
+            timeline = timeline,
+            timelineRepository = timelineRepository,
+        )
+        launchTimelineCreatorMutations(
+            state = state,
+            timeline = timeline,
+            profileRepository = profileRepository,
+        )
+    }
 }
 
 context(productionScope: CoroutineScope)
@@ -280,7 +297,8 @@ private fun launchListMemberStateHolderMutations(
 
     if (existingHolder != null) return
 
-    timelineRepository.timeline(request)
+    timelineRepository
+        .timeline(request)
         .map { timeline ->
             if (timeline is Timeline.StarterPack) timeline.listTimeline else timeline
         }
@@ -289,37 +307,44 @@ private fun launchListMemberStateHolderMutations(
         .launchAndCollect { timeline ->
             if (state.existingMembersStateHolder() != null) return@launchAndCollect
 
-            val createdHolder = ListScreenStateHolders.Members(
-                mutator = viewModelScope.actionSuspendingStateMutator(
-                    state = MemberState(
-                        signedInProfileId = null,
-                        listUri = timeline.feedList.uri,
-                        tilingData = TilingState.Data(
-                            currentQuery = ListMemberQuery(
-                                listUri = timeline.feedList.uri,
-                                data = defaultQueryData(),
-                            ),
-                        ),
-                    ).toSnapshotMutable(),
-                    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-                    producer = { memberState, actions ->
-                        authRepository.signedInUser.launchAndCollect {
-                            memberState.signedInProfileId = it?.did
-                        }
-                        actions.launchTilingMutations(
-                            state = memberState,
-                            updateQueryData = { copy(data = it) },
-                            refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = recordRepository::listMembers,
-                            onNewItems = { items ->
-                                items.distinctBy(ListMember::uri)
+            val createdHolder =
+                ListScreenStateHolders.Members(
+                    mutator =
+                        viewModelScope.actionSuspendingStateMutator(
+                            state =
+                                MemberState(
+                                        signedInProfileId = null,
+                                        listUri = timeline.feedList.uri,
+                                        tilingData =
+                                            TilingState.Data(
+                                                currentQuery =
+                                                    ListMemberQuery(
+                                                        listUri = timeline.feedList.uri,
+                                                        data = defaultQueryData(),
+                                                    )
+                                            ),
+                                    )
+                                    .toSnapshotMutable(),
+                            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+                            producer = { memberState, actions ->
+                                authRepository.signedInUser.launchAndCollect {
+                                    memberState.signedInProfileId = it?.did
+                                }
+                                actions.launchTilingMutations(
+                                    state = memberState,
+                                    updateQueryData = { copy(data = it) },
+                                    refreshQuery = { copy(data = data.reset()) },
+                                    cursorListLoader = recordRepository::listMembers,
+                                    onNewItems = { items ->
+                                        items.distinctBy(ListMember::uri)
+                                    },
+                                )
                             },
                         )
-                    },
-                ),
-            )
-            state.stateHolders = state.stateHolders
-                .filterIsInstance<ListScreenStateHolders.Timeline>() + createdHolder
+                )
+            state.stateHolders =
+                state.stateHolders.filterIsInstance<ListScreenStateHolders.Timeline>() +
+                    createdHolder
         }
 }
 
@@ -327,129 +352,141 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.Interaction(it.interaction) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = {
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = it.mutedWordPreference
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.AddListMember>.launchAddListMemberMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.FeedList.AddMember(
-            create = ListMember.Create(
-                subjectId = it.profileId,
-                listUri = it.listUri,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = {
+            Writable.FeedList.AddMember(
+                create =
+                    ListMember.Create(
+                        subjectId = it.profileId,
+                        listUri = it.listUri,
+                    )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.Restriction(
-            Profile.Restriction.Block.Add(
-                signedInProfileId = it.signedInProfileId,
-                profileId = it.profileId,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = {
+            Writable.Restriction(
+                Profile.Restriction.Block.Add(
+                    signedInProfileId = it.signedInProfileId,
+                    profileId = it.profileId,
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.Restriction(
-            Profile.Restriction.Mute.Add(
-                signedInProfileId = it.signedInProfileId,
-                profileId = it.profileId,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = {
+            Writable.Restriction(
+                Profile.Restriction.Mute.Add(
+                    signedInProfileId = it.signedInProfileId,
+                    profileId = it.profileId,
+                )
+            )
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchProfiles>.launchSearchMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = debounce(SEARCH_DEBOUNCE_MILLIS).launchAndCollectLatest { action ->
-    if (action.query.isBlank()) {
-        state.suggestedProfiles = emptyList()
-        return@launchAndCollectLatest
+) =
+    debounce(SEARCH_DEBOUNCE_MILLIS).launchAndCollectLatest { action ->
+        if (action.query.isBlank()) {
+            state.suggestedProfiles = emptyList()
+            return@launchAndCollectLatest
+        }
+        searchRepository
+            .autoCompleteProfileSearch(
+                query =
+                    SearchQuery.OfProfiles(
+                        query = action.query,
+                        isLocalOnly = false,
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                                limit = MAX_SUGGESTED_PROFILES.toLong(),
+                            ),
+                    ),
+                cursor = Cursor.Initial,
+            )
+            .collect { profiles ->
+                state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
+            }
     }
-    searchRepository.autoCompleteProfileSearch(
-        query = SearchQuery.OfProfiles(
-            query = action.query,
-            isLocalOnly = false,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = MAX_SUGGESTED_PROFILES.toLong(),
-            ),
-        ),
-        cursor = Cursor.Initial,
-    ).collect { profiles ->
-        state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
@@ -457,43 +494,47 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection =
     Writable.Connection(
         when (val following = this.following) {
-            null -> Profile.Connection.Follow(
-                signedInProfileId = signedInProfileId,
-                profileId = viewedProfileId,
-                followedBy = followedBy,
-            )
-            else -> Profile.Connection.Unfollow(
-                signedInProfileId = signedInProfileId,
-                profileId = viewedProfileId,
-                followUri = following,
-                followedBy = followedBy,
-            )
-        },
+            null ->
+                Profile.Connection.Follow(
+                    signedInProfileId = signedInProfileId,
+                    profileId = viewedProfileId,
+                    followedBy = followedBy,
+                )
+            else ->
+                Profile.Connection.Unfollow(
+                    signedInProfileId = signedInProfileId,
+                    profileId = viewedProfileId,
+                    followUri = following,
+                    followedBy = followedBy,
+                )
+        }
     )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { it.toConnectionWritable() },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { it.toConnectionWritable() },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateFeedListStatus>.launchFeedListStatusMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.TimelineUpdate(it.update) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.TimelineUpdate(it.update) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
@@ -515,15 +556,18 @@ private fun launchListStatusMutations(
         .distinctUntilChangedBy { it.timelinePreferences }
         .launchAndCollect { preferences ->
             val pinned =
-                preferences.timelinePreferences.firstOrNull {
-                    it.timelineRecordUri == listTimeline.feedList.uri
-                }?.pinned
+                preferences.timelinePreferences
+                    .firstOrNull {
+                        it.timelineRecordUri == listTimeline.feedList.uri
+                    }
+                    ?.pinned
 
-            state.listStatus = when (pinned) {
-                true -> Timeline.Home.Status.Pinned
-                false -> Timeline.Home.Status.Saved
-                null -> Timeline.Home.Status.None
-            }
+            state.listStatus =
+                when (pinned) {
+                    true -> Timeline.Home.Status.Pinned
+                    false -> Timeline.Home.Status.Saved
+                    null -> Timeline.Home.Status.None
+                }
         }
 }
 
@@ -536,43 +580,35 @@ private fun launchTimelineCreatorMutations(
     when (timeline) {
         is Timeline.Home.Feed,
         is Timeline.Home.Following,
-        is Timeline.Profile,
-        -> return
+        is Timeline.Profile -> return
 
-        is Timeline.Home.List -> profileRepository.profile(
-            profileId = timeline.feedList.creator.did,
-        )
+        is Timeline.Home.List ->
+            profileRepository.profile(profileId = timeline.feedList.creator.did)
 
-        is Timeline.StarterPack -> profileRepository.profile(
-            profileId = timeline.starterPack.creator.did,
-        )
+        is Timeline.StarterPack ->
+            profileRepository.profile(profileId = timeline.starterPack.creator.did)
     }.launchAndCollect {
         state.creator = it
     }
 }
 
 private fun State.SnapshotMutable.existingTimelineStateHolder(): ListScreenStateHolders.Timeline? =
-    stateHolders
-        .filterIsInstance<ListScreenStateHolders.Timeline>()
-        .firstOrNull()
-        .takeUnless { it?.mutator.isNoOp() }
+    stateHolders.filterIsInstance<ListScreenStateHolders.Timeline>().firstOrNull().takeUnless {
+        it?.mutator.isNoOp()
+    }
 
 private fun State.SnapshotMutable.existingMembersStateHolder(): ListScreenStateHolders.Members? =
-    stateHolders
-        .filterIsInstance<ListScreenStateHolders.Members>()
-        .firstOrNull()
+    stateHolders.filterIsInstance<ListScreenStateHolders.Members>().firstOrNull()
 
-private fun defaultQueryData() = CursorQuery.Data(
-    page = 0,
-    cursorAnchor = Clock.System.now(),
-    limit = 15,
-)
+private fun defaultQueryData() =
+    CursorQuery.Data(
+        page = 0,
+        cursorAnchor = Clock.System.now(),
+        limit = 15,
+    )
 
-internal inline fun <T> Timeline.withListTimelineOrNull(
-    block: (Timeline.Home.List) -> T,
-) =
-    if (this is Timeline.Home.List) block(this)
-    else null
+internal inline fun <T> Timeline.withListTimelineOrNull(block: (Timeline.Home.List) -> T) =
+    if (this is Timeline.Home.List) block(this) else null
 
 private const val SEARCH_DEBOUNCE_MILLIS = 300L
 private const val MAX_SUGGESTED_PROFILES = 5

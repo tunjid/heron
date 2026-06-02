@@ -46,22 +46,20 @@ internal fun PostReasonLine(
     onProfileClicked: (Post, Profile) -> Unit,
 ) {
     when (item) {
-        is TimelineItem.Pinned -> PostPinnedReasonLine(
-            modifier = modifier,
-        )
+        is TimelineItem.Pinned -> PostPinnedReasonLine(modifier = modifier)
 
-        is TimelineItem.Repost -> PostRepostReasonLine(
-            modifier = modifier,
-            repostBy = item.by,
-            onProfileClicked = {
-                onProfileClicked(item.post, it)
-            },
-        )
+        is TimelineItem.Repost ->
+            PostRepostReasonLine(
+                modifier = modifier,
+                repostBy = item.by,
+                onProfileClicked = {
+                    onProfileClicked(item.post, it)
+                },
+            )
 
         is TimelineItem.Threaded,
         is TimelineItem.Single,
-        is TimelineItem.Placeholder,
-        -> Unit
+        is TimelineItem.Placeholder -> Unit
     }
 }
 
@@ -75,17 +73,16 @@ private fun PostRepostReasonLine(
         modifier = modifier.clickable { onProfileClicked(repostBy) },
         imageVector = Icons.Rounded.Repeat,
         iconContentDescription = stringResource(Res.string.repost),
-        text = stringResource(
-            Res.string.repost_by,
-            repostBy.displayName ?: repostBy.handle,
-        ),
+        text =
+            stringResource(
+                Res.string.repost_by,
+                repostBy.displayName ?: repostBy.handle,
+            ),
     )
 }
 
 @Composable
-private fun PostPinnedReasonLine(
-    modifier: Modifier = Modifier,
-) {
+private fun PostPinnedReasonLine(modifier: Modifier = Modifier) {
     PostReasonLine(
         modifier = modifier,
         imageVector = Icons.Rounded.Star,

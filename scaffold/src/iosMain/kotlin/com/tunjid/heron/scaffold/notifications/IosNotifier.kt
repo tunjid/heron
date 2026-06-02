@@ -18,7 +18,6 @@ package com.tunjid.heron.scaffold.notifications
 
 import com.tunjid.heron.data.core.models.Notification
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
@@ -34,22 +33,24 @@ class IosNotifier : Notifier {
             val notificationId = notification.uri.uri
             if (notificationId in showingIds) continue
 
-            val content = UNMutableNotificationContent().apply {
-                setTitle(notification.title())
-                notification.body()?.let(::setBody)
-                setUserInfo(
-                    mapOf<Any?, Any>(
-                        DEEP_LINK_SCHEME_KEY to notification.deepLinkScheme(),
-                        DEEP_LINK_PATH_KEY to notification.deepLinkPath(),
-                    ),
-                )
-            }
+            val content =
+                UNMutableNotificationContent().apply {
+                    setTitle(notification.title())
+                    notification.body()?.let(::setBody)
+                    setUserInfo(
+                        mapOf<Any?, Any>(
+                            DEEP_LINK_SCHEME_KEY to notification.deepLinkScheme(),
+                            DEEP_LINK_PATH_KEY to notification.deepLinkPath(),
+                        )
+                    )
+                }
 
-            val request = UNNotificationRequest.requestWithIdentifier(
-                identifier = notificationId,
-                content = content,
-                trigger = null,
-            )
+            val request =
+                UNNotificationRequest.requestWithIdentifier(
+                    identifier = notificationId,
+                    content = content,
+                    trigger = null,
+                )
 
             center.addNotificationRequest(request, withCompletionHandler = null)
         }
@@ -61,18 +62,14 @@ class IosNotifier : Notifier {
     }
 }
 
-private suspend fun getDeliveredNotificationIds(
-    center: UNUserNotificationCenter,
-): Set<String> = suspendCancellableCoroutine { continuation ->
-    center.getDeliveredNotificationsWithCompletionHandler { delivered ->
-        if (!continuation.isActive) return@getDeliveredNotificationsWithCompletionHandler
-        val ids = delivered
-            ?.mapNotNullTo(mutableSetOf()) {
-                (it as? platform.UserNotifications.UNNotification)
-                    ?.request
-                    ?.identifier
-            }
-            ?: emptySet()
-        continuation.resume(ids)
+private suspend fun getDeliveredNotificationIds(center: UNUserNotificationCenter): Set<String> =
+    suspendCancellableCoroutine { continuation ->
+        center.getDeliveredNotificationsWithCompletionHandler { delivered ->
+            if (!continuation.isActive) return@getDeliveredNotificationsWithCompletionHandler
+            val ids =
+                delivered?.mapNotNullTo(mutableSetOf()) {
+                    (it as? platform.UserNotifications.UNNotification)?.request?.identifier
+                } ?: emptySet()
+            continuation.resume(ids)
+        }
     }
-}

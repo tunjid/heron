@@ -87,22 +87,15 @@ import org.jetbrains.compose.resources.stringResource
 private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
 private const val RouteUriPattern = "/{profileHandleOrId}/app.bsky.feed.post/{postRecordKey}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
-internal val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+internal val Route.postRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+internal val Route.profileHandleOrId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 @BindingContainer
 object PostDetailNavigationBindings {
@@ -139,11 +132,12 @@ class PostDetailBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     @Provides
     @IntoMap
@@ -152,146 +146,155 @@ class PostDetailBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry<Route>(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: PostDetailStateHolder = viewModel<ActualPostDetailViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val stateHolder: PostDetailStateHolder =
+                    viewModel<ActualPostDetailViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.title),
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                        actions = {
-                            ThreadDisplayOptions(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp),
-                                order = state.order,
-                                viewMode = state.viewMode,
-                                onOrderChanged = {
-                                    stateHolder.accept(Action.Load.Order(it))
-                                },
-                                onViewModeChanged = {
-                                    stateHolder.accept(Action.Load.ViewMode(it))
-                                },
-                            )
-                        },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            title = {
+                                AppBarTitle(title = stringResource(Res.string.title))
                             },
-                    )
-                },
-                floatingActionButton = {
-                    if (state.anchorPost?.viewerStats.canReply) PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                            actions = {
+                                ThreadDisplayOptions(
+                                    modifier = Modifier.padding(horizontal = 8.dp),
+                                    order = state.order,
+                                    viewMode = state.viewMode,
+                                    onOrderChanged = {
+                                        stateHolder.accept(Action.Load.Order(it))
+                                    },
+                                    onViewModeChanged = {
+                                        stateHolder.accept(Action.Load.ViewMode(it))
+                                    },
+                                )
                             },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                else -> Res.string.reply
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            else -> Icons.AutoMirrored.Rounded.Reply
-                        },
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = onClick@{
-                            val anchorPost = state.anchorPost ?: return@onClick
-                            stateHolder.accept(
-                                Action.Navigate.To(
+                        )
+                    },
+                    snackBarHost = {
+                        PaneSnackbarHost(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                }
+                        )
+                    },
+                    floatingActionButton = {
+                        if (state.anchorPost?.viewerStats.canReply)
+                            PaneFab(
+                                modifier =
+                                    Modifier.offset {
+                                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                    },
+                                text =
+                                    stringResource(
+                                        when {
+                                            isSignedOut -> CommonStrings.sign_in
+                                            else -> Res.string.reply
+                                        }
+                                    ),
+                                icon =
                                     when {
-                                        isSignedOut -> signInDestination()
-                                        else -> composePostDestination(
-                                            type = Post.Create.Reply(
-                                                parent = anchorPost,
-                                            ),
-                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                                        else -> Icons.AutoMirrored.Rounded.Reply
+                                    },
+                                expanded =
+                                    isFabExpanded {
+                                        if (prefersAutoHidingBottomNav)
+                                            bottomNavigationNestedScrollConnection.offset
+                                        else topAppBarNestedScrollConnection.offset * -1f
+                                    },
+                                onClick = onClick@{
+                                        val anchorPost = state.anchorPost ?: return@onClick
+                                        stateHolder.accept(
+                                            Action.Navigate.To(
+                                                when {
+                                                    isSignedOut -> signInDestination()
+                                                    else ->
+                                                        composePostDestination(
+                                                            type =
+                                                                Post.Create.Reply(
+                                                                    parent = anchorPost
+                                                                ),
+                                                            sharedElementPrefix =
+                                                                state.sharedElementPrefix,
+                                                        )
+                                                }
+                                            )
                                         )
                                     },
-                                ),
                             )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    PostDetailScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                }
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail()
+                    },
+                    content = {
+                        PostDetailScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                            modifier = Modifier,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

@@ -49,26 +49,19 @@ fun EmptyContent(
     icon: ImageVector,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(
-                vertical = 36.dp,
-            ),
+        modifier = modifier.fillMaxSize().padding(vertical = 36.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .padding(32.dp)
-                .fillMaxHeight(0.6f)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(32.dp).fillMaxHeight(0.6f).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier =
+                    Modifier.size(72.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

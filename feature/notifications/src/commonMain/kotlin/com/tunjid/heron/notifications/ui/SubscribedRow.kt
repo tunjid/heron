@@ -56,8 +56,8 @@ fun SubscribedRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onPostClicked(notification)
             },
         isRead = isRead,
@@ -68,7 +68,8 @@ fun SubscribedRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.FiberNew),
                 tint = BookmarkBlue,
-                contentDescription = stringResource(CommonStrings.notifications_post_subscription_description),
+                contentDescription =
+                    stringResource(CommonStrings.notifications_post_subscription_description),
             )
         },
         content = {
@@ -76,12 +77,14 @@ fun SubscribedRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = CommonStrings.notifications_post_subscription,
-                            pluralResource = CommonStrings.notifications_multiple_post_subscription,
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource = CommonStrings.notifications_post_subscription,
+                                pluralResource =
+                                    CommonStrings.notifications_multiple_post_subscription,
+                            ),
                     )
 
                     TimeDelta(

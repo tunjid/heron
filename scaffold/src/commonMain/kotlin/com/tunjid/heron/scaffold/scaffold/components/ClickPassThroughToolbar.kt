@@ -45,14 +45,10 @@ internal fun ClickPassThroughToolbar(
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val containerColor = colors.containerColor
-    Column(
-        modifier = modifier
-            .drawBehind { drawRect(containerColor) },
-    ) {
+    Column(modifier = modifier.drawBehind { drawRect(containerColor) }) {
         Spacer(Modifier.windowInsetsTopHeight(windowInsets))
         Row(
-            modifier = Modifier
-                .height(UiTokens.toolbarHeight),
+            modifier = Modifier.height(UiTokens.toolbarHeight),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -60,10 +56,7 @@ internal fun ClickPassThroughToolbar(
                 navigationIcon()
             }
             CompositionLocalProvider(LocalContentColor provides colors.titleContentColor) {
-                Row(
-                    modifier = Modifier
-                        .weight(1f),
-                ) {
+                Row(modifier = Modifier.weight(1f)) {
                     title()
                 }
             }

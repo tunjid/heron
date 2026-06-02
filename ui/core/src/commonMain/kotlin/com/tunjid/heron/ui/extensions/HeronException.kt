@@ -53,41 +53,60 @@ import heron.ui.core.generated.resources.error_unresolvable_profile
 import heron.ui.core.generated.resources.error_unresolvable_record
 
 val HeronException.messageResource: Memo.Resource
-    get() = when (this) {
-        is ExpiredSessionException -> Memo.Resource(stringResource = Res.string.error_expired_session)
-        is MutedThreadException -> Memo.Resource(stringResource = Res.string.error_muted_thread)
-        is NotificationFilteredOutException -> Memo.Resource(stringResource = Res.string.error_notification_filtered_out)
-        is RecordCreationException -> Memo.Resource(stringResource = Res.string.error_record_creation)
-        is RestrictedProfileException -> Memo.Resource(stringResource = Res.string.error_restricted_profile)
-        is SessionSwitchException -> Memo.Resource(stringResource = Res.string.error_session_switch)
-        is UnknownNotificationException -> Memo.Resource(stringResource = Res.string.error_unknown_notification)
-        is UnresolvableProfileException -> Memo.Resource(stringResource = Res.string.error_unresolvable_profile)
-        is UnresolvableRecordException -> Memo.Resource(stringResource = Res.string.error_unresolvable_record)
-        is InvalidTokenException -> Memo.Resource(stringResource = Res.string.error_invalid_token)
-        is UnauthorizedException -> Memo.Resource(stringResource = Res.string.error_unauthorized)
-        is AtProtoException ->
-            if (error != null) Memo.Resource(
-                stringResource = Res.string.error_atproto_with_error,
-                args = listOf(error as Any),
-            )
-            else when (statusCode) {
-                400 -> Memo.Resource(stringResource = Res.string.error_network_bad_request)
-                401 -> Memo.Resource(stringResource = Res.string.error_network_unauthorized)
-                403 -> Memo.Resource(stringResource = Res.string.error_network_forbidden)
-                404 -> Memo.Resource(stringResource = Res.string.error_network_not_found)
-                429 -> Memo.Resource(stringResource = Res.string.error_network_too_many_requests)
-                in 500..599 -> Memo.Resource(stringResource = Res.string.error_network_server_error)
-                else -> Memo.Resource(
-                    stringResource = Res.string.error_network_unknown,
-                    args = listOf(statusCode as Any),
-                )
-            }
-    }
+    get() =
+        when (this) {
+            is ExpiredSessionException ->
+                Memo.Resource(stringResource = Res.string.error_expired_session)
+            is MutedThreadException -> Memo.Resource(stringResource = Res.string.error_muted_thread)
+            is NotificationFilteredOutException ->
+                Memo.Resource(stringResource = Res.string.error_notification_filtered_out)
+            is RecordCreationException ->
+                Memo.Resource(stringResource = Res.string.error_record_creation)
+            is RestrictedProfileException ->
+                Memo.Resource(stringResource = Res.string.error_restricted_profile)
+            is SessionSwitchException ->
+                Memo.Resource(stringResource = Res.string.error_session_switch)
+            is UnknownNotificationException ->
+                Memo.Resource(stringResource = Res.string.error_unknown_notification)
+            is UnresolvableProfileException ->
+                Memo.Resource(stringResource = Res.string.error_unresolvable_profile)
+            is UnresolvableRecordException ->
+                Memo.Resource(stringResource = Res.string.error_unresolvable_record)
+            is InvalidTokenException ->
+                Memo.Resource(stringResource = Res.string.error_invalid_token)
+            is UnauthorizedException ->
+                Memo.Resource(stringResource = Res.string.error_unauthorized)
+            is AtProtoException ->
+                if (error != null)
+                    Memo.Resource(
+                        stringResource = Res.string.error_atproto_with_error,
+                        args = listOf(error as Any),
+                    )
+                else
+                    when (statusCode) {
+                        400 -> Memo.Resource(stringResource = Res.string.error_network_bad_request)
+                        401 -> Memo.Resource(stringResource = Res.string.error_network_unauthorized)
+                        403 -> Memo.Resource(stringResource = Res.string.error_network_forbidden)
+                        404 -> Memo.Resource(stringResource = Res.string.error_network_not_found)
+                        429 ->
+                            Memo.Resource(
+                                stringResource = Res.string.error_network_too_many_requests
+                            )
+                        in 500..599 ->
+                            Memo.Resource(stringResource = Res.string.error_network_server_error)
+                        else ->
+                            Memo.Resource(
+                                stringResource = Res.string.error_network_unknown,
+                                args = listOf(statusCode as Any),
+                            )
+                    }
+        }
 
 val Throwable.userMessage: Memo
     get() =
         if (this is HeronException) this.messageResource
-        else Memo.Resource(
-            stringResource = Res.string.error_generic,
-            args = listOf((message ?: toString()) as Any),
-        )
+        else
+            Memo.Resource(
+                stringResource = Res.string.error_generic,
+                args = listOf((message ?: toString()) as Any),
+            )

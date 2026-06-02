@@ -45,9 +45,7 @@ class SignInPopUpState private constructor() {
 
     companion object {
         @Composable
-        fun rememberSignInPopUpState(
-            onSignInClicked: () -> Unit,
-        ): SignInPopUpState {
+        fun rememberSignInPopUpState(onSignInClicked: () -> Unit): SignInPopUpState {
             val state = remember(::SignInPopUpState)
 
             SignInPopUp(
@@ -71,14 +69,10 @@ private fun SignInPopUp(
             state.visible = false
         },
         title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.signed_out),
-            )
+            SimpleDialogTitle(text = stringResource(Res.string.signed_out))
         },
         text = {
-            SimpleDialogText(
-                text = stringResource(Res.string.sign_in_prompt),
-            )
+            SimpleDialogText(text = stringResource(Res.string.sign_in_prompt))
         },
         confirmButton = {
             PrimaryDialogButton(

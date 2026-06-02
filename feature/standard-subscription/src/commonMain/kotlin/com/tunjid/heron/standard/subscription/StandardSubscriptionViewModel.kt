@@ -59,11 +59,10 @@ class ActualStandardSubscriptionViewModel(
     navActions: (NavigationMutation) -> Unit,
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("unused") @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("unused") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -73,18 +72,22 @@ class ActualStandardSubscriptionViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.Tile -> action.flow.launchSubscriptionLoadMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.Navigate ->
+                        action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                    is Action.Tile ->
+                        action.flow.launchSubscriptionLoadMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                        )
+                    is Action.TogglePublicationSubscription ->
+                        action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                 }
             }
         },
@@ -94,39 +97,41 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchSubscriptionLoadMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-) = map { it.tilingAction }
-    .launchTilingMutations(
-        state = state,
-        updateQueryData = { copy(data = it) },
-        refreshQuery = { copy(data = data.reset()) },
-        cursorListLoader = recordRepository::subscribedPublications,
-        onNewItems = { items -> items.distinctBy(StandardPublication::uri) },
-    )
+) =
+    map { it.tilingAction }
+        .launchTilingMutations(
+            state = state,
+            updateQueryData = { copy(data = it) },
+            refreshQuery = { copy(data = data.reset()) },
+            cursorListLoader = recordRepository::subscribedPublications,
+            onNewItems = { items -> items.distinctBy(StandardPublication::uri) },
+        )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            when (action) {
+                is Action.TogglePublicationSubscription.Subscribe ->
+                    Writable.StandardSite.Subscribe(
+                        create = StandardSubscription.Create(publicationUri = action.publicationUri)
+                    )
+                is Action.TogglePublicationSubscription.Unsubscribe ->
+                    Writable.RecordDeletion(recordUri = action.subscriptionUri)
+            }
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }

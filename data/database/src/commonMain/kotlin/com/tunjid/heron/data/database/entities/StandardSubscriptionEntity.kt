@@ -29,40 +29,42 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "standardSubscriptions",
-    primaryKeys = [
-        "publicationUri",
-        "viewingProfileId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = StandardPublicationEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["publicationUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["viewingProfileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["publicationUri"]),
-        Index(value = ["viewingProfileId"]),
-        Index(value = ["sortedAt"]),
-    ],
+    primaryKeys =
+        [
+            "publicationUri",
+            "viewingProfileId",
+        ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = StandardPublicationEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["publicationUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["viewingProfileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["publicationUri"]),
+            Index(value = ["viewingProfileId"]),
+            Index(value = ["sortedAt"]),
+        ],
 )
 data class StandardSubscriptionEntity(
     val uri: StandardSubscriptionUri,
     val cid: StandardSubscriptionId?,
     val publicationUri: StandardPublicationUri,
     val viewingProfileId: ProfileId,
-    @ColumnInfo(defaultValue = "0")
-    val sortedAt: Instant,
+    @ColumnInfo(defaultValue = "0") val sortedAt: Instant,
 ) {
     data class Deletion(
         val publicationUri: StandardPublicationUri,
@@ -70,9 +72,10 @@ data class StandardSubscriptionEntity(
     )
 }
 
-internal fun StandardSubscriptionEntity.asExternalModel() = StandardSubscription(
-    uri = uri,
-    cid = cid,
-    publicationUri = publicationUri,
-    sortedAt = sortedAt,
-)
+internal fun StandardSubscriptionEntity.asExternalModel() =
+    StandardSubscription(
+        uri = uri,
+        cid = cid,
+        publicationUri = publicationUri,
+        sortedAt = sortedAt,
+    )

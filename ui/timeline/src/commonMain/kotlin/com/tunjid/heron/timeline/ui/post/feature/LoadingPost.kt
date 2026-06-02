@@ -47,37 +47,37 @@ internal fun LoadingPost(
 ) {
     val shimmerState = rememberShimmerState()
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                vertical = presentation.postVerticalPadding,
-            ),
+        modifier = modifier.fillMaxWidth().padding(vertical = presentation.postVerticalPadding),
         verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
     ) {
         presentation.placeholders.forEach { placeholder ->
             key(placeholder) {
                 when (placeholder) {
-                    Placeholder.Attribution -> AttributionPlaceholder(
-                        shimmerState = shimmerState,
-                        modifier = Modifier.padding(
-                            start = 8.dp,
-                            end = 8.dp,
-                        ),
-                    )
+                    Placeholder.Attribution ->
+                        AttributionPlaceholder(
+                            shimmerState = shimmerState,
+                            modifier =
+                                Modifier.padding(
+                                    start = 8.dp,
+                                    end = 8.dp,
+                                ),
+                        )
 
-                    Placeholder.Text -> TextPlaceholders(
-                        shimmerState = shimmerState,
-                        modifier = Modifier.padding(
-                            start = 24.dp,
-                            end = 16.dp,
-                        ),
-                    )
+                    Placeholder.Text ->
+                        TextPlaceholders(
+                            shimmerState = shimmerState,
+                            modifier =
+                                Modifier.padding(
+                                    start = 24.dp,
+                                    end = 16.dp,
+                                ),
+                        )
 
-                    Placeholder.Media -> MediaPlaceholder(
-                        shimmerState = shimmerState,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
+                    Placeholder.Media ->
+                        MediaPlaceholder(
+                            shimmerState = shimmerState,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                 }
             }
         }
@@ -93,29 +93,27 @@ private fun AttributionPlaceholder(
         modifier = modifier,
         avatar = {
             Box(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clip(RoundedPolygonShape.Circle)
-                    .shimmer(shimmerState),
+                modifier =
+                    Modifier.size(UiTokens.avatarSize)
+                        .clip(RoundedPolygonShape.Circle)
+                        .shimmer(shimmerState)
             )
         },
         label = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(14.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .shimmer(shimmerState),
+                    modifier =
+                        Modifier.width(120.dp)
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .shimmer(shimmerState)
                 )
                 Box(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .shimmer(shimmerState),
+                    modifier =
+                        Modifier.width(80.dp)
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .shimmer(shimmerState)
                 )
             }
         },
@@ -132,18 +130,18 @@ private fun TextPlaceholders(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(16.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .shimmer(shimmerState),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .shimmer(shimmerState)
         )
         Box(
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .height(16.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .shimmer(shimmerState),
+            modifier =
+                Modifier.fillMaxWidth(0.7f)
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .shimmer(shimmerState)
         )
     }
 }
@@ -153,11 +151,7 @@ private fun MediaPlaceholder(
     shimmerState: ShimmerState,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .shimmer(shimmerState),
-    )
+    Box(modifier = modifier.aspectRatio(1f).shimmer(shimmerState))
 }
 
 private enum class Placeholder {
@@ -167,36 +161,38 @@ private enum class Placeholder {
 }
 
 private val Timeline.Presentation.placeholders: List<Placeholder>
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> listOf(
-            Placeholder.Attribution,
-            Placeholder.Text,
-        )
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed ->
+                listOf(
+                    Placeholder.Attribution,
+                    Placeholder.Text,
+                )
 
-        Timeline.Presentation.Media.Expanded -> listOf(
-            Placeholder.Attribution,
-            Placeholder.Media,
-        )
+            Timeline.Presentation.Media.Expanded ->
+                listOf(
+                    Placeholder.Attribution,
+                    Placeholder.Media,
+                )
 
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-        -> listOf(
-            Placeholder.Media,
-        )
-    }
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid -> listOf(Placeholder.Media)
+        }
 
 private val Timeline.Presentation.postVerticalPadding: Dp
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
+            Timeline.Presentation.Media.Grid -> 0.dp
+        }
 
 private val Timeline.Presentation.postContentSpacing: Dp
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
+            Timeline.Presentation.Media.Grid -> 0.dp
+        }

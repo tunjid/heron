@@ -31,95 +31,79 @@ typealias ContentLabelPreferences = List<ContentLabelPreference>
 
 @Serializable
 data class Preferences(
-    @ProtoNumber(1)
-    val local: Local = Local(),
-    @ProtoNumber(2)
-    val allowAdultContent: Boolean = false,
-    @ProtoNumber(3)
-    val timelinePreferences: List<TimelinePreference> = emptyList(),
-    @ProtoNumber(4)
-    val contentLabelPreferences: ContentLabelPreferences = emptyList(),
-    @ProtoNumber(5)
-    val labelerPreferences: List<LabelerPreference> = emptyList(),
-    @ProtoNumber(6)
-    val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
-    @ProtoNumber(7)
-    val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
-    @ProtoNumber(8)
-    val declaredAgePreferences: DeclaredAgePreference? = null,
-    @ProtoNumber(9)
-    val threadViewPreferences: ThreadViewPreference? = null,
-    @ProtoNumber(10)
-    val postInteractionSettings: PostInteractionSettingsPreference? = null,
-    @ProtoNumber(11)
-    val verificationPreferences: VerificationPreference? = null,
-    @ProtoNumber(12)
-    val feedPreferences: List<FeedPreference> = emptyList(),
+    @ProtoNumber(1) val local: Local = Local(),
+    @ProtoNumber(2) val allowAdultContent: Boolean = false,
+    @ProtoNumber(3) val timelinePreferences: List<TimelinePreference> = emptyList(),
+    @ProtoNumber(4) val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    @ProtoNumber(5) val labelerPreferences: List<LabelerPreference> = emptyList(),
+    @ProtoNumber(6) val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
+    @ProtoNumber(7) val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
+    @ProtoNumber(8) val declaredAgePreferences: DeclaredAgePreference? = null,
+    @ProtoNumber(9) val threadViewPreferences: ThreadViewPreference? = null,
+    @ProtoNumber(10) val postInteractionSettings: PostInteractionSettingsPreference? = null,
+    @ProtoNumber(11) val verificationPreferences: VerificationPreference? = null,
+    @ProtoNumber(12) val feedPreferences: List<FeedPreference> = emptyList(),
 ) : UrlEncodableModel {
 
     @Serializable
     data class Local(
-        @ProtoNumber(1)
-        val lastViewedHomeTimelineUri: Uri? = null,
-        @ProtoNumber(2)
-        val refreshHomeTimelineOnLaunch: Boolean = false,
-        @ProtoNumber(3)
-        val currentThemeOrdinal: Int = 0,
-        @ProtoNumber(4)
-        val useCompactNavigation: Boolean = false,
-        @ProtoNumber(5)
-        val autoHideBottomNavigation: Boolean = true,
-        @ProtoNumber(6)
-        val autoPlayTimelineVideos: Boolean = true,
-        @ProtoNumber(7)
-        val showPostEngagementMetrics: Boolean = true,
-        @ProtoNumber(8)
-        val showTrendingTopics: Boolean = true,
-        @ProtoNumber(9)
-        val allowAllTimelinePresentations: Boolean = false,
+        @ProtoNumber(1) val lastViewedHomeTimelineUri: Uri? = null,
+        @ProtoNumber(2) val refreshHomeTimelineOnLaunch: Boolean = false,
+        @ProtoNumber(3) val currentThemeOrdinal: Int = 0,
+        @ProtoNumber(4) val useCompactNavigation: Boolean = false,
+        @ProtoNumber(5) val autoHideBottomNavigation: Boolean = true,
+        @ProtoNumber(6) val autoPlayTimelineVideos: Boolean = true,
+        @ProtoNumber(7) val showPostEngagementMetrics: Boolean = true,
+        @ProtoNumber(8) val showTrendingTopics: Boolean = true,
+        @ProtoNumber(9) val allowAllTimelinePresentations: Boolean = false,
     )
 
     companion object {
-        val EmptyPreferences = Preferences(
-            timelinePreferences = emptyList(),
-            contentLabelPreferences = emptyList(),
-        )
+        val EmptyPreferences =
+            Preferences(
+                timelinePreferences = emptyList(),
+                contentLabelPreferences = emptyList(),
+            )
 
-        val BlueSkyGuestPreferences = Preferences(
-            timelinePreferences = listOf(
-                TimelinePreference(
-                    id = Constants.blueSkyDiscoverFeed.uri,
-                    type = "feed",
-                    value = Constants.blueSkyDiscoverFeed.uri,
-                    pinned = true,
-                ),
-                TimelinePreference(
-                    id = Constants.heronsFeed.uri,
-                    type = "feed",
-                    value = Constants.heronsFeed.uri,
-                    pinned = true,
-                ),
-            ),
-            contentLabelPreferences = emptyList(),
-        )
+        val BlueSkyGuestPreferences =
+            Preferences(
+                timelinePreferences =
+                    listOf(
+                        TimelinePreference(
+                            id = Constants.blueSkyDiscoverFeed.uri,
+                            type = "feed",
+                            value = Constants.blueSkyDiscoverFeed.uri,
+                            pinned = true,
+                        ),
+                        TimelinePreference(
+                            id = Constants.heronsFeed.uri,
+                            type = "feed",
+                            value = Constants.heronsFeed.uri,
+                            pinned = true,
+                        ),
+                    ),
+                contentLabelPreferences = emptyList(),
+            )
 
-        val BlackSkyGuestPreferences = Preferences(
-            timelinePreferences = listOf(
-                TimelinePreference(
-                    id = Constants.blackSkyTrendingFeed.uri,
-                    type = "feed",
-                    value = Constants.blackSkyTrendingFeed.uri,
-                    pinned = true,
-                ),
-                TimelinePreference(
-                    id = Constants.heronsFeed.uri,
-                    type = "feed",
-                    value = Constants.heronsFeed.uri,
-                    pinned = true,
-                ),
-            ),
-            contentLabelPreferences = emptyList(),
-        )
+        val BlackSkyGuestPreferences =
+            Preferences(
+                timelinePreferences =
+                    listOf(
+                        TimelinePreference(
+                            id = Constants.blackSkyTrendingFeed.uri,
+                            type = "feed",
+                            value = Constants.blackSkyTrendingFeed.uri,
+                            pinned = true,
+                        ),
+                        TimelinePreference(
+                            id = Constants.heronsFeed.uri,
+                            type = "feed",
+                            value = Constants.heronsFeed.uri,
+                            pinned = true,
+                        ),
+                    ),
+                contentLabelPreferences = emptyList(),
+            )
     }
 }
 
@@ -132,11 +116,12 @@ data class TimelinePreference(
 )
 
 val TimelinePreference.timelineRecordUri: RecordUri?
-    get() = when (type) {
-        "feed" -> FeedGeneratorUri(value)
-        "list" -> ListUri(value)
-        else -> null
-    }
+    get() =
+        when (type) {
+            "feed" -> FeedGeneratorUri(value)
+            "list" -> ListUri(value)
+            else -> null
+        }
 
 @Serializable
 data class ContentLabelPreference(
@@ -145,15 +130,9 @@ data class ContentLabelPreference(
     val visibility: Label.Visibility,
 )
 
-@Serializable
-data class LabelerPreference(
-    val labelerCreatorId: ProfileId,
-)
+@Serializable data class LabelerPreference(val labelerCreatorId: ProfileId)
 
-@Serializable
-data class HiddenPostPreference(
-    val uri: PostUri,
-)
+@Serializable data class HiddenPostPreference(val uri: PostUri)
 
 @Serializable
 data class MutedWordPreference(
@@ -162,11 +141,7 @@ data class MutedWordPreference(
     val actorTarget: Target? = null,
     val expiresAt: Instant? = null,
 ) {
-    @JvmInline
-    @Serializable
-    value class Target(
-        val value: String,
-    )
+    @JvmInline @Serializable value class Target(val value: String)
 
     companion object {
         val ContentTarget = Target("content")
@@ -174,20 +149,15 @@ data class MutedWordPreference(
     }
 }
 
-@Serializable
-data class DeclaredAgePreference(
-    val minAge: Int? = null,
-)
+@Serializable data class DeclaredAgePreference(val minAge: Int? = null)
 
 @Serializable
-data class ThreadViewPreference(
-    val sort: String? = null,
-) {
+data class ThreadViewPreference(val sort: String? = null) {
     companion object {
-        fun ThreadViewPreference?.order() = this?.let {
-            TimelineItem.Threaded.Order.entries
-                .firstOrNull { it.value == sort }
-        } ?: TimelineItem.Threaded.Order.Top
+        fun ThreadViewPreference?.order() =
+            this?.let {
+                TimelineItem.Threaded.Order.entries.firstOrNull { it.value == sort }
+            } ?: TimelineItem.Threaded.Order.Top
     }
 }
 
@@ -197,10 +167,7 @@ data class PostInteractionSettingsPreference(
     val allowedEmbeds: PostGate.AllowedEmbeds? = null,
 )
 
-@Serializable
-data class VerificationPreference(
-    val hideBadges: Boolean = false,
-)
+@Serializable data class VerificationPreference(val hideBadges: Boolean = false)
 
 @Serializable
 data class FeedPreference(
@@ -224,10 +191,9 @@ data class FeedPreference(
             get() = hideQuotePosts.isTrue
 
         fun List<FeedPreference>.homeFeedOrDefault(): FeedPreference =
-            firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
-                feed = HOME_FEED,
-            )
+            firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(feed = HOME_FEED)
     }
 }
 
-private val Boolean?.isTrue get() = this == true
+private val Boolean?.isTrue
+    get() = this == true

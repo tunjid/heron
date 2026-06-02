@@ -50,15 +50,15 @@ fun PublicationSubscriptionIcon(
         },
     ) { isSubscribed ->
         Icon(
-            modifier = Modifier
-                .size(iconSize),
+            modifier = Modifier.size(iconSize),
             imageVector =
-            if (isSubscribed) Icons.Rounded.NotificationsOff
-            else Icons.Rounded.NotificationsActive,
-            contentDescription = stringResource(
-                if (isSubscribed) CommonStrings.standard_publication_unsubscribe_from
-                else CommonStrings.standard_publication_subscribe_to,
-            ),
+                if (isSubscribed) Icons.Rounded.NotificationsOff
+                else Icons.Rounded.NotificationsActive,
+            contentDescription =
+                stringResource(
+                    if (isSubscribed) CommonStrings.standard_publication_unsubscribe_from
+                    else CommonStrings.standard_publication_subscribe_to
+                ),
             tint = iconTint,
         )
     }

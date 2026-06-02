@@ -20,6 +20,7 @@ plugins {
     id("org.jetbrains.compose")
     kotlin("plugin.serialization")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.feature.template"

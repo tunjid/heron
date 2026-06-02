@@ -28,18 +28,17 @@ import heron.feature.settings.generated.resources.give_feedback
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun FeedbackItem(
-    modifier: Modifier = Modifier,
-) {
+fun FeedbackItem(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
 
     SettingsItem(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                runCatching { uriHandler.openUri(FeedbackLink) }
-            }
-            .settingsItemPaddingAndMinHeight(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable {
+                    runCatching { uriHandler.openUri(FeedbackLink) }
+                }
+                .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.give_feedback),
         icon = Icons.Rounded.Feedback,
     )

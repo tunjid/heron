@@ -47,52 +47,56 @@ interface State : TilingState<PostDataQuery, TimelineItem> {
     @SnapshotSpec
     data class Immutable(
         val signedInProfileId: ProfileId? = null,
+        @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient val recentConversations: List<Conversation> = emptyList(),
+        @Transient val recentLists: List<FeedList> = emptyList(),
         @Transient
-        val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
-        override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
-            currentQuery = PostDataQuery(
-                profileId = ProfileHandle(""),
-                postRecordKey = RecordKey(""),
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                ),
+        override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> =
+            TilingState.Data(
+                currentQuery =
+                    PostDataQuery(
+                        profileId = ProfileHandle(""),
+                        postRecordKey = RecordKey(""),
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                            ),
+                    )
             ),
-        ),
-        @Transient
-        val messages: List<Memo> = emptyList(),
+        @Transient val messages: List<Memo> = emptyList(),
     ) : State
 
     companion object {
-        internal operator fun invoke(
-            request: PostsRequest,
-        ): Immutable = Immutable(
-            tilingData = TilingState.Data(
-                currentQuery = when (request) {
-                    is PostsRequest.Quotes -> PostDataQuery(
-                        profileId = request.profileHandleOrId,
-                        postRecordKey = request.postRecordKey,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
+        internal operator fun invoke(request: PostsRequest): Immutable =
+            Immutable(
+                tilingData =
+                    TilingState.Data(
+                        currentQuery =
+                            when (request) {
+                                is PostsRequest.Quotes ->
+                                    PostDataQuery(
+                                        profileId = request.profileHandleOrId,
+                                        postRecordKey = request.postRecordKey,
+                                        data =
+                                            CursorQuery.Data(
+                                                page = 0,
+                                                cursorAnchor = Clock.System.now(),
+                                            ),
+                                    )
+                                PostsRequest.Saved ->
+                                    PostDataQuery(
+                                        profileId = ProfileHandle(""),
+                                        postRecordKey = RecordKey(""),
+                                        data =
+                                            CursorQuery.Data(
+                                                page = 0,
+                                                cursorAnchor = Clock.System.now(),
+                                            ),
+                                    )
+                            }
                     )
-                    PostsRequest.Saved -> PostDataQuery(
-                        profileId = ProfileHandle(""),
-                        postRecordKey = RecordKey(""),
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
-                    )
-                },
-            ),
-        )
+            )
     }
 }
 
@@ -101,17 +105,13 @@ val State.isRefreshing: Boolean
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action("Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action("Tile")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,
@@ -123,26 +123,18 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
 
-    data class DeleteRecord(
-        val recordUri: RecordUri,
-    ) : Action(key = "DeleteRecord")
+    data class DeleteRecord(val recordUri: RecordUri) : Action(key = "DeleteRecord")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

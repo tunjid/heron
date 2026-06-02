@@ -96,36 +96,35 @@ import org.jetbrains.compose.resources.stringResource
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
 private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(
+        params = routeParams,
+        children = listOfNotNull(routeParams.decodeReferringRoute()),
+    )
 
-private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+private val Route.profileId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 private val Route.feedUriSuffix by routePath()
 
-private val RequestTrie = trieOf(
-    RoutePattern to { route: Route ->
-        TimelineRequest.OfFeed.WithProfile(
-            profileHandleOrDid = route.profileId,
-            feedUriSuffix = route.feedUriSuffix,
-        )
-    },
-    RouteUriPattern to { route: Route ->
-        TimelineRequest.OfFeed.WithUri(
-            uri = route.routeParams.pathAndQueries
-                .getAsRawUri(Uri.Host.AtProto)
-                .let(::FeedGeneratorUri),
-        )
-    },
-)
+private val RequestTrie =
+    trieOf(
+        RoutePattern to
+            { route: Route ->
+                TimelineRequest.OfFeed.WithProfile(
+                    profileHandleOrDid = route.profileId,
+                    feedUriSuffix = route.feedUriSuffix,
+                )
+            },
+        RouteUriPattern to
+            { route: Route ->
+                TimelineRequest.OfFeed.WithUri(
+                    uri =
+                        route.routeParams.pathAndQueries
+                            .getAsRawUri(Uri.Host.AtProto)
+                            .let(::FeedGeneratorUri)
+                )
+            },
+    )
 
 internal val Route.timelineRequest: TimelineRequest.OfFeed
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -165,11 +164,12 @@ class FeedBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     @Provides
     @IntoMap
@@ -178,129 +178,138 @@ class FeedBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            routeParser = routeParser,
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry<Route>(
-        contentTransform = navigationContentTransformer::contentTransform,
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val stateHolder: FeedStateHolder = viewModel<ActualFeedViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = navigationContentTransformer::contentTransform,
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val stateHolder: FeedStateHolder =
+                    viewModel<ActualFeedViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state = stateHolder.produceStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val editFeedText = stringResource(Res.string.edit_feed)
-            val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
-                signedInProfileId = state.signedInProfileId,
-                recentConversations = state.recentConversations,
-                editTitle = state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
-                    val isEditable = timeline.feedGenerator.isGrazeFeed &&
-                        state.signedInProfileId == timeline.feedGenerator.creator.did
-                    if (isEditable) editFeedText else null
-                },
-                onShareInConversationClicked = { recordUri, conversation ->
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = conversation.id,
-                                members = conversation.members,
-                                sharedElementPrefix = conversation.id.id,
-                                sharedUri = recordUri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
-                },
-                onEditClicked = onEditClicked@{
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            grazeEditorDestination(
-                                feedGenerator = state.timelineState
-                                    ?.timeline
-                                    ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
-                                    ?: return@onEditClicked,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                            ),
-                        ),
-                    )
-                },
-                onShareInPostClicked = { recordUri ->
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            composePostDestination(
-                                sharedUri = recordUri.asGenericUri(),
-                            ),
-                        ),
-                    )
-                },
-            )
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            TimelineTitle(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = ripple(bounded = false),
-                                        onClick = {
-                                            state.timelineStateHolder?.accept?.invoke(
-                                                TimelineState.Action.Tile(
-                                                    TilingState.Action.Refresh,
-                                                ),
-                                            )
-                                        },
-                                    ),
-                                paneTransitionScope = this,
-                                timeline = state.timelineState?.timeline,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                hasUpdates = state.timelineState?.hasUpdates == true,
-                                onPresentationSelected = { timeline, presentation ->
-                                    state.timelineStateHolder
-                                        ?.accept
-                                        ?.invoke(
-                                            TimelineState.Action.UpdatePreferredPresentation(
-                                                timeline = timeline,
-                                                presentation = presentation,
-                                            ),
-                                        )
-                                },
+                val editFeedText = stringResource(Res.string.edit_feed)
+                val recordOptionsSheetState =
+                    rememberUpdatedEmbeddableRecordOptionsState(
+                        signedInProfileId = state.signedInProfileId,
+                        recentConversations = state.recentConversations,
+                        editTitle =
+                            state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
+                                val isEditable =
+                                    timeline.feedGenerator.isGrazeFeed &&
+                                        state.signedInProfileId ==
+                                            timeline.feedGenerator.creator.did
+                                if (isEditable) editFeedText else null
+                            },
+                        onShareInConversationClicked = { recordUri, conversation ->
+                            stateHolder.accept(
+                                Action.Navigate.To(
+                                    conversationDestination(
+                                        id = conversation.id,
+                                        members = conversation.members,
+                                        sharedElementPrefix = conversation.id.id,
+                                        sharedUri = recordUri.asGenericUri(),
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                    )
+                                )
                             )
                         },
-                        actions = {
-                            state.timelineState
-                                ?.timeline
-                                ?.withFeedTimelineOrNull { feedTimeline ->
+                        onEditClicked = onEditClicked@{
+                                stateHolder.accept(
+                                    Action.Navigate.To(
+                                        grazeEditorDestination(
+                                            feedGenerator =
+                                                state.timelineState
+                                                    ?.timeline
+                                                    ?.withFeedTimelineOrNull(
+                                                        Timeline.Home.Feed::feedGenerator
+                                                    ) ?: return@onEditClicked,
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        )
+                                    )
+                                )
+                            },
+                        onShareInPostClicked = { recordUri ->
+                            stateHolder.accept(
+                                Action.Navigate.To(
+                                    composePostDestination(sharedUri = recordUri.asGenericUri())
+                                )
+                            )
+                        },
+                    )
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
+
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
+                    },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                TimelineTitle(
+                                    modifier =
+                                        Modifier.clip(CircleShape)
+                                            .clickable(
+                                                interactionSource =
+                                                    remember { MutableInteractionSource() },
+                                                indication = ripple(bounded = false),
+                                                onClick = {
+                                                    state.timelineStateHolder
+                                                        ?.accept
+                                                        ?.invoke(
+                                                            TimelineState.Action.Tile(
+                                                                TilingState.Action.Refresh
+                                                            )
+                                                        )
+                                                },
+                                            ),
+                                    paneTransitionScope = this,
+                                    timeline = state.timelineState?.timeline,
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    hasUpdates = state.timelineState?.hasUpdates == true,
+                                    onPresentationSelected = { timeline, presentation ->
+                                        state.timelineStateHolder
+                                            ?.accept
+                                            ?.invoke(
+                                                TimelineState.Action.UpdatePreferredPresentation(
+                                                    timeline = timeline,
+                                                    presentation = presentation,
+                                                )
+                                            )
+                                    },
+                                )
+                            },
+                            actions = {
+                                state.timelineState?.timeline?.withFeedTimelineOrNull { feedTimeline
+                                    ->
                                     FeedGeneratorStatus(
                                         status = state.feedStatus,
                                         uri = feedTimeline.feedGenerator.uri,
@@ -309,42 +318,46 @@ class FeedBindings(
                                         },
                                     )
                                 }
-                            ShareRecordButton(
-                                onShareClicked = {
-                                    state.timelineState?.timeline?.uri
-                                        ?.asEmbeddableRecordUriOrNull()
-                                        ?.let { recordUri ->
-                                            stateHolder.accept(Action.UpdateRecentConversations)
-                                            recordOptionsSheetState.showOptions(recordUri)
-                                        }
+                                ShareRecordButton(
+                                    onShareClicked = {
+                                        state.timelineState
+                                            ?.timeline
+                                            ?.uri
+                                            ?.asEmbeddableRecordUriOrNull()
+                                            ?.let { recordUri ->
+                                                stateHolder.accept(Action.UpdateRecentConversations)
+                                                recordOptionsSheetState.showOptions(recordUri)
+                                            }
+                                    }
+                                )
+                            },
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                        )
+                    },
+                    floatingActionButton = {
+                        PaneFab(
+                            text = stringResource(Res.string.scroll_to_top),
+                            icon = Icons.Rounded.Straight,
+                            expanded =
+                                isFabExpanded {
+                                    topAppBarNestedScrollConnection.offset * -1f
                                 },
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        text = stringResource(Res.string.scroll_to_top),
-                        icon = Icons.Rounded.Straight,
-                        expanded = isFabExpanded {
-                            topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(Action.ScrollToTop)
-                        },
-                    )
-                },
-                content = {
-                    FeedScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                            onClick = {
+                                stateHolder.accept(Action.ScrollToTop)
+                            },
+                        )
+                    },
+                    content = {
+                        FeedScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = stateHolder.accept,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

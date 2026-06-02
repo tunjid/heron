@@ -46,69 +46,67 @@ fun RockskyAlbum(
     sharedElementPrefix: String,
     album: RockskyAlbum,
     onMusicServiceLinkClicked: (String) -> Unit,
-) = with(paneTransitionScope) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        RecordLayout(
-            modifier = Modifier
-                .fillMaxWidth(),
-            paneTransitionScope = paneTransitionScope,
-            title = album.title,
-            subtitle = stringResource(
-                Res.string.album_by,
-                album.artist,
-            ),
-            description = dotSeparatedText(
-                preText = remember(album.releaseDate) {
-                    album.releaseDate
-                        ?.let(LocalDate::parseOrNull)
-                        ?.year
-                        ?.toString()
-                } ?: album.year?.toString(),
-                postText = album.playCount?.let { count ->
+) =
+    with(paneTransitionScope) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            RecordLayout(
+                modifier = Modifier.fillMaxWidth(),
+                paneTransitionScope = paneTransitionScope,
+                title = album.title,
+                subtitle =
                     stringResource(
-                        Res.string.played_n_times,
-                        format(count),
+                        Res.string.album_by,
+                        album.artist,
+                    ),
+                description =
+                    dotSeparatedText(
+                        preText =
+                            remember(album.releaseDate) {
+                                album.releaseDate?.let(LocalDate::parseOrNull)?.year?.toString()
+                            } ?: album.year?.toString(),
+                        postText =
+                            album.playCount?.let { count ->
+                                stringResource(
+                                    Res.string.played_n_times,
+                                    format(count),
+                                )
+                            },
+                    ),
+                blurb = null,
+                sharedElementPrefix = sharedElementPrefix,
+                sharedElementType = album.uri,
+                avatar = {
+                    RockSkyAvatar(
+                        image = album.albumArt,
+                        uri = album.uri,
+                        sharedElementPrefix = sharedElementPrefix,
                     )
                 },
-            ),
-            blurb = null,
-            sharedElementPrefix = sharedElementPrefix,
-            sharedElementType = album.uri,
-            avatar = {
-                RockSkyAvatar(
-                    image = album.albumArt,
-                    uri = album.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                )
-            },
-        )
-        if (album.hasMusicServiceLink) {
-            LabelFlowRow(
-                modifier = Modifier
-                    .align(Alignment.End),
-            ) {
-                album.forEachMusicServiceLink { labelRes, iconUri, musicServiceUrl ->
-                    val description = stringResource(labelRes)
-                    Label(
-                        contentDescription = description,
-                        isElevated = true,
-                        icon = {
-                            MusicServiceIcon(iconUri = iconUri)
-                        },
-                        description = {
-                            LabelText(text = description)
-                        },
-                        onClick = {
-                            if (musicServiceUrl.startsWith(Uri.Host.Https.prefix)) {
-                                onMusicServiceLinkClicked(musicServiceUrl)
-                            }
-                        },
-                    )
+            )
+            if (album.hasMusicServiceLink) {
+                LabelFlowRow(modifier = Modifier.align(Alignment.End)) {
+                    album.forEachMusicServiceLink { labelRes, iconUri, musicServiceUrl ->
+                        val description = stringResource(labelRes)
+                        Label(
+                            contentDescription = description,
+                            isElevated = true,
+                            icon = {
+                                MusicServiceIcon(iconUri = iconUri)
+                            },
+                            description = {
+                                LabelText(text = description)
+                            },
+                            onClick = {
+                                if (musicServiceUrl.startsWith(Uri.Host.Https.prefix)) {
+                                    onMusicServiceLinkClicked(musicServiceUrl)
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
     }
-}

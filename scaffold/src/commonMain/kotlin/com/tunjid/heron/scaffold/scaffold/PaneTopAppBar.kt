@@ -107,50 +107,46 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
 ) {
     val identityState = appState.identityState
     ClickPassThroughToolbar(
-        modifier = modifier
-            .constrainedSizePlacement(
-                orientation = Orientation.Horizontal,
-                minSize = splitPaneState.minPaneWidth,
-                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
-            )
-            .rootAppBarBackground(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                progress = transparencyFactor,
-            )
-            .blur(
-                shape = RectangleShape,
-                radius = UiTokens::appBarBlurRadius,
-                progress = transparencyFactor,
-            ),
+        modifier =
+            modifier
+                .constrainedSizePlacement(
+                    orientation = Orientation.Horizontal,
+                    minSize = splitPaneState.minPaneWidth,
+                    atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
+                )
+                .rootAppBarBackground(
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    progress = transparencyFactor,
+                )
+                .blur(
+                    shape = RectangleShape,
+                    radius = UiTokens::appBarBlurRadius,
+                    progress = transparencyFactor,
+                ),
         windowInsets = WindowInsets.platformStatusBars,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
             AppLogo(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .then(
-                        if (onLogoClicked != null && appState.identityState.isStable) {
-                            Modifier.shapedClickable(
-                                CircleShape,
-                                onClick = onLogoClicked,
-                            )
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .padding(4.dp)
-                    .size(UiTokens.avatarSize),
-                presentation = LogoPresentation.Destination.Root(
-                    blurProgress = transparencyFactor,
-                ),
+                modifier =
+                    Modifier.padding(4.dp)
+                        .then(
+                            if (onLogoClicked != null && appState.identityState.isStable) {
+                                Modifier.shapedClickable(
+                                    CircleShape,
+                                    onClick = onLogoClicked,
+                                )
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .padding(4.dp)
+                        .size(UiTokens.avatarSize),
+                presentation = LogoPresentation.Destination.Root(blurProgress = transparencyFactor),
             )
         },
         title = {
             AnimatedContent(
-                modifier = Modifier
-                    .appbarAnimatedBounds(),
+                modifier = Modifier.appbarAnimatedBounds(),
                 targetState = identityState.switchStatus,
                 transitionSpec = {
                     TitleTransform
@@ -163,48 +159,45 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             }
         },
         actions = {
-            AnimatedVisibility(
-                visible = identityState.isStable,
-            ) {
+            AnimatedVisibility(visible = identityState.isStable) {
                 if (actions != null) actions()
             }
             LazyRow(
-                modifier = Modifier
-                    .appbarAnimatedBounds()
-                    .clip(CircleShape),
+                modifier = Modifier.appbarAnimatedBounds().clip(CircleShape),
                 reverseLayout = true,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(
-                    items = identityState.pastSessions
-                        .filter(identityState::canShow),
+                    items = identityState.pastSessions.filter(identityState::canShow),
                     key = { it.profileId.id },
                     itemContent = { sessionSummary ->
                         this@RootDestinationTopAppBar.SessionAvatar(
-                            modifier = Modifier
-                                .animateItem(),
+                            modifier = Modifier.animateItem(),
                             isLive = false,
                             profileAvatar = sessionSummary.profileAvatar,
                             profileDescription = null,
                             profileId = sessionSummary.profileId,
                             signedInProfileId = identityState.signedInProfile?.did,
                             onLongClick = {
-                                if (identityState.pastSessions.isNotEmpty() && identityState.isStable)
-                                    appState.onIdentityAction(
-                                        IdentityAction.Switch.Choose,
-                                    )
+                                if (
+                                    identityState.pastSessions.isNotEmpty() &&
+                                        identityState.isStable
+                                )
+                                    appState.onIdentityAction(IdentityAction.Switch.Choose)
                             },
                             onClick = {
                                 when (identityState.switchStatus) {
-                                    IdentityState.SwitchStatus.Choosing -> appState.onIdentityAction(
-                                        IdentityAction.Switch.Transition(sessionSummary),
-                                    )
-                                    is IdentityState.SwitchStatus.Stable -> identityState.signedInProfile?.let { profile ->
-                                        onSignedInProfileClicked(
-                                            profile,
-                                            UiTokens.SignedInUserAvatarSharedElementKey,
+                                    IdentityState.SwitchStatus.Choosing ->
+                                        appState.onIdentityAction(
+                                            IdentityAction.Switch.Transition(sessionSummary)
                                         )
-                                    }
+                                    is IdentityState.SwitchStatus.Stable ->
+                                        identityState.signedInProfile?.let { profile ->
+                                            onSignedInProfileClicked(
+                                                profile,
+                                                UiTokens.SignedInUserAvatarSharedElementKey,
+                                            )
+                                        }
                                     is IdentityState.SwitchStatus.Switching -> Unit
                                 }
                             },
@@ -213,17 +206,14 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 )
             }
             AnimatedVisibility(
-                modifier = Modifier
-                    .appbarAnimatedBounds(),
+                modifier = Modifier.appbarAnimatedBounds(),
                 visible = identityState.switchStatus is IdentityState.SwitchStatus.Choosing,
             ) {
                 AppBarIconButton(
                     onClick = {
                         appState.onIdentityAction(IdentityAction.Switch.Cancel)
                     },
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = Color.Transparent,
-                    ),
+                    colors = CardDefaults.elevatedCardColors(containerColor = Color.Transparent),
                     content = {
                         Icon(
                             imageVector = Icons.Rounded.Cancel,
@@ -246,42 +236,37 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     onBackPressed: () -> Unit,
 ) {
     ClickPassThroughToolbar(
-        modifier = modifier
-            .constrainedSizePlacement(
-                orientation = Orientation.Horizontal,
-                minSize = splitPaneState.minPaneWidth,
-                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
-            )
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
-                renderInOverlay = {
-                    paneState.pane == ThreePane.Primary &&
-                        isTransitionActive &&
-                        isActive
-                },
-            )
-            .rootAppBarBackground(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                progress = transparencyFactor,
-            ),
+        modifier =
+            modifier
+                .constrainedSizePlacement(
+                    orientation = Orientation.Horizontal,
+                    minSize = splitPaneState.minPaneWidth,
+                    atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
+                )
+                .renderInSharedTransitionScopeOverlay(
+                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                    renderInOverlay = {
+                        paneState.pane == ThreePane.Primary && isTransitionActive && isActive
+                    },
+                )
+                .rootAppBarBackground(
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    progress = transparencyFactor,
+                ),
         windowInsets = WindowInsets.platformStatusBars,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
             AppLogo(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onBackPressed)
-                    .size(UiTokens.avatarSize),
+                modifier =
+                    Modifier.padding(8.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onBackPressed)
+                        .size(UiTokens.avatarSize),
                 presentation = LogoPresentation.Destination.Poppable,
             )
         },
         title = {
-            Box(
-                modifier = Modifier,
-            ) {
+            Box(modifier = Modifier) {
                 title()
             }
         },
@@ -299,8 +284,8 @@ private fun PaneScaffoldState.SwitchStatus(
         is IdentityState.SwitchStatus.Stable.Error -> {
             val description = stringResource(Res.string.identity_account_switch_reauth)
             AppBarTextButton(
-                modifier = Modifier
-                    .semantics {
+                modifier =
+                    Modifier.semantics {
                         contentDescription = description
                         role = Role.Button
                     },
@@ -311,17 +296,15 @@ private fun PaneScaffoldState.SwitchStatus(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error,
                     )
-                    EmphasizedSingleLineOutlinedText(
-                        text = description,
-                    )
+                    EmphasizedSingleLineOutlinedText(text = description)
                 },
             )
         }
         IdentityState.SwitchStatus.Choosing -> {
             val description = stringResource(Res.string.identity_account_add)
             AppBarTextButton(
-                modifier = Modifier
-                    .semantics {
+                modifier =
+                    Modifier.semantics {
                         contentDescription = description
                         role = Role.Button
                     },
@@ -332,23 +315,19 @@ private fun PaneScaffoldState.SwitchStatus(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.outline,
                     )
-                    EmphasizedSingleLineOutlinedText(
-                        text = description,
-                    )
+                    EmphasizedSingleLineOutlinedText(text = description)
                 },
             )
         }
-        is IdentityState.SwitchStatus.Switching -> AppBarElevatedCard(
-            content = {
-                LoadingIndicator(
-                    modifier = Modifier
-                        .size(24.dp),
-                )
-                EmphasizedSingleLineOutlinedText(
-                    text = stringResource(Res.string.identity_account_switching),
-                )
-            },
-        )
+        is IdentityState.SwitchStatus.Switching ->
+            AppBarElevatedCard(
+                content = {
+                    LoadingIndicator(modifier = Modifier.size(24.dp))
+                    EmphasizedSingleLineOutlinedText(
+                        text = stringResource(Res.string.identity_account_switching)
+                    )
+                }
+            )
     }
 }
 
@@ -365,60 +344,59 @@ private fun PaneScaffoldState.SessionAvatar(
     onClick: () -> Unit = {},
 ) {
     val isSignedInProfile = profileId == signedInProfileId
-    Box(
-        modifier = modifier
-            .size(UiTokens.appBarButtonSize),
-    ) {
+    Box(modifier = modifier.size(UiTokens.appBarButtonSize)) {
         PaneStickySharedElement(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .matchParentSize(),
-            sharedContentState = rememberSharedContentState(
-                key = when {
-                    isSignedInProfile -> UiTokens.SignedInUserAvatarSharedElementKey
-                    else -> profileId.id
-                },
-            ),
+            modifier = Modifier.align(Alignment.Center).matchParentSize(),
+            sharedContentState =
+                rememberSharedContentState(
+                    key =
+                        when {
+                            isSignedInProfile -> UiTokens.SignedInUserAvatarSharedElementKey
+                            else -> profileId.id
+                        }
+                ),
             zIndexInOverlay = AvatarZIndex,
         ) {
             AsyncImage(
-                modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap()
-                    .ifTrue(
-                        predicate = isLive,
-                        block = Modifier::profileLiveAvatarBorder,
-                    )
-                    .shapedCombinedClickable(
-                        CircleShape,
-                        onLongClick = onLongClick,
-                        onClick = onClick,
-                    ),
-                args = remember(profileAvatar) {
-                    ImageArgs(
-                        url = profileAvatar?.uri,
-                        contentDescription = profileDescription,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
+                modifier =
+                    Modifier.fillParentAxisIfFixedOrWrap()
+                        .ifTrue(
+                            predicate = isLive,
+                            block = Modifier::profileLiveAvatarBorder,
+                        )
+                        .shapedCombinedClickable(
+                            CircleShape,
+                            onLongClick = onLongClick,
+                            onClick = onClick,
+                        ),
+                args =
+                    remember(profileAvatar) {
+                        ImageArgs(
+                            url = profileAvatar?.uri,
+                            contentDescription = profileDescription,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
             )
-            if (isLive && isSignedInProfile) PaneStickySharedElement(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter),
-                sharedContentState = rememberSharedContentState(
-                    key = UiTokens.SignedInUserAvatarSharedElementKey
-                        .withProfileAvatarLiveSharedElementPrefix(),
-                ),
-                zIndexInOverlay = AvatarLiveZIndex,
-            ) {
-                ProfileLiveChip()
-            }
+            if (isLive && isSignedInProfile)
+                PaneStickySharedElement(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key =
+                                UiTokens.SignedInUserAvatarSharedElementKey
+                                    .withProfileAvatarLiveSharedElementPrefix()
+                        ),
+                    zIndexInOverlay = AvatarLiveZIndex,
+                ) {
+                    ProfileLiveChip()
+                }
         }
     }
 }
 
-@Suppress("UnusedReceiverParameter")
-fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
+@Suppress("UnusedReceiverParameter") fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
 
 @Composable
 fun AppBarTitle(
@@ -432,13 +410,12 @@ fun AppBarTitle(
     )
 }
 
-private fun IdentityState.canShow(
-    summary: SessionSummary,
-): Boolean = when (val status = switchStatus) {
-    IdentityState.SwitchStatus.Choosing -> true
-    is IdentityState.SwitchStatus.Stable -> summary.profileId == signedInProfile?.did
-    is IdentityState.SwitchStatus.Switching -> summary.profileId == status.session.profileId
-}
+private fun IdentityState.canShow(summary: SessionSummary): Boolean =
+    when (val status = switchStatus) {
+        IdentityState.SwitchStatus.Choosing -> true
+        is IdentityState.SwitchStatus.Stable -> summary.profileId == signedInProfile?.did
+        is IdentityState.SwitchStatus.Switching -> summary.profileId == status.session.profileId
+    }
 
 private fun Modifier.rootAppBarBackground(
     backgroundColor: Color,
@@ -446,10 +423,11 @@ private fun Modifier.rootAppBarBackground(
 ): Modifier = drawBehind {
     drawRect(
         color = backgroundColor,
-        alpha = when (val currentProgress = progress()) {
-            in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
-            else -> 0F
-        },
+        alpha =
+            when (val currentProgress = progress()) {
+                in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
+                else -> 0F
+            },
     )
 }
 
@@ -463,13 +441,15 @@ private fun Modifier.appbarAnimatedBounds(): Modifier =
 private const val TitleAnimationMillis = 600
 private val TitleAnimationSpec = tween<IntOffset>(TitleAnimationMillis)
 
-private val TitleTransform = slideInVertically(
-    animationSpec = TitleAnimationSpec,
-    initialOffsetY = { it },
-) togetherWith slideOutVertically(
-    animationSpec = TitleAnimationSpec,
-    targetOffsetY = { -it },
-)
+private val TitleTransform =
+    slideInVertically(
+        animationSpec = TitleAnimationSpec,
+        initialOffsetY = { it },
+    ) togetherWith
+        slideOutVertically(
+            animationSpec = TitleAnimationSpec,
+            targetOffsetY = { -it },
+        )
 
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f

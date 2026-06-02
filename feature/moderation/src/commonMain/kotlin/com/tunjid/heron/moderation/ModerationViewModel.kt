@@ -65,60 +65,53 @@ class ActualModerationViewModel(
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ModerationStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            adultContentAndGlobalLabelPreferenceMutations(
-                timelineRepository = timelineRepository,
+        inputs =
+            listOf(
+                adultContentAndGlobalLabelPreferenceMutations(
+                    timelineRepository = timelineRepository
+                ),
+                subscribedLabelerMutations(recordRepository = recordRepository),
+                loadPreferenceMutations(userDataRepository = userDataRepository),
             ),
-            subscribedLabelerMutations(
-                recordRepository = recordRepository,
-            ),
-            loadPreferenceMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdateAdultLabelVisibility -> action.flow.updateGlobalLabelMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateAdultContentPreferences -> action.flow.updateAdultContentPreferencesMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.UpdateAdultLabelVisibility ->
+                            action.flow.updateGlobalLabelMutations(writeQueue = writeQueue)
+                        is Action.UpdateAdultContentPreferences ->
+                            action.flow.updateAdultContentPreferencesMutations(
+                                writeQueue = writeQueue
+                            )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
-                    )
-                    Action.SignOut -> action.flow.mapToManyMutations {
-                        authRepository.signOut()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.UpdateMutedWord ->
+                            action.flow.updateMutedWordMutations(writeQueue = writeQueue)
+                        is Action.UpdateThreadGates ->
+                            action.flow.updateThreadGateMutations(writeQueue = writeQueue)
+                        is Action.UpdateRecentLists ->
+                            action.flow.recentListsMutations(recordRepository = recordRepository)
+                        Action.SignOut ->
+                            action.flow.mapToManyMutations {
+                                authRepository.signOut()
+                            }
                     }
                 }
-            }
-        },
+            },
     )
 
 fun adultContentAndGlobalLabelPreferenceMutations(
-    timelineRepository: TimelineRepository,
+    timelineRepository: TimelineRepository
 ): Flow<Mutation<State>> =
     timelineRepository.preferences
         .map { it.allowAdultContent to it.contentLabelPreferences }
@@ -130,92 +123,84 @@ fun adultContentAndGlobalLabelPreferenceMutations(
             )
         }
 
-fun subscribedLabelerMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    recordRepository.subscribedLabelers
-        .mapToMutation {
-            copy(subscribedLabelers = it)
-        }
-
-private fun loadPreferenceMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
-
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
+fun subscribedLabelerMutations(recordRepository: RecordRepository): Flow<Mutation<State>> =
+    recordRepository.subscribedLabelers.mapToMutation {
+        copy(subscribedLabelers = it)
     }
 
-private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfInteractionSettings(
-                preference = it.preference,
-            ),
-        )
-    },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
+private fun loadPreferenceMutations(userDataRepository: UserDataRepository): Flow<Mutation<State>> =
+    userDataRepository.preferences.mapToMutation {
+        copy(preferences = it)
+    }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> =
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = {
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = it.mutedWordPreference
+                )
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
+    }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository
+): Flow<Mutation<State>> = flatMapLatest {
+    recordRepository.recentLists.mapToMutation { lists ->
+        copy(recentLists = lists)
+    }
 }
+
+private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> =
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = {
+            Writable.TimelineUpdate(
+                Timeline.Update.OfInteractionSettings(preference = it.preference)
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
+    }
 
 private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
-    toWritable = { action ->
-        Writable.TimelineUpdate(
-            Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
-                label = action.adultLabel,
-                visibility = action.visibility,
-            ),
-        )
-    },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> =
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
+                    label = action.adultLabel,
+                    visibility = action.visibility,
+                )
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
+    }
 
 private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
-    toWritable = { action ->
-        Writable.TimelineUpdate(
-            Timeline.Update.OfAdultContent(
-                enabled = action.adultContentEnabled,
-            ),
-        )
-    },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> =
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                Timeline.Update.OfAdultContent(enabled = action.adultContentEnabled)
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
+    }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

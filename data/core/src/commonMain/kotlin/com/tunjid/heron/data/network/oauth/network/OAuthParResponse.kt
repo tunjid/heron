@@ -29,8 +29,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class OAuthParResponse(
-    @SerialName("request_uri")
-    val requestUri: String,
-    @SerialName("expires_in")
-    val expiresIn: Int,
+    @SerialName("request_uri") val requestUri: String,
+    @SerialName("expires_in") val expiresIn: Int,
 )

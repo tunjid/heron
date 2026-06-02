@@ -53,71 +53,68 @@ internal fun PostExternal(
     isBlurred: Boolean,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
-) = with(paneTransitionScope) {
-    val isGif = feature.isGif()
-    FeatureContainer(
-        modifier = Modifier,
-        onClick = onClick,
-    ) {
-        Column(verticalArrangement = spacedBy(8.dp)) {
-            if (!feature.thumb?.uri.isNullOrBlank()) {
-                val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
-                    RoundedPolygonShape.Rectangle,
-                )
-                else Modifier
-                PaneStickySharedElement(
-                    modifier = itemModifier
-                        .fillMaxWidth()
-                        .aspectRatio(2f / 1),
-                    sharedContentState = rememberSharedContentState(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postUri = postUri,
-                            text = feature.thumb?.uri,
-                        ),
-                    ),
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        args = remember(isGif, feature.uri, feature.thumb) {
-                            ImageArgs(
-                                url = if (isGif) feature.uri.uri else feature.thumb?.uri,
-                                contentDescription = feature.title,
-                                contentScale = ContentScale.Crop,
-                                shape = RoundedPolygonShape.Rectangle,
-                            )
-                        },
-                    )
+) =
+    with(paneTransitionScope) {
+        val isGif = feature.isGif()
+        FeatureContainer(
+            modifier = Modifier,
+            onClick = onClick,
+        ) {
+            Column(verticalArrangement = spacedBy(8.dp)) {
+                if (!feature.thumb?.uri.isNullOrBlank()) {
+                    val itemModifier =
+                        if (isBlurred) Modifier.sensitiveContentBlur(RoundedPolygonShape.Rectangle)
+                        else Modifier
+                    PaneStickySharedElement(
+                        modifier = itemModifier.fillMaxWidth().aspectRatio(2f / 1),
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    embedSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        postUri = postUri,
+                                        text = feature.thumb?.uri,
+                                    )
+                            ),
+                    ) {
+                        AsyncImage(
+                            modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                            args =
+                                remember(isGif, feature.uri, feature.thumb) {
+                                    ImageArgs(
+                                        url = if (isGif) feature.uri.uri else feature.thumb?.uri,
+                                        contentDescription = feature.title,
+                                        contentScale = ContentScale.Crop,
+                                        shape = RoundedPolygonShape.Rectangle,
+                                    )
+                                },
+                        )
+                    }
                 }
-            }
-            if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
-                PaneStickySharedElement(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 16.dp,
-                        ),
-                    sharedContentState = rememberSharedContentState(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postUri = postUri,
-                            text = feature.title,
-                        ),
-                    ),
-                ) {
-                    PostFeatureTextContent(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        title = feature.title,
-                        description = null,
-                        uri = feature.uri,
-                    )
+                if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
+                    PaneStickySharedElement(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    embedSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        postUri = postUri,
+                                        text = feature.title,
+                                    )
+                            ),
+                    ) {
+                        PostFeatureTextContent(
+                            modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                            title = feature.title,
+                            description = null,
+                            uri = feature.uri,
+                        )
+                    }
                 }
             }
         }
     }
-}
 
 @Composable
 fun PostFeatureTextContent(

@@ -57,18 +57,12 @@ val ThreadGate.Allowed?.allowsAll
 
 @Suppress("DEPRECATION")
 val ThreadGate.Allowed?.allowedListUrisOrEmpty
-    get() = this?.allowedLists
-        ?.map(FeedList::uri)
-        .orEmpty()
-        .plus(
-            this
-                ?.allowedListUris
-                .orEmpty(),
-        )
-        .distinct()
+    get() =
+        this?.allowedLists
+            ?.map(FeedList::uri)
+            .orEmpty()
+            .plus(this?.allowedListUris.orEmpty())
+            .distinct()
 
 val ThreadGate.Allowed?.allowsNone
-    get() = !allowsFollowing &&
-        !allowsFollowers &&
-        !allowsMentioned &&
-        !allowsLists
+    get() = !allowsFollowing && !allowsFollowers && !allowsMentioned && !allowsLists

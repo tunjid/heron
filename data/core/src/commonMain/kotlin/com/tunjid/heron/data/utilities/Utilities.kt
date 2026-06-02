@@ -53,24 +53,22 @@ internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
 }
 
 internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
-    transform: (value: T) -> R,
-): Result<R> = fold(
-    onSuccess = {
-        runCatchingUnlessCancelled { transform(it) }
-    },
-    onFailure = Result.Companion::failure,
-)
+    transform: (value: T) -> R
+): Result<R> =
+    fold(
+        onSuccess = {
+            runCatchingUnlessCancelled { transform(it) }
+        },
+        onFailure = Result.Companion::failure,
+    )
 
-internal inline fun <R, T> Result<T>.mapToResult(
-    transform: (value: T) -> Result<R>,
-): Result<R> = fold(
-    onSuccess = transform,
-    onFailure = Result.Companion::failure,
-)
+internal inline fun <R, T> Result<T>.mapToResult(transform: (value: T) -> Result<R>): Result<R> =
+    fold(
+        onSuccess = transform,
+        onFailure = Result.Companion::failure,
+    )
 
-/**
- * Catches network related exceptions and wraps them in a failure result.
- */
+/** Catches network related exceptions and wraps them in a failure result. */
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
     times: Int = 3,
     initialDelay: Duration = 100.milliseconds,
@@ -92,8 +90,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
             when (e) {
                 is NetworkConnectionException,
                 is IOException,
-                is ResponseException,
-                -> {
+                is ResponseException -> {
                     lastError = e
                     logcat(LogPriority.VERBOSE) {
                         "Network error on ${retry + 1} of $times retries. Cause:\n${e.loggableText()}"
@@ -119,17 +116,18 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
 }
 
 /**
- * A memory-efficient list implementation that defers memory allocation
- * for the list storage until the first element is explicitly added.
+ * A memory-efficient list implementation that defers memory allocation for the list storage until
+ * the first element is explicitly added.
  *
  * @param T The type of elements contained in the list.
  */
 @JvmInline
 internal value class LazyList<T>(
-    private val lazyList: Lazy<MutableList<T>> = lazy(
-        mode = LazyThreadSafetyMode.SYNCHRONIZED,
-        initializer = ::mutableListOf,
-    ),
+    private val lazyList: Lazy<MutableList<T>> =
+        lazy(
+            mode = LazyThreadSafetyMode.SYNCHRONIZED,
+            initializer = ::mutableListOf,
+        )
 ) {
     val list: List<T>
         get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
@@ -137,8 +135,7 @@ internal value class LazyList<T>(
     val isNotEmpty: Boolean
         get() = lazyList.isInitialized() && lazyList.value.isNotEmpty()
 
-    fun add(element: T): Boolean =
-        lazyList.value.add(element)
+    fun add(element: T): Boolean = lazyList.value.add(element)
 }
 
 internal inline fun <K, V> Map<K, V>.updateOrPutValue(
@@ -147,10 +144,11 @@ internal inline fun <K, V> Map<K, V>.updateOrPutValue(
     put: () -> V? = { null },
 ): Map<K, V> =
     when (val existingValue = this[key]) {
-        null -> when (val newValue = put()) {
-            null -> this
-            else -> this + Pair(key, newValue)
-        }
+        null ->
+            when (val newValue = put()) {
+                null -> this
+                else -> this + Pair(key, newValue)
+            }
         else -> this + Pair(key, existingValue.update())
     }
 
@@ -177,50 +175,47 @@ internal inline fun <T> Iterable<T>.triage(
 }
 
 internal inline fun <T, R> Collection<T>.toDistinctUntilChangedFlowOrEmpty(
-    crossinline block: (Collection<T>) -> Flow<List<R>>,
+    crossinline block: (Collection<T>) -> Flow<List<R>>
 ): Flow<List<R>> =
     when {
-        isEmpty() -> emptyFlow()
-        else -> block(this)
-    }
+            isEmpty() -> emptyFlow()
+            else -> block(this)
+        }
         .onStart { emit(emptyList()) }
         .distinctUntilChanged()
 
 internal inline fun <T, R> Flow<T>.distinctUntilChangedMap(
-    crossinline transform: suspend (value: T) -> R,
-) = distinctUntilChanged()
-    .map(transform)
+    crossinline transform: suspend (value: T) -> R
+) = distinctUntilChanged().map(transform)
 
 internal inline fun <T, R> Flow<T>.distinctUntilChangedMapNotNull(
-    crossinline transform: suspend (value: T) -> R?,
-) = distinctUntilChanged()
-    .mapNotNull(transform)
+    crossinline transform: suspend (value: T) -> R?
+) = distinctUntilChanged().mapNotNull(transform)
 
 internal inline fun <T, R> Flow<T>.distinctUntilChangedFlatMapLatest(
-    crossinline transform: suspend (value: T) -> Flow<R>,
-) = distinctUntilChanged()
-    .flatMapLatest(transform)
+    crossinline transform: suspend (value: T) -> Flow<R>
+) = distinctUntilChanged().flatMapLatest(transform)
 
 internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     networkList: List<R>,
     crossinline databaseId: (T) -> K,
     crossinline networkId: (R) -> K,
 ): List<T> {
-    val idToIndices = networkList.foldIndexed(MutableObjectIntMap<K>()) { index, map, networkItem ->
-        map[networkId(networkItem)] = index
-        map
-    }
+    val idToIndices =
+        networkList.foldIndexed(MutableObjectIntMap<K>()) { index, map, networkItem ->
+            map[networkId(networkItem)] = index
+            map
+        }
     return sortedBy { idToIndices[databaseId(it)] }
 }
 
-internal inline fun <T> Result<T>.toOutcome(
-    onSuccess: (T) -> Unit = {},
-): Outcome = mapCatchingUnlessCancelled { value ->
-    if (value is Outcome.Failure) throw value.exception
-    onSuccess(value)
-    Outcome.Success
-}
-    .fold(
-        onSuccess = { it },
-        onFailure = Outcome::Failure,
-    )
+internal inline fun <T> Result<T>.toOutcome(onSuccess: (T) -> Unit = {}): Outcome =
+    mapCatchingUnlessCancelled { value ->
+            if (value is Outcome.Failure) throw value.exception
+            onSuccess(value)
+            Outcome.Success
+        }
+        .fold(
+            onSuccess = { it },
+            onFailure = Outcome::Failure,
+        )

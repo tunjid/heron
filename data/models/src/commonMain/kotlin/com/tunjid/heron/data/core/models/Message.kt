@@ -34,10 +34,7 @@ data class Message(
     val reactions: List<Reaction>,
     val metadata: Metadata?,
 ) {
-    @Serializable
-    data class Metadata(
-        val links: List<Link>,
-    ) : UrlEncodableModel
+    @Serializable data class Metadata(val links: List<Link>) : UrlEncodableModel
 
     @Serializable
     data class Create(

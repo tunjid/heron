@@ -26,10 +26,11 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "timelinePreferences",
-    indices = [
-        Index(value = ["viewingProfileId"]),
-        Index(value = ["sourceId"]),
-    ],
+    indices =
+        [
+            Index(value = ["viewingProfileId"]),
+            Index(value = ["sourceId"]),
+        ],
 )
 data class TimelinePreferencesEntity(
     val sourceId: String,
@@ -38,10 +39,11 @@ data class TimelinePreferencesEntity(
     val preferredPresentation: String?,
     // Timeline items are unique to the profile viewing them
     @PrimaryKey
-    val id: String = timelinePreferenceId(
-        viewingProfileId = viewingProfileId,
-        sourceId = sourceId,
-    ),
+    val id: String =
+        timelinePreferenceId(
+            viewingProfileId = viewingProfileId,
+            sourceId = sourceId,
+        ),
 ) {
     sealed class Partial {
         abstract val id: String
@@ -65,20 +67,23 @@ fun preferredPresentationPartial(
     signedInProfileId: ProfileId?,
     sourceId: String,
     presentation: Timeline.Presentation,
-) = TimelinePreferencesEntity.Partial.PreferredPresentation(
-    id = timelinePreferenceId(
-        viewingProfileId = signedInProfileId,
+) =
+    TimelinePreferencesEntity.Partial.PreferredPresentation(
+        id =
+            timelinePreferenceId(
+                viewingProfileId = signedInProfileId,
+                sourceId = sourceId,
+            ),
         sourceId = sourceId,
-    ),
-    sourceId = sourceId,
-    preferredPresentation = presentation.key,
-)
+        preferredPresentation = presentation.key,
+    )
 
-fun TimelinePreferencesEntity.fetchedAtPartial() = FetchedAt(
-    id = id,
-    sourceId = sourceId,
-    lastFetchedAt = lastFetchedAt,
-)
+fun TimelinePreferencesEntity.fetchedAtPartial() =
+    FetchedAt(
+        id = id,
+        sourceId = sourceId,
+        lastFetchedAt = lastFetchedAt,
+    )
 
 private fun timelinePreferenceId(
     viewingProfileId: ProfileId?,

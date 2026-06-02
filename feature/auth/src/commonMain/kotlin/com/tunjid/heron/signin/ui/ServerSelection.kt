@@ -48,7 +48,6 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
-import com.tunjid.heron.timeline.ui.icons.AtProtoServer
 import com.tunjid.heron.timeline.ui.icons.logo
 import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.heron.ui.ItemSelection
@@ -94,17 +93,13 @@ fun ServerSelection(
             stringResource = Server::stringResource,
             onItemSelected = onServerSelected,
         )
-        NoAccountButton(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally),
-        )
+        NoAccountButton(modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
 @Stable
-class ServerSelectionSheetState private constructor(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class ServerSelectionSheetState private constructor(scope: BottomSheetScope) :
+    BottomSheetState(scope) {
     var currentServer by mutableStateOf<Server?>(null)
         internal set
 
@@ -119,12 +114,10 @@ class ServerSelectionSheetState private constructor(
     companion object {
         @Composable
         fun rememberUpdatedServerSelectionState(
-            onServerConfirmed: (Server) -> Unit,
+            onServerConfirmed: (Server) -> Unit
         ): ServerSelectionSheetState {
             val state = rememberBottomSheetState {
-                ServerSelectionSheetState(
-                    scope = it,
-                )
+                ServerSelectionSheetState(scope = it)
             }
 
             ServerSelectionBottomSheet(
@@ -149,8 +142,7 @@ private fun ServerSelectionBottomSheet(
             Server.BlueSky.endpoint,
             Server.BlackSky.endpoint,
             Server.EuroSky.endpoint,
-            Server.Pckt.endpoint,
-            -> {
+            Server.Pckt.endpoint -> {
                 onServerConfirmed(server)
                 state.currentServer = null
             }
@@ -161,8 +153,7 @@ private fun ServerSelectionBottomSheet(
 
     state.ModalBottomSheet {
         Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val focusRequester = remember { FocusRequester() }
@@ -178,9 +169,7 @@ private fun ServerSelectionBottomSheet(
                 }
             }
             FormField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                 field = customServerFormField,
                 onValueChange = { _, newValue ->
                     customServerFormField = customServerFormField.copyWithValidation(newValue)
@@ -191,15 +180,13 @@ private fun ServerSelectionBottomSheet(
             )
 
             OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     maybeSelectServer()
                 },
                 content = {
                     Text(
-                        text = stringResource(Res.string.submit)
-                            .capitalize(Locale.current),
+                        text = stringResource(Res.string.submit).capitalize(Locale.current),
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge,
                     )
@@ -207,23 +194,19 @@ private fun ServerSelectionBottomSheet(
             )
 
             OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     state.hide()
                 },
                 content = {
                     Text(
-                        text = stringResource(Res.string.cancel)
-                            .capitalize(Locale.current),
+                        text = stringResource(Res.string.cancel).capitalize(Locale.current),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.labelLarge,
                     )
                 },
             )
-            Spacer(
-                Modifier.height(16.dp),
-            )
+            Spacer(Modifier.height(16.dp))
 
             LaunchedEffect(Unit) {
                 focusRequester.requestFocus()
@@ -232,37 +215,41 @@ private fun ServerSelectionBottomSheet(
     }
 }
 
-private fun FormField.asServer() = Server(
-    endpoint = "https://$value",
-    supportsOauth = false,
-)
+private fun FormField.asServer() =
+    Server(
+        endpoint = "https://$value",
+        supportsOauth = false,
+    )
 
-private val CustomServerFormField = FormField(
-    id = FormField.Id("custom_server"),
-    value = "",
-    maxLines = 1,
-    leadingIcon = Icons.Rounded.Public,
-    transformation = VisualTransformation.None,
-    keyboardOptions = KeyboardOptions(
-        capitalization = KeyboardCapitalization.None,
-        autoCorrectEnabled = false,
-        keyboardType = KeyboardType.Uri,
-        imeAction = ImeAction.Done,
-    ),
-    contentDescription = Memo.Resource(Res.string.custom_server),
-    validator = Validator(
-        String::isNotBlank to Memo.Resource(
-            Res.string.empty_form,
-            listOf(Res.string.custom_server),
-        ),
-        DomainRegex::matches to Memo.Resource(
-            Res.string.invalid_domain,
-        ),
-    ),
-)
+private val CustomServerFormField =
+    FormField(
+        id = FormField.Id("custom_server"),
+        value = "",
+        maxLines = 1,
+        leadingIcon = Icons.Rounded.Public,
+        transformation = VisualTransformation.None,
+        keyboardOptions =
+            KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Done,
+            ),
+        contentDescription = Memo.Resource(Res.string.custom_server),
+        validator =
+            Validator(
+                String::isNotBlank to
+                    Memo.Resource(
+                        Res.string.empty_form,
+                        listOf(Res.string.custom_server),
+                    ),
+                DomainRegex::matches to Memo.Resource(Res.string.invalid_domain),
+            ),
+    )
 
 private val Server.key
-    get() = when (this) {
-        in Server.KnownServers -> endpoint
-        else -> "custom"
-    }
+    get() =
+        when (this) {
+            in Server.KnownServers -> endpoint
+            else -> "custom"
+        }

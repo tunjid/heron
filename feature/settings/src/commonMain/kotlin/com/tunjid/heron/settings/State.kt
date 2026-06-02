@@ -37,8 +37,7 @@ data class State(
     val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
     val pastSessions: List<SessionSummary> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 @Serializable
@@ -51,9 +50,7 @@ sealed class Section {
             get() = true
     }
 
-    data class FeedPreferences(
-        val feedPreference: FeedPreference,
-    ) : Section() {
+    data class FeedPreferences(val feedPreference: FeedPreference) : Section() {
         // Using the Companion as the key is deliberate.
         companion object : Key {
             override val isRoot: Boolean
@@ -61,9 +58,7 @@ sealed class Section {
         }
     }
 
-    data class ThreadPreferences(
-        val threadViewPreference: ThreadViewPreference?,
-    ) : Section() {
+    data class ThreadPreferences(val threadViewPreference: ThreadViewPreference?) : Section() {
         // Using the Companion as the key is deliberate.
         companion object : Key {
             override val isRoot: Boolean
@@ -77,12 +72,13 @@ sealed class Section {
     }
 
     val key: PaneScaffoldState.NestedNavigationKey
-        get() = when (this) {
-            is FeedPreferences -> FeedPreferences
-            is ThreadPreferences -> ThreadPreferences
-            Appearance -> Appearance
-            Main -> Main
-        }
+        get() =
+            when (this) {
+                is FeedPreferences -> FeedPreferences
+                is ThreadPreferences -> ThreadPreferences
+                Appearance -> Appearance
+                Main -> Main
+            }
 }
 
 enum class AccountSwitchPhase {
@@ -94,69 +90,49 @@ enum class AccountSwitchPhase {
 
 sealed class Action(val key: String) {
 
-    data class SwitchSession(
-        val sessionSummary: SessionSummary,
-    ) : Action(key = "SwitchSession")
+    data class SwitchSession(val sessionSummary: SessionSummary) : Action(key = "SwitchSession")
 
-    data class SetRefreshHomeTimelinesOnLaunch(
-        val refreshHomeTimelinesOnLaunch: Boolean,
-    ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
+    data class SetRefreshHomeTimelinesOnLaunch(val refreshHomeTimelinesOnLaunch: Boolean) :
+        Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
-    data class SetAutoPlayTimelineVideos(
-        val autoPlayTimelineVideos: Boolean,
-    ) : Action(key = "SetAutoPlayTimelineVideos")
+    data class SetAutoPlayTimelineVideos(val autoPlayTimelineVideos: Boolean) :
+        Action(key = "SetAutoPlayTimelineVideos")
 
-    data class SetCurrentThemeOrdinal(
-        val themeOrdinal: Int,
-    ) : Action(key = "SetCurrentThemeOrdinal")
+    data class SetCurrentThemeOrdinal(val themeOrdinal: Int) :
+        Action(key = "SetCurrentThemeOrdinal")
 
-    data class SetCompactNavigation(
-        val compactNavigation: Boolean,
-    ) : Action(key = "SetCompactNavigation")
+    data class SetCompactNavigation(val compactNavigation: Boolean) :
+        Action(key = "SetCompactNavigation")
 
-    data class SetAutoHideBottomNavigation(
-        val autoHideBottomNavigation: Boolean,
-    ) : Action(key = "SetAutoHideBottomNavigation")
+    data class SetAutoHideBottomNavigation(val autoHideBottomNavigation: Boolean) :
+        Action(key = "SetAutoHideBottomNavigation")
 
-    data class SetShowPostEngagementMetrics(
-        val showPostEngagementMetrics: Boolean,
-    ) : Action(key = "SetShowPostEngagementMetrics")
+    data class SetShowPostEngagementMetrics(val showPostEngagementMetrics: Boolean) :
+        Action(key = "SetShowPostEngagementMetrics")
 
-    data class SetShowTrendingTopics(
-        val showTrendingTopics: Boolean,
-    ) : Action(key = "SetShowTrendingTopics")
+    data class SetShowTrendingTopics(val showTrendingTopics: Boolean) :
+        Action(key = "SetShowTrendingTopics")
 
-    data class SetAllowAllTimelinePresentations(
-        val allowAllTimelinePresentations: Boolean,
-    ) : Action(key = "SetAllowAllTimelinePresentations")
+    data class SetAllowAllTimelinePresentations(val allowAllTimelinePresentations: Boolean) :
+        Action(key = "SetAllowAllTimelinePresentations")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class UpdateSection(
-        val section: Section,
-    ) : Action(key = "UpdateSection")
+    data class UpdateSection(val section: Section) : Action(key = "UpdateSection")
 
-    data class UpdateFeedPreference(
-        val feedPreference: FeedPreference,
-    ) : Action(key = "UpdateFeedPreference")
+    data class UpdateFeedPreference(val feedPreference: FeedPreference) :
+        Action(key = "UpdateFeedPreference")
 
-    data class UpdateThreadViewPreference(
-        val threadViewPreference: ThreadViewPreference,
-    ) : Action(key = "UpdateThreadViewPreference")
+    data class UpdateThreadViewPreference(val threadViewPreference: ThreadViewPreference) :
+        Action(key = "UpdateThreadViewPreference")
 
     data object SignOut : Action(key = "SignOut")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         /** Handles navigation to settings child screens */
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

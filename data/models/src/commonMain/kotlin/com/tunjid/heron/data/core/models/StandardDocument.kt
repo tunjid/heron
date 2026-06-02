@@ -53,9 +53,12 @@ data class StandardDocument(
 }
 
 val StandardDocument.link: String?
-    get() = path?.let {
-        when (publication) {
-            null -> "$site$it"
-            else -> "${publication.url}$it"
-        }
-    }?.takeIfIs(Uri.Host.Https)
+    get() =
+        path
+            ?.let {
+                when (publication) {
+                    null -> "$site$it"
+                    else -> "${publication.url}$it"
+                }
+            }
+            ?.takeIfIs(Uri.Host.Https)

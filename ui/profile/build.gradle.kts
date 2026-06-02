@@ -20,6 +20,7 @@ plugins {
     id("kotlin-library-convention")
     id("ui-module-convention")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.ui.profile"
@@ -59,10 +60,10 @@ kotlin {
                 implementation(libs.ktor.client.java)
             }
         }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        //        iosMain {
+        //            dependencies {
+        //                implementation(libs.ktor.client.darwin)
+        //            }
+        //        }
     }
 }

@@ -57,39 +57,41 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualProfileAvatarViewModel(
     profileRepository: ProfileRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ProfileStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            profile = route.profile ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
+        initialState =
+            State(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                profile =
+                    route.profile
+                        ?: stubProfile(
+                            did = ProfileId(route.profileHandleOrId.id),
+                            handle = ProfileHandle(route.profileHandleOrId.id),
+                            avatar = null,
+                        ),
             ),
-        ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
+        inputs =
+            listOf(
+                loadProfileMutations(
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
             ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                    }
                 }
-            }
-        },
+            },
     )
 
 private fun loadProfileMutations(

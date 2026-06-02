@@ -33,21 +33,20 @@ import com.tunjid.heron.ui.UiTokens
 
 @Composable
 internal fun rememberSplashLogoAnimation(): LogoAnimation {
-    val bodyColor = rememberUpdatedState(
-        MaterialTheme.colorScheme.onSurface,
-    )
+    val bodyColor = rememberUpdatedState(MaterialTheme.colorScheme.onSurface)
 
     val animatable = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         animatable.animateTo(
             targetValue = 1f,
-            animationSpec = keyframes {
-                durationMillis = UiTokens.splashScreenDuration.inWholeMilliseconds.toInt()
+            animationSpec =
+                keyframes {
+                    durationMillis = UiTokens.splashScreenDuration.inWholeMilliseconds.toInt()
 
-                dipKeyframe using FastOutSlowInEasing
-                raiseKeyFrame using FastOutSlowInEasing
-            },
+                    dipKeyframe using FastOutSlowInEasing
+                    raiseKeyFrame using FastOutSlowInEasing
+                },
         )
     }
     return remember {
@@ -62,42 +61,45 @@ internal class SplashLogoAnimation(
     val bodyColor: ColorProducer,
     val rotation: () -> Float,
 ) : LogoAnimation {
-    override fun DrawScope.drawPart(
-        part: HeronPart,
-    ) {
+    override fun DrawScope.drawPart(part: HeronPart) {
         val bodyColor = bodyColor()
         val degrees = rotation()
 
         when (part) {
-            HeronPart.Legs -> drawPath(
-                path = part.path,
-                color = bodyColor,
-            )
-            else -> withTransform(
-                transformBlock = {
-                    rotate(
-                        degrees = degrees,
-                        pivot = RotationPivot,
-                    )
-                },
-                drawBlock = {
-                    drawPath(
-                        path = part.path,
-                        color = if (part == HeronPart.Head) HeadColor else bodyColor,
-                    )
-                },
-            )
+            HeronPart.Legs ->
+                drawPath(
+                    path = part.path,
+                    color = bodyColor,
+                )
+            else ->
+                withTransform(
+                    transformBlock = {
+                        rotate(
+                            degrees = degrees,
+                            pivot = RotationPivot,
+                        )
+                    },
+                    drawBlock = {
+                        drawPath(
+                            path = part.path,
+                            color = if (part == HeronPart.Head) HeadColor else bodyColor,
+                        )
+                    },
+                )
         }
     }
 }
 
-private val KeyframesSpec.KeyframesSpecConfig<Float>.dipKeyframe: KeyframesSpec.KeyframeEntity<Float>
+private val KeyframesSpec.KeyframesSpecConfig<Float>.dipKeyframe:
+    KeyframesSpec.KeyframeEntity<Float>
     get() = (-35f) at (durationMillis * 0.45).toInt()
 
-private val KeyframesSpec.KeyframesSpecConfig<Float>.raiseKeyFrame: KeyframesSpec.KeyframeEntity<Float>
+private val KeyframesSpec.KeyframesSpecConfig<Float>.raiseKeyFrame:
+    KeyframesSpec.KeyframeEntity<Float>
     get() = 0f at (durationMillis * 0.90).toInt()
 
-private val RotationPivot = Offset(
-    x = 16.5f,
-    y = 22f,
-)
+private val RotationPivot =
+    Offset(
+        x = 16.5f,
+        y = 22f,
+    )

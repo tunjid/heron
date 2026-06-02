@@ -100,9 +100,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-class ProfileLiveStatusSheetState(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class ProfileLiveStatusSheetState(scope: BottomSheetScope) : BottomSheetState(scope) {
 
     override fun onHidden() = Unit
 
@@ -113,11 +111,10 @@ class ProfileLiveStatusSheetState(
             onGoLive: (url: String, duration: Int) -> Unit,
             onEndLive: () -> Unit,
         ): ProfileLiveStatusSheetState {
-            val state = rememberBottomSheetState(
-                skipPartiallyExpanded = true,
-            ) { scope ->
-                ProfileLiveStatusSheetState(scope = scope)
-            }
+            val state =
+                rememberBottomSheetState(skipPartiallyExpanded = true) { scope ->
+                    ProfileLiveStatusSheetState(scope = scope)
+                }
             ProfileLiveStatusBottomSheet(
                 state = state,
                 profile = profile,
@@ -162,35 +159,37 @@ private fun ProfileLiveStatusSheetContent(
     onEndLive: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 24.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Box(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 12.dp)
-                .size(width = 32.dp, height = 4.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                    shape = CircleShape,
-                ),
+            modifier =
+                Modifier.align(Alignment.CenterHorizontally)
+                    .padding(top = 12.dp)
+                    .size(width = 32.dp, height = 4.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                        shape = CircleShape,
+                    )
         )
 
         when {
-            currentStatus?.isLive == true -> EditLiveContent(
-                status = currentStatus,
-                onDismiss = onDismiss,
-                onEndLive = onEndLive,
-            )
-            else -> GoLiveContent(
-                profile = profile,
-                onDismiss = onDismiss,
-                onGoLive = onGoLive,
-            )
+            currentStatus?.isLive == true ->
+                EditLiveContent(
+                    status = currentStatus,
+                    onDismiss = onDismiss,
+                    onEndLive = onEndLive,
+                )
+            else ->
+                GoLiveContent(
+                    profile = profile,
+                    onDismiss = onDismiss,
+                    onGoLive = onGoLive,
+                )
         }
     }
 }
@@ -204,9 +203,10 @@ private fun GoLiveContent(
     var urlInput by rememberSaveable { mutableStateOf("") }
     val streamLink = remember(urlInput) { urlInput.toStreamLink() }
     val isUrlValid = streamLink != null
-    var selectedDuration by rememberSaveable(stateSaver = LiveDurationSaver) {
-        mutableStateOf(LiveDuration.default)
-    }
+    var selectedDuration by
+        rememberSaveable(stateSaver = LiveDurationSaver) {
+            mutableStateOf(LiveDuration.default)
+        }
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -235,10 +235,11 @@ private fun GoLiveContent(
                 )
             },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Done,
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Done,
+                ),
             shape = RoundedCornerShape(size = 12.dp),
             leadingIcon = {
                 Icon(
@@ -256,7 +257,8 @@ private fun GoLiveContent(
                     IconButton(onClick = { urlInput = "" }) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(CommonStrings.live_status_clear_url),
+                            contentDescription =
+                                stringResource(CommonStrings.live_status_clear_url),
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -285,24 +287,29 @@ private fun GoLiveContent(
 
         Button(
             onClick = {
-                if (isUrlValid) onGoLive(
-                    urlInput,
-                    selectedDuration.minutes,
-                ) else onDismiss()
+                if (isUrlValid)
+                    onGoLive(
+                        urlInput,
+                        selectedDuration.minutes,
+                    )
+                else onDismiss()
             },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = if (isUrlValid) ButtonDefaults.buttonColors()
-            else ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            colors =
+                if (isUrlValid) ButtonDefaults.buttonColors()
+                else
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
         ) {
             Text(
-                text = stringResource(
-                    if (isUrlValid) CommonStrings.live_status_go_live_title
-                    else CommonStrings.action_cancel,
-                ),
+                text =
+                    stringResource(
+                        if (isUrlValid) CommonStrings.live_status_go_live_title
+                        else CommonStrings.action_cancel
+                    ),
                 style = MaterialTheme.typography.labelLarge,
             )
         }
@@ -318,12 +325,13 @@ private fun EditLiveContent(
     var urlInput by rememberSaveable { mutableStateOf(status.embedUri) }
     val streamLink = remember(urlInput) { urlInput.toStreamLink() }
 
-    val remainingMinutes by produceState(initialValue = status.remainingMinutes()) {
-        while (true) {
-            delay(60_000)
-            value = status.remainingMinutes()
+    val remainingMinutes by
+        produceState(initialValue = status.remainingMinutes()) {
+            while (true) {
+                delay(60_000)
+                value = status.remainingMinutes()
+            }
         }
-    }
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -343,10 +351,11 @@ private fun EditLiveContent(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = stringResource(
-                        CommonStrings.live_status_expires_in,
-                        remainingMinutes.toReadableRemaining(),
-                    ),
+                    text =
+                        stringResource(
+                            CommonStrings.live_status_expires_in,
+                            remainingMinutes.toReadableRemaining(),
+                        ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -358,10 +367,11 @@ private fun EditLiveContent(
             onValueChange = { urlInput = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Done,
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Done,
+                ),
             shape = RoundedCornerShape(12.dp),
             leadingIcon = {
                 Icon(
@@ -379,7 +389,8 @@ private fun EditLiveContent(
                     IconButton(onClick = { urlInput = status.embedUri }) {
                         Icon(
                             imageVector = Icons.Rounded.Refresh,
-                            contentDescription = stringResource(CommonStrings.live_status_reset_url),
+                            contentDescription =
+                                stringResource(CommonStrings.live_status_reset_url),
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -409,10 +420,11 @@ private fun EditLiveContent(
                 onClick = onEndLive,
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
             ) {
                 Text(
                     text = stringResource(CommonStrings.live_status_end_live),
@@ -459,23 +471,23 @@ private fun LiveAvatarBadge(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .size(56.dp),
+        modifier = modifier.size(56.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
         AsyncImage(
-            args = ImageArgs(
-                url = profile.avatar?.uri,
-                contentDescription = profile.displayName ?: profile.handle.id,
-                contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Circle,
-            ),
-            modifier = Modifier
-                .size(50.dp)
-                .ifTrue(
-                    predicate = profile.status?.isLive == true,
-                    block = Modifier::profileLiveAvatarBorder,
+            args =
+                ImageArgs(
+                    url = profile.avatar?.uri,
+                    contentDescription = profile.displayName ?: profile.handle.id,
+                    contentScale = ContentScale.Crop,
+                    shape = RoundedPolygonShape.Circle,
                 ),
+            modifier =
+                Modifier.size(50.dp)
+                    .ifTrue(
+                        predicate = profile.status?.isLive == true,
+                        block = Modifier::profileLiveAvatarBorder,
+                    ),
         )
         ProfileLiveChip(modifier = Modifier.align(Alignment.BottomCenter))
     }
@@ -488,16 +500,18 @@ private fun PlatformInfoCard(
     modifier: Modifier = Modifier,
 ) {
     val showWarning = urlInput.isNotEmpty() && !isUrlValid
-    val borderColor = when {
-        showWarning -> MaterialTheme.colorScheme.error
-        isUrlValid -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-    }
+    val borderColor =
+        when {
+            showWarning -> MaterialTheme.colorScheme.error
+            isUrlValid -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+        }
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -505,14 +519,16 @@ private fun PlatformInfoCard(
             imageVector = if (showWarning) Icons.Rounded.Warning else Icons.Rounded.Info,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = if (showWarning) MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint =
+                if (showWarning) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = stringResource(CommonStrings.live_status_enabled_services),
             style = MaterialTheme.typography.bodySmall,
-            color = if (showWarning) MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            color =
+                if (showWarning) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         AnimatedVisibility(
@@ -544,10 +560,10 @@ private fun StreamLinkCard(
     ) {
         Column {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-                    .background(platform.brandColor.copy(alpha = 0.12f)),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .height(72.dp)
+                        .background(platform.brandColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -563,10 +579,10 @@ private fun StreamLinkCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    modifier = Modifier
-                        .width(3.dp)
-                        .height(36.dp)
-                        .background(color = platform.brandColor, shape = CircleShape),
+                    modifier =
+                        Modifier.width(3.dp)
+                            .height(36.dp)
+                            .background(color = platform.brandColor, shape = CircleShape)
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -608,15 +624,16 @@ private fun DurationSelector(
         modifier = modifier.fillMaxWidth(),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-            ),
+            border =
+                BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                ),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -652,9 +669,7 @@ private fun DurationSelector(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .heightIn(max = 280.dp)
-                .exposedDropdownSize(),
+            modifier = Modifier.heightIn(max = 280.dp).exposedDropdownSize(),
         ) {
             LiveDuration.Durations.forEach { duration ->
                 DropdownMenuItem(
@@ -671,7 +686,8 @@ private fun DurationSelector(
                             Text(
                                 text = duration.endTimeLabel(now),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                color =
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                             )
                         }
                     },
@@ -691,12 +707,13 @@ private fun Profile.ProfileStatus.remainingMinutes(): Long {
     return (expires - Clock.System.now()).inWholeMinutes.coerceAtLeast(0L)
 }
 
-private fun Long.toReadableRemaining(): String = when {
-    this <= 0L -> "less than a minute"
-    this < 60L -> "${this}m"
-    this % 60L == 0L -> "${this / 60}h"
-    else -> "${this / 60}h ${this % 60}m"
-}
+private fun Long.toReadableRemaining(): String =
+    when {
+        this <= 0L -> "less than a minute"
+        this < 60L -> "${this}m"
+        this % 60L == 0L -> "${this / 60}h"
+        else -> "${this / 60}h ${this % 60}m"
+    }
 
 internal enum class LivePlatform(
     val displayName: StringResource,
@@ -723,35 +740,36 @@ internal enum class LivePlatform(
 internal fun String.toStreamLink(): Pair<LinkTarget.ExternalLink, LivePlatform>? {
     val normalized = trim().lowercase()
     if (normalized.isBlank()) return null
-    val platform = LivePlatform.entries.firstOrNull { platform ->
-        platform.domains.any { domain ->
-            normalized.endsWith(domain) || normalized.contains(".$domain")
-        }
-    } ?: return null
+    val platform =
+        LivePlatform.entries.firstOrNull { platform ->
+            platform.domains.any { domain ->
+                normalized.endsWith(domain) || normalized.contains(".$domain")
+            }
+        } ?: return null
     return LinkTarget.ExternalLink(uri = GenericUri(trim())) to platform
 }
 
 @JvmInline
-internal value class LiveDuration(
-    val minutes: Int,
-) {
+internal value class LiveDuration(val minutes: Int) {
     val label: String
-        get() = when {
-            minutes % 60 == 0 -> "${minutes / 60}h"
-            minutes < 60 -> "${minutes}m"
-            else -> "${minutes / 60}h ${minutes % 60}m"
-        }
+        get() =
+            when {
+                minutes % 60 == 0 -> "${minutes / 60}h"
+                minutes < 60 -> "${minutes}m"
+                else -> "${minutes / 60}h ${minutes % 60}m"
+            }
 
     fun endTimeLabel(from: LocalDateTime): String {
         val total = from.hour * 60 + from.minute + minutes
         val h = (total / 60) % 24
         val m = total % 60
         val amPm = if (h >= 12) "PM" else "AM"
-        val h12 = when {
-            h == 0 -> 12
-            h > 12 -> h - 12
-            else -> h
-        }
+        val h12 =
+            when {
+                h == 0 -> 12
+                h > 12 -> h - 12
+                else -> h
+            }
         return "$h12:${m.toString().padStart(2, '0')} $amPm"
     }
 
@@ -762,11 +780,12 @@ internal value class LiveDuration(
     }
 }
 
-private val LiveDurationSaver: Saver<LiveDuration, Int> = Saver(
-    save = {
-        it.minutes
-    },
-    restore = {
-        LiveDuration(minutes = it)
-    },
-)
+private val LiveDurationSaver: Saver<LiveDuration, Int> =
+    Saver(
+        save = {
+            it.minutes
+        },
+        restore = {
+            LiveDuration(minutes = it)
+        },
+    )

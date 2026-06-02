@@ -41,9 +41,7 @@ fun ThreadDisplayOptions(
     onOrderChanged: (TimelineItem.Threaded.Order) -> Unit,
     onViewModeChanged: (TimelineItem.Threaded.ViewMode) -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         var expanded by remember { mutableStateOf(false) }
         AppBarIconButton(
             icon = Icons.AutoMirrored.Rounded.Sort,
@@ -55,9 +53,7 @@ fun ThreadDisplayOptions(
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(12.dp),
             tonalElevation = 6.dp,
-            modifier = Modifier
-                .padding(5.dp)
-                .widthIn(min = 200.dp),
+            modifier = Modifier.padding(5.dp).widthIn(min = 200.dp),
         ) {
             TimelineViewMode(
                 replyViewMode = viewMode,
@@ -96,12 +92,15 @@ private fun TimelineViewMode(
             onClick = { onViewModeChanged(mode) },
             text = {
                 Text(
-                    text = stringResource(
-                        when (mode) {
-                            TimelineItem.Threaded.ViewMode.Linear -> CommonStrings.timeline_thread_linear
-                            TimelineItem.Threaded.ViewMode.Tree -> CommonStrings.timeline_thread_threaded
-                        },
-                    ),
+                    text =
+                        stringResource(
+                            when (mode) {
+                                TimelineItem.Threaded.ViewMode.Linear ->
+                                    CommonStrings.timeline_thread_linear
+                                TimelineItem.Threaded.ViewMode.Tree ->
+                                    CommonStrings.timeline_thread_threaded
+                            }
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -133,13 +132,17 @@ private fun TimelineOrder(
             onClick = { onOrderChanged(item) },
             text = {
                 Text(
-                    text = stringResource(
-                        when (item) {
-                            TimelineItem.Threaded.Order.Oldest -> CommonStrings.timeline_thread_oldest_first
-                            TimelineItem.Threaded.Order.Newest -> CommonStrings.timeline_thread_newest_first
-                            TimelineItem.Threaded.Order.Top -> CommonStrings.timeline_thread_top_first
-                        },
-                    ),
+                    text =
+                        stringResource(
+                            when (item) {
+                                TimelineItem.Threaded.Order.Oldest ->
+                                    CommonStrings.timeline_thread_oldest_first
+                                TimelineItem.Threaded.Order.Newest ->
+                                    CommonStrings.timeline_thread_newest_first
+                                TimelineItem.Threaded.Order.Top ->
+                                    CommonStrings.timeline_thread_top_first
+                            }
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )

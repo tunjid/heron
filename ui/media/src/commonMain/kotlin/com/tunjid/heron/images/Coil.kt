@@ -59,13 +59,15 @@ internal class CoilImage(
 ) : Image {
 
     override val size: IntSize
-        get() = IntSize(
-            width = image.width,
-            height = image.height,
-        )
+        get() =
+            IntSize(
+                width = image.width,
+                height = image.height,
+            )
 }
 
-internal class CoilImageLoader private constructor(
+internal class CoilImageLoader
+private constructor(
     private val platformContext: PlatformContext,
     private val httpClient: HttpClient,
 ) : ImageLoader {
@@ -75,35 +77,32 @@ internal class CoilImageLoader private constructor(
         size: IntSize,
     ): Image? {
         val coilImageLoader = SingletonImageLoader.get(platformContext)
-        val coilRequest = CoilImageRequest.Builder(platformContext).apply {
-            when (request) {
-                is ImageRequest.Local -> {
-                    data(request.file)
-                }
-                is ImageRequest.Network -> {
-                    data(request.url)
-                    request.thumbnailUrl
-                        ?.let(MemoryCache::Key)
-                        ?.let { cacheKey ->
-                            placeholder {
-                                coilImageLoader
-                                    .memoryCache
-                                    ?.get(cacheKey)
-                                    ?.image
-                            }
+        val coilRequest =
+            CoilImageRequest.Builder(platformContext)
+                .apply {
+                    when (request) {
+                        is ImageRequest.Local -> {
+                            data(request.file)
                         }
-                    // TODO: This is only done for network images for now. This is because
-                    // Local images need to be loaded as is to obtain the proper dimensions
-                    size(
-                        CoilSize(
-                            width = size.width,
-                            height = size.height,
-                        ),
-                    )
+                        is ImageRequest.Network -> {
+                            data(request.url)
+                            request.thumbnailUrl?.let(MemoryCache::Key)?.let { cacheKey ->
+                                placeholder {
+                                    coilImageLoader.memoryCache?.get(cacheKey)?.image
+                                }
+                            }
+                            // TODO: This is only done for network images for now. This is because
+                            // Local images need to be loaded as is to obtain the proper dimensions
+                            size(
+                                CoilSize(
+                                    width = size.width,
+                                    height = size.height,
+                                )
+                            )
+                        }
+                    }
                 }
-            }
-        }
-            .build()
+                .build()
 
         val image = coilImageLoader.execute(coilRequest).image ?: return null
 
@@ -113,57 +112,56 @@ internal class CoilImageLoader private constructor(
         )
     }
 
-    override fun download(
-        request: ImageRequest.Network,
-    ): Flow<DownloadStatus> = when (val url = request.url) {
-        null -> emptyFlow()
-        else -> flow {
-            var tempFile: PlatformFile? = null
-            try {
-                val fileName = "${Clock.System.now().toEpochMilliseconds()}.jpg"
-                if (!MediaDownloadsDir.exists()) MediaDownloadsDir.createDirectories(true)
-                val file = (MediaDownloadsDir / fileName).also { tempFile = it }
+    override fun download(request: ImageRequest.Network): Flow<DownloadStatus> =
+        when (val url = request.url) {
+            null -> emptyFlow()
+            else ->
+                flow {
+                    var tempFile: PlatformFile? = null
+                    try {
+                        val fileName = "${Clock.System.now().toEpochMilliseconds()}.jpg"
+                        if (!MediaDownloadsDir.exists()) MediaDownloadsDir.createDirectories(true)
+                        val file = (MediaDownloadsDir / fileName).also { tempFile = it }
 
-                val sink = file.sink(append = false)
+                        val sink = file.sink(append = false)
 
-                httpClient.prepareGet(url).execute { httpResponse ->
-                    if (httpResponse.status != HttpStatusCode.OK) {
-                        emit(DownloadStatus.Failed)
-                        return@execute
-                    }
+                        httpClient.prepareGet(url).execute { httpResponse ->
+                            if (httpResponse.status != HttpStatusCode.OK) {
+                                emit(DownloadStatus.Failed)
+                                return@execute
+                            }
 
-                    val channel: ByteReadChannel = httpResponse.body()
-                    var count = 0L
-                    sink.buffered().use { bufferedSink ->
-                        val buffer = ByteArray(DownloadBufferSize)
-                        while (true) {
-                            val read = channel.readAvailable(buffer)
-                            if (read <= 0) break
-                            bufferedSink.write(buffer, 0, read)
-                            count += read
+                            val channel: ByteReadChannel = httpResponse.body()
+                            var count = 0L
+                            sink.buffered().use { bufferedSink ->
+                                val buffer = ByteArray(DownloadBufferSize)
+                                while (true) {
+                                    val read = channel.readAvailable(buffer)
+                                    if (read <= 0) break
+                                    bufferedSink.write(buffer, 0, read)
+                                    count += read
 
-                            val contentLength = httpResponse.contentLength()
-                            emit(
-                                if (contentLength == null) DownloadStatus.Indeterminate
-                                else DownloadStatus.Progress(count.toFloat() / contentLength),
-                            )
+                                    val contentLength = httpResponse.contentLength()
+                                    emit(
+                                        if (contentLength == null) DownloadStatus.Indeterminate
+                                        else
+                                            DownloadStatus.Progress(count.toFloat() / contentLength)
+                                    )
+                                }
+                            }
                         }
+                        FileKit.saveImageToGallery(file)
+                        emit(DownloadStatus.Complete)
+                    } catch (e: Exception) {
+                        emit(DownloadStatus.Failed)
+                    } finally {
+                        tempFile?.delete()
                     }
                 }
-                FileKit.saveImageToGallery(file)
-                emit(DownloadStatus.Complete)
-            } catch (e: Exception) {
-                emit(DownloadStatus.Failed)
-            } finally {
-                tempFile?.delete()
-            }
         }
-    }
 
     companion object {
-        internal fun create(
-            context: PlatformContext,
-        ): ImageLoader {
+        internal fun create(context: PlatformContext): ImageLoader {
             val httpClient = HttpClient()
             SingletonImageLoader.setSafe {
                 coil3.ImageLoader.Builder(context)
@@ -186,12 +184,12 @@ internal expect fun coil3.Image.renderInto(canvas: Canvas)
 
 internal expect fun coil3.ComponentRegistry.Builder.addPlatformDecoders()
 
-@Composable
-internal expect fun coil3.Image.AnimationEffect()
+@Composable internal expect fun coil3.Image.AnimationEffect()
 
-val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
-    throw IllegalArgumentException("Image Fetcher has not been provided")
-}
+val LocalImageLoader =
+    staticCompositionLocalOf<ImageLoader> {
+        throw IllegalArgumentException("Image Fetcher has not been provided")
+    }
 
 private val MediaDownloadsDir = FileKit.cacheDir / "media-downloads"
 private const val DownloadBufferSize = 8192

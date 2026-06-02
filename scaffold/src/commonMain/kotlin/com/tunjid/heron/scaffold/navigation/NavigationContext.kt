@@ -25,12 +25,13 @@ import com.tunjid.treenav.strings.routeOf
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
- * provides a context for navigation actions, most commonly parsing a string route to a fully
- * type route.
+ * provides a context for navigation actions, most commonly parsing a string route to a fully type
+ * route.
  */
 interface NavigationContext {
     val navState: MultiStackNav
     val String.toRoute: Route
+
     fun Route.encodeToQueryParam(): String
 }
 
@@ -38,7 +39,8 @@ internal class ImmutableNavigationContext(
     private val state: MultiStackNav,
     private val routeParser: RouteParser,
 ) : NavigationContext {
-    override val navState: MultiStackNav get() = state
+    override val navState: MultiStackNav
+        get() = state
 
     override val String.toRoute: Route
         get() = routeParser.parse(this) ?: unknownRoute()
@@ -54,4 +56,5 @@ fun unknownRoute(path: String = "/404") = routeOf(path = path)
 fun String.decodeRoutePathAndQueriesFromQueryParam(): String =
     ModelUrlSafeBase64.decode(this).decodeToString()
 
-val NavigationContext.currentRoute get() = navState.current as Route
+val NavigationContext.currentRoute
+    get() = navState.current as Route

@@ -14,5 +14,4 @@ object SavedStateSerializationHelper {
         proto.encodeToByteArray(serializer, value)
 }
 
-fun ByteArray.toBufferedSource(): BufferedSource =
-    Buffer().apply { write(this@toBufferedSource) }
+fun ByteArray.toBufferedSource(): BufferedSource = Buffer().apply { write(this@toBufferedSource) }

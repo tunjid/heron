@@ -94,105 +94,112 @@ internal fun PostsScreen(
     val presentation = remember { Timeline.Presentation.Text.WithEmbed }
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = SharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-    )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = state.recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.BlockAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = {
+                actions(Action.Navigate.To(signInDestination()))
+            },
+            onInteractionConfirmed = {
+                actions(Action.SendPostInteraction(it))
+            },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = SharedElementPrefix,
+                        )
                     )
+                )
+            },
+        )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = state.recentLists,
+            onRequestRecentLists = {
+                actions(Action.UpdateRecentLists)
+            },
+            onThreadGateUpdated = {
+                actions(Action.SendPostInteraction(it))
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = state.preferences.mutedWordPreferences,
+            onSave = {
+                actions(Action.UpdateMutedWord(it))
+            },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.MuteAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.MuteAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = state.signedInProfileId,
-        recentConversations = state.recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = state.signedInProfileId,
+            recentConversations = state.recentConversations,
+            onShown = { actions(Action.UpdateRecentConversations) },
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
 
-                is PostOption.ThreadGate ->
-                    state.tiledItems.firstOrNull { it.post.uri == option.postUri }
-                        ?.let(threadGateSheetState::show)
+                    is PostOption.ThreadGate ->
+                        state.tiledItems
+                            .firstOrNull { it.post.uri == option.postUri }
+                            ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
-            }
-        },
-    )
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                    is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
+                }
+            },
+        )
 
     PullToRefreshBox(
-        modifier = modifier
-            .padding(
-                horizontal = animateDpAsState(
-                    displayState.horizontalPadding(presentation),
-                ).value,
-            )
-            .fillMaxSize(),
+        modifier =
+            modifier
+                .padding(
+                    horizontal =
+                        animateDpAsState(displayState.horizontalPadding(presentation)).value
+                )
+                .fillMaxSize(),
         isRefreshing = state.isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
@@ -200,9 +207,8 @@ internal fun PostsScreen(
         },
         indicator = {
             DismissableRefreshIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
                     },
                 state = pullToRefreshState,
@@ -215,27 +221,28 @@ internal fun PostsScreen(
     ) {
         LookaheadScope {
             LazyVerticalStaggeredGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged {
-                        val itemWidth = with(density) {
-                            displayState.cardSize(presentation).toPx()
-                        }
+                modifier =
+                    Modifier.fillMaxSize().onSizeChanged {
+                        val itemWidth =
+                            with(density) {
+                                displayState.cardSize(presentation).toPx()
+                            }
                         val numColumns = floor(it.width / itemWidth).roundToInt()
-                        if (numColumns > 0) actions(
-                            Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)),
-                        )
+                        if (numColumns > 0)
+                            actions(
+                                Action.Tile(TilingState.Action.GridSize(numColumns = numColumns))
+                            )
                     },
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(
-                    displayState.horizontalItemSpacing(presentation),
-                ),
+                contentPadding =
+                    UiTokens.bottomNavAndInsetPaddingValues(
+                        top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                        isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    ),
+                horizontalArrangement =
+                    Arrangement.spacedBy(displayState.horizontalItemSpacing(presentation)),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
@@ -243,117 +250,152 @@ internal fun PostsScreen(
                     key = TimelineItem::id,
                     itemContent = { item ->
                         TimelineItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item),
-                                ),
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .animateItem()
+                                    .threadedVideoPosition(
+                                        state = videoStates.getOrCreateStateFor(item)
+                                    ),
                             paneTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
                             item = item,
                             sharedElementPrefix = SharedElementPrefix,
-                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                            showEngagementMetrics =
+                                state.preferences.local.showPostEngagementMetrics,
                             presentation = presentation,
-                            postActions = remember {
-                                PostActions { action ->
-                                    when (action) {
-                                        is PostAction.OfLinkTarget -> {
-                                            val linkTarget = action.linkTarget
-                                            if (linkTarget is LinkTarget.Navigable) actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = linkTarget.path,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfPost -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        sharedElementPrefix = SharedElementPrefix,
-                                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
-                                                        record = action.post,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfProfile -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    profileDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        profile = action.profile,
-                                                        avatarSharedElementKey = action.post
-                                                            .avatarSharedElementKey(
-                                                                prefix = SharedElementPrefix,
-                                                                quotingPostUri = action.quotingPostUri,
+                            postActions =
+                                remember {
+                                    PostActions { action ->
+                                        when (action) {
+                                            is PostAction.OfLinkTarget -> {
+                                                val linkTarget = action.linkTarget
+                                                if (linkTarget is LinkTarget.Navigable)
+                                                    actions(
+                                                        Action.Navigate.To(
+                                                            pathDestination(
+                                                                path = linkTarget.path,
+                                                                referringRouteOption =
+                                                                    NavigationAction
+                                                                        .ReferringRouteOption
+                                                                        .Current,
                                                             )
-                                                            .takeIf { action.post.author.did == action.profile.did },
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                                        )
+                                                    )
+                                            }
 
-                                        is PostAction.OfRecord -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        sharedElementPrefix = SharedElementPrefix
-                                                            .withQuotingPostUriPrefix(action.owningPostUri),
-                                                        record = action.record,
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                            is PostAction.OfPost -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        recordDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            sharedElementPrefix =
+                                                                SharedElementPrefix,
+                                                            otherModels =
+                                                                listOfNotNull(
+                                                                    action.warnedAppliedLabels
+                                                                ),
+                                                            record = action.post,
+                                                        )
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfMedia -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    galleryDestination(
-                                                        post = action.post,
-                                                        media = action.media,
-                                                        startIndex = action.index,
-                                                        sharedElementPrefix = SharedElementPrefix
-                                                            .withQuotingPostUriPrefix(action.quotingPostUri),
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                            is PostAction.OfProfile -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        profileDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            profile = action.profile,
+                                                            avatarSharedElementKey =
+                                                                action.post
+                                                                    .avatarSharedElementKey(
+                                                                        prefix =
+                                                                            SharedElementPrefix,
+                                                                        quotingPostUri =
+                                                                            action.quotingPostUri,
+                                                                    )
+                                                                    .takeIf {
+                                                                        action.post.author.did ==
+                                                                            action.profile.did
+                                                                    },
+                                                        )
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfReply -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    if (paneScaffoldState.isSignedOut) signInDestination()
-                                                    else composePostDestination(
-                                                        type = Post.Create.Reply(
-                                                            parent = action.post,
-                                                        ),
-                                                        sharedElementPrefix = SharedElementPrefix,
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                            is PostAction.OfRecord -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        recordDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            sharedElementPrefix =
+                                                                SharedElementPrefix
+                                                                    .withQuotingPostUriPrefix(
+                                                                        action.owningPostUri
+                                                                    ),
+                                                            record = action.record,
+                                                        )
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfInteraction -> {
-                                            postInteractionSheetState.onInteraction(action)
-                                        }
+                                            is PostAction.OfMedia -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        galleryDestination(
+                                                            post = action.post,
+                                                            media = action.media,
+                                                            startIndex = action.index,
+                                                            sharedElementPrefix =
+                                                                SharedElementPrefix
+                                                                    .withQuotingPostUriPrefix(
+                                                                        action.quotingPostUri
+                                                                    ),
+                                                        )
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfMore -> {
-                                            postOptionsSheetState.showOptions(action.post)
-                                        }
+                                            is PostAction.OfReply -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        if (paneScaffoldState.isSignedOut)
+                                                            signInDestination()
+                                                        else
+                                                            composePostDestination(
+                                                                type =
+                                                                    Post.Create.Reply(
+                                                                        parent = action.post
+                                                                    ),
+                                                                sharedElementPrefix =
+                                                                    SharedElementPrefix,
+                                                            )
+                                                    )
+                                                )
+                                            }
 
-                                        else -> Unit
+                                            is PostAction.OfInteraction -> {
+                                                postInteractionSheetState.onInteraction(action)
+                                            }
+
+                                            is PostAction.OfMore -> {
+                                                postOptionsSheetState.showOptions(action.post)
+                                            }
+
+                                            else -> Unit
+                                        }
                                     }
-                                }
-                            },
+                                },
                         )
                     },
                 )
@@ -362,7 +404,10 @@ internal fun PostsScreen(
     }
 
     // Auto-play videos for visible items
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && state.preferences.local.autoPlayTimelineVideos) {
+    if (
+        paneScaffoldState.paneState.pane == ThreePane.Primary &&
+            state.preferences.local.autoPlayTimelineVideos
+    ) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,
@@ -370,12 +415,12 @@ internal fun PostsScreen(
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            state.tiledItems.getOrNull(flooredIndex)
+            state.tiledItems
+                .getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
+                ?.let(videoPlayerController::play) ?: videoPlayerController.pauseActiveVideo()
         }
     }
 
@@ -384,10 +429,8 @@ internal fun PostsScreen(
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
-                    TilingState.Action.LoadAround(
-                        query = query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    TilingState.Action.LoadAround(query = query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )

@@ -54,7 +54,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class PostOptionsSheetState private constructor(
+class PostOptionsSheetState
+private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     scope: BottomSheetScope,
@@ -86,16 +87,18 @@ class PostOptionsSheetState private constructor(
             onShown: () -> Unit,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
-            val state = rememberBottomSheetState {
-                PostOptionsSheetState(
-                    signedInProfileId = signedInProfileId,
-                    recentConversations = recentConversations,
-                    scope = it,
-                )
-            }.also {
-                it.signedInProfileId = signedInProfileId
-                it.recentConversations = recentConversations
-            }
+            val state =
+                rememberBottomSheetState {
+                        PostOptionsSheetState(
+                            signedInProfileId = signedInProfileId,
+                            recentConversations = recentConversations,
+                            scope = it,
+                        )
+                    }
+                    .also {
+                        it.signedInProfileId = signedInProfileId
+                        it.recentConversations = recentConversations
+                    }
 
             PostOptionsBottomSheet(
                 state = state,
@@ -115,54 +118,56 @@ private fun PostOptionsBottomSheet(
     onOptionClicked: (PostOption) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
-    if (signedInProfileId != null) state.ModalBottomSheet {
-        DisposableEffect(Unit) {
-            onShown()
-            onDispose { }
-        }
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            SendDirectMessageCard(
-                signedInProfileId = signedInProfileId,
-                recentConversations = state.recentConversations,
-                onConversationClicked = { conversation ->
-                    val currentPost = state.currentPost
-                    if (currentPost != null) {
-                        onOptionClicked(
-                            PostOption.ShareInConversation(
-                                post = currentPost,
-                                conversation = conversation,
-                            ),
-                        )
-                    }
-                    state.hide()
-                },
-            )
-            state.currentPost?.let { post ->
-                val isOwnPost = post.author.did == signedInProfileId
-
-                CopyToClipboardCard(post.uri.shareUri())
-
-                if (!isOwnPost) PostModerationMenuSection(
+    if (signedInProfileId != null)
+        state.ModalBottomSheet {
+            DisposableEffect(Unit) {
+                onShown()
+                onDispose {}
+            }
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SendDirectMessageCard(
                     signedInProfileId = signedInProfileId,
-                    post = post,
-                    onOptionClicked = { option ->
+                    recentConversations = state.recentConversations,
+                    onConversationClicked = { conversation ->
+                        val currentPost = state.currentPost
+                        if (currentPost != null) {
+                            onOptionClicked(
+                                PostOption.ShareInConversation(
+                                    post = currentPost,
+                                    conversation = conversation,
+                                )
+                            )
+                        }
                         state.hide()
-                        onOptionClicked(option)
                     },
                 )
+                state.currentPost?.let { post ->
+                    val isOwnPost = post.author.did == signedInProfileId
 
-                if (isOwnPost) PostManagementMenuSection(
-                    state = state,
-                    post = post,
-                    onOptionClicked = onOptionClicked,
-                )
+                    CopyToClipboardCard(post.uri.shareUri())
+
+                    if (!isOwnPost)
+                        PostModerationMenuSection(
+                            signedInProfileId = signedInProfileId,
+                            post = post,
+                            onOptionClicked = { option ->
+                                state.hide()
+                                onOptionClicked(option)
+                            },
+                        )
+
+                    if (isOwnPost)
+                        PostManagementMenuSection(
+                            state = state,
+                            post = post,
+                            onOptionClicked = onOptionClicked,
+                        )
+                }
             }
         }
-    }
 }
 
 @Composable
@@ -177,22 +182,24 @@ internal fun PostModerationMenuSection(
             val isLast = index == PostModerationTools.entries.lastIndex
 
             BottomSheetItemCardRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 icon = tool.icon,
                 text = stringResource(tool.stringRes),
                 onClick = {
-                    val option = when (tool) {
-                        PostModerationTools.MuteWords -> PostOption.Moderation.MuteWords
-                        PostModerationTools.BlockAccount -> PostOption.Moderation.BlockAccount(
-                            signedInProfileId = signedInProfileId,
-                            post = post,
-                        )
-                        PostModerationTools.MuteAccount -> PostOption.Moderation.MuteAccount(
-                            signedInProfileId = signedInProfileId,
-                            post = post,
-                        )
-                    }
+                    val option =
+                        when (tool) {
+                            PostModerationTools.MuteWords -> PostOption.Moderation.MuteWords
+                            PostModerationTools.BlockAccount ->
+                                PostOption.Moderation.BlockAccount(
+                                    signedInProfileId = signedInProfileId,
+                                    post = post,
+                                )
+                            PostModerationTools.MuteAccount ->
+                                PostOption.Moderation.MuteAccount(
+                                    signedInProfileId = signedInProfileId,
+                                    post = post,
+                                )
+                        }
                     onOptionClicked(option)
                 },
             )
@@ -211,12 +218,10 @@ private fun PostManagementMenuSection(
     onOptionClicked: (PostOption) -> Unit,
 ) {
     BottomSheetItemCard(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         content = {
             BottomSheetItemCardRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Rounded.EditAttributes,
                 text = stringResource(Res.string.thread_gate_post_reply_settings),
                 onClick = {
@@ -227,8 +232,7 @@ private fun PostManagementMenuSection(
 
             val deletePostDialogState = rememberSimpleDialogState()
             BottomSheetItemCardRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Rounded.Delete,
                 text = stringResource(Res.string.delete_post),
                 iconTint = MaterialTheme.colorScheme.error,
@@ -240,14 +244,10 @@ private fun PostManagementMenuSection(
             SimpleDialog(
                 state = deletePostDialogState,
                 title = {
-                    SimpleDialogTitle(
-                        text = stringResource(Res.string.delete_post),
-                    )
+                    SimpleDialogTitle(text = stringResource(Res.string.delete_post))
                 },
                 text = {
-                    SimpleDialogText(
-                        text = stringResource(Res.string.delete_post_prompt),
-                    )
+                    SimpleDialogText(text = stringResource(Res.string.delete_post_prompt))
                 },
                 confirmButton = {
                     DestructiveDialogButton(
@@ -276,13 +276,9 @@ sealed class PostOption {
         val conversation: Conversation,
     ) : PostOption()
 
-    data class ThreadGate(
-        val postUri: PostUri,
-    ) : PostOption()
+    data class ThreadGate(val postUri: PostUri) : PostOption()
 
-    data class Delete(
-        val postUri: PostUri,
-    ) : PostOption()
+    data class Delete(val postUri: PostUri) : PostOption()
 
     sealed class Moderation : PostOption() {
 
@@ -293,14 +289,12 @@ sealed class PostOption {
         data class BlockAccount(
             val signedInProfileId: ProfileId,
             val post: Post,
-        ) : Moderation(),
-            ProfileRestriction
+        ) : Moderation(), ProfileRestriction
 
         data class MuteAccount(
             val signedInProfileId: ProfileId,
             val post: Post,
-        ) : Moderation(),
-            ProfileRestriction
+        ) : Moderation(), ProfileRestriction
     }
 }
 

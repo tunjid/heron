@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui.profile
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -57,7 +56,6 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.viewer_state_blocked
 import heron.ui.core.generated.resources.viewer_state_follows_you
 import heron.ui.core.generated.resources.viewer_state_muted
@@ -73,103 +71,106 @@ fun ProfileWithViewerState(
     profileSharedElementKey: (Profile) -> Any,
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-) = with(paneTransitionScope) {
-    val profileClicked = {
-        onProfileClicked(profile)
-    }
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        AttributionLayout(
-            modifier = Modifier,
-            avatar = {
-                PaneStickySharedElement(
-                    modifier = Modifier
-                        .size(UiTokens.avatarSize)
-                        .ifTrue(viewerState.isBlocked) {
-                            blur(
-                                shape = CircleShape,
-                                radius = ::BlockedContentBlurRadius,
-                                clip = ::BlockedContentBlurClip,
-                                progress = ::BlockedContentBlurProgress,
+) =
+    with(paneTransitionScope) {
+        val profileClicked = {
+            onProfileClicked(profile)
+        }
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            AttributionLayout(
+                modifier = Modifier,
+                avatar = {
+                    PaneStickySharedElement(
+                        modifier =
+                            Modifier.size(UiTokens.avatarSize)
+                                .ifTrue(viewerState.isBlocked) {
+                                    blur(
+                                        shape = CircleShape,
+                                        radius = ::BlockedContentBlurRadius,
+                                        clip = ::BlockedContentBlurClip,
+                                        progress = ::BlockedContentBlurProgress,
+                                    )
+                                }
+                                .shapedClickable(
+                                    shape = CircleShape,
+                                    onClick = profileClicked,
+                                ),
+                        sharedContentState =
+                            with(paneTransitionScope) {
+                                rememberSharedContentState(key = profileSharedElementKey(profile))
+                            },
+                        content = {
+                            AsyncImage(
+                                modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                                args =
+                                    remember(profile.avatar) {
+                                        ImageArgs(
+                                            url = profile.avatar?.uri,
+                                            contentScale = ContentScale.Crop,
+                                            contentDescription = profile.contentDescription,
+                                            shape = RoundedPolygonShape.Circle,
+                                        )
+                                    },
                             )
-                        }
-                        .shapedClickable(
-                            shape = CircleShape,
-                            onClick = profileClicked,
-                        ),
-                    sharedContentState = with(paneTransitionScope) {
-                        rememberSharedContentState(
-                            key = profileSharedElementKey(profile),
-                        )
-                    },
-                    content = {
-                        AsyncImage(
-                            modifier = Modifier
-                                .fillParentAxisIfFixedOrWrap(),
-                            args = remember(profile.avatar) {
-                                ImageArgs(
-                                    url = profile.avatar?.uri,
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = profile.contentDescription,
-                                    shape = RoundedPolygonShape.Circle,
-                                )
-                            },
-                        )
-                    },
-                )
-            },
-            label = {
-                Column {
-                    ProfileName(
-                        modifier = Modifier,
-                        profile = profile,
-                        ellipsize = false,
+                        },
                     )
-                    Spacer(Modifier.height(4.dp))
-                    ProfileHandle(
-                        modifier = Modifier,
-                        profile = profile,
-                    )
-                }
-            },
-            action = {
-                val isSignedInProfile = signedInProfileId == profile.did
-                AnimatedVisibility(
-                    visible = !isSignedInProfile && !viewerState.isRestricted,
-                    content = {
-                        ProfileViewerState(
-                            viewerState = viewerState,
-                            isSignedInProfile = isSignedInProfile,
-                            onClick = {
-                                onViewerStateClicked(viewerState)
-                            },
+                },
+                label = {
+                    Column {
+                        ProfileName(
+                            modifier = Modifier,
+                            profile = profile,
+                            ellipsize = false,
                         )
-                    },
-                )
-            },
-        )
-        LabelFlowRow {
-            if (viewerState.followsYou) IconLabel(
-                icon = null,
-                contentDescription = stringResource(CommonStrings.viewer_state_follows_you),
-                onClick = profileClicked,
+                        Spacer(Modifier.height(4.dp))
+                        ProfileHandle(
+                            modifier = Modifier,
+                            profile = profile,
+                        )
+                    }
+                },
+                action = {
+                    val isSignedInProfile = signedInProfileId == profile.did
+                    AnimatedVisibility(
+                        visible = !isSignedInProfile && !viewerState.isRestricted,
+                        content = {
+                            ProfileViewerState(
+                                viewerState = viewerState,
+                                isSignedInProfile = isSignedInProfile,
+                                onClick = {
+                                    onViewerStateClicked(viewerState)
+                                },
+                            )
+                        },
+                    )
+                },
             )
-            if (viewerState.isBlocked) IconLabel(
-                icon = Icons.Rounded.Block,
-                contentDescription = stringResource(CommonStrings.viewer_state_blocked),
-                onClick = profileClicked,
-            )
-            if (viewerState.isMuted) IconLabel(
-                icon = Icons.AutoMirrored.Rounded.VolumeOff,
-                contentDescription = stringResource(CommonStrings.viewer_state_muted),
-                onClick = profileClicked,
-            )
+            LabelFlowRow {
+                if (viewerState.followsYou)
+                    IconLabel(
+                        icon = null,
+                        contentDescription = stringResource(CommonStrings.viewer_state_follows_you),
+                        onClick = profileClicked,
+                    )
+                if (viewerState.isBlocked)
+                    IconLabel(
+                        icon = Icons.Rounded.Block,
+                        contentDescription = stringResource(CommonStrings.viewer_state_blocked),
+                        onClick = profileClicked,
+                    )
+                if (viewerState.isMuted)
+                    IconLabel(
+                        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                        contentDescription = stringResource(CommonStrings.viewer_state_muted),
+                        onClick = profileClicked,
+                    )
+            }
         }
     }
-}
 
 @Composable
 private fun IconLabel(
@@ -181,12 +182,12 @@ private fun IconLabel(
         isElevated = true,
         contentDescription = contentDescription,
         icon = {
-            if (icon != null) Icon(
-                modifier = Modifier
-                    .size(LabelIconSize),
-                imageVector = icon,
-                contentDescription = null,
-            )
+            if (icon != null)
+                Icon(
+                    modifier = Modifier.size(LabelIconSize),
+                    imageVector = icon,
+                    contentDescription = null,
+                )
         },
         description = {
             LabelText(contentDescription)

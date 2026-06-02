@@ -38,7 +38,7 @@ fun Modifier.animateConstraints(
             // Return true if the size animation has pending target change or is currently
             // running.
             !sizeAnimation.isIdle
-        },
+        }
     ) { measurable, c ->
         // In the measurement approach, the goal is to gradually reach the destination size
         // (i.e. lookahead size). To achieve that, we use an animation to track the current

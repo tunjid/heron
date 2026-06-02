@@ -45,10 +45,11 @@ internal fun Statistic(
             modifier = Modifier.alignByBaseline(),
             text = format(value),
             maxLines = 1,
-            style = LocalTextStyle.current.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-            ),
+            style =
+                LocalTextStyle.current.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                ),
         )
         Text(
             modifier = Modifier.alignByBaseline(),

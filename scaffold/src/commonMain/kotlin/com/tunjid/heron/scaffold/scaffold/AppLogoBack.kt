@@ -32,34 +32,28 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 
 @Composable
-internal fun rememberBackLogoAnimation(
-    isArrow: Boolean,
-): BackAnimation {
-    val bodyColor = rememberUpdatedState(
-        MaterialTheme.colorScheme.onSurface,
-    )
-    val backgroundColor = rememberUpdatedState(
-        ButtonDefaults.filledTonalButtonColors().containerColor,
-    )
+internal fun rememberBackLogoAnimation(isArrow: Boolean): BackAnimation {
+    val bodyColor = rememberUpdatedState(MaterialTheme.colorScheme.onSurface)
+    val backgroundColor =
+        rememberUpdatedState(ButtonDefaults.filledTonalButtonColors().containerColor)
 
-    val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
-        .navigationEventDispatcher
+    val navigationEventDispatcher =
+        LocalNavigationEventDispatcherOwner.current!!.navigationEventDispatcher
 
-    val transitionState = navigationEventDispatcher
-        .transitionState
-        .collectAsState()
+    val transitionState = navigationEventDispatcher.transitionState.collectAsState()
 
-    val progressState = animateFloatAsState(
-        targetValue = when (val value = transitionState.value) {
-            NavigationEventTransitionState.Idle ->
-                if (isArrow) BackArrowProgress
-                else HeronLogoProgress
-            is NavigationEventTransitionState.InProgress ->
-                if (isArrow) BackArrowProgress
-                else BackArrowProgress - value.latestEvent.progress
-        },
-        label = "LogoAnimation",
-    )
+    val progressState =
+        animateFloatAsState(
+            targetValue =
+                when (val value = transitionState.value) {
+                    NavigationEventTransitionState.Idle ->
+                        if (isArrow) BackArrowProgress else HeronLogoProgress
+                    is NavigationEventTransitionState.InProgress ->
+                        if (isArrow) BackArrowProgress
+                        else BackArrowProgress - value.latestEvent.progress
+                },
+            label = "LogoAnimation",
+        )
 
     return remember {
         BackAnimation(
@@ -76,9 +70,7 @@ internal class BackAnimation(
     val progress: () -> Float,
 ) : LogoAnimation {
 
-    override fun DrawScope.drawPart(
-        part: HeronPart,
-    ) {
+    override fun DrawScope.drawPart(part: HeronPart) {
         val backgroundColor = backgroundColor()
         val bodyColor = bodyColor()
         val progress = progress()
@@ -95,16 +87,18 @@ internal class BackAnimation(
                 val endY = 24f
                 val headScale = 1f - (0.8f * progress)
 
-                val circleCenter = Offset(
-                    x = startX + (endX - startX) * progress,
-                    y = startY + (endY - startY) * progress,
-                )
+                val circleCenter =
+                    Offset(
+                        x = startX + (endX - startX) * progress,
+                        y = startY + (endY - startY) * progress,
+                    )
                 val circleRadius = 24f * progress
-                val headColor = lerp(
-                    start = HeadColor,
-                    stop = backgroundColor,
-                    fraction = progress,
-                )
+                val headColor =
+                    lerp(
+                        start = HeadColor,
+                        stop = backgroundColor,
+                        fraction = progress,
+                    )
 
                 // 1. Head: Simulate head morph to circle
                 if (progress > 0) {
@@ -125,10 +119,11 @@ internal class BackAnimation(
                         scale(
                             scaleX = headScale,
                             scaleY = headScale,
-                            pivot = Offset(
-                                x = 15f,
-                                y = 3f,
-                            ),
+                            pivot =
+                                Offset(
+                                    x = 15f,
+                                    y = 3f,
+                                ),
                         )
                     },
                     drawBlock = {
@@ -141,11 +136,12 @@ internal class BackAnimation(
                 )
             }
             HeronPart.Body -> {
-                if (fadeAlpha > 0) drawPath(
-                    path = part.path,
-                    color = bodyColor,
-                    alpha = fadeAlpha,
-                )
+                if (fadeAlpha > 0)
+                    drawPath(
+                        path = part.path,
+                        color = bodyColor,
+                        alpha = fadeAlpha,
+                    )
             }
             HeronPart.Legs -> {
                 // Leg: Rotates 0 -> -90
@@ -163,10 +159,11 @@ internal class BackAnimation(
                         )
                         rotate(
                             degrees = legRotation,
-                            pivot = Offset(
-                                x = 16.5f,
-                                y = 33.5f,
-                            ),
+                            pivot =
+                                Offset(
+                                    x = 16.5f,
+                                    y = 33.5f,
+                                ),
                         )
                     },
                     drawBlock = {
@@ -188,10 +185,11 @@ internal class BackAnimation(
                 // Bottom beak caret: Rotates 0 -> 75
                 val bottomCaretRot = 75f * progress
                 // 4. Beak: Split into two instances for the Caret
-                val beakTipPivot = Offset(
-                    x = 0f,
-                    y = 12.1f,
-                )
+                val beakTipPivot =
+                    Offset(
+                        x = 0f,
+                        y = 12.1f,
+                    )
 
                 // Instance A: Top Caret
                 withTransform(

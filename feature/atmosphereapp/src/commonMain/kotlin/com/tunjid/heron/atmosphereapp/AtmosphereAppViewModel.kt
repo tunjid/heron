@@ -78,11 +78,10 @@ class ActualAtmosphereAppViewModel(
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     AtmosphereAppStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -100,19 +99,21 @@ class ActualAtmosphereAppViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.PageChanged -> action.flow.collect { event ->
-                        state.currentPage = event.page
-                    }
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
+                    is Action.PageChanged ->
+                        action.flow.collect { event ->
+                            state.currentPage = event.page
+                        }
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state = state)
+                    is Action.TogglePublicationSubscription ->
+                        action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.Navigate ->
+                        action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
                 }
             }
         },
@@ -126,12 +127,14 @@ private fun launchProfileLoadMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) {
-    val sharedProfile = profileRepository.profile(route.profileHandleOrId)
-        .shareIn(
-            scope = scope,
-            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-            replay = 1,
-        )
+    val sharedProfile =
+        profileRepository
+            .profile(route.profileHandleOrId)
+            .shareIn(
+                scope = scope,
+                started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+                replay = 1,
+            )
 
     sharedProfile.launchAndCollect { profile ->
         state.profile = profile
@@ -141,22 +144,22 @@ private fun launchProfileLoadMutations(
         .map { it.did }
         .distinctUntilChanged()
         .launchAndCollectLatest { resolvedProfileId ->
-            val keysToHolders = state.stateHolders
-                .associateBy(AppScreenStateHolders::key)
+            val keysToHolders = state.stateHolders.associateBy(AppScreenStateHolders::key)
 
-            state.stateHolders = stateHoldersFor(
-                app = state.app,
-                profileId = resolvedProfileId,
-                existingHolders = keysToHolders,
-                viewModelScope = scope,
-                recordRepository = recordRepository,
-            )
+            state.stateHolders =
+                stateHoldersFor(
+                    app = state.app,
+                    profileId = resolvedProfileId,
+                    existingHolders = keysToHolders,
+                    viewModelScope = scope,
+                    recordRepository = recordRepository,
+                )
         }
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
@@ -165,22 +168,23 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            when (action) {
+                is Action.TogglePublicationSubscription.Subscribe ->
+                    Writable.StandardSite.Subscribe(
+                        create = StandardSubscription.Create(publicationUri = action.publicationUri)
+                    )
+                is Action.TogglePublicationSubscription.Unsubscribe ->
+                    Writable.RecordDeletion(recordUri = action.subscriptionUri)
+            }
+        },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 private fun stateHoldersFor(
     app: AtmosphereApp?,
@@ -188,64 +192,73 @@ private fun stateHoldersFor(
     existingHolders: Map<String, AppScreenStateHolders>,
     viewModelScope: CoroutineScope,
     recordRepository: RecordRepository,
-): List<AppScreenStateHolders> = when (app?.id) {
-    AtmosphereApp.StandardSiteId -> listOf(
-        existingHolders[StandardDocumentUri.NAMESPACE]
-            ?: AppScreenStateHolders.StandardSite.Documents(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_documents,
-                    itemId = StandardDocument::uri,
-                    cursorListLoader = recordRepository::authorDocuments,
-                ),
-            ),
-        existingHolders[StandardPublicationUri.NAMESPACE]
-            ?: AppScreenStateHolders.StandardSite.Publications(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_publications,
-                    itemId = StandardPublication::uri,
-                    cursorListLoader = recordRepository::authorPublications,
-                ),
-            ),
-    )
-    AtmosphereApp.RockskyId -> listOf(
-        existingHolders[ScrobbleUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Scrobbles(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_scrobbles,
-                    itemId = RockskyScrobble::uri,
-                    cursorListLoader = recordRepository::scrobbles,
-                ),
-            ),
-        existingHolders[ArtistUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Artists(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_artists,
-                    itemId = RockskyArtist::uri,
-                    cursorListLoader = recordRepository::artists,
-                ),
-            ),
-        existingHolders[TrackUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Tracks(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_tracks,
-                    itemId = RockskyTrack::uri,
-                    cursorListLoader = recordRepository::tracks,
-                ),
-            ),
-        existingHolders[AlbumUri.NAMESPACE]
-            ?: AppScreenStateHolders.Rocksky.Albums(
-                mutator = viewModelScope.recordStateHolder(
-                    profileId = profileId,
-                    stringResource = Res.string.tab_albums,
-                    itemId = RockskyAlbum::uri,
-                    cursorListLoader = recordRepository::albums,
-                ),
-            ),
-    )
-    else -> emptyList()
-}
+): List<AppScreenStateHolders> =
+    when (app?.id) {
+        AtmosphereApp.StandardSiteId ->
+            listOf(
+                existingHolders[StandardDocumentUri.NAMESPACE]
+                    ?: AppScreenStateHolders.StandardSite.Documents(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_documents,
+                                itemId = StandardDocument::uri,
+                                cursorListLoader = recordRepository::authorDocuments,
+                            )
+                    ),
+                existingHolders[StandardPublicationUri.NAMESPACE]
+                    ?: AppScreenStateHolders.StandardSite.Publications(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_publications,
+                                itemId = StandardPublication::uri,
+                                cursorListLoader = recordRepository::authorPublications,
+                            )
+                    ),
+            )
+        AtmosphereApp.RockskyId ->
+            listOf(
+                existingHolders[ScrobbleUri.NAMESPACE]
+                    ?: AppScreenStateHolders.Rocksky.Scrobbles(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_scrobbles,
+                                itemId = RockskyScrobble::uri,
+                                cursorListLoader = recordRepository::scrobbles,
+                            )
+                    ),
+                existingHolders[ArtistUri.NAMESPACE]
+                    ?: AppScreenStateHolders.Rocksky.Artists(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_artists,
+                                itemId = RockskyArtist::uri,
+                                cursorListLoader = recordRepository::artists,
+                            )
+                    ),
+                existingHolders[TrackUri.NAMESPACE]
+                    ?: AppScreenStateHolders.Rocksky.Tracks(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_tracks,
+                                itemId = RockskyTrack::uri,
+                                cursorListLoader = recordRepository::tracks,
+                            )
+                    ),
+                existingHolders[AlbumUri.NAMESPACE]
+                    ?: AppScreenStateHolders.Rocksky.Albums(
+                        mutator =
+                            viewModelScope.recordStateHolder(
+                                profileId = profileId,
+                                stringResource = Res.string.tab_albums,
+                                itemId = RockskyAlbum::uri,
+                                cursorListLoader = recordRepository::albums,
+                            )
+                    ),
+            )
+        else -> emptyList()
+    }

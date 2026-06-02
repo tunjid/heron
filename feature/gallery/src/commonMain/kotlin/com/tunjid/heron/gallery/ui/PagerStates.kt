@@ -32,18 +32,15 @@ class PagerStates<Key> {
         key: Key,
         initializer: @Composable () -> PagerState,
     ): PagerState {
-        val pagerState = initializer().also {
-            keysToPagerStates[key] = it
-        }
+        val pagerState =
+            initializer().also {
+                keysToPagerStates[key] = it
+            }
         DisposableEffect(key) {
             onDispose { keysToPagerStates.remove(key) }
         }
         return pagerState
     }
 
-    @Stable
-    operator fun get(
-        key: Key,
-    ): PagerState? =
-        keysToPagerStates[key]
+    @Stable operator fun get(key: Key): PagerState? = keysToPagerStates[key]
 }

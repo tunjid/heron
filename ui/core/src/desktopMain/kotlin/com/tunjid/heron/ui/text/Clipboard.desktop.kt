@@ -19,8 +19,5 @@ package com.tunjid.heron.ui.text
 import androidx.compose.ui.platform.ClipEntry
 import com.tunjid.heron.data.core.types.Uri
 
-actual fun Uri.asClipEntry(
-    label: String,
-): ClipEntry = ClipEntry(
-    java.awt.datatransfer.StringSelection(uri),
-)
+actual fun Uri.asClipEntry(label: String): ClipEntry =
+    ClipEntry(java.awt.datatransfer.StringSelection(uri))

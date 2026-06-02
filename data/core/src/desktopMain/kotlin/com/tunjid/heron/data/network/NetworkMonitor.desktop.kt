@@ -21,11 +21,11 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-internal actual fun Throwable.isNetworkConnectionError() = when (this) {
-    is UnresolvedAddressException,
-    is UnknownHostException,
-    is SocketTimeoutException,
-    is ConnectException,
-    -> true
-    else -> false
-}
+internal actual fun Throwable.isNetworkConnectionError() =
+    when (this) {
+        is UnresolvedAddressException,
+        is UnknownHostException,
+        is SocketTimeoutException,
+        is ConnectException -> true
+        else -> false
+    }

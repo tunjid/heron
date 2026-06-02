@@ -50,40 +50,35 @@ fun AppearanceSection(
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
 
-    val availableThemes = remember(isDynamicThemingSupported) {
-        Theme.entries.filter { theme ->
-            theme != Theme.Dynamic || isDynamicThemingSupported
+    val availableThemes =
+        remember(isDynamicThemingSupported) {
+            Theme.entries.filter { theme ->
+                theme != Theme.Dynamic || isDynamicThemingSupported
+            }
         }
-    }
 
     SettingsRadioButtons(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         title = Res.string.theme,
-        selectedItem = Theme.fromOrdinal(
-            signedInProfilePreferences.local.currentThemeOrdinal,
-        ),
+        selectedItem = Theme.fromOrdinal(signedInProfilePreferences.local.currentThemeOrdinal),
         items = availableThemes,
         itemStringResource = Theme::themeStringResource,
         onItemClicked = { theme -> setCurrentThemeOrdinal(theme.ordinal) },
     )
 
-    HorizontalDivider(
-        modifier = Modifier.fillMaxWidth(),
-    )
+    HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
-    if (isCompactNavigationSupported) SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
-        text = stringResource(Res.string.use_compact_navigation),
-        enabled = true,
-        checked = signedInProfilePreferences.local.useCompactNavigation,
-        onCheckedChange = setCompactNavigation,
-    )
+    if (isCompactNavigationSupported)
+        SettingsToggleItem(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(Res.string.use_compact_navigation),
+            enabled = true,
+            checked = signedInProfilePreferences.local.useCompactNavigation,
+            onCheckedChange = setCompactNavigation,
+        )
 
     SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         text = stringResource(Res.string.autohide_bottom_navigation),
         enabled = true,
         checked = signedInProfilePreferences.local.autoHideBottomNavigation,
@@ -91,14 +86,15 @@ fun AppearanceSection(
     )
 }
 
-private fun Theme.themeStringResource(): StringResource = when (this) {
-    Theme.Default -> Res.string.theme_default
-    Theme.Dynamic -> Res.string.theme_dynamic
-    Theme.Herons.Agami -> Res.string.theme_agami
-    Theme.Herons.Black -> Res.string.theme_black
-    Theme.Herons.Blue -> Res.string.theme_blue
-    Theme.Herons.Capped -> Res.string.theme_capped
-    Theme.Herons.Green -> Res.string.theme_green
-    Theme.Herons.Reddish -> Res.string.theme_reddish
-    Theme.Herons.Tricolored -> Res.string.theme_tricolored
-}
+private fun Theme.themeStringResource(): StringResource =
+    when (this) {
+        Theme.Default -> Res.string.theme_default
+        Theme.Dynamic -> Res.string.theme_dynamic
+        Theme.Herons.Agami -> Res.string.theme_agami
+        Theme.Herons.Black -> Res.string.theme_black
+        Theme.Herons.Blue -> Res.string.theme_blue
+        Theme.Herons.Capped -> Res.string.theme_capped
+        Theme.Herons.Green -> Res.string.theme_green
+        Theme.Herons.Reddish -> Res.string.theme_reddish
+        Theme.Herons.Tricolored -> Res.string.theme_tricolored
+    }

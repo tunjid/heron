@@ -71,11 +71,7 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/compose"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object ComposeNavigationBindings {
@@ -102,110 +98,114 @@ class ComposeBindings(
     fun providePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-        navigationContentTransformer = navigationContentTransformer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(
+            viewModelInitializer = viewModelInitializer,
+            navigationContentTransformer = navigationContentTransformer,
+        )
 
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
-    ) = threePaneEntry(
-        contentTransform = navigationContentTransformer::contentTransform,
-        render = { route ->
-            val stateHolder: ComposeStateHolder = viewModel<ActualComposeViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    ) =
+        threePaneEntry(
+            contentTransform = navigationContentTransformer::contentTransform,
+            render = { route ->
+                val stateHolder: ComposeStateHolder =
+                    viewModel<ActualComposeViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by stateHolder.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        actions = {
-                            TopAppBarFab(
-                                modifier = Modifier,
-                                state = state,
-                                onCreatePost = stateHolder.accept,
-                            )
-                            Spacer(Modifier.width(16.dp))
-                        },
-                        onBackPressed = {
-                            stateHolder.accept(Action.Navigate.Pop)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    ComposePostFabRow(
-                        modifier = Modifier,
-                        state = state,
-                        onAction = stateHolder.accept,
-                    )
-                },
-                navigationBar = {
-                    val borderColor = MaterialTheme.colorScheme.outline
-                    val imePadding = WindowInsets.ime.asPaddingValues()
-                    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
-                    val imeShowing by remember {
-                        derivedStateOf {
-                            imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
-                        }
-                    }
-                    val hasBlankText by remember {
-                        derivedStateOf { state.postText.text.isBlank() }
-                    }
-                    ComposePostBottomBar(
-                        modifier = Modifier
-                            .drawBehind {
-                                drawLine(
-                                    color = borderColor,
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, 0f),
-                                    strokeWidth = 1f,
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {
+                        stateHolder.accept(Action.SnackbarDismissed(it))
+                    },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            actions = {
+                                TopAppBarFab(
+                                    modifier = Modifier,
+                                    state = state,
+                                    onCreatePost = stateHolder.accept,
                                 )
+                                Spacer(Modifier.width(16.dp))
+                            },
+                            onBackPressed = {
+                                stateHolder.accept(Action.Navigate.Pop)
+                            },
+                        )
+                    },
+                    floatingActionButton = {
+                        ComposePostFabRow(
+                            modifier = Modifier,
+                            state = state,
+                            onAction = stateHolder.accept,
+                        )
+                    },
+                    navigationBar = {
+                        val borderColor = MaterialTheme.colorScheme.outline
+                        val imePadding = WindowInsets.ime.asPaddingValues()
+                        val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                        val imeShowing by remember {
+                            derivedStateOf {
+                                imePadding.calculateBottomPadding() >
+                                    navBarPadding.calculateBottomPadding()
                             }
-                            .padding(horizontal = 8.dp)
-                            .imePadding()
-                            .windowInsetsPadding(WindowInsets.navigationBars),
-                        postText = state.postText,
-                        photos = state.photos,
-                        onMediaEdited = stateHolder.accept,
-                    )
+                        }
+                        val hasBlankText by remember {
+                            derivedStateOf { state.postText.text.isBlank() }
+                        }
+                        ComposePostBottomBar(
+                            modifier =
+                                Modifier.drawBehind {
+                                        drawLine(
+                                            color = borderColor,
+                                            start = Offset(0f, 0f),
+                                            end = Offset(size.width, 0f),
+                                            strokeWidth = 1f,
+                                        )
+                                    }
+                                    .padding(horizontal = 8.dp)
+                                    .imePadding()
+                                    .windowInsetsPadding(WindowInsets.navigationBars),
+                            postText = state.postText,
+                            photos = state.photos,
+                            onMediaEdited = stateHolder.accept,
+                        )
 
-                    DisposableEffect(hasBlankText, imeShowing) {
-                        val fabExpanded = hasBlankText || !imeShowing
-                        stateHolder.accept(Action.SetFabExpanded(expanded = fabExpanded))
-                        onDispose { }
-                    }
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    ComposeScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(paddingValues)
-                            .padding(
-                                // This padding is solely for the post interaction button
-                                bottom = UiTokens.toolbarHeight,
-                            ),
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
-            )
-        },
-    )
+                        DisposableEffect(hasBlankText, imeShowing) {
+                            val fabExpanded = hasBlankText || !imeShowing
+                            stateHolder.accept(Action.SetFabExpanded(expanded = fabExpanded))
+                            onDispose {}
+                        }
+                    },
+                    navigationRail = {
+                        PaneNavigationRail()
+                    },
+                    content = { paddingValues ->
+                        ComposeScreen(
+                            paneScaffoldState = this,
+                            modifier =
+                                Modifier.padding(paddingValues)
+                                    .padding(
+                                        // This padding is solely for the post interaction button
+                                        bottom = UiTokens.toolbarHeight
+                                    ),
+                            state = state,
+                            actions = stateHolder.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

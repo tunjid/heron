@@ -33,7 +33,7 @@ internal fun MultipleEntitySaver.add(
                 profileId = profileId,
                 atmosphereAppId = appId,
                 viewingProfileId = viewingProfileId,
-            ),
+            )
         )
     }
 }

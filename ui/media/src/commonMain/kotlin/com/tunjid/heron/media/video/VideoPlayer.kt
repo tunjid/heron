@@ -40,30 +40,34 @@ fun VideoStill(
     state: VideoPlayerState,
 ) {
     when (
-        val lastBitmap = state.videoStill.takeIf {
-            state.status != PlayerStatus.Idle.Initial
-        }
+        val lastBitmap =
+            state.videoStill.takeIf {
+                state.status != PlayerStatus.Idle.Initial
+            }
     ) {
-        null -> AsyncImage(
-            modifier = modifier,
-            args = remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
-                ImageArgs(
-                    url = state.thumbnailUrl,
-                    contentDescription = null,
-                    alignment = state.alignment,
-                    contentScale = state.contentScale,
-                    shape = state.shape,
-                )
-            },
-        )
+        null ->
+            AsyncImage(
+                modifier = modifier,
+                args =
+                    remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
+                        ImageArgs(
+                            url = state.thumbnailUrl,
+                            contentDescription = null,
+                            alignment = state.alignment,
+                            contentScale = state.contentScale,
+                            shape = state.shape,
+                        )
+                    },
+            )
 
-        else -> Image(
-            modifier = modifier,
-            bitmap = lastBitmap,
-            contentDescription = null,
-            alignment = state.alignment.animate(),
-            contentScale = state.contentScale.animate(),
-        )
+        else ->
+            Image(
+                modifier = modifier,
+                bitmap = lastBitmap,
+                contentDescription = null,
+                alignment = state.alignment.animate(),
+                contentScale = state.contentScale.animate(),
+            )
     }
 }
 
@@ -77,24 +81,25 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     contentScale: ContentScale = ContentScale.Crop,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
-): VideoPlayerState = registerVideo(
-    videoUrl = videoUrl,
-    videoId = videoId,
-    thumbnail = thumbnail,
-    isLooping = isLooping,
-    autoplay = autoplay,
-).also { videoPlayerState ->
-    videoPlayerState.thumbnailUrl = thumbnail
-    videoPlayerState.contentScale = contentScale
-    videoPlayerState.alignment = alignment
-    videoPlayerState.shape = shape
-}
-
-fun Long.formatVideoDuration() =
-    milliseconds.toComponents { h, m, s, _ ->
-        val paddedSeconds = "0$s".takeLast(2)
-        when {
-            h > 0 -> "$h:$m:$paddedSeconds"
-            else -> "$m:$paddedSeconds"
+): VideoPlayerState =
+    registerVideo(
+            videoUrl = videoUrl,
+            videoId = videoId,
+            thumbnail = thumbnail,
+            isLooping = isLooping,
+            autoplay = autoplay,
+        )
+        .also { videoPlayerState ->
+            videoPlayerState.thumbnailUrl = thumbnail
+            videoPlayerState.contentScale = contentScale
+            videoPlayerState.alignment = alignment
+            videoPlayerState.shape = shape
         }
+
+fun Long.formatVideoDuration() = milliseconds.toComponents { h, m, s, _ ->
+    val paddedSeconds = "0$s".takeLast(2)
+    when {
+        h > 0 -> "$h:$m:$paddedSeconds"
+        else -> "$m:$paddedSeconds"
     }
+}

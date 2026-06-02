@@ -57,16 +57,16 @@ fun rememberFormattedTextPost(
     }
 }
 
-fun TextFieldValue.withFormattedTextPost(
-    textLinkStyles: TextLinkStyles? = null,
-) = copy(
-    annotatedString = formatTextPost(
-        text = text,
-        textLinks = annotatedString.links(),
-        textLinkStyles = textLinkStyles,
-        onLinkTargetClicked = NoOpLinkTargetHandler,
-    ),
-)
+fun TextFieldValue.withFormattedTextPost(textLinkStyles: TextLinkStyles? = null) =
+    copy(
+        annotatedString =
+            formatTextPost(
+                text = text,
+                textLinks = annotatedString.links(),
+                textLinkStyles = textLinkStyles,
+                onLinkTargetClicked = NoOpLinkTargetHandler,
+            )
+    )
 
 fun formatTextPost(
     text: String,
@@ -77,18 +77,19 @@ fun formatTextPost(
     append(text)
 
     val newlineIndices = text.indices.filter { text[it] == '\n' }
-    if (Platform.current.isNativeCompose) newlineIndices.forEach { index ->
-        addStyle(
-            style = ParagraphStyle(lineHeight = 0.1.em),
-            start = index,
-            end = index + 1,
-        )
-        addStyle(
-            style = SpanStyle(fontSize = 0.1.em),
-            start = index,
-            end = index + 1,
-        )
-    }
+    if (Platform.current.isNativeCompose)
+        newlineIndices.forEach { index ->
+            addStyle(
+                style = ParagraphStyle(lineHeight = 0.1.em),
+                start = index,
+                end = index + 1,
+            )
+            addStyle(
+                style = SpanStyle(fontSize = 0.1.em),
+                start = index,
+                end = index + 1,
+            )
+        }
 
     val byteOffsets = text.byteOffsets()
     textLinks.forEach { link ->
@@ -105,10 +106,11 @@ fun formatTextPost(
             when (val target = link.target) {
                 is LinkTarget.ExternalLink -> {
                     addLink(
-                        url = LinkAnnotation.Url(
-                            url = target.uri.uri,
-                            styles = textLinkStyles,
-                        ),
+                        url =
+                            LinkAnnotation.Url(
+                                url = target.uri.uri,
+                                styles = textLinkStyles,
+                            ),
                         start = start,
                         end = end,
                     )
@@ -116,9 +118,10 @@ fun formatTextPost(
 
                 is LinkTarget.Hashtag -> {
                     addLink(
-                        clickable = LinkAnnotation.Clickable(target.tag) {
-                            onLinkTargetClicked(target)
-                        },
+                        clickable =
+                            LinkAnnotation.Clickable(target.tag) {
+                                onLinkTargetClicked(target)
+                            },
                         start = start,
                         end = end,
                     )
@@ -126,9 +129,10 @@ fun formatTextPost(
 
                 is LinkTarget.UserDidMention -> {
                     addLink(
-                        clickable = LinkAnnotation.Clickable(target.did.id) {
-                            onLinkTargetClicked(target)
-                        },
+                        clickable =
+                            LinkAnnotation.Clickable(target.did.id) {
+                                onLinkTargetClicked(target)
+                            },
                         start = start,
                         end = end,
                     )
@@ -136,9 +140,10 @@ fun formatTextPost(
 
                 is LinkTarget.UserHandleMention -> {
                     addLink(
-                        clickable = LinkAnnotation.Clickable(target.handle.id) {
-                            onLinkTargetClicked(target)
-                        },
+                        clickable =
+                            LinkAnnotation.Clickable(target.handle.id) {
+                                onLinkTargetClicked(target)
+                            },
                         start = start,
                         end = end,
                     )
@@ -149,9 +154,8 @@ fun formatTextPost(
 }
 
 /**
- * Returns a mapping of byte offsets to character offsets.
- * Assumes that you are providing a valid UTF-8 string as input.
- * Text encodings are really a lot of fun.
+ * Returns a mapping of byte offsets to character offsets. Assumes that you are providing a valid
+ * UTF-8 string as input. Text encodings are really a lot of fun.
  */
 internal fun String.byteOffsets(): List<Int> = buildList {
     var i = 0

@@ -35,32 +35,35 @@ fun RockskyScrobble(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     scrobble: RockskyScrobble,
-) = with(paneTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        paneTransitionScope = paneTransitionScope,
-        title = scrobble.title,
-        subtitle = scrobble.handle
-            ?.let { stringResource(Res.string.scrobbled_by, it.id) }
-            ?: scrobble.artist,
-        description = dotSeparatedText(
-            preText = scrobble.album,
-            postText = stringResource(
-                Res.string.scrobbled_ago,
-                remember(scrobble.createdAt) {
-                    (Clock.System.now() - scrobble.createdAt).roundComponent()
-                },
-            ),
-        ),
-        blurb = null,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = scrobble.uri,
-        avatar = {
-            RockSkyAvatar(
-                image = scrobble.albumArt,
-                uri = scrobble.uri,
-                sharedElementPrefix = sharedElementPrefix,
-            )
-        },
-    )
-}
+) =
+    with(paneTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            paneTransitionScope = paneTransitionScope,
+            title = scrobble.title,
+            subtitle =
+                scrobble.handle?.let { stringResource(Res.string.scrobbled_by, it.id) }
+                    ?: scrobble.artist,
+            description =
+                dotSeparatedText(
+                    preText = scrobble.album,
+                    postText =
+                        stringResource(
+                            Res.string.scrobbled_ago,
+                            remember(scrobble.createdAt) {
+                                (Clock.System.now() - scrobble.createdAt).roundComponent()
+                            },
+                        ),
+                ),
+            blurb = null,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = scrobble.uri,
+            avatar = {
+                RockSkyAvatar(
+                    image = scrobble.albumArt,
+                    uri = scrobble.uri,
+                    sharedElementPrefix = sharedElementPrefix,
+                )
+            },
+        )
+    }

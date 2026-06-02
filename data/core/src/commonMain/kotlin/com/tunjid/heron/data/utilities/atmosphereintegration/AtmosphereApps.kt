@@ -26,29 +26,33 @@ import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
 
-internal val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
-    AtmosphereApp(
-        id = AtmosphereApp.StandardSiteId,
-        webpage = GenericUri("https://standard.site"),
-        logo = ImageUri("https://standard.site/favicon.ico"),
-    ),
-    // Uncomment for development, undercooked for now
-    AtmosphereApp(
-        id = AtmosphereApp.RockskyId,
-        webpage = GenericUri("https://rocksky.app"),
-        logo = ImageUri("https://rocksky.app/favicon.ico"),
-    ),
-)
+internal val SupportedAtmosphereApps: List<AtmosphereApp> =
+    listOf(
+        AtmosphereApp(
+            id = AtmosphereApp.StandardSiteId,
+            webpage = GenericUri("https://standard.site"),
+            logo = ImageUri("https://standard.site/favicon.ico"),
+        ),
+        // Uncomment for development, undercooked for now
+        AtmosphereApp(
+            id = AtmosphereApp.RockskyId,
+            webpage = GenericUri("https://rocksky.app"),
+            logo = ImageUri("https://rocksky.app/favicon.ico"),
+        ),
+    )
 
-internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
-    AtmosphereApp.StandardSiteId to listOf(
-        StandardPublicationUri.NAMESPACE,
-        StandardDocumentUri.NAMESPACE,
-    ),
-    AtmosphereApp.RockskyId to listOf(
-        ScrobbleUri.NAMESPACE,
-        TrackUri.NAMESPACE,
-        AlbumUri.NAMESPACE,
-        ArtistUri.NAMESPACE,
-    ),
-)
+internal val AtmosphereAppNsids: Map<String, List<String>> =
+    mapOf(
+        AtmosphereApp.StandardSiteId to
+            listOf(
+                StandardPublicationUri.NAMESPACE,
+                StandardDocumentUri.NAMESPACE,
+            ),
+        AtmosphereApp.RockskyId to
+            listOf(
+                ScrobbleUri.NAMESPACE,
+                TrackUri.NAMESPACE,
+                AlbumUri.NAMESPACE,
+                ArtistUri.NAMESPACE,
+            ),
+    )

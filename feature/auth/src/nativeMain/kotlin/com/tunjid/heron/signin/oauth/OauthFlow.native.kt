@@ -39,17 +39,16 @@ import platform.darwin.NSObject
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 @Composable
-actual fun rememberOauthFlowState(
-    onResult: (OauthFlowResult) -> Unit,
-): OauthFlowState {
+actual fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState {
     val currentOnResult by rememberUpdatedState(onResult)
     val provider = remember { PresentationProvider() }
-    val state = remember(provider) {
-        AsWebAuthOauthFlowState(
-            presentationContextProvider = provider,
-            onResult = { currentOnResult(it) },
-        )
-    }
+    val state =
+        remember(provider) {
+            AsWebAuthOauthFlowState(
+                presentationContextProvider = provider,
+                onResult = { currentOnResult(it) },
+            )
+        }
     DisposableEffect(state) {
         onDispose { state.cancel() }
     }
@@ -62,7 +61,8 @@ private const val OauthCallbackPath = "/oauth/callback"
 
 @OptIn(ExperimentalForeignApi::class)
 private class AsWebAuthOauthFlowState(
-    private val presentationContextProvider: ASWebAuthenticationPresentationContextProvidingProtocol,
+    private val presentationContextProvider:
+        ASWebAuthenticationPresentationContextProvidingProtocol,
     private val onResult: (OauthFlowResult) -> Unit,
 ) : OauthFlowState {
 
@@ -72,22 +72,23 @@ private class AsWebAuthOauthFlowState(
 
     override fun launch(uri: GenericUri) {
         session?.cancel()
-        val url = NSURL.URLWithString(uri.uri)
-            ?: return onResult(OauthFlowResult.Failure)
-        val callback = ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(
-            host = OauthCallbackHost,
-            path = OauthCallbackPath,
-        )
-        val newSession = ASWebAuthenticationSession(
-            uRL = url,
-            callback = callback,
-            completionHandler = { callbackUrl, error ->
-                val result = parseResult(callbackUrl, error)
-                platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
-                    onResult(result)
-                }
-            },
-        )
+        val url = NSURL.URLWithString(uri.uri) ?: return onResult(OauthFlowResult.Failure)
+        val callback =
+            ASWebAuthenticationSessionCallback.callbackWithHTTPSHost(
+                host = OauthCallbackHost,
+                path = OauthCallbackPath,
+            )
+        val newSession =
+            ASWebAuthenticationSession(
+                uRL = url,
+                callback = callback,
+                completionHandler = { callbackUrl, error ->
+                    val result = parseResult(callbackUrl, error)
+                    platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+                        onResult(result)
+                    }
+                },
+            )
         newSession.presentationContextProvider = presentationContextProvider
         session = newSession
         newSession.start()
@@ -102,16 +103,18 @@ private class AsWebAuthOauthFlowState(
 @OptIn(ExperimentalForeignApi::class)
 private fun parseResult(callbackUrl: NSURL?, error: NSError?): OauthFlowResult {
     if (error != null || callbackUrl == null) return OauthFlowResult.Failure
-    val components = NSURLComponents.componentsWithURL(
-        url = callbackUrl,
-        resolvingAgainstBaseURL = false,
-    )
-    val issuer = components?.queryItems
-        ?.asSequence()
-        ?.mapNotNull { it as? NSURLQueryItem }
-        ?.firstOrNull { it.name == OauthIssuerKey }
-        ?.value
-        ?: return OauthFlowResult.Failure
+    val components =
+        NSURLComponents.componentsWithURL(
+            url = callbackUrl,
+            resolvingAgainstBaseURL = false,
+        )
+    val issuer =
+        components
+            ?.queryItems
+            ?.asSequence()
+            ?.mapNotNull { it as? NSURLQueryItem }
+            ?.firstOrNull { it.name == OauthIssuerKey }
+            ?.value ?: return OauthFlowResult.Failure
     val absolute = callbackUrl.absoluteString ?: return OauthFlowResult.Failure
     return OauthFlowResult.Success(
         callbackUri = GenericUri(absolute),
@@ -121,14 +124,12 @@ private fun parseResult(callbackUrl: NSURL?, error: NSError?): OauthFlowResult {
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 private class PresentationProvider :
-    NSObject(),
-    ASWebAuthenticationPresentationContextProvidingProtocol {
+    NSObject(), ASWebAuthenticationPresentationContextProvidingProtocol {
 
     override fun presentationAnchorForWebAuthenticationSession(
-        session: ASWebAuthenticationSession,
+        session: ASWebAuthenticationSession
     ): ASPresentationAnchor =
-        UIApplication.sharedApplication
-            .connectedScenes
+        UIApplication.sharedApplication.connectedScenes
             .asSequence()
             .mapNotNull { it as? UIWindowScene }
             .flatMap { scene ->
@@ -136,6 +137,6 @@ private class PresentationProvider :
             }
             .firstOrNull(UIWindow::isKeyWindow)
             ?: throw IllegalStateException(
-                "Could not find a key window to anchor the web authentication session",
+                "Could not find a key window to anchor the web authentication session"
             )
 }

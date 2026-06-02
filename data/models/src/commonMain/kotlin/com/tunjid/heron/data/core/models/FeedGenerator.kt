@@ -38,8 +38,7 @@ data class FeedGenerator(
     val acceptsInteractions: Boolean?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel,
-    Record.Embeddable {
+) : UrlEncodableModel, Record.Embeddable {
 
     override val reference: Record.Reference =
         Record.Reference(

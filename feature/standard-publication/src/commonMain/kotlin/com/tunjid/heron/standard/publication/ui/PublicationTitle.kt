@@ -55,67 +55,62 @@ fun PublicationTitle(
     paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String?,
     publication: StandardPublication?,
-) = with(paneTransitionScope) {
-    if (publication != null) Row(
-        modifier = modifier
-            .padding(
-                horizontal = 8.dp,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        PaneStickySharedElement(
-            modifier = Modifier
-                .size(44.dp),
-            sharedContentState = rememberSharedContentState(
-                key = publication.avatarSharedElementKey(
-                    prefix = sharedElementPrefix,
-                ),
-            ),
-            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap(),
-                args = remember(publication.icon) {
-                    ImageArgs(
-                        url = publication.icon?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = publication.collectionShape(),
+) =
+    with(paneTransitionScope) {
+        if (publication != null)
+            Row(
+                modifier = modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PaneStickySharedElement(
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = publication.avatarSharedElementKey(prefix = sharedElementPrefix)
+                        ),
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(publication.icon) {
+                                ImageArgs(
+                                    url = publication.icon?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = publication.collectionShape(),
+                                )
+                            },
                     )
-                },
-            )
-        }
+                }
 
-        Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(12.dp))
 
-        Box(
-            modifier = Modifier
-                .weight(1f),
-        ) {
-            Column {
-                Text(
-                    modifier = Modifier,
-                    text = publication.name,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.titleSmallEmphasized,
-                )
-                Text(
-                    modifier = Modifier,
-                    text = stringResource(
-                        Res.string.publication_publisher,
-                        publication.publisher.handle.id,
-                    ),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+                Box(modifier = Modifier.weight(1f)) {
+                    Column {
+                        Text(
+                            modifier = Modifier,
+                            text = publication.name,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.titleSmallEmphasized,
+                        )
+                        Text(
+                            modifier = Modifier,
+                            text =
+                                stringResource(
+                                    Res.string.publication_publisher,
+                                    publication.publisher.handle.id,
+                                ),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                }
             }
-        }
     }
-}
 
 @Composable
 fun SubscribeButton(

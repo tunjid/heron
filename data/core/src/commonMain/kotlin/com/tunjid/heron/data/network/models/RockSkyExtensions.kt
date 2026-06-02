@@ -36,66 +36,70 @@ import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.TrackId
 import com.tunjid.heron.data.core.types.TrackUri
 
-internal fun AlbumView.asExternalModel(): RockskyAlbum = RockskyAlbum(
-    cid = AlbumId(id),
-    uri = AlbumUri(uri.atUri),
-    title = title,
-    artist = artist,
-    releaseDate = releaseDate,
-    year = year?.toInt(),
-    albumArt = albumArt?.uri?.let(::ImageUri),
-    artistUri = ArtistUri(artistUri.atUri),
-    playCount = playCount,
-    uniqueListeners = uniqueListeners,
-    tracks = emptyList(),
-    appleMusicLink = appleMusicLink?.uri,
-    spotifyLink = spotifyLink?.uri,
-    tidalLink = tidalLink?.uri,
-    youtubeLink = youtubeLink?.uri,
-)
+internal fun AlbumView.asExternalModel(): RockskyAlbum =
+    RockskyAlbum(
+        cid = AlbumId(id),
+        uri = AlbumUri(uri.atUri),
+        title = title,
+        artist = artist,
+        releaseDate = releaseDate,
+        year = year?.toInt(),
+        albumArt = albumArt?.uri?.let(::ImageUri),
+        artistUri = ArtistUri(artistUri.atUri),
+        playCount = playCount,
+        uniqueListeners = uniqueListeners,
+        tracks = emptyList(),
+        appleMusicLink = appleMusicLink?.uri,
+        spotifyLink = spotifyLink?.uri,
+        tidalLink = tidalLink?.uri,
+        youtubeLink = youtubeLink?.uri,
+    )
 
-internal fun TrackView.asExternalModel(): RockskyTrack = RockskyTrack(
-    cid = TrackId(id),
-    title = title,
-    artist = artist,
-    albumArtist = albumArtist,
-    album = album,
-    albumArt = albumArt?.uri?.let(::ImageUri),
-    trackNumber = trackNumber?.toInt(),
-    discNumber = discNumber?.toInt(),
-    duration = duration,
-    uri = TrackUri(uri.atUri),
-    albumUri = albumUri?.atUri?.takeIf(String::isNotEmpty)?.let(::AlbumUri),
-    artistUri = artistUri?.atUri?.takeIf(String::isNotEmpty)?.let(::ArtistUri),
-    createdAt = createdAt,
-    playCount = playCount,
-    uniqueListeners = uniqueListeners,
-)
+internal fun TrackView.asExternalModel(): RockskyTrack =
+    RockskyTrack(
+        cid = TrackId(id),
+        title = title,
+        artist = artist,
+        albumArtist = albumArtist,
+        album = album,
+        albumArt = albumArt?.uri?.let(::ImageUri),
+        trackNumber = trackNumber?.toInt(),
+        discNumber = discNumber?.toInt(),
+        duration = duration,
+        uri = TrackUri(uri.atUri),
+        albumUri = albumUri?.atUri?.takeIf(String::isNotEmpty)?.let(::AlbumUri),
+        artistUri = artistUri?.atUri?.takeIf(String::isNotEmpty)?.let(::ArtistUri),
+        createdAt = createdAt,
+        playCount = playCount,
+        uniqueListeners = uniqueListeners,
+    )
 
-internal fun ArtistView.asExternalModel(): RockskyArtist = RockskyArtist(
-    cid = ArtistId(id),
-    name = name,
-    picture = picture?.uri?.let(::ImageUri),
-    uri = ArtistUri(uri.atUri),
-    playCount = playCount,
-    uniqueListeners = uniqueListeners,
-    tags = tags,
-)
+internal fun ArtistView.asExternalModel(): RockskyArtist =
+    RockskyArtist(
+        cid = ArtistId(id),
+        name = name,
+        picture = picture?.uri?.let(::ImageUri),
+        uri = ArtistUri(uri.atUri),
+        playCount = playCount,
+        uniqueListeners = uniqueListeners,
+        tags = tags,
+    )
 
-internal fun ScrobbleView.asExternalModel(): RockskyScrobble = RockskyScrobble(
-    cid = ScrobbleId(id),
-    trackId = TrackId(trackId),
-    title = title,
-    artist = artist,
-    albumArtist = albumArtist,
-    album = album,
-    albumArt = albumArt?.uri?.let(::ImageUri),
-    handle = handle?.handle?.let(::ProfileHandle),
-    did = ProfileId(did.did),
-    avatar = avatar?.uri?.let(::ImageUri),
-    uri = ScrobbleUri(uri.atUri),
-    trackUri = trackUri?.atUri?.takeIf(String::isNotEmpty)?.let(::TrackUri),
-    artistUri = artistUri?.atUri?.takeIf(String::isNotEmpty)?.let(::ArtistUri),
-    albumUri = albumUri?.atUri?.takeIf(String::isNotEmpty)?.let(::AlbumUri),
-    createdAt = createdAt,
-)
+internal fun ScrobbleView.asExternalModel(): RockskyScrobble =
+    RockskyScrobble(
+        cid = ScrobbleId(id),
+        trackId = TrackId(trackId),
+        title = title,
+        artist = artist,
+        albumArtist = albumArtist,
+        album = album,
+        albumArt = albumArt?.uri?.let(::ImageUri),
+        handle = handle?.handle?.let(::ProfileHandle),
+        did = ProfileId(did.did),
+        avatar = avatar?.uri?.let(::ImageUri),
+        uri = ScrobbleUri(uri.atUri),
+        trackUri = trackUri?.atUri?.takeIf(String::isNotEmpty)?.let(::TrackUri),
+        artistUri = artistUri?.atUri?.takeIf(String::isNotEmpty)?.let(::ArtistUri),
+        albumUri = albumUri?.atUri?.takeIf(String::isNotEmpty)?.let(::AlbumUri),
+        createdAt = createdAt,
+    )

@@ -24,9 +24,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 
 @Composable
-fun ScrimmedContent(
-    content: @Composable () -> Unit,
-) {
+fun ScrimmedContent(content: @Composable () -> Unit) {
     val colorScheme = remember { darkColorScheme() }
     MaterialTheme(colorScheme = colorScheme) {
         CompositionLocalProvider(

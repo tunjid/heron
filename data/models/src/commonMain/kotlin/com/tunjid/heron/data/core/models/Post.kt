@@ -52,9 +52,7 @@ data class Post(
     val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable? = null,
     val viewerState: ProfileViewerState? = null,
     val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
-) : UrlEncodableModel,
-    Record,
-    Record.Embeddable {
+) : UrlEncodableModel, Record, Record.Embeddable {
 
     override val reference: com.tunjid.heron.data.core.models.Record.Reference =
         com.tunjid.heron.data.core.models.Record.Reference(
@@ -100,37 +98,22 @@ data class Post(
         @Serializable
         data class Metadata(
             // @ProtoNumber(1) is for a deprecated field
-            @ProtoNumber(2)
-            val reply: Reply? = null,
+            @ProtoNumber(2) val reply: Reply? = null,
             // @ProtoNumber(3) is for a deprecated field
-            @ProtoNumber(4)
-            val embeddedMedia: List<File.Media> = emptyList(),
+            @ProtoNumber(4) val embeddedMedia: List<File.Media> = emptyList(),
             @ProtoNumber(5)
             val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
-            @ProtoNumber(6)
-            val allowed: ThreadGate.Allowed? = null,
+            @ProtoNumber(6) val allowed: ThreadGate.Allowed? = null,
         )
 
-        @Serializable
-        data class Reply(
-            val parent: Post,
-        ) : Create(),
-            UrlEncodableModel
+        @Serializable data class Reply(val parent: Post) : Create(), UrlEncodableModel
+
+        @Serializable data class Mention(val profile: Profile) : Create(), UrlEncodableModel
 
         @Serializable
-        data class Mention(
-            val profile: Profile,
-        ) : Create(),
-            UrlEncodableModel
+        data class Quote(val interaction: Interaction.Create.Repost) : Create(), UrlEncodableModel
 
-        @Serializable
-        data class Quote(
-            val interaction: Interaction.Create.Repost,
-        ) : Create(),
-            UrlEncodableModel
-
-        @Serializable
-        data object Timeline : Create(), UrlEncodableModel
+        @Serializable data object Timeline : Create(), UrlEncodableModel
 
         @Serializable
         data class Request(
@@ -182,10 +165,7 @@ data class Post(
                 val repostUri: RepostUri,
             ) : Delete()
 
-            @Serializable
-            data class RemoveBookmark(
-                override val postUri: PostUri,
-            ) : Delete()
+            @Serializable data class RemoveBookmark(override val postUri: PostUri) : Delete()
         }
 
         @Serializable
@@ -206,9 +186,9 @@ data class Post(
 /**
  * The primary embedded record of a [Post], if any.
  *
- * Reads from [Post.embeddedRecords], falling back to the deprecated
- * [Post.embeddedRecord] so that navigation routes serialized by older app
- * versions (which only populated the single field) continue to resolve.
+ * Reads from [Post.embeddedRecords], falling back to the deprecated [Post.embeddedRecord] so that
+ * navigation routes serialized by older app versions (which only populated the single field)
+ * continue to resolve.
  */
 @Suppress("DEPRECATION")
 val Post.primaryEmbeddedRecord: Record.Embeddable?
@@ -227,9 +207,10 @@ fun Post.appliedLabels(
     adultContentEnabled: Boolean,
     labelers: List<Labeler>,
     labelPreferences: ContentLabelPreferences,
-) = AppliedLabels(
-    adultContentEnabled = adultContentEnabled,
-    labels = labels + author.labels,
-    labelers = labelers,
-    contentLabelPreferences = labelPreferences,
-)
+) =
+    AppliedLabels(
+        adultContentEnabled = adultContentEnabled,
+        labels = labels + author.labels,
+        labelers = labelers,
+        contentLabelPreferences = labelPreferences,
+    )

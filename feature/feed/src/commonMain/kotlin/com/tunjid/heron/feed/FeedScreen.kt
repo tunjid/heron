@@ -101,24 +101,22 @@ internal fun FeedScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         when (val timelineStateHolder = state.timelineStateHolder) {
             null -> Unit
-            else -> FeedTimeline(
-                scrollToTopRequestId = state.scrollToTopRequestId,
-                paneScaffoldState = paneScaffoldState,
-                timelineStateHolder = timelineStateHolder,
-                actions = actions,
-                signedInProfileId = state.signedInProfileId,
-                recentLists = state.recentLists,
-                recentConversations = state.recentConversations,
-                mutedWordsPreferences = state.preferences.mutedWordPreferences,
-                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-            )
+            else ->
+                FeedTimeline(
+                    scrollToTopRequestId = state.scrollToTopRequestId,
+                    paneScaffoldState = paneScaffoldState,
+                    timelineStateHolder = timelineStateHolder,
+                    actions = actions,
+                    signedInProfileId = state.signedInProfileId,
+                    recentLists = state.recentLists,
+                    recentConversations = state.recentConversations,
+                    mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                    autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                )
         }
     }
 }
@@ -146,132 +144,133 @@ private fun FeedTimeline(
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-    )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordsPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.BlockAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = {
+                actions(Action.Navigate.To(signInDestination()))
+            },
+            onInteractionConfirmed = {
+                actions(Action.SendPostInteraction(it))
+            },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        )
                     )
-
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.MuteAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
-            }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = signedInProfileId,
-        recentConversations = recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
-
-                is PostOption.ThreadGate ->
-                    items.firstOrNull { it.post.uri == option.postUri }
-                        ?.let(threadGateSheetState::show)
-
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
-
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
-
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
-            }
-        },
-    )
-
-    PullToRefreshBox(
-        modifier = Modifier
-            .padding(
-                horizontal = animateDpAsState(
-                    displayState.horizontalPadding(presentation),
-                ).value,
-            )
-            .fillMaxSize()
-            .paneClip()
-            .gridColumnCount(
-                density = density,
-                maxColumnWidth = displayState.cardSize(presentation),
-            ) { numColumns ->
-                timelineStateHolder.accept(
-                    TimelineState.Action.Tile(
-                        tilingAction = TilingState.Action.GridSize(
-                            numColumns = numColumns,
-                        ),
-                    ),
                 )
             },
+        )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = {
+                actions(Action.UpdateRecentLists)
+            },
+            onThreadGateUpdated = {
+                actions(Action.SendPostInteraction(it))
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = mutedWordsPreferences,
+            onSave = {
+                actions(Action.UpdateMutedWord(it))
+            },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.MuteAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
+            }
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = signedInProfileId,
+            recentConversations = recentConversations,
+            onShown = { actions(Action.UpdateRecentConversations) },
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
+
+                    is PostOption.ThreadGate ->
+                        items
+                            .firstOrNull { it.post.uri == option.postUri }
+                            ?.let(threadGateSheetState::show)
+
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
+
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
+
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                    is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
+                }
+            },
+        )
+
+    PullToRefreshBox(
+        modifier =
+            Modifier.padding(
+                    horizontal =
+                        animateDpAsState(displayState.horizontalPadding(presentation)).value
+                )
+                .fillMaxSize()
+                .paneClip()
+                .gridColumnCount(
+                    density = density,
+                    maxColumnWidth = displayState.cardSize(presentation),
+                ) { numColumns ->
+                    timelineStateHolder.accept(
+                        TimelineState.Action.Tile(
+                            tilingAction = TilingState.Action.GridSize(numColumns = numColumns)
+                        )
+                    )
+                },
         isRefreshing = timelineState.isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
             timelineStateHolder.accept(
-                TimelineState.Action.Tile(
-                    tilingAction = TilingState.Action.Refresh,
-                ),
+                TimelineState.Action.Tile(tilingAction = TilingState.Action.Refresh)
             )
         },
         indicator = {
             DismissableRefreshIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = gridState.layoutInfo.beforeContentPadding)
                     },
                 state = pullToRefreshState,
@@ -287,13 +286,13 @@ private fun FeedTimeline(
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(
-                    displayState.horizontalItemSpacing(presentation),
-                ),
+                contentPadding =
+                    UiTokens.bottomNavAndInsetPaddingValues(
+                        top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                        isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    ),
+                horizontalArrangement =
+                    Arrangement.spacedBy(displayState.horizontalItemSpacing(presentation)),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
@@ -302,12 +301,12 @@ private fun FeedTimeline(
                     contentType = TimelineItem::contentType,
                     itemContent = { item ->
                         TimelineItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item),
-                                ),
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .animateItem()
+                                    .threadedVideoPosition(
+                                        state = videoStates.getOrCreateStateFor(item)
+                                    ),
                             paneTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
@@ -315,119 +314,168 @@ private fun FeedTimeline(
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             showEngagementMetrics = showEngagementMetrics,
                             presentation = presentation,
-                            postActions = remember(timelineState.timeline.sourceId) {
-                                PostActions { action ->
-                                    when (action) {
-                                        is PostAction.OfLinkTarget -> {
-                                            val linkTarget = action.linkTarget
-                                            if (linkTarget is LinkTarget.Navigable) actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = linkTarget.path,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfPost -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                        otherModels = buildList {
-                                                            action.warnedAppliedLabels?.let(::add)
-                                                            if (action.isMainPost) {
-                                                                add(timelineState.timeline.source)
-                                                                add(timelineState.tilingData.currentQuery.data)
-                                                            }
-                                                        },
-                                                        record = action.post,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfProfile -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    profileDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        profile = action.profile,
-                                                        avatarSharedElementKey = action.post
-                                                            .avatarSharedElementKey(
-                                                                prefix = timelineState.timeline.sourceId,
-                                                                quotingPostUri = action.quotingPostUri,
+                            postActions =
+                                remember(timelineState.timeline.sourceId) {
+                                    PostActions { action ->
+                                        when (action) {
+                                            is PostAction.OfLinkTarget -> {
+                                                val linkTarget = action.linkTarget
+                                                if (linkTarget is LinkTarget.Navigable)
+                                                    actions(
+                                                        Action.Navigate.To(
+                                                            pathDestination(
+                                                                path = linkTarget.path,
+                                                                referringRouteOption =
+                                                                    NavigationAction
+                                                                        .ReferringRouteOption
+                                                                        .Current,
                                                             )
-                                                            .takeIf { action.post.author.did == action.profile.did },
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                                        )
+                                                    )
+                                            }
 
-                                        is PostAction.OfRecord -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                            quotingPostUri = action.owningPostUri,
-                                                        ),
-                                                        record = action.record,
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                            is PostAction.OfPost -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        recordDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            sharedElementPrefix =
+                                                                timelineState.timeline
+                                                                    .sharedElementPrefix,
+                                                            otherModels =
+                                                                buildList {
+                                                                    action.warnedAppliedLabels?.let(
+                                                                        ::add
+                                                                    )
+                                                                    if (action.isMainPost) {
+                                                                        add(
+                                                                            timelineState.timeline
+                                                                                .source
+                                                                        )
+                                                                        add(
+                                                                            timelineState.tilingData
+                                                                                .currentQuery
+                                                                                .data
+                                                                        )
+                                                                    }
+                                                                },
+                                                            record = action.post,
+                                                        )
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfMedia -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    galleryDestination(
-                                                        post = action.post,
-                                                        media = action.media,
-                                                        startIndex = action.index,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                            quotingPostUri = action.quotingPostUri,
-                                                        ),
-                                                        otherModels = when {
-                                                            action.isMainPost -> listOf(
-                                                                timelineState.timeline.source,
-                                                                timelineState.tilingData.currentQuery.data,
+                                            is PostAction.OfProfile -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        profileDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            profile = action.profile,
+                                                            avatarSharedElementKey =
+                                                                action.post
+                                                                    .avatarSharedElementKey(
+                                                                        prefix =
+                                                                            timelineState.timeline
+                                                                                .sourceId,
+                                                                        quotingPostUri =
+                                                                            action.quotingPostUri,
+                                                                    )
+                                                                    .takeIf {
+                                                                        action.post.author.did ==
+                                                                            action.profile.did
+                                                                    },
+                                                        )
+                                                    )
+                                                )
+                                            }
+
+                                            is PostAction.OfRecord -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        recordDestination(
+                                                            referringRouteOption =
+                                                                NavigationAction
+                                                                    .ReferringRouteOption
+                                                                    .Current,
+                                                            sharedElementPrefix =
+                                                                timelineState.timeline
+                                                                    .sharedElementPrefix(
+                                                                        quotingPostUri =
+                                                                            action.owningPostUri
+                                                                    ),
+                                                            record = action.record,
+                                                        )
+                                                    )
+                                                )
+                                            }
+
+                                            is PostAction.OfMedia -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        galleryDestination(
+                                                            post = action.post,
+                                                            media = action.media,
+                                                            startIndex = action.index,
+                                                            sharedElementPrefix =
+                                                                timelineState.timeline
+                                                                    .sharedElementPrefix(
+                                                                        quotingPostUri =
+                                                                            action.quotingPostUri
+                                                                    ),
+                                                            otherModels =
+                                                                when {
+                                                                    action.isMainPost ->
+                                                                        listOf(
+                                                                            timelineState.timeline
+                                                                                .source,
+                                                                            timelineState.tilingData
+                                                                                .currentQuery
+                                                                                .data,
+                                                                        )
+                                                                    else -> emptyList()
+                                                                },
+                                                        )
+                                                    )
+                                                )
+                                            }
+
+                                            is PostAction.OfReply -> {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        if (paneScaffoldState.isSignedOut)
+                                                            signInDestination()
+                                                        else
+                                                            composePostDestination(
+                                                                type =
+                                                                    Post.Create.Reply(
+                                                                        parent = action.post
+                                                                    ),
+                                                                sharedElementPrefix =
+                                                                    timelineState.timeline
+                                                                        .sharedElementPrefix,
                                                             )
-                                                            else -> emptyList()
-                                                        },
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                                    )
+                                                )
+                                            }
 
-                                        is PostAction.OfReply -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    if (paneScaffoldState.isSignedOut) signInDestination()
-                                                    else composePostDestination(
-                                                        type = Post.Create.Reply(
-                                                            parent = action.post,
-                                                        ),
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    ),
-                                                ),
-                                            )
-                                        }
+                                            is PostAction.OfInteraction -> {
+                                                postInteractionSheetState.onInteraction(action)
+                                            }
 
-                                        is PostAction.OfInteraction -> {
-                                            postInteractionSheetState.onInteraction(action)
-                                        }
+                                            is PostAction.OfMore -> {
+                                                postOptionsSheetState.showOptions(action.post)
+                                            }
 
-                                        is PostAction.OfMore -> {
-                                            postOptionsSheetState.showOptions(action.post)
+                                            else -> Unit
                                         }
-
-                                        else -> Unit
                                     }
-                                }
-                            },
+                                },
                         )
                     },
                 )
@@ -443,12 +491,12 @@ private fun FeedTimeline(
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
+            items
+                .getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
+                ?.let(videoPlayerController::play) ?: videoPlayerController.pauseActiveVideo()
         }
     }
 
@@ -457,10 +505,11 @@ private fun FeedTimeline(
         onQueryChanged = { query ->
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: timelineState.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(
+                            query = query ?: timelineState.tilingData.currentQuery
+                        )
+                )
             )
         },
     )
@@ -473,8 +522,8 @@ private fun FeedTimeline(
     val currentScrollToTopRequestId = rememberUpdatedState(scrollToTopRequestId)
     LaunchedEffect(Unit) {
         snapshotFlow {
-            currentScrollToTopRequestId.value
-        }
+                currentScrollToTopRequestId.value
+            }
             .drop(1)
             .collectLatest { requestId ->
                 if (requestId != null) gridState.animateScrollToItem(0)

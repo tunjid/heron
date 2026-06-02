@@ -65,105 +65,93 @@ fun Document(
     document: StandardDocument,
     onPublicationClicked: ((StandardPublication) -> Unit)?,
     onSubscriptionToggled: ((StandardPublication, StandardSubscription?) -> Unit)?,
-) = with(paneTransitionScope) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AttributionLayout(
-            modifier = Modifier
-                .fillMaxWidth(),
-            avatar = {
-                document.coverImage?.let { cover ->
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(48.dp),
-                        args = remember(
-                            cover,
-                        ) {
-                            ImageArgs(
-                                url = cover.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = null,
-                                shape = DocumentCollectionShape,
-                            )
-                        },
-                    )
-                }
-            },
-            label = {
-                RecordTitle(
-                    title = document.title,
-                )
-                Spacer(Modifier.height(2.dp))
-
-                if (onPublicationClicked != null) document.publication?.let { publication ->
-                    val publisherDescription = stringResource(
-                        Res.string.standard_site_published_in,
-                        publication.name,
-                    )
-                    Label(
-                        modifier = Modifier
-                            .padding(
-                                vertical = 2.dp,
-                            ),
-                        contentDescription = publisherDescription,
-                        icon = {
-                            publication.icon?.let { icon ->
-                                PaneStickySharedElement(
-                                    modifier = Modifier
-                                        .size(20.dp),
-                                    sharedContentState = rememberSharedContentState(
-                                        key = publication.avatarSharedElementKey(
-                                            prefix = sharedElementPrefix,
-                                        ),
-                                    ),
-                                ) {
-                                    AsyncImage(
-                                        modifier = Modifier
-                                            .fillParentAxisIfFixedOrWrap(),
-                                        args = remember(
-                                            icon,
-                                        ) {
-                                            ImageArgs(
-                                                url = icon.uri,
-                                                contentScale = ContentScale.Crop,
-                                                contentDescription = null,
-                                                shape = DocumentCollectionShape,
-                                            )
-                                        },
+) =
+    with(paneTransitionScope) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AttributionLayout(
+                modifier = Modifier.fillMaxWidth(),
+                avatar = {
+                    document.coverImage?.let { cover ->
+                        AsyncImage(
+                            modifier = Modifier.size(48.dp),
+                            args =
+                                remember(cover) {
+                                    ImageArgs(
+                                        url = cover.uri,
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription = null,
+                                        shape = DocumentCollectionShape,
                                     )
-                                }
-                            }
-                        },
-                        description = {
-                            RecordSubtitle(
-                                subtitle = publisherDescription,
-                            )
-                        },
-                        onClick = {
-                            onPublicationClicked(publication)
-                        },
-                    )
-                }
-            },
-        )
+                                },
+                        )
+                    }
+                },
+                label = {
+                    RecordTitle(title = document.title)
+                    Spacer(Modifier.height(2.dp))
 
-        document.description.takeUnless(String?::isNullOrEmpty)?.let {
-            RecordText(
-                text = it,
-            )
-        }
-        LabelFlowRow {
-            RecordBlurb(
-                remember(document.publishedAt) {
-                    document.publishDate()
+                    if (onPublicationClicked != null)
+                        document.publication?.let { publication ->
+                            val publisherDescription =
+                                stringResource(
+                                    Res.string.standard_site_published_in,
+                                    publication.name,
+                                )
+                            Label(
+                                modifier = Modifier.padding(vertical = 2.dp),
+                                contentDescription = publisherDescription,
+                                icon = {
+                                    publication.icon?.let { icon ->
+                                        PaneStickySharedElement(
+                                            modifier = Modifier.size(20.dp),
+                                            sharedContentState =
+                                                rememberSharedContentState(
+                                                    key =
+                                                        publication.avatarSharedElementKey(
+                                                            prefix = sharedElementPrefix
+                                                        )
+                                                ),
+                                        ) {
+                                            AsyncImage(
+                                                modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                                                args =
+                                                    remember(icon) {
+                                                        ImageArgs(
+                                                            url = icon.uri,
+                                                            contentScale = ContentScale.Crop,
+                                                            contentDescription = null,
+                                                            shape = DocumentCollectionShape,
+                                                        )
+                                                    },
+                                            )
+                                        }
+                                    }
+                                },
+                                description = {
+                                    RecordSubtitle(subtitle = publisherDescription)
+                                },
+                                onClick = {
+                                    onPublicationClicked(publication)
+                                },
+                            )
+                        }
                 },
             )
 
-            document.tags
-                .take(3)
-                .forEach {
+            document.description.takeUnless(String?::isNullOrEmpty)?.let {
+                RecordText(text = it)
+            }
+            LabelFlowRow {
+                RecordBlurb(
+                    remember(document.publishedAt) {
+                        document.publishDate()
+                    }
+                )
+
+                document.tags.take(3).forEach {
                     Label(
                         contentDescription = it,
                         isElevated = true,
@@ -175,13 +163,14 @@ fun Document(
                     )
                 }
 
-            if (onSubscriptionToggled != null) SubscribeButton(
-                document = document,
-                onSubscriptionToggled = onSubscriptionToggled,
-            )
+                if (onSubscriptionToggled != null)
+                    SubscribeButton(
+                        document = document,
+                        onSubscriptionToggled = onSubscriptionToggled,
+                    )
+            }
         }
     }
-}
 
 @Composable
 private fun SubscribeButton(
@@ -193,10 +182,12 @@ private fun SubscribeButton(
         val latchedSubscribedState = rememberLatchedState(subscribed)
 
         Label(
-            contentDescription = stringResource(
-                if (latchedSubscribedState.value) CommonStrings.standard_publication_unsubscribe_from
-                else CommonStrings.standard_publication_subscribe_to,
-            ),
+            contentDescription =
+                stringResource(
+                    if (latchedSubscribedState.value)
+                        CommonStrings.standard_publication_unsubscribe_from
+                    else CommonStrings.standard_publication_subscribe_to
+                ),
             isElevated = true,
             icon = {
                 PublicationSubscriptionIcon(
@@ -227,5 +218,5 @@ private fun StandardDocument.publishDate(): String =
                 day()
                 char('.')
                 year()
-            },
+            }
         )

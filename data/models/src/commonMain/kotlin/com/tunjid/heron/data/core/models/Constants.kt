@@ -28,16 +28,22 @@ object Constants {
     private val unknownRecordKey = "2222222222222"
     const val UNKNOWN = "at://unknown"
 
-    private val UnknownHandles = setOf(
-        UNKNOWN,
-        "unknown.handle",
-    )
+    private val UnknownHandles =
+        setOf(
+            UNKNOWN,
+            "unknown.handle",
+        )
 
     val timelineFeed = GenericUri("at://self")
 
-    val blueSkyDiscoverFeed = FeedGeneratorUri("at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot")
-    val heronsFeed = FeedGeneratorUri("at://did:plc:coo5y44dzkgujeypdrkjtgk6/app.bsky.feed.generator/herons")
-    val blackSkyTrendingFeed = FeedGeneratorUri("at://did:plc:w4xbfzo7kqfes5zb7r6qv3rw/app.bsky.feed.generator/blacksky-trend")
+    val blueSkyDiscoverFeed =
+        FeedGeneratorUri("at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot")
+    val heronsFeed =
+        FeedGeneratorUri("at://did:plc:coo5y44dzkgujeypdrkjtgk6/app.bsky.feed.generator/herons")
+    val blackSkyTrendingFeed =
+        FeedGeneratorUri(
+            "at://did:plc:w4xbfzo7kqfes5zb7r6qv3rw/app.bsky.feed.generator/blacksky-trend"
+        )
 
     // Invalid post id format, but its already in the db. Follow up in a migration to replace
     val blockedPostId = PostId("at://blocked")
@@ -51,7 +57,8 @@ object Constants {
     val unknownAuthorId = ProfileId(id = "did:web:heron.app.unknown.user")
     val guestProfileId = ProfileId(id = "did:web:heron.app.guest.user")
     val pendingProfileId = ProfileId(id = "did:web:heron.app.pending.user")
-    val unknownFollowUri = FollowUri("${unknownAuthorId.id}/${FollowUri.NAMESPACE}/$unknownRecordKey")
+    val unknownFollowUri =
+        FollowUri("${unknownAuthorId.id}/${FollowUri.NAMESPACE}/$unknownRecordKey")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 
     fun ProfileHandle.isUnknown() = id in UnknownHandles

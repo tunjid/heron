@@ -82,33 +82,33 @@ internal fun ModerationScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = state.recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
-        onDefaultThreadGateUpdated = {
-            actions(Action.UpdateThreadGates(it))
-        },
-    )
-    val mutedWordSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = { actions(Action.UpdateMutedWord(it)) },
-        onShown = { },
-    )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(
+            recentLists = state.recentLists,
+            onRequestRecentLists = {
+                actions(Action.UpdateRecentLists)
+            },
+            onDefaultThreadGateUpdated = {
+                actions(Action.UpdateThreadGates(it))
+            },
+        )
+    val mutedWordSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = state.preferences.mutedWordPreferences,
+            onSave = { actions(Action.UpdateMutedWord(it)) },
+            onShown = {},
+        )
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            horizontal = 16.dp,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        modifier = modifier.fillMaxWidth(),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(
+                horizontal = 16.dp,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
     ) {
         moderationToolsMenuSection(
             onInteractionSettingsClicked = {
-                threadGateSheetState.show(
-                    preference = state.preferences.postInteractionSettings,
-                )
+                threadGateSheetState.show(preference = state.preferences.postInteractionSettings)
             },
             onMutedWordsClicked = mutedWordSheetState::show,
             navigate = {
@@ -123,14 +123,12 @@ internal fun ModerationScreen(
                     Action.UpdateAdultLabelVisibility(
                         adultLabel = adultLabel.adult,
                         visibility = visibility,
-                    ),
+                    )
                 )
             },
             onAdultPreferencesChecked = { adultContentEnabled ->
                 actions(
-                    Action.UpdateAdultContentPreferences(
-                        adultContentEnabled = adultContentEnabled,
-                    ),
+                    Action.UpdateAdultContentPreferences(adultContentEnabled = adultContentEnabled)
                 )
             },
         )
@@ -144,8 +142,8 @@ internal fun ModerationScreen(
                             profile = labeler.creator,
                             avatarSharedElementKey = labeler.avatarSharedElementKey(Moderation),
                             referringRouteOption = ReferringRouteOption.Current,
-                        ),
-                    ),
+                        )
+                    )
                 )
             },
         )
@@ -158,30 +156,20 @@ private fun LazyListScope.adultLabelsSection(
     onAdultLabelVisibilityChanged: (AdultLabelItem, Label.Visibility) -> Unit,
     onAdultPreferencesChecked: (Boolean) -> Unit,
 ) {
-    item(
-        key = Res.string.content_filters.key,
-    ) {
+    item(key = Res.string.content_filters.key) {
         SectionTitle(
-            modifier = Modifier
-                .animateItem(),
+            modifier = Modifier.animateItem(),
             title = stringResource(Res.string.content_filters),
         )
     }
-    item(
-        key = Res.string.enable_adult_content.key,
-    ) {
+    item(key = Res.string.enable_adult_content.key) {
         ElevatedItem(
-            modifier = Modifier
-                .animateItem(),
+            modifier = Modifier.animateItem(),
             shape = if (adultContentEnabled) FirstCardShape else RoundCardShape,
             showDivider = adultContentEnabled,
         ) {
             Row(
-                modifier = Modifier
-                    .fillParentMaxWidth()
-                    .padding(
-                        horizontal = 16.dp,
-                    ),
+                modifier = Modifier.fillParentMaxWidth().padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -193,38 +181,38 @@ private fun LazyListScope.adultLabelsSection(
             }
         }
     }
-    if (adultContentEnabled) itemsIndexed(
-        items = adultLabelItems,
-        key = { _, label ->
-            label.nameRes.key
-        },
-        itemContent = { index, item ->
-            val isLastLabel = index == adultLabelItems.lastIndex
-            ElevatedItem(
-                modifier = Modifier
-                    .animateItem(),
-                shape = if (isLastLabel) LastCardShape else RectangleShape,
-                showDivider = !isLastLabel,
-            ) {
-                LabelSetting(
-                    modifier = Modifier
-                        .padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp,
-                        ),
-                    enabled = true,
-                    labelName = stringResource(item.nameRes),
-                    labelDescription = stringResource(item.descriptionRes),
-                    selectedVisibility = item.visibility,
-                    visibilities = Label.Visibility.all,
-                    visibilityStringResource = Label.Visibility::stringRes,
-                    onVisibilityChanged = { visibility ->
-                        onAdultLabelVisibilityChanged(item, visibility)
-                    },
-                )
-            }
-        },
-    )
+    if (adultContentEnabled)
+        itemsIndexed(
+            items = adultLabelItems,
+            key = { _, label ->
+                label.nameRes.key
+            },
+            itemContent = { index, item ->
+                val isLastLabel = index == adultLabelItems.lastIndex
+                ElevatedItem(
+                    modifier = Modifier.animateItem(),
+                    shape = if (isLastLabel) LastCardShape else RectangleShape,
+                    showDivider = !isLastLabel,
+                ) {
+                    LabelSetting(
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp,
+                            ),
+                        enabled = true,
+                        labelName = stringResource(item.nameRes),
+                        labelDescription = stringResource(item.descriptionRes),
+                        selectedVisibility = item.visibility,
+                        visibilities = Label.Visibility.all,
+                        visibilityStringResource = Label.Visibility::stringRes,
+                        onVisibilityChanged = { visibility ->
+                            onAdultLabelVisibilityChanged(item, visibility)
+                        },
+                    )
+                }
+            },
+        )
 }
 
 private fun LazyListScope.subscribedLabelersSection(
@@ -232,12 +220,9 @@ private fun LazyListScope.subscribedLabelersSection(
     labelers: List<Labeler>,
     onLabelerClicked: (Labeler) -> Unit,
 ) {
-    item(
-        key = Res.string.labeler_subscriptions.key,
-    ) {
+    item(key = Res.string.labeler_subscriptions.key) {
         SectionTitle(
-            modifier = Modifier
-                .animateItem(),
+            modifier = Modifier.animateItem(),
             title = stringResource(Res.string.labeler_subscriptions),
         )
     }
@@ -250,22 +235,22 @@ private fun LazyListScope.subscribedLabelersSection(
         itemContent = { index, labeler ->
             val isLastLabel = index == labelers.lastIndex
             ElevatedItem(
-                modifier = Modifier
-                    .animateItem(),
-                shape = when {
-                    index == 0 && isLastLabel -> RoundCardShape
-                    index == 0 -> FirstCardShape
-                    isLastLabel -> LastCardShape
-                    else -> RectangleShape
-                },
+                modifier = Modifier.animateItem(),
+                shape =
+                    when {
+                        index == 0 && isLastLabel -> RoundCardShape
+                        index == 0 -> FirstCardShape
+                        isLastLabel -> LastCardShape
+                        else -> RectangleShape
+                    },
                 showDivider = !isLastLabel,
                 onItemClicked = {
                     onLabelerClicked(labeler)
                 },
             ) {
                 Labeler(
-                    modifier = Modifier
-                        .padding(
+                    modifier =
+                        Modifier.padding(
                             horizontal = 16.dp,
                             vertical = 8.dp,
                         ),
@@ -283,9 +268,7 @@ private fun LazyListScope.moderationToolsMenuSection(
     onMutedWordsClicked: () -> Unit,
     navigate: (NavigationAction.Destination) -> Unit,
 ) {
-    item(
-        key = Res.string.moderation_options_title.key,
-    ) {
+    item(key = Res.string.moderation_options_title.key) {
         SectionTitle(
             modifier = Modifier.animateItem(),
             title = stringResource(Res.string.moderation_options_title),
@@ -300,12 +283,10 @@ private fun LazyListScope.moderationToolsMenuSection(
             val isFirstItem = index == 0
             val isLastItem = index == ModerationTools.entries.lastIndex
             ElevatedItem(
-                modifier = Modifier
-                    .animateItem(),
+                modifier = Modifier.animateItem(),
                 shape =
-                if (isFirstItem) FirstCardShape
-                else if (isLastItem) LastCardShape
-                else RectangleShape,
+                    if (isFirstItem) FirstCardShape
+                    else if (isLastItem) LastCardShape else RectangleShape,
                 showDivider = !isLastItem,
                 onItemClicked = {
                     when (tool) {
@@ -333,29 +314,27 @@ private fun ElevatedItem(
     onItemClicked: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    if (onItemClicked == null) ElevatedCard(
-        modifier = modifier,
-        shape = shape,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+    if (onItemClicked == null)
+        ElevatedCard(
+            modifier = modifier,
+            shape = shape,
         ) {
-            content()
-            if (showDivider) HorizontalDivider()
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                content()
+                if (showDivider) HorizontalDivider()
+            }
         }
-    }
-    else ElevatedCard(
-        modifier = modifier,
-        shape = shape,
-        onClick = onItemClicked,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+    else
+        ElevatedCard(
+            modifier = modifier,
+            shape = shape,
+            onClick = onItemClicked,
         ) {
-            content()
-            if (showDivider) HorizontalDivider()
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                content()
+                if (showDivider) HorizontalDivider()
+            }
         }
-    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -365,8 +344,7 @@ private fun SectionTitle(
     title: String,
 ) {
     Text(
-        modifier = modifier
-            .padding(vertical = 16.dp),
+        modifier = modifier.padding(vertical = 16.dp),
         text = title,
         style = MaterialTheme.typography.titleMediumEmphasized,
     )
@@ -379,12 +357,13 @@ private fun ModerationItemRow(
     icon: ImageVector,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 16.dp,
-                vertical = 12.dp,
-            ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp,
+                ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -397,8 +376,7 @@ private fun ModerationItemRow(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -426,27 +404,30 @@ private enum class ModerationTools(
     ),
 }
 
-private val FirstCardShape = RoundedCornerShape(
-    topStart = 16.dp,
-    topEnd = 16.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 0.dp,
-)
+private val FirstCardShape =
+    RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+        bottomStart = 0.dp,
+        bottomEnd = 0.dp,
+    )
 
-private val LastCardShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomStart = 16.dp,
-    bottomEnd = 16.dp,
-)
+private val LastCardShape =
+    RoundedCornerShape(
+        topStart = 0.dp,
+        topEnd = 0.dp,
+        bottomStart = 16.dp,
+        bottomEnd = 16.dp,
+    )
 
 private val Label.Visibility.stringRes
-    get() = when (this) {
-        Label.Visibility.Ignore -> Res.string.label_show
-        Label.Visibility.Warn -> Res.string.label_warn
-        Label.Visibility.Hide -> Res.string.label_hide
-        else -> CommonStrings.unknown_label
-    }
+    get() =
+        when (this) {
+            Label.Visibility.Ignore -> Res.string.label_show
+            Label.Visibility.Warn -> Res.string.label_warn
+            Label.Visibility.Hide -> Res.string.label_hide
+            else -> CommonStrings.unknown_label
+        }
 
 private val RoundCardShape = RoundedCornerShape(16.dp)
 

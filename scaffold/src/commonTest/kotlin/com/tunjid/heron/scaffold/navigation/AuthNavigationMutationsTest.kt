@@ -24,30 +24,35 @@ class AuthNavigationMutationsTest {
 
     private val profileA = ProfileId("did:plc:user-a")
 
-    private val authStackNav = MultiStackNav(
-        name = "test",
-        stacks = listOf(
-            StackNav(
-                name = AppStack.Auth.stackName,
-                children = listOf(routeOf("/auth")),
-            ),
-        ),
-    )
+    private val authStackNav =
+        MultiStackNav(
+            name = "test",
+            stacks =
+                listOf(
+                    StackNav(
+                        name = AppStack.Auth.stackName,
+                        children = listOf(routeOf("/auth")),
+                    )
+                ),
+        )
 
-    private val signedInNav = MultiStackNav(
-        name = "test",
-        stacks = listOf(
-            StackNav(
-                name = AppStack.Home.stackName,
-                children = listOf(routeOf("/home")),
-            ),
-        ),
-    )
+    private val signedInNav =
+        MultiStackNav(
+            name = "test",
+            stacks =
+                listOf(
+                    StackNav(
+                        name = AppStack.Home.stackName,
+                        children = listOf(routeOf("/home")),
+                    )
+                ),
+        )
 
-    private val validNavigation = SavedState.Navigation(
-        activeNav = 0,
-        backStacks = listOf(listOf("/auth")),
-    )
+    private val validNavigation =
+        SavedState.Navigation(
+            activeNav = 0,
+            backStacks = listOf(listOf("/auth")),
+        )
 
     @Test
     fun noAuth_on_auth_stack_keeps_current_navigation() =
@@ -61,11 +66,11 @@ class AuthNavigationMutationsTest {
 
             val result = async {
                 authNavigationMutations(
-                    initialProfileId = null,
-                    initialIsGuest = false,
-                    authRepository = authRepo,
-                    userDataRepository = userDataRepo,
-                )
+                        initialProfileId = null,
+                        initialIsGuest = false,
+                        authRepository = authRepo,
+                        userDataRepository = userDataRepo,
+                    )
                     .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
                     .drop(1) // skip runningFold initial
                     .first { it == authStackNav }
@@ -89,11 +94,11 @@ class AuthNavigationMutationsTest {
 
             val result = async {
                 authNavigationMutations(
-                    initialProfileId = null,
-                    initialIsGuest = false,
-                    authRepository = authRepo,
-                    userDataRepository = userDataRepo,
-                )
+                        initialProfileId = null,
+                        initialIsGuest = false,
+                        authRepository = authRepo,
+                        userDataRepository = userDataRepo,
+                    )
                     .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
                     .drop(1)
                     .first { it.stacks.size == 4 }
@@ -125,11 +130,11 @@ class AuthNavigationMutationsTest {
 
             val result = async {
                 authNavigationMutations(
-                    initialProfileId = null,
-                    initialIsGuest = true,
-                    authRepository = authRepo,
-                    userDataRepository = userDataRepo,
-                )
+                        initialProfileId = null,
+                        initialIsGuest = true,
+                        authRepository = authRepo,
+                        userDataRepository = userDataRepo,
+                    )
                     .runningFold(authStackNav) { nav, mutation -> mutation(nav) }
                     .drop(1)
                     .first { it.stacks.size == 4 }
@@ -137,10 +142,11 @@ class AuthNavigationMutationsTest {
 
             // Guest becomes authenticated
             authRepo.guestState.value = false
-            authRepo.signedInUserState.value = stubProfile(
-                did = profileA,
-                handle = ProfileHandle("alice.bsky.social"),
-            )
+            authRepo.signedInUserState.value =
+                stubProfile(
+                    did = profileA,
+                    handle = ProfileHandle("alice.bsky.social"),
+                )
 
             val nav = result.await()
             assertEquals(
@@ -160,19 +166,20 @@ class AuthNavigationMutationsTest {
             val userDataRepo = FakeUserDataRepository()
 
             authRepo.guestState.value = false
-            authRepo.signedInUserState.value = stubProfile(
-                did = profileA,
-                handle = ProfileHandle("alice.bsky.social"),
-            )
+            authRepo.signedInUserState.value =
+                stubProfile(
+                    did = profileA,
+                    handle = ProfileHandle("alice.bsky.social"),
+                )
             userDataRepo.navigationState.value = validNavigation
 
             val result = async {
                 authNavigationMutations(
-                    initialProfileId = profileA,
-                    initialIsGuest = false,
-                    authRepository = authRepo,
-                    userDataRepository = userDataRepo,
-                )
+                        initialProfileId = profileA,
+                        initialIsGuest = false,
+                        authRepository = authRepo,
+                        userDataRepository = userDataRepo,
+                    )
                     .runningFold(signedInNav) { nav, mutation -> mutation(nav) }
                     .drop(1)
                     .first { it.stacks[0].name == AppStack.Auth.stackName }

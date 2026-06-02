@@ -26,28 +26,31 @@ internal object Migration22To23ConversationOwnerIds : Migration(22, 23) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `conversations_new` (
-                    `id` TEXT NOT NULL,
-                    `rev` TEXT NOT NULL,
-                    `ownerId` TEXT NOT NULL,
-                    `lastMessageId` TEXT,
-                    `lastReactedToMessageId` TEXT,
-                    `muted` INTEGER NOT NULL,
-                    `status` TEXT,
-                    `unreadCount` INTEGER NOT NULL,
-                    PRIMARY KEY(`id`),
-                    FOREIGN KEY(`ownerId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `conversations_new` (
+                `id` TEXT NOT NULL,
+                `rev` TEXT NOT NULL,
+                `ownerId` TEXT NOT NULL,
+                `lastMessageId` TEXT,
+                `lastReactedToMessageId` TEXT,
+                `muted` INTEGER NOT NULL,
+                `status` TEXT,
+                `unreadCount` INTEGER NOT NULL,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`ownerId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE conversations")
         connection.execSQL("ALTER TABLE conversations_new RENAME TO conversations")
 
         connection.execSQL("CREATE INDEX `index_conversations_id` ON conversations (`id`);")
-        connection.execSQL("CREATE INDEX `index_conversations_ownerId` ON conversations (`ownerId`);")
+        connection.execSQL(
+            "CREATE INDEX `index_conversations_ownerId` ON conversations (`ownerId`);"
+        )
     }
 }

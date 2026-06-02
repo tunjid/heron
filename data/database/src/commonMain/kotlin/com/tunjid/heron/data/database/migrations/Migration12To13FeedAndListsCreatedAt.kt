@@ -23,12 +23,18 @@ import androidx.sqlite.execSQL
 internal object Migration12To13FeedAndListsCreatedAt : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
         // Add columns
-        connection.execSQL("ALTER TABLE feedGenerators ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0;")
+        connection.execSQL(
+            "ALTER TABLE feedGenerators ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0;"
+        )
         connection.execSQL("ALTER TABLE lists ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0;")
 
         // Create indices
-        connection.execSQL("CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);")
+        connection.execSQL(
+            "CREATE INDEX `index_feedGenerators_createdAt` ON feedGenerators (`createdAt`);"
+        )
         connection.execSQL("CREATE INDEX `index_lists_createdAt` ON lists (`createdAt`);")
-        connection.execSQL("CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);")
+        connection.execSQL(
+            "CREATE INDEX `index_starterPacks_createdAt` ON starterPacks (`createdAt`);"
+        )
     }
 }

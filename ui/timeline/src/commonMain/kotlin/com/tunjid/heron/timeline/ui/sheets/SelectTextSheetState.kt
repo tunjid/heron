@@ -54,31 +54,24 @@ class SelectTextSheetState(
         options.startingText = ""
     }
 
-    fun show(
-        currentText: String,
-    ) {
+    fun show(currentText: String) {
         options.startingText = currentText
         options.text = currentText
         show()
     }
 
     @Stable
-    sealed class Options(
-        title: String,
-    ) {
+    sealed class Options(title: String) {
         var title by mutableStateOf(title)
         var text by mutableStateOf("")
         var startingText by mutableStateOf("")
 
-        sealed class Single(
-            title: String,
-        ) : Options(title) {
+        sealed class Single(title: String) : Options(title) {
 
-            class Text internal constructor(
-                title: String,
-            ) : Single(title)
+            class Text internal constructor(title: String) : Single(title)
 
-            class SuggestedProfiles internal constructor(
+            class SuggestedProfiles
+            internal constructor(
                 title: String,
                 val profileToText: (Profile) -> String = { it.handle.id },
             ) : Single(title) {
@@ -86,16 +79,13 @@ class SelectTextSheetState(
             }
         }
 
-        sealed class Collection(
-            title: String,
-        ) : Options(title) {
+        sealed class Collection(title: String) : Options(title) {
             var items by mutableStateOf(emptyList<String>())
 
-            class Text internal constructor(
-                title: String,
-            ) : Collection(title)
+            class Text internal constructor(title: String) : Collection(title)
 
-            class SuggestedProfiles internal constructor(
+            class SuggestedProfiles
+            internal constructor(
                 title: String,
                 val profileToText: (Profile) -> String = { it.handle.id },
             ) : Collection(title) {
@@ -110,11 +100,13 @@ class SelectTextSheetState(
             title: String,
             onTextConfirmed: Options.(String) -> Unit,
         ): SelectTextSheetState {
-            val options = remember {
-                Options.Single.Text(title)
-            }.also {
-                it.title = title
-            }
+            val options =
+                remember {
+                        Options.Single.Text(title)
+                    }
+                    .also {
+                        it.title = title
+                    }
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = onTextConfirmed,
@@ -127,12 +119,14 @@ class SelectTextSheetState(
             suggestedProfiles: List<Profile>,
             onTextConfirmed: Options.(String) -> Unit,
         ): SelectTextSheetState {
-            val options = remember {
-                Options.Single.SuggestedProfiles(title)
-            }.also {
-                it.title = title
-                it.profileSuggestions = suggestedProfiles
-            }
+            val options =
+                remember {
+                        Options.Single.SuggestedProfiles(title)
+                    }
+                    .also {
+                        it.title = title
+                        it.profileSuggestions = suggestedProfiles
+                    }
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = onTextConfirmed,
@@ -145,15 +139,17 @@ class SelectTextSheetState(
             suggestedProfiles: List<Profile>,
             onProfileIdSelected: Options.(ProfileId) -> Unit,
         ): SelectTextSheetState {
-            val options = remember {
-                Options.Single.SuggestedProfiles(
-                    title = title,
-                    profileToText = { it.did.id },
-                )
-            }.also {
-                it.title = title
-                it.profileSuggestions = suggestedProfiles
-            }
+            val options =
+                remember {
+                        Options.Single.SuggestedProfiles(
+                            title = title,
+                            profileToText = { it.did.id },
+                        )
+                    }
+                    .also {
+                        it.title = title
+                        it.profileSuggestions = suggestedProfiles
+                    }
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = { text -> onProfileIdSelected(ProfileId(text)) },
@@ -166,18 +162,18 @@ class SelectTextSheetState(
             items: List<String>,
             onItemsUpdated: (List<String>) -> Unit,
         ): SelectTextSheetState {
-            val options = remember {
-                Options.Collection.Text(title)
-            }.also {
-                it.title = title
-                it.items = items
-            }
+            val options =
+                remember {
+                        Options.Collection.Text(title)
+                    }
+                    .also {
+                        it.title = title
+                        it.items = items
+                    }
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = { updatedText ->
-                    onItemsUpdated(
-                        options.replaceOrAdd(items, updatedText),
-                    )
+                    onItemsUpdated(options.replaceOrAdd(items, updatedText))
                 },
             )
         }
@@ -189,19 +185,19 @@ class SelectTextSheetState(
             items: List<String>,
             onItemsUpdated: (List<String>) -> Unit,
         ): SelectTextSheetState {
-            val options = remember {
-                Options.Collection.SuggestedProfiles(title)
-            }.also {
-                it.title = title
-                it.items = items
-                it.profileSuggestions = suggestedProfiles
-            }
+            val options =
+                remember {
+                        Options.Collection.SuggestedProfiles(title)
+                    }
+                    .also {
+                        it.title = title
+                        it.items = items
+                        it.profileSuggestions = suggestedProfiles
+                    }
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = { updatedText ->
-                    onItemsUpdated(
-                        options.replaceOrAdd(items, updatedText),
-                    )
+                    onItemsUpdated(options.replaceOrAdd(items, updatedText))
                 },
             )
         }
@@ -232,44 +228,43 @@ class SelectTextSheetState(
             state.ModalBottomSheet {
                 val options = state.options
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.8f)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .fillMaxHeight(0.8f)
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(
                         text = options.title,
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                            .padding(vertical = 12.dp),
+                        modifier = Modifier.padding(vertical = 12.dp),
                     )
                     OutlinedTextField(
                         value = options.text,
                         onValueChange = { options.text = it },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
-                    val suggestions = when (options) {
-                        is Options.Single.SuggestedProfiles -> options.profileSuggestions
-                        is Options.Collection.SuggestedProfiles -> options.profileSuggestions
-                        else -> null
-                    }
-                    if (suggestions != null) {
-                        val profileToText = when (options) {
-                            is Options.Single.SuggestedProfiles -> options.profileToText
-                            is Options.Collection.SuggestedProfiles -> options.profileToText
+                    val suggestions =
+                        when (options) {
+                            is Options.Single.SuggestedProfiles -> options.profileSuggestions
+                            is Options.Collection.SuggestedProfiles -> options.profileSuggestions
                             else -> null
                         }
+                    if (suggestions != null) {
+                        val profileToText =
+                            when (options) {
+                                is Options.Single.SuggestedProfiles -> options.profileToText
+                                is Options.Collection.SuggestedProfiles -> options.profileToText
+                                else -> null
+                            }
                         ProfileSearchResults(
-                            modifier = Modifier
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             results = suggestions,
                             onProfileClicked = { profile ->
                                 options.onTextConfirmed(
-                                    profileToText?.invoke(profile) ?: profile.handle.id,
+                                    profileToText?.invoke(profile) ?: profile.handle.id
                                 )
                                 state.hide()
                             },
@@ -283,8 +278,7 @@ class SelectTextSheetState(
                             }
                             state.hide()
                         },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(text = stringResource(CommonStrings.done))
                     }
@@ -297,7 +291,4 @@ class SelectTextSheetState(
 private fun SelectTextSheetState.Options.Collection.replaceOrAdd(
     items: List<String>,
     updatedText: String,
-): List<String> = items
-    .minus(startingText)
-    .plus(updatedText)
-    .distinct()
+): List<String> = items.minus(startingText).plus(updatedText).distinct()

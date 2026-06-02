@@ -60,35 +60,37 @@ internal fun ComposePostBottomBar(
     onMediaEdited: (Action.EditMedia) -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth(),
+        modifier = modifier.background(MaterialTheme.colorScheme.surface).fillMaxWidth(),
         horizontalArrangement = spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val imagePickerLauncher = rememberMediaPicker(
-            mediaType = MediaType.Photo,
-            maxItems = max(
-                a = 0,
-                b = PhotoUploadLimit - photos.size,
-            ).takeUnless(0::equals),
-        ) { images ->
-            images
-                .filterIsInstance<RestrictedFile.Media.Photo>()
-                .let(Action.EditMedia::AddPhotos)
-                .let(onMediaEdited)
-        }
+        val imagePickerLauncher =
+            rememberMediaPicker(
+                mediaType = MediaType.Photo,
+                maxItems =
+                    max(
+                            a = 0,
+                            b = PhotoUploadLimit - photos.size,
+                        )
+                        .takeUnless(0::equals),
+            ) { images ->
+                images
+                    .filterIsInstance<RestrictedFile.Media.Photo>()
+                    .let(Action.EditMedia::AddPhotos)
+                    .let(onMediaEdited)
+            }
 
-        val videoPickerLauncher = rememberMediaPicker(
-            mediaType = MediaType.Video,
-            maxItems = 1,
-        ) { videos ->
-            videos
-                .filterIsInstance<RestrictedFile.Media.Video>()
-                .firstOrNull()
-                ?.let(Action.EditMedia::AddVideo)
-                ?.let(onMediaEdited)
-        }
+        val videoPickerLauncher =
+            rememberMediaPicker(
+                mediaType = MediaType.Video,
+                maxItems = 1,
+            ) { videos ->
+                videos
+                    .filterIsInstance<RestrictedFile.Media.Video>()
+                    .firstOrNull()
+                    ?.let(Action.EditMedia::AddVideo)
+                    ?.let(onMediaEdited)
+            }
 
         TabIcons.forEachIndexed { index, imageVector ->
             IconButton(
@@ -100,12 +102,13 @@ internal fun ComposePostBottomBar(
                 },
                 content = {
                     Icon(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                alpha = when (index) {
-                                    0 -> if (photos.size < PhotoUploadLimit) 1f else 0.6f
-                                    else -> 1f
-                                }
+                        modifier =
+                            Modifier.graphicsLayer {
+                                alpha =
+                                    when (index) {
+                                        0 -> if (photos.size < PhotoUploadLimit) 1f else 0.6f
+                                        else -> 1f
+                                    }
                             },
                         imageVector = imageVector,
                         contentDescription = null,
@@ -116,8 +119,7 @@ internal fun ComposePostBottomBar(
         }
         Spacer(Modifier.weight(1f))
         PostTextLimit(
-            modifier = Modifier
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp),
             postText = postText,
         )
     }
@@ -158,23 +160,26 @@ fun TextCircularProgress(
     CircularProgressIndicator(
         modifier = Modifier.requiredSize(24.dp),
         progress = { progress },
-        strokeWidth = lerp(
-            start = 2.dp,
-            stop = 8.dp,
-            fraction = ((unboundedProgress - 1) * 4).coerceIn(0f, 1f),
-        ),
-        color = lerp(
-            start = MaterialTheme.colorScheme.primary,
-            stop = Color.Red,
-            fraction = easing.transform(progress),
-        ),
+        strokeWidth =
+            lerp(
+                start = 2.dp,
+                stop = 8.dp,
+                fraction = ((unboundedProgress - 1) * 4).coerceIn(0f, 1f),
+            ),
+        color =
+            lerp(
+                start = MaterialTheme.colorScheme.primary,
+                stop = Color.Red,
+                fraction = easing.transform(progress),
+            ),
     )
 }
 
 private const val PostTextLimit = 300
 private const val PhotoUploadLimit = 4
 
-private val TabIcons = listOf(
-    Icons.Rounded.Photo,
-    Icons.Rounded.Movie,
-)
+private val TabIcons =
+    listOf(
+        Icons.Rounded.Photo,
+        Icons.Rounded.Movie,
+    )

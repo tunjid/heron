@@ -35,7 +35,6 @@ import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
-import heron.ui.core.generated.resources.notifications_joined_from_your_started_pack_description
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -51,8 +50,8 @@ fun ProfileVerificationRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .clickable {
+        modifier =
+            modifier.clickable {
                 onProfileClicked(notification, notification.author)
             },
         isRead = isRead,
@@ -63,20 +62,22 @@ fun ProfileVerificationRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(
-                    if (isVerified) CommonStrings.notifications_account_verified
-                    else CommonStrings.notifications_account_unverified,
-                ),
+                contentDescription =
+                    stringResource(
+                        if (isVerified) CommonStrings.notifications_account_verified
+                        else CommonStrings.notifications_account_unverified
+                    ),
             )
         },
         content = {
             Row(horizontalArrangement = spacedBy(8.dp)) {
                 Text(
                     modifier = Modifier.alignByBaseline(),
-                    text = stringResource(
-                        if (isVerified) CommonStrings.notifications_account_verified
-                        else CommonStrings.notifications_account_unverified,
-                    ),
+                    text =
+                        stringResource(
+                            if (isVerified) CommonStrings.notifications_account_verified
+                            else CommonStrings.notifications_account_unverified
+                        ),
                 )
                 TimeDelta(
                     modifier = Modifier.alignByBaseline(),

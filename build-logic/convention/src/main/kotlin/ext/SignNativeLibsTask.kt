@@ -37,7 +37,14 @@ abstract class SignNativeLibsTask : DefaultTask() {
         val identity = signingIdentity.get()
         val paths = libraries.files.map { it.absolutePath }
         execOps.exec {
-            commandLine("codesign", "--force", "--timestamp", "--sign", identity, *paths.toTypedArray())
+            commandLine(
+                "codesign",
+                "--force",
+                "--timestamp",
+                "--sign",
+                identity,
+                *paths.toTypedArray(),
+            )
         }
     }
 }

@@ -27,7 +27,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardColors
@@ -55,23 +54,26 @@ import org.jetbrains.compose.resources.StringResource
 sealed interface Status {
     sealed interface Enabled : Status {
         data object AlwaysExpanded : Enabled
+
         data object Collapsible : Enabled
     }
 
     sealed interface Disabled : Status {
         data object AlwaysExpanded : Disabled
+
         data object Collapsible : Disabled
     }
 }
 
 @PublishedApi
 internal val Status.alwaysExpanded
-    get() = when (this) {
-        Status.Disabled.AlwaysExpanded -> true
-        Status.Disabled.Collapsible -> false
-        Status.Enabled.AlwaysExpanded -> true
-        Status.Enabled.Collapsible -> false
-    }
+    get() =
+        when (this) {
+            Status.Disabled.AlwaysExpanded -> true
+            Status.Disabled.Collapsible -> false
+            Status.Enabled.AlwaysExpanded -> true
+            Status.Enabled.Collapsible -> false
+        }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -89,10 +91,7 @@ inline fun <T> ItemSelection(
 ) {
     val alwaysExpanded = status.alwaysExpanded
     var expandedItem by remember {
-        mutableStateOf(
-            if (alwaysExpanded) selectedItem
-            else null,
-        )
+        mutableStateOf(if (alwaysExpanded) selectedItem else null)
     }
     LookaheadScope {
         ElevatedCard(
@@ -101,8 +100,7 @@ inline fun <T> ItemSelection(
             colors = colors,
         ) {
             Row(
-                modifier = Modifier
-                    .animateContentSize(),
+                modifier = Modifier.animateContentSize(),
                 horizontalArrangement = Arrangement.aligned(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -110,9 +108,7 @@ inline fun <T> ItemSelection(
                     androidx.compose.runtime.key(item.key()) {
                         val isSelected = selectedItem == item
                         AnimatedVisibility(
-                            modifier = Modifier.animateBounds(
-                                lookaheadScope = this@LookaheadScope,
-                            ),
+                            modifier = Modifier.animateBounds(lookaheadScope = this@LookaheadScope),
                             visible = isSelected || expandedItem != null,
                             enter = fadeIn() + scaleIn(),
                             exit = fadeOut() + scaleOut(),
@@ -120,11 +116,11 @@ inline fun <T> ItemSelection(
                             var entered by remember { mutableStateOf(false) }
                             val progress = animateFloatAsState(if (entered) 1f else 0f)
                             IconButton(
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        alpha = progress.value
-                                    }
-                                    .size(iconSize * 5 / 3),
+                                modifier =
+                                    Modifier.graphicsLayer {
+                                            alpha = progress.value
+                                        }
+                                        .size(iconSize * 5 / 3),
                                 enabled = status is Status.Enabled,
                                 onClick = {
                                     when (expandedItem) {
@@ -135,16 +131,17 @@ inline fun <T> ItemSelection(
                                 },
                                 content = {
                                     Icon(
-                                        modifier = Modifier
-                                            .size(iconSize),
+                                        modifier = Modifier.size(iconSize),
                                         imageVector = item.icon(),
-                                        contentDescription = org.jetbrains.compose.resources.stringResource(
-                                            item.stringResource(),
-                                        ),
-                                        tint = when (item) {
-                                            selectedItem -> MaterialTheme.colorScheme.primary
-                                            else -> MaterialTheme.colorScheme.onSurface
-                                        },
+                                        contentDescription =
+                                            org.jetbrains.compose.resources.stringResource(
+                                                item.stringResource()
+                                            ),
+                                        tint =
+                                            when (item) {
+                                                selectedItem -> MaterialTheme.colorScheme.primary
+                                                else -> MaterialTheme.colorScheme.onSurface
+                                            },
                                     )
                                 },
                             )
@@ -166,6 +163,6 @@ inline fun <T> ItemSelection(
         } else {
             expandedItem = selectedItem
         }
-        onDispose { }
+        onDispose {}
     }
 }

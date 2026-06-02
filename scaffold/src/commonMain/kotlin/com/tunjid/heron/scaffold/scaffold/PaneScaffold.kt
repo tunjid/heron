@@ -82,11 +82,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Stable
-class PaneScaffoldState internal constructor(
+class PaneScaffoldState
+internal constructor(
     internal val appState: AppState,
     internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
-) : PaneTransitionScope,
+) :
+    PaneTransitionScope,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
@@ -116,9 +118,7 @@ class PaneScaffoldState internal constructor(
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
 
-    internal val nestedNavigationState = PaneNestedNavigationState(
-        paneScaffoldState = this,
-    )
+    internal val nestedNavigationState = PaneNestedNavigationState(paneScaffoldState = this)
 
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
@@ -127,34 +127,33 @@ class PaneScaffoldState internal constructor(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
-            isMediumScreenWidthOrWider
+        get() =
+            splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
+                isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
 
     internal val canShowFab
-        get() = when (paneState.pane) {
-            ThreePane.Primary -> true
-            ThreePane.Secondary -> false
-            ThreePane.Tertiary -> false
-            ThreePane.Overlay -> false
-            null -> false
-        }
+        get() =
+            when (paneState.pane) {
+                ThreePane.Primary -> true
+                ThreePane.Secondary -> false
+                ThreePane.Tertiary -> false
+                ThreePane.Overlay -> false
+                null -> false
+            }
 
-    internal val backPreviewState = BackPreviewState(
-        minScale = 0.75f,
-    )
+    internal val backPreviewState = BackPreviewState(minScale = 0.75f)
 
     internal val defaultContainerColor: Color
-        @Composable get() {
-            val elevation by animateDpAsState(
-                if (paneState.pane == ThreePane.Primary &&
-                    isActive &&
-                    inPredictiveBack
-                ) 4.dp
-                else 0.dp,
-            )
+        @Composable
+        get() {
+            val elevation by
+                animateDpAsState(
+                    if (paneState.pane == ThreePane.Primary && isActive && inPredictiveBack) 4.dp
+                    else 0.dp
+                )
 
             return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
         }
@@ -170,48 +169,50 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val splitPaneState = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    val paneScaffoldState = remember(
-        appState,
-        splitPaneState,
-        paneMovableElementSharedTransitionScope,
-    ) {
-        PaneScaffoldState(
-            appState = appState,
-            splitPaneState = splitPaneState,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-        )
-    }
+    val paneScaffoldState =
+        remember(
+            appState,
+            splitPaneState,
+            paneMovableElementSharedTransitionScope,
+        ) {
+            PaneScaffoldState(
+                appState = appState,
+                splitPaneState = splitPaneState,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            )
+        }
 
     val scope = rememberCoroutineScope()
 
     val navigationEventDispatcher =
-        LocalNavigationEventDispatcherOwner.current!!
-            .navigationEventDispatcher
+        LocalNavigationEventDispatcherOwner.current!!.navigationEventDispatcher
 
     LifecycleStartEffect(
         key1 = scope,
         key2 = navigationEventDispatcher,
     ) {
         val job = scope.launch {
-            navigationEventDispatcher.transitionState
-                .collectLatest { eventState ->
-                    when (eventState) {
-                        is NavigationEventTransitionState.Idle -> {
-                            // Wait to be visible
-                            snapshotFlow { paneScaffoldState.transition.targetState }
-                                .first { it == EnterExitState.Visible }
-                            paneScaffoldState.backPreviewState.progress = 0f
-                        }
-                        is NavigationEventTransitionState.InProgress -> paneScaffoldState.backPreviewState.apply {
+            navigationEventDispatcher.transitionState.collectLatest { eventState ->
+                when (eventState) {
+                    is NavigationEventTransitionState.Idle -> {
+                        // Wait to be visible
+                        snapshotFlow { paneScaffoldState.transition.targetState }
+                            .first { it == EnterExitState.Visible }
+                        paneScaffoldState.backPreviewState.progress = 0f
+                    }
+                    is NavigationEventTransitionState.InProgress ->
+                        paneScaffoldState.backPreviewState.apply {
                             progress = eventState.latestEvent.progress
                             atStart = eventState.latestEvent.swipeEdge == NavigationEvent.EDGE_LEFT
-                            pointerOffset = Offset(
-                                x = eventState.latestEvent.touchX,
-                                y = eventState.latestEvent.touchY,
-                            ).round()
+                            pointerOffset =
+                                Offset(
+                                        x = eventState.latestEvent.touchX,
+                                        y = eventState.latestEvent.touchY,
+                                    )
+                                    .round()
                         }
-                    }
                 }
+            }
         }
         onStopOrDispose { job.cancel() }
     }
@@ -239,21 +240,22 @@ fun PaneScaffoldState.PaneScaffold(
         },
         content = {
             NonSubComposingScaffold(
-                modifier = when {
-                    splitPaneState.paneAnchorState.hasInteractions -> Modifier
-                    else -> when (dismissBehavior) {
-                        AppState.DismissBehavior.None,
-                        AppState.DismissBehavior.Gesture.DragToPop,
-                        -> Modifier.animateBounds(
-                            lookaheadScope = this,
-                            boundsTransform = childBoundsTransform,
-                        )
+                modifier =
+                    when {
+                        splitPaneState.paneAnchorState.hasInteractions -> Modifier
+                        else ->
+                            when (dismissBehavior) {
+                                AppState.DismissBehavior.None,
+                                AppState.DismissBehavior.Gesture.DragToPop ->
+                                    Modifier.animateBounds(
+                                        lookaheadScope = this,
+                                        boundsTransform = childBoundsTransform,
+                                    )
 
-                        AppState.DismissBehavior.Gesture.SlideToPop,
-                        AppState.DismissBehavior.Gesture.ScaleToPop,
-                        -> Modifier
-                    }
-                },
+                                AppState.DismissBehavior.Gesture.SlideToPop,
+                                AppState.DismissBehavior.Gesture.ScaleToPop -> Modifier
+                            }
+                    },
                 containerColor = containerColor,
                 topBar = {
                     topBar()
@@ -269,31 +271,28 @@ fun PaneScaffoldState.PaneScaffold(
                 },
                 content = { paddingValues ->
                     val isStable = appState.identityState.isStable
-                    val blurState = animateFloatAsState(
-                        if (isStable) 0f else 1f,
-                    )
+                    val blurState = animateFloatAsState(if (isStable) 0f else 1f)
                     Box(
-                        modifier = Modifier
-                            .ifTrue(
-                                predicate = !isStable,
-                                block = {
-                                    blockClickEvents()
-                                        .drawWithContent {
+                        modifier =
+                            Modifier.ifTrue(
+                                    predicate = !isStable,
+                                    block = {
+                                        blockClickEvents().drawWithContent {
                                             drawContent()
                                             drawRect(Color.Black.withDim(true))
                                         }
-                                },
-                            )
-                            .blur(
-                                shape = PaneClipShape,
-                                radius = { 32.dp },
-                                progress = blurState::value,
-                            )
-                            .constrainedSizePlacement(
-                                orientation = Orientation.Horizontal,
-                                minSize = splitPaneState.minPaneWidth,
-                                atStart = paneState.pane == ThreePane.Secondary,
-                            ),
+                                    },
+                                )
+                                .blur(
+                                    shape = PaneClipShape,
+                                    radius = { 32.dp },
+                                    progress = blurState::value,
+                                )
+                                .constrainedSizePlacement(
+                                    orientation = Orientation.Horizontal,
+                                    minSize = splitPaneState.minPaneWidth,
+                                    atStart = paneState.pane == ThreePane.Secondary,
+                                )
                     ) {
                         PersistentSharedElement()
                         content(paddingValues)
@@ -308,9 +307,7 @@ fun PaneScaffoldState.PaneScaffold(
             .filterNotNull()
             .collect { message ->
                 val text = message.message()
-                snackbarHostState.showSnackbar(
-                    message = text,
-                )
+                snackbarHostState.showSnackbar(message = text)
                 onSnackBarMessageConsumed(message)
             }
     }
@@ -323,9 +320,7 @@ fun PaneScaffoldState.PaneScaffold(
 }
 
 @Composable
-fun PaneScaffoldState.PaneSnackbarHost(
-    modifier: Modifier = Modifier,
-) {
+fun PaneScaffoldState.PaneSnackbarHost(modifier: Modifier = Modifier) {
     SnackbarHost(
         modifier = modifier,
         hostState = snackbarHostState,
@@ -349,17 +344,13 @@ private inline fun PaneNavigationRailScaffold(
         modifier = modifier,
         content = {
             Box(
-                modifier = Modifier
-                    .widthIn(max = 80.dp)
-                    .zIndex(2f),
+                modifier = Modifier.widthIn(max = 80.dp).zIndex(2f),
                 content = {
                     navigationRail()
                 },
             )
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f),
+                modifier = Modifier.fillMaxSize().zIndex(1f),
                 content = {
                     content()
                 },
@@ -368,40 +359,39 @@ private inline fun PaneNavigationRailScaffold(
     )
 }
 
-fun Modifier.paneClip() =
-    then(PaneClipModifier)
+fun Modifier.paneClip() = then(PaneClipModifier)
 
 /**
- * A workaround for https://issuetracker.google.com/issues/498497888
- * Sticky shared elements which use Modifier.sharedElementWithUserManagedVisibility
- * need an accompanying Modifier.sharedElement match to animate if the shared element
- * transition is sought. The bug does not affect the transition if it is not seeking.
+ * A workaround for https://issuetracker.google.com/issues/498497888 Sticky shared elements which
+ * use Modifier.sharedElementWithUserManagedVisibility need an accompanying Modifier.sharedElement
+ * match to animate if the shared element transition is sought. The bug does not affect the
+ * transition if it is not seeking.
  */
 @Composable
 private fun PaneScaffoldState.PersistentSharedElement() {
-    if (paneState.pane == ThreePane.Primary) Box(
-        Modifier
-            .sharedElement(
-                sharedContentState = rememberSharedContentState(PersistentSharedElementKey),
-                animatedVisibilityScope = this,
-            )
-            .size(1.dp),
-    )
+    if (paneState.pane == ThreePane.Primary)
+        Box(
+            Modifier.sharedElement(
+                    sharedContentState = rememberSharedContentState(PersistentSharedElementKey),
+                    animatedVisibilityScope = this,
+                )
+                .size(1.dp)
+        )
 }
 
-private val PaneClipShape = RoundedCornerShape(
-    topStart = 16.dp,
-    topEnd = 16.dp,
-)
+private val PaneClipShape =
+    RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+    )
 
-private val PaneClipModifier = Modifier.clip(
-    shape = PaneClipShape,
-)
+private val PaneClipModifier = Modifier.clip(shape = PaneClipShape)
 
-private val BoundsTransformSpring = spring(
-    dampingRatio = Spring.DampingRatioNoBouncy,
-    stiffness = Spring.StiffnessMediumLow,
-    visibilityThreshold = Rect.VisibilityThreshold,
-)
+private val BoundsTransformSpring =
+    spring(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMediumLow,
+        visibilityThreshold = Rect.VisibilityThreshold,
+    )
 
 private object PersistentSharedElementKey

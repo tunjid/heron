@@ -51,8 +51,8 @@ fun JoinedStarterPackRow(
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
-        modifier = modifier
-            .rootShapedClickable {
+        modifier =
+            modifier.rootShapedClickable {
                 onProfileClicked(notification, notification.author)
             },
         isRead = isRead,
@@ -63,19 +63,25 @@ fun JoinedStarterPackRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(CommonStrings.notifications_joined_from_your_started_pack_description),
+                contentDescription =
+                    stringResource(
+                        CommonStrings.notifications_joined_from_your_started_pack_description
+                    ),
             )
         },
         content = {
             Row(horizontalArrangement = spacedBy(8.dp)) {
                 Text(
                     modifier = Modifier.alignByBaseline(),
-                    text = notificationText(
-                        notification = notification,
-                        aggregatedSize = aggregatedProfiles.size,
-                        singularResource = CommonStrings.notifications_joined_from_your_starter_pack,
-                        pluralResource = CommonStrings.notifications_multiple_joined_from_your_starter_pack,
-                    ),
+                    text =
+                        notificationText(
+                            notification = notification,
+                            aggregatedSize = aggregatedProfiles.size,
+                            singularResource =
+                                CommonStrings.notifications_joined_from_your_starter_pack,
+                            pluralResource =
+                                CommonStrings.notifications_multiple_joined_from_your_starter_pack,
+                        ),
                 )
                 TimeDelta(
                     modifier = Modifier.alignByBaseline(),

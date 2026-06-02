@@ -80,9 +80,10 @@ interface RockskyRecordOperations {
     ): Flow<CursorList<RockskyScrobble>>
 }
 
-internal class OfflineFirstRockskyRecordOperations @Inject constructor(
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+internal class OfflineFirstRockskyRecordOperations
+@Inject
+constructor(
+    @param:IODispatcher private val ioDispatcher: CoroutineDispatcher,
     private val networkService: NetworkService,
     private val rockskyDao: RockskyDao,
     private val profileLookup: ProfileLookup,
@@ -95,207 +96,222 @@ internal class OfflineFirstRockskyRecordOperations @Inject constructor(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<RockskyAlbum>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow {
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                rockskyDao.albums(
-                    profileId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { entities ->
-                        entities.map(PopulatedRockSkyAlbumEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorAlbums(
-                            GetActorAlbumsQueryParams(
-                                did = profileDid,
-                                limit = query.data.limit,
+                combine(
+                        rockskyDao
+                            .albums(
+                                profileId = profileDid.did,
                                 offset = query.data.offset,
-                            ),
-                        )
-                    },
-                    nextCursor = {
-                        if (albums.size.toLong() == query.data.limit) "" else null
-                    },
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::albumsIdentity,
+                                limit = query.data.limit,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) rockskyDao.deleteAlbumsForProfile(profileDid.did)
-                            albums.forEach {
-                                add(creatorId = ProfileId(profileDid.did), albumView = it)
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            .distinctUntilChangedMap { entities ->
+                                entities.map(PopulatedRockSkyAlbumEntity::asExternalModel)
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getActorAlbums(
+                                    GetActorAlbumsQueryParams(
+                                        did = profileDid,
+                                        limit = query.data.limit,
+                                        offset = query.data.offset,
+                                    )
+                                )
+                            },
+                            nextCursor = {
+                                if (albums.size.toLong() == query.data.limit) "" else null
+                            },
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::albumsIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh)
+                                        rockskyDao.deleteAlbumsForProfile(profileDid.did)
+                                    albums.forEach {
+                                        add(creatorId = ProfileId(profileDid.did), albumView = it)
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun tracks(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<RockskyTrack>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow {
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                rockskyDao.tracks(
-                    profileId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { entities ->
-                        entities.map(RockskyTrackEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorSongs(
-                            GetActorSongsQueryParams(
-                                did = profileDid,
-                                limit = query.data.limit,
+                combine(
+                        rockskyDao
+                            .tracks(
+                                profileId = profileDid.did,
                                 offset = query.data.offset,
-                            ),
-                        )
-                    },
-                    nextCursor = {
-                        if (tracks.size.toLong() == query.data.limit) "" else null
-                    },
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::tracksIdentity,
+                                limit = query.data.limit,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) rockskyDao.deleteTracksForProfile(profileDid.did)
-                            tracks.forEach {
-                                add(creatorId = ProfileId(profileDid.did), trackView = it)
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            .distinctUntilChangedMap { entities ->
+                                entities.map(RockskyTrackEntity::asExternalModel)
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getActorSongs(
+                                    GetActorSongsQueryParams(
+                                        did = profileDid,
+                                        limit = query.data.limit,
+                                        offset = query.data.offset,
+                                    )
+                                )
+                            },
+                            nextCursor = {
+                                if (tracks.size.toLong() == query.data.limit) "" else null
+                            },
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::tracksIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh)
+                                        rockskyDao.deleteTracksForProfile(profileDid.did)
+                                    tracks.forEach {
+                                        add(creatorId = ProfileId(profileDid.did), trackView = it)
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun artists(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<RockskyArtist>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow {
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                rockskyDao.artists(
-                    profileId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { entities ->
-                        entities.map(RockskyArtistEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorArtists(
-                            GetActorArtistsQueryParams(
-                                did = profileDid,
-                                limit = query.data.limit,
+                combine(
+                        rockskyDao
+                            .artists(
+                                profileId = profileDid.did,
                                 offset = query.data.offset,
-                            ),
-                        )
-                    },
-                    nextCursor = {
-                        if (artists.size.toLong() == query.data.limit) "" else null
-                    },
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::artistsIdentity,
+                                limit = query.data.limit,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) rockskyDao.deleteArtistsForProfile(profileDid.did)
-                            artists.forEach {
-                                add(creatorId = ProfileId(profileDid.did), artistView = it)
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            .distinctUntilChangedMap { entities ->
+                                entities.map(RockskyArtistEntity::asExternalModel)
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getActorArtists(
+                                    GetActorArtistsQueryParams(
+                                        did = profileDid,
+                                        limit = query.data.limit,
+                                        offset = query.data.offset,
+                                    )
+                                )
+                            },
+                            nextCursor = {
+                                if (artists.size.toLong() == query.data.limit) "" else null
+                            },
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::artistsIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh)
+                                        rockskyDao.deleteArtistsForProfile(profileDid.did)
+                                    artists.forEach {
+                                        add(creatorId = ProfileId(profileDid.did), artistView = it)
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 
     override fun scrobbles(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<RockskyScrobble>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+        savedStateDataSource
+            .singleSessionFlow {
+                val profileDid =
+                    profileLookup.lookupProfileDid(profileId = query.profileId)
+                        ?: return@singleSessionFlow emptyFlow()
 
-            combine(
-                rockskyDao.scrobbles(
-                    profileId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChangedMap { entities ->
-                        entities.map(RockskyScrobbleEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorScrobbles(
-                            GetActorScrobblesQueryParams(
-                                did = profileDid,
-                                limit = query.data.limit,
+                combine(
+                        rockskyDao
+                            .scrobbles(
+                                profileId = profileDid.did,
                                 offset = query.data.offset,
-                            ),
-                        )
-                    },
-                    nextCursor = {
-                        if (scrobbles.size.toLong() == query.data.limit) "" else null
-                    },
-                    onResponse = {
-                        val shouldRefresh = cursorQueryRefreshTracker
-                            .isFirstPageForDifferentAnchor(
-                                query = query,
-                                identity = query::scrobblesIdentity,
+                                limit = query.data.limit,
                             )
-                        multipleEntitySaverProvider.saveInTransaction {
-                            if (shouldRefresh) rockskyDao.deleteScrobblesForProfile(profileDid.did)
-                            scrobbles.forEach {
-                                add(creatorId = ProfileId(profileDid.did), scrobbleView = it)
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
+                            .distinctUntilChangedMap { entities ->
+                                entities.map(RockskyScrobbleEntity::asExternalModel)
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getActorScrobbles(
+                                    GetActorScrobblesQueryParams(
+                                        did = profileDid,
+                                        limit = query.data.limit,
+                                        offset = query.data.offset,
+                                    )
+                                )
+                            },
+                            nextCursor = {
+                                if (scrobbles.size.toLong() == query.data.limit) "" else null
+                            },
+                            onResponse = {
+                                val shouldRefresh =
+                                    cursorQueryRefreshTracker.isFirstPageForDifferentAnchor(
+                                        query = query,
+                                        identity = query::scrobblesIdentity,
+                                    )
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    if (shouldRefresh)
+                                        rockskyDao.deleteScrobblesForProfile(profileDid.did)
+                                    scrobbles.forEach {
+                                        add(
+                                            creatorId = ProfileId(profileDid.did),
+                                            scrobbleView = it,
+                                        )
+                                    }
+                                }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
+            }
             .flowOn(ioDispatcher)
 }

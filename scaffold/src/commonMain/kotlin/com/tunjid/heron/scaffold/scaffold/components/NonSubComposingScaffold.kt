@@ -47,8 +47,8 @@ import kotlin.jvm.JvmInline
 import kotlin.math.max
 
 /**
- * An implementation of the material 3 scaffold that does not use subcomposition, and doesn't
- * clip its content.
+ * An implementation of the material 3 scaffold that does not use subcomposition, and doesn't clip
+ * its content.
  */
 @Composable
 fun NonSubComposingScaffold(
@@ -62,10 +62,7 @@ fun NonSubComposingScaffold(
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .background(containerColor),
-    ) {
+    Box(modifier = modifier.background(containerColor)) {
         ScaffoldLayout(
             fabPosition = floatingActionButtonPosition,
             topBar = topBar,
@@ -110,17 +107,17 @@ private inline fun ScaffoldLayout(
 
     Layout(
         contents =
-        listOf(
-            { Spacer(Modifier.windowInsetsTopHeight(contentWindowInsets)) },
-            { Spacer(Modifier.windowInsetsBottomHeight(contentWindowInsets)) },
-            { Spacer(Modifier.windowInsetsStartWidth(contentWindowInsets)) },
-            { Spacer(Modifier.windowInsetsEndWidth(contentWindowInsets)) },
-            { Box { topBar() } },
-            { Box { snackbar() } },
-            { Box { fab() } },
-            { Box { bottomBar() } },
-            { Box { content(contentPadding) } },
-        ),
+            listOf(
+                { Spacer(Modifier.windowInsetsTopHeight(contentWindowInsets)) },
+                { Spacer(Modifier.windowInsetsBottomHeight(contentWindowInsets)) },
+                { Spacer(Modifier.windowInsetsStartWidth(contentWindowInsets)) },
+                { Spacer(Modifier.windowInsetsEndWidth(contentWindowInsets)) },
+                { Box { topBar() } },
+                { Box { snackbar() } },
+                { Box { fab() } },
+                { Box { bottomBar() } },
+                { Box { content(contentPadding) } },
+            )
     ) { measurables, constraints ->
         val topInsetsMeasurable = measurables[0].first()
         val bottomInsetsMeasurable = measurables[1].first()
@@ -167,7 +164,7 @@ private inline fun ScaffoldLayout(
                 looseConstraints.offset(
                     -startInsetsPlaceable.width - endInsetsPlaceable.width,
                     -bottomInsetsPlaceable.height,
-                ),
+                )
             )
 
         val snackbarHeight = snackbarPlaceable.height
@@ -178,7 +175,7 @@ private inline fun ScaffoldLayout(
                 looseConstraints.offset(
                     -startInsetsPlaceable.width - endInsetsPlaceable.width,
                     -bottomInsetsPlaceable.height,
-                ),
+                )
             )
 
         val isFabEmpty = fabPlaceable.width == 0 && fabPlaceable.height == 0
@@ -197,8 +194,7 @@ private inline fun ScaffoldLayout(
                             }
                         }
                         FabPosition.End,
-                        FabPosition.EndOverlay,
-                        -> {
+                        FabPosition.EndOverlay -> {
                             if (layoutDirection == LayoutDirection.Ltr) {
                                 layoutWidth - FabSpacing.roundToPx() - fabWidth - endInsetsWidth
                             } else {
@@ -217,14 +213,13 @@ private inline fun ScaffoldLayout(
 
         val bottomBarHeight = bottomBarPlaceable.height
 
-        val fabOffsetFromBottom =
-            fabPlacement?.let {
-                if (fabPosition == FabPosition.EndOverlay) {
-                    bottomInsetsPlaceable.height
-                } else {
-                    max(bottomInsetsPlaceable.height, bottomBarHeight)
-                } + it.height + FabSpacing.roundToPx()
-            }
+        val fabOffsetFromBottom = fabPlacement?.let {
+            if (fabPosition == FabPosition.EndOverlay) {
+                bottomInsetsPlaceable.height
+            } else {
+                max(bottomInsetsPlaceable.height, bottomBarHeight)
+            } + it.height + FabSpacing.roundToPx()
+        }
         val snackbarOffsetFromBottom =
             if (snackbarHeight != 0) {
                 snackbarHeight +
@@ -323,13 +318,10 @@ value class FabPosition internal constructor(@Suppress("unused") private val val
  * @property width the width of the FAB
  * @property height the height of the FAB
  */
-@Immutable
-private class FabPlacement(val left: Int, val width: Int, val height: Int)
+@Immutable private class FabPlacement(val left: Int, val width: Int, val height: Int)
 
 private val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
-    @Composable get() = systemBars
-        .union(displayCutout)
-        .union(WindowInsets.platformStatusBars)
+    @Composable get() = systemBars.union(displayCutout).union(WindowInsets.platformStatusBars)
 
 // FAB spacing above the bottom bar / bottom of the Scaffold
 private val FabSpacing = 16.dp

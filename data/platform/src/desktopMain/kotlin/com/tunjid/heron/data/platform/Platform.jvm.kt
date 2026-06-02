@@ -28,14 +28,15 @@ class JVMPlatform internal constructor() : Platform {
     override val description: String = "Heron for Desktop"
     override val isNativeCompose: Boolean = false
     override val supportsComposeDiagnosticStackTraces: Boolean = false
-    val variant: JvmVariant = System.getProperty("os.name").lowercase().let { osName ->
-        when {
-            osName.startsWith("mac") -> JvmVariant.Mac
-            osName.startsWith("linux") -> JvmVariant.Linux
-            osName.contains("windows") -> JvmVariant.Windows
-            else -> JvmVariant.Unknown
+    val variant: JvmVariant =
+        System.getProperty("os.name").lowercase().let { osName ->
+            when {
+                osName.startsWith("mac") -> JvmVariant.Mac
+                osName.startsWith("linux") -> JvmVariant.Linux
+                osName.contains("windows") -> JvmVariant.Windows
+                else -> JvmVariant.Unknown
+            }
         }
-    }
 }
 
 actual val Platform.Companion.current: Platform by lazy(::JVMPlatform)

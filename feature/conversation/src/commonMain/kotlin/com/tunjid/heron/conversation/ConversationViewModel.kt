@@ -85,11 +85,10 @@ class ActualConversationViewModel(
     messagesRepository: MessageRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ConversationStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -116,33 +115,40 @@ class ActualConversationViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SharedRecord -> action.flow.launchRecordSharingMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                        navActions = navActions,
-                    )
-                    is Action.SendMessage -> action.flow.launchSendMessageMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                        navActions = navActions,
-                    )
+                    is Action.Navigate ->
+                        action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                    is Action.SendPostInteraction ->
+                        action.flow.launchPostInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.SharedRecord ->
+                        action.flow.launchRecordSharingMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                            navActions = navActions,
+                        )
+                    is Action.SendMessage ->
+                        action.flow.launchSendMessageMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                            navActions = navActions,
+                        )
                     is Action.TextChanged -> action.flow.launchInputTextChangeMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.UpdateMessageReaction -> action.flow.launchUpdateMessageReactionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Tile -> action.flow.launchMessagingTilingMutations(
-                        state = state,
-                        messagesRepository = messagesRepository,
-                    )
+                    is Action.SnackbarDismissed ->
+                        action.flow.launchSnackbarDismissalMutations(state)
+                    is Action.UpdateMessageReaction ->
+                        action.flow.launchUpdateMessageReactionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    is Action.Tile ->
+                        action.flow.launchMessagingTilingMutations(
+                            state = state,
+                            messagesRepository = messagesRepository,
+                        )
                 }
             }
         },
@@ -152,24 +158,27 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
-    state.signedInProfile = it
-}
+) =
+    authRepository.signedInUser.launchAndCollect {
+        state.signedInProfile = it
+    }
 
 context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = writeQueue.queueChanges.launchAndCollect { writes ->
-    val queuedIds = writes.mapTo(mutableSetOf(), Writable::queueId)
-    val updatedPendingMessages = state.pendingItems.filter { item ->
-        queuedIds.contains(Writable.Send(item.message).queueId)
+) =
+    writeQueue.queueChanges.launchAndCollect { writes ->
+        val queuedIds = writes.mapTo(mutableSetOf(), Writable::queueId)
+        val updatedPendingMessages =
+            state.pendingItems.filter { item ->
+                queuedIds.contains(Writable.Send(item.message).queueId)
+            }
+        state.pendingItems = updatedPendingMessages
+        state.tilingData.updateItems {
+            items.mergePendingMessages(currentQuery, updatedPendingMessages)
+        }
     }
-    state.pendingItems = updatedPendingMessages
-    state.tilingData.updateItems {
-        items.mergePendingMessages(currentQuery, updatedPendingMessages)
-    }
-}
 
 private suspend fun consumeSharedUri(
     state: State.SnapshotMutable,
@@ -179,12 +188,12 @@ private suspend fun consumeSharedUri(
 ) {
     if (sharedUri == null) return
     val recordUri = sharedUri.asEmbeddableRecordUriOrNull() ?: return
-    val shouldFetch = when (state.sharedRecord) {
-        SharedRecord.Consumed,
-        is SharedRecord.Pending,
-        -> overrideExisting
-        SharedRecord.None -> true
-    }
+    val shouldFetch =
+        when (state.sharedRecord) {
+            SharedRecord.Consumed,
+            is SharedRecord.Pending -> overrideExisting
+            SharedRecord.None -> true
+        }
     if (!shouldFetch) return
 
     // There's a server side bug where non post record embeds aren't resolved
@@ -203,17 +212,18 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.Interaction(it.interaction) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.SnapshotMutable
 ) = launchAndCollect { event ->
     state.messages -= event.message
 }
@@ -222,20 +232,20 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateMessageReaction>.launchUpdateMessageReactionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Reaction(it.reaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
+) =
+    launchAndCollectEnqueueMutations(
+        writeQueue = writeQueue,
+        toWritable = { Writable.Reaction(it.reaction) },
+        postEnqueue = { _, memo ->
+            if (memo != null) state.messages += memo
+        },
+    )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TextChanged>.launchInputTextChangeMutations(
-    state: State.SnapshotMutable,
-) = launchAndCollectLatest { action ->
-    state.inputText = action.inputText
-}
+private fun Flow<Action.TextChanged>.launchInputTextChangeMutations(state: State.SnapshotMutable) =
+    launchAndCollectLatest { action ->
+        state.inputText = action.inputText
+    }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
@@ -244,12 +254,13 @@ private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
     navActions: (NavigationMutation) -> Unit,
 ) = launchAndCollectLatest { action ->
     when (action) {
-        is Action.SharedRecord.Add -> consumeSharedUri(
-            state = state,
-            sharedUri = action.uri,
-            overrideExisting = true,
-            recordRepository = recordRepository,
-        )
+        is Action.SharedRecord.Add ->
+            consumeSharedUri(
+                state = state,
+                sharedUri = action.uri,
+                overrideExisting = true,
+                recordRepository = recordRepository,
+            )
         Action.SharedRecord.Remove -> {
             state.sharedRecord = SharedRecord.Consumed
             navActions(ConsumeSharedUriQueryParam)
@@ -263,29 +274,34 @@ private fun Flow<Action.SendMessage>.launchSendMessageMutations(
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
 ) = launchAndCollect { action ->
-    val pendingItem = MessageItem.Pending(
-        sender = state.signedInProfile ?: stubProfile(
-            did = ProfileId(""),
-            handle = ProfileHandle(id = ""),
-        ),
-        message = action.message,
-        sentAt = Clock.System.now(),
-    )
+    val pendingItem =
+        MessageItem.Pending(
+            sender =
+                state.signedInProfile
+                    ?: stubProfile(
+                        did = ProfileId(""),
+                        handle = ProfileHandle(id = ""),
+                    ),
+            message = action.message,
+            sentAt = Clock.System.now(),
+        )
 
-    state.sharedRecord = when (action.message.recordReference) {
-        null -> state.sharedRecord
-        else -> SharedRecord.Consumed
-    }
+    state.sharedRecord =
+        when (action.message.recordReference) {
+            null -> state.sharedRecord
+            else -> SharedRecord.Consumed
+        }
     state.inputText = TextFieldValue()
     state.pendingItems += pendingItem
     state.tilingData.updateItems {
         // Add the pending item to the chat
         val currentItems = items
         val tileCount = currentItems.tileCount
-        val lastQuery = when {
-            tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
-            else -> state.tilingData.currentQuery
-        }
+        val lastQuery =
+            when {
+                tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
+                else -> state.tilingData.currentQuery
+            }
         currentItems + tiledListOf(lastQuery to pendingItem)
     }
 
@@ -302,55 +318,63 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchMessagingTilingMutations(
     state: State.SnapshotMutable,
     messagesRepository: MessageRepository,
-) = map { it.tilingAction }
-    .launchTilingMutations(
-        state = state,
-        updateQueryData = { copy(data = it) },
-        refreshQuery = { copy(data = data.reset()) },
-        cursorListLoader = messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(
-            MessageItem::Sent,
-        ),
-        onNewItems = { items -> items.distinctBy(MessageItem::id) },
-        onWriteItems = { deduped ->
-            // Receiver is State.SnapshotMutable; runs on the production dispatcher.
-            // pendingItems and tilingData.currentQuery are read here race-free with the
-            // launchSendMessageMutations / launchPendingMessageFlushMutations writers.
-            // Database refreshes can happen at any time. Add pending items.
-            if (pendingItems.isEmpty()) deduped
-            else deduped.mergePendingMessages(
-                currentQuery = tilingData.currentQuery,
-                pendingItems = pendingItems,
-            )
-        },
-    )
+) =
+    map { it.tilingAction }
+        .launchTilingMutations(
+            state = state,
+            updateQueryData = { copy(data = it) },
+            refreshQuery = { copy(data = data.reset()) },
+            cursorListLoader =
+                messagesRepository::messages.mapCursorList<MessageQuery, Message, MessageItem>(
+                    MessageItem::Sent
+                ),
+            onNewItems = { items -> items.distinctBy(MessageItem::id) },
+            onWriteItems = { deduped ->
+                // Receiver is State.SnapshotMutable; runs on the production dispatcher.
+                // pendingItems and tilingData.currentQuery are read here race-free with the
+                // launchSendMessageMutations / launchPendingMessageFlushMutations writers.
+                // Database refreshes can happen at any time. Add pending items.
+                if (pendingItems.isEmpty()) deduped
+                else
+                    deduped.mergePendingMessages(
+                        currentQuery = tilingData.currentQuery,
+                        pendingItems = pendingItems,
+                    )
+            },
+        )
 
 private fun TiledList<MessageQuery, MessageItem>.mergePendingMessages(
     currentQuery: MessageQuery,
     pendingItems: List<MessageItem.Pending>,
-): TiledList<MessageQuery, MessageItem> = when {
-    isEmpty() -> buildTiledList {
-        addAll(
-            query = currentQuery,
-            items = pendingItems,
-        )
-    }
+): TiledList<MessageQuery, MessageItem> =
+    when {
+        isEmpty() ->
+            buildTiledList {
+                addAll(
+                    query = currentQuery,
+                    items = pendingItems,
+                )
+            }
 
-    else -> buildTiledList {
-        (0..<tileCount).forEach { tileIndex ->
-            val tile = tileAt(tileIndex)
-            val lastTileIndex = tileCount - 1
-            val tileSublist = subList(tile.start, tile.end)
-            if (tileIndex == lastTileIndex) addAll(
-                query = queryAtTile(tileIndex),
-                // Add pending items to the last chunk and sort
-                items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
-            )
-            else addAll(
-                query = queryAtTile(tileIndex),
-                items = tileSublist,
-            )
-        }
+        else ->
+            buildTiledList {
+                (0..<tileCount).forEach { tileIndex ->
+                    val tile = tileAt(tileIndex)
+                    val lastTileIndex = tileCount - 1
+                    val tileSublist = subList(tile.start, tile.end)
+                    if (tileIndex == lastTileIndex)
+                        addAll(
+                            query = queryAtTile(tileIndex),
+                            // Add pending items to the last chunk and sort
+                            items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
+                        )
+                    else
+                        addAll(
+                            query = queryAtTile(tileIndex),
+                            items = tileSublist,
+                        )
+                }
+            }
     }
-}
 
 private val ConsumeSharedUriQueryParam = removeQueryParamsFromCurrentRoute(setOf("sharedUri"))

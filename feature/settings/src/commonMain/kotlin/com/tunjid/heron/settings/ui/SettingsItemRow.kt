@@ -73,13 +73,14 @@ fun SettingsItem(
     icon: ImageVector? = null,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-) = SettingsItemRow(
-    title = title,
-    icon = icon,
-    modifier = modifier,
-    titleColor = titleColor,
-    content = {},
-)
+) =
+    SettingsItemRow(
+        title = title,
+        icon = icon,
+        modifier = modifier,
+        titleColor = titleColor,
+        content = {},
+    )
 
 @Composable
 private fun SettingsItemRow(
@@ -92,22 +93,21 @@ private fun SettingsItemRow(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = SettingsItemClipModifier
-            .then(
-                modifier
-                    .semantics {
-                        contentDescription = title
-                    },
+        modifier =
+            SettingsItemClipModifier.then(
+                modifier.semantics {
+                    contentDescription = title
+                }
             ),
     ) {
-        if (icon != null) Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = titleColor,
-        )
+        if (icon != null)
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = titleColor,
+            )
         Text(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
             text = title,
             color = titleColor,
             style = MaterialTheme.typography.bodyLarge,
@@ -127,53 +127,50 @@ fun ExpandableSettingsItemRow(
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = SettingsItemClipModifier
-            .toggleable(
-                value = isExpanded,
-                onValueChange = { isExpanded = it },
-                role = Role.Button,
-            )
-            .then(modifier),
+        modifier =
+            SettingsItemClipModifier.toggleable(
+                    value = isExpanded,
+                    onValueChange = { isExpanded = it },
+                    role = Role.Button,
+                )
+                .then(modifier)
     ) {
         SettingsItemRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .settingsItemMinHeight(),
+            modifier = Modifier.fillMaxWidth().settingsItemMinHeight(),
             title = title,
             icon = icon,
             titleColor = titleColor,
         ) {
-            val iconRotation = animateFloatAsState(
-                targetValue = if (isExpanded) 0f else 180f,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
+            val iconRotation =
+                animateFloatAsState(
+                    targetValue = if (isExpanded) 0f else 180f,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                )
             Icon(
-                modifier = Modifier.graphicsLayer {
-                    rotationX = iconRotation.value
-                },
+                modifier =
+                    Modifier.graphicsLayer {
+                        rotationX = iconRotation.value
+                    },
                 imageVector = Icons.Default.ExpandLess,
-                contentDescription = stringResource(
-                    if (isExpanded) CommonStrings.collapse_icon
-                    else CommonStrings.expand_icon,
-                ),
+                contentDescription =
+                    stringResource(
+                        if (isExpanded) CommonStrings.collapse_icon else CommonStrings.expand_icon
+                    ),
             )
         }
         androidx.compose.animation.AnimatedVisibility(
-            modifier = Modifier
-                .settingsItemChildPadding()
-                .fillMaxWidth(),
+            modifier = Modifier.settingsItemChildPadding().fillMaxWidth(),
             visible = isExpanded,
             enter = EnterTransition,
             exit = ExitTransition,
             content = {
                 Column(
-                    modifier = Modifier
-                        // Inset expanded content from the start to disambiguate
-                        // it from other items
-                        .padding(start = 8.dp)
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            // Inset expanded content from the start to disambiguate
+                            // it from other items
+                            .padding(start = 8.dp)
+                            .fillMaxWidth()
                 ) {
                     content()
                 }
@@ -193,8 +190,8 @@ fun SettingsToggleItem(
     val latchedCheckedState = rememberLatchedState(checked)
 
     Row(
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .toggleable(
                         value = latchedCheckedState.value,
@@ -208,20 +205,16 @@ fun SettingsToggleItem(
                     .padding(
                         horizontal = 8.dp,
                         vertical = 4.dp,
-                    ),
+                    )
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
             text = text,
         )
-        Spacer(
-            modifier = Modifier
-                .width(16.dp),
-        )
+        Spacer(modifier = Modifier.width(16.dp))
         Switch(
             enabled = enabled,
             checked = latchedCheckedState.value,
@@ -246,8 +239,8 @@ fun <T> SettingsRadioButtons(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            modifier = Modifier
-                .padding(
+            modifier =
+                Modifier.padding(
                     horizontal = 4.dp,
                     vertical = 4.dp,
                 ),
@@ -257,13 +250,13 @@ fun <T> SettingsRadioButtons(
         )
         items.forEach { item ->
             Row(
-                modifier = Modifier
-                    .shapedClickable {
-                        latchedCheckedState.latch(item)
-                        onItemClicked(item)
-                    }
-                    .settingsItemPaddingAndMinHeight()
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier.shapedClickable {
+                            latchedCheckedState.latch(item)
+                            onItemClicked(item)
+                        }
+                        .settingsItemPaddingAndMinHeight()
+                        .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -271,25 +264,21 @@ fun <T> SettingsRadioButtons(
                     selected = item == latchedCheckedState.value,
                     onClick = null,
                 )
-                Text(
-                    text = stringResource(itemStringResource(item)),
-                )
+                Text(text = stringResource(itemStringResource(item)))
             }
         }
     }
 }
 
-fun Modifier.settingsItemChildPadding() =
-    padding(horizontal = 24.dp)
+fun Modifier.settingsItemChildPadding() = padding(horizontal = 24.dp)
 
-fun Modifier.settingsItemMinHeight() =
-    heightIn(min = 36.dp)
+fun Modifier.settingsItemMinHeight() = heightIn(min = 36.dp)
 
 fun Modifier.settingsItemPaddingAndMinHeight() =
     padding(
-        horizontal = 8.dp,
-        vertical = 4.dp,
-    )
+            horizontal = 8.dp,
+            vertical = 4.dp,
+        )
         .settingsItemMinHeight()
 
 private val EnterTransition = fadeIn() + slideInVertically { -it }
@@ -297,5 +286,4 @@ private val ExitTransition =
     shrinkOut { IntSize(it.width, 0) } + slideOutVertically { -it } + fadeOut()
 
 private val SettingsItemShape = RoundedCornerShape(8.dp)
-private val SettingsItemClipModifier = Modifier
-    .clip(SettingsItemShape)
+private val SettingsItemClipModifier = Modifier.clip(SettingsItemShape)

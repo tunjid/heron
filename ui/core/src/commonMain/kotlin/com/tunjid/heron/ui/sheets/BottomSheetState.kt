@@ -32,9 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Stable
-abstract class BottomSheetState(
-    internal val scope: BottomSheetScope,
-) {
+abstract class BottomSheetState(internal val scope: BottomSheetScope) {
     abstract fun onHidden()
 
     fun show() {
@@ -67,9 +65,8 @@ class BottomSheetScope(
             skipPartiallyExpanded: Boolean = true,
             block: (BottomSheetScope) -> T,
         ): T {
-            val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = skipPartiallyExpanded,
-            )
+            val sheetState =
+                rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
             val scope = rememberCoroutineScope()
 
             return remember(sheetState, scope) {
@@ -77,15 +74,13 @@ class BottomSheetScope(
                     BottomSheetScope(
                         sheetState = sheetState,
                         coroutineScope = scope,
-                    ),
+                    )
                 )
             }
         }
 
         @Composable
-        fun BottomSheetState.ModalBottomSheet(
-            content: @Composable ColumnScope.() -> Unit,
-        ) {
+        fun BottomSheetState.ModalBottomSheet(content: @Composable ColumnScope.() -> Unit) {
             if (scope.showBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = {

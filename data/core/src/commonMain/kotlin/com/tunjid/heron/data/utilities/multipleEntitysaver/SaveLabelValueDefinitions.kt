@@ -11,15 +11,17 @@ internal fun MultipleEntitySaver.add(
     creatorId: ProfileId,
     labelValueDefinition: LabelValueDefinition,
 ) {
-    val localeList = Labeler.LocaleInfoList(
-        list = labelValueDefinition.locales.map {
-            Labeler.LocaleInfo(
-                lang = it.lang.tag,
-                name = it.name,
-                description = it.description,
-            )
-        },
-    )
+    val localeList =
+        Labeler.LocaleInfoList(
+            list =
+                labelValueDefinition.locales.map {
+                    Labeler.LocaleInfo(
+                        lang = it.lang.tag,
+                        name = it.name,
+                        description = it.description,
+                    )
+                }
+        )
 
     val localeCbor = localeList.toUrlEncodedBase64()
 
@@ -29,9 +31,11 @@ internal fun MultipleEntitySaver.add(
             identifier = labelValueDefinition.identifier,
             adultOnly = labelValueDefinition.adultOnly ?: false,
             blurs = labelValueDefinition.blurs.value.lowercase(),
-            defaultSetting = labelValueDefinition.defaultSetting?.value?.lowercase() ?: Label.Visibility.Warn.value,
+            defaultSetting =
+                labelValueDefinition.defaultSetting?.value?.lowercase()
+                    ?: Label.Visibility.Warn.value,
             severity = labelValueDefinition.severity.value.lowercase(),
             localeInfoCbor = localeCbor,
-        ),
+        )
     )
 }

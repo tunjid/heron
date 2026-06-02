@@ -42,9 +42,7 @@ internal class FileKitFileManager : FileManager {
         initializeFileKit()
     }
 
-    override suspend fun cacheWithoutRestrictions(
-        restrictedFile: RestrictedFile,
-    ): File? {
+    override suspend fun cacheWithoutRestrictions(restrictedFile: RestrictedFile): File? {
         var cachedFile: PlatformFile? = null
 
         try {
@@ -60,54 +58,41 @@ internal class FileKitFileManager : FileManager {
             cachedFile.write(restrictedFile.file)
         } catch (e: Exception) {
             println("Error caching file: ${e.message}")
-            cachedFile
-                ?.takeIf(PlatformFile::exists)
-                ?.safeDelete()
+            cachedFile?.takeIf(PlatformFile::exists)?.safeDelete()
             cachedFile = null
         }
 
         return cachedFile?.let {
             val uri = FileUri(it.path)
             when (restrictedFile) {
-                is RestrictedFile.Media.Photo -> File.Media.Photo(
-                    uri = uri,
-                    width = restrictedFile.width,
-                    height = restrictedFile.height,
-                    altText = restrictedFile.altText,
-                )
-                is RestrictedFile.Media.Video -> File.Media.Video(
-                    uri = uri,
-                    width = restrictedFile.width,
-                    height = restrictedFile.height,
-                    altText = restrictedFile.altText,
-                )
+                is RestrictedFile.Media.Photo ->
+                    File.Media.Photo(
+                        uri = uri,
+                        width = restrictedFile.width,
+                        height = restrictedFile.height,
+                        altText = restrictedFile.altText,
+                    )
+                is RestrictedFile.Media.Video ->
+                    File.Media.Video(
+                        uri = uri,
+                        width = restrictedFile.width,
+                        height = restrictedFile.height,
+                        altText = restrictedFile.altText,
+                    )
             }
         }
     }
 
-    override suspend fun source(
-        file: File,
-    ): Source =
-        file.toPlatformFile()
-            .source()
-            .buffered()
+    override suspend fun source(file: File): Source = file.toPlatformFile().source().buffered()
 
-    override suspend fun size(
-        file: File,
-    ): Long =
-        file.toPlatformFile()
-            .size()
+    override suspend fun size(file: File): Long = file.toPlatformFile().size()
 
-    override suspend fun delete(
-        file: File,
-    ) {
-        file.toPlatformFile()
-            .safeDelete()
+    override suspend fun delete(file: File) {
+        file.toPlatformFile().safeDelete()
     }
 }
 
-private fun File.toPlatformFile() =
-    PlatformFile(uri.uri)
+private fun File.toPlatformFile() = PlatformFile(uri.uri)
 
 suspend fun PlatformFile.safeDelete() {
     try {

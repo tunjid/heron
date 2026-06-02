@@ -58,7 +58,7 @@ interface StandardSiteDao {
             LEFT JOIN profiles
                 ON standardPublications.publisherId = profiles.did
             WHERE standardPublications.uri = :publicationUri
-        """,
+        """
     )
     fun publication(
         viewingProfileId: String?,
@@ -89,7 +89,7 @@ interface StandardSiteDao {
             ORDER BY standardSubscriptions.sortedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun subscribedPublications(
         viewingProfileId: String?,
@@ -121,7 +121,7 @@ interface StandardSiteDao {
             ORDER BY standardPublications.sortedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun authorPublications(
         viewingProfileId: String?,
@@ -151,33 +151,26 @@ interface StandardSiteDao {
             LEFT JOIN profiles
                 ON standardPublications.publisherId = profiles.did
             WHERE standardPublications.uri IN (:uris)
-        """,
+        """
     )
     fun publications(
         viewingProfileId: String?,
         uris: Collection<StandardPublicationUri>,
     ): Flow<List<PopulatedStandardPublicationEntity>>
 
-    @Upsert
-    suspend fun upsertPublications(
-        entities: List<StandardPublicationEntity>,
-    )
+    @Upsert suspend fun upsertPublications(entities: List<StandardPublicationEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePublications(
-        entities: List<StandardPublicationEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnorePublications(entities: List<StandardPublicationEntity>): List<Long>
 
     @Query(
         """
             DELETE FROM standardPublications
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deletePublication(
-        uri: StandardPublicationUri,
-    )
+    suspend fun deletePublication(uri: StandardPublicationUri)
 
     // --- Documents ---
 
@@ -207,7 +200,7 @@ interface StandardSiteDao {
             ORDER BY publishedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun authorDocuments(
         viewingProfileId: String?,
@@ -242,7 +235,7 @@ interface StandardSiteDao {
             ORDER BY publishedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun publicationDocuments(
         viewingProfileId: String?,
@@ -274,77 +267,59 @@ interface StandardSiteDao {
             LEFT JOIN profiles
                 ON standardPublications.publisherId = profiles.did
             WHERE standardDocuments.uri IN (:uris)
-        """,
+        """
     )
     fun documents(
         viewingProfileId: String?,
         uris: Collection<StandardDocumentUri>,
     ): Flow<List<PopulatedStandardDocumentEntity>>
 
-    @Upsert
-    suspend fun upsertDocuments(
-        entities: List<StandardDocumentEntity>,
-    )
+    @Upsert suspend fun upsertDocuments(entities: List<StandardDocumentEntity>)
 
     @Query(
         """
             DELETE FROM standardDocuments
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteDocument(
-        uri: StandardDocumentUri,
-    )
+    suspend fun deleteDocument(uri: StandardDocumentUri)
 
     @Query(
         """
             DELETE FROM standardDocuments
             WHERE authorId = :authorId
-        """,
+        """
     )
-    suspend fun deleteDocumentsForAuthor(
-        authorId: String,
-    )
+    suspend fun deleteDocumentsForAuthor(authorId: String)
 
     @Query(
         """
             DELETE FROM standardDocuments
             WHERE publicationUri = :publicationUri
-        """,
+        """
     )
-    suspend fun deleteDocumentsForPublication(
-        publicationUri: String,
-    )
+    suspend fun deleteDocumentsForPublication(publicationUri: String)
 
     // --- Subscriptions ---
 
-    @Upsert
-    suspend fun upsertSubscriptions(
-        entities: List<StandardSubscriptionEntity>,
-    )
+    @Upsert suspend fun upsertSubscriptions(entities: List<StandardSubscriptionEntity>)
 
     @Delete(entity = StandardSubscriptionEntity::class)
-    suspend fun deleteSubscriptions(
-        entities: List<StandardSubscriptionEntity.Deletion>,
-    )
+    suspend fun deleteSubscriptions(entities: List<StandardSubscriptionEntity.Deletion>)
 
     @Query(
         """
             DELETE FROM standardSubscriptions
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteSubscription(
-        uri: StandardSubscriptionUri,
-    )
+    suspend fun deleteSubscription(uri: StandardSubscriptionUri)
 
     @Query(
         """
             DELETE FROM standardSubscriptions
             WHERE viewingProfileId = :viewingProfileId
-        """,
+        """
     )
-    suspend fun deleteSubscriptionsForViewer(
-        viewingProfileId: String,
-    )
+    suspend fun deleteSubscriptionsForViewer(viewingProfileId: String)
 }

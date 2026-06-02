@@ -36,9 +36,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 
-/**
- * A copy of AndroidExternalSurface with null checks for surface callbacks
- */
+/** A copy of AndroidExternalSurface with null checks for surface callbacks */
 @Composable
 internal fun EmbeddedExternalSurface(
     modifier: Modifier = Modifier,
@@ -77,8 +75,7 @@ private fun rememberEmbeddedExternalSurfaceState(): EmbeddedExternalSurfaceState
 }
 
 private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
-    BaseAndroidExternalSurfaceState(scope),
-    TextureView.SurfaceTextureListener {
+    BaseAndroidExternalSurfaceState(scope), TextureView.SurfaceTextureListener {
 
     var surfaceSize = IntSize.Zero
     val matrix = android.graphics.Matrix()
@@ -135,8 +132,7 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
 }
 
 private abstract class BaseAndroidExternalSurfaceState(val scope: CoroutineScope) :
-    androidx.compose.foundation.AndroidExternalSurfaceScope,
-    SurfaceScope {
+    androidx.compose.foundation.AndroidExternalSurfaceScope, SurfaceScope {
 
     private var onSurface:
         (suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit)? =
@@ -147,7 +143,7 @@ private abstract class BaseAndroidExternalSurfaceState(val scope: CoroutineScope
     private var job: Job? = null
 
     override fun onSurface(
-        onSurface: suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit,
+        onSurface: suspend SurfaceCoroutineScope.(surface: Surface, width: Int, height: Int) -> Unit
     ) {
         this.onSurface = onSurface
     }

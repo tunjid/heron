@@ -191,9 +191,7 @@ sealed class Notification {
         override val viewerState: ProfileViewerState?,
     ) : Notification()
 
-    enum class Reason(
-        val id: String,
-    ) {
+    enum class Reason(val id: String) {
         Unknown("unknown"),
         Like("like"),
         Repost("repost"),
@@ -207,29 +205,28 @@ sealed class Notification {
         LikeViaRepost("like-via-repost"),
         RepostViaRepost("repost-via-repost"),
         SubscribedPost("subscribed-post"),
-        DocumentPublished("document-published"),
-        ;
+        DocumentPublished("document-published");
 
         companion object {
-            fun fromIdOrNull(
-                id: String,
-            ) = Reason.entries.find { it.id.equals(id, ignoreCase = true) }
+            fun fromIdOrNull(id: String) =
+                Reason.entries.find { it.id.equals(id, ignoreCase = true) }
         }
     }
 }
 
 val Notification.associatedPostUri
-    get() = when (this) {
-        is Notification.Followed -> null
-        is Notification.JoinedStarterPack -> null
-        is Notification.Liked -> associatedPost.uri
-        is Notification.Mentioned -> null
-        is Notification.Quoted -> null
-        is Notification.RepliedTo -> null
-        is Notification.Reposted -> associatedPost.uri
-        is Notification.SubscribedPost -> associatedPost.uri
-        is Notification.DocumentPublished -> null
-        is Notification.Unknown -> null
-        is Notification.Unverified -> null
-        is Notification.Verified -> null
-    }
+    get() =
+        when (this) {
+            is Notification.Followed -> null
+            is Notification.JoinedStarterPack -> null
+            is Notification.Liked -> associatedPost.uri
+            is Notification.Mentioned -> null
+            is Notification.Quoted -> null
+            is Notification.RepliedTo -> null
+            is Notification.Reposted -> associatedPost.uri
+            is Notification.SubscribedPost -> associatedPost.uri
+            is Notification.DocumentPublished -> null
+            is Notification.Unknown -> null
+            is Notification.Unverified -> null
+            is Notification.Verified -> null
+        }

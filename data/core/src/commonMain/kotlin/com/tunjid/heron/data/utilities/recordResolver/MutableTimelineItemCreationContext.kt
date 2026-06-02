@@ -41,10 +41,10 @@ internal class MutableTimelineItemCreationContext(
     associatedRecords: List<Record.Embeddable>,
     associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
     associatedProfileEntities: List<PopulatedProfileEntity>,
-) : RecordResolver.TimelineItemCreationContext,
-    MutableList<TimelineItem> by mutableListOf() {
+) : RecordResolver.TimelineItemCreationContext, MutableList<TimelineItem> by mutableListOf() {
 
-    override val top: TimelineItem? get() = lastOrNull()
+    override val top: TimelineItem?
+        get() = lastOrNull()
 
     override infix fun push(item: TimelineItem) {
         add(item)
@@ -58,108 +58,113 @@ internal class MutableTimelineItemCreationContext(
         post: Post,
         depth: Int,
         children: List<TimelineItem.Threaded.Node>,
-    ): TimelineItem.Threaded.Node = TimelineItem.Threaded.Node(
-        post = post,
-        threadGate = threadGate(post.uri),
-        appliedLabels = appliedLabels,
-        isMuted = isMuted(post),
-        depth = depth,
-        children = children,
-    )
+    ): TimelineItem.Threaded.Node =
+        TimelineItem.Threaded.Node(
+            post = post,
+            threadGate = threadGate(post.uri),
+            appliedLabels = appliedLabels,
+            isMuted = isMuted(post),
+            depth = depth,
+            children = children,
+        )
 
     override val post: Post
         get() = requireNotNull(currentPost)
 
-    override var appliedLabels: AppliedLabels = AppliedLabels(
-        adultContentEnabled = false,
-        labels = emptyList(),
-        labelers = emptyList(),
-        contentLabelPreferences = emptyList(),
-    )
-    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>> = mutableMapOf()
+    override var appliedLabels: AppliedLabels =
+        AppliedLabels(
+            adultContentEnabled = false,
+            labels = emptyList(),
+            labelers = emptyList(),
+            contentLabelPreferences = emptyList(),
+        )
+    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>> =
+        mutableMapOf()
 
     private var currentPost: Post? = null
 
     private val recordUrisToRecords =
         if (associatedRecords.isEmpty()) emptyMap()
-        else associatedRecords.associateBy {
-            it.reference.uri
-        }
+        else
+            associatedRecords.associateBy {
+                it.reference.uri
+            }
 
     private val postUrisToThreadGateEntities =
         if (associatedThreadGateEntities.isEmpty()) emptyMap()
-        else associatedThreadGateEntities.associateBy(
-            keySelector = { it.entity.gatedPostUri },
-            valueTransform = PopulatedThreadGateEntity::asExternalModel,
-        )
+        else
+            associatedThreadGateEntities.associateBy(
+                keySelector = { it.entity.gatedPostUri },
+                valueTransform = PopulatedThreadGateEntity::asExternalModel,
+            )
 
     private val profileIdsToProfiles =
         if (associatedProfileEntities.isEmpty()) emptyMap()
-        else associatedProfileEntities.associateBy(
-            keySelector = { it.entity.did },
-            valueTransform = PopulatedProfileEntity::asExternalModel,
-        )
+        else
+            associatedProfileEntities.associateBy(
+                keySelector = { it.entity.did },
+                valueTransform = PopulatedProfileEntity::asExternalModel,
+            )
 
-    override fun record(recordUri: EmbeddableRecordUri): Record? =
-        recordUrisToRecords[recordUri]
+    override fun record(recordUri: EmbeddableRecordUri): Record? = recordUrisToRecords[recordUri]
 
-    override fun threadGate(postUri: PostUri): ThreadGate? =
-        postUrisToThreadGateEntities[postUri]
+    override fun threadGate(postUri: PostUri): ThreadGate? = postUrisToThreadGateEntities[postUri]
 
-    override fun profile(profileId: ProfileId): Profile? =
-        profileIdsToProfiles[profileId]
+    override fun profile(profileId: ProfileId): Profile? = profileIdsToProfiles[profileId]
 
-    override fun isMuted(
-        post: Post,
-    ): Boolean = with(post) {
-        if (viewerState.isMuted) return true
+    override fun isMuted(post: Post): Boolean =
+        with(post) {
+            if (viewerState.isMuted) return true
 
-        val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
-        if (
-            records.any { embedded ->
-                embedded is Post && isMuted(embedded)
-            }
-        ) return true
+            val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+            if (
+                records.any { embedded ->
+                    embedded is Post && isMuted(embedded)
+                }
+            )
+                return true
 
-        val record = this.record ?: return false
-        if (preferences.mutedWordPreferences.isEmpty()) return false
+            val record = this.record ?: return false
+            if (preferences.mutedWordPreferences.isEmpty()) return false
 
-        val now = Clock.System.now()
-        val text = record.text
+            val now = Clock.System.now()
+            val text = record.text
 
-        for (preference in preferences.mutedWordPreferences) {
-            val expiresAt = preference.expiresAt
-            if (expiresAt != null && expiresAt <= now) {
-                continue
-            }
+            for (preference in preferences.mutedWordPreferences) {
+                val expiresAt = preference.expiresAt
+                if (expiresAt != null && expiresAt <= now) {
+                    continue
+                }
 
-            for (target in preference.targets) {
-                when (target) {
-                    MutedWordPreference.ContentTarget -> {
-                        if (text.containsWholeWord(preference.value)) {
-                            return true
+                for (target in preference.targets) {
+                    when (target) {
+                        MutedWordPreference.ContentTarget -> {
+                            if (text.containsWholeWord(preference.value)) {
+                                return true
+                            }
                         }
-                    }
-                    MutedWordPreference.TagTarget -> {
-                        val normalizedMuteWord = preference.value.removePrefix("#")
-                        for (link in record.links) {
-                            val linkTarget = link.target
-                            if (linkTarget is LinkTarget.Hashtag) {
-                                if (linkTarget.tag.equals(normalizedMuteWord, ignoreCase = true)) {
-                                    return true
+                        MutedWordPreference.TagTarget -> {
+                            val normalizedMuteWord = preference.value.removePrefix("#")
+                            for (link in record.links) {
+                                val linkTarget = link.target
+                                if (linkTarget is LinkTarget.Hashtag) {
+                                    if (
+                                        linkTarget.tag.equals(normalizedMuteWord, ignoreCase = true)
+                                    ) {
+                                        return true
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            return@with false
         }
-        return@with false
-    }
 
     /**
-     * Checks if [substring] appears in this CharSequence as a whole word (surrounded by boundaries).
-     * This mimics Regex pattern "\b$substring\b" but does 0 allocations.
+     * Checks if [substring] appears in this CharSequence as a whole word (surrounded by
+     * boundaries). This mimics Regex pattern "\b$substring\b" but does 0 allocations.
      */
     private fun CharSequence.containsWholeWord(substring: String): Boolean {
         if (substring.isEmpty()) return false
