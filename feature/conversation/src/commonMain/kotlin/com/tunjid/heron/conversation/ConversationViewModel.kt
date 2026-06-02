@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -32,6 +33,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -123,6 +125,10 @@ class ActualConversationViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
                     is Action.SharedRecord -> action.flow.launchRecordSharingMutations(
                         state = state,
                         recordRepository = recordRepository,
@@ -195,7 +201,7 @@ private suspend fun consumeSharedUri(
     } else {
         // Take only one emission so user changes do not override it
         val record = recordRepository.embeddableRecord(recordUri).first()
-        state.sharedRecord = SharedRecord.Pending(record)
+        if (record is Record.Embeddable.Native) state.sharedRecord = SharedRecord.Pending(record)
     }
 }
 
@@ -206,6 +212,18 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
     toWritable = { Writable.Interaction(it.interaction) },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { it.publication.toSubscriptionWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

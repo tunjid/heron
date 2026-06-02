@@ -354,6 +354,8 @@ fun Comments(
                                                 is PostAction.OfMore -> {
                                                     postOptionsSheetState.showOptions(action.post)
                                                 }
+                                                is PostAction.OfPublicationSubscription ->
+                                                    actions(Action.TogglePublicationSubscription(action.publication))
                                                 is PostAction.OfMetadata -> Unit
                                             }
                                         }

@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -235,6 +236,14 @@ sealed interface Writable {
             recordRepository.deleteRecord(recordUri)
     }
 }
+
+fun StandardPublication.toSubscriptionWritable(): Writable =
+    when (val existingSubscription = subscription) {
+        null -> Writable.StandardSite.Subscribe(
+            create = StandardSubscription.Create(publicationUri = uri),
+        )
+        else -> Writable.RecordDeletion(recordUri = existingSubscription.uri)
+    }
 
 @Serializable
 data class FailedWrite(

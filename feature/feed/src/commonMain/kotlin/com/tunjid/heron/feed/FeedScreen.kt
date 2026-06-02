@@ -418,6 +418,9 @@ private fun FeedTimeline(
                                             postOptionsSheetState.showOptions(action.post)
                                         }
 
+                                        is PostAction.OfPublicationSubscription ->
+                                            actions(Action.TogglePublicationSubscription(action.publication))
+
                                         else -> Unit
                                     }
                                 }

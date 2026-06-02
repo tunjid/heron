@@ -60,6 +60,7 @@ internal fun PostExternal(
     isBlurred: Boolean,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
+    onSubscriptionToggled: (StandardPublication) -> Unit,
 ) = with(paneTransitionScope) {
     val isGif = feature.isGif()
     FeatureContainer(
@@ -98,8 +99,9 @@ internal fun PostExternal(
                         quotingPostUri = postUri,
                     ),
                     publication = publication,
-                    // TODO: Define actions for embedded records and use here
-                    onSubscriptionToggled = { _, _ -> },
+                    onSubscriptionToggled = { toggledPublication, _ ->
+                        onSubscriptionToggled(toggledPublication)
+                    },
                 )
             }
         }

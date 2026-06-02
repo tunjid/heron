@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
@@ -79,6 +80,7 @@ fun QuotedPost(
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
+    onSubscriptionToggled: (StandardPublication) -> Unit,
 ) = with(paneTransitionScope) {
     val author = quotedPost.author
     var hasClickedThroughSensitiveMedia by rememberSaveable { mutableStateOf(false) }
@@ -166,6 +168,7 @@ fun QuotedPost(
                         onClick = {
                             uriHandler.openUri(embed.uri.uri)
                         },
+                        onSubscriptionToggled = onSubscriptionToggled,
                     )
 
                     is ImageList -> PostImages(

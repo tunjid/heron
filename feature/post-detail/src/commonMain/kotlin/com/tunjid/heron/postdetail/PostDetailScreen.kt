@@ -338,6 +338,9 @@ internal fun PostDetailScreen(
                                 is PostAction.OfMore -> {
                                     postOptionsSheetState.showOptions(action.post)
                                 }
+
+                                is PostAction.OfPublicationSubscription ->
+                                    actions(Action.TogglePublicationSubscription(action.publication))
                             }
                         }
                     },

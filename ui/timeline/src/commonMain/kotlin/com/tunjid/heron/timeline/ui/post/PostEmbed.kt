@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -88,6 +89,7 @@ internal fun PostEmbed(
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onEmbeddedRecordClicked: (Record) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -115,6 +117,7 @@ internal fun PostEmbed(
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
                     },
+                    onSubscriptionToggled = onPublicationSubscriptionToggled,
                 )
 
                 is ImageList -> PostImages(
@@ -196,6 +199,7 @@ internal fun PostEmbed(
                             onClick = {
                                 onEmbeddedRecordClicked(nativeEmbeddedRecord)
                             },
+                            onSubscriptionToggled = onPublicationSubscriptionToggled,
                         )
                     }
                     is FeedGenerator -> FeatureContainer(

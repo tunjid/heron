@@ -64,8 +64,6 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
@@ -185,7 +183,7 @@ private fun Post(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecord: Record.Embeddable.Native?,
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
@@ -256,14 +254,6 @@ private fun Post(
                     is StarterPack -> stringResource(
                         Res.string.remove_shared_record,
                         stringResource(CommonStrings.record_starter_pack),
-                    )
-                    is StandardDocument -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_document),
-                    )
-                    is StandardPublication -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_publication),
                     )
                 }
                 FilledTonalIconButton(

@@ -36,8 +36,6 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -60,8 +58,6 @@ import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
-import com.tunjid.heron.timeline.ui.standard.Document
-import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlin.time.Clock
@@ -69,7 +65,7 @@ import kotlin.time.Clock
 @Composable
 fun EmbeddedRecord(
     modifier: Modifier = Modifier,
-    record: Record.Embeddable,
+    record: Record.Embeddable.Native,
     appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
     paneTransitionScope: PaneTransitionScope,
@@ -129,6 +125,11 @@ fun EmbeddedRecord(
                         ),
                     )
                 },
+                onSubscriptionToggled = { publication ->
+                    postActions.onPostAction(
+                        PostAction.OfPublicationSubscription(publication = publication),
+                    )
+                },
             )
             is FeedGenerator -> FeedGenerator(
                 modifier = NonPostRecordModifier,
@@ -151,23 +152,6 @@ fun EmbeddedRecord(
                 sharedElementPrefix = sharedElementPrefix,
                 paneTransitionScope = paneTransitionScope,
                 starterPack = record,
-            )
-            is StandardDocument -> Document(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                document = record,
-                // TODO: Define actions for embedded records and use here
-                onPublicationClicked = null,
-                onSubscriptionToggled = null,
-            )
-            is StandardPublication -> Publication(
-                modifier = NonPostRecordModifier,
-                sharedElementPrefix = sharedElementPrefix,
-                paneTransitionScope = paneTransitionScope,
-                publication = record,
-                // TODO: Define actions for embedded records and use here
-                onSubscriptionToggled = { _, _ -> },
             )
         }
     }
