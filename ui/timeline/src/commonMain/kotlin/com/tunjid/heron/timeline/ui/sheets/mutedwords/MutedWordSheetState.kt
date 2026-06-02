@@ -58,7 +58,6 @@ import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.ui.coroutines.UIStateProducerElement
 import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -89,9 +88,6 @@ import heron.ui.timeline.generated.resources.your_muted_word
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -129,14 +125,12 @@ private fun MutedWordsBottomSheet(
     storeProvider: ViewModelStoreProvider,
     initializer: MutedWordsViewModelInitializer,
 ) {
-    val storeOwner = rememberViewModelStoreOwner(
-        provider = storeProvider,
-        key = "muted_words_sheet",
-    )
-
     state.ModalBottomSheet {
+        val storeOwner = rememberViewModelStoreOwner(
+            provider = storeProvider,
+        )
         CompositionLocalProvider(LocalViewModelStoreOwner provides storeOwner) {
-            MutedWordsScreen(
+            MutedWordSheet(
                 sheetState = state,
                 initializer = initializer,
             )
@@ -145,7 +139,7 @@ private fun MutedWordsBottomSheet(
 }
 
 @Composable
-private fun MutedWordsScreen(
+private fun MutedWordSheet(
     sheetState: MutedWordsSheetState,
     initializer: MutedWordsViewModelInitializer,
 ) {
