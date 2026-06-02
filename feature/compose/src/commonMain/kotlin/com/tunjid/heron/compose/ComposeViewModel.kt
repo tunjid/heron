@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.File
@@ -169,7 +170,7 @@ private fun embeddedRecordMutations(
 ): Flow<Mutation<State>> =
     embeddedRecordUri?.let { uri ->
         recordRepository.embeddableRecord(uri).mapToMutation {
-            copy(embeddedRecord = it)
+            copy(embeddedRecord = it as? Record.Embeddable.Native)
         }
     }
         ?: emptyFlow()
@@ -183,7 +184,7 @@ private fun Flow<Action.EmbedUrl>.embedUrlMutations(
             emitAll(
                 recordRepository.embeddableRecord(uri)
                     .take(1)
-                    .mapToMutation { copy(embeddedRecord = it) },
+                    .mapToMutation { copy(embeddedRecord = it as? Record.Embeddable.Native) },
             )
         }
 

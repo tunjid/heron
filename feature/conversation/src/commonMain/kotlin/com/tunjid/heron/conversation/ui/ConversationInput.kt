@@ -75,7 +75,7 @@ import org.jetbrains.compose.resources.stringResource
 fun PaneScaffoldState.UserInput(
     modifier: Modifier = Modifier,
     inputText: TextFieldValue,
-    pendingRecord: Record.Embeddable?,
+    pendingRecord: Record.Embeddable.Native?,
     sendMessage: (AnnotatedString) -> Unit,
     removePendingRecordClicked: () -> Unit,
     onTextChanged: (TextFieldValue) -> Unit,

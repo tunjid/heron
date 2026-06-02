@@ -706,6 +706,9 @@ private fun ListTimeline(
                                         postOptionsSheetState.showOptions(action.post)
                                     }
 
+                                    is PostAction.OfPublicationSubscription ->
+                                        actions(Action.TogglePublicationSubscription(action.publication))
+
                                     else -> Unit
                                 }
                             }

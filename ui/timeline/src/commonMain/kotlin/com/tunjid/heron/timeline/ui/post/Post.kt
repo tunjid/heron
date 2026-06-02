@@ -495,6 +495,13 @@ private fun EmbedContent(
                 ),
             )
         },
+        onPublicationSubscriptionToggled = { publication ->
+            data.postActions.onPostAction(
+                PostAction.OfPublicationSubscription(
+                    publication = publication,
+                ),
+            )
+        },
     )
 }
 

@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -99,6 +100,7 @@ internal fun PostSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
@@ -189,6 +191,7 @@ internal fun PostSearchResults(
         onPostSearchResultClicked,
         onPostSearchResultProfileClicked,
         onPostRecordClicked,
+        onPublicationSubscriptionToggled,
         onMediaClicked,
         onReplyToPost,
     ) {
@@ -210,6 +213,10 @@ internal fun PostSearchResults(
                 is PostAction.OfRecord -> onPostRecordClicked(
                     action.record,
                     sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
+                )
+
+                is PostAction.OfPublicationSubscription -> onPublicationSubscriptionToggled(
+                    action.publication,
                 )
 
                 is PostAction.OfMedia -> onMediaClicked(
