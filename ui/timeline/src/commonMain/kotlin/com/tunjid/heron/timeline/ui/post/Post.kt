@@ -61,8 +61,8 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.core.models.externalEmbeddedRecord
+import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
