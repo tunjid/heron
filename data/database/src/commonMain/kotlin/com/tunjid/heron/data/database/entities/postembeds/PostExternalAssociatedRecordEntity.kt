@@ -19,37 +19,24 @@ package com.tunjid.heron.data.database.entities.postembeds
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
-import kotlin.time.Instant
-
-@Entity(
-    tableName = "externalEmbeds",
-)
-data class ExternalEmbedEntity(
-    @PrimaryKey
-    val uri: GenericUri,
-    val title: String,
-    val description: String,
-    val thumb: ImageUri?,
-    // From app.bsky.embed.external#viewExternal, when backed by a standard-site record.
-    val readingTime: Long? = null,
-    val createdAt: Instant? = null,
-    val updatedAt: Instant? = null,
-) : PostEmbed
 
 /**
- * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
+ * The Atmosphere records (eg. site.standard.document / site.standard.publication) that back a
+ * post's [ExternalEmbedEntity] via `app.bsky.embed.external#associatedRefs`. These become entries
+ * in the post's `embeddedRecords`.
  */
 @Entity(
-    tableName = "postExternalEmbeds",
-    primaryKeys = ["postUri", "externalEmbedUri"],
+    tableName = "postExternalAssociatedRecords",
+    primaryKeys = [
+        "postUri",
+        "externalEmbedUri",
+        "recordUri",
+    ],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
@@ -69,19 +56,12 @@ data class ExternalEmbedEntity(
     indices = [
         Index(value = ["postUri"]),
         Index(value = ["externalEmbedUri"]),
+        Index(value = ["recordUri"]),
     ],
 )
-data class PostExternalEmbedEntity(
+data class PostExternalAssociatedRecordEntity(
     val postUri: PostUri,
     val externalEmbedUri: Uri,
-)
-
-fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
-    uri = uri,
-    title = title,
-    description = description,
-    thumb = thumb,
-    readingTime = readingTime,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
+    val recordUri: EmbeddableRecordUri,
+    val recordCid: Id?,
 )

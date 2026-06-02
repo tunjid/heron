@@ -19,37 +19,23 @@ package com.tunjid.heron.data.database.entities.postembeds
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
-import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
-import kotlin.time.Instant
-
-@Entity(
-    tableName = "externalEmbeds",
-)
-data class ExternalEmbedEntity(
-    @PrimaryKey
-    val uri: GenericUri,
-    val title: String,
-    val description: String,
-    val thumb: ImageUri?,
-    // From app.bsky.embed.external#viewExternal, when backed by a standard-site record.
-    val readingTime: Long? = null,
-    val createdAt: Instant? = null,
-    val updatedAt: Instant? = null,
-) : PostEmbed
+import com.tunjid.heron.data.database.entities.ProfileEntity
 
 /**
- * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
+ * The owners of the Atmosphere records backing a post's [ExternalEmbedEntity], from
+ * `app.bsky.embed.external#viewExternal.associatedProfiles`.
  */
 @Entity(
-    tableName = "postExternalEmbeds",
-    primaryKeys = ["postUri", "externalEmbedUri"],
+    tableName = "postExternalAssociatedProfiles",
+    primaryKeys = [
+        "postUri",
+        "externalEmbedUri",
+        "profileId",
+    ],
     foreignKeys = [
         ForeignKey(
             entity = PostEntity::class,
@@ -65,23 +51,23 @@ data class ExternalEmbedEntity(
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["profileId"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["postUri"]),
         Index(value = ["externalEmbedUri"]),
+        Index(value = ["profileId"]),
     ],
 )
-data class PostExternalEmbedEntity(
+data class PostExternalAssociatedProfilesEntity(
     val postUri: PostUri,
     val externalEmbedUri: Uri,
-)
-
-fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
-    uri = uri,
-    title = title,
-    description = description,
-    thumb = thumb,
-    readingTime = readingTime,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
+    val profileId: ProfileId,
+    val ordinal: Int,
 )

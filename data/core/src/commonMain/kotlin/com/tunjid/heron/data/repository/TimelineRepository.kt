@@ -73,6 +73,7 @@ import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
@@ -537,7 +538,10 @@ internal class OfflineTimelineRepository(
                         it.entity.uri
                     },
                     associatedRecordUris = {
-                        listOfNotNull(it.entity.record?.embeddedRecordUri)
+                        listOfNotNull(it.entity.record?.embeddedRecordUri) +
+                            it.associatedRecords.map(
+                                PostExternalAssociatedRecordEntity::recordUri,
+                            )
                     },
                     associatedProfileIds = {
                         emptyList()
@@ -910,7 +914,7 @@ internal class OfflineTimelineRepository(
                     ) { latestSeen, latestSaved ->
                         latestSaved
                             .firstOrNull()
-                            ?.id != latestSeen.firstOrNull()?.id
+                            ?.entity?.id != latestSeen.firstOrNull()?.entity?.id
                     }
                 }
         }
@@ -944,7 +948,7 @@ internal class OfflineTimelineRepository(
                         hideQuotePosts = feedPreference.shouldHideQuotes,
                     )
                         .distinctUntilChangedBy { itemEntities ->
-                            itemEntities.map(TimelineItemEntity::id)
+                            itemEntities.map { it.entity.id }
                         }
                         .flatMapLatest latestFeedItems@{ itemEntities ->
                             if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
@@ -952,20 +956,23 @@ internal class OfflineTimelineRepository(
                             recordResolver.timelineItems(
                                 items = itemEntities,
                                 signedInProfileId = signedInProfileId,
-                                postUri = TimelineItemEntity::postUri,
+                                postUri = { it.entity.postUri },
                                 associatedRecordUris = {
                                     listOfNotNull(
-                                        it.reply?.parentPostUri,
-                                        it.reply?.rootPostUri,
-                                        it.embeddedRecordUri,
-                                        it.reply?.rootPostEmbeddedRecordUri,
-                                        it.reply?.parentPostEmbeddedRecordUri,
+                                        it.entity.reply?.parentPostUri,
+                                        it.entity.reply?.rootPostUri,
+                                        it.entity.embeddedRecordUri,
+                                        it.entity.reply?.rootPostEmbeddedRecordUri,
+                                        it.entity.reply?.parentPostEmbeddedRecordUri,
+                                    ) + it.associatedRecords.map(
+                                        PostExternalAssociatedRecordEntity::recordUri,
                                     )
                                 },
                                 associatedProfileIds = {
-                                    listOfNotNull(it.reposter)
+                                    listOfNotNull(it.entity.reposter)
                                 },
-                                block = block@{ entity ->
+                                block = block@{ populated ->
+                                    val entity = populated.entity
                                     // Muted posts should only show up on profile timelines
                                     val hideMuted = query.source !is Timeline.Source.Profile
                                     var isMuted = isMuted(post)

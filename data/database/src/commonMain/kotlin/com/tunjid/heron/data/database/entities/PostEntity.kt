@@ -34,6 +34,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
@@ -81,6 +82,11 @@ data class PostEntity(
     data class UriWithEmbeddedRecordUri(
         val uri: PostUri,
         val embeddedRecordUri: EmbeddableRecordUri?,
+        @Relation(
+            parentColumn = "uri",
+            entityColumn = "postUri",
+        )
+        val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
     )
 
     data class Partial(
@@ -192,6 +198,11 @@ data class PopulatedPostEntity(
         ),
     )
     val authorLabelEntities: List<LabelEntity>,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "postUri",
+    )
+    val associatedStandardRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -210,6 +221,11 @@ data class ThreadedPostEntity(
     val generation: Long,
     val rootPostUri: PostUri?,
     val parentPostUri: PostUri?,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "postUri",
+    )
+    val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 )
 
 fun PopulatedPostEntity.asExternalModel(

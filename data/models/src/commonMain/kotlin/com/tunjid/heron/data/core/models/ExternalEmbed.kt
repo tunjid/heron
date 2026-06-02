@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -26,4 +27,7 @@ data class ExternalEmbed(
     val title: String,
     val description: String,
     val thumb: ImageUri?,
+    val readingTime: Long? = null,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
 ) : Embed

@@ -33,6 +33,8 @@ import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -45,7 +47,9 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Record.Reference
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
@@ -93,6 +97,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedRecordEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
@@ -324,31 +329,22 @@ internal class OfflineRecordResolver @Inject constructor(
             }
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
-                    is PopulatedFeedGeneratorEntity -> recordEntity.asExternalModel()
-                    is PopulatedLabelerEntity -> recordEntity.asExternalModel()
-                    is PopulatedListEntity -> recordEntity.asExternalModel()
-                    is PopulatedStandardDocumentEntity -> recordEntity.asExternalModel()
-                    is PopulatedStandardPublicationEntity -> recordEntity.asExternalModel()
-                    is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
+                    // Top level posts have their embedded Records populated
                     is PopulatedPostEntity -> recordEntity.asExternalModel(
-                        embeddedRecords = listOfNotNull(
-                            when (
-                                val embeddedRecordEntity =
-                                    associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
-                            ) {
-                                is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedStandardDocumentEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedStandardPublicationEntity -> embeddedRecordEntity.asExternalModel()
-                                is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
-                                    embeddedRecords = emptyList(),
-                                )
-                                is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
-                                null -> null
-                            },
-                        ),
+                        embeddedRecords = buildList {
+                            recordEntity.entity
+                                .record
+                                ?.embeddedRecordUri
+                                ?.let(::add)
+                            recordEntity.associatedStandardRecords
+                                .forEach { add(it.recordUri) }
+                        }
+                            .mapNotNull { uri ->
+                                associatedRecords[uri]?.toEmbeddableModel()
+                            }
+                            .sortedBy(::embeddedRecordOrder),
                     )
+                    else -> recordEntity.toEmbeddableModel()
                 }
             }
         }
@@ -827,3 +823,33 @@ private val NotFoundVariants = setOf(
     "could not find",
     "not found",
 )
+
+/**
+ * Maps a resolved [PopulatedRecordEntity] to its [Record.Embeddable] model. Nested posts
+ * (eg. a quote of a quote) are resolved one level deep with empty [Post.embeddedRecords].
+ */
+private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when (this) {
+    is PopulatedFeedGeneratorEntity -> asExternalModel()
+    is PopulatedLabelerEntity -> asExternalModel()
+    is PopulatedListEntity -> asExternalModel()
+    is PopulatedStandardDocumentEntity -> asExternalModel()
+    is PopulatedStandardPublicationEntity -> asExternalModel()
+    is PopulatedStarterPackEntity -> asExternalModel()
+    is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
+}
+
+/**
+ * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
+ * records (feed generator/list/starter pack/labeler), (3) standard-site records.
+ */
+private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) {
+    is Post -> 0
+    is FeedGenerator,
+    is FeedList,
+    is StarterPack,
+    is Labeler,
+    -> 1
+    is StandardDocument,
+    is StandardPublication,
+    -> 2
+}
