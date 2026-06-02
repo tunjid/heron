@@ -850,6 +850,7 @@ private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) 
     is Labeler,
     -> 1
     is StandardDocument,
-    is StandardPublication,
     -> 2
+    is StandardPublication,
+    -> 3
 }

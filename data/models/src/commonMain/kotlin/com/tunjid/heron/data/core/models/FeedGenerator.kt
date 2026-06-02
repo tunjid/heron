@@ -39,7 +39,7 @@ data class FeedGenerator(
     val indexedAt: Instant,
     val labels: List<Label>,
 ) : UrlEncodableModel,
-    Record.Embeddable {
+    Record.Embeddable.Bluesky {
 
     override val reference: Record.Reference =
         Record.Reference(

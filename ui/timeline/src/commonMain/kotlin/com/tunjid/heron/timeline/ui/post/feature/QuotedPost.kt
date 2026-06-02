@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostExternal
@@ -155,6 +156,7 @@ fun QuotedPost(
                 when (val embed = quotedPost.embed) {
                     is ExternalEmbed -> PostExternal(
                         feature = embed,
+                        externalRecord = quotedPost.externalEmbeddedRecord,
                         postUri = quotedPost.uri,
                         sharedElementPrefix = sharedElementPrefix,
                         isBlurred = mediaBlurred,
