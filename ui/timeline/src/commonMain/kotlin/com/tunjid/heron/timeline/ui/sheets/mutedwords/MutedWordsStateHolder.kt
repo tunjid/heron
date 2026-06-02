@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
 import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
@@ -45,7 +46,7 @@ class MutedWordsViewModel(
 ) : ViewModel(viewModelScope = scope),
     MutedWordsStateHolder by scope.actionStateFlowMutator(
         initialState = MutedWordsState(),
-        started = SharingStarted.Lazily,
+        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
         inputs = listOf(
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
