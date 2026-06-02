@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.ui.coroutines.UIStateProducerElement
+import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -150,11 +151,7 @@ private fun MutedWordsScreen(
 ) {
     val stateHolder: MutedWordsStateHolder = viewModel<MutedWordsViewModel> {
         initializer.invoke(
-            scope = CoroutineScope(
-                SupervisorJob() +
-                    Dispatchers.Main.immediate +
-                    UIStateProducerElement(backgroundDispatcher = Dispatchers.Default),
-            ),
+            scope = viewModelCoroutineScope(),
         )
     }
 
