@@ -44,7 +44,7 @@ sealed interface Record {
         sealed interface External : Embeddable
 
         @Serializable
-        sealed interface Bluesky : Embeddable
+        sealed interface Native : Embeddable
     }
 
     @Serializable

@@ -134,7 +134,7 @@ data class Labeler(
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
 ) : Record,
-    Record.Embeddable.Bluesky {
+    Record.Embeddable.Native {
 
     override val reference: Record.Reference =
         Record.Reference(

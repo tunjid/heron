@@ -54,7 +54,7 @@ data class Post(
     val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
 ) : UrlEncodableModel,
     Record,
-    Record.Embeddable.Bluesky {
+    Record.Embeddable.Native {
 
     override val reference: com.tunjid.heron.data.core.models.Record.Reference =
         com.tunjid.heron.data.core.models.Record.Reference(
@@ -215,12 +215,12 @@ val Post.primaryEmbeddedRecord: Record.Embeddable?
     get() = embeddedRecords.firstOrNull() ?: embeddedRecord
 
 @Suppress("DEPRECATION")
-val Post.blueskyEmbeddedRecord: Record.Embeddable.Bluesky?
+val Post.nativeEmbeddedRecord: Record.Embeddable.Native?
     get() = (
         embeddedRecords.firstOrNull {
-            it is Record.Embeddable.Bluesky
+            it is Record.Embeddable.Native
         } ?: embeddedRecord
-        ) as? Record.Embeddable.Bluesky
+        ) as? Record.Embeddable.Native
 
 val Post.externalEmbeddedRecord: Record.Embeddable.External?
     get() = embeddedRecords.firstOrNull {

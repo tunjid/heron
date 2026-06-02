@@ -73,7 +73,7 @@ internal fun PostEmbed(
     modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,
-    blueskyEmbeddedRecord: Record.Embeddable.Bluesky?,
+    nativeEmbeddedRecord: Record.Embeddable.Native?,
     externalEmbeddedRecord: Record.Embeddable.External?,
     postUri: PostUri,
     isBlurred: Boolean,
@@ -168,25 +168,25 @@ internal fun PostEmbed(
                 }
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
-                if (blueskyEmbeddedRecord != null) Spacer(Modifier.height(16.dp))
-                when (blueskyEmbeddedRecord) {
-                    is Post -> when (blueskyEmbeddedRecord.cid) {
+                if (nativeEmbeddedRecord != null) Spacer(Modifier.height(16.dp))
+                when (nativeEmbeddedRecord) {
+                    is Post -> when (nativeEmbeddedRecord.cid) {
                         Constants.notFoundPostId -> InvisiblePostPost(onClick = null)
                         Constants.blockedPostId -> BlockedPostPost(onClick = null)
                         Constants.unknownPostId -> UnknownPostPost(onClick = null)
                         else -> QuotedPost(
                             now = now,
-                            quotedPost = blueskyEmbeddedRecord,
+                            quotedPost = nativeEmbeddedRecord,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
                             appliedLabels = remember(
                                 appliedLabels,
-                                blueskyEmbeddedRecord.labels,
-                                blueskyEmbeddedRecord.author.labels,
+                                nativeEmbeddedRecord.labels,
+                                nativeEmbeddedRecord.author.labels,
                             ) {
                                 appliedLabels.withLabels(
-                                    blueskyEmbeddedRecord.labels + blueskyEmbeddedRecord.author.labels,
+                                    nativeEmbeddedRecord.labels + nativeEmbeddedRecord.author.labels,
                                 )
                             },
                             paneTransitionScope = paneTransitionScope,
@@ -194,12 +194,12 @@ internal fun PostEmbed(
                             onProfileClicked = onQuotedProfileClicked,
                             onPostMediaClicked = onPostMediaClicked,
                             onClick = {
-                                onEmbeddedRecordClicked(blueskyEmbeddedRecord)
+                                onEmbeddedRecordClicked(nativeEmbeddedRecord)
                             },
                         )
                     }
                     is FeedGenerator -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(blueskyEmbeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         FeedGenerator(
                             modifier = EmbeddedRecordPaddingModifier,
@@ -207,13 +207,13 @@ internal fun PostEmbed(
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            feedGenerator = blueskyEmbeddedRecord,
+                            feedGenerator = nativeEmbeddedRecord,
                             status = null,
                             onFeedGeneratorStatusUpdated = {},
                         )
                     }
                     is FeedList -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(blueskyEmbeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         FeedList(
                             modifier = EmbeddedRecordPaddingModifier,
@@ -221,13 +221,13 @@ internal fun PostEmbed(
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            list = blueskyEmbeddedRecord,
+                            list = nativeEmbeddedRecord,
                             status = null,
                             onListStatusUpdated = {},
                         )
                     }
                     is StarterPack -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(blueskyEmbeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         StarterPack(
                             modifier = EmbeddedRecordPaddingModifier,
@@ -235,7 +235,7 @@ internal fun PostEmbed(
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            starterPack = blueskyEmbeddedRecord,
+                            starterPack = nativeEmbeddedRecord,
                         )
                     }
                     is Labeler -> Labeler(
@@ -244,7 +244,7 @@ internal fun PostEmbed(
                         sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                             quotingPostUri = postUri,
                         ),
-                        labeler = blueskyEmbeddedRecord,
+                        labeler = nativeEmbeddedRecord,
                     )
                     null -> Unit
                 }
