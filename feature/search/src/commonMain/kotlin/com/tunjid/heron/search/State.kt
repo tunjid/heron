@@ -158,10 +158,6 @@ sealed class Action(val key: String) {
         val category: String? = null,
     ) : Action(key = "FetchSuggestedProfiles")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,

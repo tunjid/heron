@@ -102,7 +102,6 @@ internal fun PostSearchResults(
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
-    onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,

@@ -113,10 +113,6 @@ sealed class Action(val key: String) {
         val adultContentEnabled: Boolean,
     ) : Action(key = "UpdateAdultContentPreferences")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class UpdateThreadGates(
         val preference: PostInteractionSettingsPreference,
     ) : Action(key = "UpdateThreadGates")
