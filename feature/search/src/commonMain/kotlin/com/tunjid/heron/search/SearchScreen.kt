@@ -270,7 +270,6 @@ internal fun SearchScreen(
                 onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
-                onSave = { actions(Action.UpdateMutedWord(it)) },
                 onMuteAccountClicked = { signInProfileId, profileId ->
                     actions(
                         Action.MuteAccount(

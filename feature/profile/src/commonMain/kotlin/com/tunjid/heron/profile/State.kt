@@ -302,10 +302,6 @@ sealed class Action(val key: String) {
         val page: Int,
     ) : Action(key = "PageChanged")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
         data class Subscribe(
             val publicationUri: StandardPublicationUri,

@@ -56,6 +56,7 @@ import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
@@ -67,7 +68,6 @@ import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.remember
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
@@ -123,13 +123,8 @@ internal fun PostDetailScreen(
             actions(Action.SendPostInteraction(it))
         },
     )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
+    val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
+
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
         onProfileRestricted = { profileRestriction ->
             when (profileRestriction) {

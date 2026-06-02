@@ -52,10 +52,10 @@ import com.tunjid.heron.scaffold.navigation.blocksDestination
 import com.tunjid.heron.scaffold.navigation.mutesDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.CommonStrings
@@ -91,11 +91,7 @@ internal fun ModerationScreen(
             actions(Action.UpdateThreadGates(it))
         },
     )
-    val mutedWordSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = { actions(Action.UpdateMutedWord(it)) },
-        onShown = { },
-    )
+    val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
@@ -110,7 +106,7 @@ internal fun ModerationScreen(
                     preference = state.preferences.postInteractionSettings,
                 )
             },
-            onMutedWordsClicked = mutedWordSheetState::show,
+            onMutedWordsClicked = mutedWordsSheetState::show,
             navigate = {
                 actions(Action.Navigate.To(it))
             },

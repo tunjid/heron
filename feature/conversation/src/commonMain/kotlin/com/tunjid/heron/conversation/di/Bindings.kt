@@ -50,9 +50,9 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle

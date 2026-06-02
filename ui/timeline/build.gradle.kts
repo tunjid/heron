@@ -18,6 +18,7 @@ plugins {
     id("kotlin-library-convention")
     id("ui-module-convention")
     id("com.tunjid.snapshottable")
+    id("ksp-convention")
 }
 
 compose.resources {
@@ -46,6 +47,9 @@ kotlin {
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
+
+                implementation(libs.lifecycle.multiplatform.viewmodel)
+                implementation(libs.lifecycle.multiplatform.viewmodel.compose)
             }
         }
     }

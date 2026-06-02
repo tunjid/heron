@@ -194,10 +194,6 @@ internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class LoadComments(
         val post: Post,
         val order: TimelineItem.Threaded.Order?,

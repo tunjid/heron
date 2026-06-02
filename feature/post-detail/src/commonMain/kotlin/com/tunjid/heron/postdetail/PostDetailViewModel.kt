@@ -117,10 +117,6 @@ class ActualPostDetailViewModel(
                         is Action.Navigate -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
                         }
-                        is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                            state = state,
-                            writeQueue = writeQueue,
-                        )
                         is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                             state = state,
                             writeQueue = writeQueue,
@@ -249,24 +245,6 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
     toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

@@ -36,7 +36,6 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.ActualStandardPublicationViewModel
 import com.tunjid.heron.standard.publication.RouteViewModelInitializer
@@ -44,6 +43,7 @@ import com.tunjid.heron.standard.publication.StandardPublicationScreen
 import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
 import com.tunjid.heron.standard.publication.ui.PublicationTitle
 import com.tunjid.heron.standard.publication.ui.SubscribeButton
+import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle

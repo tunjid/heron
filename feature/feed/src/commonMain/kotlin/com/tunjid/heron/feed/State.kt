@@ -104,10 +104,6 @@ val State.timelineState
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
