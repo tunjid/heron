@@ -42,7 +42,7 @@ data class StandardDocument(
     val bskyPostRef: Record.Reference?,
     val tags: List<String>,
     val publication: StandardPublication?,
-) : Record.Embeddable {
+) : Record.Embeddable.External {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
