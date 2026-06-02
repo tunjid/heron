@@ -308,6 +308,7 @@ internal class OfflineRecordResolver @Inject constructor(
             capacity = RefreshBufferSize,
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
+        val queuedUris = mutableSetOf<RecordUri>()
 
         return combine(
             listOf(
@@ -335,8 +336,8 @@ internal class OfflineRecordResolver @Inject constructor(
                 populatedRecordLists.forEach { populatedRecords ->
                     populatedRecords.forEach { recordEntity ->
                         put(recordEntity.recordUri, recordEntity)
-                        if (recordEntity.needsRefreshing()) {
-                            refreshChannel.send(recordEntity.recordUri)
+                        if (recordEntity.needsRefreshing() && queuedUris.add(recordEntity.recordUri)) {
+                            refreshChannel.trySend(recordEntity.recordUri)
                         }
                     }
                 }
