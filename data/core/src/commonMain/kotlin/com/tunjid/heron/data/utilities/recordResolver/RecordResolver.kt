@@ -135,6 +135,9 @@ import io.ktor.http.HttpStatusCode
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -144,6 +147,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -300,6 +304,12 @@ internal class OfflineRecordResolver @Inject constructor(
             }
         }
 
+        val refreshChannel = Channel<RecordUri>(
+            capacity = RefreshBufferSize,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+        val queuedUris = mutableSetOf<RecordUri>()
+
         return combine(
             listOf(
                 feedUris.list
@@ -324,7 +334,12 @@ internal class OfflineRecordResolver @Inject constructor(
         ) { populatedRecordLists ->
             val associatedRecords = buildMap {
                 populatedRecordLists.forEach { populatedRecords ->
-                    populatedRecords.forEach { put(it.recordUri, it) }
+                    populatedRecords.forEach { recordEntity ->
+                        put(recordEntity.recordUri, recordEntity)
+                        if (recordEntity.needsRefreshing() && queuedUris.add(recordEntity.recordUri)) {
+                            refreshChannel.trySend(recordEntity.recordUri)
+                        }
+                    }
                 }
             }
             associatedRecords.values.map { recordEntity ->
@@ -348,6 +363,14 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
             }
         }
+            .withRefresh {
+                refreshChannel.consumeEach {
+                    resolve(it)
+                }
+            }
+            .onCompletion {
+                refreshChannel.close()
+            }
     }
 
     override suspend fun resolve(
@@ -838,6 +861,19 @@ private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when 
     is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
 }
 
+private fun PopulatedRecordEntity.needsRefreshing() =
+    when (this) {
+        is PopulatedFeedGeneratorEntity,
+        is PopulatedLabelerEntity,
+        is PopulatedListEntity,
+        is PopulatedPostEntity,
+        is PopulatedStarterPackEntity,
+        is PopulatedStandardDocumentEntity,
+        -> false
+        is PopulatedStandardPublicationEntity,
+        -> this.entity.cid == null && entity.url == Collections.PLACEHOLDER_URL
+    }
+
 /**
  * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
  * records (feed generator/list/starter pack/labeler), (3) standard-site records.
@@ -854,3 +890,5 @@ private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) 
     is StandardPublication,
     -> 3
 }
+
+private const val RefreshBufferSize = 64
