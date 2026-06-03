@@ -49,10 +49,13 @@ import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.mapToMutation
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.current
@@ -84,24 +87,28 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
-interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
+interface NavigationStateHolder : ActionSuspendingStateMutator<NavigationMutation, NavigationState>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
+
+@Snapshottable
+interface NavigationState {
+    @SnapshotSpec
+    data class Immutable(
+        val multiStackNav: MultiStackNav = InitialNavigationState,
+    ) : NavigationState
+}
 
 val Route.sharedUri: GenericUri? by optionalMappedRouteQuery(
     mapper = ::GenericUri,
@@ -506,73 +513,68 @@ class PersistedNavigationStateHolder(
     authRepository: AuthRepository,
     routeParser: RouteParser,
 ) : NavigationStateHolder,
-    ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appMainScope.actionStateFlowMutator(
-        initialState = InitialNavigationState,
+    ActionSuspendingStateMutator<NavigationMutation, NavigationState> by appMainScope.actionSuspendingStateMutator(
+        state = NavigationState.Immutable().toSnapshotMutable(),
         started = SharingStarted.Eagerly,
-        actionTransform = { navActions ->
-            flow {
-                val startTime = TimeSource.Monotonic.markNow()
+        producer = { state, navActions ->
+            val startTime = TimeSource.Monotonic.markNow()
 
-                // Restore saved nav from disk first
-                val savedNavigation = userDataRepository.navigation
-                    // Wait for a non empty saved state to be read
-                    .first { it != InitialNavigation }
+            // Restore saved nav from disk first
+            val savedNavigation = userDataRepository.navigation
+                // Wait for a non empty saved state to be read
+                .first { it != InitialNavigation }
 
-                val signedInProfile = authRepository.signedInUser.first()
-                val isGuest = authRepository.isGuest.first()
+            val signedInProfile = authRepository.signedInUser.first()
+            val isGuest = authRepository.isGuest.first()
 
-                val multiStackNav = when {
-                    savedNavigation == EmptyNavigation -> SignedOutNavigationState
-                    signedInProfile == null && !isGuest -> SignedOutNavigationState
-                    isGuest -> routeParser.parseMultiStackNav(
-                        navigation = savedNavigation,
-                        isSignedIn = false,
-                        isGuest = true,
-                    )
-                    else -> routeParser.parseMultiStackNav(
-                        navigation = savedNavigation,
-                        isSignedIn = true,
-                    ).let {
-                        val wasInOauthFlow = it.current?.id?.contains(OAuthUrlPathSegment) == true
-                        if (wasInOauthFlow) SignedOutNavigationState else it
-                    }
+            val multiStackNav = when {
+                savedNavigation == EmptyNavigation -> SignedOutNavigationState
+                signedInProfile == null && !isGuest -> SignedOutNavigationState
+                isGuest -> routeParser.parseMultiStackNav(
+                    navigation = savedNavigation,
+                    isSignedIn = false,
+                    isGuest = true,
+                )
+                else -> routeParser.parseMultiStackNav(
+                    navigation = savedNavigation,
+                    isSignedIn = true,
+                ).let {
+                    val wasInOauthFlow = it.current?.id?.contains(OAuthUrlPathSegment) == true
+                    if (wasInOauthFlow) SignedOutNavigationState else it
                 }
+            }
 
-                val elapsed = startTime.elapsedNow()
-                if (elapsed < UiTokens.splashScreenDuration) delay(UiTokens.splashScreenDuration - elapsed)
+            val elapsed = startTime.elapsedNow()
+            if (elapsed < UiTokens.splashScreenDuration) delay(UiTokens.splashScreenDuration - elapsed)
 
-                emit { multiStackNav }
+            state.multiStackNav = multiStackNav
 
-                emitAll(
-                    merge(
-                        navActions.mapToMutation { navMutation ->
-                            navMutation(
-                                ImmutableNavigationContext(
-                                    state = this,
-                                    routeParser = routeParser,
-                                ),
-                            )
-                        },
-                        authNavigationMutations(
-                            initialProfileId = signedInProfile?.did,
-                            initialIsGuest = isGuest,
-                            authRepository = authRepository,
-                            userDataRepository = userDataRepository,
+            merge(
+                navActions.mapToMutation { navMutation ->
+                    navMutation(
+                        ImmutableNavigationContext(
+                            state = this,
+                            routeParser = routeParser,
                         ),
-                    ),
-                )
-            }
-        },
-        stateTransform = { navigationStateFlow ->
-            // Save each new navigation state in parallel
-            navigationStateFlow.onEach { navigationState ->
-                // Fire and forget, do not slow down the collector,
-                // navigation needs to be immediate.
-                appMainScope.persistNavigationState(
-                    navigationState = navigationState,
+                    )
+                },
+                authNavigationMutations(
+                    initialProfileId = signedInProfile?.did,
+                    initialIsGuest = isGuest,
+                    authRepository = authRepository,
                     userDataRepository = userDataRepository,
-                )
-            }
+                ),
+            )
+                .launchAndCollect { navigationAction ->
+                    state.multiStackNav = navigationAction(state.multiStackNav)
+
+                    // Fire and forget, do not slow down the collector,
+                    // navigation needs to be immediate.
+                    appMainScope.launchPersistNavigationState(
+                        navigationState = state.multiStackNav,
+                        userDataRepository = userDataRepository,
+                    )
+                }
         },
     )
 
@@ -612,7 +614,7 @@ internal fun authNavigationMutations(
             transform = AuthNavigationEventState::navigationMutation,
         )
 
-private fun CoroutineScope.persistNavigationState(
+private fun CoroutineScope.launchPersistNavigationState(
     navigationState: MultiStackNav,
     userDataRepository: UserDataRepository,
 ) = launch {

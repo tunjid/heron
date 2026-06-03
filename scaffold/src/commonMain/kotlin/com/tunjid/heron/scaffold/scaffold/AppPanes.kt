@@ -289,7 +289,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
                 splitPaneState.filteredPaneOrder.size > 1 &&
                 appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop &&
                 // Only enable if going back to a single pane layout
-                appState.navigation.pop().current?.children?.isEmpty() ?: false
+                appState.navigationState.multiStackNav.pop().current?.children?.isEmpty() ?: false
         }
     }
 
