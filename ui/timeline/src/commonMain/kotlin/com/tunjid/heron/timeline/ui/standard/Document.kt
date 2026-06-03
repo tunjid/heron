@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -202,7 +201,6 @@ private fun SubscribeButton(
                 PublicationSubscriptionIcon(
                     subscribed = latchedSubscribedState.value,
                     iconSize = 16.dp,
-                    iconTint = MaterialTheme.colorScheme.outline,
                 )
             },
             description = {},

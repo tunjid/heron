@@ -139,7 +139,6 @@ fun SubscribeButton(
             PublicationSubscriptionIcon(
                 subscribed = latchedSubscribedState.value,
                 iconSize = 24.dp,
-                iconTint = MaterialTheme.colorScheme.primary,
             )
         },
     )
