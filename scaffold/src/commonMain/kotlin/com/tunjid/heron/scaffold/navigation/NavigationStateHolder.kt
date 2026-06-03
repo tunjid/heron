@@ -553,7 +553,7 @@ class PersistedNavigationStateHolder(
                 navActions.mapToMutation { navMutation ->
                     navMutation(
                         ImmutableNavigationContext(
-                            state = state.multiStackNav,
+                            state = this,
                             routeParser = routeParser,
                         ),
                     )
