@@ -26,6 +26,7 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardPublicationId
@@ -95,7 +96,9 @@ data class PopulatedStandardPublicationEntity(
     val publisher: ProfileEntity,
     @Embedded(prefix = "subscription_")
     val subscription: StandardSubscriptionEntity?,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: EmbeddableRecordUri get() = entity.uri
+}
 
 fun StandardPublicationEntity.asExternalModel(
     publisher: Profile,

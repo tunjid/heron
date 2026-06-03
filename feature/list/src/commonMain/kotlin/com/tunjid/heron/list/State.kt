@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.FollowUri
@@ -213,10 +214,6 @@ typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, 
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
@@ -234,6 +231,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
 
     data class SnackbarDismissed(
         val message: Memo,

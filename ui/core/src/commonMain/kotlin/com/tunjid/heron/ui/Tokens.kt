@@ -50,6 +50,12 @@ object UiTokens {
 
     val restrictedPaneWidth = 600.dp
 
+    val SecondaryPaneMinWidthBreakpoint = 600.dp
+
+    val TertiaryPaneMinWidthBreakpoint = 1200.dp
+
+    val NavRailWidth = 72.dp
+
     val LikeRed: Color = Color(0xFFE0245E)
 
     val RepostGreen: Color = Color(0xFF17BF63)

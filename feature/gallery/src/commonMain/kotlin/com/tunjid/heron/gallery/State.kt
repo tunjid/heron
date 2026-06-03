@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -127,7 +128,7 @@ interface State {
                         record = null,
                         viewerStats = null,
                         labels = emptyList(),
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     ),
                 ),
             ),
@@ -194,10 +195,6 @@ internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class LoadComments(
         val post: Post,
         val order: TimelineItem.Threaded.Order?,
@@ -220,6 +217,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
 
     data class SnackbarDismissed(
         val message: Memo,

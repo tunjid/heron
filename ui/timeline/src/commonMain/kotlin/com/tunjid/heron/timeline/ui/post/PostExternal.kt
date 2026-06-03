@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,9 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -40,6 +44,8 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
+import com.tunjid.heron.timeline.ui.standard.Publication
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -47,74 +53,123 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 @Composable
 internal fun PostExternal(
     feature: ExternalEmbed,
+    externalRecord: Record.Embeddable.External?,
     postUri: PostUri,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     isBlurred: Boolean,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
+    onSubscriptionToggled: (StandardPublication) -> Unit,
 ) = with(paneTransitionScope) {
     val isGif = feature.isGif()
     FeatureContainer(
         modifier = Modifier,
         onClick = onClick,
     ) {
-        Column(verticalArrangement = spacedBy(8.dp)) {
-            if (!feature.thumb?.uri.isNullOrBlank()) {
-                val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
-                    RoundedPolygonShape.Rectangle,
-                )
-                else Modifier
-                PaneStickySharedElement(
-                    modifier = itemModifier
-                        .fillMaxWidth()
-                        .aspectRatio(2f / 1),
-                    sharedContentState = rememberSharedContentState(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postUri = postUri,
-                            text = feature.thumb?.uri,
-                        ),
-                    ),
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        args = remember(isGif, feature.uri, feature.thumb) {
-                            ImageArgs(
-                                url = if (isGif) feature.uri.uri else feature.thumb?.uri,
-                                contentDescription = feature.title,
-                                contentScale = ContentScale.Crop,
-                                shape = RoundedPolygonShape.Rectangle,
-                            )
-                        },
-                    )
-                }
+        Column(
+            verticalArrangement = spacedBy(8.dp),
+        ) {
+            val showContentPreview = externalRecord == null ||
+                externalRecord is StandardDocument
+
+            if (showContentPreview) ContentPreview(
+                feature = feature,
+                isBlurred = isBlurred,
+                sharedElementPrefix = sharedElementPrefix,
+                postUri = postUri,
+                isGif = isGif,
+                presentation = presentation,
+            )
+            val publication = when (externalRecord) {
+                is StandardDocument -> externalRecord.publication
+                is StandardPublication -> externalRecord
+                null -> null
+            }.takeIf {
+                presentation == Timeline.Presentation.Text.WithEmbed
             }
-            if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
-                PaneStickySharedElement(
+
+            if (publication != null) {
+                if (showContentPreview) HorizontalDivider()
+                Publication(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 16.dp,
-                        ),
-                    sharedContentState = rememberSharedContentState(
-                        key = embedSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postUri = postUri,
-                            text = feature.title,
-                        ),
+                        .padding(all = 12.dp),
+                    paneTransitionScope = paneTransitionScope,
+                    sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                        quotingPostUri = postUri,
                     ),
-                ) {
-                    PostFeatureTextContent(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap(),
-                        title = feature.title,
-                        description = null,
-                        uri = feature.uri,
-                    )
-                }
+                    publication = publication,
+                    onSubscriptionToggled = { toggledPublication, _ ->
+                        onSubscriptionToggled(toggledPublication)
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun PaneTransitionScope.ContentPreview(
+    feature: ExternalEmbed,
+    isBlurred: Boolean,
+    sharedElementPrefix: String,
+    postUri: PostUri,
+    isGif: Boolean,
+    presentation: Timeline.Presentation,
+) {
+    if (!feature.thumb?.uri.isNullOrBlank()) {
+        val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
+            RoundedPolygonShape.Rectangle,
+        )
+        else Modifier
+        PaneStickySharedElement(
+            modifier = itemModifier
+                .fillMaxWidth()
+                .aspectRatio(2f / 1),
+            sharedContentState = rememberSharedContentState(
+                key = embedSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postUri = postUri,
+                    text = feature.thumb?.uri,
+                ),
+            ),
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .fillParentAxisIfFixedOrWrap(),
+                args = remember(isGif, feature.uri, feature.thumb) {
+                    ImageArgs(
+                        url = if (isGif) feature.uri.uri else feature.thumb?.uri,
+                        contentDescription = feature.title,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Rectangle,
+                    )
+                },
+            )
+        }
+    }
+    if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
+        PaneStickySharedElement(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                ),
+            sharedContentState = rememberSharedContentState(
+                key = embedSharedElementKey(
+                    prefix = sharedElementPrefix,
+                    postUri = postUri,
+                    text = feature.title,
+                ),
+            ),
+        ) {
+            PostFeatureTextContent(
+                modifier = Modifier
+                    .fillParentAxisIfFixedOrWrap(),
+                title = feature.title,
+                description = null,
+                uri = feature.uri,
+            )
         }
     }
 }

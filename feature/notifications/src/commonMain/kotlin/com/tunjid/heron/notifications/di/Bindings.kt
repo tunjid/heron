@@ -53,10 +53,10 @@ import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -198,6 +198,9 @@ class NotificationsBindings(
                                     },
                                 )
                             }
+                        },
+                        onLogoClicked = {
+                            stateHolder.accept(Action.Navigate.Home)
                         },
                     )
                 },

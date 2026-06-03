@@ -32,6 +32,6 @@ fun samplePost(): Post {
         ),
         viewerState = null,
         labels = emptyList(),
-        embeddedRecord = null,
+        embeddedRecords = emptyList(),
     )
 }

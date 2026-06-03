@@ -14,9 +14,8 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.scaffold.scaffold
+package com.tunjid.heron.ui.coroutines
 
-import com.tunjid.heron.ui.coroutines.UIStateProducerElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

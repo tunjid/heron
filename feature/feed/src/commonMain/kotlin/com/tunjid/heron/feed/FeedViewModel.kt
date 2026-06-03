@@ -32,6 +32,7 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.feed.di.timelineRequest
@@ -111,6 +112,11 @@ class ActualFeedViewModel(
                         writeQueue = writeQueue,
                     )
 
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
+
                     is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -122,10 +128,6 @@ class ActualFeedViewModel(
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -247,18 +249,12 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
+    toWritable = { it.publication.toSubscriptionWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

@@ -59,6 +59,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -102,12 +103,12 @@ internal fun GeneralSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
-    onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
@@ -216,11 +217,11 @@ internal fun GeneralSearchResults(
                             onPostSearchResultClicked = onPostSearchResultClicked,
                             onReplyToPost = onReplyToPost,
                             onPostRecordClicked = onPostRecordClicked,
+                            onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
                             onMediaClicked = onMediaClicked,
                             onNavigate = onNavigate,
                             onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
-                            onSave = onSave,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
                             onDeletePostClicked = onDeletePostClicked,

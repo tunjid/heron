@@ -39,6 +39,12 @@ sealed interface Record {
     @SerialName("com.tunjid.heron.data.core.models.Record.Post")
     sealed interface Embeddable : Record {
         val embeddableRecordUri: EmbeddableRecordUri
+
+        @Serializable
+        sealed interface External : Embeddable
+
+        @Serializable
+        sealed interface Native : Embeddable
     }
 
     @Serializable

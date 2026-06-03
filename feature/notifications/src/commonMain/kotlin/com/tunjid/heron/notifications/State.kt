@@ -106,10 +106,6 @@ sealed class Action(val key: String) {
         val tilingAction: TilingState.Action,
     ) : Action(key = "Tile")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
@@ -141,6 +137,8 @@ sealed class Action(val key: String) {
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
+
+        data object Home : Navigate(), NavigationAction by NavigationAction.Home
 
         data class To(
             val delegate: NavigationAction.Destination,

@@ -55,6 +55,7 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
@@ -68,14 +69,10 @@ import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.remember
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
-import com.tunjid.heron.timeline.utilities.cardSize
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
-import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -95,6 +92,7 @@ internal fun PostsScreen(
     val now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = remember { Timeline.Presentation.Text.WithEmbed }
+    val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
@@ -124,13 +122,8 @@ internal fun PostsScreen(
             actions(Action.SendPostInteraction(it))
         },
     )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
+    val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
+
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
         onProfileRestricted = { profileRestriction ->
             when (profileRestriction) {
@@ -191,7 +184,7 @@ internal fun PostsScreen(
         modifier = modifier
             .padding(
                 horizontal = animateDpAsState(
-                    presentation.timelineHorizontalPadding,
+                    displayState.horizontalPadding(presentation),
                 ).value,
             )
             .fillMaxSize(),
@@ -221,7 +214,7 @@ internal fun PostsScreen(
                     .fillMaxSize()
                     .onSizeChanged {
                         val itemWidth = with(density) {
-                            presentation.cardSize.toPx()
+                            displayState.cardSize(presentation).toPx()
                         }
                         val numColumns = floor(it.width / itemWidth).roundToInt()
                         if (numColumns > 0) actions(
@@ -229,14 +222,14 @@ internal fun PostsScreen(
                         )
                     },
                 state = gridState,
-                columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-                verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+                columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
+                verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(
-                    presentation.lazyGridHorizontalItemSpacing,
+                    displayState.horizontalItemSpacing(presentation),
                 ),
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
@@ -351,6 +344,9 @@ internal fun PostsScreen(
                                         is PostAction.OfMore -> {
                                             postOptionsSheetState.showOptions(action.post)
                                         }
+
+                                        is PostAction.OfPublicationSubscription ->
+                                            actions(Action.TogglePublicationSubscription(action.publication))
 
                                         else -> Unit
                                     }

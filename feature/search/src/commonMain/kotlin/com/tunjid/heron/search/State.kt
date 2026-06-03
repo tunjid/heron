@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
@@ -158,10 +159,6 @@ sealed class Action(val key: String) {
         val category: String? = null,
     ) : Action(key = "FetchSuggestedProfiles")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
@@ -179,6 +176,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
 
     data class SnackbarDismissed(
         val message: Memo,
@@ -204,6 +205,8 @@ sealed class Action(val key: String) {
         NavigationAction {
 
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
+
+        data object Home : Navigate(), NavigationAction by NavigationAction.Home
 
         data class To(
             val delegate: NavigationAction.Destination,

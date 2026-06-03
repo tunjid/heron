@@ -74,7 +74,7 @@ interface TilingState<Query : CursorQuery, Item> {
     @Stable
     @Snapshottable
     @Serializable(with = DataSerializer::class)
-    sealed interface Data<Query : CursorQuery, Item> {
+    interface Data<Query : CursorQuery, Item> {
         @Serializable
         @SnapshotSpec
         data class Immutable<Query : CursorQuery, Item>(
@@ -402,7 +402,6 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
                 .map { networkCursorList ->
                     NeighboredFetchResult(
                         // Set the cursor for the next page and any other page with data available.
-                        //
                         mapOf(
                             Pair(
                                 first = query.nextPage(query.data.copy(page = query.data.page + 1)),
@@ -423,6 +422,9 @@ object DataSerializer : KSerializer<TilingState.Data<*, *>> {
         val immutable: TilingState.Data.Immutable<out CursorQuery, out Any?> = when (value) {
             is TilingState.Data.Immutable<*, *> -> value
             is TilingState.Data.SnapshotMutable<*, *> -> value.toSnapshotSpec()
+            else -> throw kotlinx.serialization.SerializationException(
+                "Unsupported serialization of tiling data state $value",
+            )
         }
         delegate.serialize(encoder, immutable)
     }

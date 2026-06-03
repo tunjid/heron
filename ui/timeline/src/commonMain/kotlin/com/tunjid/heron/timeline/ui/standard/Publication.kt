@@ -57,7 +57,6 @@ fun Publication(
                     sharedContentState = rememberSharedContentState(
                         key = publication.avatarSharedElementKey(
                             prefix = sharedElementPrefix,
-                            creator = StandardPublication::publisher,
                         ),
                     ),
                 ) {

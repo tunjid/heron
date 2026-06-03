@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -73,7 +74,8 @@ internal fun PostEmbed(
     modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,
-    embeddedRecord: Record.Embeddable?,
+    nativeEmbeddedRecord: Record.Embeddable.Native?,
+    externalEmbeddedRecord: Record.Embeddable.External?,
     postUri: PostUri,
     isBlurred: Boolean,
     canUnblur: Boolean,
@@ -87,6 +89,7 @@ internal fun PostEmbed(
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onEmbeddedRecordClicked: (Record) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     presentation: Timeline.Presentation,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -105,6 +108,7 @@ internal fun PostEmbed(
             when (embed) {
                 is ExternalEmbed -> PostExternal(
                     feature = embed,
+                    externalRecord = externalEmbeddedRecord,
                     postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
                     presentation = presentation,
@@ -113,6 +117,7 @@ internal fun PostEmbed(
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
                     },
+                    onSubscriptionToggled = onPublicationSubscriptionToggled,
                 )
 
                 is ImageList -> PostImages(
@@ -166,25 +171,25 @@ internal fun PostEmbed(
                 }
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
-                if (embeddedRecord != null) Spacer(Modifier.height(16.dp))
-                when (embeddedRecord) {
-                    is Post -> when (embeddedRecord.cid) {
+                if (nativeEmbeddedRecord != null) Spacer(Modifier.height(16.dp))
+                when (nativeEmbeddedRecord) {
+                    is Post -> when (nativeEmbeddedRecord.cid) {
                         Constants.notFoundPostId -> InvisiblePostPost(onClick = null)
                         Constants.blockedPostId -> BlockedPostPost(onClick = null)
                         Constants.unknownPostId -> UnknownPostPost(onClick = null)
                         else -> QuotedPost(
                             now = now,
-                            quotedPost = embeddedRecord,
+                            quotedPost = nativeEmbeddedRecord,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
                             appliedLabels = remember(
                                 appliedLabels,
-                                embeddedRecord.labels,
-                                embeddedRecord.author.labels,
+                                nativeEmbeddedRecord.labels,
+                                nativeEmbeddedRecord.author.labels,
                             ) {
                                 appliedLabels.withLabels(
-                                    embeddedRecord.labels + embeddedRecord.author.labels,
+                                    nativeEmbeddedRecord.labels + nativeEmbeddedRecord.author.labels,
                                 )
                             },
                             paneTransitionScope = paneTransitionScope,
@@ -192,57 +197,58 @@ internal fun PostEmbed(
                             onProfileClicked = onQuotedProfileClicked,
                             onPostMediaClicked = onPostMediaClicked,
                             onClick = {
-                                onEmbeddedRecordClicked(embeddedRecord)
+                                onEmbeddedRecordClicked(nativeEmbeddedRecord)
                             },
+                            onSubscriptionToggled = onPublicationSubscriptionToggled,
                         )
                     }
                     is FeedGenerator -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         FeedGenerator(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = EmbeddedRecordPaddingModifier,
                             paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            feedGenerator = embeddedRecord,
+                            feedGenerator = nativeEmbeddedRecord,
                             status = null,
                             onFeedGeneratorStatusUpdated = {},
                         )
                     }
                     is FeedList -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         FeedList(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = EmbeddedRecordPaddingModifier,
                             paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            list = embeddedRecord,
+                            list = nativeEmbeddedRecord,
                             status = null,
                             onListStatusUpdated = {},
                         )
                     }
                     is StarterPack -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                        onClick = { onEmbeddedRecordClicked(nativeEmbeddedRecord) },
                     ) {
                         StarterPack(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = EmbeddedRecordPaddingModifier,
                             paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            starterPack = embeddedRecord,
+                            starterPack = nativeEmbeddedRecord,
                         )
                     }
                     is Labeler -> Labeler(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = EmbeddedRecordPaddingModifier,
                         paneTransitionScope = paneTransitionScope,
                         sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                             quotingPostUri = postUri,
                         ),
-                        labeler = embeddedRecord,
+                        labeler = nativeEmbeddedRecord,
                     )
                     null -> Unit
                 }
@@ -250,3 +256,6 @@ internal fun PostEmbed(
         }
     }
 }
+
+private val EmbeddedRecordPaddingModifier =
+    Modifier.padding(12.dp)

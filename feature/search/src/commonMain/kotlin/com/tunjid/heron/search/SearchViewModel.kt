@@ -35,6 +35,7 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -161,6 +162,10 @@ class SearchViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
                     is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                     is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
@@ -173,10 +178,6 @@ class SearchViewModel(
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -452,24 +453,6 @@ private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
@@ -530,6 +513,18 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
     toWritable = { action -> Writable.Interaction(action.interaction) },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { it.publication.toSubscriptionWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

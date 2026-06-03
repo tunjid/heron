@@ -71,6 +71,7 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.asExternalModelWithViewerState
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
@@ -297,7 +298,10 @@ internal class OfflinePostRepository @Inject constructor(
                                 signedInProfileId = signedInProfileId,
                                 postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
                                 associatedRecordUris = {
-                                    listOfNotNull(it.embeddedRecordUri)
+                                    listOfNotNull(it.embeddedRecordUri) +
+                                        it.associatedRecords.map(
+                                            PostExternalAssociatedRecordEntity::recordUri,
+                                        )
                                 },
                                 associatedProfileIds = {
                                     emptyList()
@@ -367,7 +371,10 @@ internal class OfflinePostRepository @Inject constructor(
                             signedInProfileId = signedInProfileId,
                             postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
                             associatedRecordUris = {
-                                listOfNotNull(it.embeddedRecordUri)
+                                listOfNotNull(it.embeddedRecordUri) +
+                                    it.associatedRecords.map(
+                                        PostExternalAssociatedRecordEntity::recordUri,
+                                    )
                             },
                             associatedProfileIds = {
                                 emptyList()
@@ -423,7 +430,7 @@ internal class OfflinePostRepository @Inject constructor(
             )
                 .distinctUntilChangedMapNotNull {
                     it.firstOrNull()?.asExternalModel(
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     )
                 }
         }

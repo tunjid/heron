@@ -39,6 +39,7 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
 import com.tunjid.heron.scaffold.ui.theme.Theme
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.MovableSharedElementHostState
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -87,10 +88,10 @@ fun App(
                             listOf(
                                 threePaneAdaptiveDecorator(
                                     secondaryPaneBreakPoint = mutableStateOf(
-                                        SecondaryPaneMinWidthBreakpointDp,
+                                        UiTokens.SecondaryPaneMinWidthBreakpoint,
                                     ),
                                     tertiaryPaneBreakPoint = mutableStateOf(
-                                        TertiaryPaneMinWidthBreakpointDp,
+                                        UiTokens.TertiaryPaneMinWidthBreakpoint,
                                     ),
                                     windowWidthState = windowWidth,
                                 ),

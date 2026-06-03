@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -50,6 +51,7 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.canAutoPlayVideo
@@ -67,11 +69,8 @@ import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.remember
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.cardSize
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -101,16 +100,17 @@ internal fun PostSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
-    onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
+    val displayState = rememberTimelineDisplayState()
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
@@ -133,11 +133,8 @@ internal fun PostSearchResults(
         onRequestRecentLists = onRequestRecentLists,
         onThreadGateUpdated = onSendPostInteraction,
     )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordPreferences,
-        onSave = onSave,
-        onShown = {},
-    )
+    val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
+
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
         onProfileRestricted = { profileRestriction ->
             when (profileRestriction) {
@@ -194,6 +191,7 @@ internal fun PostSearchResults(
         onPostSearchResultClicked,
         onPostSearchResultProfileClicked,
         onPostRecordClicked,
+        onPublicationSubscriptionToggled,
         onMediaClicked,
         onReplyToPost,
     ) {
@@ -217,6 +215,10 @@ internal fun PostSearchResults(
                     sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
                 )
 
+                is PostAction.OfPublicationSubscription -> onPublicationSubscriptionToggled(
+                    action.publication,
+                )
+
                 is PostAction.OfMedia -> onMediaClicked(
                     action.media,
                     action.index,
@@ -238,15 +240,15 @@ internal fun PostSearchResults(
         modifier = modifier,
         state = gridState,
         columns = StaggeredGridCells.Adaptive(
-            Timeline.Presentation.Text.WithEmbed.cardSize,
+            displayState.cardSize(Timeline.Presentation.Text.WithEmbed),
         ),
-        verticalItemSpacing = Timeline.Presentation.Text.WithEmbed.lazyGridVerticalItemSpacing,
+        verticalItemSpacing = displayState.verticalItemSpacing(Timeline.Presentation.Text.WithEmbed),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(
-            Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing,
+            displayState.horizontalItemSpacing(Timeline.Presentation.Text.WithEmbed),
         ),
     ) {
         items(

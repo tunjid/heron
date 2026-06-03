@@ -69,7 +69,6 @@ fun PublicationTitle(
             sharedContentState = rememberSharedContentState(
                 key = publication.avatarSharedElementKey(
                     prefix = sharedElementPrefix,
-                    creator = StandardPublication::publisher,
                 ),
             ),
             zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
@@ -140,7 +139,6 @@ fun SubscribeButton(
             PublicationSubscriptionIcon(
                 subscribed = latchedSubscribedState.value,
                 iconSize = 24.dp,
-                iconTint = MaterialTheme.colorScheme.primary,
             )
         },
     )

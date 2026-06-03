@@ -190,10 +190,6 @@ class ActualProfileViewModel(
                             else -> Unit
                         }
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.Block -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -405,24 +401,6 @@ private fun launchFeedGeneratorUrisToStatusMutations(
                 valueTransform = TimelinePreference::pinned,
             )
     }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
 
 private fun Action.Block.toBlockWritable(): Writable.Restriction =
     Writable.Restriction(

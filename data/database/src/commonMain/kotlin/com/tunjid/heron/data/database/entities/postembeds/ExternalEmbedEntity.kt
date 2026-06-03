@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
+import kotlin.time.Instant
 
 @Entity(
     tableName = "externalEmbeds",
@@ -37,6 +38,10 @@ data class ExternalEmbedEntity(
     val title: String,
     val description: String,
     val thumb: ImageUri?,
+    // From app.bsky.embed.external#viewExternal, when backed by a standard-site record.
+    val readingTime: Long? = null,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
 ) : PostEmbed
 
 /**
@@ -76,4 +81,7 @@ fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
     title = title,
     description = description,
     thumb = thumb,
+    readingTime = readingTime,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
 )

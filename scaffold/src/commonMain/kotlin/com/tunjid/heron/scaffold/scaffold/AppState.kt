@@ -58,6 +58,7 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
+import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.mutator.compose.produceState
 import com.tunjid.treenav.MultiStackNav
@@ -91,6 +92,7 @@ class AppState(
     private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
+    internal val sheetsViewModelInitializers: SheetsViewModelInitializers,
 ) {
     private var notificationCount by mutableStateOf(0L)
 
@@ -360,7 +362,7 @@ internal class SplitPaneState(
     )
 
     internal val isMediumScreenWidthOrWider
-        get() = windowWidth.value >= SecondaryPaneMinWidthBreakpointDp
+        get() = windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     fun update(
         density: Density,

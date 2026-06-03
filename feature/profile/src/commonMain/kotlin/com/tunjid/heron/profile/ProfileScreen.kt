@@ -139,6 +139,7 @@ import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
+import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
@@ -162,23 +163,19 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.record.RecordList
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
-import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
-import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.orDefault
+import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.Tab
@@ -1334,6 +1331,7 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
+    val displayState = rememberTimelineDisplayState()
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -1362,13 +1360,8 @@ private fun ProfileTimeline(
             actions(Action.SendPostInteraction(it))
         },
     )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordsPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
+    val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
+
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
         onProfileRestricted = { profileRestriction ->
             when (profileRestriction) {
@@ -1430,13 +1423,13 @@ private fun ProfileTimeline(
             modifier = Modifier
                 .padding(
                     horizontal = animateDpAsState(
-                        presentation.timelineHorizontalPadding,
+                        displayState.horizontalPadding(presentation),
                     ).value,
                 )
                 .fillMaxSize()
                 .onSizeChanged {
                     val itemWidth = with(density) {
-                        presentation.cardSize.toPx()
+                        displayState.cardSize(presentation).toPx()
                     }
                     timelineStateHolder.accept(
                         TimelineState.Action.Tile(
@@ -1447,14 +1440,14 @@ private fun ProfileTimeline(
                     )
                 },
             state = gridState,
-            columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+            columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
                 extraBottom = bottomPadding,
             ),
-            verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
+            verticalItemSpacing = displayState.verticalItemSpacing(presentation),
             horizontalArrangement = Arrangement.spacedBy(
-                presentation.lazyGridHorizontalItemSpacing,
+                displayState.horizontalItemSpacing(presentation),
             ),
         ) {
             items(
@@ -1584,6 +1577,18 @@ private fun ProfileTimeline(
                                     is PostAction.OfMore -> {
                                         postOptionsSheetState.showOptions(action.post)
                                     }
+
+                                    is PostAction.OfPublicationSubscription ->
+                                        actions(
+                                            when (val subscription = action.publication.subscription) {
+                                                null -> Action.TogglePublicationSubscription.Subscribe(
+                                                    publicationUri = action.publication.uri,
+                                                )
+                                                else -> Action.TogglePublicationSubscription.Unsubscribe(
+                                                    subscriptionUri = subscription.uri,
+                                                )
+                                            },
+                                        )
 
                                     else -> Unit
                                 }

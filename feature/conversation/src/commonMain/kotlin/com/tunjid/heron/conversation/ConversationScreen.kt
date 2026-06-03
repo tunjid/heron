@@ -274,7 +274,7 @@ private fun Message(
 
         when (item) {
             is MessageItem.Pending -> Unit
-            is MessageItem.Sent -> item.message.embeddedRecord?.let { record ->
+            is MessageItem.Sent -> (item.message.embeddedRecord as? Record.Embeddable.Native)?.let { record ->
                 MessageRecord(
                     record = record,
                     item = item,
@@ -454,7 +454,7 @@ private fun ChatItemBubble(
 
 @Composable
 private fun MessageRecord(
-    record: Record.Embeddable,
+    record: Record.Embeddable.Native,
     item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
@@ -539,6 +539,9 @@ private fun MessageRecord(
                     )
                     is PostAction.OfInteraction -> actions(
                         Action.SendPostInteraction(action.interaction),
+                    )
+                    is PostAction.OfPublicationSubscription -> actions(
+                        Action.TogglePublicationSubscription(action.publication),
                     )
                     is PostAction.Options -> Unit
                 }
