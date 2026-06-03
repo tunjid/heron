@@ -16,14 +16,32 @@
 
 package com.tunjid.heron.scaffold.navigation
 
+import com.tunjid.heron.data.core.models.UrlEncodableModel
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.treenav.strings.Route
-import com.tunjid.treenav.strings.RouteParams
-import com.tunjid.treenav.strings.urlRouteMatcher
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
+import com.tunjid.treenav.strings.optionalRouteQuery
+import com.tunjid.treenav.strings.routeQuery
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-fun <T : Route> routePatternAndMatcher(
-    routePattern: String,
-    routeMapper: (RouteParams) -> T,
-) = routePattern to urlRouteMatcher(
-    routePattern = routePattern,
-    routeMapper = routeMapper,
+val Route.sharedUri: GenericUri? by optionalMappedRouteQuery(
+    mapper = ::GenericUri,
+)
+
+inline fun <reified T> Route.model(): T? = models.asSequence()
+    .filterIsInstance<T>()
+    .firstOrNull()
+
+val Route.models: List<UrlEncodableModel>
+    get() = routeParams.queryParams["model"]
+        ?.map(String::fromBase64EncodedUrl)
+        ?: emptyList()
+
+val Route.avatarSharedElementKey by optionalRouteQuery()
+
+@OptIn(ExperimentalUuidApi::class)
+val Route.sharedElementPrefix by routeQuery(
+    default = Uuid.random().toHexString(),
 )
