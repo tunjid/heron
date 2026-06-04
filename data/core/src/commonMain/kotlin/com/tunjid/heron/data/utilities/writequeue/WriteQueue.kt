@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -30,6 +28,7 @@ import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.expiredSessionOutcome
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
@@ -38,8 +37,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +44,6 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
@@ -73,6 +69,8 @@ sealed class WriteQueue {
 
     abstract val queueChanges: Flow<List<Writable>>
 
+    abstract val failedWrites: Flow<List<FailedWrite>>
+
     abstract suspend fun enqueue(
         writable: Writable,
     ): Status
@@ -83,62 +81,18 @@ sealed class WriteQueue {
 
     abstract suspend fun drain()
 
+    abstract suspend fun retry(
+        failedWrite: FailedWrite,
+    ): Status
+
+    abstract suspend fun dismiss(
+        failedWrite: FailedWrite,
+    ): Outcome
+
     sealed interface Status {
         data object Enqueued : Status
         data object Dropped : Status
         data object Duplicate : Status
-    }
-}
-
-internal class SnapshotWriteQueue @Inject constructor(
-    override val postRepository: PostRepository,
-    override val profileRepository: ProfileRepository,
-    override val messageRepository: MessageRepository,
-    override val timelineRepository: TimelineRepository,
-    override val notificationRepository: NotificationsRepository,
-    override val recordRepository: RecordRepository,
-) : WriteQueue() {
-    // At some point this queue should be persisted to disk
-    private val queue = mutableStateListOf<Writable>()
-
-    override val queueChanges: Flow<List<Writable>>
-        get() = snapshotFlow { queue.toList() }
-            .distinctUntilChangedBy {
-                it.map(Writable::queueId)
-            }
-
-    override suspend fun enqueue(
-        writable: Writable,
-    ): Status {
-        // Enqueue on main
-        return withContext(Dispatchers.Main) {
-            // De-dup
-            if (queue.any { writable.queueId == it.queueId }) return@withContext Status.Duplicate
-            queue.add(writable)
-            Status.Enqueued
-        }
-    }
-
-    override suspend fun awaitDequeue(writable: Writable) {
-        snapshotFlow {
-            queue.firstOrNull { it.queueId == writable.queueId }
-        }.first { it == null }
-    }
-
-    override suspend fun drain() {
-        snapshotFlow { queue.lastOrNull() }
-            .filterNotNull()
-            .collect { writable ->
-                withContext(Dispatchers.IO) {
-                    with(writable) {
-                        write()
-                    }
-                }
-                // Dequeue on main
-                withContext(Dispatchers.Main) {
-                    queue.removeAt(queue.lastIndex)
-                }
-            }
     }
 }
 
@@ -157,6 +111,30 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override val queueChanges: Flow<List<Writable>>
         get() = savedStateDataSource.signedInProfileWrites()
+
+    override val failedWrites: Flow<List<FailedWrite>>
+        get() = savedStateDataSource.signedInProfileFailedWrites()
+
+    override suspend fun retry(
+        failedWrite: FailedWrite,
+    ): Status = when (dismiss(failedWrite)) {
+        is Outcome.Failure -> Status.Dropped
+        is Outcome.Success -> enqueue(failedWrite.writable)
+    }
+
+    override suspend fun dismiss(
+        failedWrite: FailedWrite,
+    ): Outcome =
+        savedStateDataSource.inCurrentProfileSession {
+            savedStateDataSource.updateWrites {
+                copy(
+                    failedWrites = failedWrites.filterNot {
+                        it.writable.queueId == failedWrite.writable.queueId
+                    },
+                )
+            }
+            Outcome.Success
+        } ?: expiredSessionOutcome()
 
     override suspend fun enqueue(
         writable: Writable,
@@ -317,6 +295,21 @@ private fun SavedStateDataSource.signedInProfileWrites() =
             }
             .distinctUntilChangedBy { pendingWrites ->
                 pendingWrites.map(Writable::queueId)
+            }
+    }
+
+private fun SavedStateDataSource.signedInProfileFailedWrites() =
+    singleAuthorizedSessionFlow { signedInProfileId ->
+        savedState
+            .mapNotNull { savedState ->
+                savedState
+                    .takeIf { it.auth?.authProfileId == signedInProfileId }
+                    ?.signedInProfileData
+                    ?.writes
+                    ?.failedWrites
+            }
+            .distinctUntilChangedBy { failedWrites ->
+                failedWrites.map { it.writable.queueId }
             }
     }
 

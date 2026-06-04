@@ -40,6 +40,7 @@ import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashNavigationBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationNavigationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
+import com.tunjid.heron.tasks.di.TasksNavigationBindings
 import com.tunjid.treenav.strings.RouteMatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
@@ -77,6 +78,7 @@ interface AppNavigationGraph {
             @Includes standardPublicationNavigationBindings: StandardPublicationNavigationBindings,
             @Includes standardSubscriptionNavigationBindings: StandardSubscriptionNavigationBindings,
             @Includes settingsNavigationBindings: SettingsNavigationBindings,
+            @Includes tasksNavigationBindings: TasksNavigationBindings,
         ): AppNavigationGraph
     }
 

@@ -51,6 +51,7 @@ import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
+import com.tunjid.heron.tasks.di.TasksBindings
 import com.tunjid.heron.timeline.di.SheetBindings
 import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import com.tunjid.treenav.compose.PaneEntry
@@ -97,6 +98,7 @@ interface AppGraph {
             @Includes standardPublicationBindings: StandardPublicationBindings,
             @Includes standardSubscriptionBindings: StandardSubscriptionBindings,
             @Includes settingsBindings: SettingsBindings,
+            @Includes tasksBindings: TasksBindings,
             @Includes sheetBindings: SheetBindings,
         ): AppGraph
     }

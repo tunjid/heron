@@ -91,6 +91,7 @@ kotlin {
             implementation(project(":feature:settings"))
             implementation(project(":feature:standard-publication"))
             implementation(project(":feature:standard-subscription"))
+            implementation(project(":feature:tasks"))
             implementation(project(":feature:splash"))
             implementation(project(":ui:media"))
             implementation(project(":ui:timeline"))
