@@ -118,9 +118,36 @@ internal class PersistedWriteQueue @Inject constructor(
     override suspend fun retry(
         failedWrite: FailedWrite,
     ): Status {
-        val status = enqueue(failedWrite.writable)
-        if (status != Status.Dropped) {
-            dismiss(failedWrite)
+        concurrentWriteMutex.withLock {
+            if (failedWrite.writable.queueId in processingWriteIds) return Status.Duplicate
+        }
+        var status: Status = Status.Dropped
+        savedStateDataSource.inCurrentProfileSession {
+            savedStateDataSource.updateWrites {
+                when {
+                    pendingWrites.size >= MaximumPendingWrites -> {
+                        status = Status.Dropped
+                        this
+                    }
+                    pendingWrites.any { failedWrite.writable.queueId == it.queueId } -> {
+                        status = Status.Duplicate
+                        copy(
+                            failedWrites = failedWrites.filterNot {
+                                it.writable.queueId == failedWrite.writable.queueId
+                            },
+                        )
+                    }
+                    else -> {
+                        status = Status.Enqueued
+                        copy(
+                            pendingWrites = pendingWrites + failedWrite.writable,
+                            failedWrites = failedWrites.filterNot {
+                                it.writable.queueId == failedWrite.writable.queueId
+                            },
+                        )
+                    }
+                }
+            }
         }
         return status
     }
