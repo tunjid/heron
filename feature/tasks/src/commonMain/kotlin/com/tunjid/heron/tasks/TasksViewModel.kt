@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
@@ -54,6 +55,7 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.tasks.generated.resources.Res
 import heron.feature.tasks.generated.resources.dismiss_failed
 import kotlin.time.Clock
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -243,8 +245,8 @@ private fun Post.Create.Request.stubPost(
     val photos = metadata.embeddedMedia.filterIsInstance<File.Media.Photo>()
     val video = metadata.embeddedMedia.filterIsInstance<File.Media.Video>().firstOrNull()
     return Post(
-        cid = PostId(""),
-        uri = PostUri(""),
+        cid = PostId(Uuid.random().toString()),
+        uri = PostUri("${author.did.id}/${PostUri.NAMESPACE}/${RecordKey.generate().value}"),
         author = author,
         replyCount = 0,
         repostCount = 0,
@@ -264,7 +266,7 @@ private fun Post.Create.Request.stubPost(
                 },
             )
             video != null -> Video(
-                cid = GenericId(""),
+                cid = GenericId(Uuid.random().toString()),
                 playlist = GenericUri(video.uri.uri),
                 thumbnail = ImageUri(video.uri.uri),
                 alt = video.altText,

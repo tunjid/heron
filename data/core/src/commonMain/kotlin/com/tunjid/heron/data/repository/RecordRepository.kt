@@ -49,6 +49,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 
 interface RecordRepository :
@@ -152,7 +153,8 @@ internal class OfflineFirstRecordRepository @Inject constructor(
     override fun embeddableRecords(
         uris: Set<EmbeddableRecordUri>,
     ): Flow<List<Record.Embeddable>> =
-        savedStateDataSource.singleSessionFlow {
+        if (uris.isEmpty()) flowOf(emptyList())
+        else savedStateDataSource.singleSessionFlow {
             recordResolver.embeddableRecords(
                 uris = uris,
                 viewingProfileId = it,

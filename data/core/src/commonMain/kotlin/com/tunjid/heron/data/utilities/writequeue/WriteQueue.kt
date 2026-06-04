@@ -117,9 +117,12 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override suspend fun retry(
         failedWrite: FailedWrite,
-    ): Status = when (dismiss(failedWrite)) {
-        is Outcome.Failure -> Status.Dropped
-        is Outcome.Success -> enqueue(failedWrite.writable)
+    ): Status {
+        val status = enqueue(failedWrite.writable)
+        if (status != Status.Dropped) {
+            dismiss(failedWrite)
+        }
+        return status
     }
 
     override suspend fun dismiss(
