@@ -31,6 +31,7 @@ import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.navigation.standardSubscriptionsDestination
+import com.tunjid.heron.scaffold.navigation.tasksDestination
 import com.tunjid.heron.scaffold.scaffold.NestedNavigation
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
@@ -44,6 +45,7 @@ import com.tunjid.heron.settings.ui.NotificationSettingsItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.PublicationSubscriptionsItem
 import com.tunjid.heron.settings.ui.SignOutItem
+import com.tunjid.heron.settings.ui.TasksItem
 import com.tunjid.heron.settings.ui.ThreadPreferencesSection
 
 @Composable
@@ -174,6 +176,15 @@ private fun MainSection(
                     ),
             ) {
                 actions(Action.Navigate.To(notificationSettingsDestination()))
+            }
+            TasksItem(
+                modifier = Modifier
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
+            ) {
+                actions(Action.Navigate.To(tasksDestination()))
             }
             PublicationSubscriptionsItem(
                 modifier = Modifier

@@ -1,0 +1,62 @@
+<!--
+  ~    Copyright 2024 Adetunji Dahunsi
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<resources>
+    <string name="tasks">Tasks</string>
+    <string name="in_flight">In flight</string>
+    <string name="failed">Failed</string>
+    <string name="empty_in_flight">All caught up</string>
+    <string name="empty_in_flight_description">Posts, uploads and other changes will appear here while the app syncs them.</string>
+    <string name="empty_failed">Nothing failed</string>
+    <string name="empty_failed_description">Changes that couldn't be saved will show up here so you can retry them.</string>
+    <string name="retry">Retry</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="failed_at">Failed %1$s</string>
+    <string name="failed_reason_io">Couldn't reach storage</string>
+    <string name="dismiss_failed">Couldn't dismiss the task</string>
+
+    <string name="creating_post">Creating a post</string>
+    <string name="post_photo">Photo post</string>
+    <string name="post_video">Video post</string>
+    <string name="liking_post">Liking a post</string>
+    <string name="reposting">Reposting</string>
+    <string name="bookmarking_post">Bookmarking a post</string>
+    <string name="removing_like">Removing a like</string>
+    <string name="removing_repost">Removing a repost</string>
+    <string name="removing_bookmark">Removing a bookmark</string>
+    <string name="updating_reply_settings">Updating who can reply</string>
+    <string name="sending_message">Sending a message</string>
+    <string name="reacting_with">Reacting with %1$s</string>
+    <string name="removing_reaction">Removing reaction %1$s</string>
+    <string name="following_profile">Following a profile</string>
+    <string name="unfollowing_profile">Unfollowing a profile</string>
+    <string name="adding_to_list">Adding to a list</string>
+    <string name="subscribing_publication">Subscribing to a publication</string>
+    <string name="blocking_profile">Blocking a profile</string>
+    <string name="unblocking_profile">Unblocking a profile</string>
+    <string name="muting_profile">Muting a profile</string>
+    <string name="unmuting_profile">Unmuting a profile</string>
+    <string name="updating_status">Updating your status</string>
+    <string name="updating_feed_settings">Updating feed settings</string>
+    <string name="updating_profile">Updating your profile</string>
+    <string name="updating_notification_preferences">Updating notification preferences</string>
+    <string name="deleting_record">Deleting a record</string>
+
+    <string name="media_photos_single">%1$d photo</string>
+    <string name="media_photos_multiple">%1$d photos</string>
+    <string name="media_videos_single">%1$d video</string>
+    <string name="media_videos_multiple">%1$d videos</string>
+</resources>

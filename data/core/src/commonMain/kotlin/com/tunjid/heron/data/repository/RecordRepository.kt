@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -58,6 +59,10 @@ interface RecordRepository :
     fun embeddableRecord(
         uri: EmbeddableRecordUri,
     ): Flow<Record.Embeddable>
+
+    fun embeddableRecords(
+        uris: Set<EmbeddableRecordUri>,
+    ): Flow<List<Record.Embeddable>>
 
     suspend fun deleteRecord(
         uri: RecordUri,
@@ -143,6 +148,16 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                 recordResolver.resolve(uri)
             }
             .flowOn(ioDispatcher)
+
+    override fun embeddableRecords(
+        uris: Set<EmbeddableRecordUri>,
+    ): Flow<List<Record.Embeddable>> =
+        savedStateDataSource.singleSessionFlow {
+            recordResolver.embeddableRecords(
+                uris = uris,
+                viewingProfileId = it,
+            )
+        }
 
     override suspend fun deleteRecord(
         uri: RecordUri,

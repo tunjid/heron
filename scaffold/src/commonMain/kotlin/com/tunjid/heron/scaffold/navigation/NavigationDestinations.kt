@@ -156,6 +156,11 @@ fun notificationSettingsDestination(): NavigationAction.Destination = pathDestin
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
+fun tasksDestination(): NavigationAction.Destination = pathDestination(
+    path = "/tasks",
+    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+)
+
 fun moderationDestination(): NavigationAction.Destination = pathDestination(
     path = "/moderation",
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,

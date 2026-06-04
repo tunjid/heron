@@ -85,6 +85,7 @@ include(
     ":feature:settings",
     ":feature:standard-publication",
     ":feature:standard-subscription",
+    ":feature:tasks",
     ":feature:template",
     ":ui:core",
     ":ui:media",

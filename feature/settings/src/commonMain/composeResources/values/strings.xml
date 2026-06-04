@@ -35,6 +35,7 @@
     <string name="content_and_media">Content and media</string>
     <string name="refresh_timelines_on_launch">Refresh timelines on launch</string>
     <string name="moderation">Moderation</string>
+    <string name="tasks">Tasks</string>
     <string name="publication_subscriptions">Publication subscriptions</string>
     <string name="appearance">Appearance</string>
     <string name="theme">Theme</string>
