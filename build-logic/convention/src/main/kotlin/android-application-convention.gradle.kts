@@ -23,7 +23,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         // The app uses Modifier.blur which is Android 12 and up

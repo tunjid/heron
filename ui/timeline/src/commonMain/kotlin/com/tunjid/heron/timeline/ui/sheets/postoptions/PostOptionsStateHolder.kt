@@ -1,5 +1,6 @@
 package com.tunjid.heron.timeline.ui.sheets.postoptions
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.ProfileId
@@ -7,22 +8,20 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
-typealias PostOptionsStateHolder = ActionStateMutator<PostOptionsAction, StateFlow<PostOptionsState>>
+typealias PostOptionsStateHolder = ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>
 
 @AssistedFactory
 fun interface PostOptionsViewModelInitializer {
@@ -37,44 +36,49 @@ class PostOptionsViewModel(
     messageRepository: MessageRepository,
     @Assisted scope: CoroutineScope,
 ) : ViewModel(viewModelScope = scope),
-    PostOptionsStateHolder by scope.actionStateFlowMutator(
-        initialState = PostOptionsState(),
+    PostOptionsStateHolder by scope.actionSuspendingStateMutator(
+        state = PostOptionsState.Immutable().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        inputs = listOf(
-            loadSignedInProfileMutations(
+        producer = { state, _ ->
+            launchLoadSignedInProfileMutations(
+                state = state,
                 authRepository = authRepository,
-            ),
-        ),
-        actionTransform = { actions ->
-            actions.toMutationStream(keySelector = PostOptionsAction::key) {
-                when (val action = type()) {
-                    is PostOptionsAction.UpdateRecentConversations -> action.flow.updateRecentConversionsMutations(
-                        messageRepository = messageRepository,
-                    )
-                }
-            }
+            )
+            launchUpdateRecentConversionsMutations(
+                state = state,
+                messageRepository = messageRepository,
+            )
         },
     )
 
-private fun loadSignedInProfileMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadSignedInProfileMutations(
+    state: PostOptionsState.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<PostOptionsState>> =
-    authRepository.signedInUser
-        .distinctUntilChanged()
-        .mapToMutation { copy(signedInProfileId = it?.did) }
+) = authRepository.signedInUser
+    .distinctUntilChanged()
+    .launchAndCollect {
+        state.signedInProfileId = it?.did
+    }
 
-private fun Flow<PostOptionsAction.UpdateRecentConversations>.updateRecentConversionsMutations(
+context(productionScope: CoroutineScope)
+private fun launchUpdateRecentConversionsMutations(
+    state: PostOptionsState.SnapshotMutable,
     messageRepository: MessageRepository,
-): Flow<Mutation<PostOptionsState>> =
-    messageRepository.recentConversations()
-        .mapToMutation { copy(recentConversations = it) }
+) = messageRepository.recentConversations()
+    .launchAndCollect {
+        state.recentConversations = it
+    }
 
-@Serializable
-data class PostOptionsState(
-    val signedInProfileId: ProfileId? = null,
-    val recentConversations: List<Conversation> = emptyList(),
-)
-
-sealed class PostOptionsAction(val key: String) {
-    data object UpdateRecentConversations : PostOptionsAction(key = "PostOptionsAction")
+@Stable
+@Snapshottable
+interface PostOptionsState {
+    @SnapshotSpec
+    @Serializable
+    data class Immutable(
+        val signedInProfileId: ProfileId? = null,
+        val recentConversations: List<Conversation> = emptyList(),
+    ) : PostOptionsState
 }
+
+sealed class PostOptionsAction(val key: String)

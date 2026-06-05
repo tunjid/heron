@@ -12,8 +12,6 @@ import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,12 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.ViewModelStoreProvider
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostUri
@@ -42,13 +34,13 @@ import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceState
 import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
@@ -64,6 +56,7 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 class PostOptionsSheetState(
     scope: BottomSheetScope,
+    internal val viewModel: PostOptionsViewModel,
 ) : BottomSheetState(scope) {
 
     var currentPost: Post? by mutableStateOf(null)
@@ -84,17 +77,13 @@ class PostOptionsSheetState(
             initializer: PostOptionsViewModelInitializer,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
-            val state = rememberBottomSheetState {
-                PostOptionsSheetState(
-                    scope = it,
-                )
-            }
-            val storeProvider = rememberViewModelStoreProvider()
+            val state = rememberBottomSheetState(
+                viewModelInitializer = initializer::invoke,
+                block = ::PostOptionsSheetState,
+            )
 
             PostOptionsBottomSheet(
                 state = state,
-                storeProvider = storeProvider,
-                initializer = initializer,
                 onOptionClicked = onOptionClicked,
             )
 
@@ -106,95 +95,53 @@ class PostOptionsSheetState(
 @Composable
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
-    storeProvider: ViewModelStoreProvider,
-    initializer: PostOptionsViewModelInitializer,
     onOptionClicked: (PostOption) -> Unit,
 ) {
     state.ModalBottomSheet {
-        val storeOwner = rememberViewModelStoreOwner(provider = storeProvider)
-        CompositionLocalProvider(LocalViewModelStoreOwner provides storeOwner) {
-            PostOptionsSheet(
-                sheetState = state,
-                initializer = initializer,
-                onOptionClicked = onOptionClicked,
-            )
-        }
-    }
-}
+        val postOptionsState = state.viewModel.produceState()
 
-@Composable
-private fun PostOptionsSheet(
-    sheetState: PostOptionsSheetState,
-    initializer: PostOptionsViewModelInitializer,
-    onOptionClicked: (PostOption) -> Unit,
-) {
-    val stateHolder: PostOptionsStateHolder = viewModel<PostOptionsViewModel> {
-        initializer.invoke(
-            scope = viewModelCoroutineScope(),
-        )
-    }
-
-    LaunchedEffect(stateHolder) {
-        stateHolder.accept(PostOptionsAction.UpdateRecentConversations)
-    }
-
-    val state by stateHolder.state.collectAsStateWithLifecycle()
-    val signedInProfileId = state.signedInProfileId ?: return
-
-    PostOptionsContent(
-        sheetState = sheetState,
-        signedInProfileId = signedInProfileId,
-        recentConversations = state.recentConversations,
-        onOptionClicked = onOptionClicked,
-    )
-}
-
-@Composable
-private fun PostOptionsContent(
-    sheetState: PostOptionsSheetState,
-    signedInProfileId: ProfileId,
-    recentConversations: List<Conversation>,
-    onOptionClicked: (PostOption) -> Unit,
-) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        SendDirectMessageCard(
-            signedInProfileId = signedInProfileId,
-            recentConversations = recentConversations,
-            onConversationClicked = { conversation ->
-                val currentPost = sheetState.currentPost
-                if (currentPost != null) {
-                    onOptionClicked(
-                        PostOption.ShareInConversation(
-                            post = currentPost,
-                            conversation = conversation,
-                        ),
-                    )
-                }
-                sheetState.hide()
-            },
-        )
-        sheetState.currentPost?.let { post ->
-            val isOwnPost = post.author.did == signedInProfileId
-
-            CopyToClipboardCard(post.uri.shareUri())
-
-            if (!isOwnPost) PostModerationMenuSection(
+        val signedInProfileId = postOptionsState.signedInProfileId
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (signedInProfileId != null) SendDirectMessageCard(
                 signedInProfileId = signedInProfileId,
-                post = post,
-                onOptionClicked = { option ->
-                    sheetState.hide()
-                    onOptionClicked(option)
+                recentConversations = postOptionsState.recentConversations,
+                onConversationClicked = { conversation ->
+                    val currentPost = state.currentPost
+                    if (currentPost != null) {
+                        onOptionClicked(
+                            PostOption.ShareInConversation(
+                                post = currentPost,
+                                conversation = conversation,
+                            ),
+                        )
+                    }
+                    state.hide()
                 },
             )
+            state.currentPost?.let { post ->
+                val isOwnPost = post.author.did == signedInProfileId
 
-            if (isOwnPost) PostManagementMenuSection(
-                state = sheetState,
-                post = post,
-                onOptionClicked = onOptionClicked,
-            )
+                CopyToClipboardCard(post.uri.shareUri())
+
+                if (signedInProfileId != null && !isOwnPost) PostModerationMenuSection(
+                    signedInProfileId = signedInProfileId,
+                    post = post,
+                    onOptionClicked = { option ->
+                        state.hide()
+                        onOptionClicked(option)
+                    },
+                )
+
+                if (isOwnPost) PostManagementMenuSection(
+                    state = state,
+                    post = post,
+                    onOptionClicked = onOptionClicked,
+                )
+            }
         }
     }
 }
