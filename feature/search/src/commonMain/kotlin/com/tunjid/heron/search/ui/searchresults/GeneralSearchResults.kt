@@ -207,7 +207,6 @@ internal fun GeneralSearchResults(
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             recentLists = state.recentLists,
-                            recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
                             onRequestRecentLists = onRequestRecentLists,

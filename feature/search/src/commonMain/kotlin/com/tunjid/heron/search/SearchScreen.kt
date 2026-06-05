@@ -255,9 +255,7 @@ internal fun SearchScreen(
                 onRequestRecentLists = {
                     actions(Action.UpdateRecentLists)
                 },
-                onRequestRecentConversations = {
-                    actions(Action.UpdateRecentConversations)
-                },
+                onRequestRecentConversations = {},
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,
                 onLinkTargetClicked = onLinkTargetClicked,
