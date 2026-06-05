@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.list.Action
@@ -366,7 +367,6 @@ class ListBindings(
                                     state.timelineState?.timeline?.uri
                                         ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
-                                            stateHolder.accept(Action.UpdateRecentConversations)
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
                                 },

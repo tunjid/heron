@@ -74,11 +74,11 @@ interface State {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
         val stateHolders: List<ListScreenStateHolders> = emptyList(),
         @Transient
         val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val isOnProfilesTab: Boolean = false,
         @Transient

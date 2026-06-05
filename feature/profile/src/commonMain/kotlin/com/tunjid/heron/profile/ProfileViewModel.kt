@@ -39,13 +39,11 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -99,7 +97,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualProfileViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
-    messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -201,10 +198,6 @@ class ActualProfileViewModel(
                     is Action.PageChanged -> action.flow.collect { event ->
                         state.currentPage = event.page
                     }
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
                     is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
@@ -225,16 +218,6 @@ class ActualProfileViewModel(
             }
         },
     )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(

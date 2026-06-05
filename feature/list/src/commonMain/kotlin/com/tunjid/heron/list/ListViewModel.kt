@@ -159,7 +159,7 @@ class ActualListViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
+                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationsMutations(
                         state = state,
                         messageRepository = messageRepository,
                     )
@@ -194,16 +194,6 @@ private fun launchSignedInProfileIdMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
 }
 
 context(productionScope: CoroutineScope)
@@ -497,6 +487,16 @@ private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
 ) = launchAndCollectLatest {
     recordRepository.recentLists.collect { lists ->
         state.recentLists = lists
+    }
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationsMutations(
+    state: State.SnapshotMutable,
+    messageRepository: MessageRepository,
+) = launchAndCollectLatest {
+    messageRepository.recentConversations().collect { conversations ->
+        state.recentConversations = conversations
     }
 }
 

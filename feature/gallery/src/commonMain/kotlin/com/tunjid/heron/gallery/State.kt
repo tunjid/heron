@@ -19,7 +19,6 @@ package com.tunjid.heron.gallery
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
@@ -81,8 +80,6 @@ interface State {
         val order: TimelineItem.Threaded.Order? = null,
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
         @Transient
@@ -243,8 +240,6 @@ sealed class Action(val key: String) {
         val following: FollowUri?,
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

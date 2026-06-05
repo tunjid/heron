@@ -62,9 +62,9 @@ interface State {
         @Transient
         val signedInProfileId: ProfileId? = null,
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
         val recentLists: List<FeedList> = emptyList(),
+        @Transient
+        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val timelineStateHolder: TimelineStateHolder? = null,
         @Transient
