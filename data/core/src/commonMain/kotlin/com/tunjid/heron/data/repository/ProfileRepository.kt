@@ -250,24 +250,16 @@ internal class OfflineProfileRepository @Inject constructor(
                             async {
                                 val nsids = AtmosphereAppNsids[app.id].orEmpty()
                                 val hasAny = nsids.any { nsid ->
-                                    runCatching {
-                                        networkService.runCatchingWithMonitoredNetworkRetry {
-                                            listRecords(
-                                                ListRecordsQueryParams(
-                                                    repo = profileDid.let(::Did),
-                                                    collection = Nsid(nsid),
-                                                    limit = 1,
-                                                ),
-                                            )
-                                        }
-                                            .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
-                                            .getOrElse { false }
-                                    }
-                                        .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-                                        .getOrElse {
-                                            false
-                                        }
-                                }
+                                    networkService.runCatchingWithMonitoredNetworkRetry {
+                                        listRecords(
+                                            ListRecordsQueryParams(
+                                                repo = profileDid.let(::Did),
+                                                collection = Nsid(nsid),
+                                                limit = 1,
+                                            ),
+                                        )
+                                        .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
+                                        .getOrElse { false }
                                 app.id.takeIf { hasAny }
                             }
                         }
