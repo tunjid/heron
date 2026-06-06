@@ -51,8 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.AnimatedVerticallySlidingContent
+import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import heron.ui.core.generated.resources.close

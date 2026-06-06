@@ -2,9 +2,11 @@ package com.tunjid.heron.scaffold.identity
 
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
+import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
@@ -22,6 +24,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
@@ -32,6 +37,7 @@ class AppIdentityStateHolder(
     appMainScope: CoroutineScope,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
+    networkMonitor: NetworkMonitor,
     writeQueue: WriteQueue,
     databaseCleanup: DatabaseCleanup,
 ) : IdentityStateHolder,
@@ -39,15 +45,19 @@ class AppIdentityStateHolder(
         state = IdentityState.Immutable().toSnapshotMutable(),
         started = SharingStarted.Eagerly,
         producer = { state, actions ->
-            authRepository.signedInUser.launchAndCollect(
-                state::signedInProfile::set,
-            )
-            authRepository.pastSessions.launchAndCollect(
-                state::pastSessions::set,
-            )
-            userDataRepository.preferences.launchAndCollect(
-                state::preferences::set,
-            )
+            authRepository.signedInUser
+                .launchAndCollect(state::signedInProfile::set)
+            authRepository.pastSessions
+                .launchAndCollect(state::pastSessions::set)
+            userDataRepository.preferences
+                .launchAndCollect(state::preferences::set)
+            networkMonitor.isConnected
+                .launchAndCollect(state::isConnected::set)
+            writeQueue.failedWrites
+                .map(List<FailedWrite>::lastOrNull)
+                .distinctUntilChanged()
+                .drop(1)
+                .launchAndCollect(state::lastFailedWrite::set)
             launch {
                 writeQueue.drain()
             }

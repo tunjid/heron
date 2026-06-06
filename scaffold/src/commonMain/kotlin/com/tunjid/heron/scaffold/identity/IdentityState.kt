@@ -4,9 +4,11 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
+import kotlinx.serialization.Transient
 
 sealed class IdentityAction(
     val key: String,
@@ -42,8 +44,10 @@ interface IdentityState {
 
     @SnapshotSpec
     data class Immutable(
+        val isConnected: Boolean = true,
         val signedInProfile: Profile? = null,
         val preferences: Preferences? = null,
+        val lastFailedWrite: FailedWrite? = null,
         val switchStatus: SwitchStatus = SwitchStatus.Stable.Idle,
         val pastSessions: List<SessionSummary> = emptyList(),
     ) : IdentityState
