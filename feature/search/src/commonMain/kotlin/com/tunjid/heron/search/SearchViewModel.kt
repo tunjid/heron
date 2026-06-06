@@ -565,7 +565,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
             ),
         ),
     )
-    if (query.isNotBlank()) {
+    if (query.isBlank()) {
         add(
             SearchState.OfProfiles(
                 tilingData = TilingState.Data(
