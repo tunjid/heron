@@ -23,13 +23,11 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -73,7 +71,6 @@ class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     recordRepository: RecordRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
@@ -139,10 +136,6 @@ class ActualFeedViewModel(
                     is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationsMutations(
-                        state = state,
-                        messageRepository = messageRepository,
                     )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
@@ -312,16 +305,6 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
     state.messages -= event.message
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationsMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
 }
 
 context(productionScope: CoroutineScope)

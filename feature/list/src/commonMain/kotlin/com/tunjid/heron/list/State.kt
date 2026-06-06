@@ -17,7 +17,6 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -77,8 +76,6 @@ interface State {
         val stateHolders: List<ListScreenStateHolders> = emptyList(),
         @Transient
         val recentLists: List<FeedList> = emptyList(),
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val isOnProfilesTab: Boolean = false,
         @Transient
@@ -265,8 +262,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

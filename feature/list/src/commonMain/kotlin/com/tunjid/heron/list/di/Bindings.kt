@@ -42,7 +42,6 @@ import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.list.Action
@@ -299,7 +298,7 @@ class ListBindings(
                 topBar = {
                     val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                         signedInProfileId = state.signedInProfileId,
-                        recentConversations = state.recentConversations,
+                        recentConversations = emptyList(),
                         editTitle = null,
                         onEditClicked = {},
                         onShareInConversationClicked = { recordUri, conversation ->

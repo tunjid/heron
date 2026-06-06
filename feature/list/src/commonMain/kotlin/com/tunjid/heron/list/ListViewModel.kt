@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
@@ -36,7 +35,6 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -85,7 +83,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualListViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
-    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
@@ -158,10 +155,6 @@ class ActualListViewModel(
                     is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationsMutations(
-                        state = state,
-                        messageRepository = messageRepository,
                     )
                     is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
@@ -487,16 +480,6 @@ private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
 ) = launchAndCollectLatest {
     recordRepository.recentLists.collect { lists ->
         state.recentLists = lists
-    }
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationsMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
     }
 }
 
