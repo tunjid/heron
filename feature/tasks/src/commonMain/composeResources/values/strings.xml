@@ -28,33 +28,6 @@
     <string name="failed_reason_io">Couldn't reach storage</string>
     <string name="dismiss_failed">Couldn't dismiss the task</string>
 
-    <string name="creating_post">Creating a post</string>
-    <string name="post_photo">Photo post</string>
-    <string name="post_video">Video post</string>
-    <string name="liking_post">Liking a post</string>
-    <string name="reposting">Reposting</string>
-    <string name="bookmarking_post">Bookmarking a post</string>
-    <string name="removing_like">Removing a like</string>
-    <string name="removing_repost">Removing a repost</string>
-    <string name="removing_bookmark">Removing a bookmark</string>
-    <string name="updating_reply_settings">Updating who can reply</string>
-    <string name="sending_message">Sending a message</string>
-    <string name="reacting_with">Reacting with %1$s</string>
-    <string name="removing_reaction">Removing reaction %1$s</string>
-    <string name="following_profile">Following a profile</string>
-    <string name="unfollowing_profile">Unfollowing a profile</string>
-    <string name="adding_to_list">Adding to a list</string>
-    <string name="subscribing_publication">Subscribing to a publication</string>
-    <string name="blocking_profile">Blocking a profile</string>
-    <string name="unblocking_profile">Unblocking a profile</string>
-    <string name="muting_profile">Muting a profile</string>
-    <string name="unmuting_profile">Unmuting a profile</string>
-    <string name="updating_status">Updating your status</string>
-    <string name="updating_feed_settings">Updating feed settings</string>
-    <string name="updating_profile">Updating your profile</string>
-    <string name="updating_notification_preferences">Updating notification preferences</string>
-    <string name="deleting_record">Deleting a record</string>
-
     <string name="media_photos_single">%1$d photo</string>
     <string name="media_photos_multiple">%1$d photos</string>
     <string name="media_videos_single">%1$d video</string>
