@@ -19,7 +19,7 @@ fun <T> AnimatedVerticallySlidingContent(
         modifier = modifier,
         targetState = targetState,
         transitionSpec = {
-            TitleTransform
+            ContentTransform
         },
     ) { currentState ->
         content(currentState)
@@ -29,7 +29,7 @@ fun <T> AnimatedVerticallySlidingContent(
 private const val TransitionDurationMillis = 600
 private val TransitionAnimationSpec = tween<IntOffset>(TransitionDurationMillis)
 
-private val TitleTransform = slideInVertically(
+private val ContentTransform = slideInVertically(
     animationSpec = TransitionAnimationSpec,
     initialOffsetY = { it },
 ) togetherWith slideOutVertically(
