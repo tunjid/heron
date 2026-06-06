@@ -22,34 +22,54 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -72,6 +92,7 @@ import com.tunjid.heron.scaffold.identity.IdentityAction
 import com.tunjid.heron.scaffold.identity.IdentityState
 import com.tunjid.heron.scaffold.identity.isStable
 import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
+import com.tunjid.heron.timeline.utilities.describe
 import com.tunjid.heron.ui.AnimatedVerticallySlidingContent
 import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
@@ -84,11 +105,17 @@ import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
+import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.scaffold.generated.resources.Res
+import heron.scaffold.generated.resources.close
+import heron.scaffold.generated.resources.failed_write_title
+import heron.scaffold.generated.resources.failed_write_view_details
 import heron.scaffold.generated.resources.identity_account_add
 import heron.scaffold.generated.resources.identity_account_switch_reauth
 import heron.scaffold.generated.resources.identity_account_switching
+import heron.scaffold.generated.resources.offline_description
+import heron.scaffold.generated.resources.offline_title
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -122,25 +149,27 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            AppLogo(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .then(
-                        if (onLogoClicked != null && appState.identityState.isStable) {
-                            Modifier.shapedClickable(
-                                CircleShape,
-                                onClick = onLogoClicked,
-                            )
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .padding(4.dp)
-                    .size(UiTokens.avatarSize),
-                presentation = LogoPresentation.Destination.Root(
-                    blurProgress = transparencyFactor,
-                ),
-            )
+            NavigationIconBox {
+                AppLogo(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .then(
+                            if (onLogoClicked != null && appState.identityState.isStable) {
+                                Modifier.shapedClickable(
+                                    CircleShape,
+                                    onClick = onLogoClicked,
+                                )
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .padding(4.dp)
+                        .size(UiTokens.avatarSize),
+                    presentation = LogoPresentation.Destination.Root(
+                        blurProgress = transparencyFactor,
+                    ),
+                )
+            }
         },
         title = {
             AnimatedVerticallySlidingContent(
@@ -261,14 +290,16 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            AppLogo(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onBackPressed)
-                    .size(UiTokens.avatarSize),
-                presentation = LogoPresentation.Destination.Poppable,
-            )
+            NavigationIconBox {
+                AppLogo(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onBackPressed)
+                        .size(UiTokens.avatarSize),
+                    presentation = LogoPresentation.Destination.Poppable,
+                )
+            }
         },
         title = {
             Box(
@@ -409,6 +440,194 @@ private fun PaneScaffoldState.SessionAvatar(
     }
 }
 
+@Composable
+private fun PaneScaffoldState.OfflineIcon(
+    modifier: Modifier = Modifier,
+) {
+    NavigationIconPopoverButton(
+        modifier = modifier,
+        icon = Icons.Rounded.CloudOff,
+        popOverContent = { onClose ->
+            BadgePopover(
+                title = stringResource(Res.string.offline_title),
+                onClose = onClose,
+            ) {
+                Text(
+                    text = stringResource(Res.string.offline_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun PaneScaffoldState.FailedWriteIcon(
+    modifier: Modifier = Modifier,
+) {
+    val appState = LocalAppState.current
+    val failedWrite = appState.identityState.lastFailedWrite ?: return
+    val description = remember(failedWrite) { failedWrite.writable.describe() }
+    NavigationIconPopoverButton(
+        modifier = modifier,
+        icon = Icons.Rounded.PriorityHigh,
+        popOverContent = { onClose ->
+            BadgePopover(
+                title = stringResource(Res.string.failed_write_title),
+                onClose = onClose,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = description.icon,
+                        contentDescription = null,
+                    )
+                    Text(
+                        text = description.title.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                description.summary?.let { summary ->
+                    Text(
+                        text = summary.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FilledTonalButton(
+                    onClick = {
+                        onClose()
+                        appState.onNavigateToTasks()
+                    },
+                ) {
+                    Text(text = stringResource(Res.string.failed_write_view_details))
+                }
+            }
+            DisposableEffect(Unit) {
+                onDispose { appState.onIdentityAction(IdentityAction.ClearFailedWrite) }
+            }
+        },
+    )
+}
+
+@Composable
+private fun PaneScaffoldState.NavigationIconBox(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        content()
+
+        val identityState = LocalAppState.current.identityState
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd),
+        ) {
+            when {
+                !identityState.isConnected -> OfflineIcon()
+                identityState.lastFailedWrite != null -> FailedWriteIcon()
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaneScaffoldState.NavigationIconPopoverButton(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    popOverContent: @Composable (onClose: () -> Unit) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        ElevatedCard(
+            modifier = Modifier
+                .renderInSharedTransitionScopeOverlay(
+                    zIndexInOverlay = UiTokens.navigationIconZIndex,
+                )
+                .offset(
+                    x = 12.dp,
+                    y = -(12).dp,
+                ),
+            shape = CircleShape,
+            onClick = {
+                expanded = true
+            },
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
+            content = {
+                Box(
+                    modifier = modifier
+                        .size(20.dp),
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(16.dp),
+                        imageVector = icon,
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+        DropdownMenu(
+            expanded = expanded,
+            shape = PopOverShape,
+            onDismissRequest = { expanded = false },
+        ) {
+            popOverContent { expanded = false }
+        }
+    }
+}
+
+@Composable
+private fun BadgePopover(
+    title: String,
+    onClose: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .padding(all = 16.dp)
+            .widthIn(max = 280.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        content = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    modifier = Modifier
+                        .weight(1f),
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                FilledTonalIconButton(
+                    onClick = onClose,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(Res.string.close),
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .padding(end = 48.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                content = content,
+            )
+        },
+    )
+}
+
 @Suppress("UnusedReceiverParameter")
 fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
 
@@ -452,5 +671,6 @@ private fun Modifier.appbarAnimatedBounds(): Modifier =
         boundsTransform = paneScaffoldState.childBoundsTransform,
     )
 
+private val PopOverShape = RoundedCornerShape(16.dp)
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f

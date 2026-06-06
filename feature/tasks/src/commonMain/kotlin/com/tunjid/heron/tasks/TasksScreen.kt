@@ -59,7 +59,9 @@ internal fun TasksScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pagerState = rememberPagerState { 2 }
+    val pagerState = rememberPagerState(
+        initialPage = state.initialPage,
+    ) { 2 }
     val scope = rememberCoroutineScope()
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
 

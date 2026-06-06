@@ -19,10 +19,12 @@ package com.tunjid.heron.tasks
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.tasks.di.showFailedWrites
 import com.tunjid.heron.tasks.ui.TaskItem
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
+import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -33,6 +35,7 @@ interface State {
     @Serializable
     @SnapshotSpec
     data class Immutable(
+        val initialPage: Int = 0,
         @Transient
         val inFlight: List<TaskItem.InFlight> = emptyList(),
         @Transient
@@ -42,7 +45,11 @@ interface State {
     ) : State
 
     companion object {
-        operator fun invoke(): Immutable = Immutable()
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            initialPage = if (route.showFailedWrites) 1 else 0,
+        )
     }
 }
 

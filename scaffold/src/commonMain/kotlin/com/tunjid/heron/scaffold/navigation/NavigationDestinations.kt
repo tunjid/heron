@@ -156,8 +156,13 @@ fun notificationSettingsDestination(): NavigationAction.Destination = pathDestin
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
-fun tasksDestination(): NavigationAction.Destination = pathDestination(
+fun tasksDestination(
+    showFailedWrites: Boolean = false,
+): NavigationAction.Destination = pathDestination(
     path = "/tasks",
+    miscQueryParams = mapOf(
+        "showFailedWrites" to listOf(showFailedWrites.toString()),
+    ),
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
