@@ -94,7 +94,6 @@ internal fun PostSearchResults(
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onRequestRecentLists: () -> Unit,
-    onRequestRecentConversations: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
