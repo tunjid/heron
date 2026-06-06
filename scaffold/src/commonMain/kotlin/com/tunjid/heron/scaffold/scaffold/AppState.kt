@@ -55,6 +55,7 @@ import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.navigation.tasksDestination
 import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
@@ -224,6 +225,11 @@ class AppState(
         navigationStateHolder.accept {
             navState.pop()
         }
+
+    internal fun onNavigateToTasks() =
+        navigationStateHolder.accept(
+            tasksDestination(showFailedWrites = true).navigationMutation,
+        )
 
     internal fun addAccount() {
         identityStateHolder.accept(

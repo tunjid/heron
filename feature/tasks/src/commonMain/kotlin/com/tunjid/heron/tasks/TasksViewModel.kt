@@ -84,11 +84,11 @@ class ActualTasksViewModel(
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("unused") @Assisted
+    @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     TasksStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         producer = { state, actions ->
             launchLoadInFlightWrites(

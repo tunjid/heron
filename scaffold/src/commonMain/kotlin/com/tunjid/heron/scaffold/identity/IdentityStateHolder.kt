@@ -79,6 +79,9 @@ class AppIdentityStateHolder(
                         state = state,
                         authRepository = authRepository,
                     )
+                    is IdentityAction.ClearFailedWrite -> action.flow.launchClearFailedWriteMutations(
+                        state = state,
+                    )
                 }
             }
         },
@@ -130,3 +133,10 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
                 }
         }
     }
+
+context(productionScope: CoroutineScope)
+private fun Flow<IdentityAction.ClearFailedWrite>.launchClearFailedWriteMutations(
+    state: IdentityState.SnapshotMutable,
+) = launchAndCollect {
+    state.lastFailedWrite = null
+}

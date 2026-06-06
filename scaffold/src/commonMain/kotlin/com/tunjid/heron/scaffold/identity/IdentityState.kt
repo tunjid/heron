@@ -1,13 +1,18 @@
 package com.tunjid.heron.scaffold.identity
 
 import androidx.compose.runtime.Stable
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
+import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
+import kotlin.time.Clock
 import kotlinx.serialization.Transient
 
 sealed class IdentityAction(
@@ -23,6 +28,10 @@ sealed class IdentityAction(
             val summary: SessionSummary,
         ) : Switch()
     }
+
+    data object ClearFailedWrite : IdentityAction(
+        key = "ClearFailedWrite",
+    )
 }
 
 @Stable

@@ -53,6 +53,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -73,6 +74,11 @@ private fun createRoute(
     children = listOfNotNull(
         routeParams.decodeReferringRoute(),
     ),
+)
+
+internal val Route.showFailedWrites by mappedRouteQuery(
+    default = false,
+    mapper = String::toBoolean,
 )
 
 @BindingContainer
