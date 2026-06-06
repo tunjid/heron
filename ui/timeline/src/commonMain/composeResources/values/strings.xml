@@ -182,11 +182,6 @@
     <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
     <string name="writable_description_deleting_record">Deleting a record</string>
 
-    <string name="writable_description_media_photos_single">%1$d photo</string>
-    <string name="writable_description_media_photos_multiple">%1$d photos</string>
-    <string name="writable_description_media_videos_single">%1$d video</string>
-    <string name="writable_description_media_videos_multiple">%1$d videos</string>
-
     <string name="empty_timeline_thread">There are no replies to this post.</string>
     <string name="empty_timeline_thread_description">Join the conversation by adding a post of your own.</string>
     <string name="empty_timeline_generic">This feed is empty</string>
