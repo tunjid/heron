@@ -74,10 +74,10 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.ScrimmedContent
 import com.tunjid.heron.ui.isPrimaryOrActive

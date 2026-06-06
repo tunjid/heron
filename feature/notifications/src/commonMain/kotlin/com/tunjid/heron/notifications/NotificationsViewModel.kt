@@ -20,12 +20,9 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -67,7 +64,6 @@ class ActualNotificationsViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     notificationsRepository: NotificationsRepository,
     userDataRepository: UserDataRepository,
     @Assisted
@@ -124,10 +120,6 @@ class ActualNotificationsViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -143,16 +135,6 @@ private fun launchLoadProfileMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect {
     state.signedInProfile = it
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
 }
 
 context(productionScope: CoroutineScope)

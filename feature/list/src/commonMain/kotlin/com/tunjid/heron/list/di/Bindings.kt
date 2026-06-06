@@ -298,7 +298,7 @@ class ListBindings(
                 topBar = {
                     val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                         signedInProfileId = state.signedInProfileId,
-                        recentConversations = state.recentConversations,
+                        recentConversations = emptyList(),
                         editTitle = null,
                         onEditClicked = {},
                         onShareInConversationClicked = { recordUri, conversation ->
@@ -366,7 +366,6 @@ class ListBindings(
                                     state.timelineState?.timeline?.uri
                                         ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
-                                            stateHolder.accept(Action.UpdateRecentConversations)
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
                                 },

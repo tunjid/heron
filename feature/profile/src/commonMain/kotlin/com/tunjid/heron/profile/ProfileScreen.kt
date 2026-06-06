@@ -140,6 +140,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
+import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
@@ -153,8 +154,6 @@ import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -163,6 +162,8 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.record.RecordList
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
@@ -584,7 +585,6 @@ internal fun ProfileScreen(
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
                                 recentLists = state.recentLists,
-                                recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
@@ -1318,7 +1318,6 @@ private fun ProfileTimeline(
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
     recentLists: List<FeedList>,
-    recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
@@ -1383,10 +1382,7 @@ private fun ProfileTimeline(
             }
         },
     )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = signedInProfileId,
-        recentConversations = recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
+    val postOptionsSheetState = paneScaffoldState.rememberPostOptionsSheetState(
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->

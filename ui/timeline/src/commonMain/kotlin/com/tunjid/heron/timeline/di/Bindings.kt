@@ -18,6 +18,7 @@ package com.tunjid.heron.timeline.di
 
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.timeline.ui.sheets.mutedwords.MutedWordsViewModelInitializer
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsViewModelInitializer
 import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -29,8 +30,10 @@ class SheetBindings(
 ) {
     @Provides
     fun provideSheetInitializers(
-        viewModelInitializer: MutedWordsViewModelInitializer,
+        mutedWordsViewModelInitializer: MutedWordsViewModelInitializer,
+        postOptionsViewModelInitializer: PostOptionsViewModelInitializer,
     ): SheetsViewModelInitializers = SheetsViewModelInitializers(
-        mutedWordsViewModelInitializer = viewModelInitializer,
+        mutedWordsViewModelInitializer = mutedWordsViewModelInitializer,
+        postOptionsViewModelInitializer = postOptionsViewModelInitializer,
     )
 }

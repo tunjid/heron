@@ -27,13 +27,11 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -83,7 +81,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     userDataRepository: UserDataRepository,
@@ -156,10 +153,6 @@ class ActualGalleryViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -199,7 +192,7 @@ private suspend fun launchLoadPostMutations(
 
     postRepository.post(postUri).launchAndCollectLatest { post ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
-        else state.items = state.items.map { item ->
+        else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(post = post)
             else item
         }
@@ -212,16 +205,6 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
     state.preferences = it
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
 }
 
 context(productionScope: CoroutineScope)
@@ -240,7 +223,7 @@ private fun launchProfileRelationshipMutations(
 ) = profileRepository.profileRelationships(setOf(profileId))
     .launchAndCollectLatest { relationships ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
-        else state.items = state.items.map { item ->
+        else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(
                 viewerState = relationships.firstOrNull(),
             )

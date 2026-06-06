@@ -209,7 +209,7 @@ class FeedBindings(
             val editFeedText = stringResource(Res.string.edit_feed)
             val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                 signedInProfileId = state.signedInProfileId,
-                recentConversations = state.recentConversations,
+                recentConversations = emptyList(),
                 editTitle = state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
                     val isEditable = timeline.feedGenerator.isGrazeFeed &&
                         state.signedInProfileId == timeline.feedGenerator.creator.did
@@ -314,7 +314,6 @@ class FeedBindings(
                                     state.timelineState?.timeline?.uri
                                         ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
-                                            stateHolder.accept(Action.UpdateRecentConversations)
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
                                 },

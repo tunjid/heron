@@ -26,13 +26,11 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -86,7 +84,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     recordRepository: RecordRepository,
     searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
@@ -186,10 +183,6 @@ class SearchViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
                     is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
                         state = state,
                         recordRepository = recordRepository,
@@ -245,16 +238,6 @@ private fun launchSearchStateHolderMutations(
             }
         }
     }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(

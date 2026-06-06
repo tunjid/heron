@@ -18,7 +18,6 @@ package com.tunjid.heron.profile
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AtmosphereApp
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
@@ -93,8 +92,6 @@ interface State {
         val supportedApps: List<AtmosphereApp> = emptyList(),
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val recentLists: List<FeedList> = emptyList(),
         @Transient
@@ -341,8 +338,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdatePreferences")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),
