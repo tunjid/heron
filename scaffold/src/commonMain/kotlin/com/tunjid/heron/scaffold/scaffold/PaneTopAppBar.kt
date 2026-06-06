@@ -16,13 +16,8 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateBounds
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +55,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
@@ -82,6 +76,7 @@ import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.AnimatedVerticallySlidingContent
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -148,13 +143,10 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             )
         },
         title = {
-            AnimatedContent(
+            AnimatedVerticallySlidingContent(
                 modifier = Modifier
                     .appbarAnimatedBounds(),
                 targetState = identityState.switchStatus,
-                transitionSpec = {
-                    TitleTransform
-                },
             ) { currentState ->
                 SwitchStatus(
                     currentState = currentState,
@@ -459,17 +451,6 @@ private fun Modifier.appbarAnimatedBounds(): Modifier =
         lookaheadScope = paneScaffoldState,
         boundsTransform = paneScaffoldState.childBoundsTransform,
     )
-
-private const val TitleAnimationMillis = 600
-private val TitleAnimationSpec = tween<IntOffset>(TitleAnimationMillis)
-
-private val TitleTransform = slideInVertically(
-    animationSpec = TitleAnimationSpec,
-    initialOffsetY = { it },
-) togetherWith slideOutVertically(
-    animationSpec = TitleAnimationSpec,
-    targetOffsetY = { -it },
-)
 
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
