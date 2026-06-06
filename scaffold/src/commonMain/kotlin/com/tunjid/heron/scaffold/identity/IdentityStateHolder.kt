@@ -45,19 +45,26 @@ class AppIdentityStateHolder(
         state = IdentityState.Immutable().toSnapshotMutable(),
         started = SharingStarted.Eagerly,
         producer = { state, actions ->
-            authRepository.signedInUser
-                .launchAndCollect(state::signedInProfile::set)
-            authRepository.pastSessions
-                .launchAndCollect(state::pastSessions::set)
-            userDataRepository.preferences
-                .launchAndCollect(state::preferences::set)
-            networkMonitor.isConnected
-                .launchAndCollect(state::isConnected::set)
+            authRepository.signedInUser.launchAndCollect {
+                state.signedInProfile = it
+            }
+            authRepository.pastSessions.launchAndCollect {
+                state.pastSessions = it
+            }
+            userDataRepository.preferences.launchAndCollect {
+                state.preferences = it
+            }
+            networkMonitor.isConnected.launchAndCollect {
+                state.isConnected = it
+            }
             writeQueue.failedWrites
                 .map(List<FailedWrite>::lastOrNull)
                 .distinctUntilChanged()
                 .drop(1)
-                .launchAndCollect(state::lastFailedWrite::set)
+                .launchAndCollect {
+                    state.lastFailedWrite = it
+                }
+
             launch {
                 writeQueue.drain()
             }
