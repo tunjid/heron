@@ -209,7 +209,8 @@ internal interface RecordResolver {
     }
 }
 
-internal class OfflineRecordResolver @Inject constructor(
+@Inject
+internal class OfflineRecordResolver(
     @AppMainScope
     appMainScope: CoroutineScope,
     @param:DefaultDispatcher

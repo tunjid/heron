@@ -113,7 +113,8 @@ interface StandardSiteRecordOperations {
     ): Outcome
 }
 
-internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
+@Inject
+internal class OfflineFirstStandardSiteRecordOperations(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val standardSiteDao: StandardSiteDao,

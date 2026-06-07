@@ -61,7 +61,8 @@ internal interface FeedCreationService {
     ): Result<GrazeResponse>
 }
 
-internal class GrazeFeedCreationService @Inject constructor(
+@Inject
+internal class GrazeFeedCreationService(
     httpClient: HttpClient,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,

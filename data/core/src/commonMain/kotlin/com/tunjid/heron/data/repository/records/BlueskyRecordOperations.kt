@@ -148,7 +148,8 @@ interface BlueskyRecordOperations {
     ): Outcome
 }
 
-internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
+@Inject
+internal class OfflineFirstBlueskyRecordOperations(
     @AppMainScope
     appMainScope: CoroutineScope,
     recordResolver: RecordResolver,

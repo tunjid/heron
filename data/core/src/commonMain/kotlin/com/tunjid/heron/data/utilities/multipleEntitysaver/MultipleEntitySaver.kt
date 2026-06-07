@@ -87,7 +87,8 @@ import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
-class MultipleEntitySaverProvider @Inject constructor(
+@Inject
+class MultipleEntitySaverProvider(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,

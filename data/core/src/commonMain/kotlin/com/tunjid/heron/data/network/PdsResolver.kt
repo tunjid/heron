@@ -39,7 +39,8 @@ internal interface PdsResolver {
     suspend fun resolveServer(handle: Handle): Server?
 }
 
-internal class PlcDirectoryPdsResolver @Inject constructor(
+@Inject
+internal class PlcDirectoryPdsResolver(
     private val httpClient: HttpClient,
     @param:AppMainScope
     private val scope: kotlinx.coroutines.CoroutineScope,

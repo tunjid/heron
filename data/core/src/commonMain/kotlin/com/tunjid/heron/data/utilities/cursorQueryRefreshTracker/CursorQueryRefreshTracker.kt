@@ -50,7 +50,8 @@ internal interface CursorQueryRefreshTracker {
     ): Boolean
 }
 
-internal class InMemoryCursorQueryRefreshTracker @Inject constructor() : CursorQueryRefreshTracker {
+@Inject
+internal class InMemoryCursorQueryRefreshTracker : CursorQueryRefreshTracker {
 
     private val anchors = mutableMapOf<String, Instant>()
     private val mutex = Mutex()

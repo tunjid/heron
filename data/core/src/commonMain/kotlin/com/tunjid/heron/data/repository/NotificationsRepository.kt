@@ -178,7 +178,8 @@ interface NotificationsRepository {
     suspend fun markNotificationPermissionsRequested(): Outcome
 }
 
-internal class OfflineNotificationsRepository @Inject constructor(
+@Inject
+internal class OfflineNotificationsRepository(
     @AppMainScope
     appMainScope: CoroutineScope,
     @param:IODispatcher
