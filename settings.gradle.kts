@@ -51,6 +51,7 @@ dependencyResolutionManagement {
 include(
     ":androidApp",
     ":composeApp",
+    ":desktopApp",
     ":data:core",
     ":data:files",
     ":data:graze",

@@ -315,7 +315,7 @@ jobs:
         env:
           HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
         run: |
-          ./gradlew packageReleaseDmg \
+          ./gradlew :desktopApp:packageReleaseDmg \
             -Pheron.versionCode=${{ github.run_number }} \
             -Pheron.endpoint="$HERON_ENDPOINT" \
             -Pheron.macOS.signing.identity="${{ secrets.MACOS_SIGNING_IDENTITY }}"
@@ -326,7 +326,7 @@ jobs:
           MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
         run: |
-          DMG_PATH=$(find composeApp/build/release/main-release/dmg -name "*.dmg" | head -1)
+          DMG_PATH=$(find desktopApp/build/release/main-release/dmg -name "*.dmg" | head -1)
           xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$MACOS_NOTARIZATION_APPLE_ID" \
             --password "$MACOS_NOTARIZATION_PASSWORD" \
@@ -339,6 +339,6 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: composeApp/build/release/main-release/dmg/*.dmg
+          files: desktopApp/build/release/main-release/dmg/*.dmg
           draft: true
           allow_updates: true
