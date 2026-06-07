@@ -167,7 +167,8 @@ interface PostRepository {
     ): Outcome
 }
 
-internal class OfflinePostRepository @Inject constructor(
+@Inject
+internal class OfflinePostRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,

@@ -14,7 +14,8 @@ internal interface NotificationPreferenceUpdater {
     ): SavedState.Notifications
 }
 
-internal class ThingNotificationPreferenceUpdater @Inject constructor() : NotificationPreferenceUpdater {
+@Inject
+internal class ThingNotificationPreferenceUpdater : NotificationPreferenceUpdater {
 
     override suspend fun update(
         notificationPreferences: Preferences,

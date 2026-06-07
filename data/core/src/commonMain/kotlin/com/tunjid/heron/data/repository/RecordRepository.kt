@@ -70,7 +70,8 @@ interface RecordRepository :
     ): Outcome
 }
 
-internal class OfflineFirstRecordRepository @Inject constructor(
+@Inject
+internal class OfflineFirstRecordRepository(
     blueskyRecordOperations: BlueskyRecordOperations,
     rockSkyRecordOperations: RockskyRecordOperations,
     standardSiteRecordOperations: StandardSiteRecordOperations,

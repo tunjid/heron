@@ -125,7 +125,8 @@ interface MessageRepository {
     ): Outcome
 }
 
-internal class OfflineMessageRepository @Inject constructor(
+@Inject
+internal class OfflineMessageRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val messageDao: MessageDao,

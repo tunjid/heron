@@ -95,7 +95,8 @@ internal interface SessionManager {
     fun manage(config: HttpClientConfig<*>)
 }
 
-internal class PersistedSessionManager @Inject constructor(
+@Inject
+internal class PersistedSessionManager(
     httpClient: HttpClient,
     private val savedStateDataSource: SavedStateDataSource,
     private val pdsResolver: PdsResolver,

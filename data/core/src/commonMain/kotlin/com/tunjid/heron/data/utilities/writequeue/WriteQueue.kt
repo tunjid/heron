@@ -96,7 +96,8 @@ sealed class WriteQueue {
     }
 }
 
-internal class PersistedWriteQueue @Inject constructor(
+@Inject
+internal class PersistedWriteQueue(
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,

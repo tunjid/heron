@@ -142,7 +142,8 @@ interface SearchRepository {
     fun suggestedFeeds(): Flow<List<FeedGenerator>>
 }
 
-internal class OfflineSearchRepository @Inject constructor(
+@Inject
+internal class OfflineSearchRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,

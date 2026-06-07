@@ -166,7 +166,8 @@ interface ProfileRepository {
     ): Outcome
 }
 
-internal class OfflineProfileRepository @Inject constructor(
+@Inject
+internal class OfflineProfileRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
