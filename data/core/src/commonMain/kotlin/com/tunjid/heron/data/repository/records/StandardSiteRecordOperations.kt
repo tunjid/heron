@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -356,6 +357,7 @@ internal class OfflineFirstStandardSiteRecordOperations(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override suspend fun createSubscription(

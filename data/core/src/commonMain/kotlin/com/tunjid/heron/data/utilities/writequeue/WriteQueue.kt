@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.sync.Mutex
@@ -328,6 +329,7 @@ private fun SavedStateDataSource.signedInProfileWrites() =
                 pendingWrites.map(Writable::queueId)
             }
     }
+        .map { it ?: emptyList() }
 
 private fun SavedStateDataSource.signedInProfileFailedWrites() =
     singleAuthorizedSessionFlow { signedInProfileId ->
@@ -343,6 +345,7 @@ private fun SavedStateDataSource.signedInProfileFailedWrites() =
                 failedWrites.map { it.writable.queueId }
             }
     }
+        .map { it ?: emptyList() }
 
 private suspend inline fun SavedStateDataSource.updateWrites(
     crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
