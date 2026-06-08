@@ -35,7 +35,7 @@ class AppliedLabelsSeverityTest {
 
     @Test
     fun severityNoneMediaLabelStillBlursMedia() {
-        val labels = appliedLabels(severity = Label.Severity.None)
+        val labels = adultContentAppliedLabels(severity = Label.Severity.None)
 
         assertTrue(labels.shouldBlurMedia)
         assertEquals(Label.Severity.None, labels.blurredMediaSeverity)
@@ -44,7 +44,7 @@ class AppliedLabelsSeverityTest {
 
     @Test
     fun mediaLabelPreservesAlertSeverity() {
-        val labels = appliedLabels(severity = Label.Severity.Alert)
+        val labels = adultContentAppliedLabels(severity = Label.Severity.Alert)
 
         assertTrue(labels.shouldBlurMedia)
         assertEquals(Label.Severity.Alert, labels.blurredMediaSeverity)
@@ -53,7 +53,7 @@ class AppliedLabelsSeverityTest {
 
     @Test
     fun mediaLabelPreservesInformSeverity() {
-        val labels = appliedLabels(severity = Label.Severity.Inform)
+        val labels = adultContentAppliedLabels(severity = Label.Severity.Inform)
 
         assertTrue(labels.shouldBlurMedia)
         assertEquals(Label.Severity.Inform, labels.blurredMediaSeverity)
@@ -68,7 +68,7 @@ class AppliedLabelsSeverityTest {
         assertTrue(labels.canAutoPlayVideo)
     }
 
-    private fun appliedLabels(
+    private fun adultContentAppliedLabels(
         severity: Label.Severity,
     ) = AppliedLabels(
         adultContentEnabled = true,

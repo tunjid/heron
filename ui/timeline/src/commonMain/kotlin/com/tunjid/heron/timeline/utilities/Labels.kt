@@ -120,11 +120,13 @@ fun Label.Definition.locale(
 
 internal fun Label.Severity?.icon() =
     when (this) {
-        Label.Severity.Alert -> Icons.Rounded.Report
-        Label.Severity.Inform -> Icons.Rounded.Warning
+        Label.Severity.Alert,
+        -> Icons.Rounded.Report
+        Label.Severity.Inform,
         Label.Severity.None,
-        null,
         -> Icons.Rounded.Warning
+        null,
+        -> null
     }
 
 internal val LabelIconSize = 12.dp
