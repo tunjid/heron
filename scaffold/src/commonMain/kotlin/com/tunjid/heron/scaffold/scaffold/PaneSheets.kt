@@ -1,13 +1,14 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.runtime.Composable
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
-import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.timeline.ui.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.mutedwords.MutedWordsSheetState
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
-import com.tunjid.heron.timeline.ui.sheets.threadgate.Mode
 import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState
 
 @Composable
@@ -41,4 +42,19 @@ fun PaneScaffoldState.rememberPreferenceThreadGateSheetState(
     ThreadGateSheetState.rememberUpdatedThreadGateSheetState(
         initializer = appState.sheetsViewModelInitializers.threadGateViewModelInitializer,
         onDefaultThreadGateUpdated = onDefaultThreadGateUpdated,
+    )
+
+@Composable
+fun PaneScaffoldState.rememberEmbeddableRecordOptionsSheetState(
+    editTitle: String?,
+    onEditClicked: (EmbeddableRecordUri) -> Unit,
+    onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
+    onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
+): EmbeddableRecordOptionsSheetState =
+    EmbeddableRecordOptionsSheetState.rememberUpdatedEmbeddableRecordOptionsState(
+        initializer = appState.sheetsViewModelInitializers.embeddableRecordOptionsViewModelInitializer,
+        editTitle = editTitle,
+        onEditClicked = onEditClicked,
+        onShareInConversationClicked = onShareInConversationClicked,
+        onShareInPostClicked = onShareInPostClicked,
     )

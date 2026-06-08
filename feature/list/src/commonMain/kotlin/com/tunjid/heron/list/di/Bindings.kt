@@ -65,9 +65,9 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.rememberEmbeddableRecordOptionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.EmbeddableRecordOptionsSheetState.Companion.rememberUpdatedEmbeddableRecordOptionsState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
@@ -296,9 +296,7 @@ class ListBindings(
                     stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
-                        signedInProfileId = state.signedInProfileId,
-                        recentConversations = emptyList(),
+                    val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
                         editTitle = null,
                         onEditClicked = {},
                         onShareInConversationClicked = { recordUri, conversation ->
