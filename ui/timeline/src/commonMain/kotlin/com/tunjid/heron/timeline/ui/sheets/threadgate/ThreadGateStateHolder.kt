@@ -81,7 +81,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.UpdateAllowed>.launchUpdateAllowedMutations(
     state: ThreadGateState.SnapshotMutable,
 ) = launchAndCollect { action ->
-    state.allowed = action.block(state.allowed ?: NoneAllowed)
+    state.allowed = action.allowed
 }
 
 context(productionScope: CoroutineScope)
@@ -95,12 +95,16 @@ private fun Flow<ThreadGateAction.Reset>.launchResetMutations(
 @Stable
 @Snapshottable
 interface ThreadGateState {
+    val recentLists: List<FeedList>
+    val mode: Mode?
+    val allowed: ThreadGate.Allowed?
+
     @SnapshotSpec
     @Serializable
     data class Immutable(
-        @Transient val recentLists: List<FeedList> = emptyList(),
-        @Transient val mode: Mode? = null,
-        @Transient val allowed: ThreadGate.Allowed? = null,
+        @Transient override val recentLists: List<FeedList> = emptyList(),
+        @Transient override val mode: Mode? = null,
+        @Transient override val allowed: ThreadGate.Allowed? = null,
     ) : ThreadGateState
 }
 
@@ -111,7 +115,7 @@ sealed class ThreadGateAction(val key: String) {
     ) : ThreadGateAction("Initialize")
 
     data class UpdateAllowed(
-        val block: ThreadGate.Allowed.() -> ThreadGate.Allowed?,
+        val allowed: ThreadGate.Allowed?,
     ) : ThreadGateAction("UpdateAllowed")
 
     data object Reset : ThreadGateAction("Reset")

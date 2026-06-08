@@ -217,7 +217,7 @@ private fun ThreadGateBottomSheet(
                     selected = allowed.allowsAll,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.viewModel.accept(ThreadGateAction.UpdateAllowed { null })
+                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(null))
                     },
                 )
                 SelectionCard(
@@ -225,7 +225,7 @@ private fun ThreadGateBottomSheet(
                     selected = allowed.allowsNone,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.viewModel.accept(ThreadGateAction.UpdateAllowed { NoneAllowed })
+                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(NoneAllowed))
                     },
                 )
             }
@@ -238,7 +238,9 @@ private fun ThreadGateBottomSheet(
                     enabled = isCustomOrAnyone,
                     onClick = {
                         state.viewModel.accept(
-                            ThreadGateAction.UpdateAllowed { copy(allowsFollowers = !allowsFollowers) },
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsFollowers = !allowsFollowers) },
+                            ),
                         )
                     },
                 )
@@ -248,7 +250,9 @@ private fun ThreadGateBottomSheet(
                     enabled = isCustomOrAnyone,
                     onClick = {
                         state.viewModel.accept(
-                            ThreadGateAction.UpdateAllowed { copy(allowsFollowing = !allowsFollowing) },
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsFollowing = !allowsFollowing) },
+                            ),
                         )
                     },
                 )
@@ -258,7 +262,9 @@ private fun ThreadGateBottomSheet(
                     enabled = isCustomOrAnyone,
                     onClick = {
                         state.viewModel.accept(
-                            ThreadGateAction.UpdateAllowed { copy(allowsMentioned = !allowsMentioned) },
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsMentioned = !allowsMentioned) },
+                            ),
                         )
                     },
                 )
@@ -301,16 +307,17 @@ private fun ThreadGateBottomSheet(
                                 checked = checked,
                                 enabled = enabled,
                                 onClick = {
+                                    val current = allowed ?: NoneAllowed
+                                    val currentUris = current.allowedListUrisOrEmpty
+                                    val newLists = if (checked) currentUris - list.uri
+                                    else currentUris + list.uri
                                     state.viewModel.accept(
-                                        ThreadGateAction.UpdateAllowed {
-                                            val currentUris = allowedListUrisOrEmpty
-                                            val newLists = if (checked) currentUris - list.uri
-                                            else currentUris + list.uri
-                                            copy(
+                                        ThreadGateAction.UpdateAllowed(
+                                            current.copy(
                                                 allowedLists = emptyList(),
                                                 allowedListUris = newLists,
-                                            )
-                                        },
+                                            ),
+                                        ),
                                     )
                                 },
                             )
