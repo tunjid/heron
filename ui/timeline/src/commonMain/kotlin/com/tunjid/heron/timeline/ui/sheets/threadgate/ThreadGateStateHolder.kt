@@ -95,16 +95,11 @@ private fun Flow<ThreadGateAction.Reset>.launchResetMutations(
 @Stable
 @Snapshottable
 interface ThreadGateState {
-    val recentLists: List<FeedList>
-    val mode: Mode?
-    val allowed: ThreadGate.Allowed?
-
     @SnapshotSpec
-    @Serializable
     data class Immutable(
-        @Transient override val recentLists: List<FeedList> = emptyList(),
-        @Transient override val mode: Mode? = null,
-        @Transient override val allowed: ThreadGate.Allowed? = null,
+        val recentLists: List<FeedList> = emptyList(),
+        val mode: Mode? = null,
+        val allowed: ThreadGate.Allowed? = null,
     ) : ThreadGateState
 }
 
