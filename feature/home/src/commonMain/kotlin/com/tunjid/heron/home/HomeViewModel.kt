@@ -158,10 +158,6 @@ class ActualHomeViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                 }
             }
         },
@@ -213,16 +209,6 @@ private fun launchTimelineMutations(
             HomeScreenStateHolders.Pinned(holder)
         else
             HomeScreenStateHolders.Saved(holder)
-    }
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
     }
 }
 

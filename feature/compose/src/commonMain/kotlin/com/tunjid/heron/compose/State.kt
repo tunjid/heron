@@ -46,8 +46,6 @@ data class State(
     @Transient
     val dismissedEmbedUrl: String? = null,
     @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
     val interactionsPreference: PostInteractionSettingsPreference? = null,
     @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
@@ -161,6 +159,4 @@ sealed class Action(val key: String) {
     data class RemoveEmbeddedRecord(
         val url: String? = null,
     ) : Action("RemoveEmbeddedRecord")
-
-    data object UpdateRecentLists : Action("UpdateRecentLists")
 }

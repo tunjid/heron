@@ -113,7 +113,6 @@ internal fun FeedScreen(
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
                 signedInProfileId = state.signedInProfileId,
-                recentLists = state.recentLists,
                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
@@ -130,7 +129,6 @@ private fun FeedTimeline(
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
     mutedWordsPreferences: List<MutedWordPreference>,
-    recentLists: List<FeedList>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {

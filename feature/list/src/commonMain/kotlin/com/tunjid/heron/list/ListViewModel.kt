@@ -156,10 +156,6 @@ class ActualListViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -472,16 +468,6 @@ private fun Flow<Action.UpdateFeedListStatus>.launchFeedListStatusMutations(
         if (memo != null) state.messages += memo
     },
 )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun launchListStatusMutations(

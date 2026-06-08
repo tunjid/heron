@@ -75,8 +75,6 @@ interface State {
         @Transient
         val stateHolders: List<ListScreenStateHolders> = emptyList(),
         @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val isOnProfilesTab: Boolean = false,
         @Transient
         val suggestedProfiles: List<Profile> = emptyList(),
@@ -260,8 +258,6 @@ sealed class Action(val key: String) {
     data class UpdateFeedListStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

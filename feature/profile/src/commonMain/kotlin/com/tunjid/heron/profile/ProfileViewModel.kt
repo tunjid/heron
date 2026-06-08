@@ -198,10 +198,6 @@ class ActualProfileViewModel(
                     is Action.PageChanged -> action.flow.collect { event ->
                         state.currentPage = event.page
                     }
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                     is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -218,16 +214,6 @@ class ActualProfileViewModel(
             }
         },
     )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(

@@ -126,8 +126,6 @@ interface State {
         @Transient
         val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
         @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
         @Transient
         val feedGenerators: List<FeedGenerator> = emptyList(),
@@ -192,8 +190,6 @@ sealed class Action(val key: String) {
     data class UpdateFeedGeneratorStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),
