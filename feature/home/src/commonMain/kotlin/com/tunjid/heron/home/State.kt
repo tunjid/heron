@@ -50,8 +50,6 @@ interface State {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val timelinePreferenceSaveRequestId: String? = null,
         @Transient
         val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
@@ -137,8 +135,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "DeleteRecord")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class UpdateTimeline : Action(key = "Timeline") {
         data object RequestUpdate : UpdateTimeline()

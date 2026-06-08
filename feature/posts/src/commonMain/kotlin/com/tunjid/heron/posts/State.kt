@@ -51,8 +51,6 @@ interface State : TilingState<PostDataQuery, TimelineItem> {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
             currentQuery = PostDataQuery(
                 profileId = ProfileHandle(""),
@@ -129,8 +127,6 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

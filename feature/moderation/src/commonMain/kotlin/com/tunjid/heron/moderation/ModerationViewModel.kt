@@ -103,9 +103,6 @@ class ActualModerationViewModel(
                     is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
-                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -142,16 +139,6 @@ private fun loadPreferenceMutations(
         .mapToMutation {
             copy(preferences = it)
         }
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
-    }
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,

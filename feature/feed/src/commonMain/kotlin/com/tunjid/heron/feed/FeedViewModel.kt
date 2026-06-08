@@ -133,10 +133,6 @@ class ActualFeedViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -152,16 +148,6 @@ private fun launchSignedInProfileIdMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
 }
 
 context(productionScope: CoroutineScope)

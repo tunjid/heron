@@ -61,8 +61,6 @@ interface State {
         @Transient
         val signedInProfileId: ProfileId? = null,
         @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val timelineStateHolder: TimelineStateHolder? = null,
         @Transient
         val messages: List<Memo> = emptyList(),
@@ -133,8 +131,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

@@ -183,10 +183,6 @@ class SearchViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -531,16 +527,6 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMuta
         if (memo != null) state.messages += memo
     },
 )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
 
 private fun Route.searchStates(): List<SearchState> = buildList {
     add(
