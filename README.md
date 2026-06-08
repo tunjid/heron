@@ -186,12 +186,12 @@ persisted across app restarts.
   the [business logic state holder](https://developer.android.com/topic/architecture/ui-layer/stateholders).
 * State is produced in a lifecycle aware way using
   the [Jetpack Lifecyle](https://developer.android.com/jetpack/androidx/releases/lifecycle) APIs.
-    * The `CoroutineScope` for each `ViewModel` is obtained from the composition's
-      `LocalLifecycleOwner`
+    * The `CoroutineScope` for each `ViewModel` is obtained using `viewModelCoroutineScope()`
+      with special coroutine elements for UI state production.
 * The specifics of producing state over time is implemented with
   the [Mutator library](https://github.com/tunjid/Mutator).
-    * Inputs to the state production pipeline are passed to the mutator in the `inputs` argument, or
-      derived from an action in `actionTransform`.
+    * Inputs to the state production pipeline are passed to the mutator using an `Action` sealed
+      class hierarchy.
     * Every coroutine launched is limited to running when the lifecycle of the component displaying
       it is resumed. When the lifecyle
       is paused, the coroutines are cancelled after 2 seconds:
