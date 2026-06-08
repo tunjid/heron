@@ -41,7 +41,6 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -85,7 +84,7 @@ fun QuotedPost(
     val author = quotedPost.author
     var hasClickedThroughSensitiveMedia by rememberSaveable { mutableStateOf(false) }
     val mediaBlurred = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
-    val canUnblurMedia = appliedLabels.blurredMediaSeverity != Label.Severity.None
+    val canUnblurMedia = appliedLabels.shouldBlurMedia
     Box(
         modifier = modifier,
     ) {

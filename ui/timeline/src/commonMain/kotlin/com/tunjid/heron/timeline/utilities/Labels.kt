@@ -124,7 +124,7 @@ internal fun Label.Severity?.icon() =
         Label.Severity.Inform -> Icons.Rounded.Warning
         Label.Severity.None,
         null,
-        -> null
+        -> Icons.Rounded.Warning
     }
 
 internal val LabelIconSize = 12.dp

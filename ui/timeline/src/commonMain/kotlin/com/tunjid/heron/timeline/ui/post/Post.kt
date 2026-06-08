@@ -860,7 +860,7 @@ private val PostData.mediaBlurred: Boolean
     get() = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
 
 private val PostData.canUnblurMedia: Boolean
-    get() = appliedLabels.blurredMediaSeverity != Label.Severity.None
+    get() = appliedLabels.shouldBlurMedia
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")
