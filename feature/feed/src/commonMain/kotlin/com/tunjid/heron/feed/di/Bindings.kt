@@ -60,12 +60,13 @@ import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.scaffold.scaffold.rememberEmbeddableRecordOptionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.EmbeddableRecordOptionsSheetState.Companion.rememberUpdatedEmbeddableRecordOptionsState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
+import com.tunjid.heron.timeline.ui.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState.Companion.rememberUpdatedEmbeddableRecordOptionsState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
@@ -207,26 +208,11 @@ class FeedBindings(
             val paneScaffoldState = rememberPaneScaffoldState()
 
             val editFeedText = stringResource(Res.string.edit_feed)
-            val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
-                signedInProfileId = state.signedInProfileId,
-                recentConversations = emptyList(),
+            val recordOptionsSheetState = paneScaffoldState.rememberEmbeddableRecordOptionsSheetState(
                 editTitle = state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
                     val isEditable = timeline.feedGenerator.isGrazeFeed &&
                         state.signedInProfileId == timeline.feedGenerator.creator.did
                     if (isEditable) editFeedText else null
-                },
-                onShareInConversationClicked = { recordUri, conversation ->
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = conversation.id,
-                                members = conversation.members,
-                                sharedElementPrefix = conversation.id.id,
-                                sharedUri = recordUri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
                 },
                 onEditClicked = onEditClicked@{
                     stateHolder.accept(
@@ -241,12 +227,23 @@ class FeedBindings(
                         ),
                     )
                 },
+                onShareInConversationClicked = { recordUri, conversation ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = conversation.id,
+                                members = conversation.members,
+                                sharedElementPrefix = conversation.id.id,
+                                sharedUri = recordUri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
                 onShareInPostClicked = { recordUri ->
                     stateHolder.accept(
                         Action.Navigate.To(
-                            composePostDestination(
-                                sharedUri = recordUri.asGenericUri(),
-                            ),
+                            composePostDestination(sharedUri = recordUri.asGenericUri()),
                         ),
                     )
                 },
