@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.timeline.ui.sheets.embedrecordoptions
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,20 +44,18 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.mutator.compose.produceState
 
 @Stable
-class EmbeddableRecordOptionsSheetState private constructor(
-    signedInProfileId: ProfileId?,
-    recentConversations: List<Conversation>,
+class EmbeddableRecordOptionsSheetState(
     scope: BottomSheetScope,
+    internal val viewModel: EmbeddableRecordOptionsViewModel,
 ) : BottomSheetState(scope) {
-    internal var signedInProfileId by mutableStateOf(signedInProfileId)
 
-    internal var recentConversations by mutableStateOf(recentConversations)
+    var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
+        internal set
 
-    internal var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
-
-    internal val isSignedIn get() = signedInProfileId != null
+    internal var editTitle: String? by mutableStateOf(null)
 
     override fun onHidden() {
         currentRecordUri = null
@@ -68,30 +66,24 @@ class EmbeddableRecordOptionsSheetState private constructor(
         show()
     }
 
-    companion object Companion {
+    companion object {
         @Composable
         fun rememberUpdatedEmbeddableRecordOptionsState(
-            signedInProfileId: ProfileId?,
+            initializer: EmbeddableRecordOptionsViewModelInitializer,
             editTitle: String?,
-            recentConversations: List<Conversation>,
             onEditClicked: (EmbeddableRecordUri) -> Unit,
             onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
             onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
         ): EmbeddableRecordOptionsSheetState {
-            val state = rememberBottomSheetState {
-                EmbeddableRecordOptionsSheetState(
-                    signedInProfileId = signedInProfileId,
-                    recentConversations = recentConversations,
-                    scope = it,
-                )
-            }.also {
-                it.signedInProfileId = signedInProfileId
-                it.recentConversations = recentConversations
+            val state = rememberBottomSheetState(
+                viewModelInitializer = initializer::invoke,
+                block = ::EmbeddableRecordOptionsSheetState,
+            ).also {
+                it.editTitle = editTitle
             }
 
             EmbeddableRecordOptionsBottomSheet(
                 state = state,
-                editTitle = editTitle,
                 onEditClicked = onEditClicked,
                 onShareInConversationClicked = onShareInConversationClicked,
                 onShareInPostClicked = onShareInPostClicked,
@@ -105,42 +97,44 @@ class EmbeddableRecordOptionsSheetState private constructor(
 @Composable
 private fun EmbeddableRecordOptionsBottomSheet(
     state: EmbeddableRecordOptionsSheetState,
-    editTitle: String?,
     onEditClicked: (EmbeddableRecordUri) -> Unit,
     onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
     onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
 ) {
-    val signedInProfileId = state.signedInProfileId
+    state.ModalBottomSheet {
+        val embeddableState = state.viewModel.produceState()
 
-    if (signedInProfileId != null) state.ModalBottomSheet {
+        val editTitle = state.editTitle
+
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SendDirectMessageCard(
-                signedInProfileId = signedInProfileId,
-                recentConversations = state.recentConversations,
-                onConversationClicked = { conversation ->
-                    state.currentRecordUri?.let { uri ->
-                        onShareInConversationClicked(uri, conversation)
-                    }
-                    state.hide()
-                },
-            )
+            val signedInProfileId = embeddableState.signedInProfileId
+            if (signedInProfileId != null) {
+                SendDirectMessageCard(
+                    signedInProfileId = signedInProfileId,
+                    recentConversations = embeddableState.recentConversations,
+                    onConversationClicked = { conversation ->
+                        state.currentRecordUri?.let { uri ->
+                            onShareInConversationClicked(uri, conversation)
+                        }
+                        state.hide()
+                    },
+                )
+            }
             if (editTitle != null) {
                 BottomSheetItemCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        state.currentRecordUri
-                            ?.let(onEditClicked)
+                        state.currentRecordUri?.let(onEditClicked)
                         state.hide()
                     },
                 ) {
                     BottomSheetItemCardRow(
-                        modifier = Modifier
-                            .semantics {
-                                contentDescription = editTitle
-                            },
+                        modifier = Modifier.semantics {
+                            contentDescription = editTitle
+                        },
                         icon = Icons.Rounded.Edit,
                         text = editTitle,
                     )
@@ -152,7 +146,6 @@ private fun EmbeddableRecordOptionsBottomSheet(
                 }
                 state.hide()
             }
-
             state.currentRecordUri?.let { uri ->
                 CopyToClipboardCard(uri.shareUri())
             }
