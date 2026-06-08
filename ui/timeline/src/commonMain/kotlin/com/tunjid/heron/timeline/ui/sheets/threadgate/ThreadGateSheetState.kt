@@ -294,7 +294,7 @@ private fun ThreadGateBottomSheet(
                     Icon(
                         imageVector = if (listsExpanded) Icons.Rounded.KeyboardArrowUp
                         else Icons.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
+                        contentDescription = stringResource(Res.string.thread_gate_select_from_your_lists),
                     )
                 }
 
@@ -530,7 +530,7 @@ sealed class Mode {
     }
 }
 
-val NoneAllowed = ThreadGate.Allowed(
+internal val NoneAllowed = ThreadGate.Allowed(
     allowsFollowing = false,
     allowsFollowers = false,
     allowsMentioned = false,
