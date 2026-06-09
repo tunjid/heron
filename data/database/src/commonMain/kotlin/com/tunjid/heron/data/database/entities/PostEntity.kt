@@ -245,7 +245,9 @@ fun PopulatedPostEntity.asExternalModel(
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()
         images.isNotEmpty() -> ImageList(
-            images = images.map(ImageEntity::asExternalModel),
+            images = images
+                .sortedBy(ImageEntity::index)
+                .map(ImageEntity::asExternalModel),
         )
 
         else -> null

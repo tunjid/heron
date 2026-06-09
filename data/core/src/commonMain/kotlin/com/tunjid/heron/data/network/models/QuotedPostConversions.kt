@@ -17,8 +17,6 @@
 package com.tunjid.heron.data.network.models
 
 import app.bsky.actor.ProfileViewBasic
-import app.bsky.embed.GalleryViewItemUnion
-import app.bsky.embed.ImagesViewImage
 import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
@@ -116,18 +114,21 @@ private fun RecordViewRecordUnion.embedEntities(): List<PostEmbed> =
                     is RecordViewRecordEmbedUnion.ImagesView ->
                         innerRecord.value
                             .images
-                            .map(ImagesViewImage::imageEntity)
+                            .mapIndexed(::imageEntity)
 
                     is RecordViewRecordEmbedUnion.RecordView -> emptyList()
                     is RecordViewRecordEmbedUnion.RecordWithMediaView -> emptyList()
                     is RecordViewRecordEmbedUnion.Unknown -> emptyList()
                     is RecordViewRecordEmbedUnion.VideoView -> listOf(
-                        innerRecord.value.videoEntity(),
+                        videoEntity(
+                            index = 0,
+                            videoView = innerRecord.value,
+                        ),
                     )
                     is RecordViewRecordEmbedUnion.GalleryView ->
                         innerRecord.value
                             .items
-                            .mapNotNull(GalleryViewItemUnion::postEmbed)
+                            .mapIndexedNotNull(::postEmbed)
                 }
             } ?: emptyList()
     }.flatten()
