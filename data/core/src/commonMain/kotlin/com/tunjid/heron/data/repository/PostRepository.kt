@@ -492,7 +492,9 @@ internal class OfflinePostRepository(
             // Only delete the uploaded media once the post has been created, so the
             // write can be safely retried with the source files intact if it fails.
             request.metadata.embeddedMedia.forEach { file ->
-                fileManager.delete(file)
+                runCatchingUnlessCancelled {
+                    fileManager.delete(file)
+                }
             }
         }
     } ?: expiredSessionOutcome()
