@@ -17,21 +17,17 @@
 package com.tunjid.heron.data.network.models
 
 import app.bsky.actor.ProfileViewBasic
+import app.bsky.embed.GalleryViewItemUnion
+import app.bsky.embed.ImagesViewImage
 import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
-import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
-import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 
 internal fun PostView.quotedPostEntity(): PostEntity? =
     when (val embed = embed) {
@@ -40,6 +36,7 @@ internal fun PostView.quotedPostEntity(): PostEntity? =
         is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record.postEntity()
         is PostViewEmbedUnion.Unknown -> null
         is PostViewEmbedUnion.VideoView -> null
+        is PostViewEmbedUnion.GalleryView -> null
         is PostViewEmbedUnion.RecordView -> embed.value.record.postEntity()
 
         null -> null
@@ -53,6 +50,7 @@ internal fun PostView.quotedPostProfileView(): ProfileViewBasic? =
 
         is PostViewEmbedUnion.Unknown -> null
         is PostViewEmbedUnion.VideoView -> null
+        is PostViewEmbedUnion.GalleryView -> null
         is PostViewEmbedUnion.RecordView -> embed.value.record.profileView()
 
         null -> null
@@ -86,6 +84,7 @@ internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> emptyList()
+        is PostViewEmbedUnion.GalleryView -> emptyList()
         is PostViewEmbedUnion.RecordView ->
             embed
                 .value
@@ -95,7 +94,7 @@ internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
         null -> emptyList()
     }
 
-private fun RecordViewRecordUnion.embedEntities() =
+private fun RecordViewRecordUnion.embedEntities(): List<PostEmbed> =
     when (this) {
         is RecordViewRecordUnion.FeedGeneratorView,
         is RecordViewRecordUnion.GraphListView,
@@ -108,40 +107,27 @@ private fun RecordViewRecordUnion.embedEntities() =
         -> emptyList()
 
         is RecordViewRecordUnion.ViewRecord ->
-            value.embeds?.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->
+            value.embeds?.map { innerRecord ->
                 when (innerRecord) {
                     is RecordViewRecordEmbedUnion.ExternalView -> listOf(
-                        ExternalEmbedEntity(
-                            uri = GenericUri(innerRecord.value.external.uri.uri),
-                            title = innerRecord.value.external.title,
-                            description = innerRecord.value.external.description,
-                            thumb = innerRecord.value.external.thumb?.uri?.let(::ImageUri),
-                        ),
+                        innerRecord.value.external.asExternalEmbedEntity(),
                     )
 
-                    is RecordViewRecordEmbedUnion.ImagesView -> innerRecord.value.images.map {
-                        ImageEntity(
-                            fullSize = ImageUri(it.fullsize.uri),
-                            thumb = ImageUri(it.thumb.uri),
-                            alt = it.alt,
-                            width = it.aspectRatio?.width,
-                            height = it.aspectRatio?.height,
-                        )
-                    }
+                    is RecordViewRecordEmbedUnion.ImagesView ->
+                        innerRecord.value
+                            .images
+                            .map(ImagesViewImage::imageEntity)
 
                     is RecordViewRecordEmbedUnion.RecordView -> emptyList()
                     is RecordViewRecordEmbedUnion.RecordWithMediaView -> emptyList()
                     is RecordViewRecordEmbedUnion.Unknown -> emptyList()
                     is RecordViewRecordEmbedUnion.VideoView -> listOf(
-                        VideoEntity(
-                            cid = GenericId(innerRecord.value.cid.cid),
-                            playlist = GenericUri(innerRecord.value.playlist.uri),
-                            thumbnail = innerRecord.value.thumbnail?.uri?.let(::ImageUri),
-                            alt = innerRecord.value.alt,
-                            width = innerRecord.value.aspectRatio?.width,
-                            height = innerRecord.value.aspectRatio?.height,
-                        ),
+                        innerRecord.value.videoEntity(),
                     )
+                    is RecordViewRecordEmbedUnion.GalleryView ->
+                        innerRecord.value
+                            .items
+                            .mapNotNull(GalleryViewItemUnion::postEmbed)
                 }
             } ?: emptyList()
     }.flatten()
