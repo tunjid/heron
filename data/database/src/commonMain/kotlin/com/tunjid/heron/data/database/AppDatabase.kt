@@ -108,7 +108,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 44,
+    version = 45,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -248,6 +248,8 @@ import kotlinx.coroutines.IO
         // Add standard-site external embed support: PostExternalAssociatedRecordEntity,
         // PostExternalAssociatedProfilesEntity, and readingTime/createdAt/updatedAt on externalEmbeds
         AutoMigration(from = 43, to = 44),
+        // Add index to ImageEntity and VideoEntity
+        AutoMigration(from = 44, to = 45),
     ],
     exportSchema = true,
 )

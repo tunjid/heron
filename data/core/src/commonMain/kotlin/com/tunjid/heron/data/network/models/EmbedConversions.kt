@@ -39,34 +39,46 @@ internal fun ExternalViewExternal.asExternalEmbedEntity() = ExternalEmbedEntity(
     updatedAt = updatedAt,
 )
 
-internal fun ImagesViewImage.imageEntity(): ImageEntity = ImageEntity(
-    fullSize = ImageUri(fullsize.uri),
-    thumb = ImageUri(thumb.uri),
-    alt = alt,
-    width = aspectRatio?.width,
-    height = aspectRatio?.height,
+internal fun imageEntity(
+    index: Int,
+    imagesViewImage: ImagesViewImage,
+): ImageEntity = ImageEntity(
+    fullSize = ImageUri(imagesViewImage.fullsize.uri),
+    thumb = ImageUri(imagesViewImage.thumb.uri),
+    alt = imagesViewImage.alt,
+    width = imagesViewImage.aspectRatio?.width,
+    height = imagesViewImage.aspectRatio?.height,
+    index = index,
 )
 
-internal fun VideoView.videoEntity(): VideoEntity =
+internal fun videoEntity(
+    index: Int,
+    videoView: VideoView,
+): VideoEntity =
     VideoEntity(
-        cid = GenericId(cid.cid),
-        playlist = GenericUri(playlist.uri),
-        thumbnail = thumbnail?.uri?.let(::ImageUri),
-        alt = alt,
-        width = aspectRatio?.width,
-        height = aspectRatio?.height,
+        cid = GenericId(videoView.cid.cid),
+        playlist = GenericUri(videoView.playlist.uri),
+        thumbnail = videoView.thumbnail?.uri?.let(::ImageUri),
+        alt = videoView.alt,
+        width = videoView.aspectRatio?.width,
+        height = videoView.aspectRatio?.height,
+        index = index,
     )
 
-internal fun GalleryViewItemUnion.postEmbed(): PostEmbed? =
-    when (this) {
+internal fun postEmbed(
+    index: Int,
+    galleryViewItemUnion: GalleryViewItemUnion,
+): PostEmbed? =
+    when (galleryViewItemUnion) {
         // At some point this will contain video.
         // USe the parent type to accommodate this
         is GalleryViewItemUnion.Unknown -> null
         is GalleryViewItemUnion.ViewImage -> ImageEntity(
-            fullSize = ImageUri(value.fullsize.uri),
-            thumb = ImageUri(value.thumbnail.uri),
-            alt = value.alt,
-            width = value.aspectRatio.width,
-            height = value.aspectRatio.height,
+            fullSize = ImageUri(galleryViewItemUnion.value.fullsize.uri),
+            thumb = ImageUri(galleryViewItemUnion.value.thumbnail.uri),
+            alt = galleryViewItemUnion.value.alt,
+            width = galleryViewItemUnion.value.aspectRatio.width,
+            height = galleryViewItemUnion.value.aspectRatio.height,
+            index = index,
         )
     }

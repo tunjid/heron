@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.data.network.models
 
-import app.bsky.embed.GalleryViewItemUnion
-import app.bsky.embed.ImagesViewImage
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.embed.RecordWithMediaViewMediaUnion
 import app.bsky.feed.GeneratorView
@@ -244,7 +242,7 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
         is PostViewEmbedUnion.ImagesView ->
             embed.value
                 .images
-                .map(ImagesViewImage::imageEntity)
+                .mapIndexed(::imageEntity)
 
         is PostViewEmbedUnion.RecordView -> emptyList()
         is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
@@ -255,26 +253,32 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
             is RecordWithMediaViewMediaUnion.ImagesView ->
                 mediaEmbed.value
                     .images
-                    .map(ImagesViewImage::imageEntity)
+                    .mapIndexed(::imageEntity)
 
             is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
             is RecordWithMediaViewMediaUnion.VideoView -> listOf(
-                mediaEmbed.value.videoEntity(),
+                videoEntity(
+                    index = 0,
+                    videoView = mediaEmbed.value,
+                ),
             )
             is RecordWithMediaViewMediaUnion.GalleryView ->
                 mediaEmbed.value
                     .items
-                    .mapNotNull(GalleryViewItemUnion::postEmbed)
+                    .mapIndexedNotNull(::postEmbed)
         }
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
-            embed.value.videoEntity(),
+            videoEntity(
+                index = 0,
+                videoView = embed.value,
+            ),
         )
         is PostViewEmbedUnion.GalleryView ->
             embed.value
                 .items
-                .mapNotNull(GalleryViewItemUnion::postEmbed)
+                .mapIndexedNotNull(::postEmbed)
 
         null -> emptyList()
     }
