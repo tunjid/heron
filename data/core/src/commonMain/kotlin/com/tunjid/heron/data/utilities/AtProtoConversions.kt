@@ -99,15 +99,15 @@ internal fun postEmbedUnion(
         )
 
         video != null -> PostEmbedUnion.Video(video)
-        images != null -> when {
-            images.images.size < MediaList.MinGallerySize -> PostEmbedUnion.Images(images)
-            else -> PostEmbedUnion.Gallery(
-                Gallery(
-                    items = images.images
-                        .mapNotNull(ImagesImage::galleryItemImage),
-                ),
-            )
-        }
+        images != null ->
+            images.images
+                .mapNotNull(ImagesImage::galleryItemImage)
+                .let {
+                    when {
+                        it.size < MediaList.MinGallerySize -> PostEmbedUnion.Images(images)
+                        else -> PostEmbedUnion.Gallery(Gallery(items = it))
+                    }
+                }
         else -> null
     }
 }
