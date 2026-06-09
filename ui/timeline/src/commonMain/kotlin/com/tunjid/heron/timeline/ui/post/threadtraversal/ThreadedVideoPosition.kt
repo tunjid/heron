@@ -29,6 +29,7 @@ import androidx.compose.ui.node.requireLayoutCoordinates
 import androidx.compose.ui.node.traverseDescendants
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -182,5 +183,9 @@ internal val Post.videoId
         is ExternalEmbed -> null
         is ImageList -> null
         is Video -> embed.playlist.uri
+        is MediaList -> embed.media.firstNotNullOfOrNull {
+            if (it is Video) it.playlist.uri
+            else null
+        }
         UnknownEmbed -> null
     }

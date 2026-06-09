@@ -24,9 +24,8 @@ import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
@@ -182,7 +181,12 @@ val GalleryItem.Media.key
 
 internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
     when (this) {
-        is ImageList -> this.images.map(GalleryItem.Media::Photo)
+        is MediaList -> this.media.map { media ->
+            when (media) {
+                is EmbeddedImage -> GalleryItem.Media.Photo(media)
+                is EmbeddedVideo -> GalleryItem.Media.Video(media)
+            }
+        }
         is Video -> listOf(GalleryItem.Media.Video(this))
         is ExternalEmbed,
         UnknownEmbed,
