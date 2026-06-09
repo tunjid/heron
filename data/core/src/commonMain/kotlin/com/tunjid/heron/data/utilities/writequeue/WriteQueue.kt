@@ -386,7 +386,7 @@ private fun Writable.writeTimeout() =
 
 private val VideoWriteTimeout = 8.minutes
 
-private val ImageWriteTimeout = 20.seconds
+private val ImageWriteTimeout = 35.seconds
 private val BasicWriteTimeout = 10.seconds
 private const val MaxConcurrentWrites = 9
 private const val MaximumPendingWrites = 15

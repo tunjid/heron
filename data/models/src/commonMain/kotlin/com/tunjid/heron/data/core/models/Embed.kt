@@ -26,6 +26,23 @@ sealed interface Embed {
         UrlEncodableModel
 }
 
+// Deliberately not serializable, only Embed.Media is
+sealed interface MediaItem : AspectRatio
+
+@Serializable
+sealed interface MediaList : Embed.Media {
+    val media: List<MediaItem>
+
+    companion object {
+        const val MinGallerySize = 5
+    }
+}
+
+@Serializable
+data class GalleryList(
+    override val media: List<MediaItem>,
+) : MediaList
+
 /**
  * Provides the width and height of an item if available.
  *

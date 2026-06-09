@@ -22,6 +22,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -87,11 +88,13 @@ internal fun MediaUploadItems(
             onAltClicked = { altTextSheetState.editAltText(video) },
             onMediaItemUpdated = onMediaItemUpdated,
         )
-        else Row(
+        else FlowRow(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = MaxItemsInRow,
         ) {
             photos.forEach {
                 key(it.path) {
@@ -109,6 +112,16 @@ internal fun MediaUploadItems(
                         onMediaItemUpdated = onMediaItemUpdated,
                     )
                 }
+            }
+            if (photos.size > MaxItemsInRow) repeat(MaxItemsInRow - (photos.size % MaxItemsInRow)) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(
+                            ratio = 1f,
+                            matchHeightConstraintsFirst = true,
+                        ),
+                )
             }
         }
     }
@@ -266,3 +279,5 @@ private fun MediaUpload(
 
 internal val MediaUploadItemShape = RoundedPolygonShape.RoundedRectangle(0.1f)
 private const val AltTextSymbol = "ALT"
+
+private const val MaxItemsInRow = 4

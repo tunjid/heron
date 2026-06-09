@@ -89,12 +89,8 @@ internal fun PostVideo(
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
-    val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
-        videoUrl = video.playlist.uri,
-        thumbnail = video.thumbnail?.uri,
-        shape = presentation.videoShape,
-    )
-    Box(
+
+    videoPlayerController.PostVideo(
         modifier = modifier
             .aspectRatio(
                 ratio = when (presentation) {
@@ -107,17 +103,43 @@ internal fun PostVideo(
                     -> 1f
                 },
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-            ),
+            )
+            .clickable {
+                videoPlayerController.play(videoId = video.playlist.uri)
+                onClicked()
+            },
+        video = video,
+        presentation = presentation,
+        isBlurred = isBlurred,
+        paneTransitionScope = paneTransitionScope,
+        sharedElementPrefix = sharedElementPrefix,
+        postUri = postUri,
+    )
+}
+
+@Composable
+internal fun VideoPlayerController.PostVideo(
+    modifier: Modifier,
+    video: Video,
+    presentation: Timeline.Presentation,
+    isBlurred: Boolean,
+    paneTransitionScope: PaneTransitionScope,
+    sharedElementPrefix: String,
+    postUri: PostUri,
+) {
+    Box(
+        modifier = modifier,
     ) {
+        val videoPlayerState = rememberUpdatedVideoPlayerState(
+            videoUrl = video.playlist.uri,
+            thumbnail = video.thumbnail?.uri,
+            shape = presentation.videoShape,
+        )
         val videoModifier = when {
             isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
             else -> Modifier
         }
             .fillMaxSize()
-            .clickable {
-                videoPlayerController.play(videoId = video.playlist.uri)
-                onClicked()
-            }
         if (!paneTransitionScope.isPrimaryOrActive) VideoStill(
             modifier = videoModifier,
             state = videoPlayerState,
@@ -151,7 +173,7 @@ internal fun PostVideo(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth(),
             videoPlayerState = videoPlayerState,
-            videoPlayerController = videoPlayerController,
+            videoPlayerController = this@PostVideo,
         )
 
         PlayButton(
@@ -174,7 +196,7 @@ internal fun PostVideo(
                 ),
             presentation = presentation,
             videoPlayerState = videoPlayerState,
-            videoPlayerController = videoPlayerController,
+            videoPlayerController = this@PostVideo,
         )
     }
 }
