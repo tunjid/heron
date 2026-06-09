@@ -46,6 +46,7 @@ import io.ktor.client.call.body
 import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.logging.LogLevel
@@ -64,6 +65,7 @@ import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -434,6 +436,13 @@ private fun atProtoAuth(
             }
         }
 
+        context.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeoutConfig ->
+            timeoutConfig.requestTimeoutMillis = when {
+                context.url.encodedPath.endsWith(UploadBlobPath) -> 2.minutes.inWholeMilliseconds
+                else -> timeoutConfig.requestTimeoutMillis
+            }
+        }
+
         var resolvedOtherProfilePds = false
 
         if (context.url.encodedPath.contains(ComAtProtoPathSegment)) {
@@ -664,6 +673,8 @@ private val PendingTokenTimeout = 2.seconds
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
+
+private const val UploadBlobPath = "com.atproto.repo.uploadBlob"
 private const val HeronAtProtoProxyHeaderValue = "did:web:heron.tunji.dev#heron_appview"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
