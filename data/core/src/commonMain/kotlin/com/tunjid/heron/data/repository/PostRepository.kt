@@ -488,7 +488,13 @@ internal class OfflinePostRepository(
                     validate = true,
                 ),
             )
-        }.toOutcome()
+        }.toOutcome {
+            // Only delete the uploaded media once the post has been created, so the
+            // write can be safely retried with the source files intact if it fails.
+            request.metadata.embeddedMedia.forEach { file ->
+                fileManager.delete(file)
+            }
+        }
     } ?: expiredSessionOutcome()
 
     override suspend fun sendInteraction(
@@ -797,7 +803,6 @@ internal class OfflinePostRepository(
                             )
                         }
                             .map(file::with)
-                            .onSuccess { fileManager.delete(file) }
                     }
                 }
                     .awaitAll()
