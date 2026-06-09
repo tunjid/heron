@@ -113,7 +113,8 @@ internal fun MediaUploadItems(
                     )
                 }
             }
-            if (photos.size > MaxItemsInRow) repeat(MaxItemsInRow - (photos.size % MaxItemsInRow)) {
+            val remainder = photos.size % MaxItemsInRow
+            if (photos.size > MaxItemsInRow && remainder != 0) repeat(MaxItemsInRow - remainder) {
                 Box(
                     modifier = Modifier
                         .weight(1f)

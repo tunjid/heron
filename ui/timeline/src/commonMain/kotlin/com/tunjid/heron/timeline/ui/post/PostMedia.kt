@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
@@ -111,15 +112,21 @@ internal fun PostMedia(
                         postUri = postUri,
                         presentation = presentation,
                     )
-                    is Video -> LocalVideoPlayerController.current.PostVideo(
-                        modifier = itemModifier,
-                        video = item,
-                        presentation = presentation,
-                        isBlurred = isBlurred,
-                        paneTransitionScope = paneTransitionScope,
-                        sharedElementPrefix = sharedElementPrefix,
-                        postUri = postUri,
-                    )
+                    is Video -> with(LocalVideoPlayerController.current) {
+                        PostVideo(
+                            modifier = itemModifier
+                                .clickable {
+                                    play(videoId = item.playlist.uri)
+                                    onMediaClicked(index)
+                                },
+                            video = item,
+                            presentation = presentation,
+                            isBlurred = isBlurred,
+                            paneTransitionScope = paneTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix,
+                            postUri = postUri,
+                        )
+                    }
                 }
             },
         )

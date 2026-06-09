@@ -104,7 +104,7 @@ internal fun postEmbedUnion(
             else -> PostEmbedUnion.Gallery(
                 Gallery(
                     items = images.images
-                        .mapNotNull(ImagesImage::gallleryItemImage),
+                        .mapNotNull(ImagesImage::galleryItemImage),
                 ),
             )
         }
@@ -180,7 +180,7 @@ private fun List<MediaBlob>.images(): BskyImages? =
         .takeUnless(List<ImagesImage>::isEmpty)
         ?.let(::BskyImages)
 
-private fun ImagesImage.gallleryItemImage(): GalleryItemUnion.Image? =
+private fun ImagesImage.galleryItemImage(): GalleryItemUnion.Image? =
     aspectRatio?.let { aspectRatio ->
         GalleryItemUnion.Image(
             GalleryImage(

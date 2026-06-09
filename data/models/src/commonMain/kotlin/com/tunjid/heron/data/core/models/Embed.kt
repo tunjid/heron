@@ -26,7 +26,7 @@ sealed interface Embed {
         UrlEncodableModel
 }
 
-// Deliberately not serializable, only Embed.Media is
+@Serializable
 sealed interface MediaItem : AspectRatio
 
 @Serializable
