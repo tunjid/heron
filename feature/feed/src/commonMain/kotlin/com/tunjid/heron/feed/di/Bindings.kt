@@ -214,19 +214,6 @@ class FeedBindings(
                         state.signedInProfileId == timeline.feedGenerator.creator.did
                     if (isEditable) editFeedText else null
                 },
-                onEditClicked = onEditClicked@{
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            grazeEditorDestination(
-                                feedGenerator = state.timelineState
-                                    ?.timeline
-                                    ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
-                                    ?: return@onEditClicked,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                            ),
-                        ),
-                    )
-                },
                 onShareInConversationClicked = { recordUri, conversation ->
                     stateHolder.accept(
                         Action.Navigate.To(
@@ -236,6 +223,19 @@ class FeedBindings(
                                 sharedElementPrefix = conversation.id.id,
                                 sharedUri = recordUri.asGenericUri(),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+                onEditClicked = onEditClicked@{
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            grazeEditorDestination(
+                                feedGenerator = state.timelineState
+                                    ?.timeline
+                                    ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
+                                    ?: return@onEditClicked,
+                                sharedElementPrefix = state.sharedElementPrefix,
                             ),
                         ),
                     )
