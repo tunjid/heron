@@ -55,8 +55,6 @@ class EmbeddableRecordOptionsSheetState(
     var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
         internal set
 
-    internal var editTitle: String? by mutableStateOf(null)
-
     override fun onHidden() {
         currentRecordUri = null
     }
@@ -79,7 +77,7 @@ class EmbeddableRecordOptionsSheetState(
                 viewModelInitializer = initializer::invoke,
                 block = ::EmbeddableRecordOptionsSheetState,
             ).also {
-                it.editTitle = editTitle
+                it.viewModel.accept(EmbeddableRecordOptionsAction.SetEditTitle(editTitle))
             }
 
             EmbeddableRecordOptionsBottomSheet(
@@ -104,7 +102,7 @@ private fun EmbeddableRecordOptionsBottomSheet(
     state.ModalBottomSheet {
         val embeddableState = state.viewModel.produceState()
 
-        val editTitle = state.editTitle
+        val editTitle = embeddableState.editTitle
 
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
