@@ -11,6 +11,7 @@ import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
 import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -40,7 +41,7 @@ class EmbeddableRecordOptionsViewModel(
     EmbeddableRecordOptionsStateHolder by scope.actionSuspendingStateMutator(
         state = EmbeddableRecordOptionsState.Immutable().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, _ ->
+        producer = { state, actions ->
             launchLoadSignedInProfileMutations(
                 state = state,
                 authRepository = authRepository,
@@ -49,6 +50,16 @@ class EmbeddableRecordOptionsViewModel(
                 state = state,
                 messageRepository = messageRepository,
             )
+            actions.launchMutationsIn(
+                productionScope = this,
+                keySelector = EmbeddableRecordOptionsAction::key,
+            ) {
+                when (val action = type()) {
+                    is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchAndCollect {
+                        state.editTitle = it.title
+                    }
+                }
+            }
         },
     )
 
@@ -75,7 +86,10 @@ interface EmbeddableRecordOptionsState {
     data class Immutable(
         val signedInProfileId: ProfileId? = null,
         val recentConversations: List<Conversation> = emptyList(),
+        val editTitle: String? = null,
     ) : EmbeddableRecordOptionsState
 }
 
-sealed class EmbeddableRecordOptionsAction(val key: String)
+sealed class EmbeddableRecordOptionsAction(val key: String) {
+    data class SetEditTitle(val title: String?) : EmbeddableRecordOptionsAction("SetEditTitle")
+}
