@@ -252,12 +252,6 @@ internal fun SearchScreen(
                 pagerState = pagerState,
                 state = state,
                 paneScaffoldState = paneScaffoldState,
-                onRequestRecentLists = {
-                    actions(Action.UpdateRecentLists)
-                },
-                onRequestRecentConversations = {
-                    actions(Action.UpdateRecentConversations)
-                },
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,
                 onLinkTargetClicked = onLinkTargetClicked,

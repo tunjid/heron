@@ -342,14 +342,15 @@ interface PostDao {
             WITH RECURSIVE
               -- 1. ParentHierarchy CTE: Recursively finds all parent URIs for the given post
               -- and calculates their generation (negative).
-              ParentHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
+              ParentHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount, ancestorIsOp) AS (
                 SELECT
                   pt.parentPostUri, -- each parent is its own root
                   pt.postUri AS rootPostUri,
                   -1 AS generation,
                   -1 AS ancestorCreated, -- Always a negative constant for ancestors
                   -1 AS postCreated, -- Always a negative constant for ancestors
-                  0 AS ancestorLikeCount
+                  0 AS ancestorLikeCount,
+                  0 AS ancestorIsOp -- only used for replies (generation > 0)
                 FROM
                   postThreads pt
                 WHERE postUri = :postUri
@@ -360,6 +361,7 @@ interface PostDao {
                   ph.generation - 1,
                   ph.ancestorCreated - 1,
                   ph.postCreated - 1,
+                  0,
                   0
                 FROM
                   postThreads pt
@@ -367,16 +369,28 @@ interface PostDao {
                   ParentHierarchy ph ON pt.postUri = ph.uri
               ),
 
+              -- 1b. OpAuthor CTE: the thread's OP, i.e. the author of the thread root. The root is
+              -- the furthest known ancestor (most negative generation); if the anchor has no
+              -- ancestors it is itself the root. Evaluated once.
+              OpAuthor(opId) AS (
+                SELECT authorId FROM posts
+                WHERE uri = COALESCE(
+                  (SELECT uri FROM ParentHierarchy ORDER BY generation ASC LIMIT 1),
+                  :postUri
+                )
+              ),
+
               -- 2. ChildHierarchy CTE: Recursively finds all child URIs for the given post
               -- and calculates their generation (positive).
-              ChildHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
+              ChildHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount, ancestorIsOp) AS (
                 SELECT
                   pt.postUri,
                   pt.postUri AS rootPostUri, -- add the very first reply to the OP as the root
                   1 AS generation,
                   p.createdAt as ancestorCreated, -- sort all replies by the very first reply to the OP
                   p.createdAt as postCreated, -- second sort is the actual post's createdAt
-                  COALESCE(p.likeCount, 0) as ancestorLikeCount -- like count of the root reply for top sort
+                  COALESCE(p.likeCount, 0) as ancestorLikeCount, -- like count of the root reply for top sort
+                  CASE WHEN p.authorId = (SELECT opId FROM OpAuthor) THEN 1 ELSE 0 END as ancestorIsOp -- root reply authored by OP
                 FROM
                   postThreads pt
                 JOIN posts p ON pt.postUri = p.uri
@@ -389,7 +403,8 @@ interface PostDao {
                   ch.generation + 1,
                   ch.ancestorCreated, -- preserve the ancestorCreatedDate in the thread
                   p.createdAt, -- pull in the actual post's createdAt date
-                  ch.ancestorLikeCount -- preserve the root reply's like count in the thread
+                  ch.ancestorLikeCount, -- preserve the root reply's like count in the thread
+                  ch.ancestorIsOp -- preserve whether the root reply is by the OP
                 FROM
                   postThreads pt
                 INNER JOIN posts p ON pt.postUri = p.uri
@@ -399,12 +414,12 @@ interface PostDao {
 
               -- 3. FullThread CTE: Combines the URIs and generations from parents, children,
               -- and the post itself (generation 0).
-              FullThread(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
-                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount FROM ParentHierarchy
+              FullThread(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount, ancestorIsOp) AS (
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount, ancestorIsOp FROM ParentHierarchy
                 UNION
-                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount FROM ChildHierarchy
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount, ancestorIsOp FROM ChildHierarchy
                 UNION
-                SELECT :postUri, NULL, 0, 0, 0, 0
+                SELECT :postUri, NULL, 0, 0, 0, 0, 0
               )
 
             -- 4. Final SELECT: Fetches all columns from the `posts` table for every URI
@@ -431,16 +446,44 @@ interface PostDao {
                 ELSE 2
               END,
               -- Tier 2: within ancestors, sort by generation (most distant first)
-              CASE WHEN ft.generation < 0 THEN ft.generation END,
+              CASE
+                WHEN ft.generation < 0 THEN ft.generation
+              END,
+              -- Tier 2.5: bump OP-authored top-level reply chains above the rest (server applyBumping).
+              -- Keyed on the propagated root-reply flag so each chain's subtree stays contiguous.
+              CASE
+                WHEN ft.generation > 0 AND ft.ancestorIsOp = 1 THEN 0
+                ELSE 1
+              END,
               -- Tier 3: within replies, sort by chosen criteria for the root reply chain
               CASE
                 WHEN ft.generation > 0 AND :sortOrder = 0 THEN ft.ancestorCreated
                 WHEN ft.generation > 0 AND :sortOrder = 1 THEN -ft.ancestorCreated
                 WHEN ft.generation > 0 AND :sortOrder = 2 THEN -ft.ancestorLikeCount
               END,
-              -- Tier 4: within same reply chain, sort by depth then creation time
+              -- Tier 3b: keep each top-level subtree contiguous; break root like-ties by recency
+              CASE
+                WHEN ft.generation > 0 THEN -ft.ancestorCreated
+              END,
+              -- Tier 4: within a subtree, group by depth so chains stay top-down
               ft.generation,
-              ft.postCreated;
+              -- Tier 4.5: bump OP-authored replies above their siblings at each deeper level
+              -- (server applyBumping, applied per sibling group). Gen 1 is handled by Tier 2.5.
+              CASE
+                WHEN ft.generation > 1 AND p.authorId = (SELECT opId FROM OpAuthor) THEN 0
+                ELSE 1
+              END,
+              -- Tier 5: order siblings at each depth by the chosen criteria (post's own values)
+              CASE
+                WHEN ft.generation > 0 AND :sortOrder = 0 THEN ft.postCreated
+                WHEN ft.generation > 0 AND :sortOrder = 1 THEN -ft.postCreated
+                WHEN ft.generation > 0 AND :sortOrder = 2 THEN -COALESCE(p.likeCount, 0)
+              END,
+              -- Tier 6: 'top' like-ties break by newest (match server); stable final fallback
+              CASE
+                WHEN :sortOrder = 0 THEN ft.postCreated
+                ELSE -ft.postCreated
+              END;
         """,
     )
     fun postThread(

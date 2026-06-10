@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -113,7 +114,8 @@ interface StandardSiteRecordOperations {
     ): Outcome
 }
 
-internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
+@Inject
+internal class OfflineFirstStandardSiteRecordOperations(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val standardSiteDao: StandardSiteDao,
@@ -355,6 +357,7 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override suspend fun createSubscription(

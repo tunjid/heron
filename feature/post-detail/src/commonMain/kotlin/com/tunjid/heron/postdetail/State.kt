@@ -62,10 +62,6 @@ interface State {
         @Transient
         val signedInProfileId: ProfileId? = null,
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val items: List<TimelineItem> = emptyList(),
         @Transient
         val messages: List<Memo> = emptyList(),
@@ -146,10 +142,6 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

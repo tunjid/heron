@@ -17,7 +17,6 @@
 package com.tunjid.heron.search
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
@@ -127,10 +126,6 @@ interface State {
         @Transient
         val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
-        @Transient
         val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
         @Transient
         val feedGenerators: List<FeedGenerator> = emptyList(),
@@ -195,10 +190,6 @@ sealed class Action(val key: String) {
     data class UpdateFeedGeneratorStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

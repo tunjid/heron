@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities.postembeds
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -36,6 +37,8 @@ data class ImageEntity(
     val alt: String,
     val width: Long?,
     val height: Long?,
+    @ColumnInfo(defaultValue = "0")
+    val index: Int,
 ) : PostEmbed
 
 /**

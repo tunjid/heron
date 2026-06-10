@@ -53,9 +53,9 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
@@ -682,7 +682,7 @@ private fun Timeline.Presentation.postContentEndPadding(
 }
 
 private fun Embed?.asPostContent() = when (this) {
-    is ImageList,
+    is MediaList,
     is Video,
     -> PostContent.Embed.Media
 
@@ -860,7 +860,7 @@ private val PostData.mediaBlurred: Boolean
     get() = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
 
 private val PostData.canUnblurMedia: Boolean
-    get() = appliedLabels.blurredMediaSeverity != Label.Severity.None
+    get() = appliedLabels.shouldBlurMedia
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")

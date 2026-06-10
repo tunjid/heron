@@ -172,7 +172,7 @@ fun TextCircularProgress(
 }
 
 private const val PostTextLimit = 300
-private const val PhotoUploadLimit = 4
+private const val PhotoUploadLimit = 10
 
 private val TabIcons = listOf(
     Icons.Rounded.Photo,

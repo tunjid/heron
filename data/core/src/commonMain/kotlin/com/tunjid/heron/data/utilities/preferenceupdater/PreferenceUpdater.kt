@@ -79,7 +79,8 @@ internal interface PreferenceUpdater {
     ): List<PreferencesUnion>
 }
 
-internal class ThingPreferenceUpdater @Inject constructor(
+@Inject
+internal class ThingPreferenceUpdater(
     private val tidGenerator: TidGenerator,
 ) : PreferenceUpdater {
 

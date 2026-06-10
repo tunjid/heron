@@ -39,10 +39,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,18 +50,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.ViewModelStoreProvider
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.mutator.compose.produceState
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.add_muted_word
 import heron.ui.timeline.generated.resources.add_words_above_to_mute
@@ -94,9 +87,10 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 class MutedWordsSheetState(
     scope: BottomSheetScope,
+    internal val viewModel: MutedWordsViewModel,
 ) : BottomSheetState(scope) {
 
-    override fun onHidden() { }
+    override fun onHidden() {}
 
     companion object {
         @Composable
@@ -105,14 +99,12 @@ class MutedWordsSheetState(
         ): MutedWordsSheetState {
             val state = rememberBottomSheetState(
                 skipPartiallyExpanded = false,
-            ) { scope -> MutedWordsSheetState(scope = scope) }
-
-            val storeProvider = rememberViewModelStoreProvider()
+                viewModelInitializer = initializer::invoke,
+                block = ::MutedWordsSheetState,
+            )
 
             MutedWordsBottomSheet(
                 state = state,
-                storeProvider = storeProvider,
-                initializer = initializer,
             )
             return state
         }
@@ -122,57 +114,34 @@ class MutedWordsSheetState(
 @Composable
 private fun MutedWordsBottomSheet(
     state: MutedWordsSheetState,
-    storeProvider: ViewModelStoreProvider,
-    initializer: MutedWordsViewModelInitializer,
 ) {
     state.ModalBottomSheet {
-        val storeOwner = rememberViewModelStoreOwner(
-            provider = storeProvider,
-        )
-        CompositionLocalProvider(LocalViewModelStoreOwner provides storeOwner) {
-            MutedWordSheet(
-                sheetState = state,
-                initializer = initializer,
-            )
+        val mutedWordsState = state.viewModel.produceState()
+
+        val initialMutedWords =
+            remember { mutableStateOf<List<MutedWordPreference>?>(null) }
+        if (mutedWordsState.preferencesLoaded && initialMutedWords.value == null) {
+            initialMutedWords.value = mutedWordsState.mutedWords
         }
-    }
-}
 
-@Composable
-private fun MutedWordSheet(
-    sheetState: MutedWordsSheetState,
-    initializer: MutedWordsViewModelInitializer,
-) {
-    val stateHolder: MutedWordsStateHolder = viewModel<MutedWordsViewModel> {
-        initializer.invoke(
-            scope = viewModelCoroutineScope(),
-        )
-    }
-
-    val state by stateHolder.state.collectAsStateWithLifecycle()
-
-    val initialMutedWords = remember { androidx.compose.runtime.mutableStateOf<List<MutedWordPreference>?>(null) }
-    if (state.preferencesLoaded && initialMutedWords.value == null) {
-        initialMutedWords.value = state.mutedWords
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            val currentWords = stateHolder.state.value.mutedWords
-            if (initialMutedWords.value != null && initialMutedWords.value != currentWords) {
-                stateHolder.accept(
-                    MutedWordsAction.UpdateMutedWord(currentWords),
-                )
+        DisposableEffect(Unit) {
+            onDispose {
+                val currentWords = mutedWordsState.mutedWords
+                if (initialMutedWords.value != null && initialMutedWords.value != currentWords) {
+                    state.viewModel.accept(
+                        MutedWordsAction.UpdateMutedWord(currentWords),
+                    )
+                }
             }
         }
-    }
 
-    MutedWordsContent(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        sheetState = sheetState,
-        state = state,
-        actions = stateHolder.accept,
-    )
+        MutedWordsContent(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            sheetState = state,
+            state = mutedWordsState,
+            actions = state.viewModel.accept,
+        )
+    }
 }
 
 @Composable

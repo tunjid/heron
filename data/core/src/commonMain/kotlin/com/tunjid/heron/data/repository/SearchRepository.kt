@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -142,7 +143,8 @@ interface SearchRepository {
     fun suggestedFeeds(): Flow<List<FeedGenerator>>
 }
 
-internal class OfflineSearchRepository @Inject constructor(
+@Inject
+internal class OfflineSearchRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -374,6 +376,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 responseCursor = { null },
             )
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
@@ -407,6 +410,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =

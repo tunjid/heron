@@ -63,7 +63,8 @@ interface VideoUploadService {
     ): Result<Blob>
 }
 
-internal class SuspendingVideoUploadService @Inject constructor(
+@Inject
+internal class SuspendingVideoUploadService(
     httpClient: HttpClient,
     private val networkService: NetworkService,
     private val fileManager: FileManager,

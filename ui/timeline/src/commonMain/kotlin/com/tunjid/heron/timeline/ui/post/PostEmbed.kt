@@ -40,9 +40,9 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -120,7 +120,7 @@ internal fun PostEmbed(
                     onSubscriptionToggled = onPublicationSubscriptionToggled,
                 )
 
-                is ImageList -> PostImages(
+                is MediaList -> PostMedia(
                     modifier = Modifier
                         .fillMaxWidth(),
                     feature = embed,
@@ -130,11 +130,10 @@ internal fun PostEmbed(
                     presentation = presentation,
                     isBlurred = isBlurred,
                     matchHeightConstraintsFirst = false,
-                    onImageClicked = { index ->
+                    onMediaClicked = { index ->
                         onPostMediaClicked(embed, index, null)
                     },
                 )
-
                 UnknownEmbed -> UnknownPostPost(onClick = {})
                 is Video -> PostVideo(
                     modifier = Modifier

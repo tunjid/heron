@@ -38,7 +38,8 @@ interface NetworkMonitor {
     val isConnected: Flow<Boolean>
 }
 
-internal class ConnectivityNetworkMonitor @Inject constructor(
+@Inject
+internal class ConnectivityNetworkMonitor(
     @AppMainScope
     appMainScope: CoroutineScope,
     @IODispatcher

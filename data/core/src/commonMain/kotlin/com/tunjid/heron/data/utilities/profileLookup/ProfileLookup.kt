@@ -80,7 +80,8 @@ internal interface ProfileLookup {
     ): Outcome
 }
 
-internal class OfflineProfileLookup @Inject constructor(
+@Inject
+internal class OfflineProfileLookup(
     private val profileDao: ProfileDao,
     private val networkService: NetworkService,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,

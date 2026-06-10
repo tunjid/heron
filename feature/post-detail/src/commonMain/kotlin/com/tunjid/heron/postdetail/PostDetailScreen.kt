@@ -57,17 +57,18 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
+import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
+import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostMetadata
-import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
+import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
@@ -114,11 +115,7 @@ internal fun PostDetailScreen(
             )
         },
     )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = state.recentLists,
-        onRequestRecentLists = {
-            actions(Action.UpdateRecentLists)
-        },
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },
@@ -146,10 +143,7 @@ internal fun PostDetailScreen(
             }
         },
     )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = state.signedInProfileId,
-        recentConversations = state.recentConversations,
-        onShown = { actions(Action.UpdateRecentConversations) },
+    val postOptionsSheetState = paneScaffoldState.rememberPostOptionsSheetState(
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->

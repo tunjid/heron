@@ -1,5 +1,6 @@
 package com.tunjid.heron.timeline.ui.sheets.mutedwords
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Timeline
@@ -7,29 +8,28 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.heron.timeline.utilities.enqueueMutations
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.launchAndCollect
+import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
-import kotlin.collections.plus
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-typealias MutedWordsStateHolder = ActionStateMutator<MutedWordsAction, StateFlow<MutedWordsState>>
+typealias MutedWordsStateHolder = ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>
 
 @AssistedFactory
 fun interface MutedWordsViewModelInitializer {
@@ -44,26 +44,45 @@ class MutedWordsViewModel(
     writeQueue: WriteQueue,
     @Assisted scope: CoroutineScope,
 ) : ViewModel(viewModelScope = scope),
-    MutedWordsStateHolder by scope.actionStateFlowMutator(
-        initialState = MutedWordsState(),
+    MutedWordsStateHolder by scope.actionSuspendingStateMutator(
+        state = MutedWordsState.Immutable().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        inputs = listOf(
-            loadPreferencesMutations(
+        producer = { state, actions ->
+            launchLoadPreferencesMutations(
+                state = state,
                 userDataRepository = userDataRepository,
-            ),
-        ),
-        actionTransform = { actions ->
-            actions.toMutationStream(keySelector = MutedWordsAction::key) {
+            )
+            actions.launchMutationsIn(
+                productionScope = this,
+                keySelector = MutedWordsAction::key,
+            ) {
                 when (val action = type()) {
-                    is MutedWordsAction.UpdateNewWord -> action.flow.updateNewWordMutations()
-                    is MutedWordsAction.UpdateDuration -> action.flow.updateDurationMutations()
-                    is MutedWordsAction.UpdateTargets -> action.flow.updateTargetsMutations()
-                    is MutedWordsAction.UpdateExcludeNonFollowers -> action.flow.updateExcludeNonFollowersMutations()
-                    is MutedWordsAction.AddMutedWord -> action.flow.addWordMutations()
-                    is MutedWordsAction.RemoveMutedWord -> action.flow.removeMutedWordMutations()
-                    is MutedWordsAction.ClearAll -> action.flow.clearAllMutations()
-                    is MutedWordsAction.ResetErrors -> action.flow.resetErrorsMutations()
-                    is MutedWordsAction.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                    is MutedWordsAction.UpdateNewWord -> action.flow.launchUpdateNewWordMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.UpdateDuration -> action.flow.launchUpdateDurationMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.UpdateTargets -> action.flow.launchUpdateTargetsMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.UpdateExcludeNonFollowers -> action.flow.launchUpdateExcludeNonFollowersMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.AddMutedWord -> action.flow.launchAddWordMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.RemoveMutedWord -> action.flow.launchRemoveMutedWordMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.ClearAll -> action.flow.launchClearAllMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.ResetErrors -> action.flow.launchResetErrorsMutations(
+                        state = state,
+                    )
+                    is MutedWordsAction.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
                 }
@@ -71,55 +90,84 @@ class MutedWordsViewModel(
         },
     )
 
-private fun loadPreferencesMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadPreferencesMutations(
+    state: MutedWordsState.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<MutedWordsState>> =
-    userDataRepository.preferences
-        .take(1)
-        .mapToMutation {
-            copy(
-                mutedWords = it.mutedWordPreferences,
-                preferencesLoaded = true,
-            )
-        }
-
-private fun Flow<MutedWordsAction.UpdateNewWord>.updateNewWordMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(newWord = it.value, error = null) }
-
-private fun Flow<MutedWordsAction.UpdateDuration>.updateDurationMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(newWordDuration = it.duration) }
-
-private fun Flow<MutedWordsAction.UpdateTargets>.updateTargetsMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(newWordTargets = it.targets) }
-
-private fun Flow<MutedWordsAction.UpdateExcludeNonFollowers>.updateExcludeNonFollowersMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(newWordExcludeNonFollowers = it.exclude) }
-
-private fun Flow<MutedWordsAction.RemoveMutedWord>.removeMutedWordMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation {
-        copy(
-            mutedWords = mutedWords.filterNot { w -> w.value == it.value },
-            error = null,
-        )
+) = userDataRepository.preferences
+    .take(1)
+    .launchAndCollect {
+        state.mutedWords = it.mutedWordPreferences
+        state.preferencesLoaded = true
     }
 
-private fun Flow<MutedWordsAction.ClearAll>.clearAllMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(mutedWords = emptyList(), error = null) }
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.UpdateNewWord>.launchUpdateNewWordMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.newWord = it.value
+    state.error = null
+}
 
-private fun Flow<MutedWordsAction.ResetErrors>.resetErrorsMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation { copy(error = null) }
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.UpdateDuration>.launchUpdateDurationMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.newWordDuration = it.duration
+}
 
-private fun Flow<MutedWordsAction.AddMutedWord>.addWordMutations(): Flow<Mutation<MutedWordsState>> =
-    mapToMutation {
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.UpdateTargets>.launchUpdateTargetsMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.newWordTargets = it.targets
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.UpdateExcludeNonFollowers>.launchUpdateExcludeNonFollowersMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.newWordExcludeNonFollowers = it.exclude
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.RemoveMutedWord>.launchRemoveMutedWordMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.mutedWords = state.mutedWords.filterNot { w -> w.value == it.value }
+    state.error = null
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.ClearAll>.launchClearAllMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.mutedWords = emptyList()
+    state.error = null
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.ResetErrors>.launchResetErrorsMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchAndCollect {
+    state.error = null
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.AddMutedWord>.launchAddWordMutations(
+    state: MutedWordsState.SnapshotMutable,
+) =
+    launchAndCollectWithState(state) {
         val trimmedWord = newWord.trim()
-        if (trimmedWord.isBlank()) return@mapToMutation this
+        if (trimmedWord.isBlank()) return@launchAndCollectWithState
 
         if (mutedWords.any { it.value.contentEquals(trimmedWord, ignoreCase = true) }) {
-            return@mapToMutation copy(error = "Word already muted")
+            state.error = "Word already muted"
+            return@launchAndCollectWithState
         }
 
         val expiresAt = newWordDuration?.let { Clock.System.now().plus(it) }
-        copy(
+        update(
             mutedWords = mutedWords + MutedWordPreference(
                 value = trimmedWord,
                 targets = newWordTargets.map { MutedWordPreference.Target(it) },
@@ -135,48 +183,58 @@ private fun Flow<MutedWordsAction.AddMutedWord>.addWordMutations(): Flow<Mutatio
         )
     }
 
-private fun Flow<MutedWordsAction.UpdateMutedWord>.updateMutedWordMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.UpdateMutedWord>.launchUpdateMutedWordMutations(
+    state: MutedWordsState.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<MutedWordsState>> =
-    this.enqueueMutations(
-        writeQueue,
-        toWritable = { action ->
-            Writable.TimelineUpdate(
-                Timeline.Update.OfMutedWord.ReplaceAll(
-                    mutedWordPreferences = action.mutedWordPreference,
-                ),
-            )
-        },
-    ) { _, memo ->
-        if (memo != null) emit { copy(messages = messages + memo) }
-    }
+) = launchAndCollectEnqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = action.mutedWordPreference,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) state.messages += memo
+}
 
-@Serializable
-data class MutedWordsState(
-    val mutedWords: List<MutedWordPreference> = emptyList(),
-    val newWord: String = "",
-    val newWordTargets: List<String> = listOf("content", "tag"),
-    val newWordDuration: Duration? = null,
-    val newWordExcludeNonFollowers: Boolean = false,
-    val preferencesLoaded: Boolean = false,
-    val error: String? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface MutedWordsState {
+    @SnapshotSpec
+    @Serializable
+    data class Immutable(
+        val mutedWords: List<MutedWordPreference> = emptyList(),
+        val newWord: String = "",
+        val newWordTargets: List<String> = listOf("content", "tag"),
+        val newWordDuration: Duration? = null,
+        val newWordExcludeNonFollowers: Boolean = false,
+        val preferencesLoaded: Boolean = false,
+        val error: String? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : MutedWordsState
+}
 
 sealed class MutedWordsAction(val key: String) {
     data class UpdateNewWord(
         val value: String,
     ) : MutedWordsAction("UpdateNewWord")
+
     data class UpdateDuration(
         val duration: Duration?,
     ) : MutedWordsAction("UpdateDuration")
+
     data class UpdateTargets(
         val targets: List<String>,
     ) : MutedWordsAction("UpdateTargets")
+
     data class UpdateExcludeNonFollowers(
         val exclude: Boolean,
     ) : MutedWordsAction("UpdateExcludeNonFollowers")
+
     data object AddMutedWord : MutedWordsAction("AddMutedWord")
     data class RemoveMutedWord(val value: String) : MutedWordsAction("RemoveMutedWord")
     data object ClearAll : MutedWordsAction("ClearAll")

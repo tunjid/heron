@@ -80,6 +80,8 @@ import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationNavigationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
+import com.tunjid.heron.tasks.di.TasksBindings
+import com.tunjid.heron.tasks.di.TasksNavigationBindings
 import com.tunjid.heron.timeline.di.SheetBindings
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
@@ -129,6 +131,7 @@ fun createAppState(
         standardPublicationNavigationBindings = StandardPublicationNavigationBindings,
         standardSubscriptionNavigationBindings = StandardSubscriptionNavigationBindings,
         settingsNavigationBindings = SettingsNavigationBindings,
+        tasksNavigationBindings = TasksNavigationBindings,
     )
 
     val dataBindings = DataBindings(
@@ -242,6 +245,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         settingsBindings = SettingsBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        tasksBindings = TasksBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

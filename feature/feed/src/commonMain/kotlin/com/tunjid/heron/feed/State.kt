@@ -17,7 +17,6 @@
 package com.tunjid.heron.feed
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -61,10 +60,6 @@ interface State {
         val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
         @Transient
         val signedInProfileId: ProfileId? = null,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
         @Transient
         val timelineStateHolder: TimelineStateHolder? = null,
         @Transient
@@ -136,10 +131,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

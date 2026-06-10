@@ -101,7 +101,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -148,7 +150,8 @@ interface BlueskyRecordOperations {
     ): Outcome
 }
 
-internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
+@Inject
+internal class OfflineFirstBlueskyRecordOperations(
     @AppMainScope
     appMainScope: CoroutineScope,
     recordResolver: RecordResolver,
@@ -192,6 +195,8 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                     }
                 }
         }
+            // Clear the previous account's lists when there is no signed in user.
+            .map { it ?: emptyList() }
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = appMainScope,
@@ -219,6 +224,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
                 responseCursor = GetBlocksResponse::cursor,
             )
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun starterPacks(
@@ -372,6 +378,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun feedGenerators(

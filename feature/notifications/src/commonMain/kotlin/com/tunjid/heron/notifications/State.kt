@@ -17,7 +17,6 @@
 package com.tunjid.heron.notifications
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Notification
@@ -50,8 +49,6 @@ interface State : TilingState<NotificationsQuery, Notification> {
         val lastRefreshed: Instant? = null,
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val signedInProfile: Profile? = null,
         @Transient
@@ -131,9 +128,6 @@ sealed class Action(val key: String) {
     data class MarkNotificationsRead(
         val at: Instant,
     ) : Action(key = "markNotificationsRead")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
-
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

@@ -17,7 +17,6 @@
 package com.tunjid.heron.home
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -50,10 +49,6 @@ interface State {
         val trends: List<Trend> = emptyList(),
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
         @Transient
         val timelinePreferenceSaveRequestId: String? = null,
         @Transient
@@ -140,10 +135,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "DeleteRecord")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class UpdateTimeline : Action(key = "Timeline") {
         data object RequestUpdate : UpdateTimeline()

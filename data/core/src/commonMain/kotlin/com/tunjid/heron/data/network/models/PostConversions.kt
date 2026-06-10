@@ -45,8 +45,6 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -173,10 +171,12 @@ internal fun PostView.externalEmbeddedRecordUris() = when (val embed = embed) {
         is RecordWithMediaViewMediaUnion.ImagesView -> emptyList()
         is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
         is RecordWithMediaViewMediaUnion.VideoView -> emptyList()
+        is RecordWithMediaViewMediaUnion.GalleryView -> emptyList()
     }
     is PostViewEmbedUnion.Unknown -> emptyList()
     is PostViewEmbedUnion.VideoView -> emptyList()
     null -> emptyList()
+    is PostViewEmbedUnion.GalleryView -> emptyList()
 }
     .mapNotNull {
         it.atUri.asEmbeddableRecordUriOrNull()
@@ -239,15 +239,10 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
             embed.value.external.asExternalEmbedEntity(),
         )
 
-        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
-            ImageEntity(
-                fullSize = ImageUri(it.fullsize.uri),
-                thumb = ImageUri(it.thumb.uri),
-                alt = it.alt,
-                width = it.aspectRatio?.width,
-                height = it.aspectRatio?.height,
-            )
-        }
+        is PostViewEmbedUnion.ImagesView ->
+            embed.value
+                .images
+                .mapIndexed(::imageEntity)
 
         is PostViewEmbedUnion.RecordView -> emptyList()
         is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
@@ -255,40 +250,35 @@ internal fun PostView.embedEntities(): List<PostEmbed> =
                 mediaEmbed.value.external.asExternalEmbedEntity(),
             )
 
-            is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
-                ImageEntity(
-                    fullSize = ImageUri(it.fullsize.uri),
-                    thumb = ImageUri(it.thumb.uri),
-                    alt = it.alt,
-                    width = it.aspectRatio?.width,
-                    height = it.aspectRatio?.height,
-                )
-            }
+            is RecordWithMediaViewMediaUnion.ImagesView ->
+                mediaEmbed.value
+                    .images
+                    .mapIndexed(::imageEntity)
 
             is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
             is RecordWithMediaViewMediaUnion.VideoView -> listOf(
-                VideoEntity(
-                    cid = GenericId(mediaEmbed.value.cid.cid),
-                    playlist = GenericUri(mediaEmbed.value.playlist.uri),
-                    thumbnail = mediaEmbed.value.thumbnail?.uri?.let(::ImageUri),
-                    alt = mediaEmbed.value.alt,
-                    width = mediaEmbed.value.aspectRatio?.width,
-                    height = mediaEmbed.value.aspectRatio?.height,
+                videoEntity(
+                    index = 0,
+                    videoView = mediaEmbed.value,
                 ),
             )
+            is RecordWithMediaViewMediaUnion.GalleryView ->
+                mediaEmbed.value
+                    .items
+                    .mapIndexedNotNull(::postEmbed)
         }
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
-            VideoEntity(
-                cid = GenericId(embed.value.cid.cid),
-                playlist = GenericUri(embed.value.playlist.uri),
-                thumbnail = embed.value.thumbnail?.uri?.let(::ImageUri),
-                alt = embed.value.alt,
-                width = embed.value.aspectRatio?.width,
-                height = embed.value.aspectRatio?.height,
+            videoEntity(
+                index = 0,
+                videoView = embed.value,
             ),
         )
+        is PostViewEmbedUnion.GalleryView ->
+            embed.value
+                .items
+                .mapIndexedNotNull(::postEmbed)
 
         null -> emptyList()
     }

@@ -19,15 +19,13 @@ package com.tunjid.heron.gallery
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
@@ -81,8 +79,6 @@ interface State {
         val order: TimelineItem.Threaded.Order? = null,
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
         @Transient
         val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
         @Transient
@@ -185,7 +181,12 @@ val GalleryItem.Media.key
 
 internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
     when (this) {
-        is ImageList -> this.images.map(GalleryItem.Media::Photo)
+        is MediaList -> this.media.map { media ->
+            when (media) {
+                is EmbeddedImage -> GalleryItem.Media.Photo(media)
+                is EmbeddedVideo -> GalleryItem.Media.Video(media)
+            }
+        }
         is Video -> listOf(GalleryItem.Media.Video(this))
         is ExternalEmbed,
         UnknownEmbed,
@@ -243,8 +244,6 @@ sealed class Action(val key: String) {
         val following: FollowUri?,
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),
