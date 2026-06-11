@@ -84,7 +84,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
     private fun <T : Record> derakkumaRecords(query: ProfilesQuery, cursor: Cursor, collection: String, mapper: suspend (RawDerakkumaRecord) -> T?): Flow<CursorList<T>> = savedStateDataSource.singleSessionFlow {
         if (cursor is Cursor.Pending || cursor is Cursor.Final) return@singleSessionFlow flowOf(emptyCursorList())
         val response = networkService.runCatchingWithMonitoredNetworkRetry {
-            listRecords(ListRecordsQueryParams(repo = Did(query.profileId.id), collection = Nsid(collection), limit = query.data.limit.coerceIn(1, 100), cursor = cursor.value, reverse = true))
+            listRecords(ListRecordsQueryParams(repo = Did(query.profileId.id), collection = Nsid(collection), limit = query.data.limit.coerceIn(1, 100), cursor = cursor.value, reverse = false))
         }.getOrElse { return@singleSessionFlow flowOf(emptyCursorList()) }
 
         flow {
@@ -95,7 +95,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
                     cid = DerakkumaRecordId(record.cid.cid),
                     value = record.value,
                 )
-            }
+            }.sortDerakkumaRecords(collection)
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
             val fastItems = rawRecords.mapNotNull { it.fastMapper(collection) as? T }
             if (fastItems.isNotEmpty()) {
@@ -383,6 +383,29 @@ private val RawDerakkumaRecord.circle get() = value as? DerakkumaCircleRecord
 private val RawDerakkumaRecord.circleMember get() = value as? DerakkumaCircleMemberRecord
 private val RawDerakkumaRecord.chart get() = value as? DerakkumaChartRecord
 private val RawDerakkumaRecord.song get() = value as? DerakkumaSongRecord
+
+private fun List<RawDerakkumaRecord>.sortDerakkumaRecords(collection: String): List<RawDerakkumaRecord> = when (collection) {
+    DerakkumaPlayUri.NAMESPACE -> sortedWith(
+        compareByDescending<RawDerakkumaRecord> { it.play?.playedAt.derakkumaDateSortKey() }
+            .thenByDescending { it.play?.createdAt.derakkumaDateSortKey() }
+            .thenByDescending { it.uri.uri },
+    )
+
+    else -> this
+}
+
+private fun String?.derakkumaDateSortKey(): Long = this
+    ?.let(derakkumaDateRegex::find)
+    ?.groupValues
+    ?.drop(1)
+    ?.map(String::toLongOrNull)
+    ?.takeIf { parts -> parts.size == 5 && parts.all { it != null } }
+    ?.let { parts ->
+        val (year, month, day, hour, minute) = parts.map { it ?: 0 }
+        year * 100_000_000L + month * 1_000_000L + day * 10_000L + hour * 100L + minute
+    } ?: 0L
+
+private val derakkumaDateRegex = Regex("""(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2})""")
 
 private fun RecordUri.rawAtUriComponents(): AtUriComponents? {
     val withoutPrefix = uri.removePrefix("at://")
