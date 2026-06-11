@@ -29,10 +29,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Profile
@@ -190,19 +193,40 @@ private fun PreviewConversation() {
 }
 
 /**
- * Renders the direct-message column at several accessibility font scales.
- *
- * NOTE: the compose-preview Desktop (Skia) renderer currently ignores the
- * `@Preview(fontScale = …)` parameter, so on that pipeline all three entries
- * render identically until the renderer applies it.
+ * Forces a system font scale by overriding [LocalDensity]'s `fontScale`, which the
+ * Skia/Desktop preview renderer honours as ordinary composition. The Desktop
+ * pipeline does not apply the `@Preview(fontScale = …)` parameter, so we drive it
+ * here instead to exercise accessibility font scaling.
  */
-@Preview(name = "Direct messages - font 1.0x", fontScale = 1f, widthDp = 360)
-@Preview(name = "Direct messages - font 1.5x", fontScale = 1.5f, widthDp = 360)
-@Preview(name = "Direct messages - font 2.0x", fontScale = 2f, widthDp = 360)
-annotation class FontScalePreviews
-
-@FontScalePreviews
 @Composable
-internal fun ConversationPreview() {
-    PreviewConversation()
+private fun FontScaled(
+    fontScale: Float,
+    content: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(
+            density = density.density,
+            fontScale = fontScale,
+        ),
+        content = content,
+    )
+}
+
+@Preview(name = "Direct messages - font 1.0x", widthDp = 360)
+@Composable
+internal fun ConversationFontScale100Preview() {
+    FontScaled(fontScale = 1f) { PreviewConversation() }
+}
+
+@Preview(name = "Direct messages - font 1.5x", widthDp = 360)
+@Composable
+internal fun ConversationFontScale150Preview() {
+    FontScaled(fontScale = 1.5f) { PreviewConversation() }
+}
+
+@Preview(name = "Direct messages - font 2.0x", widthDp = 360)
+@Composable
+internal fun ConversationFontScale200Preview() {
+    FontScaled(fontScale = 2f) { PreviewConversation() }
 }
