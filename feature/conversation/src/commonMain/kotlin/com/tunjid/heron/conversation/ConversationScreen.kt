@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -268,7 +269,10 @@ private fun Message(
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier,
             onMessageLongPressed = onMessageLongPressed,
-            paneScaffoldState = paneScaffoldState,
+            reactionModifier = Modifier.animateBounds(
+                lookaheadScope = paneScaffoldState,
+                boundsTransform = paneScaffoldState.childBoundsTransform,
+            ),
             onLinkTargetClicked = onLinkTargetClicked,
         )
 
@@ -316,13 +320,13 @@ private fun MessageAvatar(
 }
 
 @Composable
-private fun AuthorAndTextMessage(
+internal fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    paneScaffoldState: PaneScaffoldState,
+    reactionModifier: Modifier = Modifier,
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
@@ -344,7 +348,7 @@ private fun AuthorAndTextMessage(
                 },
             message = item,
             side = side,
-            paneScaffoldState = paneScaffoldState,
+            reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
         if (isFirstMessageByAuthor) {
@@ -366,7 +370,10 @@ private fun AuthorNameTimestamp(
         Text(
             text = item.sender.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
+                .weight(1f, fill = false)
                 .alignBy(LastBaseline)
                 .paddingFrom(LastBaseline, after = 8.dp), // Space to 1st bubble
         )
@@ -374,6 +381,8 @@ private fun AuthorNameTimestamp(
         Text(
             text = item.sentAt.toTimestamp(),
             style = MaterialTheme.typography.bodySmall,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.alignBy(LastBaseline),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -385,7 +394,7 @@ private fun ChatItemBubble(
     modifier: Modifier = Modifier,
     message: MessageItem,
     side: Side,
-    paneScaffoldState: PaneScaffoldState,
+    reactionModifier: Modifier = Modifier,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     val backgroundBubbleColor = when (side) {
@@ -437,11 +446,7 @@ private fun ChatItemBubble(
             message.reactions.forEach { reaction ->
                 key(reaction.value) {
                     Text(
-                        modifier = Modifier
-                            .animateBounds(
-                                lookaheadScope = paneScaffoldState,
-                                boundsTransform = paneScaffoldState.childBoundsTransform,
-                            ),
+                        modifier = reactionModifier,
                         text = reaction.value,
                         fontSize = 12.sp,
                     )
@@ -563,7 +568,7 @@ private fun Instant.toTimestamp(): String {
     return "${localDateTime.hour}.$minute $amOrPm"
 }
 
-private sealed interface Side :
+internal sealed interface Side :
     Arrangement.Horizontal,
     Alignment.Horizontal {
     val bubbleShape: Shape
