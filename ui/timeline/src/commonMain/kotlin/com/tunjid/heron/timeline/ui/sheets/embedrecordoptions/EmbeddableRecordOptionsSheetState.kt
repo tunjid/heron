@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,8 +77,9 @@ class EmbeddableRecordOptionsSheetState(
             val state = rememberBottomSheetState(
                 viewModelInitializer = initializer::invoke,
                 block = ::EmbeddableRecordOptionsSheetState,
-            ).also {
-                it.viewModel.accept(EmbeddableRecordOptionsAction.SetEditTitle(editTitle))
+            )
+            LaunchedEffect(editTitle) {
+                state.viewModel.accept(EmbeddableRecordOptionsAction.SetEditTitle(editTitle))
             }
 
             EmbeddableRecordOptionsBottomSheet(
