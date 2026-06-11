@@ -49,25 +49,12 @@ kotlin {
         }
         named("desktopMain") {
             dependencies {
-                // Host skiko native binaries the compose-preview Desktop (Skia)
-                // renderer needs. The CLI auto-injects the plugin but not a host
-                // skiko-awt-runtime, and this module's desktop classpath has none,
-                // so without this the renderer hits UnsatisfiedLinkError:
-                // _nSetFontEdging. Resolved per host so the wrong arch never leaks
-                // into the desktop app.
-                val osName = System.getProperty("os.name").lowercase()
-                val osArch = System.getProperty("os.arch").lowercase()
-                val skikoTarget = when {
-                    osName.contains("linux") && osArch.contains("aarch64") -> "linux-arm64"
-                    osName.contains("linux") -> "linux-x64"
-                    osName.contains("mac") && osArch.contains("aarch64") -> "macos-arm64"
-                    osName.contains("mac") -> "macos-x64"
-                    osName.contains("windows") -> "windows-x64"
-                    else -> null
-                }
-                if (skikoTarget != null) {
-                    runtimeOnly("org.jetbrains.skiko:skiko-awt-runtime-$skikoTarget:0.144.6")
-                }
+                // The compose-preview Desktop (Skia) renderer needs a host skiko
+                // native runtime. The CLI auto-injects the plugin but not skiko, and
+                // a bare jvm("desktop") target doesn't pull one. compose.desktop
+                // .currentOs is the Compose plugin's host selector (same as
+                // desktopApp/composeApp use) and brings the matching host skiko.
+                runtimeOnly(compose.desktop.currentOs)
             }
         }
     }
