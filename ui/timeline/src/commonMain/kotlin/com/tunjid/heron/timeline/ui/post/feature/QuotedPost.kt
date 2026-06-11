@@ -40,19 +40,20 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
-import com.tunjid.heron.timeline.ui.post.PostImages
+import com.tunjid.heron.timeline.ui.post.PostMedia
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.PostVideo
 import com.tunjid.heron.timeline.utilities.SensitiveContentBox
@@ -78,11 +79,12 @@ fun QuotedPost(
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
+    onSubscriptionToggled: (StandardPublication) -> Unit,
 ) = with(paneTransitionScope) {
     val author = quotedPost.author
     var hasClickedThroughSensitiveMedia by rememberSaveable { mutableStateOf(false) }
     val mediaBlurred = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
-    val canUnblurMedia = appliedLabels.blurredMediaSeverity != Label.Severity.None
+    val canUnblurMedia = appliedLabels.shouldBlurMedia
     Box(
         modifier = modifier,
     ) {
@@ -155,6 +157,7 @@ fun QuotedPost(
                 when (val embed = quotedPost.embed) {
                     is ExternalEmbed -> PostExternal(
                         feature = embed,
+                        externalRecord = quotedPost.externalEmbeddedRecord,
                         postUri = quotedPost.uri,
                         sharedElementPrefix = sharedElementPrefix,
                         isBlurred = mediaBlurred,
@@ -164,9 +167,10 @@ fun QuotedPost(
                         onClick = {
                             uriHandler.openUri(embed.uri.uri)
                         },
+                        onSubscriptionToggled = onSubscriptionToggled,
                     )
 
-                    is ImageList -> PostImages(
+                    is MediaList -> PostMedia(
                         modifier = Modifier
                             .wrapContentWidth()
                             .heightIn(max = 140.dp),
@@ -176,7 +180,7 @@ fun QuotedPost(
                         isBlurred = mediaBlurred,
                         matchHeightConstraintsFirst = true,
                         paneTransitionScope = paneTransitionScope,
-                        onImageClicked = { index ->
+                        onMediaClicked = { index ->
                             onPostMediaClicked(embed, index, quotedPost)
                         },
                         // Quotes are exclusively in blog view types

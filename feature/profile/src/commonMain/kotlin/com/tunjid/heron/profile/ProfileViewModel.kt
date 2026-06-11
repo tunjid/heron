@@ -39,13 +39,11 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -99,7 +97,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualProfileViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
-    messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -190,10 +187,6 @@ class ActualProfileViewModel(
                             else -> Unit
                         }
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.Block -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -205,14 +198,6 @@ class ActualProfileViewModel(
                     is Action.PageChanged -> action.flow.collect { event ->
                         state.currentPage = event.page
                     }
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
                     is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -229,26 +214,6 @@ class ActualProfileViewModel(
             }
         },
     )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
@@ -405,24 +370,6 @@ private fun launchFeedGeneratorUrisToStatusMutations(
                 valueTransform = TimelinePreference::pinned,
             )
     }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
 
 private fun Action.Block.toBlockWritable(): Writable.Restriction =
     Writable.Restriction(

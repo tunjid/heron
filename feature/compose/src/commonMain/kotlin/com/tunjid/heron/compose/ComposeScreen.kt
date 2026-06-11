@@ -87,9 +87,11 @@ import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.remove_quoted_post
 import heron.feature.compose.generated.resources.remove_shared_record
+import heron.ui.core.generated.resources.record_document
 import heron.ui.core.generated.resources.record_feed
 import heron.ui.core.generated.resources.record_labeler
 import heron.ui.core.generated.resources.record_list
+import heron.ui.core.generated.resources.record_publication
 import heron.ui.core.generated.resources.record_starter_pack
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -181,7 +183,7 @@ private fun Post(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecord: Record.Embeddable.Native?,
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,

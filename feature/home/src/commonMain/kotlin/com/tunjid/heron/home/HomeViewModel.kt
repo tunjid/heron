@@ -24,14 +24,13 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -75,7 +74,6 @@ class ActualHomeViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
     searchRepository: SearchRepository,
-    messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
@@ -123,6 +121,10 @@ class ActualHomeViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
                     is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
                     is Action.RefreshCurrentTab -> action.flow.launchTabRefreshMutations(
@@ -144,10 +146,6 @@ class ActualHomeViewModel(
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -155,14 +153,6 @@ class ActualHomeViewModel(
                     is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
                     )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
@@ -223,26 +213,6 @@ private fun launchTimelineMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
-
-context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
@@ -296,18 +266,12 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
+    toWritable = { it.publication.toSubscriptionWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

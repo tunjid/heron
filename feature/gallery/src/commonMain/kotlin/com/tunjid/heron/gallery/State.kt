@@ -19,19 +19,18 @@ package com.tunjid.heron.gallery
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -81,8 +80,6 @@ interface State {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
         val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
         @Transient
         val comments: List<TimelineItem> = emptyList(),
@@ -127,7 +124,7 @@ interface State {
                         record = null,
                         viewerStats = null,
                         labels = emptyList(),
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     ),
                 ),
             ),
@@ -184,7 +181,12 @@ val GalleryItem.Media.key
 
 internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
     when (this) {
-        is ImageList -> this.images.map(GalleryItem.Media::Photo)
+        is MediaList -> this.media.map { media ->
+            when (media) {
+                is EmbeddedImage -> GalleryItem.Media.Photo(media)
+                is EmbeddedVideo -> GalleryItem.Media.Video(media)
+            }
+        }
         is Video -> listOf(GalleryItem.Media.Video(this))
         is ExternalEmbed,
         UnknownEmbed,
@@ -193,10 +195,6 @@ internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
     }
 
 sealed class Action(val key: String) {
-
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
 
     data class LoadComments(
         val post: Post,
@@ -221,6 +219,10 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
@@ -242,8 +244,6 @@ sealed class Action(val key: String) {
         val following: FollowUri?,
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

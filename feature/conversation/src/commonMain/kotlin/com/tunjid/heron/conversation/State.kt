@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
@@ -91,7 +92,7 @@ sealed class SharedRecord {
 
     @Serializable
     data class Pending(
-        val record: Record.Embeddable,
+        val record: Record.Embeddable.Native,
     ) : SharedRecord()
 
     @Serializable
@@ -177,6 +178,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
 
     data class SnackbarDismissed(
         val message: Memo,

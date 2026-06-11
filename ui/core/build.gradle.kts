@@ -36,6 +36,9 @@ kotlin {
                 implementation(project(":data:platform"))
 
                 implementation(libs.kotlinx.datetime)
+
+                implementation(libs.lifecycle.multiplatform.viewmodel)
+                implementation(libs.lifecycle.multiplatform.viewmodel.compose)
             }
         }
         androidMain {

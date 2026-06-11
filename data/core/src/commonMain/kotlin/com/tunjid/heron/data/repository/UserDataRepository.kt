@@ -60,7 +60,8 @@ interface UserDataRepository {
     ): Outcome
 }
 
-internal class OfflineUserDataRepository @Inject constructor(
+@Inject
+internal class OfflineUserDataRepository(
     private val savedStateDataSource: SavedStateDataSource,
 ) : UserDataRepository {
 

@@ -45,8 +45,6 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -102,6 +100,32 @@ internal fun PostView.post(
     viewingProfileId: ProfileId?,
 ): Post {
     val postEntity = postEntity()
+    return post(
+        postEntity = postEntity,
+        profileEntity = profileEntity(),
+        embeds = embedEntities(),
+        viewerStateEntity =
+        if (viewingProfileId == null) null
+        else author.profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+        ),
+        viewerStatisticsEntity = viewer
+            ?.postViewerStatisticsEntity(
+                postUri = postEntity.uri,
+                viewingProfileId = viewingProfileId,
+            ),
+        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
+        // It's not worth extracting non bluesky embedded records here as they will be missing
+        // metadata from joins. These values will be seen when the db is observed.
+        embeddedRecords = blueskyEmbeddedRecords(
+            viewingProfileId = viewingProfileId,
+        ),
+    )
+}
+
+internal fun PostView.blueskyEmbeddedRecords(
+    viewingProfileId: ProfileId?,
+): List<Record.Embeddable> {
     val quotedPostEntity = quotedPostEntity()
     val quotedPostProfileView = quotedPostProfileView()
 
@@ -117,32 +141,46 @@ internal fun PostView.post(
             ),
             viewerStatisticsEntity = null,
             labels = emptyList(),
-            embeddedRecord = null,
-            quote = null,
+            embeddedRecords = emptyList(),
         )
         else null
 
-    val embeddedRecord = quotedPost ?: nonPostEmbeddedRecord()
-
-    return post(
-        postEntity = postEntity,
-        profileEntity = profileEntity(),
-        embeds = embedEntities(),
-        viewerStateEntity =
-        if (viewingProfileId == null) null
-        else author.profileViewerStateEntity(
-            viewingProfileId = viewingProfileId,
-        ),
-        viewerStatisticsEntity = viewer
-            ?.postViewerStatisticsEntity(
-                postUri = postEntity.uri,
-                viewingProfileId = viewingProfileId,
-            ),
-        quote = quotedPost,
-        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
-        embeddedRecord = embeddedRecord,
+    val embeddedRecords = listOfNotNull(
+        quotedPost,
+        nonPostEmbeddedRecord(),
     )
+    return embeddedRecords
 }
+
+internal fun PostView.externalEmbeddedRecordUris() = when (val embed = embed) {
+    is PostViewEmbedUnion.ExternalView ->
+        embed.value
+            .external
+            .associatedRefs
+            ?.map { it.uri }
+            .orEmpty()
+    is PostViewEmbedUnion.ImagesView -> emptyList()
+    is PostViewEmbedUnion.RecordView -> emptyList()
+    is PostViewEmbedUnion.RecordWithMediaView -> when (val media = embed.value.media) {
+        is RecordWithMediaViewMediaUnion.ExternalView ->
+            media.value
+                .external
+                .associatedRefs
+                ?.map { it.uri }
+                .orEmpty()
+        is RecordWithMediaViewMediaUnion.ImagesView -> emptyList()
+        is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
+        is RecordWithMediaViewMediaUnion.VideoView -> emptyList()
+        is RecordWithMediaViewMediaUnion.GalleryView -> emptyList()
+    }
+    is PostViewEmbedUnion.Unknown -> emptyList()
+    is PostViewEmbedUnion.VideoView -> emptyList()
+    null -> emptyList()
+    is PostViewEmbedUnion.GalleryView -> emptyList()
+}
+    .mapNotNull {
+        it.atUri.asEmbeddableRecordUriOrNull()
+    }
 
 private fun post(
     postEntity: PostEntity,
@@ -150,9 +188,8 @@ private fun post(
     embeds: List<PostEmbed>,
     viewerStateEntity: ProfileViewerStateEntity?,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
-    quote: Post?,
     labels: List<Label>,
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecords: List<Record.Embeddable>,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -176,7 +213,7 @@ private fun post(
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labels,
-    embeddedRecord = embeddedRecord,
+    embeddedRecords = embeddedRecords,
 )
 
 internal fun PostView.postEntity() =
@@ -199,69 +236,49 @@ internal fun PostView.profileEntity(): ProfileEntity =
 internal fun PostView.embedEntities(): List<PostEmbed> =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> listOf(
-            ExternalEmbedEntity(
-                uri = GenericUri(embed.value.external.uri.uri),
-                title = embed.value.external.title,
-                description = embed.value.external.description,
-                thumb = embed.value.external.thumb?.uri?.let(::ImageUri),
-            ),
+            embed.value.external.asExternalEmbedEntity(),
         )
 
-        is PostViewEmbedUnion.ImagesView -> embed.value.images.map {
-            ImageEntity(
-                fullSize = ImageUri(it.fullsize.uri),
-                thumb = ImageUri(it.thumb.uri),
-                alt = it.alt,
-                width = it.aspectRatio?.width,
-                height = it.aspectRatio?.height,
-            )
-        }
+        is PostViewEmbedUnion.ImagesView ->
+            embed.value
+                .images
+                .mapIndexed(::imageEntity)
 
         is PostViewEmbedUnion.RecordView -> emptyList()
         is PostViewEmbedUnion.RecordWithMediaView -> when (val mediaEmbed = embed.value.media) {
             is RecordWithMediaViewMediaUnion.ExternalView -> listOf(
-                ExternalEmbedEntity(
-                    uri = GenericUri(mediaEmbed.value.external.uri.uri),
-                    title = mediaEmbed.value.external.title,
-                    description = mediaEmbed.value.external.description,
-                    thumb = mediaEmbed.value.external.thumb?.uri?.let(::ImageUri),
-                ),
+                mediaEmbed.value.external.asExternalEmbedEntity(),
             )
 
-            is RecordWithMediaViewMediaUnion.ImagesView -> mediaEmbed.value.images.map {
-                ImageEntity(
-                    fullSize = ImageUri(it.fullsize.uri),
-                    thumb = ImageUri(it.thumb.uri),
-                    alt = it.alt,
-                    width = it.aspectRatio?.width,
-                    height = it.aspectRatio?.height,
-                )
-            }
+            is RecordWithMediaViewMediaUnion.ImagesView ->
+                mediaEmbed.value
+                    .images
+                    .mapIndexed(::imageEntity)
 
             is RecordWithMediaViewMediaUnion.Unknown -> emptyList()
             is RecordWithMediaViewMediaUnion.VideoView -> listOf(
-                VideoEntity(
-                    cid = GenericId(mediaEmbed.value.cid.cid),
-                    playlist = GenericUri(mediaEmbed.value.playlist.uri),
-                    thumbnail = mediaEmbed.value.thumbnail?.uri?.let(::ImageUri),
-                    alt = mediaEmbed.value.alt,
-                    width = mediaEmbed.value.aspectRatio?.width,
-                    height = mediaEmbed.value.aspectRatio?.height,
+                videoEntity(
+                    index = 0,
+                    videoView = mediaEmbed.value,
                 ),
             )
+            is RecordWithMediaViewMediaUnion.GalleryView ->
+                mediaEmbed.value
+                    .items
+                    .mapIndexedNotNull(::postEmbed)
         }
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> listOf(
-            VideoEntity(
-                cid = GenericId(embed.value.cid.cid),
-                playlist = GenericUri(embed.value.playlist.uri),
-                thumbnail = embed.value.thumbnail?.uri?.let(::ImageUri),
-                alt = embed.value.alt,
-                width = embed.value.aspectRatio?.width,
-                height = embed.value.aspectRatio?.height,
+            videoEntity(
+                index = 0,
+                videoView = embed.value,
             ),
         )
+        is PostViewEmbedUnion.GalleryView ->
+            embed.value
+                .items
+                .mapIndexedNotNull(::postEmbed)
 
         null -> emptyList()
     }

@@ -33,6 +33,8 @@ import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -45,7 +47,9 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Record.Reference
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
@@ -100,6 +104,9 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedRecordEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -135,6 +142,9 @@ import io.ktor.http.HttpStatusCode
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -144,6 +154,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -205,7 +216,8 @@ internal interface RecordResolver {
     }
 }
 
-internal class OfflineRecordResolver @Inject constructor(
+@Inject
+internal class OfflineRecordResolver(
     @AppMainScope
     appMainScope: CoroutineScope,
     @param:DefaultDispatcher
@@ -285,6 +297,8 @@ internal class OfflineRecordResolver @Inject constructor(
         val postUris = LazyList<PostUri>()
         val starterPackUris = LazyList<StarterPackUri>()
         val labelerUris = LazyList<LabelerUri>()
+        val documentUris = LazyList<StandardDocumentUri>()
+        val publicationUris = LazyList<StandardPublicationUri>()
 
         uris.forEach { uri ->
             when (uri) {
@@ -293,52 +307,78 @@ internal class OfflineRecordResolver @Inject constructor(
                 is PostUri -> postUris.add(uri)
                 is StarterPackUri -> starterPackUris.add(uri)
                 is LabelerUri -> labelerUris.add(uri)
+                is StandardDocumentUri -> documentUris.add(uri)
+                is StandardPublicationUri -> publicationUris.add(uri)
             }
         }
 
+        val refreshChannel = Channel<RecordUri>(
+            capacity = RefreshBufferSize,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+        val queuedUris = mutableSetOf<RecordUri>()
+
         return combine(
-            feedUris.list
-                .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
-            listUris.list
-                .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
-            postUris.list
-                .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
-            starterPackUris.list
-                .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
-            labelerUris.list
-                .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
-        ) { feeds, lists, posts, starterPacks, labelers ->
+            listOf(
+                feedUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
+                listUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
+                postUris.list
+                    .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
+                starterPackUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
+                labelerUris.list
+                    .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
+                documentUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        standardSiteDao.documents(viewingProfileId?.id, it)
+                    },
+                publicationUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        standardSiteDao.publications(viewingProfileId?.id, it)
+                    },
+            ),
+        ) { populatedRecordLists ->
             val associatedRecords = buildMap {
-                feeds.forEach { put(it.recordUri, it) }
-                lists.forEach { put(it.recordUri, it) }
-                posts.forEach { put(it.recordUri, it) }
-                starterPacks.forEach { put(it.recordUri, it) }
-                labelers.forEach { put(it.recordUri, it) }
+                populatedRecordLists.forEach { populatedRecords ->
+                    populatedRecords.forEach { recordEntity ->
+                        put(recordEntity.recordUri, recordEntity)
+                        if (recordEntity.needsRefreshing() && queuedUris.add(recordEntity.recordUri)) {
+                            refreshChannel.trySend(recordEntity.recordUri)
+                        }
+                    }
+                }
             }
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
-                    is PopulatedFeedGeneratorEntity -> recordEntity.asExternalModel()
-                    is PopulatedLabelerEntity -> recordEntity.asExternalModel()
-                    is PopulatedListEntity -> recordEntity.asExternalModel()
+                    // Top level posts have their embedded Records populated
                     is PopulatedPostEntity -> recordEntity.asExternalModel(
-                        embeddedRecord = when (
-                            val embeddedRecordEntity =
-                                associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
-                        ) {
-                            is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
-                            is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
-                                embeddedRecord = null,
-                            )
-                            is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
-                            null -> null
-                        },
+                        embeddedRecords = buildList {
+                            recordEntity.entity
+                                .record
+                                ?.embeddedRecordUri
+                                ?.let(::add)
+                            recordEntity.associatedStandardRecords
+                                .forEach { add(it.recordUri) }
+                        }
+                            .mapNotNull { uri ->
+                                associatedRecords[uri]?.toEmbeddableModel()
+                            }
+                            .sortedBy(::embeddedRecordOrder),
                     )
-                    is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
+                    else -> recordEntity.toEmbeddableModel()
                 }
             }
         }
+            .withRefresh {
+                refreshChannel.consumeEach {
+                    resolve(it)
+                }
+            }
+            .onCompletion {
+                refreshChannel.close()
+            }
     }
 
     override suspend fun resolve(
@@ -828,3 +868,49 @@ private val NotFoundVariants = setOf(
     "could not find",
     "not found",
 )
+
+/**
+ * Maps a resolved [PopulatedRecordEntity] to its [Record.Embeddable] model. Nested posts
+ * (eg. a quote of a quote) are resolved one level deep with empty [Post.embeddedRecords].
+ */
+private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when (this) {
+    is PopulatedFeedGeneratorEntity -> asExternalModel()
+    is PopulatedLabelerEntity -> asExternalModel()
+    is PopulatedListEntity -> asExternalModel()
+    is PopulatedStandardDocumentEntity -> asExternalModel()
+    is PopulatedStandardPublicationEntity -> asExternalModel()
+    is PopulatedStarterPackEntity -> asExternalModel()
+    is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
+}
+
+private fun PopulatedRecordEntity.needsRefreshing() =
+    when (this) {
+        is PopulatedFeedGeneratorEntity,
+        is PopulatedLabelerEntity,
+        is PopulatedListEntity,
+        is PopulatedPostEntity,
+        is PopulatedStarterPackEntity,
+        is PopulatedStandardDocumentEntity,
+        -> false
+        is PopulatedStandardPublicationEntity,
+        -> this.entity.cid == null && entity.url == Collections.PLACEHOLDER_URL
+    }
+
+/**
+ * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
+ * records (feed generator/list/starter pack/labeler), (3) standard-site records.
+ */
+private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) {
+    is Post -> 0
+    is FeedGenerator,
+    is FeedList,
+    is StarterPack,
+    is Labeler,
+    -> 1
+    is StandardDocument,
+    -> 2
+    is StandardPublication,
+    -> 3
+}
+
+private const val RefreshBufferSize = 64

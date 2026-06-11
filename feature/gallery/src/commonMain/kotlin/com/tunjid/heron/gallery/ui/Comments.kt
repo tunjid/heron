@@ -96,7 +96,7 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
@@ -354,6 +354,8 @@ fun Comments(
                                                 is PostAction.OfMore -> {
                                                     postOptionsSheetState.showOptions(action.post)
                                                 }
+                                                is PostAction.OfPublicationSubscription ->
+                                                    actions(Action.TogglePublicationSubscription(action.publication))
                                                 is PostAction.OfMetadata -> Unit
                                             }
                                         }

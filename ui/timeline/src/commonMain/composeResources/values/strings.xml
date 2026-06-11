@@ -170,6 +170,33 @@
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
 
+    <string name="writable_description_creating_post">Creating a post</string>
+    <string name="writable_description_post_photo">Photo post</string>
+    <string name="writable_description_post_video">Video post</string>
+    <string name="writable_description_liking_post">Liking a post</string>
+    <string name="writable_description_reposting">Reposting</string>
+    <string name="writable_description_bookmarking_post">Bookmarking a post</string>
+    <string name="writable_description_removing_like">Removing a like</string>
+    <string name="writable_description_removing_repost">Removing a repost</string>
+    <string name="writable_description_removing_bookmark">Removing a bookmark</string>
+    <string name="writable_description_updating_reply_settings">Updating who can reply</string>
+    <string name="writable_description_sending_message">Sending a message</string>
+    <string name="writable_description_reacting_with">Reacting with %1$s</string>
+    <string name="writable_description_removing_reaction">Removing reaction %1$s</string>
+    <string name="writable_description_following_profile">Following a profile</string>
+    <string name="writable_description_unfollowing_profile">Unfollowing a profile</string>
+    <string name="writable_description_adding_to_list">Adding to a list</string>
+    <string name="writable_description_subscribing_publication">Subscribing to a publication</string>
+    <string name="writable_description_blocking_profile">Blocking a profile</string>
+    <string name="writable_description_unblocking_profile">Unblocking a profile</string>
+    <string name="writable_description_muting_profile">Muting a profile</string>
+    <string name="writable_description_unmuting_profile">Unmuting a profile</string>
+    <string name="writable_description_updating_status">Updating your status</string>
+    <string name="writable_description_updating_feed_settings">Updating feed settings</string>
+    <string name="writable_description_updating_profile">Updating your profile</string>
+    <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
+    <string name="writable_description_deleting_record">Deleting a record</string>
+
     <string name="empty_timeline_thread">There are no replies to this post.</string>
     <string name="empty_timeline_thread_description">Join the conversation by adding a post of your own.</string>
     <string name="empty_timeline_generic">This feed is empty</string>

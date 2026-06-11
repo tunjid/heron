@@ -24,36 +24,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberPreferenceThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.PostInteractionStatus
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
+import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 
 @Composable
-fun ComposeThreadGate(
+fun PaneScaffoldState.ComposeThreadGate(
     modifier: Modifier = Modifier,
-    recentLists: List<FeedList>,
-    onRequestRecentLists: () -> Unit,
     interactionSettingsPreference: PostInteractionSettingsPreference?,
     onInteractionSettingsUpdated: (PostInteractionSettingsPreference) -> Unit,
 ) {
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = recentLists,
-        onRequestRecentLists = onRequestRecentLists,
+    val threadGateSheetState = rememberPreferenceThreadGateSheetState(
         onDefaultThreadGateUpdated = onInteractionSettingsUpdated,
     )
 
     ElevatedCard(
         modifier = modifier,
         shape = CircleShape,
-        onClick = {
-            threadGateSheetState.show(interactionSettingsPreference)
-        },
+        onClick = { threadGateSheetState.show(interactionSettingsPreference) },
     ) {
         PostInteractionStatus(
-            modifier = Modifier
-                .padding(
-                    vertical = 4.dp,
-                    horizontal = 8.dp,
-                ),
+            modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
             preference = interactionSettingsPreference,
         )
     }

@@ -77,6 +77,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -125,7 +126,8 @@ interface MessageRepository {
     ): Outcome
 }
 
-internal class OfflineMessageRepository @Inject constructor(
+@Inject
+internal class OfflineMessageRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val messageDao: MessageDao,
@@ -176,6 +178,7 @@ internal class OfflineMessageRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun messages(
@@ -250,6 +253,7 @@ internal class OfflineMessageRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override suspend fun monitorConversationLogs() {

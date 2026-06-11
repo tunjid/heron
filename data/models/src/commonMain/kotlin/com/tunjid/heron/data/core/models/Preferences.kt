@@ -184,10 +184,16 @@ data class ThreadViewPreference(
     val sort: String? = null,
 ) {
     companion object {
-        fun ThreadViewPreference?.order() = this?.let {
-            TimelineItem.Threaded.Order.entries
-                .firstOrNull { it.value == sort }
-        } ?: TimelineItem.Threaded.Order.Top
+        fun ThreadViewPreference?.order(): TimelineItem.Threaded.Order =
+            when (val sort = this?.sort) {
+                // Not implemented in Heron; mirror the server's handling:
+                "random" -> TimelineItem.Threaded.Order.Newest // server falls back to newest
+                "hotness" -> TimelineItem.Threaded.Order.Top // alias for most-likes
+                else ->
+                    TimelineItem.Threaded.Order.entries
+                        .firstOrNull { it.value == sort }
+                        ?: TimelineItem.Threaded.Order.Top
+            }
     }
 }
 

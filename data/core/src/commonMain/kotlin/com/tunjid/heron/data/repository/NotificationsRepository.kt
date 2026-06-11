@@ -63,6 +63,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isFollowing
 import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.models.offset
+import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericId
@@ -127,6 +128,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -184,7 +186,8 @@ interface NotificationsRepository {
     suspend fun markNotificationPermissionsRequested(): Outcome
 }
 
-internal class OfflineNotificationsRepository @Inject constructor(
+@Inject
+internal class OfflineNotificationsRepository(
     @AppMainScope
     appMainScope: CoroutineScope,
     @param:IODispatcher
@@ -225,6 +228,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 }
             }
         }
+            // Reset to zero when there is no signed in user.
+            .map { it ?: 0 }
             .stateIn(
                 scope = appMainScope + ioDispatcher,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -257,6 +262,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     )
                 }
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun notifications(
@@ -300,6 +306,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override suspend fun markRead(at: Instant) {
@@ -679,6 +686,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     )
                 }
         }
+            .filterNotNull()
 
     private fun asExternalModel(
         signedInProfileId: ProfileId,
@@ -695,7 +703,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 associatedPost = it.entity.associatedPostUri
                     ?.let(urisToPosts::get)
                     ?.asExternalModel(
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     ),
             )
         }
@@ -739,8 +747,8 @@ private fun Post.isReply(
 private fun Post.isQuote(
     signedInProfileId: ProfileId?,
 ): Boolean {
-    val embeddedRecord = embeddedRecord
-    return embeddedRecord is Post && embeddedRecord.author.did == signedInProfileId
+    val records = embeddedRecords.ifEmpty { listOfNotNull(primaryEmbeddedRecord) }
+    return records.any { it is Post && it.author.did == signedInProfileId }
 }
 
 private fun Post.isMention(

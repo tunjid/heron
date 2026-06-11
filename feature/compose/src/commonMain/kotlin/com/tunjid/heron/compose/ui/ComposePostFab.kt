@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
+import com.tunjid.heron.compose.ui.ComposeThreadGate
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.UiTokens
@@ -91,10 +92,6 @@ fun PaneScaffoldState.ComposePostFabRow(
                 interactionSettingsPreference = state.interactionsPreference,
                 onInteractionSettingsUpdated = {
                     onAction(Action.UpdateInteractionSettings(it))
-                },
-                recentLists = state.recentLists,
-                onRequestRecentLists = {
-                    onAction(Action.UpdateRecentLists)
                 },
             )
         }

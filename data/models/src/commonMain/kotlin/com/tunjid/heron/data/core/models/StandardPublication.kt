@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -33,13 +34,15 @@ data class StandardPublication(
     val showInDiscover: Boolean,
     val basicTheme: BasicTheme?,
     val subscription: StandardSubscription?,
-) : Record,
+) : Record.Embeddable.External,
     UrlEncodableModel {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri = uri
 
     @Serializable
     data class BasicTheme(

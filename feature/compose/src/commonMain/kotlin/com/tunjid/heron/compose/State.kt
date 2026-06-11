@@ -42,11 +42,9 @@ data class State(
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
-    val embeddedRecord: Record.Embeddable? = null,
+    val embeddedRecord: Record.Embeddable.Native? = null,
     @Transient
     val dismissedEmbedUrl: String? = null,
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val interactionsPreference: PostInteractionSettingsPreference? = null,
     @Serializable(with = TextFieldValueSerializer::class)
@@ -161,6 +159,4 @@ sealed class Action(val key: String) {
     data class RemoveEmbeddedRecord(
         val url: String? = null,
     ) : Action("RemoveEmbeddedRecord")
-
-    data object UpdateRecentLists : Action("UpdateRecentLists")
 }

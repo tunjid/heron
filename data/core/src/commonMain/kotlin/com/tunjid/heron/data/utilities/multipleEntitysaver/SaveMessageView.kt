@@ -157,6 +157,7 @@ private fun MultipleEntitySaver.add(
             is MessagePost.RecordWithMediaView -> TimelinePost.RecordWithMediaView(embed.value)
             is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
             is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
+            is MessagePost.GalleryView -> TimelinePost.GalleryView(embed.value)
             null -> null
         },
         replyCount = record.value.replyCount,

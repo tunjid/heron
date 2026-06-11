@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProfileDao {
 
+    @Transaction
     @Query(
         """
             SELECT * FROM profiles
@@ -85,6 +86,7 @@ interface ProfileDao {
         profileIdOrHandle: String,
     ): Flow<ProfileTabsEntity?>
 
+    @Transaction
     @Query(
         """
             SELECT * FROM profiles

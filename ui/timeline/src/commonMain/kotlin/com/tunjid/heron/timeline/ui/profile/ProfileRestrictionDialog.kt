@@ -22,7 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.tunjid.heron.timeline.ui.post.PostOption
+import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog

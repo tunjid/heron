@@ -24,6 +24,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
@@ -90,7 +91,9 @@ data class PopulatedStandardDocumentEntity(
         entityColumn = "uri",
     )
     val publication: StandardPublicationEntity?,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: EmbeddableRecordUri get() = entity.uri
+}
 
 fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
     uri = entity.uri,

@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.post
+package com.tunjid.heron.timeline.ui.sheets.postoptions
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +12,6 @@ import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +40,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceState
 import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
@@ -54,20 +54,13 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class PostOptionsSheetState private constructor(
-    signedInProfileId: ProfileId?,
-    recentConversations: List<Conversation>,
+class PostOptionsSheetState(
     scope: BottomSheetScope,
+    internal val viewModel: PostOptionsViewModel,
 ) : BottomSheetState(scope) {
 
-    internal var signedInProfileId by mutableStateOf(signedInProfileId)
-
-    internal var recentConversations by mutableStateOf(recentConversations)
-
-    internal var currentPost: Post? by mutableStateOf(null)
-
-    internal val isSignedIn
-        get() = signedInProfileId != null
+    var currentPost: Post? by mutableStateOf(null)
+        internal set
 
     override fun onHidden() {
         currentPost = null
@@ -81,25 +74,16 @@ class PostOptionsSheetState private constructor(
     companion object {
         @Composable
         fun rememberUpdatedPostOptionsSheetState(
-            signedInProfileId: ProfileId?,
-            recentConversations: List<Conversation>,
-            onShown: () -> Unit,
+            initializer: PostOptionsViewModelInitializer,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
-            val state = rememberBottomSheetState {
-                PostOptionsSheetState(
-                    signedInProfileId = signedInProfileId,
-                    recentConversations = recentConversations,
-                    scope = it,
-                )
-            }.also {
-                it.signedInProfileId = signedInProfileId
-                it.recentConversations = recentConversations
-            }
+            val state = rememberBottomSheetState(
+                viewModelInitializer = initializer::invoke,
+                block = ::PostOptionsSheetState,
+            )
 
             PostOptionsBottomSheet(
                 state = state,
-                onShown = onShown,
                 onOptionClicked = onOptionClicked,
             )
 
@@ -111,23 +95,20 @@ class PostOptionsSheetState private constructor(
 @Composable
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
-    onShown: () -> Unit,
     onOptionClicked: (PostOption) -> Unit,
 ) {
-    val signedInProfileId = state.signedInProfileId
-    if (signedInProfileId != null) state.ModalBottomSheet {
-        DisposableEffect(Unit) {
-            onShown()
-            onDispose { }
-        }
+    state.ModalBottomSheet {
+        val postOptionsState = state.viewModel.produceState()
+
+        val signedInProfileId = postOptionsState.signedInProfileId
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SendDirectMessageCard(
+            if (signedInProfileId != null) SendDirectMessageCard(
                 signedInProfileId = signedInProfileId,
-                recentConversations = state.recentConversations,
+                recentConversations = postOptionsState.recentConversations,
                 onConversationClicked = { conversation ->
                     val currentPost = state.currentPost
                     if (currentPost != null) {
@@ -146,7 +127,7 @@ private fun PostOptionsBottomSheet(
 
                 CopyToClipboardCard(post.uri.shareUri())
 
-                if (!isOwnPost) PostModerationMenuSection(
+                if (signedInProfileId != null && !isOwnPost) PostModerationMenuSection(
                     signedInProfileId = signedInProfileId,
                     post = post,
                     onOptionClicked = { option ->

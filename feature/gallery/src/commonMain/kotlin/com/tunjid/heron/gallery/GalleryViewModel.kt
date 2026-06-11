@@ -27,15 +27,14 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
@@ -82,7 +81,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     userDataRepository: UserDataRepository,
@@ -132,6 +130,11 @@ class ActualGalleryViewModel(
                         writeQueue = writeQueue,
                     )
 
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
+
                     is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -142,10 +145,6 @@ class ActualGalleryViewModel(
                     is Action.Navigate -> action.flow.collect { navAction ->
                         navActions(navAction.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -153,10 +152,6 @@ class ActualGalleryViewModel(
                     is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
                     )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
@@ -197,7 +192,7 @@ private suspend fun launchLoadPostMutations(
 
     postRepository.post(postUri).launchAndCollectLatest { post ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
-        else state.items = state.items.map { item ->
+        else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(post = post)
             else item
         }
@@ -210,16 +205,6 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchAndCollect {
     state.preferences = it
-}
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
 }
 
 context(productionScope: CoroutineScope)
@@ -238,7 +223,7 @@ private fun launchProfileRelationshipMutations(
 ) = profileRepository.profileRelationships(setOf(profileId))
     .launchAndCollectLatest { relationships ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
-        else state.items = state.items.map { item ->
+        else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(
                 viewerState = relationships.firstOrNull(),
             )
@@ -259,18 +244,12 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
+    toWritable = { it.publication.toSubscriptionWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

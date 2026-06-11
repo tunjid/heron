@@ -24,7 +24,9 @@ import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.tunjid.heron.data.core.models.GalleryList
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.MediaItem
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
@@ -34,6 +36,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
@@ -81,6 +85,11 @@ data class PostEntity(
     data class UriWithEmbeddedRecordUri(
         val uri: PostUri,
         val embeddedRecordUri: EmbeddableRecordUri?,
+        @Relation(
+            parentColumn = "uri",
+            entityColumn = "postUri",
+        )
+        val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
     )
 
     data class Partial(
@@ -192,6 +201,11 @@ data class PopulatedPostEntity(
         ),
     )
     val authorLabelEntities: List<LabelEntity>,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "postUri",
+    )
+    val associatedStandardRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -210,10 +224,15 @@ data class ThreadedPostEntity(
     val generation: Long,
     val rootPostUri: PostUri?,
     val parentPostUri: PostUri?,
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "postUri",
+    )
+    val associatedRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
 )
 
 fun PopulatedPostEntity.asExternalModel(
-    embeddedRecord: Record.Embeddable?,
+    embeddedRecords: List<Record.Embeddable>,
 ) = Post(
     cid = entity.cid,
     uri = entity.uri,
@@ -227,9 +246,18 @@ fun PopulatedPostEntity.asExternalModel(
     ),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
+        videos.isNotEmpty() && images.isNotEmpty() -> buildList {
+            addAll(videos)
+            addAll(images)
+        }
+            .sortedBy(PostEmbed::sortIndex)
+            .mapNotNull(PostEmbed::mediaItem)
+            .let(::GalleryList)
         videos.isNotEmpty() -> videos.first().asExternalModel()
         images.isNotEmpty() -> ImageList(
-            images = images.map(ImageEntity::asExternalModel),
+            images = images
+                .sortedBy(ImageEntity::index)
+                .map(ImageEntity::asExternalModel),
         )
 
         else -> null
@@ -238,7 +266,7 @@ fun PopulatedPostEntity.asExternalModel(
     viewerStats = postStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labelEntities.asActiveExternalModels(),
-    embeddedRecord = embeddedRecord,
+    embeddedRecords = embeddedRecords,
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =
@@ -255,5 +283,19 @@ fun PostViewerStatisticsEntity.asExternalModel() =
 fun PostEntity.RecordData.asExternalModel(): Post.Record? =
     base64EncodedRecord
         ?.fromBase64EncodedUrl<Post.Record>()
+
+private fun PostEmbed.sortIndex(): Int =
+    when (this) {
+        is ExternalEmbedEntity -> -1
+        is ImageEntity -> this.index
+        is VideoEntity -> this.index
+    }
+
+private fun PostEmbed.mediaItem(): MediaItem? =
+    when (this) {
+        is ExternalEmbedEntity -> null
+        is ImageEntity -> this.asExternalModel()
+        is VideoEntity -> this.asExternalModel()
+    }
 
 private fun Long?.orZero() = this ?: 0L

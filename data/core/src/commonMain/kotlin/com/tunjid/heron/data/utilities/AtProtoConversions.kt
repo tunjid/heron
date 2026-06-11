@@ -17,6 +17,9 @@
 package com.tunjid.heron.data.utilities
 
 import app.bsky.embed.AspectRatio
+import app.bsky.embed.Gallery
+import app.bsky.embed.GalleryImage
+import app.bsky.embed.GalleryItemUnion
 import app.bsky.embed.Images as BskyImages
 import app.bsky.embed.ImagesImage
 import app.bsky.embed.Record as BskyRecord
@@ -35,6 +38,7 @@ import app.bsky.richtext.FacetTag
 import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.utilities.File
 import sh.christian.ozone.api.AtUri
@@ -95,7 +99,15 @@ internal fun postEmbedUnion(
         )
 
         video != null -> PostEmbedUnion.Video(video)
-        images != null -> PostEmbedUnion.Images(images)
+        images != null ->
+            images.images
+                .mapNotNull(ImagesImage::galleryItemImage)
+                .let {
+                    when {
+                        it.size < MediaList.MinGallerySize -> PostEmbedUnion.Images(images)
+                        else -> PostEmbedUnion.Gallery(Gallery(items = it))
+                    }
+                }
         else -> null
     }
 }
@@ -167,3 +179,14 @@ private fun List<MediaBlob>.images(): BskyImages? =
         }
         .takeUnless(List<ImagesImage>::isEmpty)
         ?.let(::BskyImages)
+
+private fun ImagesImage.galleryItemImage(): GalleryItemUnion.Image? =
+    aspectRatio?.let { aspectRatio ->
+        GalleryItemUnion.Image(
+            GalleryImage(
+                image = image,
+                alt = alt,
+                aspectRatio = aspectRatio,
+            ),
+        )
+    }

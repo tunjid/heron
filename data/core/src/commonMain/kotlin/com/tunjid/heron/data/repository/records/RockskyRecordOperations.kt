@@ -80,7 +80,8 @@ interface RockskyRecordOperations {
     ): Flow<CursorList<RockskyScrobble>>
 }
 
-internal class OfflineFirstRockskyRecordOperations @Inject constructor(
+@Inject
+internal class OfflineFirstRockskyRecordOperations(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val networkService: NetworkService,

@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.post
+package com.tunjid.heron.timeline.ui.sheets.threadgate
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -74,6 +74,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceState
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
 import heron.ui.timeline.generated.resources.Res
@@ -92,43 +93,25 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 sealed class ThreadGateSheetState private constructor(
     scope: BottomSheetScope,
+    internal val viewModel: ThreadGateViewModel,
 ) : BottomSheetState(scope) {
 
-    protected var mode by mutableStateOf<Mode?>(null)
-    internal var allowed by mutableStateOf<ThreadGate.Allowed?>(null)
-
-    internal val isForSinglePost get() = mode is Mode.Timeline
-
-    internal inline fun updateAllowed(
-        block: ThreadGate.Allowed.() -> ThreadGate.Allowed?,
-    ) {
-        allowed = (allowed ?: NoneAllowed).block()
-    }
-
-    internal inline fun onUpdated(
-        block: (Mode, ThreadGate.Allowed?) -> Unit,
-    ) {
-        val currentMode = mode
-        val currentAllowed = allowed
-        if (currentMode != null) block(currentMode, currentAllowed)
-    }
-
     override fun onHidden() {
-        mode = null
-        allowed = null
+        viewModel.accept(ThreadGateAction.Reset)
     }
 
     @Stable
     class OfTimeline(
         scope: BottomSheetScope,
-    ) : ThreadGateSheetState(scope) {
-
-        fun show(
-            timelineItem: TimelineItem,
-        ) {
-            this.mode = Mode.Timeline(timelineItem)
-            this.allowed = timelineItem.threadGate?.allowed
-
+        viewModel: ThreadGateViewModel,
+    ) : ThreadGateSheetState(scope, viewModel) {
+        fun show(timelineItem: TimelineItem) {
+            viewModel.accept(
+                ThreadGateAction.Initialize(
+                    mode = Mode.Timeline(timelineItem),
+                    allowed = timelineItem.threadGate?.allowed,
+                ),
+            )
             show()
         }
     }
@@ -136,28 +119,27 @@ sealed class ThreadGateSheetState private constructor(
     @Stable
     class OfPreference(
         scope: BottomSheetScope,
-    ) : ThreadGateSheetState(scope) {
-        fun show(
-            preference: PostInteractionSettingsPreference?,
-        ) {
-            this.mode = Mode.Preferences(preference)
-            this.allowed = preference?.threadGateAllowed
-
+        viewModel: ThreadGateViewModel,
+    ) : ThreadGateSheetState(scope, viewModel) {
+        fun show(preference: PostInteractionSettingsPreference?) {
+            viewModel.accept(
+                ThreadGateAction.Initialize(
+                    mode = Mode.Preferences(preference),
+                    allowed = preference?.threadGateAllowed,
+                ),
+            )
             show()
         }
     }
 
     companion object {
-
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            recentLists: List<FeedList>,
-            onRequestRecentLists: () -> Unit,
+            initializer: ThreadGateViewModelInitializer,
             onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
         ): OfTimeline = rememberUpdatedGenericThreadGateSheetState(
-            recentLists = recentLists,
-            onRequestRecentLists = onRequestRecentLists,
-            ThreadGateSheetState::OfTimeline,
+            initializer = initializer,
+            block = ::OfTimeline,
         ) { mode, allowed ->
             require(mode is Mode.Timeline)
             onThreadGateUpdated(mode.update(allowed))
@@ -165,36 +147,30 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            recentLists: List<FeedList>,
-            onRequestRecentLists: () -> Unit,
+            initializer: ThreadGateViewModelInitializer,
             onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit,
         ): OfPreference = rememberUpdatedGenericThreadGateSheetState(
-            recentLists = recentLists,
-            onRequestRecentLists = onRequestRecentLists,
-            ThreadGateSheetState::OfPreference,
+            initializer = initializer,
+            block = ::OfPreference,
         ) { mode, allowed ->
             require(mode is Mode.Preferences)
             onDefaultThreadGateUpdated(mode.update(allowed))
         }
 
         @Composable
-        private inline fun <T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
-            recentLists: List<FeedList>,
-            noinline onRequestRecentLists: () -> Unit,
-            crossinline initializer: (BottomSheetScope) -> T,
-            crossinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
+        private inline fun <reified T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
+            initializer: ThreadGateViewModelInitializer,
+            crossinline block: (BottomSheetScope, ThreadGateViewModel) -> T,
+            noinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
-            val state = rememberBottomSheetState {
-                initializer(it)
-            }
+            val state = rememberBottomSheetState(
+                viewModelInitializer = initializer::invoke,
+                block = block,
+            )
 
             ThreadGateBottomSheet(
                 state = state,
-                recentLists = recentLists,
-                onRequestRecentLists = onRequestRecentLists,
-                onThreadGateUpdated = { mode, allowed ->
-                    onThreadGateUpdated(mode, allowed)
-                },
+                onThreadGateUpdated = onThreadGateUpdated,
             )
 
             return state
@@ -205,87 +181,94 @@ sealed class ThreadGateSheetState private constructor(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
-    recentLists: List<FeedList>,
-    onRequestRecentLists: () -> Unit,
     onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
 ) {
     var listsExpanded by remember { mutableStateOf(false) }
 
     state.ModalBottomSheet {
+        val threadGateState = state.viewModel.produceState()
+        val allowed = threadGateState.allowed
+        val selectedUris = allowed.allowedListUrisOrEmpty
+        val enabled = !allowed.allowsNone
+
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (state.isForSinglePost) Text(
+            if (threadGateState.mode is Mode.Timeline) Text(
                 text = stringResource(Res.string.thread_gate_post_reply_settings),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-            )
-            else InfoBanner()
+            ) else InfoBanner()
 
             Text(
                 text = stringResource(Res.string.thread_gate_who_can_reply),
                 style = MaterialTheme.typography.titleSmall,
             )
 
-            // Anyone / Nobody Toggles
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 SelectionCard(
                     text = stringResource(Res.string.thread_gate_anyone),
-                    selected = state.allowed.allowsAll,
+                    selected = allowed.allowsAll,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.updateAllowed { null }
+                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(null))
                     },
                 )
                 SelectionCard(
                     text = stringResource(Res.string.thread_gate_nobody),
-                    selected = state.allowed.allowsNone,
+                    selected = allowed.allowsNone,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.updateAllowed { NoneAllowed }
+                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(NoneAllowed))
                     },
                 )
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-            ) {
-                val isCustomOrAnyone = !state.allowed.allowsNone
-
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                val isCustomOrAnyone = !allowed.allowsNone
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_your_followers),
-                    checked = state.allowed.allowsFollowers,
+                    checked = allowed.allowsFollowers,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsFollowers = !allowsFollowers) }
+                        state.viewModel.accept(
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsFollowers = !allowsFollowers) },
+                            ),
+                        )
                     },
                 )
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_people_you_follow),
-                    checked = state.allowed.allowsFollowing,
+                    checked = allowed.allowsFollowing,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsFollowing = !allowsFollowing) }
+                        state.viewModel.accept(
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsFollowing = !allowsFollowing) },
+                            ),
+                        )
                     },
                 )
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_people_you_mention),
-                    checked = state.allowed.allowsMentioned,
+                    checked = allowed.allowsMentioned,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsMentioned = !allowsMentioned) }
+                        state.viewModel.accept(
+                            ThreadGateAction.UpdateAllowed(
+                                (allowed ?: NoneAllowed).run { copy(allowsMentioned = !allowsMentioned) },
+                            ),
+                        )
                     },
                 )
             }
-
-            val selectedUris = state.allowed.allowedListUrisOrEmpty
-            val enabled = !state.allowed.allowsNone
 
             Column(
                 modifier = Modifier
@@ -298,10 +281,8 @@ private fun ThreadGateBottomSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(enabled = enabled) {
-                            if (!listsExpanded) onRequestRecentLists()
-                            listsExpanded = !listsExpanded
-                        }
+                        // ← no onRequestRecentLists, lists load from ViewModel automatically
+                        .clickable(enabled = enabled) { listsExpanded = !listsExpanded }
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -310,42 +291,34 @@ private fun ThreadGateBottomSheet(
                         text = stringResource(Res.string.thread_gate_select_from_your_lists),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-
                     Icon(
-                        imageVector = if (listsExpanded)
-                            Icons.Rounded.KeyboardArrowUp
-                        else
-                            Icons.Rounded.KeyboardArrowDown,
-                        contentDescription = stringResource(
-                            if (listsExpanded) CommonStrings.collapse_icon
-                            else CommonStrings.expand_icon,
-                        ),
+                        imageVector = if (listsExpanded) Icons.Rounded.KeyboardArrowUp
+                        else Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = stringResource(Res.string.thread_gate_select_from_your_lists),
                     )
                 }
 
                 AnimatedVisibility(visible = listsExpanded && enabled) {
-                    Column(
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    ) {
-                        recentLists.forEach { list ->
+                    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                        threadGateState.recentLists.forEach { list ->
                             val checked = list.uri in selectedUris
-
                             FeedListCheckboxRow(
                                 list = list,
                                 checked = checked,
                                 enabled = enabled,
                                 onClick = {
-                                    state.updateAllowed {
-                                        val currentUris = allowedListUrisOrEmpty
-                                        val newLists =
-                                            if (checked) currentUris - list.uri
-                                            else currentUris + list.uri
-
-                                        copy(
-                                            allowedLists = emptyList(),
-                                            allowedListUris = newLists,
-                                        )
-                                    }
+                                    val current = allowed ?: NoneAllowed
+                                    val currentUris = current.allowedListUrisOrEmpty
+                                    val newLists = if (checked) currentUris - list.uri
+                                    else currentUris + list.uri
+                                    state.viewModel.accept(
+                                        ThreadGateAction.UpdateAllowed(
+                                            current.copy(
+                                                allowedLists = emptyList(),
+                                                allowedListUris = newLists,
+                                            ),
+                                        ),
+                                    )
                                 },
                             )
                         }
@@ -353,48 +326,14 @@ private fun ThreadGateBottomSheet(
                 }
             }
 
-            // Quote Posts Toggle
-            /* Comment out for now, out of scope
-             Row(
-             modifier = Modifier
-             .fillMaxWidth()
-             .clip(RoundedCornerShape(8.dp))
-             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
-             .padding(horizontal = 16.dp, vertical = 12.dp),
-             horizontalArrangement = Arrangement.SpaceBetween,
-             verticalAlignment = Alignment.CenterVertically,
-             ) {
-             Row(
-             verticalAlignment = Alignment.CenterVertically,
-             horizontalArrangement = Arrangement.spacedBy(12.dp),
-             ) {
-             Icon(
-             imageVector = Icons.Rounded.FormatQuote,
-             contentDescription = null,
-             modifier = Modifier.size(20.dp),
-             )
-             Text(
-             text = stringResource(Res.string.thread_gate_allow_quote_posts),
-             style = MaterialTheme.typography.bodyMedium,
-             fontWeight = FontWeight.Medium,
-             )
-             }
-             Switch(
-             checked = true,
-             onCheckedChange = {
-
-             },
-             )
-             }
-             */
-
             Spacer(Modifier.height(8.dp))
 
-            // Save Button
             Button(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 onClick = {
-                    state.onUpdated(onThreadGateUpdated)
+                    val mode = threadGateState.mode
+                    val currentAllowed = threadGateState.allowed
+                    if (mode != null) onThreadGateUpdated(mode, currentAllowed)
                     state.hide()
                 },
             ) {
@@ -591,7 +530,7 @@ sealed class Mode {
     }
 }
 
-private val NoneAllowed = ThreadGate.Allowed(
+internal val NoneAllowed = ThreadGate.Allowed(
     allowsFollowing = false,
     allowsFollowers = false,
     allowsMentioned = false,

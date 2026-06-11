@@ -59,6 +59,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -93,8 +94,6 @@ internal fun GeneralSearchResults(
     pagerState: PagerState,
     state: State,
     paneScaffoldState: PaneScaffoldState,
-    onRequestRecentLists: () -> Unit,
-    onRequestRecentConversations: () -> Unit,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
@@ -102,12 +101,12 @@ internal fun GeneralSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
+    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
-    onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
@@ -205,22 +204,18 @@ internal fun GeneralSearchResults(
                             mutedWordPreferences = state.preferences.mutedWordPreferences,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            recentLists = state.recentLists,
-                            recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
-                            onRequestRecentLists = onRequestRecentLists,
-                            onRequestRecentConversations = onRequestRecentConversations,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                             onPostSearchResultClicked = onPostSearchResultClicked,
                             onReplyToPost = onReplyToPost,
                             onPostRecordClicked = onPostRecordClicked,
+                            onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
                             onMediaClicked = onMediaClicked,
                             onNavigate = onNavigate,
                             onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
-                            onSave = onSave,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
                             onDeletePostClicked = onDeletePostClicked,

@@ -43,8 +43,6 @@ import org.jetbrains.compose.resources.StringResource
 data class State(
     val adultContentEnabled: Boolean = false,
     @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val adultLabelItems: List<AdultLabelItem> = emptyList(),
@@ -113,10 +111,6 @@ sealed class Action(val key: String) {
         val adultContentEnabled: Boolean,
     ) : Action(key = "UpdateAdultContentPreferences")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class UpdateThreadGates(
         val preference: PostInteractionSettingsPreference,
     ) : Action(key = "UpdateThreadGates")
@@ -126,8 +120,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "SnackbarDismissed")
 
     data object SignOut : Action(key = "SignOut")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

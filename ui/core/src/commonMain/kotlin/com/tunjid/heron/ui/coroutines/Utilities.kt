@@ -14,12 +14,16 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.scaffold.scaffold
+package com.tunjid.heron.ui.coroutines
 
-import com.tunjid.heron.ui.coroutines.UIStateProducerElement
+import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 fun viewModelCoroutineScope() = CoroutineScope(
     context = SupervisorJob() +
@@ -28,3 +32,25 @@ fun viewModelCoroutineScope() = CoroutineScope(
             backgroundDispatcher = Dispatchers.Default,
         ),
 )
+
+suspend fun withSnapshotNotifications(
+    block: suspend CoroutineScope.() -> Unit,
+) = coroutineScope {
+    val snapshotChanged = Channel<Unit>(1)
+    launch {
+        snapshotChanged.consumeEach {
+            Snapshot.sendApplyNotifications()
+        }
+    }
+
+    val snapshotObserver = Snapshot.registerGlobalWriteObserver {
+        snapshotChanged.trySend(Unit)
+    }
+
+    try {
+        block()
+    } finally {
+        snapshotObserver.dispose()
+        snapshotChanged.close()
+    }
+}

@@ -17,7 +17,6 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -25,6 +24,7 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.FollowUri
@@ -73,11 +73,7 @@ interface State {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
         val stateHolders: List<ListScreenStateHolders> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
         @Transient
         val isOnProfilesTab: Boolean = false,
         @Transient
@@ -213,10 +209,6 @@ typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, 
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
-
     data class BlockAccount(
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
@@ -234,6 +226,10 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
+
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
 
     data class SnackbarDismissed(
         val message: Memo,
@@ -262,10 +258,6 @@ sealed class Action(val key: String) {
     data class UpdateFeedListStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

@@ -53,14 +53,16 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.externalEmbeddedRecord
+import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
@@ -443,7 +445,8 @@ private fun EmbedContent(
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
-        embeddedRecord = data.post.embeddedRecord,
+        nativeEmbeddedRecord = data.post.nativeEmbeddedRecord,
+        externalEmbeddedRecord = data.post.externalEmbeddedRecord,
         postUri = data.post.uri,
         isBlurred = data.mediaBlurred,
         canUnblur = data.canUnblurMedia,
@@ -489,6 +492,13 @@ private fun EmbedContent(
                     profile = quotedProfile,
                     post = quotedPost,
                     quotingPostUri = data.post.uri,
+                ),
+            )
+        },
+        onPublicationSubscriptionToggled = { publication ->
+            data.postActions.onPostAction(
+                PostAction.OfPublicationSubscription(
+                    publication = publication,
                 ),
             )
         },
@@ -672,7 +682,7 @@ private fun Timeline.Presentation.postContentEndPadding(
 }
 
 private fun Embed?.asPostContent() = when (this) {
-    is ImageList,
+    is MediaList,
     is Video,
     -> PostContent.Embed.Media
 
@@ -850,7 +860,7 @@ private val PostData.mediaBlurred: Boolean
     get() = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
 
 private val PostData.canUnblurMedia: Boolean
-    get() = appliedLabels.blurredMediaSeverity != Label.Severity.None
+    get() = appliedLabels.shouldBlurMedia
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")

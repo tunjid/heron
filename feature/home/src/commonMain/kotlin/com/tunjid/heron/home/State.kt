@@ -17,12 +17,12 @@
 package com.tunjid.heron.home
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.ProfileId
@@ -49,10 +49,6 @@ interface State {
         val trends: List<Trend> = emptyList(),
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
-        @Transient
-        val recentConversations: List<Conversation> = emptyList(),
-        @Transient
-        val recentLists: List<FeedList> = emptyList(),
         @Transient
         val timelinePreferenceSaveRequestId: String? = null,
         @Transient
@@ -108,6 +104,10 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
+    data class TogglePublicationSubscription(
+        val publication: StandardPublication,
+    ) : Action(key = "TogglePublicationSubscription")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
@@ -119,10 +119,6 @@ sealed class Action(val key: String) {
     data class SetTabLayout(
         val layout: TabLayout,
     ) : Action(key = "SetTabLayout")
-
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,
@@ -139,10 +135,6 @@ sealed class Action(val key: String) {
     ) : Action(key = "DeleteRecord")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
-
-    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class UpdateTimeline : Action(key = "Timeline") {
         data object RequestUpdate : UpdateTimeline()

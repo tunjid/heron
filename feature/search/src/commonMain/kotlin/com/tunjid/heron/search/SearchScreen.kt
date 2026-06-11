@@ -252,12 +252,6 @@ internal fun SearchScreen(
                 pagerState = pagerState,
                 state = state,
                 paneScaffoldState = paneScaffoldState,
-                onRequestRecentLists = {
-                    actions(Action.UpdateRecentLists)
-                },
-                onRequestRecentConversations = {
-                    actions(Action.UpdateRecentConversations)
-                },
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,
                 onLinkTargetClicked = onLinkTargetClicked,
@@ -265,12 +259,12 @@ internal fun SearchScreen(
                 onPostSearchResultClicked = onPostSearchResultClicked,
                 onReplyToPost = onReplyToPost,
                 onPostRecordClicked = onPostRecordClicked,
+                onPublicationSubscriptionToggled = { actions(Action.TogglePublicationSubscription(it)) },
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,
                 onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
-                onSave = { actions(Action.UpdateMutedWord(it)) },
                 onMuteAccountClicked = { signInProfileId, profileId ->
                     actions(
                         Action.MuteAccount(

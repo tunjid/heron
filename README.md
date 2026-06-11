@@ -39,7 +39,7 @@ the [Now in Android sample](https://github.com/android/nowinandroid) repository,
 this app follows the same architecture principles it does, and the architecture decisions are very
 similar.
 
-There are 6 kinds of modules:
+There are 5 kinds of modules:
 
 1. `data-*` is the [data layer](https://developer.android.com/topic/architecture/data-layer) of the
    app containing models data and repository implementations for reading and writing that data.
@@ -53,37 +53,120 @@ There are 6 kinds of modules:
       is used for blob storage of arbitrary data with protobufs.
     - [Ktor](https://ktor.io/) is used for network connections via the
       [Ozone at-proto bindings](https://github.com/christiandeange/ozone).
-2. `domain-*` is the [domain layer](https://developer.android.com/topic/architecture/domain-layer)
-   where aggregated business logic lives. This is mostly `domain-timeline` where higher level
-   abstractions timeline data manipulation exists.
-3. `feature-*` contains navigation destinations or screens in the app. Multiple features can
-   run side by side in app panes depending on the navigation configuration and device screen size.
-4. `ui-*` contains standalone and reusable UI components and Jetpack Compose effects for the app
+2. `ui-*` contains standalone and reusable UI components and Jetpack Compose effects for the app
    ranging from basic layout to multimedia components for displaying photos and video playback.
-5. `scaffold` contains the application state in the `AppState` class, and coordinates app level
+    - Higher level, aggregated abstractions also live here, most notably `ui-timeline` which holds
+      the `TimelineState` and `timelineStateHolder` that drive timeline data production with the
+      [Tiling library](https://github.com/tunjid/Tiler).
+3. `scaffold` contains the application state in the `AppState` class, and coordinates app level
    UI logic like pane display, drag to dismiss, back previews and so on. It is the entry point to
    the multiplatform application
-6. `/composeApp` is app module that is the fully assembled app and depends on all other modules.
-   It offers the entry point to the application for a platform.
-   It contains several subfolders:
-    - `commonMain` is for code that’s common for all targets.
-    - Other folders are for Kotlin code that will be compiled for only the platform indicated in the
-      folder name.
-    - `/iosApp` is the entry point for the iOS app.
+4. `feature-*` contains navigation destinations or screens in the app. Multiple features can
+   run side by side in app panes depending on the navigation configuration and device screen size.
+5. `/composeApp` is the module that assembles the fully wired app and depends on all other modules.
+   It is consumed by each platform's launcher (see [Platform entry points](#platform-entry-points)).
+   It contains several source sets:
+    - `commonMain` is for code that’s common for all targets, including the shared `createAppState`
+      builder that wires the whole DI graph.
+    - The `androidMain`, `desktopMain` and `iosMain` folders hold Kotlin code compiled for only the
+      platform indicated by the folder name, mostly each platform's `createAppState` overload.
 
 ### Dependency Injection
 
 Dependency injection is implemented with the [Metro](https://github.com/ZacSweers/metro)
 library which constructs the dependency graph at build time
 and therefore is compile time safe. Assisted injection is used for feature screens to pass
-navigation arguments information to the feature. The items in the dependency graph are:
+navigation arguments information to the feature.
 
-* `NavigationBindings` from feature modules providing Navigation3 `NavEntry` instances per feature.
-* Feature `Bindings` from feature modules providing access to the data layer and app scaffold to each module.
-* Scaffold `Bindings` providing the `PaneScaffoldState` for building a multi-pane app,
-* Data `Bindings` for the data layer.
+#### Graph levels
+
+The DI graph is layered. Conceptually the data layer is the root of the app at the top, and each
+level below it is built on the levels above. The fully assembled `composeApp` sits at the leaf:
+
+* **Data** (`data-*`) — the top of the graph, the root of the app. Repository implementations,
+  the Room database, the Ktor network stack and the `WriteQueue`. Depends on no other layer.
+  Contributed to the graph via `DataBindings`.
+* **UI** (`ui-*`) — depends on data. Reusable Compose components and effects. It can also host
+  ViewModels that have access to the data layer, for example the sheet ViewModels contributed via
+  `SheetBindings`.
+* **Scaffold** (`scaffold`) — depends on data and ui. Navigation lives here. It manages global app
+  logic in discrete states — `IdentityState`, `NotificationState` and `NavigationState` — that are
+  coordinated by `AppState`, the app level state holding app level concerns. `PaneScaffoldState` is
+  a slice into `AppState` that feature modules can see. Contributed via `ScaffoldBindings`.
+* **Feature** (`feature-*`) — navigation destinations. Depends on data and scaffold. Its ViewModels
+  have access to the data layer and to navigation semantics, and it uses `PaneScaffoldState` to glean
+  app level scope from the scaffold. Each feature contributes a `*NavigationBindings` (route matchers)
+  and a feature `Bindings` (its screen entry and ViewModel access).
+* **Compose App** (`composeApp`) — the fully assembled app, the lowest level of the tree. `AppGraph`
+  `@Includes` every layer's bindings and exposes the assembled `entryMap` and `appState`, and each
+  platform's entry point creates the `AppState` and renders `App()`.
+
+```mermaid
+graph TD
+    Data["Data · data-*<br/>repositories, database, network, WriteQueue<br/>(root — depends on nothing)"]
+    UI["UI · ui-*<br/>reusable Compose components + ViewModels"]
+    Scaffold["Scaffold · scaffold<br/>navigation + AppState<br/>(IdentityState, NotificationState, NavigationState)<br/>exposes PaneScaffoldState"]
+    Feature["Feature · feature-*<br/>navigation destinations; ViewModels with<br/>data + navigation; read scope via PaneScaffoldState"]
+    App["Compose App · composeApp<br/>AppGraph assembles all layers · per-platform entry points"]
+
+    Data --> UI
+    Data --> Scaffold
+    Data --> Feature
+    UI --> Scaffold
+    Scaffold --> Feature
+    UI --> App
+    Scaffold --> App
+    Feature --> App
+```
+
+> Arrows point from a layer to the layers built on top of it; the compile-time dependencies run the
+> opposite way (e.g. every feature depends on data and scaffold).
+
+#### Graph items
+
+The items in the dependency graph are:
+
+* `*NavigationBindings` from feature modules contributing `RouteMatcher` instances (`@IntoMap`) into
+  the `AppNavigationGraph`'s `routeMatcherMap`.
+* Feature `Bindings` from feature modules contributing the per-feature `PaneEntry` screen factory
+  (`@IntoMap`) into the `AppGraph`'s `entryMap`, plus access to the data layer and app scaffold.
+* `ScaffoldBindings` providing the `PaneScaffoldState` for building a multi-pane app and the global
+  state holders.
+* `DataBindings` for the data layer.
 * An `AppNavigationGraph` for resolving navigation routes.
 * An `AppGraph` containing the entire app DI graph.
+
+### Platform entry points
+
+`composeApp` produces the assembled app for every target — an Android library, an iOS framework and the
+desktop application — but the OS-level launcher for each platform lives outside it. Every platform follows
+the same two steps: build an `AppState` once, then hand it to the single shared root composable,
+`scaffold`'s `App(appState, modifier)`.
+
+The wiring lives in the `EntryPoint*.kt` files in `composeApp`:
+
+* **Common** — [`EntryPoint.kt`](composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt)
+  exposes `createAppState(...)`. It creates the app-wide `CoroutineScope`, builds the `AppNavigationGraph`
+  and `AppGraph` from every module's bindings via Metro's `createGraphFactory`, and returns
+  `appGraph.appState`. It is platform-agnostic: the platform-specific pieces — `imageLoader`, `notifier`,
+  `logger`, `videoPlayerController` and the data layer `args` (`DataBindingArgs`) — are passed in as
+  factory lambdas.
+* **Android** — [`EntryPoint.android.kt`](composeApp/src/androidMain/kotlin/com/tunjid/heron/EntryPoint.android.kt)
+  adds a `createAppState(context)` overload that supplies the Android implementations of those factories
+  (e.g. the saved-state path under app storage) and delegates to the common builder. The OS launcher is
+  the separate `androidApp` module: `HeronApplication` calls `createAppState(this)` on startup and holds
+  the `AppState`, and `MainActivity` reads it and calls `setContent { App(appState, …) }`, also wiring the
+  splash screen, FCM token registration and deep links.
+* **Desktop (JVM)** — [`EntryPoint.jvm.kt`](composeApp/src/desktopMain/kotlin/com/tunjid/heron/EntryPoint.jvm.kt)
+  provides a no-arg `createAppState()` that resolves the per-OS app data directory and encrypts saved
+  state with Tink. The launcher is [`main.kt`](composeApp/src/desktopMain/kotlin/com/tunjid/heron/main.kt):
+  a `fun main()` that opens a Compose `Window { App(appState = remember { createAppState() }, …) }`.
+* **iOS** — [`EntryPoint.ios.kt`](composeApp/src/iosMain/kotlin/com/tunjid/heron/EntryPoint.ios.kt) provides
+  the iOS `createAppState()` plus bridge functions for FCM tokens and push notifications, and
+  [`MainViewController.kt`](composeApp/src/iosMain/kotlin/com/tunjid/heron/MainViewController.kt) wraps the
+  root composable in a `ComposeUIViewController`. The OS launcher is the `iosApp` Xcode/SwiftUI project:
+  `iOSApp.swift`'s `AppDelegate` calls `EntryPoint_iosKt.createAppState()` and holds the `AppState`, and
+  `ContentView.swift` embeds `MainViewController(appState:)` in a SwiftUI `UIViewControllerRepresentable`.
 
 ### Navigation
 
@@ -103,12 +186,12 @@ persisted across app restarts.
   the [business logic state holder](https://developer.android.com/topic/architecture/ui-layer/stateholders).
 * State is produced in a lifecycle aware way using
   the [Jetpack Lifecyle](https://developer.android.com/jetpack/androidx/releases/lifecycle) APIs.
-    * The `CoroutineScope` for each `ViewModel` is obtained from the composition's
-      `LocalLifecycleOwner`
+    * The `CoroutineScope` for each `ViewModel` is obtained using `viewModelCoroutineScope()`
+      with special coroutine elements for UI state production.
 * The specifics of producing state over time is implemented with
   the [Mutator library](https://github.com/tunjid/Mutator).
-    * Inputs to the state production pipeline are passed to the mutator in the `inputs` argument, or
-      derived from an action in `actionTransform`.
+    * Inputs to the state production pipeline are passed to the mutator using an `Action` sealed
+      class hierarchy.
     * Every coroutine launched is limited to running when the lifecycle of the component displaying
       it is resumed. When the lifecyle
       is paused, the coroutines are cancelled after 2 seconds:

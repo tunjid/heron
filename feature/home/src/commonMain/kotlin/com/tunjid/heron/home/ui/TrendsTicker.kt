@@ -19,10 +19,6 @@ package com.tunjid.heron.home.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -53,9 +49,9 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.ui.AnimatedVerticallySlidingContent
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
@@ -138,7 +134,7 @@ private fun VerticalTicker(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.outline,
         )
-        AnimatedContent(
+        AnimatedVerticallySlidingContent(
             modifier = Modifier
                 .sharedElement(
                     sharedContentState = rememberSharedContentState(
@@ -147,7 +143,6 @@ private fun VerticalTicker(
                     animatedVisibilityScope = animatedVisibilityScope,
                 ),
             targetState = trend.tickerValue,
-            transitionSpec = { TextCheckedTransform },
         ) { currentText ->
             EmphasizedSingleLineOutlinedText(
                 text = currentText,
@@ -265,17 +260,6 @@ private val LazyListState.middleItemIndex: Int
     }
 
 private const val HORIZONTAL_TICKER_SCROLL_DELTA = 1f
-private const val BUTTON_ANIMATION_DURATION_MILLIS = 600
-
-private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLIS)
 
 private val VerticalTickerChangeDelay = 4.seconds
 private val HorizontalTickerDirectionChangeDelay = 2.seconds
-
-private val TextCheckedTransform = slideInVertically(
-    animationSpec = TextAnimationSpec,
-    initialOffsetY = { it },
-) togetherWith slideOutVertically(
-    animationSpec = TextAnimationSpec,
-    targetOffsetY = { -it },
-)

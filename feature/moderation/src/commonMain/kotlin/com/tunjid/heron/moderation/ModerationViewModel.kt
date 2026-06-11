@@ -100,14 +100,8 @@ class ActualModerationViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
                     is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
                         writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
                     )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
@@ -145,31 +139,6 @@ private fun loadPreferenceMutations(
         .mapToMutation {
             copy(preferences = it)
         }
-
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
-    }
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,

@@ -23,7 +23,7 @@ plugins {
 kotlin {
     configureKotlinMultiplatform(this)
     androidLibrary {
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 31
 
         androidResources.enable = true

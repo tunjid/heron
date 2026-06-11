@@ -55,12 +55,6 @@ class ScaffoldBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun navStateStream(
-        navStateHolder: NavigationStateHolder,
-    ): StateFlow<MultiStackNav> = navStateHolder.state
-
-    @SingleIn(AppScope::class)
-    @Provides
     fun routeParser(): RouteParser =
         routeParserFrom(*(args.routeMatchers).toTypedArray())
 

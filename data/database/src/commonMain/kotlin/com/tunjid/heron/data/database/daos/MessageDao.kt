@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ConversationEntity
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MessageDao {
 
+    @Transaction
     @Query(
         """
             SELECT conversations.*,
@@ -84,6 +86,7 @@ interface MessageDao {
         offset: Long,
     ): Flow<List<PopulatedConversationEntity>>
 
+    @Transaction
     @Query(
         """
             SELECT * FROM messages

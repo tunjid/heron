@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.File
@@ -138,9 +139,6 @@ class ActualComposeViewModel(
                     )
                     is Action.ClearSuggestions -> action.flow.clearSuggestionsMutations()
                     is Action.RemoveEmbeddedRecord -> action.flow.removeEmbeddedMutations()
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
-                    )
                     is Action.EmbedUrl -> action.flow.embedUrlMutations(
                         recordRepository = recordRepository,
                     )
@@ -169,7 +167,7 @@ private fun embeddedRecordMutations(
 ): Flow<Mutation<State>> =
     embeddedRecordUri?.let { uri ->
         recordRepository.embeddableRecord(uri).mapToMutation {
-            copy(embeddedRecord = it)
+            copy(embeddedRecord = it as? Record.Embeddable.Native)
         }
     }
         ?: emptyFlow()
@@ -183,7 +181,7 @@ private fun Flow<Action.EmbedUrl>.embedUrlMutations(
             emitAll(
                 recordRepository.embeddableRecord(uri)
                     .take(1)
-                    .mapToMutation { copy(embeddedRecord = it) },
+                    .mapToMutation { copy(embeddedRecord = it as? Record.Embeddable.Native) },
             )
         }
 
@@ -213,16 +211,6 @@ private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mu
 private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(interactionsPreference = it.interactionSettingsPreference)
-    }
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
     }
 
 private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =

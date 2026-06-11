@@ -71,6 +71,7 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.asExternalModelWithViewerState
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
@@ -166,7 +167,8 @@ interface PostRepository {
     ): Outcome
 }
 
-internal class OfflinePostRepository @Inject constructor(
+@Inject
+internal class OfflinePostRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
@@ -297,7 +299,10 @@ internal class OfflinePostRepository @Inject constructor(
                                 signedInProfileId = signedInProfileId,
                                 postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
                                 associatedRecordUris = {
-                                    listOfNotNull(it.embeddedRecordUri)
+                                    listOfNotNull(it.embeddedRecordUri) +
+                                        it.associatedRecords.map(
+                                            PostExternalAssociatedRecordEntity::recordUri,
+                                        )
                                 },
                                 associatedProfileIds = {
                                     emptyList()
@@ -367,7 +372,10 @@ internal class OfflinePostRepository @Inject constructor(
                             signedInProfileId = signedInProfileId,
                             postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
                             associatedRecordUris = {
-                                listOfNotNull(it.embeddedRecordUri)
+                                listOfNotNull(it.embeddedRecordUri) +
+                                    it.associatedRecords.map(
+                                        PostExternalAssociatedRecordEntity::recordUri,
+                                    )
                             },
                             associatedProfileIds = {
                                 emptyList()
@@ -423,7 +431,7 @@ internal class OfflinePostRepository @Inject constructor(
             )
                 .distinctUntilChangedMapNotNull {
                     it.firstOrNull()?.asExternalModel(
-                        embeddedRecord = null,
+                        embeddedRecords = emptyList(),
                     )
                 }
         }
@@ -480,7 +488,15 @@ internal class OfflinePostRepository @Inject constructor(
                     validate = true,
                 ),
             )
-        }.toOutcome()
+        }.toOutcome {
+            // Only delete the uploaded media once the post has been created, so the
+            // write can be safely retried with the source files intact if it fails.
+            request.metadata.embeddedMedia.forEach { file ->
+                runCatchingUnlessCancelled {
+                    fileManager.delete(file)
+                }
+            }
+        }
     } ?: expiredSessionOutcome()
 
     override suspend fun sendInteraction(
@@ -789,7 +805,6 @@ internal class OfflinePostRepository @Inject constructor(
                             )
                         }
                             .map(file::with)
-                            .onSuccess { fileManager.delete(file) }
                     }
                 }
                     .awaitAll()

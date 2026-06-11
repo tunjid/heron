@@ -26,15 +26,14 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
-import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -85,7 +84,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
-    messageRepository: MessageRepository,
     recordRepository: RecordRepository,
     searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
@@ -161,6 +159,10 @@ class SearchViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                    )
                     is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                     is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                         state = state,
@@ -173,10 +175,6 @@ class SearchViewModel(
                     is Action.Navigate -> action.flow.collect {
                         navActions(it.navigationMutation)
                     }
-                    is Action.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -184,14 +182,6 @@ class SearchViewModel(
                     is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
                         state = state,
                         writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentConversations -> action.flow.launchRecentConversationMutations(
-                        state = state,
-                        messageRepository = messageRepository,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.launchRecentListsMutations(
-                        state = state,
-                        recordRepository = recordRepository,
                     )
                     is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                         state = state,
@@ -244,16 +234,6 @@ private fun launchSearchStateHolderMutations(
             }
         }
     }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentConversations>.launchRecentConversationMutations(
-    state: State.SnapshotMutable,
-    messageRepository: MessageRepository,
-) = launchAndCollectLatest {
-    messageRepository.recentConversations().collect { conversations ->
-        state.recentConversations = conversations
-    }
-}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
@@ -452,24 +432,6 @@ private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = {
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
-        )
-    },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
@@ -536,6 +498,18 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 )
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { it.publication.toSubscriptionWritable() },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchAndCollect { event ->
@@ -553,16 +527,6 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMuta
         if (memo != null) state.messages += memo
     },
 )
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.UpdateRecentLists>.launchRecentListsMutations(
-    state: State.SnapshotMutable,
-    recordRepository: RecordRepository,
-) = launchAndCollectLatest {
-    recordRepository.recentLists.collect { lists ->
-        state.recentLists = lists
-    }
-}
 
 private fun Route.searchStates(): List<SearchState> = buildList {
     add(
@@ -587,7 +551,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
             ),
         ),
     )
-    if (query.isNotBlank()) {
+    if (query.isBlank()) {
         add(
             SearchState.OfProfiles(
                 tilingData = TilingState.Data(

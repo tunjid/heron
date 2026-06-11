@@ -51,9 +51,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -526,14 +526,17 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
 }
 
 /**
- * Returns a new [Flow] on each authorized session change or an empty flow
+ * Returns a new [Flow] on each authorized session change, emitting `null` when there is
+ * no signed in user. Consumers that only care about the signed in case can use
+ * [filterNotNull]; consumers for which the signed out state is meaningful can react to the
+ * `null` emission.
  */
 internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
     crossinline block: suspend (ProfileId) -> Flow<T>,
-): Flow<T> = observedSignedInProfileId
+): Flow<T?> = observedSignedInProfileId
     .flatMapLatest { profileId ->
-        if (profileId == null) return@flatMapLatest emptyFlow()
-        val profileData = savedState.value.signedInProfileData ?: return@flatMapLatest emptyFlow()
+        if (profileId == null) return@flatMapLatest flowOf(null)
+        val profileData = savedState.value.signedInProfileData ?: return@flatMapLatest flowOf(null)
 
         block(profileId)
             .flowOn(

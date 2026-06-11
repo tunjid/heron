@@ -31,8 +31,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.core.net.toUri
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.domain.navigation.R
@@ -98,23 +97,37 @@ class AndroidNotifier(
         }
     }
 
-    private fun Notification.deepLinkPendingIntent(): PendingIntent? = PendingIntent.getActivity(
-        /* context = */
-        context,
-        /* requestCode = */
-        androidPendingDeepLinkRequestCode,
-        /* intent = */
-        Intent().apply {
-            component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
-            data = AndroidUri.Builder()
-                .scheme(deepLinkScheme())
-                .path(deepLinkPath())
-                .build()
+    private fun Notification.deepLinkPendingIntent(): PendingIntent? {
+        val scheme = deepLinkScheme()
+        val intent = when (scheme) {
+            // A full web URL: hand off to the system so it opens in the browser
+            // (or a verified app link handler) instead of being forced into the app.
+            Uri.Host.Https.prefix -> Intent(Intent.ACTION_VIEW).apply {
+                data = (scheme + deepLinkPath().removePrefix("/")).toUri()
+            }
+            // An in-app deep link: route directly to MainActivity, which reads the path.
+            else -> Intent().apply {
+                component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
+                data = AndroidUri.Builder()
+                    .scheme(scheme.removeSuffix("://"))
+                    .path(deepLinkPath())
+                    .build()
+            }
+        }.apply {
             putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
-        },
-        /* flags = */
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
+        }
+
+        return PendingIntent.getActivity(
+            /* context = */
+            context,
+            /* requestCode = */
+            androidPendingDeepLinkRequestCode,
+            /* intent = */
+            intent,
+            /* flags = */
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
 
     private fun Notification.dismissalPendingIntent(): PendingIntent? = PendingIntent.getBroadcast(
         /* context = */

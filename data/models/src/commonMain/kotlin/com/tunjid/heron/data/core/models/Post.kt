@@ -45,11 +45,16 @@ data class Post(
     val record: Record?,
     val viewerStats: ViewerStats?,
     val labels: List<Label>,
-    val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable?,
+    @Deprecated(
+        message = "Use embeddedRecords / Post.primaryEmbeddedRecord",
+        replaceWith = ReplaceWith("primaryEmbeddedRecord"),
+    )
+    val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable? = null,
     val viewerState: ProfileViewerState? = null,
+    val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
 ) : UrlEncodableModel,
     Record,
-    Record.Embeddable {
+    Record.Embeddable.Native {
 
     override val reference: com.tunjid.heron.data.core.models.Record.Reference =
         com.tunjid.heron.data.core.models.Record.Reference(
@@ -197,6 +202,30 @@ data class Post(
         }
     }
 }
+
+/**
+ * The primary embedded record of a [Post], if any.
+ *
+ * Reads from [Post.embeddedRecords], falling back to the deprecated
+ * [Post.embeddedRecord] so that navigation routes serialized by older app
+ * versions (which only populated the single field) continue to resolve.
+ */
+@Suppress("DEPRECATION")
+val Post.primaryEmbeddedRecord: Record.Embeddable?
+    get() = embeddedRecords.firstOrNull() ?: embeddedRecord
+
+@Suppress("DEPRECATION")
+val Post.nativeEmbeddedRecord: Record.Embeddable.Native?
+    get() = (
+        embeddedRecords.firstOrNull {
+            it is Record.Embeddable.Native
+        } ?: embeddedRecord
+        ) as? Record.Embeddable.Native
+
+val Post.externalEmbeddedRecord: Record.Embeddable.External?
+    get() = embeddedRecords.firstOrNull {
+        it is Record.Embeddable.External
+    } as? Record.Embeddable.External
 
 val Post.ViewerStats?.canReply
     get() = this?.replyDisabled?.not() ?: true

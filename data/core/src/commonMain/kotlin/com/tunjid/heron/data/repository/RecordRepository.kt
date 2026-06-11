@@ -22,7 +22,10 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.profileId
@@ -32,6 +35,7 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
@@ -46,6 +50,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 
 interface RecordRepository :
@@ -58,12 +63,17 @@ interface RecordRepository :
         uri: EmbeddableRecordUri,
     ): Flow<Record.Embeddable>
 
+    fun embeddableRecords(
+        uris: Set<EmbeddableRecordUri>,
+    ): Flow<List<Record.Embeddable>>
+
     suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome
 }
 
-internal class OfflineFirstRecordRepository @Inject constructor(
+@Inject
+internal class OfflineFirstRecordRepository(
     blueskyRecordOperations: BlueskyRecordOperations,
     derakkumaRecordOperations: DerakkumaRecordOperations,
     rockSkyRecordOperations: RockskyRecordOperations,
@@ -75,6 +85,7 @@ internal class OfflineFirstRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
 ) : RecordRepository,
@@ -113,9 +124,29 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                         )
                             .distinctUntilChangedMap {
                                 it.firstOrNull()?.asExternalModel(
-                                    embeddedRecord = null,
+                                    embeddedRecords = emptyList(),
                                 )
                             }
+                    }
+
+            is StandardDocumentUri ->
+                savedStateDataSource
+                    .singleSessionFlow { profileId ->
+                        standardSiteDao.documents(
+                            viewingProfileId = profileId?.id,
+                            uris = listOf(uri),
+                        )
+                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                    }
+
+            is StandardPublicationUri ->
+                savedStateDataSource
+                    .singleSessionFlow { profileId ->
+                        standardSiteDao.publications(
+                            viewingProfileId = profileId?.id,
+                            uris = listOf(uri),
+                        )
+                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
                     }
         }
             .filterNotNull()
@@ -123,6 +154,17 @@ internal class OfflineFirstRecordRepository @Inject constructor(
                 recordResolver.resolve(uri)
             }
             .flowOn(ioDispatcher)
+
+    override fun embeddableRecords(
+        uris: Set<EmbeddableRecordUri>,
+    ): Flow<List<Record.Embeddable>> =
+        if (uris.isEmpty()) flowOf(emptyList())
+        else savedStateDataSource.singleSessionFlow {
+            recordResolver.embeddableRecords(
+                uris = uris,
+                viewingProfileId = it,
+            )
+        }
 
     override suspend fun deleteRecord(
         uri: RecordUri,

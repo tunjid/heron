@@ -41,7 +41,8 @@ import kotlinx.coroutines.sync.withLock
     ExperimentalAtomicApi::class,
     ExperimentalTime::class,
 )
-class TidGenerator @Inject constructor() {
+@Inject
+class TidGenerator {
 
     private val mutex = Mutex()
 

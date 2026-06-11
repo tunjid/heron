@@ -211,7 +211,7 @@ sealed class TimelineItem {
             record = null,
             viewerStats = null,
             labels = emptyList(),
-            embeddedRecord = null,
+            embeddedRecords = emptyList(),
             viewerState = null,
         )
 

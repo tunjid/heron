@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
@@ -47,6 +48,10 @@ sealed interface PostAction {
     data class OfRecord(
         val record: Record,
         val owningPostUri: PostUri,
+    ) : PostAction
+
+    data class OfPublicationSubscription(
+        val publication: StandardPublication,
     ) : PostAction
 
     data class OfMedia(

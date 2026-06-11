@@ -235,7 +235,8 @@ value class BlockUri(
 value class StandardPublicationUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -248,7 +249,8 @@ value class StandardPublicationUri(
 value class StandardDocumentUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -543,6 +545,8 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
             ListUri.NAMESPACE -> ListUri(normalized)
             StarterPackUri.NAMESPACE -> StarterPackUri(normalized)
             LabelerUri.NAMESPACE -> LabelerUri(normalized)
+            StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
+            StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
             else -> null
         }
     }

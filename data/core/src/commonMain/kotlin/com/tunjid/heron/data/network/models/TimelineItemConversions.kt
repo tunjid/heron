@@ -70,6 +70,7 @@ internal fun FeedViewPost.feedItemEntity(
         is PostViewEmbedUnion.RecordWithMediaView -> true
         is PostViewEmbedUnion.Unknown -> false
         is PostViewEmbedUnion.VideoView -> true
+        is PostViewEmbedUnion.GalleryView -> true
         null -> false
     },
     indexedAt = when (val reason = reason) {
@@ -107,6 +108,7 @@ internal fun FeedViewPost.feedItemEntity(
         is PostViewEmbedUnion.ImagesView,
         is PostViewEmbedUnion.Unknown,
         is PostViewEmbedUnion.VideoView,
+        is PostViewEmbedUnion.GalleryView,
         null,
         -> null
     },

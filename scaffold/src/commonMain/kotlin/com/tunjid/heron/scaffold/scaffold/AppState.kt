@@ -18,7 +18,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -28,6 +27,7 @@ import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
@@ -55,10 +55,13 @@ import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.navigation.tasksDestination
 import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
+import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.coroutines.withSnapshotNotifications
 import com.tunjid.mutator.compose.produceState
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
@@ -76,12 +79,9 @@ import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 @Stable
 class AppState(
@@ -91,13 +91,16 @@ class AppState(
     private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
+    internal val sheetsViewModelInitializers: SheetsViewModelInitializers,
 ) {
-    private var notificationCount by mutableStateOf(0L)
-
     internal val identityState
         get() = identityStateHolder.state
 
-    private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
+    internal val navigationState
+        get() = navigationStateHolder.state
+
+    private val notificationState
+        get() = notificationStateHolder.state
 
     internal var showNavigation by mutableStateOf(false)
 
@@ -107,8 +110,6 @@ class AppState(
     internal val navItems by derivedStateOf {
         currentNavItems()
     }
-
-    internal val navigation by multiStackNavState
 
     internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
         private set
@@ -149,7 +150,7 @@ class AppState(
             MultiPaneDisplayState(
                 panes = ThreePane.entries.toList(),
                 paneDecorators = paneDecorators,
-                navigationState = multiStackNavState,
+                navigationState = derivedStateOf(navigationState::multiStackNav),
                 backStackTransform = MultiStackNav::multiPaneDisplayBackstack,
                 destinationTransform = MultiStackNav::requireCurrent,
                 popTransform = MultiStackNav::pop,
@@ -172,24 +173,10 @@ class AppState(
         }
 
         identityStateHolder.produceState()
-
-        DisposableEffect(Unit) {
-            val job = CoroutineScope(Dispatchers.Main.immediate).launch {
-                navigationStateHolder.state.collect { multiStackNav ->
-                    multiStackNavState.value = multiStackNav
-                }
-            }
-            onDispose { job.cancel() }
-        }
+        navigationStateHolder.produceState()
+        notificationStateHolder.produceState()
 
         // TODO: Figure out a way to do this in the background with KMP
-        LaunchedEffect(Unit) {
-            launch {
-                notificationStateHolder.state.collect { notificationState ->
-                    notificationCount = notificationState.unreadCount
-                }
-            }
-        }
         LifecycleResumeEffect(Unit) {
             notificationStateHolder.accept(
                 NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
@@ -239,6 +226,11 @@ class AppState(
             navState.pop()
         }
 
+    internal fun onNavigateToTasks() =
+        navigationStateHolder.accept(
+            tasksDestination(showFailedWrites = true).navigationMutation,
+        )
+
     internal fun addAccount() {
         identityStateHolder.accept(
             IdentityAction.Switch.Cancel,
@@ -252,7 +244,7 @@ class AppState(
         anchor: PaneAnchor,
         destinationId: String,
     ) {
-        if (destinationId != navigation.current?.id || anchor == PaneAnchor.Full) return
+        if (destinationId != navigationState.multiStackNav.current?.id || anchor == PaneAnchor.Full) return
         lastPaneAnchor = anchor
     }
 
@@ -265,15 +257,23 @@ class AppState(
     fun onIdentityAction(action: IdentityAction) =
         identityStateHolder.accept(action)
 
-    suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
-        notificationStateHolder.state.first { state ->
-            recordUri in state.processedNotificationRecordUris
+    /**
+     * This method is called from outside compose and
+     * needs manual snapshot observation.
+     */
+    suspend fun awaitNotificationProcessing(
+        recordUri: RecordUri,
+    ) = withSnapshotNotifications {
+        snapshotFlow {
+            notificationState.processedNotificationRecordUris
+        }.first {
+            recordUri in it
         }
     }
 
     private fun currentNavItems(): List<NavItem> {
-        val multiStackNav = multiStackNavState.value
-        return multiStackNav.stacks
+        return navigationState.multiStackNav
+            .stacks
             .map(StackNav::name)
             .mapIndexedNotNull { index, name ->
                 val stack = AppStack.entries.firstOrNull { stack ->
@@ -290,8 +290,8 @@ class AppState(
                 NavItem(
                     stack = stack,
                     index = index,
-                    selected = multiStackNav.currentIndex == index,
-                    badgeCount = if (stack == AppStack.Notifications) notificationCount else 0L,
+                    selected = navigationState.multiStackNav.currentIndex == index,
+                    badgeCount = if (stack == AppStack.Notifications) notificationState.unreadCount else 0L,
                 )
             }
     }
@@ -311,7 +311,7 @@ class AppState(
 }
 
 val AppState.isShowingSplashScreen: Boolean
-    get() = navigation.isShowingSplashScreen
+    get() = navigationState.multiStackNav.isShowingSplashScreen
 
 private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Route> = NavEntryDecorator { entry ->
     entry.Content()

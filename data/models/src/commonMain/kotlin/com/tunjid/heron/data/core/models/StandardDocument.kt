@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
@@ -41,12 +42,14 @@ data class StandardDocument(
     val bskyPostRef: Record.Reference?,
     val tags: List<String>,
     val publication: StandardPublication?,
-) : Record {
+) : Record.Embeddable.External {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri = uri
 }
 
 val StandardDocument.link: String?

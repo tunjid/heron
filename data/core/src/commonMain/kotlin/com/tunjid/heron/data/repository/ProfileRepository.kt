@@ -97,6 +97,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
@@ -166,7 +167,8 @@ interface ProfileRepository {
     ): Outcome
 }
 
-internal class OfflineProfileRepository @Inject constructor(
+@Inject
+internal class OfflineProfileRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
@@ -281,6 +283,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     }
                 }
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun profileRelationships(
@@ -295,6 +298,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
                 }
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun commonFollowers(
@@ -315,6 +319,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override fun followers(
@@ -391,6 +396,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 responseCursor = GetMutesResponse::cursor,
             )
         }
+            .filterNotNull()
             .flowOn(ioDispatcher)
 
     override suspend fun sendConnection(

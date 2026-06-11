@@ -66,6 +66,8 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackE
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
+import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -85,7 +87,8 @@ import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
-class MultipleEntitySaverProvider @Inject constructor(
+@Inject
+class MultipleEntitySaverProvider(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -154,6 +157,10 @@ internal class MultipleEntitySaver(
     private val externalEmbedEntities = LazyList<ExternalEmbedEntity>()
 
     private val postExternalEmbedEntities = LazyList<PostExternalEmbedEntity>()
+
+    private val postExternalAssociatedRecordEntities = LazyList<PostExternalAssociatedRecordEntity>()
+
+    private val postExternalAssociatedProfileEntities = LazyList<PostExternalAssociatedProfilesEntity>()
 
     private val imageEntities = LazyList<ImageEntity>()
 
@@ -284,6 +291,12 @@ internal class MultipleEntitySaver(
         if (postExternalEmbedEntities.isNotEmpty) {
             postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
         }
+        if (postExternalAssociatedRecordEntities.isNotEmpty) {
+            postDao.upsertPostExternalAssociatedRecords(postExternalAssociatedRecordEntities.list)
+        }
+        if (postExternalAssociatedProfileEntities.isNotEmpty) {
+            postDao.upsertPostExternalAssociatedProfiles(postExternalAssociatedProfileEntities.list)
+        }
         if (postImageEntities.isNotEmpty) {
             postDao.insertOrIgnorePostImages(postImageEntities.list)
         }
@@ -407,7 +420,11 @@ internal class MultipleEntitySaver(
             standardSiteDao.upsertPublications(fullPublicationEntities)
         }
         if (standardDocumentEntities.isNotEmpty) {
-            standardSiteDao.upsertDocuments(standardDocumentEntities.list)
+            val (fullDocumentEntities, stubDocumentEntities) = standardDocumentEntities.list.partition {
+                it.cid != null
+            }
+            standardSiteDao.insertOrIgnoreDocuments(stubDocumentEntities)
+            standardSiteDao.upsertDocuments(fullDocumentEntities)
         }
         if (standardSubscriptionEntities.isNotEmpty) {
             standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
@@ -538,6 +555,9 @@ internal class MultipleEntitySaver(
     fun add(entity: RockskyTrackEntity) = rockskyTrackEntities.add(entity)
     fun add(entity: RockskyScrobbleEntity) = rockskyScrobbleEntities.add(entity)
     fun add(entity: RockskyArtistEntity) = rockskyArtistEntities.add(entity)
+
+    fun add(entity: PostExternalAssociatedRecordEntity) = postExternalAssociatedRecordEntities.add(entity)
+    fun add(entity: PostExternalAssociatedProfilesEntity) = postExternalAssociatedProfileEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 
