@@ -33,17 +33,17 @@ internal object PreviewFixtures {
 
     val conversations: List<ConversationRow> = listOf(
         ConversationRow(
-            profile = profile("Julian Marinus", "fooljulian.bsky.social"),
-            summary = "Yuri Schimke reacted ❤️ to \"Got the invite, thanks!\"",
+            profile = profile("Brian Henderson", "brianhenderson.bsky.social"),
+            summary = "Brian Henderson reacted ❤️ to \"Got the invite, thanks!\"",
         ),
         ConversationRow(
-            profile = profile("Anton Arhipov", "antonarhipov.bsky.social"),
-            summary = "Hey, Mark, can we move our sync to half past three? I want to " +
+            profile = profile("Mike Munro", "mikemunro.bsky.social"),
+            summary = "Hey, can we move our sync to half past three? I want to " +
                 "walk through the new build pipeline and the preview rendering " +
                 "changes before the team standup tomorrow morning.",
         ),
         ConversationRow(
-            profile = profile("Jesse Wilson", "swank.ca"),
+            profile = profile("Jim Waley", "jimwaley.bsky.social"),
             summary = "Yup. And that wraps up our time, you can stop sharing.",
         ),
     )
