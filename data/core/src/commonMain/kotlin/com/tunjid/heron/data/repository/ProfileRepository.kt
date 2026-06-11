@@ -260,8 +260,10 @@ internal class OfflineProfileRepository(
                                                 limit = 1,
                                             ),
                                         )
+                                    }
                                         .mapCatchingUnlessCancelled { it.records.isNotEmpty() }
                                         .getOrElse { false }
+                                }
                                 app.id.takeIf { hasAny }
                             }
                         }
