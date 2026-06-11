@@ -79,7 +79,9 @@ private val previewConversations = listOf(
     ),
     ConversationRow(
         profile = previewProfile("Anton Arhipov", "antonarhipov.bsky.social"),
-        summary = "Hey, Mark, can we move our sync to half past three?",
+        summary = "Hey, Mark, can we move our sync to half past three? I want to " +
+            "walk through the new build pipeline and the preview rendering " +
+            "changes before the team standup tomorrow morning.",
     ),
     ConversationRow(
         profile = previewProfile("Jesse Wilson", "swank.ca"),
