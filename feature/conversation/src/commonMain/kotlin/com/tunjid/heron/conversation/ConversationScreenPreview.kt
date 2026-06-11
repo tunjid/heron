@@ -37,60 +37,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Message
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.MessageId
-import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.data.core.types.ProfileId
-import kotlin.time.Instant
-
-private val PreviewTimestamp = Instant.parse("2024-01-01T09:41:00Z")
-
-private fun previewProfile(
-    displayName: String,
-    id: String,
-): Profile = Profile(
-    did = ProfileId(id),
-    handle = ProfileHandle("$id.bsky.social"),
-    displayName = displayName,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = 0,
-    followsCount = 0,
-    postsCount = 0,
-    joinedViaStarterPack = null,
-    indexedAt = PreviewTimestamp,
-    createdAt = PreviewTimestamp,
-    metadata = Profile.Metadata(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-        chat = Profile.ChatInfo(
-            allowed = Profile.ChatInfo.Allowed.NoOne,
-        ),
-    ),
-)
-
-private fun sentMessage(
-    id: String,
-    sender: Profile,
-    text: String,
-    reactions: List<Message.Reaction> = emptyList(),
-): MessageItem.Sent = MessageItem.Sent(
-    message = Message(
-        id = MessageId(id),
-        conversationId = ConversationId("convo-preview"),
-        text = text,
-        sender = sender,
-        isDeleted = false,
-        sentAt = PreviewTimestamp,
-        embeddedRecord = null,
-        reactions = reactions,
-        metadata = null,
-    ),
-)
 
 /**
  * Reproduces the per message [Row] layout from [ConversationScreen]'s `Message`
@@ -140,8 +86,6 @@ private fun PreviewMessageRow(
 
 @Composable
 private fun PreviewConversation() {
-    val me = previewProfile(displayName = "Me", id = "me")
-    val them = previewProfile(displayName = "Joel Muraguri-Wanjiku", id = "joel")
     MaterialTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
             Column(
@@ -151,38 +95,19 @@ private fun PreviewConversation() {
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 PreviewMessageRow(
-                    item = sentMessage(
-                        id = "1",
-                        sender = them,
-                        text = "Hey! Are we still on for the design review later today?",
-                    ),
+                    item = PreviewFixtures.designReviewQuestion,
                     side = Side.Receiver,
                     isFirstMessageByAuthor = true,
                     isLastMessageByAuthor = true,
                 )
                 PreviewMessageRow(
-                    item = sentMessage(
-                        id = "2",
-                        sender = me,
-                        text = "Yes — 3pm works for me",
-                        reactions = listOf(
-                            Message.Reaction(
-                                value = "👍",
-                                senderId = ProfileId("joel"),
-                                createdAt = PreviewTimestamp,
-                            ),
-                        ),
-                    ),
+                    item = PreviewFixtures.confirmation,
                     side = Side.Sender,
                     isFirstMessageByAuthor = true,
                     isLastMessageByAuthor = true,
                 )
                 PreviewMessageRow(
-                    item = sentMessage(
-                        id = "3",
-                        sender = them,
-                        text = "Perfect, I'll share the Figma link in a moment",
-                    ),
+                    item = PreviewFixtures.figmaFollowUp,
                     side = Side.Receiver,
                     isFirstMessageByAuthor = true,
                     isLastMessageByAuthor = true,
