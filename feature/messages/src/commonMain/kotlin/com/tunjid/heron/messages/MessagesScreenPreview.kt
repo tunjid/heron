@@ -1,5 +1,5 @@
 /*
- *    Copyright 2024 Adetunji Dahunsi
+ *    Copyright 2026 Adetunji Dahunsi
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -148,15 +148,25 @@ private fun PreviewMessageList(rowHeight: Dp?) {
     }
 }
 
+/**
+ * Multi-preview that fans the message list across device widths. Width is the
+ * dimension the Desktop renderer varies, and narrower widths stress the summary
+ * wrapping / ellipsis where the clipping shows up.
+ */
+@Preview(name = "Compact width 320dp", widthDp = 320)
+@Preview(name = "Phone width 360dp", widthDp = 360)
+@Preview(name = "Expanded width 480dp", widthDp = 480)
+annotation class MessageListPreviews
+
 /** Reproduces the reported bug: the fixed 68dp row clips the summary line. */
-@Preview(name = "Messages list - fixed 68dp (clips summary)", widthDp = 360)
+@MessageListPreviews
 @Composable
 internal fun MessageListFixedHeightPreview() {
     PreviewMessageList(rowHeight = 68.dp)
 }
 
 /** Same rows with heightIn(min = 68dp) — the summary is no longer clipped. */
-@Preview(name = "Messages list - heightIn min 68dp (fixed)", widthDp = 360)
+@MessageListPreviews
 @Composable
 internal fun MessageListMinHeightPreview() {
     PreviewMessageList(rowHeight = null)
