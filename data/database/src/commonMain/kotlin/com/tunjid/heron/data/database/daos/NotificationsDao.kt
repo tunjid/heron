@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
@@ -39,6 +40,7 @@ interface NotificationsDao {
             OFFSET :offset
         """,
     )
+    @Transaction
     fun notifications(
         ownerId: String,
         before: Instant,
@@ -58,6 +60,7 @@ interface NotificationsDao {
             ORDER BY indexedAt DESC
         """,
     )
+    @Transaction
     fun unreadNotifications(
         ownerId: String,
         after: Instant,
