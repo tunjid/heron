@@ -41,9 +41,7 @@ kotlin {
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
 
-                // Provides the androidx.compose.ui.tooling.preview.Preview annotation
-                // used by ConversationScreenPreview. The compose-preview renderer
-                // plugin itself is auto-injected by the compose-preview CLI.
+                // Provides the @Preview annotation used by ConversationScreenPreview (the plugin is auto-injected by the CLI).
                 implementation(libs.compose.multiplatform.ui.tooling.preview)
             }
         }
