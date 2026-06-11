@@ -49,11 +49,7 @@ kotlin {
         }
         named("desktopMain") {
             dependencies {
-                // The compose-preview Desktop (Skia) renderer needs a host skiko
-                // native runtime. The CLI auto-injects the plugin but not skiko, and
-                // a bare jvm("desktop") target doesn't pull one. compose.desktop
-                // .currentOs is the Compose plugin's host selector (same as
-                // desktopApp/composeApp use) and brings the matching host skiko.
+                // Host skiko native for the compose-preview Desktop renderer (the CLI injects the plugin, not skiko).
                 runtimeOnly(compose.desktop.currentOs)
             }
         }
