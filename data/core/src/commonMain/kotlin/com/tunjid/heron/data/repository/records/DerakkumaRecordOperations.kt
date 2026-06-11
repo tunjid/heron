@@ -143,6 +143,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaPlay(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaPlayUri ?: return null,
+            chart = play.chart.recordUriOrNull(),
             songName = songRecord?.title ?: chartRecord?.songId ?: play.chartSongName(),
             difficulty = chartRecord?.difficulty ?: play.chartString("difficulty"),
             level = chartRecord?.level ?: play.chartString("level"),
@@ -154,6 +155,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             fcStatus = play.fcStatus.orEmpty(),
             syncStatus = play.syncStatus.orEmpty(),
             dxScore = play.dxScore.fractionString(),
+            dxStar = play.dxStar ?: 0,
             trackNum = play.trackNum ?: 0,
             rating = play.rating ?: 0,
             ratingDelta = play.ratingDelta ?: 0,
@@ -167,6 +169,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaPlay(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaPlayUri ?: return null,
+            chart = play.chart.recordUriOrNull(),
             songName = play.chartSongName(),
             difficulty = play.chartString("difficulty"),
             level = play.chartString("level"),
@@ -178,6 +181,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             fcStatus = play.fcStatus.orEmpty(),
             syncStatus = play.syncStatus.orEmpty(),
             dxScore = play.dxScore.fractionString(),
+            dxStar = play.dxStar ?: 0,
             trackNum = play.trackNum ?: 0,
             rating = play.rating ?: 0,
             ratingDelta = play.ratingDelta ?: 0,
@@ -195,6 +199,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaBest(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaBestUri ?: return null,
+            chart = best.chart.recordUriOrNull(),
             songName = songRecord?.title ?: chartRecord?.songId ?: best.chartSongName(),
             difficulty = chartRecord?.difficulty ?: best.chartString("difficulty"),
             level = chartRecord?.level ?: best.chartString("level"),
@@ -205,7 +210,10 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             scoreRank = best.scoreRank.orEmpty(),
             fcStatus = best.fcStatus.orEmpty(),
             syncStatus = best.syncStatus.orEmpty(),
+            dxScore = best.dxScore.fractionString(),
+            dxStar = best.dxStar ?: 0,
             playCount = best.playCount ?: 0,
+            lastPlayed = best.lastPlayed.orEmpty(),
             updatedAt = best.updatedAt ?: best.createdAt.orEmpty(),
         )
     }
@@ -215,6 +223,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaBest(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaBestUri ?: return null,
+            chart = best.chart.recordUriOrNull(),
             songName = best.chartSongName(),
             difficulty = best.chartString("difficulty"),
             level = best.chartString("level"),
@@ -225,7 +234,10 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             scoreRank = best.scoreRank.orEmpty(),
             fcStatus = best.fcStatus.orEmpty(),
             syncStatus = best.syncStatus.orEmpty(),
+            dxScore = best.dxScore.fractionString(),
+            dxStar = best.dxStar ?: 0,
             playCount = best.playCount ?: 0,
+            lastPlayed = best.lastPlayed.orEmpty(),
             updatedAt = best.updatedAt ?: best.createdAt.orEmpty(),
         )
     }
@@ -256,10 +268,12 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaFavoriteSong(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaFavoriteSongUri ?: return null,
+            song = favoriteSong.song.recordUriOrNull(),
             songName = songRecord?.title ?: favoriteSong.songName(),
             artist = songRecord?.artist.orEmpty(),
             coverArt = song?.blobImage(songRecord?.coverArt),
             orderId = favoriteSong.orderId ?: 0,
+            observedAt = favoriteSong.observedAt.orEmpty(),
             createdAt = favoriteSong.createdAt.orEmpty(),
             updatedAt = favoriteSong.updatedAt ?: favoriteSong.createdAt.orEmpty(),
         )
@@ -270,10 +284,12 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         return DerakkumaFavoriteSong(
             cid = raw.cid,
             uri = raw.uri as? DerakkumaFavoriteSongUri ?: return null,
+            song = favoriteSong.song.recordUriOrNull(),
             songName = favoriteSong.songName(),
             artist = "",
             coverArt = null,
             orderId = favoriteSong.orderId ?: 0,
+            observedAt = favoriteSong.observedAt.orEmpty(),
             createdAt = favoriteSong.createdAt.orEmpty(),
             updatedAt = favoriteSong.updatedAt ?: favoriteSong.createdAt.orEmpty(),
         )
@@ -407,6 +423,7 @@ private fun DerakkumaBestRecord.chartString(key: String): String = when (key) {
 private fun DerakkumaPlayRecord.chartSongName(): String = songName ?: chartSongName ?: chartSongId ?: chart?.uri?.atUri ?: "Unknown song"
 private fun DerakkumaBestRecord.chartSongName(): String = songName ?: chartSongName ?: chartSongId ?: chart?.uri?.atUri ?: "Unknown song"
 private fun DerakkumaFavoriteSongRecord.songName(): String = songName ?: name ?: song?.uri?.atUri ?: "Unknown song"
+private fun StrongRef?.recordUriOrNull(): RecordUri? = this?.uri?.atUri?.asRecordUriOrNull()
 private fun DerakkumaDxScoreRecord?.fractionString(): String = this?.let { score -> listOf(score.achieved, score.total).takeIf { it.any { n -> n > 0 } }?.joinToString("/") }.orEmpty()
 
 @Serializable
@@ -442,6 +459,7 @@ private data class DerakkumaPlayRecord(
     val fcStatus: String? = null,
     val syncStatus: String? = null,
     val dxScore: DerakkumaDxScoreRecord? = null,
+    val dxStar: Long? = null,
     val trackNum: Long? = null,
     val rating: Long? = null,
     val ratingDelta: Long? = null,
@@ -462,7 +480,10 @@ private data class DerakkumaBestRecord(
     val scoreRank: String? = null,
     val fcStatus: String? = null,
     val syncStatus: String? = null,
+    val dxScore: DerakkumaDxScoreRecord? = null,
+    val dxStar: Long? = null,
     val playCount: Long? = null,
+    val lastPlayed: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
@@ -494,6 +515,7 @@ private data class DerakkumaFavoriteSongRecord(
     val songName: String? = null,
     val name: String? = null,
     val orderId: Long? = null,
+    val observedAt: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

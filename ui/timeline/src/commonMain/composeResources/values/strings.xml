@@ -66,6 +66,7 @@
     <string name="derakkuma_favorite">Favorite</string>
     <string name="derakkuma_rival">Rival</string>
     <string name="derakkuma_rating">Rating %1$s</string>
+    <string name="derakkuma_dx_star">DX ✦%1$s</string>
     <string name="derakkuma_owner">Owner %1$s</string>
     <string name="derakkuma_points">%1$s pts</string>
     <string name="derakkuma_days_left">%1$s days left</string>

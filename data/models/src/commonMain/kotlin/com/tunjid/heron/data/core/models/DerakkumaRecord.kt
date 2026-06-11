@@ -10,6 +10,7 @@ import com.tunjid.heron.data.core.types.DerakkumaProfileUri
 import com.tunjid.heron.data.core.types.DerakkumaRecordId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -38,6 +39,7 @@ data class DerakkumaProfile(
 data class DerakkumaPlay(
     val cid: DerakkumaRecordId,
     val uri: DerakkumaPlayUri,
+    val chart: RecordUri?,
     val difficulty: String,
     val level: String,
     val type: String,
@@ -49,6 +51,7 @@ data class DerakkumaPlay(
     val fcStatus: String,
     val syncStatus: String,
     val dxScore: String,
+    val dxStar: Long,
     val trackNum: Long,
     val rating: Long,
     val ratingDelta: Long,
@@ -62,6 +65,7 @@ data class DerakkumaPlay(
 data class DerakkumaBest(
     val cid: DerakkumaRecordId,
     val uri: DerakkumaBestUri,
+    val chart: RecordUri?,
     val songName: String,
     val difficulty: String,
     val level: String,
@@ -72,7 +76,10 @@ data class DerakkumaBest(
     val scoreRank: String,
     val fcStatus: String,
     val syncStatus: String,
+    val dxScore: String,
+    val dxStar: Long,
     val playCount: Long,
+    val lastPlayed: String,
     val updatedAt: String,
 ) : Record {
     override val reference = Record.Reference(id = cid, uri = uri)
@@ -104,10 +111,12 @@ data class DerakkumaFriend(
 data class DerakkumaFavoriteSong(
     val cid: DerakkumaRecordId,
     val uri: DerakkumaFavoriteSongUri,
+    val song: RecordUri?,
     val songName: String,
     val artist: String,
     val coverArt: ImageUri?,
     val orderId: Long,
+    val observedAt: String,
     val createdAt: String,
     val updatedAt: String,
 ) : Record {

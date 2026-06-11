@@ -46,6 +46,7 @@ import heron.ui.timeline.generated.resources.derakkuma_best_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_circle_member_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_circle_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_days_left
+import heron.ui.timeline.generated.resources.derakkuma_dx_star
 import heron.ui.timeline.generated.resources.derakkuma_favorite
 import heron.ui.timeline.generated.resources.derakkuma_favorite_subtitle
 import heron.ui.timeline.generated.resources.derakkuma_friend_code
@@ -96,7 +97,14 @@ fun DerakkumaPlay(
         paneTransitionScope = paneTransitionScope,
         title = play.songName,
         subtitle = stringResource(Res.string.derakkuma_play_subtitle, play.difficulty, play.level, play.achievement),
-        description = listOf(play.artist, play.scoreRank.uppercase(), play.fcStatus.uppercase(), play.syncStatus.uppercase(), play.dxScore.takeIf(String::isNotBlank)?.let { "DX $it" }).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
+        description = listOf(
+            play.artist,
+            play.scoreRank.uppercase(),
+            play.fcStatus.uppercase(),
+            play.syncStatus.uppercase(),
+            play.dxScore.takeIf(String::isNotBlank)?.let { "DX $it" },
+            play.dxStar.takeIf { it > 0 }?.let { stringResource(Res.string.derakkuma_dx_star, it) },
+        ).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
         blurb = play.playedAt.ifBlank { play.createdAt },
         image = play.coverArt,
         sharedElementPrefix = sharedElementPrefix,
@@ -116,8 +124,15 @@ fun DerakkumaBest(
         paneTransitionScope = paneTransitionScope,
         title = best.songName,
         subtitle = stringResource(Res.string.derakkuma_best_subtitle, best.difficulty, best.level, best.achievement),
-        description = listOf(best.artist, best.scoreRank.uppercase(), best.fcStatus.uppercase(), best.syncStatus.uppercase()).filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
-        blurb = if (best.playCount > 0) stringResource(Res.string.played_n_times, best.playCount) else best.updatedAt,
+        description = listOf(
+            best.artist,
+            best.scoreRank.uppercase(),
+            best.fcStatus.uppercase(),
+            best.syncStatus.uppercase(),
+            best.dxScore.takeIf(String::isNotBlank)?.let { "DX $it" },
+            best.dxStar.takeIf { it > 0 }?.let { stringResource(Res.string.derakkuma_dx_star, it) },
+        ).filterNotNull().filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
+        blurb = if (best.playCount > 0) stringResource(Res.string.played_n_times, best.playCount) else best.lastPlayed.ifBlank { best.updatedAt },
         image = best.coverArt,
         sharedElementPrefix = sharedElementPrefix,
         uri = best.uri,
@@ -176,7 +191,7 @@ fun DerakkumaFavoriteSong(
         paneTransitionScope = paneTransitionScope,
         title = favoriteSong.songName,
         subtitle = stringResource(Res.string.derakkuma_favorite_subtitle, favoriteSong.orderId),
-        description = listOf(favoriteSong.artist, favoriteSong.updatedAt.ifBlank { favoriteSong.createdAt }).filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
+        description = listOf(favoriteSong.artist, favoriteSong.observedAt, favoriteSong.updatedAt.ifBlank { favoriteSong.createdAt }).filter(String::isNotBlank).joinToString(" · ").ifBlank { null },
         blurb = null,
         image = favoriteSong.coverArt,
         sharedElementPrefix = sharedElementPrefix,
