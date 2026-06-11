@@ -20,68 +20,41 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 
 /**
- * Reproduces the per message [Row] layout from [ConversationScreen]'s `Message`
- * composable, swapping the shared element avatar for a static placeholder so the
- * stateless [AuthorAndTextMessage] can be previewed without a `PaneScaffoldState`.
+ * Renders the real [MessageRow] from [ConversationScreen] with a static avatar
+ * placeholder in place of the shared element, so the production layout (not a
+ * copy of it) is previewed without a `PaneScaffoldState`.
  */
 @Composable
 private fun PreviewMessageRow(
     item: MessageItem,
     side: Side,
-    isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean,
 ) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier
-            .padding(
-                top = if (isLastMessageByAuthor) 8.dp else 0.dp,
-                start = 16.dp,
-                end = 16.dp,
-            )
-            .fillMaxWidth(),
-        horizontalArrangement = side,
-    ) {
-        if (isLastMessageByAuthor) {
+    MessageRow(
+        item = item,
+        side = side,
+        isFirstMessageByAuthor = true,
+        isLastMessageByAuthor = true,
+        avatar = {
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
-                    .align(Alignment.Top),
+                    .matchParentSize()
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
             )
-        }
-        Spacer(
-            modifier = Modifier
-                .width(if (isLastMessageByAuthor) 16.dp else 34.dp),
-        )
-        AuthorAndTextMessage(
-            item = item,
-            side = side,
-            isFirstMessageByAuthor = isFirstMessageByAuthor,
-            isLastMessageByAuthor = isLastMessageByAuthor,
-            onMessageLongPressed = {},
-            onLinkTargetClicked = {},
-        )
-    }
+        },
+    )
 }
 
 @Composable
@@ -97,20 +70,14 @@ private fun PreviewConversation() {
                 PreviewMessageRow(
                     item = PreviewFixtures.designReviewQuestion,
                     side = Side.Receiver,
-                    isFirstMessageByAuthor = true,
-                    isLastMessageByAuthor = true,
                 )
                 PreviewMessageRow(
                     item = PreviewFixtures.confirmation,
                     side = Side.Sender,
-                    isFirstMessageByAuthor = true,
-                    isLastMessageByAuthor = true,
                 )
                 PreviewMessageRow(
                     item = PreviewFixtures.figmaFollowUp,
                     side = Side.Receiver,
-                    isFirstMessageByAuthor = true,
-                    isLastMessageByAuthor = true,
                 )
             }
         }

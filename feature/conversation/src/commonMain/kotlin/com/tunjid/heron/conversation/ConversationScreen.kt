@@ -23,6 +23,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -220,6 +221,72 @@ private fun Message(
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
+    MessageRow(
+        modifier = modifier,
+        item = item,
+        side = side,
+        isFirstMessageByAuthor = isFirstMessageByAuthor,
+        isLastMessageByAuthor = isLastMessageByAuthor,
+        reactionModifier = Modifier.animateBounds(
+            lookaheadScope = paneScaffoldState,
+            boundsTransform = paneScaffoldState.childBoundsTransform,
+        ),
+        onAvatarClicked = {
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        profile = item.sender,
+                        avatarSharedElementKey = item.avatarSharedElementKey(),
+                    ),
+                ),
+            )
+        },
+        onMessageLongPressed = onMessageLongPressed,
+        onLinkTargetClicked = onLinkTargetClicked,
+        record = {
+            when (item) {
+                is MessageItem.Pending -> Unit
+                is MessageItem.Sent -> (item.message.embeddedRecord as? Record.Embeddable.Native)?.let { record ->
+                    MessageRecord(
+                        record = record,
+                        item = item,
+                        paneScaffoldState = paneScaffoldState,
+                        actions = actions,
+                    )
+                }
+            }
+        },
+        avatar = {
+            MessageAvatar(
+                modifier = Modifier.matchParentSize(),
+                item = item,
+                paneScaffoldState = paneScaffoldState,
+            )
+        },
+    )
+}
+
+/**
+ * Stateless message row layout: avatar framing, spacing, the author/text column and
+ * an optional embedded [record]. Hoisted out of the stateful [Message] so it can be
+ * previewed without a `PaneScaffoldState` — callers supply the [avatar] (a shared
+ * element in the app, a static placeholder in previews) and [record] slots.
+ */
+@Composable
+internal fun MessageRow(
+    item: MessageItem,
+    side: Side,
+    isFirstMessageByAuthor: Boolean,
+    isLastMessageByAuthor: Boolean,
+    modifier: Modifier = Modifier,
+    reactionModifier: Modifier = Modifier,
+    onAvatarClicked: () -> Unit = {},
+    onMessageLongPressed: (MessageItem) -> Unit = {},
+    onLinkTargetClicked: (LinkTarget) -> Unit = {},
+    record: @Composable () -> Unit = {},
+    avatar: @Composable BoxScope.() -> Unit,
+) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.tertiary
@@ -236,25 +303,14 @@ private fun Message(
         horizontalArrangement = side,
     ) {
         if (isLastMessageByAuthor) {
-            MessageAvatar(
+            Box(
                 modifier = Modifier.size(24.dp)
                     .border(1.5.dp, borderColor, CircleShape)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top)
-                    .clickable {
-                        actions(
-                            Action.Navigate.To(
-                                profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = item.sender,
-                                    avatarSharedElementKey = item.avatarSharedElementKey(),
-                                ),
-                            ),
-                        )
-                    },
-                item = item,
-                paneScaffoldState = paneScaffoldState,
+                    .clickable(onClick = onAvatarClicked),
+                content = avatar,
             )
         }
         Spacer(
@@ -269,24 +325,11 @@ private fun Message(
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier,
             onMessageLongPressed = onMessageLongPressed,
-            reactionModifier = Modifier.animateBounds(
-                lookaheadScope = paneScaffoldState,
-                boundsTransform = paneScaffoldState.childBoundsTransform,
-            ),
+            reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
 
-        when (item) {
-            is MessageItem.Pending -> Unit
-            is MessageItem.Sent -> (item.message.embeddedRecord as? Record.Embeddable.Native)?.let { record ->
-                MessageRecord(
-                    record = record,
-                    item = item,
-                    paneScaffoldState = paneScaffoldState,
-                    actions = actions,
-                )
-            }
-        }
+        record()
     }
 }
 
