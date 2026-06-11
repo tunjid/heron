@@ -34,7 +34,7 @@ internal object PreviewFixtures {
 
     val me: Profile = profile(displayName = "Me", id = "me")
 
-    val them: Profile = profile(displayName = "Hugh Riminton", id = "hughriminton")
+    val them: Profile = profile(displayName = "Richard Carleton", id = "richardcarleton")
 
     private val thumbsUp = Message.Reaction(
         value = "👍",

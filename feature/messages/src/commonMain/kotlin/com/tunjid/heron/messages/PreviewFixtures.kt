@@ -37,7 +37,7 @@ internal object PreviewFixtures {
             summary = "Brian Henderson reacted ❤️ to \"Got the invite, thanks!\"",
         ),
         ConversationRow(
-            profile = profile("Mike Munro", "mikemunro.bsky.social"),
+            profile = profile("Hugh Riminton", "hughriminton.bsky.social"),
             summary = "Hey, can we move our sync to half past three? I want to " +
                 "walk through the new build pipeline and the preview rendering " +
                 "changes before the team standup tomorrow morning.",
