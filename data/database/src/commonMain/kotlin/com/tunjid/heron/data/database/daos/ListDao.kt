@@ -62,6 +62,7 @@ interface ListDao {
         entities: List<ListEntity>,
     )
 
+    @Transaction
     @Query(
         """
             SELECT * FROM lists

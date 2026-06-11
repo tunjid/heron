@@ -25,12 +25,14 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.profileViewerStateEntity
+import com.tunjid.heron.data.network.models.stubProfileEntity
 import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     profileView: ProfileViewBasic,
 ) {
+    if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
     profileView.labels?.forEach(::add)
 
@@ -61,6 +63,7 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     profileView: ProfileView,
 ) {
+    if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
@@ -89,6 +92,7 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     profileView: ProfileViewDetailed,
 ) {
+    if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
