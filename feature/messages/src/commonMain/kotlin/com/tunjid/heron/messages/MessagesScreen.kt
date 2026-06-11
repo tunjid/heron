@@ -244,7 +244,7 @@ fun ConversationMembers(
 }
 
 @Composable
-private fun ConversationDetails(
+internal fun ConversationDetails(
     participants: List<Profile>,
     signedInProfileId: ProfileId?,
     conversationSummary: String,
