@@ -18,7 +18,6 @@ plugins {
     id("kotlin-library-convention")
     id("feature-module-convention")
     id("ksp-convention")
-    id("ee.schimke.composeai.preview") version "0.13.4"
 }
 kotlin {
     androidLibrary {
@@ -42,16 +41,20 @@ kotlin {
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
 
+                // Provides the androidx.compose.ui.tooling.preview.Preview annotation
+                // used by MessagesScreenPreview. The compose-preview renderer plugin
+                // itself is auto-injected by the compose-preview CLI.
                 implementation(libs.compose.multiplatform.ui.tooling.preview)
             }
         }
         named("desktopMain") {
             dependencies {
-                // Host skiko native binaries for the compose-preview Desktop (Skia)
-                // renderer. A feature module's desktop classpath has no
-                // skiko-awt-runtime-<host>, so without this the renderer falls back
-                // to a mismatched native lib (UnsatisfiedLinkError: _nSetFontEdging).
-                // Resolved per host so the wrong arch never leaks into the desktop app.
+                // Host skiko native binaries the compose-preview Desktop (Skia)
+                // renderer needs. The CLI auto-injects the plugin but not a host
+                // skiko-awt-runtime, and this module's desktop classpath has none,
+                // so without this the renderer hits UnsatisfiedLinkError:
+                // _nSetFontEdging. Resolved per host so the wrong arch never leaks
+                // into the desktop app.
                 val osName = System.getProperty("os.name").lowercase()
                 val osArch = System.getProperty("os.arch").lowercase()
                 val skikoTarget = when {
