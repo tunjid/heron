@@ -36,58 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.ui.modifiers.shapedClickable
-
-private fun previewProfile(
-    displayName: String,
-    handle: String,
-): Profile = Profile(
-    did = ProfileId(handle),
-    handle = ProfileHandle(handle),
-    displayName = displayName,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = 0,
-    followsCount = 0,
-    postsCount = 0,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    metadata = Profile.Metadata(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-        chat = Profile.ChatInfo(
-            allowed = Profile.ChatInfo.Allowed.NoOne,
-        ),
-    ),
-)
-
-private data class ConversationRow(
-    val profile: Profile,
-    val summary: String,
-)
-
-private val previewConversations = listOf(
-    ConversationRow(
-        profile = previewProfile("Julian Marinus", "fooljulian.bsky.social"),
-        summary = "Yuri Schimke reacted ❤️ to \"Got the invite, thanks!\"",
-    ),
-    ConversationRow(
-        profile = previewProfile("Anton Arhipov", "antonarhipov.bsky.social"),
-        summary = "Hey, Mark, can we move our sync to half past three? I want to " +
-            "walk through the new build pipeline and the preview rendering " +
-            "changes before the team standup tomorrow morning.",
-    ),
-    ConversationRow(
-        profile = previewProfile("Jesse Wilson", "swank.ca"),
-        summary = "Yup. And that wraps up our time, you can stop sharing.",
-    ),
-)
 
 /**
  * Mirrors the `Conversation` row from [MessagesScreen] — same fixed
@@ -99,7 +48,7 @@ private val previewConversations = listOf(
  */
 @Composable
 private fun PreviewConversationRow(
-    row: ConversationRow,
+    row: PreviewFixtures.ConversationRow,
     rowHeight: Dp?,
 ) {
     androidx.compose.foundation.layout.Row(
@@ -140,7 +89,7 @@ private fun PreviewMessageList(rowHeight: Dp?) {
                     .padding(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                previewConversations.forEach { row ->
+                PreviewFixtures.conversations.forEach { row ->
                     PreviewConversationRow(row = row, rowHeight = rowHeight)
                 }
             }
