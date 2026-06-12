@@ -23,6 +23,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +60,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -219,6 +221,72 @@ private fun Message(
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
+    MessageRow(
+        modifier = modifier,
+        item = item,
+        side = side,
+        isFirstMessageByAuthor = isFirstMessageByAuthor,
+        isLastMessageByAuthor = isLastMessageByAuthor,
+        reactionModifier = Modifier.animateBounds(
+            lookaheadScope = paneScaffoldState,
+            boundsTransform = paneScaffoldState.childBoundsTransform,
+        ),
+        onAvatarClicked = {
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        profile = item.sender,
+                        avatarSharedElementKey = item.avatarSharedElementKey(),
+                    ),
+                ),
+            )
+        },
+        onMessageLongPressed = onMessageLongPressed,
+        onLinkTargetClicked = onLinkTargetClicked,
+        record = {
+            when (item) {
+                is MessageItem.Pending -> Unit
+                is MessageItem.Sent -> (item.message.embeddedRecord as? Record.Embeddable.Native)?.let { record ->
+                    MessageRecord(
+                        record = record,
+                        item = item,
+                        paneScaffoldState = paneScaffoldState,
+                        actions = actions,
+                    )
+                }
+            }
+        },
+        avatar = {
+            MessageAvatar(
+                modifier = Modifier.matchParentSize(),
+                item = item,
+                paneScaffoldState = paneScaffoldState,
+            )
+        },
+    )
+}
+
+/**
+ * Stateless message row layout: avatar framing, spacing, the author/text column and
+ * an optional embedded [record]. Hoisted out of the stateful [Message] so it can be
+ * previewed without a `PaneScaffoldState` — callers supply the [avatar] (a shared
+ * element in the app, a static placeholder in previews) and [record] slots.
+ */
+@Composable
+internal fun MessageRow(
+    item: MessageItem,
+    side: Side,
+    isFirstMessageByAuthor: Boolean,
+    isLastMessageByAuthor: Boolean,
+    modifier: Modifier = Modifier,
+    reactionModifier: Modifier = Modifier,
+    onAvatarClicked: () -> Unit = {},
+    onMessageLongPressed: (MessageItem) -> Unit = {},
+    onLinkTargetClicked: (LinkTarget) -> Unit = {},
+    record: @Composable () -> Unit = {},
+    avatar: @Composable BoxScope.() -> Unit,
+) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.tertiary
@@ -235,25 +303,14 @@ private fun Message(
         horizontalArrangement = side,
     ) {
         if (isLastMessageByAuthor) {
-            MessageAvatar(
+            Box(
                 modifier = Modifier.size(24.dp)
                     .border(1.5.dp, borderColor, CircleShape)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
                     .clip(CircleShape)
                     .align(Alignment.Top)
-                    .clickable {
-                        actions(
-                            Action.Navigate.To(
-                                profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = item.sender,
-                                    avatarSharedElementKey = item.avatarSharedElementKey(),
-                                ),
-                            ),
-                        )
-                    },
-                item = item,
-                paneScaffoldState = paneScaffoldState,
+                    .clickable(onClick = onAvatarClicked),
+                content = avatar,
             )
         }
         Spacer(
@@ -268,21 +325,11 @@ private fun Message(
             isLastMessageByAuthor = isLastMessageByAuthor,
             modifier = Modifier,
             onMessageLongPressed = onMessageLongPressed,
-            paneScaffoldState = paneScaffoldState,
+            reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
 
-        when (item) {
-            is MessageItem.Pending -> Unit
-            is MessageItem.Sent -> (item.message.embeddedRecord as? Record.Embeddable.Native)?.let { record ->
-                MessageRecord(
-                    record = record,
-                    item = item,
-                    paneScaffoldState = paneScaffoldState,
-                    actions = actions,
-                )
-            }
-        }
+        record()
     }
 }
 
@@ -316,13 +363,13 @@ private fun MessageAvatar(
 }
 
 @Composable
-private fun AuthorAndTextMessage(
+internal fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
-    paneScaffoldState: PaneScaffoldState,
+    reactionModifier: Modifier = Modifier,
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
@@ -344,7 +391,7 @@ private fun AuthorAndTextMessage(
                 },
             message = item,
             side = side,
-            paneScaffoldState = paneScaffoldState,
+            reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
         if (isFirstMessageByAuthor) {
@@ -366,7 +413,10 @@ private fun AuthorNameTimestamp(
         Text(
             text = item.sender.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
+                .weight(1f, fill = false)
                 .alignBy(LastBaseline)
                 .paddingFrom(LastBaseline, after = 8.dp), // Space to 1st bubble
         )
@@ -374,6 +424,8 @@ private fun AuthorNameTimestamp(
         Text(
             text = item.sentAt.toTimestamp(),
             style = MaterialTheme.typography.bodySmall,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.alignBy(LastBaseline),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -385,7 +437,7 @@ private fun ChatItemBubble(
     modifier: Modifier = Modifier,
     message: MessageItem,
     side: Side,
-    paneScaffoldState: PaneScaffoldState,
+    reactionModifier: Modifier = Modifier,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     val backgroundBubbleColor = when (side) {
@@ -437,11 +489,7 @@ private fun ChatItemBubble(
             message.reactions.forEach { reaction ->
                 key(reaction.value) {
                     Text(
-                        modifier = Modifier
-                            .animateBounds(
-                                lookaheadScope = paneScaffoldState,
-                                boundsTransform = paneScaffoldState.childBoundsTransform,
-                            ),
+                        modifier = reactionModifier,
                         text = reaction.value,
                         fontSize = 12.sp,
                     )
@@ -563,7 +611,7 @@ private fun Instant.toTimestamp(): String {
     return "${localDateTime.hour}.$minute $amOrPm"
 }
 
-private sealed interface Side :
+internal sealed interface Side :
     Arrangement.Horizontal,
     Alignment.Horizontal {
     val bubbleShape: Shape
