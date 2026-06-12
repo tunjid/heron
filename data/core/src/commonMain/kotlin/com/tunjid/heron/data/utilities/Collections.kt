@@ -23,12 +23,9 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
-import com.tunjid.heron.data.network.BlueskyJson
 import kotlin.time.Instant
-import kotlinx.serialization.KSerializer
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.RKey
-import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
     const val Profile = "app.bsky.actor.profile"
@@ -82,19 +79,6 @@ fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlas
 
 internal val AtUri.tidInstant: Instant?
     get() = RecordKey(atUri.split("/").last()).tidInstant
-
-internal fun <T> T.asJsonContent(
-    serializer: KSerializer<T>,
-): JsonContent = BlueskyJson.decodeFromString(
-    BlueskyJson.encodeToString(serializer, this),
-)
-
-internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
-    try {
-        decodeAs<T>()
-    } catch (_: kotlinx.serialization.SerializationException) {
-        null
-    }
 
 /**
  * @see [TID definition](https://atproto.com/specs/tid)
