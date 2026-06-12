@@ -23,6 +23,10 @@ plugins {
 
 configureCompose()
 kotlin {
+    compose
     configureKotlinMultiplatform(this)
-    configureUiModule(this)
+    configureUiModule(
+        extension = this,
+        composeDependencies = compose,
+    )
 }

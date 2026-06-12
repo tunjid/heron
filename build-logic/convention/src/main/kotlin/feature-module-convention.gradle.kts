@@ -1,3 +1,5 @@
+import gradle.kotlin.dsl.accessors._01efc85ab9c9413349884ebbb45c8059.compose
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -25,6 +27,9 @@ plugins {
 configureCompose()
 kotlin {
     configureKotlinMultiplatform(this)
-    configureUiModule(this)
+    configureUiModule(
+        extension = this,
+        composeDependencies = compose,
+    )
     configureFeatureModule(this)
 }
