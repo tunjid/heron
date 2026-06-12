@@ -40,15 +40,6 @@ kotlin {
 
                 implementation(libs.tunjid.tiler.tiler)
                 implementation(libs.tunjid.tiler.compose)
-
-                // Provides the @Preview annotation used by MessagesScreenPreview (the plugin is auto-injected by the CLI).
-                implementation(libs.compose.multiplatform.ui.tooling.preview)
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-                // Host skiko native for the compose-preview Desktop renderer (the CLI injects the plugin, not skiko).
-                runtimeOnly(compose.desktop.currentOs)
             }
         }
     }

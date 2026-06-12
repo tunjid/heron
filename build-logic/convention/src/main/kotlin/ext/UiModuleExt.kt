@@ -15,10 +15,12 @@
  */
 
 import ext.libs
+import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun org.gradle.api.Project.configureUiModule(
     extension: KotlinMultiplatformExtension,
+    composeDependencies: ComposePlugin.Dependencies,
 ) = extension.apply {
     sourceSets.apply {
         named("commonMain") {
@@ -40,6 +42,8 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.compose.multiplatform.foundation.foundation)
                 api(libs.compose.multiplatform.ui.ui)
 
+                api(libs.compose.multiplatform.ui.tooling.preview)
+
                 api(libs.androidx.graphics.shapes)
 
                 api(libs.kotlinx.coroutines.core)
@@ -57,6 +61,12 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.tunjid.treenav.compose.threepane)
                 api(libs.tunjid.treenav.core)
                 api(libs.tunjid.treenav.strings)
+            }
+        }
+        named("desktopMain") {
+            dependencies {
+                // Host skiko native for the compose-preview Desktop renderer (the CLI injects the plugin, not skiko).
+                runtimeOnly(composeDependencies.desktop.currentOs)
             }
         }
     }
