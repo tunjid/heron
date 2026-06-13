@@ -73,6 +73,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
@@ -173,6 +174,7 @@ import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
+import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
@@ -187,6 +189,7 @@ import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.asClipEntry
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -199,6 +202,7 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.action_search_posts
@@ -996,6 +1000,9 @@ private fun ProfileHeadline(
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
     )
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
+    val copyProfileLinkLabel = stringResource(CommonStrings.action_copy_profile_link)
     AttributionLayout(
         modifier = modifier,
         avatar = null,
@@ -1094,6 +1101,13 @@ private fun ProfileHeadline(
                                     },
                                     onItemClicked = { item ->
                                         when (item.title) {
+                                            CommonStrings.action_copy_profile_link ->
+                                                clipboardScope.launch {
+                                                    clipboard.setClipEntry(
+                                                        profile.shareUri()
+                                                            .asClipEntry(copyProfileLinkLabel),
+                                                    )
+                                                }
                                             CommonStrings.action_search_posts ->
                                                 onNavigate(searchProfilePostsDestination(profile))
                                             CommonStrings.action_go_live,
