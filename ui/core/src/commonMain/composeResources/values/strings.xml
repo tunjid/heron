@@ -163,6 +163,7 @@
     <string name="action_go_live">Go Live</string>
     <string name="action_end_live">End Live</string>
     <string name="action_edit_live_status">Edit Live Status</string>
+    <string name="action_search_posts">Search posts</string>
 
     <string name="live_badge">LIVE</string>
     <string name="action_close">Close</string>
