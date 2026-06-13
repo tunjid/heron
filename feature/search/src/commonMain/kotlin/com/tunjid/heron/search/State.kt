@@ -104,7 +104,7 @@ val RouteQuery.isRoot
     }
 
 val RouteQuery.ProfilePostSearch.profileHandle
-    get() = "@${query.split(":").lastOrNull()}"
+    get() = "@${query.removePrefix("from:")}"
 
 fun RouteQuery.queryString(searchBarText: String) = when (this) {
     RouteQuery.FullSearch -> searchBarText

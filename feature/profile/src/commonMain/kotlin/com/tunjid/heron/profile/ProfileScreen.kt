@@ -1083,6 +1083,7 @@ private fun ProfileHeadline(
                             if (signedInProfileId != null) {
                                 ProfileActionsMenu(
                                     items = remember(
+                                        viewerState,
                                         isSignedInProfile,
                                         profile.status?.isLive,
                                     ) {
