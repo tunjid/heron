@@ -315,11 +315,11 @@ val AppState.isShowingSplashScreen: Boolean
 
 private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Route> = NavEntryDecorator { entry ->
     entry.Content()
-    LifecycleStartEffect(Unit) {
-        if (entry.contentKey == AppStack.Splash.rootRoute.id) {
+    if (showPlatformSplashScreen) {
+        LifecycleStartEffect(Unit) {
             showPlatformSplashScreen = false
+            onStopOrDispose { }
         }
-        onStopOrDispose { }
     }
 }
 
