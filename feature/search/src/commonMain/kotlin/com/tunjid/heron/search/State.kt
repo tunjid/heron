@@ -18,8 +18,6 @@ package com.tunjid.heron.search
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -47,6 +45,80 @@ enum class ScreenLayout {
     Suggested,
     AutoCompleteProfiles,
     GeneralSearchResults,
+}
+
+@Serializable
+sealed class RouteQuery {
+    data object FullSearch : RouteQuery()
+    data class HashtaggedPostsSearch(
+        val query: String,
+    ) : RouteQuery()
+
+    data class ProfilePostSearch(
+        val query: String,
+    ) : RouteQuery()
+}
+
+val RouteQuery.initialQueryString
+    get() = when (this) {
+        RouteQuery.FullSearch -> ""
+        is RouteQuery.HashtaggedPostsSearch -> query
+        is RouteQuery.ProfilePostSearch -> query
+    }
+
+val RouteQuery.initialSearchBarText
+    get() = when (this) {
+        RouteQuery.FullSearch -> ""
+        is RouteQuery.HashtaggedPostsSearch -> query
+        is RouteQuery.ProfilePostSearch -> ""
+    }
+val RouteQuery.supportsNonPostSearch
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> false
+    }
+
+val RouteQuery.initialLayout
+    get() = when (this) {
+        RouteQuery.FullSearch -> ScreenLayout.Suggested
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> ScreenLayout.GeneralSearchResults
+    }
+
+val RouteQuery.isQueryEditable
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch -> false
+        is RouteQuery.ProfilePostSearch -> true
+    }
+
+val RouteQuery.isRoot
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> false
+    }
+
+val RouteQuery.ProfilePostSearch.profileHandle
+    get() = "@${query.split(":").lastOrNull()}"
+
+fun RouteQuery.queryString(searchBarText: String) = when (this) {
+    RouteQuery.FullSearch -> searchBarText
+    is RouteQuery.HashtaggedPostsSearch -> searchBarText
+    is RouteQuery.ProfilePostSearch -> "$query $searchBarText"
+}
+
+fun RouteQuery.layoutFor(
+    action: Action.Search.OnSearchQueryChanged,
+): ScreenLayout = when {
+    supportsNonPostSearch ->
+        if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
+        else ScreenLayout.Suggested
+    else -> ScreenLayout.GeneralSearchResults
 }
 
 internal typealias SearchResultStateHolder = ActionSuspendingStateMutator<SearchState.Tile, SearchState>
@@ -114,12 +186,12 @@ interface State {
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        val currentQuery: String = "",
+        val searchBarText: String = "",
+        val query: RouteQuery = RouteQuery.FullSearch,
         val layout: ScreenLayout = ScreenLayout.Suggested,
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
         val suggestedProfileCategory: String? = null,
-        val isQueryEditable: Boolean = true,
         val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,

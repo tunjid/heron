@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
@@ -96,12 +95,9 @@ class SearchViewModel(
 ) : ViewModel(viewModelScope = scope),
     SearchStateHolder by scope.actionSuspendingStateMutator(
         state = State.Immutable(
-            currentQuery = route.query,
-            isQueryEditable = route.query.isBlank(),
-            layout = when {
-                route.query.isBlank() -> ScreenLayout.Suggested
-                else -> ScreenLayout.GeneralSearchResults
-            },
+            searchBarText = route.query.initialSearchBarText,
+            query = route.query,
+            layout = route.query.initialLayout,
             searchStateHolders = route.searchStates()
                 .mapNotNull { searchState ->
                     scope.searchStateHolder(searchState, searchRepository)
@@ -344,33 +340,34 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
     shared.launchAndCollect { action ->
         when (action) {
             is Action.Search.OnSearchQueryChanged -> {
-                state.currentQuery = action.query
-                state.layout =
-                    if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                    else ScreenLayout.Suggested
+                state.searchBarText = action.query
+                state.layout = state.query.layoutFor(action)
             }
             is Action.Search.OnSearchQueryConfirmed -> {
                 state.searchStateHolders.forEach {
+                    val currentQuery = state.query.queryString(
+                        searchBarText = state.searchBarText,
+                    )
                     val confirmedQuery = when (val searchState = it.state) {
                         is SearchState.OfPosts -> when (searchState.tilingData.currentQuery) {
                             is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
-                                query = state.currentQuery,
+                                query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
                             )
                             is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
-                                query = state.currentQuery,
+                                query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
                             )
                         }
                         is SearchState.OfProfiles -> SearchQuery.OfProfiles(
-                            query = state.currentQuery,
+                            query = currentQuery,
                             isLocalOnly = action.isLocalOnly,
                             data = defaultSearchQueryData(),
                         )
                         is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
-                            query = state.currentQuery,
+                            query = currentQuery,
                             isLocalOnly = action.isLocalOnly,
                             data = defaultSearchQueryData(),
                         )
@@ -533,7 +530,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Top(
-                    query = query,
+                    query = query.initialQueryString,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
@@ -544,19 +541,19 @@ private fun Route.searchStates(): List<SearchState> = buildList {
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Latest(
-                    query = query,
+                    query = query.initialQueryString,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
             ),
         ),
     )
-    if (query.isBlank()) {
+    if (query.supportsNonPostSearch) {
         add(
             SearchState.OfProfiles(
                 tilingData = TilingState.Data(
                     currentQuery = SearchQuery.OfProfiles(
-                        query = query,
+                        query = query.initialQueryString,
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),
@@ -567,7 +564,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
             SearchState.OfFeedGenerators(
                 tilingData = TilingState.Data(
                     currentQuery = SearchQuery.OfFeedGenerators(
-                        query = query,
+                        query = query.initialQueryString,
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),

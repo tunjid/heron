@@ -43,10 +43,14 @@ import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.search.Action
+import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolder
 import com.tunjid.heron.search.SearchViewModel
+import com.tunjid.heron.search.isQueryEditable
+import com.tunjid.heron.search.isRoot
+import com.tunjid.heron.search.profileHandle
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
@@ -60,14 +64,18 @@ import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.search.generated.resources.Res
+import heron.feature.search.generated.resources.hint_general_search
+import heron.feature.search.generated.resources.hint_profile_post_search
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
 private const val RouteQueryPattern = "/search/{query}"
@@ -78,7 +86,13 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.query by routePath(default = "")
+internal val Route.query by mappedRoutePath(default = RouteQuery.FullSearch) { query ->
+    when {
+        query.isBlank() -> RouteQuery.FullSearch
+        query.startsWith("from:") -> RouteQuery.ProfilePostSearch(query)
+        else -> RouteQuery.HashtaggedPostsSearch(query)
+    }
+}
 
 @BindingContainer
 object SearchNavigationBindings {
@@ -174,13 +188,24 @@ class SearchBindings(
                     stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    if (state.isQueryEditable) RootDestinationTopAppBar(
+                    val searchHint = when (val query = state.query) {
+                        is RouteQuery.ProfilePostSearch -> stringResource(
+                            Res.string.hint_profile_post_search,
+                            query.profileHandle,
+                        )
+                        RouteQuery.FullSearch -> stringResource(
+                            Res.string.hint_general_search,
+                        )
+                        is RouteQuery.HashtaggedPostsSearch -> state.searchBarText
+                    }
+                    if (state.query.isRoot) RootDestinationTopAppBar(
                         modifier = Modifier.offset {
                             topAppBarNestedScrollConnection.offset.round()
                         },
                         title = {
                             SearchBar(
-                                searchQuery = state.currentQuery,
+                                searchQuery = state.searchBarText,
+                                searchHint = searchHint,
                                 focusRequester = searchFocusRequester,
                                 onQueryChanged = { query ->
                                     stateHolder.accept(
@@ -212,8 +237,23 @@ class SearchBindings(
                     )
                     else PoppableDestinationTopAppBar(
                         title = {
-                            Text(
-                                text = state.currentQuery,
+                            if (state.query.isQueryEditable) SearchBar(
+                                searchQuery = state.searchBarText,
+                                searchHint = searchHint,
+                                focusRequester = searchFocusRequester,
+                                onQueryChanged = { query ->
+                                    stateHolder.accept(
+                                        Action.Search.OnSearchQueryChanged(query),
+                                    )
+                                },
+                                onQueryConfirmed = {
+                                    stateHolder.accept(
+                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
+                                    )
+                                },
+                            )
+                            else Text(
+                                text = searchHint,
                                 style = MaterialTheme.typography.titleSmallEmphasized,
                             )
                         },

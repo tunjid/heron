@@ -142,6 +142,13 @@ fun profileFollowersDestination(
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
+fun searchProfilePostsDestination(
+    profile: Profile,
+): NavigationAction.Destination = pathDestination(
+    path = "/search/from:${profile.handle.id}",
+    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+)
+
 fun signInDestination(): NavigationAction.Destination = pathDestination(
     path = "/auth",
 )

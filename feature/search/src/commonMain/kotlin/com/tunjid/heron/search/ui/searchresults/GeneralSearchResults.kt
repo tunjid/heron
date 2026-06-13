@@ -52,9 +52,7 @@ import androidx.compose.ui.zIndex
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -65,11 +63,13 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.State
 import com.tunjid.heron.search.id
 import com.tunjid.heron.search.key
+import com.tunjid.heron.search.supportsNonPostSearch
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.Tab
@@ -161,7 +161,7 @@ internal fun GeneralSearchResults(
                 tabsState = rememberTabsState(
                     tabs = searchTabs(
                         isSignedIn = state.signedInProfile != null,
-                        isQueryEditable = state.isQueryEditable,
+                        query = state.query,
                     ),
                     isCollapsed = tabsCollapsed,
                     selectedTabIndex = pagerState::tabIndex,
@@ -193,11 +193,11 @@ internal fun GeneralSearchResults(
                 val searchResultState = searchResultStateHolder.produceStateWithLifecycle()
                 val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
 
-                when (val resultState = searchResultState) {
+                when (searchResultState) {
                     is SearchState.OfPosts -> {
                         val gridState = rememberLazyStaggeredGridState()
                         PostSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             gridState = gridState,
                             modifier = modifier,
                             signedInProfileId = state.signedInProfile?.did,
@@ -231,7 +231,7 @@ internal fun GeneralSearchResults(
                     is SearchState.OfProfiles -> {
                         val listState = rememberLazyListState()
                         ProfileSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
@@ -252,7 +252,7 @@ internal fun GeneralSearchResults(
                     is SearchState.OfFeedGenerators -> {
                         val listState = rememberLazyListState()
                         FeedSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
@@ -287,11 +287,15 @@ internal fun GeneralSearchResults(
 @Composable
 private fun searchTabs(
     isSignedIn: Boolean,
-    isQueryEditable: Boolean,
+    query: RouteQuery,
 ): List<Tab> = buildList {
-    if (isSignedIn) add(stringResource(resource = Res.string.top))
-    if (isSignedIn) add(stringResource(resource = Res.string.latest))
-    if (isQueryEditable) add(stringResource(resource = Res.string.people))
-    if (isQueryEditable) add(stringResource(resource = Res.string.feeds))
+    if (isSignedIn) {
+        add(stringResource(resource = Res.string.top))
+        add(stringResource(resource = Res.string.latest))
+    }
+    if (query.supportsNonPostSearch) {
+        add(stringResource(resource = Res.string.people))
+        add(stringResource(resource = Res.string.feeds))
+    }
 }
     .map { Tab(title = it, hasUpdate = false) }

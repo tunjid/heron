@@ -89,10 +89,8 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.AtmosphereApp
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -133,6 +131,7 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
+import com.tunjid.heron.scaffold.navigation.searchProfilePostsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -162,7 +161,6 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
@@ -203,6 +201,7 @@ import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
+import heron.ui.core.generated.resources.action_search_posts
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -579,11 +578,9 @@ internal fun ProfileScreen(
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 bottomPadding = collapsedHeight,
-                                signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
-                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             )
@@ -734,12 +731,13 @@ private fun ProfileHeader(
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
+                    onNavigate = onNavigate,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     followsSignInProfile = viewerState?.followedBy != null,
-                    onNavigateToProfiles = onNavigate,
+                    onNavigate = onNavigate,
                 )
                 ProfileBio(
                     description = profile.description ?: "",
@@ -993,6 +991,7 @@ private fun ProfileHeadline(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -1083,12 +1082,19 @@ private fun ProfileHeadline(
                             )
                             if (signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(
-                                        isSignedInProfile = isSignedInProfile,
-                                        isLive = profile.status?.isLive == true,
-                                    ),
+                                    items = remember(
+                                        isSignedInProfile,
+                                        profile.status?.isLive,
+                                    ) {
+                                        viewerState.profileActionMenuItems(
+                                            isSignedInProfile = isSignedInProfile,
+                                            isLive = profile.status?.isLive == true,
+                                        )
+                                    },
                                     onItemClicked = { item ->
                                         when (item.title) {
+                                            CommonStrings.action_search_posts ->
+                                                onNavigate(searchProfilePostsDestination(profile))
                                             CommonStrings.action_go_live,
                                             CommonStrings.action_edit_live_status,
                                             -> onUpdateProfileLiveStatus()
@@ -1130,7 +1136,7 @@ private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
     followsSignInProfile: Boolean,
-    onNavigateToProfiles: (NavigationAction.Destination) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -1141,7 +1147,7 @@ private fun ProfileStats(
             value = profile.followersCount ?: 0,
             description = stringResource(CommonStrings.followers),
             onClick = {
-                onNavigateToProfiles(
+                onNavigate(
                     profileFollowersDestination(
                         profileId = profile.did,
                     ),
@@ -1152,7 +1158,7 @@ private fun ProfileStats(
             value = profile.followsCount ?: 0,
             description = stringResource(CommonStrings.following),
             onClick = {
-                onNavigateToProfiles(
+                onNavigate(
                     profileFollowsDestination(
                         profileId = profile.did,
                     ),
@@ -1162,7 +1168,13 @@ private fun ProfileStats(
         Statistic(
             value = profile.postsCount ?: 0,
             description = stringResource(Res.string.posts),
-            onClick = {},
+            onClick = {
+                onNavigate(
+                    searchProfilePostsDestination(
+                        profile = profile,
+                    ),
+                )
+            },
         )
         Box(
             Modifier
@@ -1311,11 +1323,9 @@ private fun ProfileTabs(
 @Composable
 private fun ProfileTimeline(
     bottomPadding: Dp,
-    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {
