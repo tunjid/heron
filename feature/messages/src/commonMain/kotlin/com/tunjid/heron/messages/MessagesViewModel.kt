@@ -35,12 +35,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -133,21 +133,21 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetIsSearching>.launchSetIsSearchingMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.isSearching = event.isSearching
 }
 
@@ -156,7 +156,7 @@ private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     try {
         withTimeout(2.seconds) {
             messagesRepository.resolveConversation(
@@ -194,7 +194,7 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
         started = SharingStarted.WhileSubscribed(),
         replay = 1,
     )
-    sharedActions.launchAndCollectLatest {
+    sharedActions.launchedCollectLatest {
         state.searchQuery = it.query
     }
     sharedActions
@@ -212,7 +212,7 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
                 ),
                 cursor = Cursor.Initial,
             )
-        }.launchAndCollect {
+        }.launchedCollect {
             state.autoCompletedProfiles = it.sortedByDescending(
                 ProfileWithViewerState::canBeMessaged,
             )

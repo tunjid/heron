@@ -6,10 +6,10 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -67,12 +67,12 @@ private fun launchLoadRecentListsMutations(
     state: ThreadGateState.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = recordRepository.recentLists
-    .launchAndCollect { state.recentLists = it }
+    .launchedCollect { state.recentLists = it }
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.Initialize>.launchInitializeMutations(
     state: ThreadGateState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.mode = it.mode
     state.allowed = it.allowed
 }
@@ -80,14 +80,14 @@ private fun Flow<ThreadGateAction.Initialize>.launchInitializeMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.UpdateAllowed>.launchUpdateAllowedMutations(
     state: ThreadGateState.SnapshotMutable,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     state.allowed = action.allowed
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.Reset>.launchResetMutations(
     state: ThreadGateState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.mode = null
     state.allowed = null
 }

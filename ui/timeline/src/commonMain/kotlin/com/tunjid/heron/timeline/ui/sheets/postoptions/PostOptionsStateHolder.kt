@@ -8,9 +8,9 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -57,7 +57,7 @@ private fun launchLoadSignedInProfileMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
-    .launchAndCollect {
+    .launchedCollect {
         state.signedInProfileId = it?.did
     }
 
@@ -66,7 +66,7 @@ private fun launchUpdateRecentConversionsMutations(
     state: PostOptionsState.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = messageRepository.recentConversations()
-    .launchAndCollect {
+    .launchedCollect {
         state.recentConversations = it
     }
 

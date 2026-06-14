@@ -37,12 +37,12 @@ import com.tunjid.heron.feed.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.isNoOp
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.isNoOp
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -146,7 +146,7 @@ context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
 }
 
@@ -154,7 +154,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -282,14 +282,14 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 @OptIn(ExperimentalUuidApi::class)
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ScrollToTop>.launchScrollToTopMutations(state: State.SnapshotMutable) =
-    launchAndCollect {
+    launchedCollect {
         state.scrollToTopRequestId = Uuid.random().toString()
     }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -313,7 +313,7 @@ private fun launchTimelineCreatorMutations(
 ) = timeline.withFeedTimelineOrNull { feedTimeline ->
     profileRepository.profile(
         profileId = feedTimeline.feedGenerator.creator.did,
-    ).launchAndCollect {
+    ).launchedCollect {
         state.creator = it
     }
 }
@@ -326,7 +326,7 @@ private fun launchFeedStatusMutations(
 ) = timeline.withFeedTimelineOrNull { feedTimeline ->
     timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
-        .launchAndCollect { preferences ->
+        .launchedCollect { preferences ->
             val pinned =
                 preferences.timelinePreferences.firstOrNull {
                     it.timelineRecordUri == feedTimeline.feedGenerator.uri

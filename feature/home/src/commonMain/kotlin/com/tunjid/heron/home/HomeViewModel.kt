@@ -39,11 +39,11 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -167,7 +167,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
@@ -181,7 +181,7 @@ private fun launchTimelineMutations(
     userDataRepository.preferences.take(1),
     timelineRepository.homeTimelines,
     ::Pair,
-).launchAndCollect { (preferences, homeTimelines) ->
+).launchedCollect { (preferences, homeTimelines) ->
     val tabUri = state.currentTabUri
         ?: preferences
             .local
@@ -216,7 +216,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -224,7 +224,7 @@ context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.trends().launchAndCollect {
+) = searchRepository.trends().launchedCollect {
     state.trends = it
 }
 
@@ -233,7 +233,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     when (action) {
         Action.UpdateTimeline.RequestUpdate -> {
             state.timelinePreferenceSaveRequestId = Uuid.random().toHexString()
@@ -330,7 +330,7 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -338,7 +338,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     // Write to memory in state immediately
     state.currentTabUri = action.currentTabUri
     // Wait until we're sure the user has settled on this tab
@@ -350,14 +350,14 @@ private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetTabLayout>.launchSetTabLayoutMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     state.tabLayout = action.layout
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.RefreshCurrentTab>.launchTabRefreshMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.timelineStateHolders
         .firstOrNull { it.state.timeline.uri == state.currentTabUri }
         ?.accept

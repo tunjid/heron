@@ -45,11 +45,11 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.map
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -190,7 +190,7 @@ private suspend fun launchLoadPostMutations(
             )
         }
 
-    postRepository.post(postUri).launchAndCollectLatest { post ->
+    postRepository.post(postUri).launchedCollectLatest { post ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
         else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(post = post)
@@ -203,7 +203,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -211,7 +211,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfileId = it?.did
 }
 
@@ -221,7 +221,7 @@ private fun launchProfileRelationshipMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.profileRelationships(setOf(profileId))
-    .launchAndCollectLatest { relationships ->
+    .launchedCollectLatest { relationships ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
         else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(
@@ -364,7 +364,7 @@ private fun Flow<Action.SendReply>.launchSendReplyMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -373,7 +373,7 @@ private fun Flow<Action.LoadComments>.launchLoadCommentsMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     val post = action.post
     val order = action.order
         ?: state.order
@@ -446,14 +446,14 @@ private suspend fun launchVerticalTimelineMutations(
     with(productionScope) {
         snapshotFlow { timelineStateHolder.state.tilingData.items }
             .distinctUntilChanged()
-            .launchAndCollect { fetched ->
+            .launchedCollect { fetched ->
                 val initialItem = state.items.firstOrNull()
                     ?.takeIf { it is GalleryItem.Initial }
 
                 val missingInitialItem = initialItem != null &&
                     fetched.none { it.post.uri == initialItem.post.uri }
 
-                if (missingInitialItem) return@launchAndCollect
+                if (missingInitialItem) return@launchedCollect
                 state.canScrollVertically = fetched.isNotEmpty()
                 state.items = when {
                     fetched.isEmpty() -> state.items

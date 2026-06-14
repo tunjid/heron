@@ -43,11 +43,11 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -192,7 +192,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfile = signedInProfile
 }
 
@@ -206,7 +206,7 @@ private fun launchSearchStateHolderMutations(
 ) = authRepository.signedInUser
     .map { it != null }
     .distinctUntilChanged()
-    .launchAndCollect { isSignedIn ->
+    .launchedCollect { isSignedIn ->
         val existingHolders = state.searchStateHolders
             .associateBy { it.state.key }
 
@@ -235,7 +235,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -243,7 +243,7 @@ context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.trends().launchAndCollect {
+) = searchRepository.trends().launchedCollect {
     state.trends = it
 }
 
@@ -288,7 +288,7 @@ private fun launchSuggestedStarterPackMutations(
                 }
             }
     }
-    .launchAndCollect {
+    .launchedCollect {
         state.starterPacksWithMembers = it
     }
 
@@ -296,7 +296,7 @@ context(productionScope: CoroutineScope)
 private fun launchSuggestedFeedGeneratorMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.suggestedFeeds().launchAndCollect {
+) = searchRepository.suggestedFeeds().launchedCollect {
     state.feedGenerators = it
 }
 
@@ -306,7 +306,7 @@ private fun launchFeedGeneratorUrisToStatusMutations(
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
     .distinctUntilChangedBy { it.timelinePreferences }
-    .launchAndCollect { preferences ->
+    .launchedCollect { preferences ->
         state.timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
             .associateBy(
                 keySelector = TimelinePreference::timelineRecordUri,
@@ -318,7 +318,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     searchRepository.suggestedProfiles(
         category = action.category,
     ).collect { suggestedProfiles ->
@@ -337,7 +337,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         replay = 1,
     )
-    shared.launchAndCollect { action ->
+    shared.launchedCollect { action ->
         when (action) {
             is Action.Search.OnSearchQueryChanged -> {
                 state.searchBarText = action.query
@@ -395,7 +395,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
                 cursor = Cursor.Initial,
             )
         }
-        .launchAndCollect { profileWithViewerStates ->
+        .launchedCollect { profileWithViewerStates ->
             state.autoCompletedProfiles = profileWithViewerStates.map(SearchResult::OfProfile)
         }
 }
@@ -509,7 +509,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
