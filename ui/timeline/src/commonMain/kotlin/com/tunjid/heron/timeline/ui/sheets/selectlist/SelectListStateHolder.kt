@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -47,7 +47,7 @@ private fun launchLoadListsMutations(
     state: SelectListState.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = recordRepository.recentLists
-    .launchAndCollect { state.lists = it }
+    .launchedCollect { state.lists = it }
 
 @Stable
 @Snapshottable
