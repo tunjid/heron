@@ -223,15 +223,6 @@ fun GrazeEditorScreen(
             }
         }
     }
-
-    val hasList = state.currentFilter
-        .filters
-        .any { it is Filter.Social.ListMember }
-
-    // Using Disposable effect as there's no need for a CoroutineScope
-    DisposableEffect(hasList) {
-        onDispose { }
-    }
 }
 
 @Composable
@@ -523,14 +514,12 @@ fun FilterLeaf(
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
-        is Filter.Social.ListMember -> with(paneScaffoldState) {
-            SocialListMemberFilter(
-                modifier = modifier,
-                filter = filter,
-                onUpdate = onUpdate,
-                onRemove = onRemove,
-            )
-        }
+        is Filter.Social.ListMember -> paneScaffoldState.SocialListMemberFilter(
+            modifier = modifier,
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
         is Filter.Social.MagicAudience -> SocialMagicAudienceFilter(
             modifier = modifier,
             filter = filter,
