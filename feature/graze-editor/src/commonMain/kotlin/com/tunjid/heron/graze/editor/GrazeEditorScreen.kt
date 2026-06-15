@@ -48,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.filter.AnalysisFilter
@@ -151,10 +150,6 @@ fun GrazeEditorScreen(
                             animatedVisibilityScope = this@NestedNavigation,
                             paneScaffoldState = paneScaffoldState,
                             profileSearchResults = state.suggestedProfiles,
-                            recentLists = state.recentLists,
-                            onUpdateRecentLists = {
-                                actions(Action.UpdateRecentLists)
-                            },
                             filter = child,
                             atTopLevel = true,
                             onProfileQueryChanged = { query ->
@@ -235,7 +230,6 @@ fun GrazeEditorScreen(
 
     // Using Disposable effect as there's no need for a CoroutineScope
     DisposableEffect(hasList) {
-        if (hasList) actions(Action.UpdateRecentLists)
         onDispose { }
     }
 }
@@ -247,8 +241,6 @@ private fun Filter(
     paneScaffoldState: PaneScaffoldState,
     filter: Filter,
     profileSearchResults: List<Profile>,
-    recentLists: List<FeedList>,
-    onUpdateRecentLists: () -> Unit,
     atTopLevel: Boolean,
     path: List<Int>,
     enterFilter: (Int) -> Unit,
@@ -265,8 +257,6 @@ private fun Filter(
         modifier = modifier,
         filter = filter,
         profileSearchResults = profileSearchResults,
-        recentLists = recentLists,
-        onUpdateRecentLists = onUpdateRecentLists,
         index = index,
         path = path,
         onProfileQueryChanged = onProfileQueryChanged,
@@ -276,11 +266,10 @@ private fun Filter(
         onRemoveFilter = onRemoveFilter,
     )
     else FilterLeaf(
+        paneScaffoldState = paneScaffoldState,
         modifier = modifier,
         filter = filter,
         profileSearchResults = profileSearchResults,
-        recentLists = recentLists,
-        onUpdateRecentLists = onUpdateRecentLists,
         onProfileQueryChanged = onProfileQueryChanged,
         onUpdate = { updatedFilter ->
             onUpdateFilter(
@@ -307,8 +296,6 @@ fun FilterRow(
     filter: Filter.Root,
     path: List<Int>,
     profileSearchResults: List<Profile>,
-    recentLists: List<FeedList>,
-    onUpdateRecentLists: () -> Unit,
     onProfileQueryChanged: (String) -> Unit,
     enterFilter: (Int) -> Unit,
     onFlipClicked: (path: List<Int>) -> Unit,
@@ -376,8 +363,6 @@ fun FilterRow(
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 paneScaffoldState = paneScaffoldState,
                                 profileSearchResults = profileSearchResults,
-                                recentLists = recentLists,
-                                onUpdateRecentLists = onUpdateRecentLists,
                                 filter = child,
                                 atTopLevel = false,
                                 index = childIndex,
@@ -476,10 +461,9 @@ private fun RootFilterDescription(
 
 @Composable
 fun FilterLeaf(
+    paneScaffoldState: PaneScaffoldState,
     filter: Filter,
     profileSearchResults: List<Profile>,
-    recentLists: List<FeedList>,
-    onUpdateRecentLists: () -> Unit,
     onProfileQueryChanged: (String) -> Unit,
     onUpdate: (Filter) -> Unit,
     onRemove: () -> Unit,
@@ -539,14 +523,14 @@ fun FilterLeaf(
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
-        is Filter.Social.ListMember -> SocialListMemberFilter(
-            modifier = modifier,
-            filter = filter,
-            recentLists = recentLists,
-            onUpdateRecentLists = onUpdateRecentLists,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
+        is Filter.Social.ListMember -> with(paneScaffoldState) {
+            SocialListMemberFilter(
+                modifier = modifier,
+                filter = filter,
+                onUpdate = onUpdate,
+                onRemove = onRemove,
+            )
+        }
         is Filter.Social.MagicAudience -> SocialMagicAudienceFilter(
             modifier = modifier,
             filter = filter,

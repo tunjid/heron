@@ -27,10 +27,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.timeline.ui.SelectListSheetState.Companion.rememberSelectListSheetState
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberSelectListSheetState
 import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileHandleState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
@@ -208,20 +208,15 @@ fun SocialStarterPackFilter(
 }
 
 @Composable
-fun SocialListMemberFilter(
+fun PaneScaffoldState.SocialListMemberFilter(
     filter: Filter.Social.ListMember,
-    recentLists: List<FeedList>,
-    onUpdateRecentLists: () -> Unit,
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberSelectListSheetState(
-        lists = recentLists,
         onListSelected = { list ->
-            onUpdate(
-                filter.copy(url = list.uri.uri),
-            )
+            onUpdate(filter.copy(url = list.uri.uri))
         },
     )
     StandardFilter(
@@ -246,7 +241,7 @@ fun SocialListMemberFilter(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
-                    value = recentLists.find { it.uri.uri == filter.url }?.name ?: filter.url,
+                    value = filter.url,
                     onValueChange = {},
                     readOnly = true,
                     label = {
@@ -258,7 +253,6 @@ fun SocialListMemberFilter(
 
                 FilledTonalButton(
                     onClick = {
-                        onUpdateRecentLists()
                         sheetState.show()
                     },
                     modifier = Modifier
