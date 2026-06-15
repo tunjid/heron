@@ -20,6 +20,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.timeline.ui.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModelInitializer
 import com.tunjid.heron.timeline.ui.sheets.mutedwords.MutedWordsViewModelInitializer
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsViewModelInitializer
+import com.tunjid.heron.timeline.ui.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateViewModelInitializer
 import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
 import dev.zacsweers.metro.BindingContainer
@@ -36,10 +37,12 @@ class SheetBindings(
         postOptionsViewModelInitializer: PostOptionsViewModelInitializer,
         threadGateViewModelInitializer: ThreadGateViewModelInitializer,
         embeddableRecordOptionsViewModelInitializer: EmbeddableRecordOptionsViewModelInitializer,
+        selectListViewModelInitializer: SelectListViewModelInitializer,
     ): SheetsViewModelInitializers = SheetsViewModelInitializers(
         mutedWordsViewModelInitializer = mutedWordsViewModelInitializer,
         postOptionsViewModelInitializer = postOptionsViewModelInitializer,
         threadGateViewModelInitializer = threadGateViewModelInitializer,
         embeddableRecordOptionsViewModelInitializer = embeddableRecordOptionsViewModelInitializer,
+        selectListViewModelInitializer = selectListViewModelInitializer,
     )
 }
