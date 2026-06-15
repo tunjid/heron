@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,6 +29,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,8 +51,17 @@ import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaBest
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaCircle
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaCircleMember
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaFavoriteSong
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaFriend
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaPlay
+import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaProfile
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.rocksky.RockskyAlbum
 import com.tunjid.heron.timeline.ui.rocksky.RockskyArtist
@@ -60,6 +71,7 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -79,10 +91,19 @@ internal fun AtmosphereAppScreen(
         initialExpandedHeight = with(density) { 800.dp.toPx() },
     )
 
-    val pagerState = rememberPagerState { state.stateHolders.size }
+    val visibleStateHolders = remember(state.stateHolders) {
+        state.stateHolders.filterNot { it is AppScreenStateHolders.Derakkuma.CircleMembers }
+    }
+    val pagerState = rememberPagerState { visibleStateHolders.size }
     val pullToRefreshState = rememberPullToRefreshState()
+    val circleMembers = state.stateHolders
+        .filterIsInstance<AppScreenStateHolders.Derakkuma.CircleMembers>()
+        .firstOrNull()
+        ?.produceStateWithLifecycle()
+        ?.tiledItems
+        .orEmpty()
 
-    val isRefreshing = state.stateHolders
+    val isRefreshing = visibleStateHolders
         .getOrNull(pagerState.currentPage)
         .isRefreshing
 
@@ -92,7 +113,7 @@ internal fun AtmosphereAppScreen(
         isRefreshing = isRefreshing,
         state = pullToRefreshState,
         onRefresh = {
-            state.stateHolders
+            visibleStateHolders
                 .getOrNull(pagerState.currentPage)
                 ?.refresh()
         },
@@ -126,7 +147,7 @@ internal fun AtmosphereAppScreen(
                     avatarSharedElementKey = state.avatarSharedElementKey,
                     profile = state.profile,
                     app = state.app,
-                    stateHolders = state.stateHolders,
+                    stateHolders = visibleStateHolders,
                 )
             },
             body = {
@@ -135,9 +156,9 @@ internal fun AtmosphereAppScreen(
                     modifier = Modifier
                         .fillMaxSize(),
                     state = pagerState,
-                    key = { page -> state.stateHolders[page].key },
+                    key = { page -> visibleStateHolders[page].key },
                     pageContent = { page ->
-                        when (val stateHolder = state.stateHolders[page]) {
+                        when (val stateHolder = visibleStateHolders[page]) {
                             is AppScreenStateHolders.StandardSite.Documents -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
@@ -310,6 +331,90 @@ internal fun AtmosphereAppScreen(
                                         sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
                                         scrobble = scrobble,
                                     )
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.Profiles -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { profile ->
+                                    DerakkumaProfile(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, profile)
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.Plays -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { play ->
+                                    DerakkumaPlay(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, play)
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.Bests -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { best ->
+                                    DerakkumaBest(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, best)
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.Friends -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { friend ->
+                                    DerakkumaFriend(
+                                        modifier = Modifier.fillMaxWidth().padding(8.dp).animateItem(),
+                                        paneTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = AtmosphereScreenSharedElementPrefix,
+                                        friend = friend,
+                                        onProfileClick = { profile, avatarSharedElementKey ->
+                                            actions(
+                                                Action.Navigate.To(
+                                                    profileDestination(
+                                                        profile = profile,
+                                                        avatarSharedElementKey = avatarSharedElementKey,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    ),
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.FavoriteSongs -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { favorite ->
+                                    DerakkumaFavoriteSong(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, favorite)
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.Circle -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemContent = { circles ->
+                                    items(
+                                        items = circles,
+                                        key = { it.uri.uri },
+                                    ) { circle ->
+                                        DerakkumaCircle(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, circle)
+                                    }
+                                    circleMembers.let { members ->
+                                        items(
+                                            items = members,
+                                            key = { it.uri.uri },
+                                        ) { member ->
+                                            DerakkumaCircleMember(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, member)
+                                        }
+                                    }
+                                },
+                            )
+                            is AppScreenStateHolders.Derakkuma.CircleMembers -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { member ->
+                                    DerakkumaCircleMember(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, member)
                                 },
                             )
                         }

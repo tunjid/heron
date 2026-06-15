@@ -57,6 +57,13 @@ import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.DerakkumaBestUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleMemberUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleUri
+import com.tunjid.heron.data.core.types.DerakkumaFavoriteSongUri
+import com.tunjid.heron.data.core.types.DerakkumaFriendUri
+import com.tunjid.heron.data.core.types.DerakkumaPlayUri
+import com.tunjid.heron.data.core.types.DerakkumaProfileUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
@@ -641,6 +648,13 @@ internal class OfflineRecordResolver(
             }
             is AlbumUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+            is DerakkumaProfileUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaPlayUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaBestUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaFriendUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaFavoriteSongUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaCircleUri -> Result.failure(UnresolvableRecordException(uri))
+            is DerakkumaCircleMemberUri -> Result.failure(UnresolvableRecordException(uri))
             is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is TrackUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
@@ -689,6 +703,13 @@ internal class OfflineRecordResolver(
             is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
             is AlbumUri -> Unit // TODO
             is ArtistUri -> Unit // TODO
+            is DerakkumaProfileUri -> Unit
+            is DerakkumaPlayUri -> Unit
+            is DerakkumaBestUri -> Unit
+            is DerakkumaFriendUri -> Unit
+            is DerakkumaFavoriteSongUri -> Unit
+            is DerakkumaCircleUri -> Unit
+            is DerakkumaCircleMemberUri -> Unit
             is ScrobbleUri -> Unit // TODO
             is TrackUri -> Unit // TODO
             is UnknownRecordUri -> Unit

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -97,6 +98,29 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     emptyIcon: ImageVector = T::class.emptyIcon,
     crossinline itemKey: (T) -> Any,
     crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
+) = RecordList(
+    collectionStateHolder = collectionStateHolder,
+    prefersCompactBottomNav = prefersCompactBottomNav,
+    emptyTitleRes = emptyTitleRes,
+    emptyDescriptionRes = emptyDescriptionRes,
+    emptyIcon = emptyIcon,
+    itemContent = {
+        items(
+            items = it,
+            key = { item -> itemKey(item) },
+            itemContent = itemContent,
+        )
+    },
+)
+
+@Composable
+inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordList(
+    collectionStateHolder: ActionSuspendingStateMutator<TilingState.Action, State>,
+    prefersCompactBottomNav: Boolean,
+    emptyTitleRes: StringResource = T::class.emptyTitleRes,
+    emptyDescriptionRes: StringResource = T::class.emptyDescriptionRes,
+    emptyIcon: ImageVector = T::class.emptyIcon,
+    crossinline itemContent: LazyListScope.(List<T>) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val collectionState = collectionStateHolder.produceStateWithLifecycle()
@@ -115,11 +139,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(
-            items = collectionState.tiledItems,
-            key = { itemKey(it) },
-            itemContent = itemContent,
-        )
+        itemContent(collectionState.tiledItems)
 
         if (isEmpty) {
             item {

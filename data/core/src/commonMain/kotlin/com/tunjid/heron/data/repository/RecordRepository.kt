@@ -40,6 +40,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.DerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.flowOn
 
 interface RecordRepository :
     BlueskyRecordOperations,
+    DerakkumaRecordOperations,
     RockskyRecordOperations,
     StandardSiteRecordOperations {
 
@@ -73,6 +75,7 @@ interface RecordRepository :
 @Inject
 internal class OfflineFirstRecordRepository(
     blueskyRecordOperations: BlueskyRecordOperations,
+    derakkumaRecordOperations: DerakkumaRecordOperations,
     rockSkyRecordOperations: RockskyRecordOperations,
     standardSiteRecordOperations: StandardSiteRecordOperations,
     @param:IODispatcher
@@ -87,6 +90,7 @@ internal class OfflineFirstRecordRepository(
     private val recordResolver: RecordResolver,
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
+    DerakkumaRecordOperations by derakkumaRecordOperations,
     RockskyRecordOperations by rockSkyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
 
