@@ -9,12 +9,11 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -96,7 +95,7 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences
     .take(1)
-    .launchAndCollect {
+    .launchedCollect {
         state.mutedWords = it.mutedWordPreferences
         state.preferencesLoaded = true
     }
@@ -104,7 +103,7 @@ private fun launchLoadPreferencesMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateNewWord>.launchUpdateNewWordMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.newWord = it.value
     state.error = null
 }
@@ -112,28 +111,28 @@ private fun Flow<MutedWordsAction.UpdateNewWord>.launchUpdateNewWordMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateDuration>.launchUpdateDurationMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.newWordDuration = it.duration
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateTargets>.launchUpdateTargetsMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.newWordTargets = it.targets
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateExcludeNonFollowers>.launchUpdateExcludeNonFollowersMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.newWordExcludeNonFollowers = it.exclude
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.RemoveMutedWord>.launchRemoveMutedWordMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.mutedWords = state.mutedWords.filterNot { w -> w.value == it.value }
     state.error = null
 }
@@ -141,7 +140,7 @@ private fun Flow<MutedWordsAction.RemoveMutedWord>.launchRemoveMutedWordMutation
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.ClearAll>.launchClearAllMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.mutedWords = emptyList()
     state.error = null
 }
@@ -149,7 +148,7 @@ private fun Flow<MutedWordsAction.ClearAll>.launchClearAllMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.ResetErrors>.launchResetErrorsMutations(
     state: MutedWordsState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.error = null
 }
 
@@ -157,21 +156,21 @@ context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.AddMutedWord>.launchAddWordMutations(
     state: MutedWordsState.SnapshotMutable,
 ) =
-    launchAndCollectWithState(state) {
-        val trimmedWord = newWord.trim()
-        if (trimmedWord.isBlank()) return@launchAndCollectWithState
+    launchedCollect {
+        val trimmedWord = state.newWord.trim()
+        if (trimmedWord.isBlank()) return@launchedCollect
 
-        if (mutedWords.any { it.value.contentEquals(trimmedWord, ignoreCase = true) }) {
+        if (state.mutedWords.any { it.value.contentEquals(trimmedWord, ignoreCase = true) }) {
             state.error = "Word already muted"
-            return@launchAndCollectWithState
+            return@launchedCollect
         }
 
-        val expiresAt = newWordDuration?.let { Clock.System.now().plus(it) }
-        update(
-            mutedWords = mutedWords + MutedWordPreference(
+        val expiresAt = state.newWordDuration?.let { Clock.System.now().plus(it) }
+        state.update(
+            mutedWords = state.mutedWords + MutedWordPreference(
                 value = trimmedWord,
-                targets = newWordTargets.map { MutedWordPreference.Target(it) },
-                actorTarget = if (newWordExcludeNonFollowers)
+                targets = state.newWordTargets.map { MutedWordPreference.Target(it) },
+                actorTarget = if (state.newWordExcludeNonFollowers)
                     MutedWordPreference.Target("non_followers") else null,
                 expiresAt = expiresAt,
             ),

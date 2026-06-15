@@ -8,10 +8,10 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import dev.zacsweers.metro.Assisted
@@ -55,7 +55,7 @@ class EmbeddableRecordOptionsViewModel(
                 keySelector = EmbeddableRecordOptionsAction::key,
             ) {
                 when (val action = type()) {
-                    is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchAndCollect {
+                    is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchedCollect {
                         state.editTitle = it.title
                     }
                 }
@@ -69,14 +69,14 @@ private fun launchLoadSignedInProfileMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
-    .launchAndCollect { state.signedInProfileId = it?.did }
+    .launchedCollect { state.signedInProfileId = it?.did }
 
 context(productionScope: CoroutineScope)
 private fun launchLoadRecentConversationsMutations(
     state: EmbeddableRecordOptionsState.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = messageRepository.recentConversations()
-    .launchAndCollect { state.recentConversations = it }
+    .launchedCollect { state.recentConversations = it }
 
 @Stable
 @Snapshottable

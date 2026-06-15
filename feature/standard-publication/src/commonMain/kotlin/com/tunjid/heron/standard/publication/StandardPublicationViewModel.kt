@@ -35,10 +35,10 @@ import com.tunjid.heron.standard.publication.di.publicationRequest
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -127,7 +127,7 @@ private suspend fun launchPublicationMutations(
         )
     }
 
-    recordRepository.publication(publicationUri).launchAndCollect {
+    recordRepository.publication(publicationUri).launchedCollect {
         state.publication = it
     }
 }
@@ -156,7 +156,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 

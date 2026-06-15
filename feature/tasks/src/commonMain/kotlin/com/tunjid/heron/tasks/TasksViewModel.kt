@@ -42,12 +42,12 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tasks.ui.failedTaskItem
 import com.tunjid.heron.tasks.ui.inFlightTaskItem
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -118,7 +118,7 @@ class ActualTasksViewModel(
                     is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
                         state = state,
                     )
-                    is Action.Navigate -> action.flow.launchAndCollect {
+                    is Action.Navigate -> action.flow.launchedCollect {
                         navActions(it.navigationMutation)
                     }
                 }
@@ -149,7 +149,7 @@ private fun launchLoadInFlightWrites(
             )
         }
     }
-        .launchAndCollect(state::inFlight::set)
+        .launchedCollect(state::inFlight::set)
 }
 
 context(productionScope: CoroutineScope)
@@ -174,13 +174,13 @@ private fun launchLoadFailedWrites(
             )
         }
     }
-        .launchAndCollect(state::failed::set)
+        .launchedCollect(state::failed::set)
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Retry>.launchRetryMutations(
     writeQueue: WriteQueue,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     writeQueue.retry(action.failedWrite)
 }
 
@@ -188,7 +188,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.Dismiss>.launchDismissMutations(
     writeQueue: WriteQueue,
     state: State.SnapshotMutable,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     if (writeQueue.dismiss(action.failedWrite) is Outcome.Failure) {
         state.messages += Memo.Resource(Res.string.dismiss_failed)
     }
@@ -197,7 +197,7 @@ private fun Flow<Action.Dismiss>.launchDismissMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 

@@ -29,10 +29,10 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.tiling.withRefreshedStatus
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.TiledList
@@ -170,7 +170,7 @@ private fun launchHasUpdatesMutations(
     timelineRepository: TimelineRepository,
 ) {
     timelineRepository.hasUpdates(timeline)
-        .launchAndCollectLatest { updatesAvailable ->
+        .launchedCollectLatest { updatesAvailable ->
             state.hasUpdates = updatesAvailable
             if (!updatesAvailable) {
                 state.tilingData = state.tilingData.withRefreshedStatus()
@@ -185,7 +185,7 @@ private fun launchTimelineUpdateMutations(
     timelineRepository: TimelineRepository,
 ) {
     timelineRepository.timeline(request = timeline.toTimelineRequest())
-        .launchAndCollectLatest { newTimeline ->
+        .launchedCollectLatest { newTimeline ->
             state.timeline = newTimeline
 
             if (newTimeline.isEmpty()) {
@@ -205,7 +205,7 @@ private fun launchTimelineUpdateMutations(
 context(scope: CoroutineScope)
 private fun Flow<TimelineState.Action.UpdatePreferredPresentation>.launchUpdatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
-) = launchAndCollectLatest {
+) = launchedCollectLatest {
     timelineRepository.updatePreferredPresentation(
         timeline = it.timeline,
         presentation = it.presentation,

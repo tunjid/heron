@@ -24,10 +24,10 @@ import com.tunjid.heron.data.repository.InitialNavigation
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
@@ -114,7 +114,7 @@ class PersistedNavigationStateHolder(
                     userDataRepository = userDataRepository,
                 ),
             )
-                .launchAndCollect { navigationAction ->
+                .launchedCollect { navigationAction ->
                     state.multiStackNav = navigationAction(state.multiStackNav)
 
                     // Fire and forget, do not slow down the collector,

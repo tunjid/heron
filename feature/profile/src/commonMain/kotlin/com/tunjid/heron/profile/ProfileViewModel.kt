@@ -54,12 +54,12 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.push
@@ -219,7 +219,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -227,7 +227,7 @@ context(productionScope: CoroutineScope)
 private fun launchSubscribedLabelerMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-) = recordRepository.subscribedLabelers.launchAndCollect { labelers ->
+) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
     state.subscribedLabelers = labelers
 }
 
@@ -239,7 +239,7 @@ private fun launchCommonFollowerMutations(
 ) = profileRepository.commonFollowers(
     otherProfileId = profileId,
     limit = 6,
-).launchAndCollect {
+).launchedCollect {
     state.commonFollowers = it
 }
 
@@ -276,10 +276,10 @@ private fun launchLoadProfileMutations(
             replay = 1,
         )
 
-    sharedProfile.launchAndCollect { profile ->
+    sharedProfile.launchedCollect { profile ->
         state.profile = profile
     }
-    sharedSignInState.launchAndCollect { (signedInProfileId, isSignedInProfile) ->
+    sharedSignInState.launchedCollect { (signedInProfileId, isSignedInProfile) ->
         state.signedInProfileId = signedInProfileId
         state.isSignedInProfile = isSignedInProfile
     }
@@ -290,7 +290,7 @@ private fun launchLoadProfileMutations(
             .map { it.did to it.isLabeler }
             .distinctUntilChanged(),
         transform = ::Triple,
-    ).launchAndCollectLatest { (signedInProfileIdToIsSignedInProfile, tabs, profileIdToIsLabeler) ->
+    ).launchedCollectLatest { (signedInProfileIdToIsSignedInProfile, tabs, profileIdToIsLabeler) ->
         val (signedInProfileId, isSignedInProfile) = signedInProfileIdToIsSignedInProfile
         val isSignedIn = signedInProfileId != null
         val (resolvedProfileId, isLabeler) = profileIdToIsLabeler
@@ -344,7 +344,7 @@ private fun launchProfileRelationshipMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-) = profileRepository.profileRelationships(setOf(profileId)).launchAndCollect {
+) = profileRepository.profileRelationships(setOf(profileId)).launchedCollect {
     state.viewerState = it.firstOrNull()
 }
 
@@ -353,7 +353,7 @@ private fun launchSupportedAppMutations(
     state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-) = profileRepository.supportedApps(profileId).launchAndCollect {
+) = profileRepository.supportedApps(profileId).launchedCollect {
     state.supportedApps = it
 }
 
@@ -363,7 +363,7 @@ private fun launchFeedGeneratorUrisToStatusMutations(
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
     .distinctUntilChangedBy { it.timelinePreferences }
-    .launchAndCollect { preferences ->
+    .launchedCollect { preferences ->
         state.timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
             .associateBy(
                 keySelector = TimelinePreference::timelineRecordUri,
@@ -465,7 +465,7 @@ private fun Flow<Action.UpdateLiveStatus>.launchLiveStatusMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 

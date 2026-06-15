@@ -46,12 +46,12 @@ import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.buildTiledList
 import com.tunjid.tiler.distinctBy
@@ -158,7 +158,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
@@ -166,7 +166,7 @@ context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = writeQueue.queueChanges.launchAndCollect { writes ->
+) = writeQueue.queueChanges.launchedCollect { writes ->
     val queuedIds = writes.mapTo(mutableSetOf(), Writable::queueId)
     val updatedPendingMessages = state.pendingItems.filter { item ->
         queuedIds.contains(Writable.Send(item.message).queueId)
@@ -232,7 +232,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -251,7 +251,7 @@ private fun Flow<Action.UpdateMessageReaction>.launchUpdateMessageReactionMutati
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TextChanged>.launchInputTextChangeMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     state.inputText = action.inputText
 }
 
@@ -260,7 +260,7 @@ private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
     navActions: (NavigationMutation) -> Unit,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     when (action) {
         is Action.SharedRecord.Add -> consumeSharedUri(
             state = state,
@@ -280,7 +280,7 @@ private fun Flow<Action.SendMessage>.launchSendMessageMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     val pendingItem = MessageItem.Pending(
         sender = state.signedInProfile ?: stubProfile(
             did = ProfileId(""),

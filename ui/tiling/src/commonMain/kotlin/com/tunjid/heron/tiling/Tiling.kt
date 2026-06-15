@@ -21,9 +21,9 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.mapCursorList
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
-import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
 import com.tunjid.heron.ui.coroutines.requireStateProducingBackgroundDispatcher
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.tiler.ListTiler
@@ -241,18 +241,18 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                         currentCoroutineContext().requireStateProducingBackgroundDispatcher()
                     // Refreshes need tear down the tiling pipeline all over
                     val refreshes = queries.distinctUntilChangedBy(queryRefreshBy)
-                    queries.launchAndCollectWithState(startingState) { newQuery ->
-                        status = when {
-                            currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
+                    queries.launchedCollect { newQuery ->
+                        startingState.status = when {
+                            startingState.currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
                                 cursorAnchor = newQuery.data.cursorAnchor,
                             )
 
-                            else -> status
+                            else -> startingState.status
                         }
-                        currentQuery = newQuery
+                        startingState.currentQuery = newQuery
                     }
-                    numColumns.launchAndCollectWithState(startingState) {
-                        update(numColumns = it)
+                    numColumns.launchedCollect {
+                        startingState.update(numColumns = it)
                     }
                     refreshes.flatMapLatest { refreshedQuery ->
                         cursorTileInputs<Query, Item>(
@@ -273,9 +273,9 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                             else 200.milliseconds
                         }
                         .flowOn(backgroundDispatcher)
-                        .launchAndCollectLatestWithState(startingState) { items ->
+                        .launchedCollectLatest { items ->
                             // Ignore results from stale queries
-                            if (items.isValidFor(currentQuery)) {
+                            if (items.isValidFor(startingState.currentQuery)) {
                                 // Heavy work on the background dispatcher
                                 val deduped = withContext(backgroundDispatcher) {
                                     onNewItems(items)
@@ -284,18 +284,18 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                                 // receiver, so callers can read live snapshot-state fields
                                 // race-free with other producer-scope writers.
                                 val toCommit = with(state) { onWriteItems(deduped) }
-                                update(
+                                startingState.update(
                                     items = toCommit,
                                     status = when {
                                         isRefreshedOnNewItems && items.isNotEmpty() -> {
                                             val fetchedQuery = items.queryAt(0)
-                                            if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
+                                            if (fetchedQuery.hasDifferentAnchor(startingState.currentQuery)) startingState.status
                                             else TilingState.Status.Refreshed(
                                                 cursorAnchor = fetchedQuery.data.cursorAnchor,
                                             )
                                         }
 
-                                        else -> status
+                                        else -> startingState.status
                                     },
                                 )
                             }

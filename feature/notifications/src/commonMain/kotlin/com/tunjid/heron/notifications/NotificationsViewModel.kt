@@ -33,11 +33,11 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -133,7 +133,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
@@ -141,7 +141,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -149,7 +149,7 @@ context(productionScope: CoroutineScope)
 private fun launchLastRefreshedMutations(
     state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
-) = notificationsRepository.lastRefreshed.launchAndCollect { refreshedAt ->
+) = notificationsRepository.lastRefreshed.launchedCollect { refreshedAt ->
     state.lastRefreshed = refreshedAt
     val currentStatus = state.tilingData.status
     if (currentStatus is TilingState.Status.Refreshing &&
@@ -165,7 +165,7 @@ private fun launchCanShowRequestPermissionsButtonMutations(
     state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
 ) = notificationsRepository.hasPreviouslyRequestedNotificationPermissions
-    .launchAndCollect { hasPreviouslyRequestedNotificationPermissions ->
+    .launchedCollect { hasPreviouslyRequestedNotificationPermissions ->
         state.canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions
     }
 
@@ -238,14 +238,14 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MarkNotificationsRead>.launchMarkNotificationsReadMutations(
     notificationsRepository: NotificationsRepository,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     notificationsRepository.markRead(action.at)
 }
 

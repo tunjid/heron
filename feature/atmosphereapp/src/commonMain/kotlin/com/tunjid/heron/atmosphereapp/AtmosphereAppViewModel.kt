@@ -42,10 +42,10 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -133,14 +133,14 @@ private fun launchProfileLoadMutations(
             replay = 1,
         )
 
-    sharedProfile.launchAndCollect { profile ->
+    sharedProfile.launchedCollect { profile ->
         state.profile = profile
     }
 
     sharedProfile
         .map { it.did }
         .distinctUntilChanged()
-        .launchAndCollectLatest { resolvedProfileId ->
+        .launchedCollectLatest { resolvedProfileId ->
             val keysToHolders = state.stateHolders
                 .associateBy(AppScreenStateHolders::key)
 
@@ -157,7 +157,7 @@ private fun launchProfileLoadMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
