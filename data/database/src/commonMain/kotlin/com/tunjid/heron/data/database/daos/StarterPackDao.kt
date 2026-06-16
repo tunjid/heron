@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StarterPackDao {
 
+    @Transaction
     @Query(
         """
             SELECT * FROM starterPacks

@@ -47,12 +47,12 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.isNoOp
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.isNoOp
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -181,7 +181,7 @@ context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
 }
 
@@ -189,7 +189,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -219,8 +219,8 @@ private fun launchTimelineStateHolderMutations(
 
     timelineRepository.timeline(request)
         .take(1)
-        .launchAndCollect { timeline ->
-            if (state.existingTimelineStateHolder() != null) return@launchAndCollect
+        .launchedCollect { timeline ->
+            if (state.existingTimelineStateHolder() != null) return@launchedCollect
 
             val createdHolder = ListScreenStateHolders.Timeline(
                 mutator = viewModelScope.timelineStateHolder(
@@ -266,8 +266,8 @@ private fun launchListMemberStateHolderMutations(
         }
         .filterIsInstance<Timeline.Home.List>()
         .take(1)
-        .launchAndCollect { timeline ->
-            if (state.existingMembersStateHolder() != null) return@launchAndCollect
+        .launchedCollect { timeline ->
+            if (state.existingMembersStateHolder() != null) return@launchedCollect
 
             val createdHolder = ListScreenStateHolders.Members(
                 mutator = viewModelScope.actionSuspendingStateMutator(
@@ -283,7 +283,7 @@ private fun launchListMemberStateHolderMutations(
                     ).toSnapshotMutable(),
                     started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
                     producer = { memberState, actions ->
-                        authRepository.signedInUser.launchAndCollect {
+                        authRepository.signedInUser.launchedCollect {
                             memberState.signedInProfileId = it?.did
                         }
                         actions.launchTilingMutations(
@@ -400,10 +400,10 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchProfiles>.launchSearchMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = debounce(SEARCH_DEBOUNCE_MILLIS).launchAndCollectLatest { action ->
+) = debounce(SEARCH_DEBOUNCE_MILLIS).launchedCollectLatest { action ->
     if (action.query.isBlank()) {
         state.suggestedProfiles = emptyList()
-        return@launchAndCollectLatest
+        return@launchedCollectLatest
     }
     searchRepository.autoCompleteProfileSearch(
         query = SearchQuery.OfProfiles(
@@ -424,7 +424,7 @@ private fun Flow<Action.SearchProfiles>.launchSearchMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -477,7 +477,7 @@ private fun launchListStatusMutations(
 ) = timeline.withListTimelineOrNull { listTimeline ->
     timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
-        .launchAndCollect { preferences ->
+        .launchedCollect { preferences ->
             val pinned =
                 preferences.timelinePreferences.firstOrNull {
                     it.timelineRecordUri == listTimeline.feedList.uri
@@ -510,7 +510,7 @@ private fun launchTimelineCreatorMutations(
         is Timeline.StarterPack -> profileRepository.profile(
             profileId = timeline.starterPack.creator.did,
         )
-    }.launchAndCollect {
+    }.launchedCollect {
         state.creator = it
     }
 }

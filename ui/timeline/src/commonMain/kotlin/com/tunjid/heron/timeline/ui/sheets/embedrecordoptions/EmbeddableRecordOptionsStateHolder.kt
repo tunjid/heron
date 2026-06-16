@@ -1,4 +1,4 @@
-package com.tunjid.heron.timeline.ui.sheets.postoptions
+package com.tunjid.heron.timeline.ui.sheets.embedrecordoptions
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
@@ -10,6 +10,7 @@ import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.timeline.utilities.SheetWhileSubscribed
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -21,64 +22,74 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
-typealias PostOptionsStateHolder = ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>
+typealias EmbeddableRecordOptionsStateHolder =
+    ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
 
 @AssistedFactory
-fun interface PostOptionsViewModelInitializer {
+fun interface EmbeddableRecordOptionsViewModelInitializer {
     fun invoke(
         scope: CoroutineScope,
-    ): PostOptionsViewModel
+    ): EmbeddableRecordOptionsViewModel
 }
 
 @AssistedInject
-class PostOptionsViewModel(
+class EmbeddableRecordOptionsViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
     @Assisted scope: CoroutineScope,
 ) : ViewModel(viewModelScope = scope),
-    PostOptionsStateHolder by scope.actionSuspendingStateMutator(
-        state = PostOptionsState.Immutable().toSnapshotMutable(),
+    EmbeddableRecordOptionsStateHolder by scope.actionSuspendingStateMutator(
+        state = EmbeddableRecordOptionsState.Immutable().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, _ ->
+        producer = { state, actions ->
             launchLoadSignedInProfileMutations(
                 state = state,
                 authRepository = authRepository,
             )
-            launchUpdateRecentConversionsMutations(
+            launchLoadRecentConversationsMutations(
                 state = state,
                 messageRepository = messageRepository,
             )
+            actions.launchMutationsIn(
+                productionScope = this,
+                keySelector = EmbeddableRecordOptionsAction::key,
+            ) {
+                when (val action = type()) {
+                    is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchedCollect {
+                        state.editTitle = it.title
+                    }
+                }
+            }
         },
     )
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: EmbeddableRecordOptionsState.SnapshotMutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
-    .launchedCollect {
-        state.signedInProfileId = it?.did
-    }
+    .launchedCollect { state.signedInProfileId = it?.did }
 
 context(productionScope: CoroutineScope)
-private fun launchUpdateRecentConversionsMutations(
-    state: PostOptionsState.SnapshotMutable,
+private fun launchLoadRecentConversationsMutations(
+    state: EmbeddableRecordOptionsState.SnapshotMutable,
     messageRepository: MessageRepository,
 ) = messageRepository.recentConversations()
-    .launchedCollect {
-        state.recentConversations = it
-    }
+    .launchedCollect { state.recentConversations = it }
 
 @Stable
 @Snapshottable
-interface PostOptionsState {
+interface EmbeddableRecordOptionsState {
     @SnapshotSpec
     @Serializable
     data class Immutable(
         val signedInProfileId: ProfileId? = null,
         val recentConversations: List<Conversation> = emptyList(),
-    ) : PostOptionsState
+        val editTitle: String? = null,
+    ) : EmbeddableRecordOptionsState
 }
 
-sealed class PostOptionsAction(val key: String)
+sealed class EmbeddableRecordOptionsAction(val key: String) {
+    data class SetEditTitle(val title: String?) : EmbeddableRecordOptionsAction("SetEditTitle")
+}

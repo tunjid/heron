@@ -23,11 +23,11 @@ import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.scaffold.scaffold.AppState
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -92,7 +92,7 @@ private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.launchMoni
     state: NotificationState.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
 ) = distinctUntilChanged()
-    .launchAndCollectLatest { action ->
+    .launchedCollectLatest { action ->
         if (action.monitor) notificationsRepository.unreadCount
             .collect { state.unreadCount = it }
     }
@@ -100,7 +100,7 @@ private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.launchMoni
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.UpdatePermissions>.launchUpdateNotificationPermissions(
     state: NotificationState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.hasNotificationPermissions = it.hasNotificationPermissions
 }
 
@@ -108,7 +108,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.RegisterToken>.launchRegisterTokenMutations(
     state: NotificationState.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     // TODO: This should be enqueued, but the write queue does not currently
     //  support updating a queued write to something else. For now, just write
     //  using the app scope and fix in a follow up PR.
@@ -172,28 +172,28 @@ private fun Flow<NotificationAction.HandleNotification>.launchHandleNotification
             emit(recordUri)
         }
     }
-    .launchAndCollect { recordUri ->
+    .launchedCollect { recordUri ->
         state.processedNotificationRecordUris += recordUri
     }
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.NotificationDismissed>.launchNotificationDismissalMutations(
     notificationsRepository: NotificationsRepository,
-) = launchAndCollectLatest {
+) = launchedCollectLatest {
     notificationsRepository.markRead(it.dismissedAt)
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.NotificationProcessedOrDropped>.launchNotificationProcessedOrDroppedMutations(
     state: NotificationState.SnapshotMutable,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     state.processedNotificationRecordUris -= action.recordUri
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.RequestedNotificationPermission>.launchMarkNotificationPermissionRequestedMutations(
     notificationsRepository: NotificationsRepository,
-) = launchAndCollectLatest {
+) = launchedCollectLatest {
     notificationsRepository.markNotificationPermissionsRequested()
 }
 

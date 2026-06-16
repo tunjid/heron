@@ -8,13 +8,13 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import dev.zacsweers.metro.Inject
 import heron.ui.core.generated.resources.error_session_switch
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,23 +45,23 @@ class AppIdentityStateHolder(
         state = IdentityState.Immutable().toSnapshotMutable(),
         started = SharingStarted.Eagerly,
         producer = { state, actions ->
-            authRepository.signedInUser.launchAndCollect {
+            authRepository.signedInUser.launchedCollect {
                 state.signedInProfile = it
             }
-            authRepository.pastSessions.launchAndCollect {
+            authRepository.pastSessions.launchedCollect {
                 state.pastSessions = it
             }
-            userDataRepository.preferences.launchAndCollect {
+            userDataRepository.preferences.launchedCollect {
                 state.preferences = it
             }
-            networkMonitor.isConnected.launchAndCollect {
+            networkMonitor.isConnected.launchedCollect {
                 state.isConnected = it
             }
             writeQueue.failedWrites
                 .map(List<FailedWrite>::lastOrNull)
                 .distinctUntilChanged()
                 .drop(1)
-                .launchAndCollect {
+                .launchedCollect {
                     state.lastFailedWrite = it
                 }
 
@@ -98,7 +98,7 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
         is IdentityAction.Switch.Transition -> 300.milliseconds
     }
 }
-    .launchAndCollectLatest { action ->
+    .launchedCollectLatest { action ->
         when (action) {
             IdentityAction.Switch.Cancel ->
                 state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
@@ -137,6 +137,6 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<IdentityAction.ClearFailedWrite>.launchClearFailedWriteMutations(
     state: IdentityState.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.lastFailedWrite = null
 }

@@ -100,6 +100,7 @@ interface RockskyDao {
         updatePartials = ::upsertScrobbles,
     )
 
+    @Transaction
     @Query(
         """
     SELECT * FROM rockskyAlbums

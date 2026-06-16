@@ -40,9 +40,9 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
@@ -126,7 +126,7 @@ interface State {
                 },
             ).map {
                 ListScreenStateHolders.Timeline(
-                    noOpActionSuspendingStateMutator(it),
+                    it.asNoOpActionSuspendingStateMutator(),
                 )
             }
                 .take(1),

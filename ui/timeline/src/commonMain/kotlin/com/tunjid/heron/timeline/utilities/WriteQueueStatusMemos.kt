@@ -21,9 +21,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
@@ -87,7 +87,7 @@ inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
     crossinline toWritable: (T) -> Writable,
     crossinline postEnqueue: suspend (T, Memo?) -> Unit = { _, _ -> },
 ) {
-    launchAndCollect { action ->
+    launchedCollect { action ->
         val writable = toWritable(action)
         val status = writeQueue.enqueue(writable)
         val memo = writable.writeStatusMessage(status)

@@ -197,6 +197,9 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
         },
     )
 
+fun Profile.shareUri(): GenericUri =
+    GenericUri("https://bsky.app/profile/${handle.id}")
+
 fun Record.collectionShape() = when (this) {
     is Record.Embeddable -> embeddableRecordUri.collectionShape()
     else -> DocumentCollectionShape

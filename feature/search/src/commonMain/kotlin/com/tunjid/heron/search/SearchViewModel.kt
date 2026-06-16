@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
@@ -44,11 +43,11 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -96,12 +95,9 @@ class SearchViewModel(
 ) : ViewModel(viewModelScope = scope),
     SearchStateHolder by scope.actionSuspendingStateMutator(
         state = State.Immutable(
-            currentQuery = route.query,
-            isQueryEditable = route.query.isBlank(),
-            layout = when {
-                route.query.isBlank() -> ScreenLayout.Suggested
-                else -> ScreenLayout.GeneralSearchResults
-            },
+            searchBarText = route.query.initialSearchBarText,
+            query = route.query,
+            layout = route.query.initialLayout,
             searchStateHolders = route.searchStates()
                 .mapNotNull { searchState ->
                     scope.searchStateHolder(searchState, searchRepository)
@@ -196,7 +192,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfile = signedInProfile
 }
 
@@ -210,7 +206,7 @@ private fun launchSearchStateHolderMutations(
 ) = authRepository.signedInUser
     .map { it != null }
     .distinctUntilChanged()
-    .launchAndCollect { isSignedIn ->
+    .launchedCollect { isSignedIn ->
         val existingHolders = state.searchStateHolders
             .associateBy { it.state.key }
 
@@ -239,7 +235,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -247,7 +243,7 @@ context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.trends().launchAndCollect {
+) = searchRepository.trends().launchedCollect {
     state.trends = it
 }
 
@@ -292,7 +288,7 @@ private fun launchSuggestedStarterPackMutations(
                 }
             }
     }
-    .launchAndCollect {
+    .launchedCollect {
         state.starterPacksWithMembers = it
     }
 
@@ -300,7 +296,7 @@ context(productionScope: CoroutineScope)
 private fun launchSuggestedFeedGeneratorMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.suggestedFeeds().launchAndCollect {
+) = searchRepository.suggestedFeeds().launchedCollect {
     state.feedGenerators = it
 }
 
@@ -310,7 +306,7 @@ private fun launchFeedGeneratorUrisToStatusMutations(
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
     .distinctUntilChangedBy { it.timelinePreferences }
-    .launchAndCollect { preferences ->
+    .launchedCollect { preferences ->
         state.timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
             .associateBy(
                 keySelector = TimelinePreference::timelineRecordUri,
@@ -322,7 +318,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     searchRepository.suggestedProfiles(
         category = action.category,
     ).collect { suggestedProfiles ->
@@ -341,36 +337,37 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         replay = 1,
     )
-    shared.launchAndCollect { action ->
+    shared.launchedCollect { action ->
         when (action) {
             is Action.Search.OnSearchQueryChanged -> {
-                state.currentQuery = action.query
-                state.layout =
-                    if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                    else ScreenLayout.Suggested
+                state.searchBarText = action.query
+                state.layout = state.query.layoutFor(action)
             }
             is Action.Search.OnSearchQueryConfirmed -> {
                 state.searchStateHolders.forEach {
+                    val currentQuery = state.query.queryString(
+                        searchBarText = state.searchBarText,
+                    )
                     val confirmedQuery = when (val searchState = it.state) {
                         is SearchState.OfPosts -> when (searchState.tilingData.currentQuery) {
                             is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
-                                query = state.currentQuery,
+                                query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
                             )
                             is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
-                                query = state.currentQuery,
+                                query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
                             )
                         }
                         is SearchState.OfProfiles -> SearchQuery.OfProfiles(
-                            query = state.currentQuery,
+                            query = currentQuery,
                             isLocalOnly = action.isLocalOnly,
                             data = defaultSearchQueryData(),
                         )
                         is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
-                            query = state.currentQuery,
+                            query = currentQuery,
                             isLocalOnly = action.isLocalOnly,
                             data = defaultSearchQueryData(),
                         )
@@ -398,7 +395,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
                 cursor = Cursor.Initial,
             )
         }
-        .launchAndCollect { profileWithViewerStates ->
+        .launchedCollect { profileWithViewerStates ->
             state.autoCompletedProfiles = profileWithViewerStates.map(SearchResult::OfProfile)
         }
 }
@@ -512,7 +509,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -533,7 +530,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Top(
-                    query = query,
+                    query = query.initialQueryString,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
@@ -544,19 +541,19 @@ private fun Route.searchStates(): List<SearchState> = buildList {
         SearchState.OfPosts(
             tilingData = TilingState.Data(
                 currentQuery = SearchQuery.OfPosts.Latest(
-                    query = query,
+                    query = query.initialQueryString,
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
             ),
         ),
     )
-    if (query.isBlank()) {
+    if (query.supportsNonPostSearch) {
         add(
             SearchState.OfProfiles(
                 tilingData = TilingState.Data(
                     currentQuery = SearchQuery.OfProfiles(
-                        query = query,
+                        query = query.initialQueryString,
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),
@@ -567,7 +564,7 @@ private fun Route.searchStates(): List<SearchState> = buildList {
             SearchState.OfFeedGenerators(
                 tilingData = TilingState.Data(
                     currentQuery = SearchQuery.OfFeedGenerators(
-                        query = query,
+                        query = query.initialQueryString,
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),

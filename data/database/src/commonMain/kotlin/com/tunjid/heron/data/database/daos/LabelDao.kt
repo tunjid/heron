@@ -19,6 +19,7 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface LabelDao {
 
+    @Transaction
     @Query(
         """
             SELECT * FROM labelers
@@ -41,6 +43,7 @@ interface LabelDao {
         uris: Collection<LabelerUri>,
     ): Flow<List<PopulatedLabelerEntity>>
 
+    @Transaction
     @Query(
         """
             SELECT * FROM labelers

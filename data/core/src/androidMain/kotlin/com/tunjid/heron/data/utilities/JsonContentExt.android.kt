@@ -14,18 +14,17 @@
  *    limitations under the License.
  */
 
-plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.compose")
-    kotlin("plugin.serialization")
-}
+package com.tunjid.heron.data.utilities
 
-configureCompose()
-kotlin {
-    configureKotlinMultiplatform(this)
-    configureUiModule(
-        extension = this,
-        composeDependencies = compose,
-    )
-}
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import sh.christian.ozone.api.model.JsonContent
+
+internal actual fun JsonContent.add(
+    builderAction: JsonObjectBuilder.() -> Unit,
+): JsonContent = JsonContent(
+    value = JsonObject(value.jsonObject + buildJsonObject(builderAction)),
+    format = format,
+)

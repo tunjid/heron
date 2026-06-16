@@ -27,4 +27,6 @@
     <string name="hot">Hot</string>
     <string name="discover_feeds">Discover Feeds</string>
     <string name="feeds">Feeds</string>
+    <string name="hint_general_search">Search for posts, users or feeds</string>
+    <string name="hint_profile_post_search">Search %1$s's posts</string>
 </resources>

@@ -38,11 +38,11 @@ import com.tunjid.heron.postdetail.di.postRecordKey
 import com.tunjid.heron.postdetail.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -143,7 +143,7 @@ private fun Flow<Action.Load>.launchPostThreadsMutations(
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     val postUri = profileRepository.profile(route.profileHandleOrId)
         .first()
         .let {
@@ -201,7 +201,7 @@ context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect { signedInProfile ->
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
 }
 
@@ -209,7 +209,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 context(productionScope: CoroutineScope)
@@ -289,6 +289,6 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
