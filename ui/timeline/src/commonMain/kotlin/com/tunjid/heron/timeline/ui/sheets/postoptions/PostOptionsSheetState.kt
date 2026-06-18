@@ -252,7 +252,7 @@ private fun PostManagementMenuSection(
                     ),
                     onClick = {
                         when {
-                            ownDocument.bskyPostRef != null -> overwriteDialogState.show()
+                            !isLinkedPost && ownDocument.bskyPostRef != null -> overwriteDialogState.show()
                             else -> dispatch()
                         }
                     },
