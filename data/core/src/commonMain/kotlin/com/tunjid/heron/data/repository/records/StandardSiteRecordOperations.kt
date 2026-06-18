@@ -17,6 +17,9 @@
 package com.tunjid.heron.data.repository.records
 
 import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.PutRecordRequest
+import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -25,10 +28,16 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.StandardDocumentId
+import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import com.tunjid.heron.data.core.types.UnauthorizedException
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
@@ -62,13 +71,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import site.standard.Document
 import site.standard.graph.Subscription
 import site.standard.heron.GetDocumentsQueryParams
 import site.standard.heron.GetDocumentsResponse
@@ -111,6 +123,10 @@ interface StandardSiteRecordOperations {
 
     suspend fun createSubscription(
         create: StandardSubscription.Create,
+    ): Outcome
+
+    suspend fun updateDocumentPostRef(
+        reference: StandardDocument.PostReference,
     ): Outcome
 }
 
@@ -386,6 +402,82 @@ internal class OfflineFirstStandardSiteRecordOperations(
                     subscription = subscription,
                     viewingProfileId = signedInProfileId,
                     sortedAt = create.sortedAt,
+                )
+            }
+        }
+            .toOutcome()
+    } ?: expiredSessionOutcome()
+
+    override suspend fun updateDocumentPostRef(
+        reference: StandardDocument.PostReference,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        // The document record lives in its author's repo, so only its author can
+        // rewrite it. Refuse if the signed-in user does not own the document.
+        val documentProfileId = reference.documentUri.profileId()
+        if (documentProfileId != signedInProfileId) {
+            return@inCurrentProfileSession UnauthorizedException(
+                signedInProfileId = signedInProfileId,
+                profileId = documentProfileId,
+            ).asFailureOutcome()
+        }
+
+        val repo = Did(signedInProfileId.id)
+        val collection = Nsid(StandardDocumentUri.NAMESPACE)
+        val rkey = RKey(reference.documentUri.recordKey.value)
+
+        // Linking sets the strong ref; unlinking clears it.
+        val newPostRef = when (reference) {
+            is StandardDocument.PostReference.Link -> StrongRef(
+                uri = AtUri(reference.postUri.uri),
+                cid = Cid(reference.postCid.id),
+            )
+            is StandardDocument.PostReference.Unlink -> null
+        }
+
+        // Read the current record first so the cover image blob and any other
+        // fields are preserved; only the bskyPostRef is changed.
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getRecord(
+                GetRecordQueryParams(
+                    repo = repo,
+                    collection = collection,
+                    rkey = rkey,
+                ),
+            )
+        }.mapCatchingUnlessCancelled { recordResponse ->
+            val current = recordResponse.value.decodeAs<Document>()
+            val updated = current.copy(bskyPostRef = newPostRef)
+            val putResponse = networkService.runCatchingWithMonitoredNetworkRetry {
+                putRecord(
+                    PutRecordRequest(
+                        repo = repo,
+                        collection = collection,
+                        rkey = rkey,
+                        swapRecord = recordResponse.cid,
+                        record = updated.asJsonContent(Document.serializer()),
+                    ),
+                )
+            }.getOrThrow()
+
+            // Persist the change locally without relying on the AppView, which lags
+            // behind the PDS write.
+            val linkedPost = reference as? StandardDocument.PostReference.Link
+            val cachedEntity = standardSiteDao.documents(
+                viewingProfileId = signedInProfileId.id,
+                uris = setOf(reference.documentUri),
+            )
+                .first()
+                .firstOrNull()
+                ?.entity
+            if (cachedEntity != null) multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    cachedEntity.copy(
+                        cid = putResponse.cid.cid.let(::StandardDocumentId),
+                        bskyPostRefUri = linkedPost?.postUri,
+                        bskyPostRefCid = linkedPost?.postCid,
+                    ),
                 )
             }
         }

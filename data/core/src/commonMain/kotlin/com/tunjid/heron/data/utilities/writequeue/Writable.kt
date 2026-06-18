@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
@@ -142,6 +143,18 @@ sealed interface Writable {
 
             override suspend fun WriteQueue.write(): Outcome =
                 recordRepository.createSubscription(create)
+        }
+
+        @Serializable
+        data class UpdatePostReference(
+            val reference: StandardDocument.PostReference,
+        ) : StandardSite,
+            Writable {
+            override val queueId: String
+                get() = "document-post-ref-$reference"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.updateDocumentPostRef(reference)
         }
     }
 

@@ -8,6 +8,14 @@
             "ref": "com.atproto.repo.strongRef",
             "type": "ref"
           },
+          "content": {
+            "description": "Not modelled by Heron. Typed as unknown so it is preserved verbatim across edits.",
+            "type": "unknown"
+          },
+          "contributors": {
+            "description": "Not modelled by Heron. Typed as unknown so it is preserved verbatim across edits.",
+            "type": "unknown"
+          },
           "coverImage": {
             "accept": ["image/*"],
             "maxSize": 1000000,
@@ -17,6 +25,14 @@
             "maxGraphemes": 3000,
             "maxLength": 30000,
             "type": "string"
+          },
+          "labels": {
+            "description": "Not modelled by Heron. Typed as unknown so it is preserved verbatim across edits.",
+            "type": "unknown"
+          },
+          "links": {
+            "description": "Not modelled by Heron. Typed as unknown so it is preserved verbatim across edits.",
+            "type": "unknown"
           },
           "path": {
             "description": "combine with the publication url or the document site to construct a full url to the document",
@@ -33,8 +49,8 @@
           },
           "tags": {
             "items": {
-              "maxGraphemes": 50,
-              "maxLength": 100,
+              "maxGraphemes": 128,
+              "maxLength": 1280,
               "type": "string"
             },
             "type": "array"
