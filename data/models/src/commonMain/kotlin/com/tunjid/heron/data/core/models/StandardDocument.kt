@@ -18,6 +18,8 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
@@ -50,6 +52,32 @@ data class StandardDocument(
         )
 
     override val embeddableRecordUri: EmbeddableRecordUri = uri
+
+    /**
+     * Describes a change to a [StandardDocument]'s `bskyPostRef`.
+     */
+    @Serializable
+    sealed class PostReference {
+        abstract val documentUri: StandardDocumentUri
+
+        /**
+         * Point the document's `bskyPostRef` at the post it is embedded in.
+         */
+        @Serializable
+        data class Link(
+            override val documentUri: StandardDocumentUri,
+            val postUri: PostUri,
+            val postCid: PostId,
+        ) : PostReference()
+
+        /**
+         * Clear the document's `bskyPostRef`.
+         */
+        @Serializable
+        data class Unlink(
+            override val documentUri: StandardDocumentUri,
+        ) : PostReference()
+    }
 }
 
 val StandardDocument.link: String?

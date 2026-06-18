@@ -298,6 +298,7 @@ private fun Writable.embeddableRecordUri(): EmbeddableRecordUri? =
         is Writable.Restriction -> null
         is Writable.Send -> null
         is Writable.StandardSite.Subscribe -> this.create.publicationUri
+        is Writable.StandardSite.UpdatePostReference -> this.reference.documentUri
         is Writable.StatusUpdate -> null
         is Writable.TimelineUpdate -> null
     }

@@ -12,6 +12,8 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.HeartBroken
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.ManageAccounts
 import androidx.compose.material.icons.rounded.Mood
 import androidx.compose.material.icons.rounded.MoodBad
@@ -27,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.ui.text.Memo
@@ -39,6 +42,7 @@ import heron.ui.timeline.generated.resources.writable_description_creating_post
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
 import heron.ui.timeline.generated.resources.writable_description_following_profile
 import heron.ui.timeline.generated.resources.writable_description_liking_post
+import heron.ui.timeline.generated.resources.writable_description_linking_document
 import heron.ui.timeline.generated.resources.writable_description_muting_profile
 import heron.ui.timeline.generated.resources.writable_description_post_photo
 import heron.ui.timeline.generated.resources.writable_description_post_video
@@ -52,6 +56,7 @@ import heron.ui.timeline.generated.resources.writable_description_sending_messag
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication
 import heron.ui.timeline.generated.resources.writable_description_unblocking_profile
 import heron.ui.timeline.generated.resources.writable_description_unfollowing_profile
+import heron.ui.timeline.generated.resources.writable_description_unlinking_document
 import heron.ui.timeline.generated.resources.writable_description_unmuting_profile
 import heron.ui.timeline.generated.resources.writable_description_updating_feed_settings
 import heron.ui.timeline.generated.resources.writable_description_updating_notification_preferences
@@ -110,6 +115,18 @@ fun Writable.describe(): WritableDescription =
             title = Resource(Res.string.writable_description_subscribing_publication),
             summary = null,
         )
+        is Writable.StandardSite.UpdatePostReference -> when (reference) {
+            is StandardDocument.PostReference.Link -> WritableDescription(
+                icon = Icons.Rounded.Link,
+                title = Resource(Res.string.writable_description_linking_document),
+                summary = null,
+            )
+            is StandardDocument.PostReference.Unlink -> WritableDescription(
+                icon = Icons.Rounded.LinkOff,
+                title = Resource(Res.string.writable_description_unlinking_document),
+                summary = null,
+            )
+        }
         is Writable.Restriction -> when (restriction) {
             is Profile.Restriction.Block.Add -> WritableDescription(
                 icon = Icons.Rounded.Block,

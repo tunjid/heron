@@ -9,6 +9,8 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EditAttributes
 import androidx.compose.material.icons.rounded.FilterAlt
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -21,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
@@ -48,8 +51,11 @@ import heron.ui.core.generated.resources.yes
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.delete_post
 import heron.ui.timeline.generated.resources.delete_post_prompt
+import heron.ui.timeline.generated.resources.link_document_to_post
+import heron.ui.timeline.generated.resources.link_document_to_post_overwrite_prompt
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
+import heron.ui.timeline.generated.resources.unlink_document_from_post
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -138,6 +144,7 @@ private fun PostOptionsBottomSheet(
 
                 if (isOwnPost) PostManagementMenuSection(
                     state = state,
+                    signedInProfileId = signedInProfileId,
                     post = post,
                     onOptionClicked = onOptionClicked,
                 )
@@ -188,6 +195,7 @@ internal fun PostModerationMenuSection(
 private fun PostManagementMenuSection(
     modifier: Modifier = Modifier,
     state: PostOptionsSheetState,
+    signedInProfileId: ProfileId?,
     post: Post,
     onOptionClicked: (PostOption) -> Unit,
 ) {
@@ -205,6 +213,82 @@ private fun PostManagementMenuSection(
                 },
             )
             ItemHorizontalDivider()
+
+            // Only the owner of both the post and its embedded standard document can change
+            // the document's bskyPostRef. Show "unlink" when it already points here, otherwise
+            // "link" (with a confirm when it currently points at a different post).
+            val ownDocument = post.embeddedRecords
+                .filterIsInstance<StandardDocument>()
+                .firstOrNull()
+                ?.takeIf { it.authorId == signedInProfileId }
+            if (ownDocument != null) {
+                val overwriteDialogState = rememberSimpleDialogState()
+                val isLinkedPost = ownDocument.bskyPostRef?.uri == post.uri
+                val dispatch = {
+                    state.viewModel.accept(
+                        PostOptionsAction.UpdatePostReference(
+                            if (isLinkedPost) StandardDocument.PostReference.Unlink(
+                                documentUri = ownDocument.uri,
+                            )
+                            else StandardDocument.PostReference.Link(
+                                documentUri = ownDocument.uri,
+                                postUri = post.uri,
+                                postCid = post.cid,
+                            ),
+                        ),
+                    )
+                    state.hide()
+                }
+
+                BottomSheetItemCardRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    icon =
+                    if (isLinkedPost) Icons.Rounded.LinkOff
+                    else Icons.Rounded.Link,
+                    text = stringResource(
+                        if (isLinkedPost) Res.string.unlink_document_from_post
+                        else Res.string.link_document_to_post,
+                    ),
+                    onClick = {
+                        when {
+                            ownDocument.bskyPostRef != null -> overwriteDialogState.show()
+                            else -> dispatch()
+                        }
+                    },
+                )
+
+                SimpleDialog(
+                    state = overwriteDialogState,
+                    title = {
+                        SimpleDialogTitle(
+                            text = stringResource(Res.string.link_document_to_post),
+                        )
+                    },
+                    text = {
+                        SimpleDialogText(
+                            text = stringResource(Res.string.link_document_to_post_overwrite_prompt),
+                        )
+                    },
+                    confirmButton = {
+                        DestructiveDialogButton(
+                            text = stringResource(CommonStrings.yes),
+                            onClick = {
+                                overwriteDialogState.hide()
+                                dispatch()
+                            },
+                        )
+                    },
+                    dismissButton = {
+                        NeutralDialogButton(
+                            text = stringResource(CommonStrings.no),
+                            onClick = overwriteDialogState::hide,
+                        )
+                    },
+                )
+
+                ItemHorizontalDivider()
+            }
 
             val deletePostDialogState = rememberSimpleDialogState()
             BottomSheetItemCardRow(
