@@ -77,6 +77,8 @@ data class Preferences(
         val showTrendingTopics: Boolean = true,
         @ProtoNumber(9)
         val allowAllTimelinePresentations: Boolean = false,
+        @ProtoNumber(10)
+        val darkThemeConfigOrdinal: Int = 0,
     )
 
     companion object {
