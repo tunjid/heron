@@ -232,25 +232,21 @@ private fun stubPublicationEntity(
 
 private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
     is BasicAccentUnion.Rgb -> value.toColor()
-    is BasicAccentUnion.Rgba -> value.toColor()
     is BasicAccentUnion.Unknown -> null
 }
 
 private fun BasicAccentForegroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
     is BasicAccentForegroundUnion.Rgb -> value.toColor()
-    is BasicAccentForegroundUnion.Rgba -> value.toColor()
     is BasicAccentForegroundUnion.Unknown -> null
 }
 
 private fun BasicBackgroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
     is BasicBackgroundUnion.Rgb -> value.toColor()
-    is BasicBackgroundUnion.Rgba -> value.toColor()
     is BasicBackgroundUnion.Unknown -> null
 }
 
 private fun BasicForegroundUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
     is BasicForegroundUnion.Rgb -> value.toColor()
-    is BasicForegroundUnion.Rgba -> value.toColor()
     is BasicForegroundUnion.Unknown -> null
 }
 

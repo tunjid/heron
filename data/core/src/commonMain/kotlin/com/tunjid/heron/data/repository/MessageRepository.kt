@@ -244,6 +244,9 @@ internal class OfflineMessageRepository(
                                     )
 
                                     is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                    // TODO: Support group conversations. System messages (member
+                                    //  joins/leaves, group edits, etc.) are dropped for now.
+                                    is GetMessagesResponseMessageUnion.SystemMessageView -> Unit
                                 }
                             }
                         }
@@ -307,6 +310,29 @@ internal class OfflineMessageRepository(
                             )
                             is Log.Unknown -> cursor
                             is Log.UnmuteConvo -> maxOf(cursor, union.value.rev)
+                            // TODO: Support group conversations. These membership, join-request and
+                            //  join-link log events only advance the cursor for now; none of their
+                            //  state is persisted. Handle them when group messaging is implemented.
+                            is Log.AddMember -> maxOf(cursor, union.value.rev)
+                            is Log.ApproveJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.CreateJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.DisableJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.EditGroup -> maxOf(cursor, union.value.rev)
+                            is Log.EditJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.EnableJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.IncomingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.LockConvo -> maxOf(cursor, union.value.rev)
+                            is Log.LockConvoPermanently -> maxOf(cursor, union.value.rev)
+                            is Log.MemberJoin -> maxOf(cursor, union.value.rev)
+                            is Log.MemberLeave -> maxOf(cursor, union.value.rev)
+                            is Log.OutgoingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.ReadConvo -> maxOf(cursor, union.value.rev)
+                            is Log.ReadJoinRequests -> maxOf(cursor, union.value.rev)
+                            is Log.RejectJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.RemoveMember -> maxOf(cursor, union.value.rev)
+                            is Log.UnlockConvo -> maxOf(cursor, union.value.rev)
+                            is Log.WithdrawIncomingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.WithdrawOutgoingJoinRequest -> maxOf(cursor, union.value.rev)
                         }
                     }
 
