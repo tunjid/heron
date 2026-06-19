@@ -31,3 +31,7 @@ internal actual fun JsonContent.add(
     ),
     format = format,
 )
+
+internal actual fun <T> JsonContent.read(
+    reader: JsonObject.() -> T,
+): T = format.parseToJsonElement(value).jsonObject.reader()

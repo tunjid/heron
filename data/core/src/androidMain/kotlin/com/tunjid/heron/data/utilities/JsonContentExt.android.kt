@@ -28,3 +28,7 @@ internal actual fun JsonContent.add(
     value = JsonObject(value.jsonObject + buildJsonObject(builderAction)),
     format = format,
 )
+
+internal actual fun <T> JsonContent.read(
+    reader: JsonObject.() -> T,
+): T = value.jsonObject.reader()

@@ -82,6 +82,7 @@ import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.TidGenerator
+import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.facet
@@ -117,6 +118,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
@@ -785,10 +787,12 @@ internal class OfflinePostRepository(
                 mediaBlobs = blobs,
             ),
             facets = resolvedLinks.facet(),
-            via = Platform.current.description,
             createdAt = createdAt,
         )
             .asJsonContent(BskyPost.serializer())
+            .add {
+                put("via", Platform.current.description)
+            }
     }
 
     private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =

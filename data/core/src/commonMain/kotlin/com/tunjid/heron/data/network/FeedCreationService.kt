@@ -121,7 +121,7 @@ internal class GrazeFeedCreationService(
         networkService.runCatchingWithMonitoredNetworkRetry {
             getServiceAuth(
                 GetServiceAuthQueryParams(
-                    aud = Did(GrazeDid.id),
+                    aud = GrazeDid.id,
                     exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
                     lxm = call.lexicon,
                 ),

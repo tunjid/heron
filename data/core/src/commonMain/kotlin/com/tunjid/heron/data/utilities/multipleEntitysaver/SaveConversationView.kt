@@ -77,6 +77,9 @@ internal fun MultipleEntitySaver.add(
             )
             lastMessage.value.id.let(::MessageId)
         }
+        // TODO: Support group conversations. System messages (member joins/leaves,
+        //  group edits, etc.) are emitted in group convos; only the id is recorded for now.
+        is ConvoViewLastMessageUnion.SystemMessageView -> lastMessage.value.id.let(::MessageId)
     }
 
     val lastReactedToMessageId = when (val lastReaction = convoView.lastReaction) {

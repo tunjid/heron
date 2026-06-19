@@ -18,7 +18,10 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import sh.christian.ozone.api.model.JsonContent
 
 internal fun <T> T.asJsonContent(
@@ -46,3 +49,23 @@ internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
 internal expect fun JsonContent.add(
     builderAction: JsonObjectBuilder.() -> Unit,
 ): JsonContent
+
+/**
+ * Reads from the underlying JSON object via [reader] and returns its result.
+ *
+ * This is the read counterpart to [add]: it allows extracting arbitrary fields that
+ * are not present on the bundled upstream lexicon definitions (e.g. a custom `via`
+ * field on `app.bsky.feed.Post`) and are therefore dropped by the generated
+ * deserializers, since the underlying JSON is trivially readable.
+ */
+internal expect fun <T> JsonContent.read(
+    reader: JsonObject.() -> T,
+): T
+
+/**
+ * Reads the value of [key] from the underlying JSON object as a [String], or `null`
+ * if the key is absent, not a primitive, or an explicit JSON `null`.
+ */
+internal fun JsonContent.stringOrNull(
+    key: String,
+): String? = read { (this[key] as? JsonPrimitive)?.contentOrNull }

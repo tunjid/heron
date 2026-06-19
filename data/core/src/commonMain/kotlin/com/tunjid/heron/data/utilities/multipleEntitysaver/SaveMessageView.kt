@@ -77,7 +77,9 @@ internal fun MultipleEntitySaver.add(
 
     when (val embed = messageView.embed) {
         is MessageViewEmbedUnion.Unknown -> Unit
-        is MessageViewEmbedUnion.View -> when (val record = embed.value.record) {
+        // TODO: Support group conversations. Join-link embeds are a group feature; ignored for now.
+        is MessageViewEmbedUnion.ChatBskyEmbedJoinLinkView -> Unit
+        is MessageViewEmbedUnion.AppBskyEmbedRecordView -> when (val record = embed.value.record) {
             is RecordViewRecordUnion.FeedGeneratorView -> {
                 add(
                     feedGeneratorView = record.value,

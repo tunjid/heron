@@ -45,7 +45,8 @@ metro = "1.2.1"
 navigationEventCompose = "1.1.0"
 navigation3Multiplatform = "1.1.1"
 okio = "3.17.0"
-ozone-atproto = "0.3.7"
+ozone-atproto = "0.3.9"
+ozone-bluesky-lexicons = "2026.06.19"
 savedstate-multiplatform = "1.4.0"
 spotless = "8.4.0"
 tunjid-state-holder = "2.0.0"
@@ -173,6 +174,7 @@ navigation3-multiplatform-ui = { group = "org.jetbrains.androidx.navigation3", n
 navigation-event-compose = { group = "org.jetbrains.androidx.navigationevent", name = "navigationevent-compose", version.ref = "navigationEventCompose" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 ozone-atproto-runtime = { group = "com.tunjid", name = "api-gen-runtime", version.ref = "ozone-atproto" }
+ozone-bluesky-lexicons = { group = "sh.christian.ozone", name = "lexicons", version.ref = "ozone-bluesky-lexicons" }
 skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 tunjid-composables = { group = "com.tunjid.composables", name = "composables", version.ref = "tunjid-composables" }
 tunjid-mutator-core-common = { group = "com.tunjid.mutator", name = "core", version.ref = "tunjid-state-holder" }
