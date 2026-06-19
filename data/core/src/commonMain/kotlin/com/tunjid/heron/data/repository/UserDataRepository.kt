@@ -35,6 +35,10 @@ interface UserDataRepository {
         themeOrdinal: Int,
     ): Outcome
 
+    suspend fun setDarkThemeConfigOrdinal(
+        darkThemeConfigOrdinal: Int,
+    ): Outcome
+
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
@@ -104,6 +108,12 @@ internal class OfflineUserDataRepository(
         themeOrdinal: Int,
     ): Outcome = updatePreferences {
         copy(local = local.copy(currentThemeOrdinal = themeOrdinal))
+    }
+
+    override suspend fun setDarkThemeConfigOrdinal(
+        darkThemeConfigOrdinal: Int,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(darkThemeConfigOrdinal = darkThemeConfigOrdinal))
     }
 
     override suspend fun setCompactNavigation(

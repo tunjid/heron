@@ -131,6 +131,7 @@ internal fun ComposeScreen(
                 actions(Action.RemoveEmbeddedRecord(lastDetectedEmbedUrl))
             },
             onExternalLinkDetected = { url ->
+                println("URL: $url")
                 lastDetectedEmbedUrl = url
                 if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
                     actions(Action.EmbedUrl(url))

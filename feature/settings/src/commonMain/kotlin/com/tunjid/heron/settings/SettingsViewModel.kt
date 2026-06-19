@@ -115,6 +115,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetDarkThemeConfigOrdinal -> action.flow.setDarkThemeConfigOrdinal(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.SetCompactNavigation -> action.flow.toggleCompactNavigation(
                         userDataRepository = userDataRepository,
                     )
@@ -293,6 +297,13 @@ private fun Flow<Action.SetCurrentThemeOrdinal>.setCurrentThemeOrdinal(
 ): Flow<Mutation<State>> =
     mapToManyMutations { (themeOrdinal) ->
         userDataRepository.setCurrentThemeOrdinal(themeOrdinal)
+    }
+
+private fun Flow<Action.SetDarkThemeConfigOrdinal>.setDarkThemeConfigOrdinal(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (darkThemeConfigOrdinal) ->
+        userDataRepository.setDarkThemeConfigOrdinal(darkThemeConfigOrdinal)
     }
 
 private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
