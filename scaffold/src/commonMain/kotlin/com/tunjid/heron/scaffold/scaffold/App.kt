@@ -58,11 +58,7 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    val localPrefs by remember {
-        derivedStateOf {
-            appState.identityState.preferences?.local
-        }
-    }
+    val localPrefs = appState.identityState.preferences?.local
     AppTheme(
         useDarkTheme = when (
             DarkThemeConfig.fromOrdinal(localPrefs?.darkThemeConfigOrdinal ?: 0)
