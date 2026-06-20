@@ -265,13 +265,14 @@ private fun Flow<Action.EditMedia>.launchEditMediaMutations(
             state.video = state.video?.takeIf { it != action.media }
         }
 
-        is Action.EditMedia.UpdateMedia -> when (val item = media.first()) {
+        is Action.EditMedia.UpdateMedia -> when (val item = media.firstOrNull()) {
             is RestrictedFile.Media.Photo -> state.photos = state.photos.map { photo ->
                 if (photo.path == item.path) item
                 else photo
             }
 
             is RestrictedFile.Media.Video -> state.video = item
+            else -> Unit
         }
     }
 }
@@ -283,29 +284,31 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
     fileManager: FileManager,
     writeQueue: WriteQueue,
 ) = launchedCollect { action ->
-    val postWrite = Writable.Create(
-        request = Post.Create.Request(
-            authorId = action.authorId,
-            text = action.text,
-            links = action.links,
-            metadata = Post.Create.Metadata(
-                reply = action.postType as? Post.Create.Reply,
-                embeddedRecordReference = action.embeddedRecordReference,
-                embeddedMedia = action.media.mapNotNull { item ->
-                    when (item) {
-                        is RestrictedFile.Media.Photo ->
-                            if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
-                            else null
+    val postWrite = withContext(Dispatchers.IO) {
+        Writable.Create(
+            request = Post.Create.Request(
+                authorId = action.authorId,
+                text = action.text,
+                links = action.links,
+                metadata = Post.Create.Metadata(
+                    reply = action.postType as? Post.Create.Reply,
+                    embeddedRecordReference = action.embeddedRecordReference,
+                    embeddedMedia = action.media.mapNotNull { item ->
+                        when (item) {
+                            is RestrictedFile.Media.Photo ->
+                                if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
+                                else null
 
-                        is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(
-                            item,
-                        )
-                    }
-                }.filterIsInstance<File.Media>(),
-                allowed = action.interactionPreference?.threadGateAllowed,
+                            is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(
+                                item,
+                            )
+                        }
+                    }.filterIsInstance<File.Media>(),
+                    allowed = action.interactionPreference?.threadGateAllowed,
+                ),
             ),
-        ),
-    )
+        )
+    }
 
     val status = writeQueue.enqueue(postWrite)
     val memo = postWrite.writeStatusMessage(status)
