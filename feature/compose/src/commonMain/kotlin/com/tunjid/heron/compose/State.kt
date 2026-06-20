@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -32,35 +33,43 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val sharedElementPrefix: String?,
-    val postType: Post.Create? = null,
-    val signedInProfile: Profile? = null,
-    val fabExpanded: Boolean = true,
-    val embeddedRecord: Record.Embeddable.Native? = null,
-    @Transient
-    val dismissedEmbedUrl: String? = null,
-    @Transient
-    val interactionsPreference: PostInteractionSettingsPreference? = null,
-    @Serializable(with = TextFieldValueSerializer::class)
-    val postText: TextFieldValue = TextFieldValue(),
-    @Transient
-    val photos: List<RestrictedFile.Media.Photo> = emptyList(),
-    @Transient
-    val video: RestrictedFile.Media.Video? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-    @Transient
-    val suggestedProfiles: List<Profile> = emptyList(),
-) {
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val sharedElementPrefix: String?,
+        val postType: Post.Create? = null,
+        val signedInProfile: Profile? = null,
+        val fabExpanded: Boolean = true,
+        val embeddedRecord: Record.Embeddable.Native? = null,
+        @Transient
+        val dismissedEmbedUrl: String? = null,
+        @Transient
+        val interactionsPreference: PostInteractionSettingsPreference? = null,
+        @Serializable(with = TextFieldValueSerializer::class)
+        val postText: TextFieldValue = TextFieldValue(),
+        @Transient
+        val photos: List<RestrictedFile.Media.Photo> = emptyList(),
+        @Transient
+        val video: RestrictedFile.Media.Video? = null,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+        @Transient
+        val suggestedProfiles: List<Profile> = emptyList(),
+    ) : State
+
     companion object {
-        operator fun invoke(route: Route): State = when (val model = route.model<Post.Create>()) {
-            is Post.Create -> State(
+        operator fun invoke(route: Route): Immutable = when (val model = route.model<Post.Create>()) {
+            is Post.Create -> Immutable(
                 postText = TextFieldValue(
                     annotatedString = AnnotatedString(
                         when (model) {
@@ -80,7 +89,7 @@ data class State(
                 postType = model,
             )
 
-            else -> State(
+            else -> Immutable(
                 sharedElementPrefix = route.sharedElementPrefix,
             )
         }
