@@ -276,7 +276,7 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
 
     return when {
         lastMessageReactedTo == null -> lastMessage?.let {
-            if (it.sender.did == signedInProfileId) {
+            if (it.sender?.did == signedInProfileId) {
                 stringResource(Res.string.you_sent_summary, it.text)
             } else it.text
         } ?: ""
@@ -306,7 +306,7 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
                     )
                 }
                 lastMessage -> {
-                    if (mostRecent.sender.did == signedInProfileId) {
+                    if (mostRecent.sender?.did == signedInProfileId) {
                         stringResource(Res.string.you_sent_summary, mostRecent.text)
                     } else mostRecent.text
                 }

@@ -59,6 +59,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
@@ -92,10 +93,23 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
+import heron.feature.conversation.generated.resources.Res
+import heron.feature.conversation.generated.resources.system_message_group_renamed
+import heron.feature.conversation.generated.resources.system_message_group_renamed_to
+import heron.feature.conversation.generated.resources.system_message_join_link_updated
+import heron.feature.conversation.generated.resources.system_message_locked
+import heron.feature.conversation.generated.resources.system_message_locked_permanently
+import heron.feature.conversation.generated.resources.system_message_member_added
+import heron.feature.conversation.generated.resources.system_message_member_joined
+import heron.feature.conversation.generated.resources.system_message_member_left
+import heron.feature.conversation.generated.resources.system_message_member_removed
+import heron.feature.conversation.generated.resources.system_message_unknown_actor
+import heron.feature.conversation.generated.resources.system_message_unlocked
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ConversationScreen(
@@ -121,41 +135,49 @@ internal fun ConversationScreen(
             count = state.tiledItems.size,
             key = { state.tiledItems[it].id },
         ) { index ->
-            val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
-            val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
             val content = state.tiledItems[index]
-            val isFirstMessageByAuthor = prevAuthor != content.sender
-            val isLastMessageByAuthor = nextAuthor != content.sender
+            val systemContent = content.systemContent
+            if (systemContent != null) {
+                SystemMessageRow(
+                    modifier = Modifier.animateItem(),
+                    systemContent = systemContent,
+                )
+            } else {
+                val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
+                val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
+                val isFirstMessageByAuthor = prevAuthor != content.sender
+                val isLastMessageByAuthor = nextAuthor != content.sender
 
-            Message(
-                modifier = Modifier
-                    .animateItem(),
-                item = content,
-                side = when {
-                    content.sender.did == state.signedInProfile?.did -> Side.Sender
-                    else -> Side.Receiver
-                },
-                isFirstMessageByAuthor = isFirstMessageByAuthor,
-                isLastMessageByAuthor = isLastMessageByAuthor,
-                paneScaffoldState = paneScaffoldState,
-                actions = actions,
-                onMessageLongPressed = { item ->
-                    when (item) {
-                        is MessageItem.Pending -> Unit
-                        is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
-                    }
-                },
-                onLinkTargetClicked = { linkTarget ->
-                    if (linkTarget is LinkTarget.Navigable) actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = linkTarget.path,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                Message(
+                    modifier = Modifier
+                        .animateItem(),
+                    item = content,
+                    side = when {
+                        content.sender?.did == state.signedInProfile?.did -> Side.Sender
+                        else -> Side.Receiver
+                    },
+                    isFirstMessageByAuthor = isFirstMessageByAuthor,
+                    isLastMessageByAuthor = isLastMessageByAuthor,
+                    paneScaffoldState = paneScaffoldState,
+                    actions = actions,
+                    onMessageLongPressed = { item ->
+                        when (item) {
+                            is MessageItem.Pending -> Unit
+                            is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
+                        }
+                    },
+                    onLinkTargetClicked = { linkTarget ->
+                        if (linkTarget is LinkTarget.Navigable) actions(
+                            Action.Navigate.To(
+                                pathDestination(
+                                    path = linkTarget.path,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                ),
                             ),
-                        ),
-                    )
-                },
-            )
+                        )
+                    },
+                )
+            }
         }
     }
 
@@ -232,15 +254,17 @@ private fun Message(
             boundsTransform = paneScaffoldState.childBoundsTransform,
         ),
         onAvatarClicked = {
-            actions(
-                Action.Navigate.To(
-                    profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        profile = item.sender,
-                        avatarSharedElementKey = item.avatarSharedElementKey(),
+            item.sender?.let { profile ->
+                actions(
+                    Action.Navigate.To(
+                        profileDestination(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            profile = profile,
+                            avatarSharedElementKey = item.avatarSharedElementKey(),
+                        ),
                     ),
-                ),
-            )
+                )
+            }
         },
         onMessageLongPressed = onMessageLongPressed,
         onLinkTargetClicked = onLinkTargetClicked,
@@ -346,9 +370,9 @@ private fun MessageAvatar(
             sharedContentState = paneScaffoldState.rememberSharedContentState(
                 key = item.avatarSharedElementKey(),
             ),
-            state = remember(item.sender.avatar) {
+            state = remember(item.sender?.avatar) {
                 ImageArgs(
-                    url = item.sender.avatar?.uri,
+                    url = item.sender?.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                     shape = RoundedPolygonShape.Circle,
@@ -411,7 +435,7 @@ private fun AuthorNameTimestamp(
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = item.sender.displayName ?: "",
+            text = item.sender?.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -599,7 +623,77 @@ private fun MessageRecord(
 }
 
 private fun MessageItem.avatarSharedElementKey(): String {
-    return "$id-${conversationId.id}-${sender.did.id}"
+    return "$id-${conversationId.id}-${sender?.did?.id}"
+}
+
+@Composable
+private fun SystemMessageRow(
+    systemContent: Message.SystemContent,
+    modifier: Modifier = Modifier,
+) {
+    val summary = systemContent.summary()
+    if (summary.isEmpty()) return
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+private fun Message.SystemContent.Actor.name(fallback: String): String =
+    displayName?.takeIf(String::isNotBlank) ?: handle ?: fallback
+
+@Composable
+private fun Message.SystemContent.summary(): String {
+    val someone = stringResource(Res.string.system_message_unknown_actor)
+    return when (this) {
+        is Message.SystemContent.MemberAdded -> stringResource(
+            Res.string.system_message_member_added,
+            addedBy.name(someone),
+            member.name(someone),
+        )
+        is Message.SystemContent.MemberRemoved -> stringResource(
+            Res.string.system_message_member_removed,
+            removedBy.name(someone),
+            member.name(someone),
+        )
+        is Message.SystemContent.MemberJoined -> stringResource(
+            Res.string.system_message_member_joined,
+            member.name(someone),
+        )
+        is Message.SystemContent.MemberLeft -> stringResource(
+            Res.string.system_message_member_left,
+            member.name(someone),
+        )
+        is Message.SystemContent.GroupRenamed -> {
+            val newName = newName
+            if (newName.isNullOrBlank()) stringResource(Res.string.system_message_group_renamed)
+            else stringResource(Res.string.system_message_group_renamed_to, newName)
+        }
+        is Message.SystemContent.Locked -> stringResource(
+            Res.string.system_message_locked,
+            by.name(someone),
+        )
+        is Message.SystemContent.Unlocked -> stringResource(
+            Res.string.system_message_unlocked,
+            by.name(someone),
+        )
+        is Message.SystemContent.LockedPermanently -> stringResource(
+            Res.string.system_message_locked_permanently,
+            by.name(someone),
+        )
+        Message.SystemContent.JoinLinkChanged ->
+            stringResource(Res.string.system_message_join_link_updated)
+        Message.SystemContent.Unknown -> ""
+    }
 }
 
 private fun Instant.toTimestamp(): String {

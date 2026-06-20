@@ -158,6 +158,7 @@
     <string name="writable_link_document">document link</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
+    <string name="writable_conversation_update">conversation update</string>
 
     <string name="writable_description_creating_post">Creating a post</string>
     <string name="writable_description_post_photo">Photo post</string>
@@ -187,6 +188,10 @@
     <string name="writable_description_updating_profile">Updating your profile</string>
     <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
     <string name="writable_description_deleting_record">Deleting a record</string>
+    <string name="writable_description_accepting_conversation">Accepting a conversation</string>
+    <string name="writable_description_leaving_conversation">Leaving a conversation</string>
+    <string name="writable_description_muting_conversation">Muting a conversation</string>
+    <string name="writable_description_unmuting_conversation">Unmuting a conversation</string>
 
     <string name="empty_timeline_thread">There are no replies to this post.</string>
     <string name="empty_timeline_thread_description">Join the conversation by adding a post of your own.</string>

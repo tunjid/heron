@@ -30,6 +30,7 @@ import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
+import heron.ui.timeline.generated.resources.writable_conversation_update
 import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
@@ -197,6 +198,10 @@ fun Writable.writeStatusMessage(
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_status_update),
+            )
+            is Writable.ConversationUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_conversation_update),
             )
         }
     }

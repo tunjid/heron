@@ -371,6 +371,7 @@ private fun Writable.writeTimeout() =
                 .plus(if (update.avatarFile != null) ImageWriteTimeout else 0.seconds)
                 .plus(if (update.bannerFile != null) ImageWriteTimeout else 0.seconds)
         is Writable.Connection,
+        is Writable.ConversationUpdate,
         is Writable.Interaction,
         is Writable.NotificationUpdate,
         is Writable.Reaction,

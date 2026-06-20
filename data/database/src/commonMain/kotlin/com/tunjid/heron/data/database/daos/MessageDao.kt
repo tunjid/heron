@@ -48,6 +48,7 @@ interface MessageDao {
                 lastMessage.conversationOwnerId AS lastMessage_conversationOwnerId,
                 lastMessage.isDeleted AS lastMessage_isDeleted,
                 lastMessage.sentAt AS lastMessage_sentAt,
+                lastMessage.base64EncodedSystemContent AS lastMessage_base64EncodedSystemContent,
                 lastMessageReactedTo.id AS lastMessageReactedTo_id,
                 lastMessageReactedTo.rev AS lastMessageReactedTo_rev,
                 lastMessageReactedTo.text AS lastMessageReactedTo_text,
@@ -85,6 +86,53 @@ interface MessageDao {
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedConversationEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT conversations.*,
+                lastMessage.id AS lastMessage_id,
+                lastMessage.rev AS lastMessage_rev,
+                lastMessage.text AS lastMessage_text,
+                lastMessage.senderId AS lastMessage_senderId,
+                lastMessage.conversationId AS lastMessage_conversationId,
+                lastMessage.conversationOwnerId AS lastMessage_conversationOwnerId,
+                lastMessage.isDeleted AS lastMessage_isDeleted,
+                lastMessage.sentAt AS lastMessage_sentAt,
+                lastMessage.base64EncodedSystemContent AS lastMessage_base64EncodedSystemContent,
+                lastMessageReactedTo.id AS lastMessageReactedTo_id,
+                lastMessageReactedTo.rev AS lastMessageReactedTo_rev,
+                lastMessageReactedTo.text AS lastMessageReactedTo_text,
+                lastMessageReactedTo.senderId AS lastMessageReactedTo_senderId,
+                lastMessageReactedTo.conversationId AS lastMessageReactedTo_conversationId,
+                lastMessageReactedTo.conversationOwnerId AS lastMessageReactedTo_conversationOwnerId,
+                lastMessageReactedTo.isDeleted AS lastMessageReactedTo_isDeleted,
+                lastMessageReactedTo.sentAt AS lastMessageReactedTo_sentAt,
+                lastReaction.messageId AS lastReaction_messageId,
+                lastReaction.value AS lastReaction_value,
+                lastReaction.senderId AS lastReaction_senderId,
+                lastReaction.createdAt AS lastReaction_createdAt
+                FROM conversations
+            LEFT JOIN messages AS lastMessage
+            ON lastMessageId = lastMessage.id
+            LEFT JOIN messages AS lastMessageReactedTo
+            ON lastReactedToMessageId = lastMessageReactedTo.id
+            LEFT JOIN (
+                SELECT * FROM messageReactions AS lastReaction
+                ORDER BY createdAt
+                DESC
+                LIMIT 1
+            ) AS lastReaction
+            ON lastReactedToMessageId = lastReaction.messageId
+            WHERE conversations.id = :conversationId
+            AND ownerId = :ownerId
+            LIMIT 1
+        """,
+    )
+    fun conversation(
+        conversationId: String,
+        ownerId: String,
+    ): Flow<PopulatedConversationEntity?>
 
     @Transaction
     @Query(
@@ -151,6 +199,31 @@ interface MessageDao {
     """,
     )
     suspend fun deleteAllConversations()
+
+    @Query(
+        """
+        DELETE FROM conversations
+        WHERE id = :conversationId
+        AND ownerId = :ownerId
+    """,
+    )
+    suspend fun deleteConversation(
+        conversationId: String,
+        ownerId: String,
+    )
+
+    @Query(
+        """
+        UPDATE conversations
+        SET status = 'accepted'
+        WHERE id = :conversationId
+        AND ownerId = :ownerId
+    """,
+    )
+    suspend fun markConversationAccepted(
+        conversationId: String,
+        ownerId: String,
+    )
 
     @Query(
         """

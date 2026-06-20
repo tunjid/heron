@@ -21,4 +21,25 @@
     <string name="textfield_desc">Text input</string>
     <string name="textfield_hint">Type a message</string>
     <string name="textfield_send">Send</string>
+
+    <!-- Group conversation system messages. %1$s/%2$s are member display names. -->
+    <string name="system_message_unknown_actor">Someone</string>
+    <string name="system_message_member_added">%1$s added %2$s</string>
+    <string name="system_message_member_removed">%1$s removed %2$s</string>
+    <string name="system_message_member_joined">%1$s joined</string>
+    <string name="system_message_member_left">%1$s left</string>
+    <string name="system_message_group_renamed">The group was renamed</string>
+    <string name="system_message_group_renamed_to">The group was renamed to &quot;%1$s&quot;</string>
+    <string name="system_message_locked">%1$s locked the group</string>
+    <string name="system_message_unlocked">%1$s unlocked the group</string>
+    <string name="system_message_locked_permanently">%1$s locked the group permanently</string>
+    <string name="system_message_join_link_updated">The join link was updated</string>
+
+    <!-- Conversation actions and title -->
+    <string name="conversation_options">Conversation options</string>
+    <string name="conversation_accept">Accept</string>
+    <string name="conversation_mute">Mute</string>
+    <string name="conversation_unmute">Unmute</string>
+    <string name="conversation_leave">Leave</string>
+    <string name="conversation_group_fallback">Group</string>
 </resources>
