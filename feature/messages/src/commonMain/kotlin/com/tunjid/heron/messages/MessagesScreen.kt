@@ -58,6 +58,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -275,11 +276,7 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
     val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
 
     return when {
-        lastMessageReactedTo == null -> lastMessage?.let {
-            if (it.sender?.did == signedInProfileId) {
-                stringResource(Res.string.you_sent_summary, it.text)
-            } else it.text
-        } ?: ""
+        lastMessageReactedTo == null -> lastMessage?.summaryText(signedInProfileId) ?: ""
 
         lastMessage == null -> ""
 
@@ -305,14 +302,20 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
                         mostRecent.text,
                     )
                 }
-                lastMessage -> {
-                    if (mostRecent.sender?.did == signedInProfileId) {
-                        stringResource(Res.string.you_sent_summary, mostRecent.text)
-                    } else mostRecent.text
-                }
+                lastMessage -> mostRecent.summaryText(signedInProfileId)
                 else -> ""
             }
         }
+    }
+}
+
+@Composable
+private fun Message.summaryText(signedInProfileId: ProfileId?): String {
+    val system = system
+    return when {
+        system != null -> system.summary()
+        sender?.did == signedInProfileId -> stringResource(Res.string.you_sent_summary, text)
+        else -> text
     }
 }
 

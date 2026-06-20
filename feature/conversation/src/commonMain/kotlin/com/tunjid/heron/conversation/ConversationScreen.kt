@@ -88,28 +88,16 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
-import heron.feature.conversation.generated.resources.Res
-import heron.feature.conversation.generated.resources.system_message_group_renamed
-import heron.feature.conversation.generated.resources.system_message_group_renamed_to
-import heron.feature.conversation.generated.resources.system_message_join_link_updated
-import heron.feature.conversation.generated.resources.system_message_locked
-import heron.feature.conversation.generated.resources.system_message_locked_permanently
-import heron.feature.conversation.generated.resources.system_message_member_added
-import heron.feature.conversation.generated.resources.system_message_member_joined
-import heron.feature.conversation.generated.resources.system_message_member_left
-import heron.feature.conversation.generated.resources.system_message_member_removed
-import heron.feature.conversation.generated.resources.system_message_unknown_actor
-import heron.feature.conversation.generated.resources.system_message_unlocked
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ConversationScreen(
@@ -645,54 +633,6 @@ private fun SystemMessageRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-private fun Message.SystemContent.Actor.name(fallback: String): String =
-    displayName?.takeIf(String::isNotBlank) ?: handle ?: fallback
-
-@Composable
-private fun Message.SystemContent.summary(): String {
-    val someone = stringResource(Res.string.system_message_unknown_actor)
-    return when (this) {
-        is Message.SystemContent.MemberAdded -> stringResource(
-            Res.string.system_message_member_added,
-            addedBy.name(someone),
-            member.name(someone),
-        )
-        is Message.SystemContent.MemberRemoved -> stringResource(
-            Res.string.system_message_member_removed,
-            removedBy.name(someone),
-            member.name(someone),
-        )
-        is Message.SystemContent.MemberJoined -> stringResource(
-            Res.string.system_message_member_joined,
-            member.name(someone),
-        )
-        is Message.SystemContent.MemberLeft -> stringResource(
-            Res.string.system_message_member_left,
-            member.name(someone),
-        )
-        is Message.SystemContent.GroupRenamed -> {
-            val newName = newName
-            if (newName.isNullOrBlank()) stringResource(Res.string.system_message_group_renamed)
-            else stringResource(Res.string.system_message_group_renamed_to, newName)
-        }
-        is Message.SystemContent.Locked -> stringResource(
-            Res.string.system_message_locked,
-            by.name(someone),
-        )
-        is Message.SystemContent.Unlocked -> stringResource(
-            Res.string.system_message_unlocked,
-            by.name(someone),
-        )
-        is Message.SystemContent.LockedPermanently -> stringResource(
-            Res.string.system_message_locked_permanently,
-            by.name(someone),
-        )
-        Message.SystemContent.JoinLinkChanged ->
-            stringResource(Res.string.system_message_join_link_updated)
-        Message.SystemContent.Unknown -> ""
     }
 }
 

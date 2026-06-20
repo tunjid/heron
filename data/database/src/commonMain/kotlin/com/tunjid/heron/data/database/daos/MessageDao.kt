@@ -67,13 +67,12 @@ interface MessageDao {
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
             ON lastReactedToMessageId = lastMessageReactedTo.id
-            LEFT JOIN (
-                SELECT * FROM messageReactions AS lastReaction
-                ORDER BY createdAt
-                DESC
-                LIMIT 1
-            ) AS lastReaction
-            ON lastReactedToMessageId = lastReaction.messageId
+            LEFT JOIN messageReactions AS lastReaction
+            ON lastReaction.messageId = lastReactedToMessageId
+            AND lastReaction.createdAt = (
+                SELECT MAX(createdAt) FROM messageReactions
+                WHERE messageId = lastReactedToMessageId
+            )
             WHERE ownerId = :ownerId
             ORDER BY sort
             DESC
@@ -117,13 +116,12 @@ interface MessageDao {
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
             ON lastReactedToMessageId = lastMessageReactedTo.id
-            LEFT JOIN (
-                SELECT * FROM messageReactions AS lastReaction
-                ORDER BY createdAt
-                DESC
-                LIMIT 1
-            ) AS lastReaction
-            ON lastReactedToMessageId = lastReaction.messageId
+            LEFT JOIN messageReactions AS lastReaction
+            ON lastReaction.messageId = lastReactedToMessageId
+            AND lastReaction.createdAt = (
+                SELECT MAX(createdAt) FROM messageReactions
+                WHERE messageId = lastReactedToMessageId
+            )
             WHERE conversations.id = :conversationId
             AND ownerId = :ownerId
             LIMIT 1

@@ -129,7 +129,8 @@ private fun MultipleParticipantTitle(
         )
         AppBarTitle(
             modifier = Modifier,
-            title = conversationName ?: stringResource(Res.string.conversation_group_fallback),
+            title = conversationName?.takeIf(String::isNotBlank)
+                ?: stringResource(Res.string.conversation_group_fallback),
         )
     }
 }
