@@ -288,6 +288,7 @@ private fun Post.Create.Request.stubPost(
 private fun Writable.embeddableRecordUri(): EmbeddableRecordUri? =
     when (this) {
         is Writable.Connection -> null
+        is Writable.ConversationUpdate -> null
         is Writable.Create -> null
         is Writable.FeedList.AddMember -> create.listUri
         is Writable.Interaction -> this.interaction.postUri

@@ -34,6 +34,7 @@ import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.ConversationStateHolder
 import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.pendingRecord
+import com.tunjid.heron.conversation.ui.ConversationOverflowMenu
 import com.tunjid.heron.conversation.ui.ConversationTitle
 import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.data.core.models.Message
@@ -160,7 +161,8 @@ class ConversationBindings(
                             ConversationTitle(
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 signedInProfileId = state.signedInProfile?.did,
-                                participants = state.members,
+                                participants = state.conversation?.members.orEmpty(),
+                                conversationName = state.conversation?.group?.name,
                                 paneScaffoldState = this,
                                 onProfileClicked = { profile ->
                                     stateHolder.accept(
@@ -174,6 +176,20 @@ class ConversationBindings(
                                             ),
                                         ),
                                     )
+                                },
+                            )
+                        },
+                        actions = {
+                            ConversationOverflowMenu(
+                                conversation = state.conversation,
+                                onAccept = {
+                                    stateHolder.accept(Action.AcceptConversation)
+                                },
+                                onLeave = {
+                                    stateHolder.accept(Action.LeaveConversation)
+                                },
+                                onToggleMute = { muted ->
+                                    stateHolder.accept(Action.ToggleMute(muted))
                                 },
                             )
                         },

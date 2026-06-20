@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
@@ -99,6 +100,22 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             messageRepository.updateReaction(update)
+    }
+
+    @Serializable
+    data class ConversationUpdate(
+        val update: Conversation.Update,
+    ) : Writable {
+
+        override val queueId: String
+            get() = when (update) {
+                is Conversation.Update.Accept -> "accept-convo-${update.conversationId}"
+                is Conversation.Update.Leave -> "leave-convo-${update.conversationId}"
+                is Conversation.Update.Mute -> "mute-convo-${update.conversationId}-${update.muted}"
+            }
+
+        override suspend fun WriteQueue.write(): Outcome =
+            messageRepository.updateConversation(update)
     }
 
     @Serializable

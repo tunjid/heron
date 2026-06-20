@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.actor.ProfileViewBasic
 import chat.bsky.convo.ConvoView
+import chat.bsky.convo.ConvoViewKindUnion
 import chat.bsky.convo.ConvoViewLastMessageUnion
 import chat.bsky.convo.ConvoViewLastReactionUnion
 import com.tunjid.heron.data.core.types.ConversationId
@@ -77,9 +78,16 @@ internal fun MultipleEntitySaver.add(
             )
             lastMessage.value.id.let(::MessageId)
         }
-        // TODO: Support group conversations. System messages (member joins/leaves,
-        //  group edits, etc.) are emitted in group convos; only the id is recorded for now.
-        is ConvoViewLastMessageUnion.SystemMessageView -> lastMessage.value.id.let(::MessageId)
+        is ConvoViewLastMessageUnion.SystemMessageView -> {
+            add(
+                viewingProfileId = viewingProfileId,
+                conversationId = convoView.id.let(::ConversationId),
+                systemMessageView = lastMessage.value,
+                // The members subset is the best source of referred-profile names here.
+                relatedProfiles = convoView.members,
+            )
+            lastMessage.value.id.let(::MessageId)
+        }
     }
 
     val lastReactedToMessageId = when (val lastReaction = convoView.lastReaction) {
@@ -105,6 +113,14 @@ internal fun MultipleEntitySaver.add(
         }
     }
 
+    val groupConvo = when (val kind = convoView.kind) {
+        is ConvoViewKindUnion.GroupConvo -> kind.value
+        is ConvoViewKindUnion.DirectConvo,
+        is ConvoViewKindUnion.Unknown,
+        null,
+        -> null
+    }
+
     add(
         ConversationEntity(
             id = convoView.id.let(::ConversationId),
@@ -115,6 +131,16 @@ internal fun MultipleEntitySaver.add(
             muted = convoView.muted,
             status = convoView.status?.value,
             unreadCount = convoView.unreadCount,
+            kind = when (convoView.kind) {
+                is ConvoViewKindUnion.GroupConvo -> "group"
+                is ConvoViewKindUnion.DirectConvo -> "direct"
+                is ConvoViewKindUnion.Unknown,
+                null,
+                -> null
+            },
+            name = groupConvo?.name,
+            memberCount = groupConvo?.memberCount,
+            lockStatus = groupConvo?.lockStatus?.value,
         ),
     )
 }

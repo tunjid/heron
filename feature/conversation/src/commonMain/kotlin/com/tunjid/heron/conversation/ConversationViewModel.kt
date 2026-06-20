@@ -19,6 +19,7 @@ package com.tunjid.heron.conversation
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.stubProfile
@@ -105,6 +106,10 @@ class ActualConversationViewModel(
                 writeQueue = writeQueue,
             )
             launch { messagesRepository.monitorConversationLogs() }
+            launchConversationMutations(
+                state = state,
+                messagesRepository = messagesRepository,
+            )
             launch {
                 consumeSharedUri(
                     state = state,
@@ -145,6 +150,21 @@ class ActualConversationViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is Action.AcceptConversation -> action.flow.launchConversationUpdateMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                        navActions = navActions,
+                    )
+                    is Action.LeaveConversation -> action.flow.launchConversationUpdateMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                        navActions = navActions,
+                    )
+                    is Action.ToggleMute -> action.flow.launchConversationUpdateMutations(
+                        state = state,
+                        writeQueue = writeQueue,
+                        navActions = navActions,
+                    )
                     is Action.Tile -> action.flow.launchMessagingTilingMutations(
                         state = state,
                         messagesRepository = messagesRepository,
@@ -161,6 +181,43 @@ private fun launchLoadProfileMutations(
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
+
+context(productionScope: CoroutineScope)
+private fun launchConversationMutations(
+    state: State.SnapshotMutable,
+    messagesRepository: MessageRepository,
+) = messagesRepository.conversation(state.id).launchedCollect { conversation ->
+    // Keep the route-seeded stub until the conversation is available locally, otherwise a
+    // not-yet-persisted convo would emit null and blank out the title/members.
+    if (conversation != null) state.conversation = conversation
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action>.launchConversationUpdateMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+    navActions: (NavigationMutation) -> Unit,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.ConversationUpdate(
+            update = when (action) {
+                Action.AcceptConversation -> Conversation.Update.Accept(state.id)
+                Action.LeaveConversation -> Conversation.Update.Leave(state.id)
+                is Action.ToggleMute -> Conversation.Update.Mute(
+                    conversationId = state.id,
+                    muted = action.muted,
+                )
+                else -> error("Unexpected conversation action: $action")
+            },
+        )
+    },
+    postEnqueue = { action, memo ->
+        if (memo != null) state.messages += memo
+        // Leaving deletes the conversation locally, so navigate away from it.
+        if (action is Action.LeaveConversation) navActions(Action.Navigate.Pop.navigationMutation)
+    },
+)
 
 context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(

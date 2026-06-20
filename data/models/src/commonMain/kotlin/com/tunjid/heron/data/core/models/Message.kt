@@ -27,17 +27,87 @@ data class Message(
     val id: MessageId,
     val conversationId: ConversationId,
     val text: String,
-    val sender: Profile,
+    // Null for system messages (group member joins/leaves, edits, etc.) which have no sender.
+    val sender: Profile?,
     val isDeleted: Boolean,
     val sentAt: Instant,
     val embeddedRecord: Record.Embeddable?,
     val reactions: List<Reaction>,
     val metadata: Metadata?,
+    // Non-null when this is a group system message rather than a user authored message.
+    val system: SystemContent? = null,
 ) {
     @Serializable
     data class Metadata(
         val links: List<Link>,
     ) : UrlEncodableModel
+
+    /**
+     * A system generated message describing a change to a group conversation
+     * (members joining/leaving, the group being renamed or locked, etc.). Referred
+     * users carry their display info, baked in at save time, so rendering needs no
+     * read time profile resolution.
+     */
+    @Serializable
+    sealed class SystemContent : UrlEncodableModel {
+
+        @Serializable
+        data class Actor(
+            val did: ProfileId,
+            val displayName: String?,
+            val handle: String?,
+        )
+
+        @Serializable
+        data class MemberAdded(
+            val member: Actor,
+            val addedBy: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data class MemberRemoved(
+            val member: Actor,
+            val removedBy: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data class MemberJoined(
+            val member: Actor,
+            val approvedBy: Actor?,
+        ) : SystemContent()
+
+        @Serializable
+        data class MemberLeft(
+            val member: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data class GroupRenamed(
+            val oldName: String?,
+            val newName: String?,
+        ) : SystemContent()
+
+        @Serializable
+        data class Locked(
+            val by: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data class Unlocked(
+            val by: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data class LockedPermanently(
+            val by: Actor,
+        ) : SystemContent()
+
+        @Serializable
+        data object JoinLinkChanged : SystemContent()
+
+        @Serializable
+        data object Unknown : SystemContent()
+    }
 
     @Serializable
     data class Create(

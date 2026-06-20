@@ -57,6 +57,11 @@ data class ConversationEntity(
     val muted: Boolean,
     val status: String? = null,
     val unreadCount: Long,
+    // Group conversation metadata. `kind` is "group" for groups, "direct"/null otherwise.
+    val kind: String? = null,
+    val name: String? = null,
+    val memberCount: Long? = null,
+    val lockStatus: String? = null,
 )
 
 data class PopulatedConversationEntity(
@@ -88,34 +93,58 @@ fun PopulatedConversationEntity.asExternalModel() =
         members = memberEntities.map(ProfileEntity::asExternalModel),
         lastMessage = lastMessageEntity?.let(::conversationMessage),
         lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
+        status = entity.conversationStatus(),
+        group = entity.conversationGroup(),
+    )
+
+// The stored strings are the raw ATProto enum tokens written by the conversation saver.
+private fun ConversationEntity.conversationStatus(): Conversation.Status =
+    when (status) {
+        "request" -> Conversation.Status.Request
+        "accepted" -> Conversation.Status.Accepted
+        else -> Conversation.Status.Unknown
+    }
+
+private fun ConversationEntity.conversationGroup(): Conversation.Group? =
+    if (kind != "group") null
+    else Conversation.Group(
+        name = name.orEmpty(),
+        memberCount = memberCount ?: 0L,
+        lockStatus = when (lockStatus) {
+            "unlocked" -> Conversation.LockStatus.Unlocked
+            "locked" -> Conversation.LockStatus.Locked
+            "locked-permanently" -> Conversation.LockStatus.LockedPermanently
+            else -> Conversation.LockStatus.Unknown
+        },
     )
 
 private fun PopulatedConversationEntity.conversationMessage(
     message: MessageEntity,
-): Message? =
-    memberEntities.firstOrNull {
-        it.did == message.senderId
-    }
-        ?.let { sender ->
-            Message(
-                id = message.id,
-                conversationId = message.conversationId,
-                text = message.text,
-                sentAt = message.sentAt,
-                isDeleted = message.isDeleted,
-                sender = sender.asExternalModel(),
-                embeddedRecord = null,
-                reactions = listOfNotNull(
-                    lastReactionEntity
-                        ?.takeIf { message.id == lastMessageReactedToEntity?.id }
-                        ?.let { _ ->
-                            Message.Reaction(
-                                value = lastReactionEntity.value,
-                                senderId = lastReactionEntity.senderId,
-                                createdAt = lastReactionEntity.createdAt,
-                            )
-                        },
-                ),
-                metadata = message.metadata(),
-            )
-        }
+): Message? {
+    val system = message.systemContent()
+    val sender = memberEntities.firstOrNull { it.did == message.senderId }
+    // A non system message must have a known sender to be shown as a preview.
+    if (system == null && sender == null) return null
+    return Message(
+        id = message.id,
+        conversationId = message.conversationId,
+        text = message.text,
+        sentAt = message.sentAt,
+        isDeleted = message.isDeleted,
+        sender = sender?.asExternalModel(),
+        embeddedRecord = null,
+        reactions = listOfNotNull(
+            lastReactionEntity
+                ?.takeIf { message.id == lastMessageReactedToEntity?.id }
+                ?.let { _ ->
+                    Message.Reaction(
+                        value = lastReactionEntity.value,
+                        senderId = lastReactionEntity.senderId,
+                        createdAt = lastReactionEntity.createdAt,
+                    )
+                },
+        ),
+        metadata = message.metadata(),
+        system = system,
+    )
+}

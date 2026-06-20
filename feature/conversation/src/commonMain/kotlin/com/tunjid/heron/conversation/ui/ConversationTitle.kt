@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,6 +37,7 @@ import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -48,25 +48,32 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
+import heron.feature.conversation.generated.resources.Res
+import heron.feature.conversation.generated.resources.conversation_group_fallback
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ConversationTitle(
     sharedElementPrefix: String,
     signedInProfileId: ProfileId?,
     participants: List<Profile>,
+    conversationName: String?,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    val hasMultipleParticipants = remember(
+    val otherParticipants = remember(
+        participants,
         signedInProfileId,
-        participants.size,
     ) {
-        participants.filter { it.did != signedInProfileId }.size > 1
+        participants
+            .filter { it.did != signedInProfileId }
+            .take(3)
     }
-    if (hasMultipleParticipants) {
+    if (otherParticipants.size > 1) {
         MultipleParticipantTitle(
             sharedElementPrefix = sharedElementPrefix,
-            participants = participants,
+            participants = otherParticipants,
+            conversationName = conversationName,
             paneScaffoldState = paneScaffoldState,
             onProfileClicked = onProfileClicked,
         )
@@ -85,6 +92,7 @@ internal fun ConversationTitle(
 private fun MultipleParticipantTitle(
     sharedElementPrefix: String,
     participants: List<Profile>,
+    conversationName: String?,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
 ) = with(paneScaffoldState) {
@@ -118,11 +126,12 @@ private fun MultipleParticipantTitle(
         }
         Spacer(
             modifier = Modifier
-                .width(16.dp),
+                .width(8.dp),
         )
-        Text(
+        AppBarTitle(
             modifier = Modifier,
-            text = "roomName",
+            title = conversationName?.takeIf(String::isNotBlank)
+                ?: stringResource(Res.string.conversation_group_fallback),
         )
     }
 }
