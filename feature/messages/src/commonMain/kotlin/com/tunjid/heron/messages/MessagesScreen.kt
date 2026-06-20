@@ -55,13 +55,14 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.profile.ProfileHandle
-import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.displayNameOrBlank
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.BoldedText
+import com.tunjid.heron.ui.text.SmallOutlinedText
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.messages.generated.resources.Res
@@ -187,8 +188,20 @@ fun Conversation(
             conversationId = conversation.id,
         )
         ConversationDetails(
-            participants = participants,
-            signedInProfileId = signedInProfileId,
+            title = when (val group = conversation.group) {
+                null ->
+                    conversation.members
+                        .firstOrNull()
+                        .displayNameOrBlank
+                else -> group.name
+            },
+            description = when (conversation.group) {
+                null ->
+                    conversation.members
+                        .firstOrNull()
+                        ?.handle?.id
+                else -> null
+            },
             conversationSummary = conversation.summary(signedInProfileId = signedInProfileId),
         )
     }
@@ -247,19 +260,20 @@ fun ConversationMembers(
 
 @Composable
 internal fun ConversationDetails(
-    participants: List<Profile>,
-    signedInProfileId: ProfileId?,
+    title: String,
+    description: String?,
     conversationSummary: String,
 ) {
-    val profile = remember(participants, signedInProfileId) {
-        participants.firstOrNull { it.did != signedInProfileId }
-    }
     Column(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        profile?.let {
-            ProfileName(profile = it)
-            ProfileHandle(profile = it)
+        BoldedText(
+            text = title,
+        )
+        description?.let {
+            SmallOutlinedText(
+                text = it,
+            )
         }
         Text(
             text = conversationSummary,

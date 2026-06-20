@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -62,16 +61,18 @@ internal fun ConversationTitle(
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    val hasMultipleParticipants = remember(
+    val otherParticipants = remember(
+        participants,
         signedInProfileId,
-        participants.size,
     ) {
-        participants.filter { it.did != signedInProfileId }.size > 1
+        participants
+            .filter { it.did != signedInProfileId }
+            .take(3)
     }
-    if (hasMultipleParticipants) {
+    if (otherParticipants.size > 1) {
         MultipleParticipantTitle(
             sharedElementPrefix = sharedElementPrefix,
-            participants = participants.take(3),
+            participants = otherParticipants,
             conversationName = conversationName,
             paneScaffoldState = paneScaffoldState,
             onProfileClicked = onProfileClicked,
@@ -125,7 +126,7 @@ private fun MultipleParticipantTitle(
         }
         Spacer(
             modifier = Modifier
-                .width(16.dp),
+                .width(8.dp),
         )
         AppBarTitle(
             modifier = Modifier,
