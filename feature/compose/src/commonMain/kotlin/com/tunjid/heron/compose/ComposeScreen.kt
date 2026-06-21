@@ -230,6 +230,42 @@ private fun Post(
             },
         )
 
+        if (!hasMedia) {
+            if (isLoadingLinkPreview && linkPreview == null) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(32.dp),
+                )
+            }
+
+            linkPreview?.let { preview ->
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    ExternalEmbedPreview(
+                        modifier = Modifier
+                            .weight(1f),
+                        embed = preview.embed,
+                        externalRecord = preview.primaryRecord,
+                        paneTransitionScope = paneTransitionScope,
+                    )
+                    FilledTonalIconButton(
+                        onClick = onRemoveEmbeddedRecordClicked,
+                        content = {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = stringResource(Res.string.remove_link_preview),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
         if (embeddedRecord != null) Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp),
@@ -273,42 +309,6 @@ private fun Post(
                     )
                 },
             )
-        }
-
-        if (!hasMedia) {
-            if (isLoadingLinkPreview && linkPreview == null) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .size(32.dp),
-                )
-            }
-
-            linkPreview?.let { preview ->
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    ExternalEmbedPreview(
-                        modifier = Modifier
-                            .weight(1f),
-                        embed = preview.embed,
-                        externalRecord = preview.primaryRecord,
-                        paneTransitionScope = paneTransitionScope,
-                    )
-                    FilledTonalIconButton(
-                        onClick = onRemoveEmbeddedRecordClicked,
-                        content = {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = stringResource(Res.string.remove_link_preview),
-                            )
-                        },
-                    )
-                }
-            }
         }
     }
 }
