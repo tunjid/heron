@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,11 +42,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +67,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.core.models.primaryRecord
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -110,7 +109,6 @@ internal fun ComposeScreen(
     actions: (Action) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    var lastDetectedEmbedUrl by remember { mutableStateOf<String?>(null) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -123,6 +121,7 @@ internal fun ComposeScreen(
             sharedElementPrefix = state.sharedElementPrefix,
         )
         Post(
+            paneScaffoldState = paneScaffoldState,
             signedInProfile = state.signedInProfile,
             postText = postText,
             embeddedRecord = state.embeddedRecord,
@@ -135,13 +134,14 @@ internal fun ComposeScreen(
             onMentionDetected = {
                 actions(Action.SearchProfiles(it))
             },
-            onRemoveEmbeddedRecordClicked = {
-                actions(Action.RemoveEmbeddedRecord(lastDetectedEmbedUrl))
+            onRemoveUriClicked = {
+                actions(Action.RemoveDetectedUri(it))
             },
-            onExternalLinkDetected = { url ->
-                lastDetectedEmbedUrl = url
-                if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
-                    actions(Action.EmbedUrl(url))
+            onUriDetected = { uri ->
+                when (uri) {
+                    state.embeddedRecord?.embeddableRecordUri?.uri -> Unit
+                    state.linkPreview?.embed?.uri?.uri -> Unit
+                    else -> actions(Action.UriDetected(uri))
                 }
             },
             removeMediaItem = { item ->
@@ -182,6 +182,7 @@ internal fun ComposeScreen(
 @Composable
 private fun Post(
     modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
     signedInProfile: Profile?,
     postText: TextFieldValue,
     embeddedRecord: Record.Embeddable.Native?,
@@ -192,8 +193,8 @@ private fun Post(
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
-    onRemoveEmbeddedRecordClicked: () -> Unit,
-    onExternalLinkDetected: (String) -> Unit,
+    onRemoveUriClicked: (Uri) -> Unit,
+    onUriDetected: (String) -> Unit,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
@@ -223,7 +224,7 @@ private fun Post(
                     postText = postText,
                     onPostTextChanged = onPostTextChanged,
                     onMentionDetected = onMentionDetected,
-                    onExternalLinkDetected = onExternalLinkDetected,
+                    onUriDetected = onUriDetected,
                 )
             },
         )
@@ -250,6 +251,7 @@ private fun Post(
             linkPreview?.let { preview ->
                 Row(
                     modifier = Modifier
+                        .animateBounds(paneScaffoldState)
                         .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.Top,
@@ -262,7 +264,9 @@ private fun Post(
                         paneTransitionScope = paneTransitionScope,
                     )
                     FilledTonalIconButton(
-                        onClick = onRemoveEmbeddedRecordClicked,
+                        onClick = {
+                            onRemoveUriClicked(preview.embed.uri)
+                        },
                         content = {
                             Icon(
                                 imageVector = Icons.Rounded.Close,
@@ -276,6 +280,7 @@ private fun Post(
 
         if (embeddedRecord != null) Row(
             modifier = Modifier
+                .animateBounds(paneScaffoldState)
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
@@ -309,7 +314,9 @@ private fun Post(
                 )
             }
             FilledTonalIconButton(
-                onClick = onRemoveEmbeddedRecordClicked,
+                onClick = {
+                    onRemoveUriClicked(embeddedRecord.embeddableRecordUri)
+                },
                 content = {
                     Icon(
                         imageVector = Icons.Rounded.Close,
@@ -393,7 +400,7 @@ private fun PostComposition(
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
-    onExternalLinkDetected: (String) -> Unit,
+    onUriDetected: (String) -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -413,9 +420,9 @@ private fun PostComposition(
             onPostTextChanged(
                 it.copy(annotatedString = annotated),
             )
-            when (val target = links.detectActiveLink(it.selection)) {
+            when (val target = links.detectActiveLink(it.selection).also { println("c: ${links.size}; $it") }) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
-                is LinkTarget.ExternalLink -> onExternalLinkDetected(target.uri.uri)
+                is LinkTarget.ExternalLink -> onUriDetected(target.uri.uri)
                 is LinkTarget.Hashtag -> {
                     // TODO: Implement hashtag search
                 }

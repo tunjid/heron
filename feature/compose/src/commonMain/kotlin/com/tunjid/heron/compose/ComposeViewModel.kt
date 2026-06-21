@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
@@ -145,10 +146,10 @@ class ActualComposeViewModel(
                     is Action.ClearSuggestions -> action.flow.launchClearSuggestionsMutations(
                         state = state,
                     )
-                    is Action.RemoveEmbeddedRecord -> action.flow.launchRemoveEmbeddedMutations(
+                    is Action.RemoveDetectedUri -> action.flow.launchRemoveDetectedUriMutations(
                         state = state,
                     )
-                    is Action.EmbedUrl -> action.flow.launchEmbedUrlMutations(
+                    is Action.UriDetected -> action.flow.launchEmbedUrlMutations(
                         state = state,
                         recordRepository = recordRepository,
                     )
@@ -190,7 +191,7 @@ private fun launchEmbeddedRecordMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.EmbedUrl>.launchEmbedUrlMutations(
+private fun Flow<Action.UriDetected>.launchEmbedUrlMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
 ) = debounce(400.milliseconds)
@@ -233,12 +234,15 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.RemoveEmbeddedRecord>.launchRemoveEmbeddedMutations(
+private fun Flow<Action.RemoveDetectedUri>.launchRemoveDetectedUriMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { action ->
-    state.embeddedRecord = null
-    state.linkPreview = null
-    state.dismissedEmbedUrl = action.url
+    when (action.uri) {
+        state.embeddedRecord?.embeddableRecordUri -> state.embeddedRecord = null
+        state.linkPreview?.embed?.uri -> state.linkPreview = null
+        else -> Unit
+    }
+    state.dismissedUri = action.uri
 }
 
 context(productionScope: CoroutineScope)
