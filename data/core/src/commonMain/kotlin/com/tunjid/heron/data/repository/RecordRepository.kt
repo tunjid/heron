@@ -49,6 +49,9 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
@@ -176,10 +179,13 @@ internal class OfflineFirstRecordRepository(
         else savedStateDataSource.singleSessionFlow { viewingProfileId ->
             // Resolve each URI's authority to a DID first; handle based URIs (eg. parsed from
             // bsky.app links) do not match the DID keyed records persisted in the daos.
+            val resolvedUris = coroutineScope {
+                uris.map { uri ->
+                    async { profileLookup.withDidAuthority(uri) }
+                }.awaitAll().toSet()
+            }
             recordResolver.embeddableRecords(
-                uris = uris.mapTo(mutableSetOf()) {
-                    profileLookup.withDidAuthority(it)
-                },
+                uris = resolvedUris,
                 viewingProfileId = viewingProfileId,
             )
         }

@@ -198,6 +198,7 @@ internal class OfflineProfileLookup(
     override suspend fun <T : RecordUri> withDidAuthority(
         uri: T,
     ): T {
+        if (uri is com.tunjid.heron.data.core.types.UnknownRecordUri) return uri
         val profileId = uri.profileId()
         if (Did.Regex.matches(profileId.id)) return uri
         val did = lookupProfileDid(profileId) ?: return uri
