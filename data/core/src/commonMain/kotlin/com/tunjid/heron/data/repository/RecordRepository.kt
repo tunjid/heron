@@ -16,13 +16,14 @@
 
 package com.tunjid.heron.data.repository
 
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 
 interface RecordRepository :
     BlueskyRecordOperations,
@@ -64,6 +66,10 @@ interface RecordRepository :
     fun embeddableRecords(
         uris: Set<EmbeddableRecordUri>,
     ): Flow<List<Record.Embeddable>>
+
+    suspend fun externalLinkPreview(
+        url: GenericUri,
+    ): LinkPreview?
 
     suspend fun deleteRecord(
         uri: RecordUri,
@@ -161,6 +167,12 @@ internal class OfflineFirstRecordRepository(
                 viewingProfileId = it,
             )
         }
+
+    override suspend fun externalLinkPreview(
+        url: GenericUri,
+    ): LinkPreview? = withContext(ioDispatcher) {
+        recordResolver.resolveExternalLink(url)
+    }
 
     override suspend fun deleteRecord(
         uri: RecordUri,

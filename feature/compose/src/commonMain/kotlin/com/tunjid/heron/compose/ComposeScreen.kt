@@ -33,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -60,16 +61,20 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
+import com.tunjid.heron.data.core.models.primaryRecord
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
+import com.tunjid.heron.timeline.ui.post.ExternalEmbedPreview
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
@@ -85,13 +90,12 @@ import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.remove_link_preview
 import heron.feature.compose.generated.resources.remove_quoted_post
 import heron.feature.compose.generated.resources.remove_shared_record
-import heron.ui.core.generated.resources.record_document
 import heron.ui.core.generated.resources.record_feed
 import heron.ui.core.generated.resources.record_labeler
 import heron.ui.core.generated.resources.record_list
-import heron.ui.core.generated.resources.record_publication
 import heron.ui.core.generated.resources.record_starter_pack
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -122,6 +126,10 @@ internal fun ComposeScreen(
             signedInProfile = state.signedInProfile,
             postText = postText,
             embeddedRecord = state.embeddedRecord,
+            linkPreview = state.linkPreview,
+            isLoadingLinkPreview = state.isLoadingLinkPreview,
+            photos = state.photos,
+            video = state.video,
             paneTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onMentionDetected = {
@@ -135,6 +143,12 @@ internal fun ComposeScreen(
                 if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
                     actions(Action.EmbedUrl(url))
                 }
+            },
+            removeMediaItem = { item ->
+                actions(Action.EditMedia.RemoveMedia(item))
+            },
+            onMediaItemUpdated = { item ->
+                actions(Action.EditMedia.UpdateMedia(item))
             },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
@@ -151,19 +165,6 @@ internal fun ComposeScreen(
                 },
             )
         }
-        MediaUploadItems(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            photos = state.photos,
-            video = state.video,
-            removeMediaItem = { item ->
-                actions(Action.EditMedia.RemoveMedia(item))
-            },
-            onMediaItemUpdated = { item ->
-                actions(Action.EditMedia.UpdateMedia(item))
-            },
-        )
         Spacer(
             modifier = Modifier
                 .height(56.dp),
@@ -184,11 +185,17 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     embeddedRecord: Record.Embeddable.Native?,
+    linkPreview: LinkPreview?,
+    isLoadingLinkPreview: Boolean,
+    photos: List<RestrictedFile.Media.Photo>,
+    video: RestrictedFile.Media.Video?,
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
     onRemoveEmbeddedRecordClicked: () -> Unit,
     onExternalLinkDetected: (String) -> Unit,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -221,51 +228,95 @@ private fun Post(
             },
         )
 
-        embeddedRecord?.let {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
-                EmbeddedRecord(
+        MediaUploadItems(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            photos = photos,
+            video = video,
+            removeMediaItem = removeMediaItem,
+            onMediaItemUpdated = onMediaItemUpdated,
+        )
+
+        if (photos.isEmpty() && video == null) {
+            if (isLoadingLinkPreview && linkPreview == null) {
+                CircularProgressIndicator(
                     modifier = Modifier
-                        .weight(1f),
-                    record = it,
-                    appliedLabels = AppliedLabels.Empty,
-                    sharedElementPrefix = NeverMatchedSharedElementPrefix,
-                    paneTransitionScope = paneTransitionScope,
-                    postActions = PostActions.NoOp,
-                )
-                val contentDescription = when (it) {
-                    is Labeler -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_labeler),
-                    )
-                    is Post -> stringResource(Res.string.remove_quoted_post)
-                    is FeedGenerator -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_feed),
-                    )
-                    is FeedList -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_list),
-                    )
-                    is StarterPack -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_starter_pack),
-                    )
-                }
-                FilledTonalIconButton(
-                    onClick = onRemoveEmbeddedRecordClicked,
-                    content = {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = contentDescription,
-                        )
-                    },
+                        .align(Alignment.CenterHorizontally)
+                        .size(32.dp),
                 )
             }
+
+            linkPreview?.let { preview ->
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    ExternalEmbedPreview(
+                        modifier = Modifier
+                            .weight(1f),
+                        embed = preview.embed,
+                        externalRecord = preview.primaryRecord,
+                        paneTransitionScope = paneTransitionScope,
+                    )
+                    FilledTonalIconButton(
+                        onClick = onRemoveEmbeddedRecordClicked,
+                        content = {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = stringResource(Res.string.remove_link_preview),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
+        if (embeddedRecord != null) Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            EmbeddedRecord(
+                modifier = Modifier
+                    .weight(1f),
+                record = embeddedRecord,
+                appliedLabels = AppliedLabels.Empty,
+                sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                paneTransitionScope = paneTransitionScope,
+                postActions = PostActions.NoOp,
+            )
+            val contentDescription = when (embeddedRecord) {
+                is Labeler -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_labeler),
+                )
+                is Post -> stringResource(Res.string.remove_quoted_post)
+                is FeedGenerator -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_feed),
+                )
+                is FeedList -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_list),
+                )
+                is StarterPack -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_starter_pack),
+                )
+            }
+            FilledTonalIconButton(
+                onClick = onRemoveEmbeddedRecordClicked,
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = contentDescription,
+                    )
+                },
+            )
         }
     }
 }

@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Like
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -61,6 +62,7 @@ import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.LikeUri
@@ -131,6 +133,7 @@ import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
@@ -182,6 +185,10 @@ internal interface RecordResolver {
         uri: RecordUri,
     ): Result<Record>
 
+    suspend fun resolveExternalLink(
+        url: GenericUri,
+    ): LinkPreview?
+
     suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome
@@ -227,6 +234,7 @@ internal class OfflineRecordResolver(
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
+    private val httpClient: HttpClient,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordResolver {
 
@@ -653,6 +661,10 @@ internal class OfflineRecordResolver(
             deleteLocalRecord(uri)
         }
     }
+
+    override suspend fun resolveExternalLink(
+        url: GenericUri,
+    ): LinkPreview? = httpClient.linkPreviewOrNull(url)
 
     override suspend fun deleteRecord(
         uri: RecordUri,

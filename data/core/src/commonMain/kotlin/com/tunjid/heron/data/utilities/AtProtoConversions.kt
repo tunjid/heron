@@ -17,6 +17,8 @@
 package com.tunjid.heron.data.utilities
 
 import app.bsky.embed.AspectRatio
+import app.bsky.embed.External as BskyExternal
+import app.bsky.embed.ExternalExternal
 import app.bsky.embed.Gallery
 import app.bsky.embed.GalleryImage
 import app.bsky.embed.GalleryItemUnion
@@ -37,6 +39,7 @@ import app.bsky.richtext.FacetMention
 import app.bsky.richtext.FacetTag
 import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.Record
@@ -78,18 +81,26 @@ internal fun File.Media.with(blob: Blob) = when (this) {
 internal fun postEmbedUnion(
     embeddedRecordReference: Record.Reference?,
     mediaBlobs: List<MediaBlob>,
+    linkPreview: LinkPreview?,
+    externalThumbBlob: Blob?,
 ): PostEmbedUnion? {
     val record = embeddedRecordReference?.toStrongReferencedRecord()
     val video = mediaBlobs.video()
     val images = mediaBlobs.images()
+    val hasMedia = video != null || images != null || linkPreview != null
 
     return when {
-        record != null && (video != null || images != null) -> PostEmbedUnion.RecordWithMedia(
+        record != null && hasMedia -> PostEmbedUnion.RecordWithMedia(
             value = RecordWithMedia(
                 record = record,
                 media = video
                     ?.let { RecordWithMediaMediaUnion.Video(it) }
                     ?: images?.let { RecordWithMediaMediaUnion.Images(it) }
+                    ?: linkPreview?.let {
+                        RecordWithMediaMediaUnion.External(
+                            it.bskyExternalMedia(externalThumbBlob),
+                        )
+                    }
                     ?: throw IllegalArgumentException("Media should exist"),
             ),
         )
@@ -108,9 +119,40 @@ internal fun postEmbedUnion(
                         else -> PostEmbedUnion.Gallery(Gallery(items = it))
                     }
                 }
+
+        // An external link card only applies when the post has no quote and no media.
+        linkPreview != null -> PostEmbedUnion.External(
+            value = linkPreview.bskyExternalMedia(externalThumbBlob),
+        )
+
         else -> null
     }
 }
+
+private fun LinkPreview.bskyExternalMedia(
+    externalThumbBlob: Blob?,
+): BskyExternal = BskyExternal(
+    external = ExternalExternal(
+        uri = BskyUri(embed.uri.uri),
+        title = embed.title,
+        description = embed.description,
+        thumb = externalThumbBlob,
+        associatedRefs = records.associatedStrongRefs(),
+    ),
+)
+
+/**
+ * The strong refs (uri + cid) of the `site.standard.*` records backing a link preview, written into
+ * `app.bsky.embed.external#associatedRefs`. Records without a cid are skipped; `null` when none remain.
+ */
+private fun List<Record.Embeddable.External>.associatedStrongRefs(): List<StrongRef>? =
+    mapNotNull { record ->
+        val cid = record.reference.id ?: return@mapNotNull null
+        StrongRef(
+            uri = AtUri(record.reference.uri.uri),
+            cid = Cid(cid.id),
+        )
+    }.takeIf(List<StrongRef>::isNotEmpty)
 
 internal fun List<Link>.facet(): List<Facet> = map { link ->
     Facet(

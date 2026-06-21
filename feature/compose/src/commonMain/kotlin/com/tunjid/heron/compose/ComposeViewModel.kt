@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
@@ -62,7 +63,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
 internal typealias ComposeStateHolder = ActionSuspendingStateMutator<Action, State>
@@ -194,10 +195,20 @@ private fun Flow<Action.EmbedUrl>.launchEmbedUrlMutations(
     recordRepository: RecordRepository,
 ) = debounce(400.milliseconds)
     .launchedCollectLatest { action ->
-        val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@launchedCollectLatest
-        recordRepository.embeddableRecord(uri)
-            .take(1)
-            .collect { state.embeddedRecord = it as? Record.Embeddable.Native }
+        val trimmedUrl = action.url.trimEnd('/', '\n', '\r', ' ')
+        when (val uri = trimmedUrl.asEmbeddableRecordUriOrNull()) {
+            null -> try {
+                // Not an embeddable AT-record; resolve the URL to an external link card preview.
+                state.isLoadingLinkPreview = true
+                state.linkPreview = recordRepository.externalLinkPreview(GenericUri(action.url))
+            } finally {
+                state.isLoadingLinkPreview = false
+            }
+            else -> {
+                state.embeddedRecord = recordRepository.embeddableRecord(uri)
+                    .firstOrNull() as? Record.Embeddable.Native
+            }
+        }
     }
 
 context(productionScope: CoroutineScope)
@@ -226,6 +237,7 @@ private fun Flow<Action.RemoveEmbeddedRecord>.launchRemoveEmbeddedMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { action ->
     state.embeddedRecord = null
+    state.linkPreview = null
     state.dismissedEmbedUrl = action.url
 }
 
@@ -305,6 +317,7 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
                         }
                     }.filterIsInstance<File.Media>(),
                     allowed = action.interactionPreference?.threadGateAllowed,
+                    linkPreview = action.linkPreview,
                 ),
             ),
         )

@@ -109,6 +109,8 @@ data class Post(
             val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
             @ProtoNumber(6)
             val allowed: ThreadGate.Allowed? = null,
+            @ProtoNumber(7)
+            val linkPreview: LinkPreview? = null,
         )
 
         @Serializable
