@@ -173,5 +173,5 @@ sealed class Action(val key: String) {
 
     data class RemoveDetectedUri(
         val uri: Uri,
-    ) : Action("RemoveEmbeddedRecord")
+    ) : Action("RemoveDetectedUri")
 }
