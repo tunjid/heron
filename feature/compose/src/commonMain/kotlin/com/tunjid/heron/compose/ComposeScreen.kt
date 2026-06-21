@@ -141,6 +141,7 @@ internal fun ComposeScreen(
                 when (uri) {
                     state.embeddedRecord?.embeddableRecordUri?.uri -> Unit
                     state.linkPreview?.embed?.uri?.uri -> Unit
+                    state.dismissedUri?.uri -> Unit
                     else -> actions(Action.UriDetected(uri))
                 }
             },
@@ -420,7 +421,7 @@ private fun PostComposition(
             onPostTextChanged(
                 it.copy(annotatedString = annotated),
             )
-            when (val target = links.detectActiveLink(it.selection).also { println("c: ${links.size}; $it") }) {
+            when (val target = links.detectActiveLink(it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
                 is LinkTarget.ExternalLink -> onUriDetected(target.uri.uri)
                 is LinkTarget.Hashtag -> {
