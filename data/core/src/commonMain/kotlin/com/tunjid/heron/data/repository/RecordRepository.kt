@@ -44,12 +44,18 @@ import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -91,80 +97,96 @@ internal class OfflineFirstRecordRepository(
     private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
+    private val profileLookup: ProfileLookup,
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
     RockskyRecordOperations by rockSkyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
 
-    override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
-        when (uri) {
-            is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+    override fun embeddableRecord(
+        uri: EmbeddableRecordUri,
+    ): Flow<Record.Embeddable> = flow {
+        // Resolve the URI's authority to a DID first; handle based URIs (eg. parsed from
+        // bsky.app links) do not match the DID keyed records persisted in the daos.
+        val resolvedUri = profileLookup.withDidAuthority(uri)
+        emitAll(
+            when (resolvedUri) {
+                is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
+                    listOf(resolvedUri),
+                )
+                    .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
-            is ListUri -> listDao.lists(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is ListUri -> listDao.lists(
+                    listOf(resolvedUri),
+                )
+                    .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
-            is StarterPackUri -> starterPackDao.starterPacks(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
-            is LabelerUri -> labelDao.labelers(
-                listOf(uri),
-            )
-                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is StarterPackUri -> starterPackDao.starterPacks(
+                    listOf(resolvedUri),
+                )
+                    .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                is LabelerUri -> labelDao.labelers(
+                    listOf(resolvedUri),
+                )
+                    .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
-            is PostUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        postDao.posts(
-                            viewingProfileId = profileId?.id,
-                            postUris = listOf(uri),
-                        )
-                            .distinctUntilChangedMap {
-                                it.firstOrNull()?.asExternalModel(
-                                    embeddedRecords = emptyList(),
-                                )
-                            }
-                    }
+                is PostUri ->
+                    savedStateDataSource
+                        .singleSessionFlow { profileId ->
+                            postDao.posts(
+                                viewingProfileId = profileId?.id,
+                                postUris = listOf(resolvedUri),
+                            )
+                                .distinctUntilChangedMap {
+                                    it.firstOrNull()?.asExternalModel(
+                                        embeddedRecords = emptyList(),
+                                    )
+                                }
+                        }
 
-            is StandardDocumentUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        standardSiteDao.documents(
-                            viewingProfileId = profileId?.id,
-                            uris = listOf(uri),
-                        )
-                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
-                    }
+                is StandardDocumentUri ->
+                    savedStateDataSource
+                        .singleSessionFlow { profileId ->
+                            standardSiteDao.documents(
+                                viewingProfileId = profileId?.id,
+                                uris = listOf(resolvedUri),
+                            )
+                                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                        }
 
-            is StandardPublicationUri ->
-                savedStateDataSource
-                    .singleSessionFlow { profileId ->
-                        standardSiteDao.publications(
-                            viewingProfileId = profileId?.id,
-                            uris = listOf(uri),
-                        )
-                            .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
-                    }
-        }
-            .filterNotNull()
-            .withRefresh {
-                recordResolver.resolve(uri)
+                is StandardPublicationUri ->
+                    savedStateDataSource
+                        .singleSessionFlow { profileId ->
+                            standardSiteDao.publications(
+                                viewingProfileId = profileId?.id,
+                                uris = listOf(resolvedUri),
+                            )
+                                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                        }
             }
-            .flowOn(ioDispatcher)
+                .filterNotNull()
+                .withRefresh {
+                    recordResolver.resolve(resolvedUri)
+                },
+        )
+    }
+        .flowOn(ioDispatcher)
 
     override fun embeddableRecords(
         uris: Set<EmbeddableRecordUri>,
     ): Flow<List<Record.Embeddable>> =
         if (uris.isEmpty()) flowOf(emptyList())
-        else savedStateDataSource.singleSessionFlow {
+        else savedStateDataSource.singleSessionFlow { viewingProfileId ->
+            // Resolve each URI's authority to a DID first; handle based URIs (eg. parsed from
+            // bsky.app links) do not match the DID keyed records persisted in the daos.
+            val resolvedUris = coroutineScope {
+                uris.map { uri ->
+                    async { profileLookup.withDidAuthority(uri) }
+                }.awaitAll().toSet()
+            }
             recordResolver.embeddableRecords(
-                uris = uris,
-                viewingProfileId = it,
+                uris = resolvedUris,
+                viewingProfileId = viewingProfileId,
             )
         }
 

@@ -464,7 +464,7 @@ internal class OfflinePostRepository(
             requireNotNull(blobsResult.exceptionOrNull()),
         )
 
-        // An external link card only applies when the post has no embedded records and no media.
+        // An external link card only applies when the post has no media.
         val linkPreview = request.metadata.linkPreview?.takeIf {
             blobs.isEmpty()
         }
