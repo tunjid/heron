@@ -206,8 +206,7 @@ private fun Flow<Action.EmbedUrl>.launchEmbedUrlMutations(
             }
             else -> {
                 state.embeddedRecord = recordRepository.embeddableRecord(uri)
-                    .filterIsInstance<Record.Embeddable.Native>()
-                    .firstOrNull()
+                    .firstOrNull() as? Record.Embeddable.Native
             }
         }
     }

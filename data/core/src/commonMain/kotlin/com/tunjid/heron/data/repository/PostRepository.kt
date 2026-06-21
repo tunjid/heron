@@ -475,7 +475,9 @@ internal class OfflinePostRepository(
                 runCatchingUnlessCancelled {
                     httpClient.prepareGet(it).execute { response ->
                         networkService.uploadImageBlob(
-                            data = response.bodyAsChannel(),
+                            // Piping a hot stream, only one attempt
+                            attempts = 1,
+                            data = response::bodyAsChannel,
                         ).getOrThrow()
                     }
                 }.getOrNull()
@@ -862,13 +864,21 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
 private suspend fun NetworkService.uploadImageBlob(
     data: Source,
 ): Result<Blob> = uploadImageBlob(
-    data = ByteReadChannel(data),
+    attempts = 3,
+    // Create a new channel each invocation
+    // so the source may be re-read
+    data = {
+        ByteReadChannel(data)
+    },
 )
 
-private suspend fun NetworkService.uploadImageBlob(
-    data: ByteReadChannel,
-): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    uploadBlob(data)
+private suspend inline fun NetworkService.uploadImageBlob(
+    attempts: Int,
+    crossinline data: suspend () -> ByteReadChannel,
+): Result<Blob> = runCatchingWithMonitoredNetworkRetry(
+    times = attempts,
+) {
+    uploadBlob(data())
         .map(UploadBlobResponse::blob)
 }
 

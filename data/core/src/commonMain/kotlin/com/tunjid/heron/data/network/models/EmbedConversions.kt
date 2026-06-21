@@ -162,6 +162,8 @@ internal fun ExternalViewExternal.associatedStandardRefs(): ExternalStandardRefs
         }
     }
 
+    if (documentUri == null && publicationUri == null) return null
+
     return ExternalStandardRefs(
         documentUri = documentUri,
         documentCid = documentCid,
