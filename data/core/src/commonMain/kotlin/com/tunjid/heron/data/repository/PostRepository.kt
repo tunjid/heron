@@ -100,10 +100,9 @@ import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.asSource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -122,7 +121,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.Source
-import kotlinx.io.buffered
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
@@ -475,12 +473,11 @@ internal class OfflinePostRepository(
             ?.uri
             ?.let {
                 runCatchingUnlessCancelled {
-                    networkService.uploadImageBlob(
-                        data = httpClient.get(it)
-                            .bodyAsChannel()
-                            .asSource()
-                            .buffered(),
-                    ).getOrThrow()
+                    httpClient.prepareGet(it).execute { response ->
+                        networkService.uploadImageBlob(
+                            data = response.bodyAsChannel(),
+                        ).getOrThrow()
+                    }
                 }.getOrNull()
             }
 
@@ -864,8 +861,14 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
 
 private suspend fun NetworkService.uploadImageBlob(
     data: Source,
+): Result<Blob> = uploadImageBlob(
+    data = ByteReadChannel(data),
+)
+
+private suspend fun NetworkService.uploadImageBlob(
+    data: ByteReadChannel,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    uploadBlob(ByteReadChannel(data))
+    uploadBlob(data)
         .map(UploadBlobResponse::blob)
 }
 
