@@ -69,6 +69,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.core.models.primaryRecord
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -127,7 +128,8 @@ internal fun ComposeScreen(
             embeddedRecord = state.embeddedRecord,
             linkPreview = state.linkPreview,
             isLoadingLinkPreview = state.isLoadingLinkPreview,
-            hasMedia = state.photos.isNotEmpty() || state.video != null,
+            photos = state.photos,
+            video = state.video,
             paneTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onMentionDetected = {
@@ -141,6 +143,12 @@ internal fun ComposeScreen(
                 if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
                     actions(Action.EmbedUrl(url))
                 }
+            },
+            removeMediaItem = { item ->
+                actions(Action.EditMedia.RemoveMedia(item))
+            },
+            onMediaItemUpdated = { item ->
+                actions(Action.EditMedia.UpdateMedia(item))
             },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
@@ -157,19 +165,6 @@ internal fun ComposeScreen(
                 },
             )
         }
-        MediaUploadItems(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            photos = state.photos,
-            video = state.video,
-            removeMediaItem = { item ->
-                actions(Action.EditMedia.RemoveMedia(item))
-            },
-            onMediaItemUpdated = { item ->
-                actions(Action.EditMedia.UpdateMedia(item))
-            },
-        )
         Spacer(
             modifier = Modifier
                 .height(56.dp),
@@ -192,12 +187,15 @@ private fun Post(
     embeddedRecord: Record.Embeddable.Native?,
     linkPreview: LinkPreview?,
     isLoadingLinkPreview: Boolean,
-    hasMedia: Boolean,
+    photos: List<RestrictedFile.Media.Photo>,
+    video: RestrictedFile.Media.Video?,
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
     onRemoveEmbeddedRecordClicked: () -> Unit,
     onExternalLinkDetected: (String) -> Unit,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -230,7 +228,17 @@ private fun Post(
             },
         )
 
-        if (!hasMedia) {
+        MediaUploadItems(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            photos = photos,
+            video = video,
+            removeMediaItem = removeMediaItem,
+            onMediaItemUpdated = onMediaItemUpdated,
+        )
+
+        if (!photos.isNotEmpty() || video != null) {
             if (isLoadingLinkPreview && linkPreview == null) {
                 CircularProgressIndicator(
                     modifier = Modifier

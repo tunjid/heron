@@ -87,14 +87,20 @@ internal fun postEmbedUnion(
     val record = embeddedRecordReference?.toStrongReferencedRecord()
     val video = mediaBlobs.video()
     val images = mediaBlobs.images()
+    val hasMedia = video != null || images != null || linkPreview != null
 
     return when {
-        record != null && (video != null || images != null) -> PostEmbedUnion.RecordWithMedia(
+        record != null && hasMedia -> PostEmbedUnion.RecordWithMedia(
             value = RecordWithMedia(
                 record = record,
                 media = video
                     ?.let { RecordWithMediaMediaUnion.Video(it) }
                     ?: images?.let { RecordWithMediaMediaUnion.Images(it) }
+                    ?: linkPreview?.let {
+                        RecordWithMediaMediaUnion.External(
+                            it.bskyExternalMedia(externalThumbBlob),
+                        )
+                    }
                     ?: throw IllegalArgumentException("Media should exist"),
             ),
         )
@@ -116,20 +122,24 @@ internal fun postEmbedUnion(
 
         // An external link card only applies when the post has no quote and no media.
         linkPreview != null -> PostEmbedUnion.External(
-            value = BskyExternal(
-                external = ExternalExternal(
-                    uri = BskyUri(linkPreview.embed.uri.uri),
-                    title = linkPreview.embed.title,
-                    description = linkPreview.embed.description,
-                    thumb = externalThumbBlob,
-                    associatedRefs = linkPreview.records.associatedStrongRefs(),
-                ),
-            ),
+            value = linkPreview.bskyExternalMedia(externalThumbBlob),
         )
 
         else -> null
     }
 }
+
+private fun LinkPreview.bskyExternalMedia(
+    externalThumbBlob: Blob?,
+): BskyExternal = BskyExternal(
+    external = ExternalExternal(
+        uri = BskyUri(embed.uri.uri),
+        title = embed.title,
+        description = embed.description,
+        thumb = externalThumbBlob,
+        associatedRefs = records.associatedStrongRefs(),
+    ),
+)
 
 /**
  * The strong refs (uri + cid) of the `site.standard.*` records backing a link preview, written into

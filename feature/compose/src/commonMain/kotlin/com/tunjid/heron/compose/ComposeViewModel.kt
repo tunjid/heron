@@ -63,7 +63,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
@@ -196,7 +195,11 @@ private fun Flow<Action.EmbedUrl>.launchEmbedUrlMutations(
     recordRepository: RecordRepository,
 ) = debounce(400.milliseconds)
     .launchedCollectLatest { action ->
-        when (val uri = action.url.asEmbeddableRecordUriOrNull()) {
+        when (
+            val uri = action.url
+                .trimEnd('/', '\n', '\r')
+                .asEmbeddableRecordUriOrNull()
+        ) {
             null -> try {
                 // Not an embeddable AT-record; resolve the URL to an external link card preview.
                 state.isLoadingLinkPreview = true
