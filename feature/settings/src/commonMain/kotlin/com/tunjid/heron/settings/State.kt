@@ -110,6 +110,10 @@ sealed class Action(val key: String) {
         val themeOrdinal: Int,
     ) : Action(key = "SetCurrentThemeOrdinal")
 
+    data class SetDarkThemeConfigOrdinal(
+        val darkThemeConfigOrdinal: Int,
+    ) : Action(key = "SetDarkThemeConfigOrdinal")
+
     data class SetCompactNavigation(
         val compactNavigation: Boolean,
     ) : Action(key = "SetCompactNavigation")

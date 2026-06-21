@@ -14,21 +14,16 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.utilities
+package com.tunjid.heron.scaffold.ui.theme
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonObject
-import sh.christian.ozone.api.model.JsonContent
+enum class DarkThemeConfig {
+    System,
+    Light,
+    Dark,
+    ;
 
-internal actual fun JsonContent.add(
-    builderAction: JsonObjectBuilder.() -> Unit,
-): JsonContent = JsonContent(
-    value = JsonObject(value.jsonObject + buildJsonObject(builderAction)),
-    format = format,
-)
-
-internal actual fun <T> JsonContent.read(
-    reader: JsonObject.() -> T,
-): T = value.jsonObject.reader()
+    companion object {
+        fun fromOrdinal(ordinal: Int): DarkThemeConfig =
+            entries.getOrElse(ordinal) { System }
+    }
+}

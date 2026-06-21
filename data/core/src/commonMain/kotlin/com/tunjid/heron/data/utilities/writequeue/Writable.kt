@@ -16,11 +16,13 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
@@ -101,6 +103,22 @@ sealed interface Writable {
     }
 
     @Serializable
+    data class ConversationUpdate(
+        val update: Conversation.Update,
+    ) : Writable {
+
+        override val queueId: String
+            get() = when (update) {
+                is Conversation.Update.Accept -> "accept-convo-${update.conversationId}"
+                is Conversation.Update.Leave -> "leave-convo-${update.conversationId}"
+                is Conversation.Update.Mute -> "mute-convo-${update.conversationId}-${update.muted}"
+            }
+
+        override suspend fun WriteQueue.write(): Outcome =
+            messageRepository.updateConversation(update)
+    }
+
+    @Serializable
     data class Connection(
         val connection: Profile.Connection,
     ) : Writable {
@@ -142,6 +160,18 @@ sealed interface Writable {
 
             override suspend fun WriteQueue.write(): Outcome =
                 recordRepository.createSubscription(create)
+        }
+
+        @Serializable
+        data class UpdatePostReference(
+            val reference: StandardDocument.PostReference,
+        ) : StandardSite,
+            Writable {
+            override val queueId: String
+                get() = "document-post-ref-$reference"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.updateDocumentPostRef(reference)
         }
     }
 

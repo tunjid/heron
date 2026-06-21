@@ -48,6 +48,10 @@
     <string name="theme_green">Green Heron</string>
     <string name="theme_reddish">Reddish Egret</string>
     <string name="theme_tricolored">Tricolored Heron</string>
+    <string name="dark_theme">Dark theme</string>
+    <string name="dark_theme_system">System default</string>
+    <string name="dark_theme_light">Light</string>
+    <string name="dark_theme_dark">Dark</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
     <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>

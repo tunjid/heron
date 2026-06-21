@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -23,7 +24,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
@@ -37,18 +40,15 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -63,17 +63,11 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
-internal typealias ComposeStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias ComposeStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
@@ -83,6 +77,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualComposeViewModel
 }
 
+@Stable
 @AssistedInject
 class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
@@ -97,173 +92,216 @@ class ActualComposeViewModel(
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),
-    ComposeStateHolder by scope.actionStateFlowMutator(
-        initialState = State(route),
+    ComposeStateHolder by scope.actionSuspendingStateMutator(
+        state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadSignedInProfileMutations(
+        producer = { state, actions ->
+            launchLoadSignedInProfileMutations(
+                state = state,
                 authRepository = authRepository,
-            ),
-            embeddedRecordMutations(
+            )
+            launchInteractionSettingsMutations(
+                state = state,
+                userDataRepository = userDataRepository,
+            )
+            launchEmbeddedRecordMutations(
+                state = state,
                 embeddedRecordUri = when (val creationType = route.model<Post.Create.Quote>()) {
                     is Post.Create.Quote -> creationType.interaction.postUri
                     else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
                 },
                 recordRepository = recordRepository,
-            ),
-            interactionSettingsMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+            )
+
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.PostTextChanged -> action.flow.postTextMutations()
-                    is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.UpdateInteractionSettings -> action.flow.updateInteractionSettingsMutations()
-                    is Action.EditMedia -> action.flow.editMediaMutations()
-                    is Action.CreatePost -> action.flow.createPostMutations(
+                    is Action.PostTextChanged -> action.flow.launchPostTextMutations(
+                        state = state,
+                    )
+                    is Action.SetFabExpanded -> action.flow.launchFabExpansionMutations(
+                        state = state,
+                    )
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                        state = state,
+                    )
+                    is Action.UpdateInteractionSettings -> action.flow.launchUpdateInteractionSettingsMutations(
+                        state = state,
+                    )
+                    is Action.EditMedia -> action.flow.launchEditMediaMutations(
+                        state = state,
+                    )
+                    is Action.CreatePost -> action.flow.launchCreatePostMutations(
+                        state = state,
                         navActions = navActions,
                         writeQueue = writeQueue,
                         fileManager = fileManager,
                     )
-
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SearchProfiles -> action.flow.searchMutations(
+                    is Action.SearchProfiles -> action.flow.launchSearchMutations(
+                        state = state,
                         searchRepository = searchRepository,
                     )
-                    is Action.ClearSuggestions -> action.flow.clearSuggestionsMutations()
-                    is Action.RemoveEmbeddedRecord -> action.flow.removeEmbeddedMutations()
-                    is Action.EmbedUrl -> action.flow.embedUrlMutations(
+                    is Action.ClearSuggestions -> action.flow.launchClearSuggestionsMutations(
+                        state = state,
+                    )
+                    is Action.RemoveDetectedUri -> action.flow.launchRemoveDetectedUriMutations(
+                        state = state,
+                    )
+                    is Action.UriDetected -> action.flow.launchEmbedUrlMutations(
+                        state = state,
                         recordRepository = recordRepository,
                     )
+                    is Action.Navigate -> action.flow.collect { navAction ->
+                        navActions(navAction.navigationMutation)
+                    }
                 }
             }
         },
     )
 
-private fun loadSignedInProfileMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadSignedInProfileMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
-    }
+) = authRepository.signedInUser.launchedCollect {
+    state.signedInProfile = it
+}
 
-private fun interactionSettingsMutations(
+context(productionScope: CoroutineScope)
+private fun launchInteractionSettingsMutations(
+    state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences.mapToMutation {
-        copy(interactionsPreference = it.postInteractionSettings)
-    }
+) = userDataRepository.preferences.launchedCollect {
+    state.interactionsPreference = it.postInteractionSettings
+}
 
-private fun embeddedRecordMutations(
+context(productionScope: CoroutineScope)
+private fun launchEmbeddedRecordMutations(
+    state: State.SnapshotMutable,
     embeddedRecordUri: EmbeddableRecordUri?,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
+) {
     embeddedRecordUri?.let { uri ->
-        recordRepository.embeddableRecord(uri).mapToMutation {
-            copy(embeddedRecord = it as? Record.Embeddable.Native)
+        recordRepository.embeddableRecord(uri).launchedCollect {
+            state.embeddedRecord = it as? Record.Embeddable.Native
         }
     }
-        ?: emptyFlow()
+}
 
-private fun Flow<Action.EmbedUrl>.embedUrlMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UriDetected>.launchEmbedUrlMutations(
+    state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    debounce(400.milliseconds)
-        .mapLatestToManyMutations { action ->
-            val uri = action.url.asEmbeddableRecordUriOrNull() ?: return@mapLatestToManyMutations
-            emitAll(
-                recordRepository.embeddableRecord(uri)
-                    .take(1)
-                    .mapToMutation { copy(embeddedRecord = it as? Record.Embeddable.Native) },
-            )
-        }
-
-private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(postText = action.textFieldValue)
-    }
-
-private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(fabExpanded = action.expanded)
-    }
-
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
-
-private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(
-            embeddedRecord = null,
-            dismissedEmbedUrl = it.url,
-        )
-    }
-
-private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(interactionsPreference = it.interactionSettingsPreference)
-    }
-
-private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
-    map { action ->
-        // Invoke in IO context as creating media items may perform IO
-        withContext(Dispatchers.IO) {
-            action to when (action) {
-                is Action.EditMedia.AddPhotos -> action.photos
-                is Action.EditMedia.AddVideo -> listOfNotNull(action.video)
-                is Action.EditMedia.RemoveMedia -> emptyList()
-                is Action.EditMedia.UpdateMedia -> listOfNotNull(action.media)
+) = debounce(400.milliseconds)
+    .launchedCollectLatest { action ->
+        val trimmedUrl = action.url.trimEnd('/', '\n', '\r', ' ')
+        when (val uri = trimmedUrl.asEmbeddableRecordUriOrNull()) {
+            null -> try {
+                // Not an embeddable AT-record; resolve the URL to an external link card preview.
+                state.isLoadingLinkPreview = true
+                state.linkPreview = recordRepository.externalLinkPreview(GenericUri(action.url))
+            } finally {
+                state.isLoadingLinkPreview = false
+            }
+            else -> {
+                state.embeddedRecord = recordRepository.embeddableRecord(uri)
+                    .firstOrNull() as? Record.Embeddable.Native
             }
         }
     }
-        .mapToMutation { (action, media) ->
-            when (action) {
-                is Action.EditMedia.AddPhotos -> copy(
-                    photos = photos + media.filterIsInstance<RestrictedFile.Media.Photo>(),
-                    video = null,
-                )
 
-                is Action.EditMedia.AddVideo -> copy(
-                    photos = emptyList(),
-                    video = media.filterIsInstance<RestrictedFile.Media.Video>().firstOrNull(),
-                )
+context(productionScope: CoroutineScope)
+private fun Flow<Action.PostTextChanged>.launchPostTextMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.postText = action.textFieldValue
+}
 
-                is Action.EditMedia.RemoveMedia -> copy(
-                    photos = photos.filter { it != action.media },
-                    video = video?.takeIf { it != action.media },
-                )
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetFabExpanded>.launchFabExpansionMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.fabExpanded = action.expanded
+}
 
-                is Action.EditMedia.UpdateMedia -> when (val item = media.first()) {
-                    is RestrictedFile.Media.Photo -> copy(
-                        photos = photos.map { photo ->
-                            if (photo.path == item.path) item
-                            else photo
-                        },
-                    )
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}
 
-                    is RestrictedFile.Media.Video -> copy(
-                        video = item,
-                    )
-                }
-            }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.RemoveDetectedUri>.launchRemoveDetectedUriMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    when (action.uri) {
+        state.embeddedRecord?.embeddableRecordUri -> state.embeddedRecord = null
+        state.linkPreview?.embed?.uri -> state.linkPreview = null
+        else -> Unit
+    }
+    state.dismissedUri = action.uri
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateInteractionSettings>.launchUpdateInteractionSettingsMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.interactionsPreference = action.interactionSettingsPreference
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.EditMedia>.launchEditMediaMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    // Invoke in IO context as creating media items may perform IO
+    val media = withContext(Dispatchers.IO) {
+        when (action) {
+            is Action.EditMedia.AddPhotos -> action.photos
+            is Action.EditMedia.AddVideo -> listOfNotNull(action.video)
+            is Action.EditMedia.RemoveMedia -> emptyList()
+            is Action.EditMedia.UpdateMedia -> listOfNotNull(action.media)
+        }
+    }
+    when (action) {
+        is Action.EditMedia.AddPhotos -> {
+            state.photos += media.filterIsInstance<RestrictedFile.Media.Photo>()
+            state.video = null
         }
 
-private fun Flow<Action.CreatePost>.createPostMutations(
+        is Action.EditMedia.AddVideo -> {
+            state.photos = emptyList()
+            state.video = media.filterIsInstance<RestrictedFile.Media.Video>().firstOrNull()
+        }
+
+        is Action.EditMedia.RemoveMedia -> {
+            state.photos = state.photos.filter { it != action.media }
+            state.video = state.video?.takeIf { it != action.media }
+        }
+
+        is Action.EditMedia.UpdateMedia -> when (val item = media.firstOrNull()) {
+            is RestrictedFile.Media.Photo -> state.photos = state.photos.map { photo ->
+                if (photo.path == item.path) item
+                else photo
+            }
+
+            is RestrictedFile.Media.Video -> state.video = item
+            else -> Unit
+        }
+    }
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.CreatePost>.launchCreatePostMutations(
+    state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val postWrite = Writable.Create(
+) = launchedCollect { action ->
+    val postWrite = withContext(Dispatchers.IO) {
+        Writable.Create(
             request = Post.Create.Request(
                 authorId = action.authorId,
                 text = action.text,
@@ -283,55 +321,54 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                         }
                     }.filterIsInstance<File.Media>(),
                     allowed = action.interactionPreference?.threadGateAllowed,
+                    linkPreview = action.linkPreview,
                 ),
-            ),
-        )
-
-        val status = writeQueue.enqueue(postWrite)
-        val memo = postWrite.writeStatusMessage(status)
-        if (memo != null) emit { copy(messages = messages + memo) }
-
-        if (status !is WriteQueue.Status.Enqueued) return@mapToManyMutations
-
-        emit { copy(messages = messages + Memo.Resource(stringResource = Res.string.sending_post)) }
-
-        // Wait for the user to read the message
-        delay(1400.milliseconds)
-
-        emitAll(
-            flowOf(Action.Navigate.Pop).consumeNavigationActions(
-                navigationMutationConsumer = navActions,
             ),
         )
     }
 
-private fun Flow<Action.SearchProfiles>.searchMutations(
+    val status = writeQueue.enqueue(postWrite)
+    val memo = postWrite.writeStatusMessage(status)
+    if (memo != null) state.messages += memo
+
+    if (status !is WriteQueue.Status.Enqueued) return@launchedCollect
+
+    state.messages += Memo.Resource(stringResource = Res.string.sending_post)
+
+    // Wait for the user to read the message
+    delay(1400.milliseconds)
+
+    navActions(Action.Navigate.Pop.navigationMutation)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SearchProfiles>.launchSearchMutations(
+    state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-): Flow<Mutation<State>> =
-    debounce(SEARCH_DEBOUNCE_MILLIS)
-        .flatMapLatest { action ->
-            searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
-                    query = action.query,
-                    isLocalOnly = false,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
-                        limit = MAX_SUGGESTED_PROFILES.toLong(),
-                    ),
+) = debounce(SEARCH_DEBOUNCE_MILLIS)
+    .launchedCollectLatest { action ->
+        searchRepository.autoCompleteProfileSearch(
+            query = SearchQuery.OfProfiles(
+                query = action.query,
+                isLocalOnly = false,
+                data = CursorQuery.Data(
+                    page = 0,
+                    cursorAnchor = Clock.System.now(),
+                    limit = MAX_SUGGESTED_PROFILES.toLong(),
                 ),
-                cursor = Cursor.Initial,
-            ).mapToMutation { profiles ->
-                copy(
-                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
-                )
-            }
+            ),
+            cursor = Cursor.Initial,
+        ).collect { profiles ->
+            state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
         }
-
-private fun Flow<Action.ClearSuggestions>.clearSuggestionsMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(suggestedProfiles = emptyList())
     }
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.ClearSuggestions>.launchClearSuggestionsMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect {
+    state.suggestedProfiles = emptyList()
+}
 
 private const val SEARCH_DEBOUNCE_MILLIS = 300L
 const val MAX_SUGGESTED_PROFILES = 5

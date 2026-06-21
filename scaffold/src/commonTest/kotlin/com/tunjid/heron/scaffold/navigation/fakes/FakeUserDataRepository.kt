@@ -31,6 +31,9 @@ class FakeUserDataRepository : UserDataRepository {
 
     override suspend fun setCurrentThemeOrdinal(themeOrdinal: Int): Outcome = Outcome.Success
 
+    override suspend fun setDarkThemeConfigOrdinal(darkThemeConfigOrdinal: Int): Outcome =
+        Outcome.Success
+
     override suspend fun setCompactNavigation(compactNavigation: Boolean): Outcome =
         Outcome.Success
 

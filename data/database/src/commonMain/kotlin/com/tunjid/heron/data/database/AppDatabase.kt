@@ -100,6 +100,7 @@ import com.tunjid.heron.data.database.migrations.Migration32To33ItemSortOnTimeli
 import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignKey
 import com.tunjid.heron.data.database.migrations.Migration37To38StandardSubscriptionViewerIds
 import com.tunjid.heron.data.database.migrations.Migration42To43RockskyCreatorId
+import com.tunjid.heron.data.database.migrations.Migration45To46GroupConversations
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -108,7 +109,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 45,
+    version = 46,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -250,6 +251,7 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 43, to = 44),
         // Add index to ImageEntity and VideoEntity
         AutoMigration(from = 44, to = 45),
+        // Migration 45 - 46 is a manual migration
     ],
     exportSchema = true,
 )
@@ -305,6 +307,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration33To34OnUpdateForeignKey,
             Migration37To38StandardSubscriptionViewerIds,
             Migration42To43RockskyCreatorId,
+            Migration45To46GroupConversations,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

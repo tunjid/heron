@@ -30,12 +30,14 @@ import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
+import heron.ui.timeline.generated.resources.writable_conversation_update
 import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
 import heron.ui.timeline.generated.resources.writable_failed_post_interaction
 import heron.ui.timeline.generated.resources.writable_follow
 import heron.ui.timeline.generated.resources.writable_like
+import heron.ui.timeline.generated.resources.writable_link_document
 import heron.ui.timeline.generated.resources.writable_message
 import heron.ui.timeline.generated.resources.writable_mute
 import heron.ui.timeline.generated.resources.writable_notification_update
@@ -189,9 +191,17 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_subscribe_standard_publication),
             )
+            is Writable.StandardSite.UpdatePostReference -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_link_document),
+            )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_status_update),
+            )
+            is Writable.ConversationUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_conversation_update),
             )
         }
     }

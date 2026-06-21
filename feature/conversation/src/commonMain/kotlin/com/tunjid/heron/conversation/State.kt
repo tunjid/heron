@@ -19,6 +19,7 @@ package com.tunjid.heron.conversation
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.conversation.di.conversationId
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
@@ -53,7 +54,8 @@ interface State : TilingState<MessageQuery, MessageItem> {
         val signedInProfile: Profile? = null,
         val sharedElementPrefix: String,
         val id: ConversationId,
-        val members: List<Profile> = emptyList(),
+        @Transient
+        val conversation: Conversation? = null,
         val pendingItems: List<MessageItem.Pending> = emptyList(),
         override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
         @Serializable(with = TextFieldValueSerializer::class)
@@ -70,7 +72,16 @@ interface State : TilingState<MessageQuery, MessageItem> {
         ): Immutable = Immutable(
             id = route.conversationId,
             sharedElementPrefix = route.sharedElementPrefix,
-            members = route.models.filterIsInstance<Profile>(),
+            // Seed the conversation from the route so the title shows immediately; the
+            // DB observation replaces this stub once the conversation is available.
+            conversation = Conversation(
+                id = route.conversationId,
+                members = route.models.filterIsInstance<Profile>(),
+                muted = false,
+                unreadCount = 0,
+                lastMessage = null,
+                lastMessageReactedTo = null,
+            ),
             tilingData = TilingState.Data(
                 currentQuery = MessageQuery(
                     conversationId = route.conversationId,
@@ -125,6 +136,12 @@ val MessageItem.sender
     get() = when (this) {
         is MessageItem.Pending -> sender
         is MessageItem.Sent -> message.sender
+    }
+
+val MessageItem.systemContent: Message.SystemContent?
+    get() = when (this) {
+        is MessageItem.Pending -> null
+        is MessageItem.Sent -> message.system
     }
 
 val MessageItem.id
@@ -198,6 +215,14 @@ sealed class Action(val key: String) {
     data class UpdateMessageReaction(
         val reaction: Message.UpdateReaction,
     ) : Action(key = "UpdateMessageReaction")
+
+    data object AcceptConversation : Action(key = "AcceptConversation")
+
+    data object LeaveConversation : Action(key = "LeaveConversation")
+
+    data class ToggleMute(
+        val muted: Boolean,
+    ) : Action(key = "ToggleMute")
 
     sealed class SharedRecord : Action(key = "SharedRecord") {
         data class Add(

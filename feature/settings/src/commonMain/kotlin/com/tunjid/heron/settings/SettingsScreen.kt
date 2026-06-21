@@ -97,6 +97,9 @@ internal fun SettingsScreen(
                             setCurrentThemeOrdinal = {
                                 actions(Action.SetCurrentThemeOrdinal(it))
                             },
+                            setDarkThemeConfigOrdinal = {
+                                actions(Action.SetDarkThemeConfigOrdinal(it))
+                            },
                             setCompactNavigation = {
                                 actions(Action.SetCompactNavigation(it))
                             },

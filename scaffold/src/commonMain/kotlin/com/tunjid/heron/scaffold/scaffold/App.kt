@@ -17,6 +17,7 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -38,6 +39,7 @@ import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
+import com.tunjid.heron.scaffold.ui.theme.DarkThemeConfig
 import com.tunjid.heron.scaffold.ui.theme.Theme
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.MovableSharedElementHostState
@@ -55,10 +57,16 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
+    val localPrefs = appState.identityState.preferences?.local
     AppTheme(
-        theme = Theme.fromOrdinal(
-            appState.identityState.preferences?.local?.currentThemeOrdinal ?: 0,
-        ),
+        useDarkTheme = when (
+            DarkThemeConfig.fromOrdinal(localPrefs?.darkThemeConfigOrdinal ?: 0)
+        ) {
+            DarkThemeConfig.System -> isSystemInDarkTheme()
+            DarkThemeConfig.Light -> false
+            DarkThemeConfig.Dark -> true
+        },
+        theme = Theme.fromOrdinal(localPrefs?.currentThemeOrdinal ?: 0),
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,

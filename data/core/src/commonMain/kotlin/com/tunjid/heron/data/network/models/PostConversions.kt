@@ -73,6 +73,7 @@ import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntit
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.utilities.safeDecodeAs
+import com.tunjid.heron.data.utilities.stringOrNull
 import sh.christian.ozone.api.model.JsonContent
 
 internal fun PostEntity.postVideoEntity(
@@ -331,6 +332,9 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     try {
         val bskyPost = decodeAs<BskyPost>()
+        // `via` is a Heron-custom field not present on the bundled `app.bsky.feed.Post`
+        // lexicon, so read it directly from the underlying JSON.
+        val via = stringOrNull("via")
 
         val embeddedUri: EmbeddableRecordUri? = when (val embed = bskyPost.embed) {
             is PostEmbedUnion.Record ->
@@ -344,30 +348,31 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
 
         PostEntity.RecordData(
             text = bskyPost.text,
-            base64EncodedRecord = bskyPost.toPostRecord().toUrlEncodedBase64(),
+            base64EncodedRecord = bskyPost.toPostRecord(via = via).toUrlEncodedBase64(),
             createdAt = bskyPost.createdAt,
             embeddedRecordUri = embeddedUri,
-            via = bskyPost.via,
+            via = via,
         )
     } catch (_: Exception) {
         null
     }
 
-private fun BskyPost.toPostRecord() =
-    Post.Record(
-        text = text,
-        createdAt = createdAt,
-        links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
-        replyRef = reply?.let {
-            Post.ReplyRef(
-                rootCid = it.root.cid.cid.let(::PostId),
-                rootUri = it.root.uri.atUri.let(::PostUri),
-                parentCid = it.parent.cid.cid.let(::PostId),
-                parentUri = it.parent.uri.atUri.let(::PostUri),
-            )
-        },
-        via = via,
-    )
+private fun BskyPost.toPostRecord(
+    via: String?,
+) = Post.Record(
+    text = text,
+    createdAt = createdAt,
+    links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
+    replyRef = reply?.let {
+        Post.ReplyRef(
+            rootCid = it.root.cid.cid.let(::PostId),
+            rootUri = it.root.uri.atUri.let(::PostUri),
+            parentCid = it.parent.cid.cid.let(::PostId),
+            parentUri = it.parent.uri.atUri.let(::PostUri),
+        )
+    },
+    via = via,
+)
 
 private fun PostView.nonPostEmbeddedRecord(): Record.Embeddable? {
     val recordUnion = when (val embed = embed) {

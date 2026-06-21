@@ -228,6 +228,8 @@ internal class ThingPreferenceUpdater(
                         },
                     ),
                 )
+                // Unused in the app for now
+                is PreferencesUnion.LiveEventPreferences -> foldedPreferences
             }
         },
     )

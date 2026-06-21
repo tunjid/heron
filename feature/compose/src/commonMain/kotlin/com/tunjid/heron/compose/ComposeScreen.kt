@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.compose
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -40,11 +42,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,16 +59,21 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
+import com.tunjid.heron.data.core.models.primaryRecord
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
+import com.tunjid.heron.timeline.ui.post.ExternalEmbedPreview
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
@@ -85,13 +89,12 @@ import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.remove_link_preview
 import heron.feature.compose.generated.resources.remove_quoted_post
 import heron.feature.compose.generated.resources.remove_shared_record
-import heron.ui.core.generated.resources.record_document
 import heron.ui.core.generated.resources.record_feed
 import heron.ui.core.generated.resources.record_labeler
 import heron.ui.core.generated.resources.record_list
-import heron.ui.core.generated.resources.record_publication
 import heron.ui.core.generated.resources.record_starter_pack
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -106,7 +109,6 @@ internal fun ComposeScreen(
     actions: (Action) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    var lastDetectedEmbedUrl by remember { mutableStateOf<String?>(null) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -119,22 +121,35 @@ internal fun ComposeScreen(
             sharedElementPrefix = state.sharedElementPrefix,
         )
         Post(
+            paneScaffoldState = paneScaffoldState,
             signedInProfile = state.signedInProfile,
             postText = postText,
             embeddedRecord = state.embeddedRecord,
+            linkPreview = state.linkPreview,
+            isLoadingLinkPreview = state.isLoadingLinkPreview,
+            photos = state.photos,
+            video = state.video,
             paneTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onMentionDetected = {
                 actions(Action.SearchProfiles(it))
             },
-            onRemoveEmbeddedRecordClicked = {
-                actions(Action.RemoveEmbeddedRecord(lastDetectedEmbedUrl))
+            onRemoveUriClicked = {
+                actions(Action.RemoveDetectedUri(it))
             },
-            onExternalLinkDetected = { url ->
-                lastDetectedEmbedUrl = url
-                if (state.embeddedRecord == null && state.dismissedEmbedUrl != url) {
-                    actions(Action.EmbedUrl(url))
+            onUriDetected = { uri ->
+                when (uri) {
+                    state.embeddedRecord?.embeddableRecordUri?.uri -> Unit
+                    state.linkPreview?.embed?.uri?.uri -> Unit
+                    state.dismissedUri?.uri -> Unit
+                    else -> actions(Action.UriDetected(uri))
                 }
+            },
+            removeMediaItem = { item ->
+                actions(Action.EditMedia.RemoveMedia(item))
+            },
+            onMediaItemUpdated = { item ->
+                actions(Action.EditMedia.UpdateMedia(item))
             },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
@@ -151,19 +166,6 @@ internal fun ComposeScreen(
                 },
             )
         }
-        MediaUploadItems(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            photos = state.photos,
-            video = state.video,
-            removeMediaItem = { item ->
-                actions(Action.EditMedia.RemoveMedia(item))
-            },
-            onMediaItemUpdated = { item ->
-                actions(Action.EditMedia.UpdateMedia(item))
-            },
-        )
         Spacer(
             modifier = Modifier
                 .height(56.dp),
@@ -181,14 +183,21 @@ internal fun ComposeScreen(
 @Composable
 private fun Post(
     modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
     signedInProfile: Profile?,
     postText: TextFieldValue,
     embeddedRecord: Record.Embeddable.Native?,
+    linkPreview: LinkPreview?,
+    isLoadingLinkPreview: Boolean,
+    photos: List<RestrictedFile.Media.Photo>,
+    video: RestrictedFile.Media.Video?,
     paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
-    onRemoveEmbeddedRecordClicked: () -> Unit,
-    onExternalLinkDetected: (String) -> Unit,
+    onRemoveUriClicked: (Uri) -> Unit,
+    onUriDetected: (String) -> Unit,
+    removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -216,56 +225,106 @@ private fun Post(
                     postText = postText,
                     onPostTextChanged = onPostTextChanged,
                     onMentionDetected = onMentionDetected,
-                    onExternalLinkDetected = onExternalLinkDetected,
+                    onUriDetected = onUriDetected,
                 )
             },
         )
 
-        embeddedRecord?.let {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
-                EmbeddedRecord(
+        MediaUploadItems(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            photos = photos,
+            video = video,
+            removeMediaItem = removeMediaItem,
+            onMediaItemUpdated = onMediaItemUpdated,
+        )
+
+        if (photos.isEmpty() && video == null) {
+            if (isLoadingLinkPreview && linkPreview == null) {
+                CircularProgressIndicator(
                     modifier = Modifier
-                        .weight(1f),
-                    record = it,
-                    appliedLabels = AppliedLabels.Empty,
-                    sharedElementPrefix = NeverMatchedSharedElementPrefix,
-                    paneTransitionScope = paneTransitionScope,
-                    postActions = PostActions.NoOp,
-                )
-                val contentDescription = when (it) {
-                    is Labeler -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_labeler),
-                    )
-                    is Post -> stringResource(Res.string.remove_quoted_post)
-                    is FeedGenerator -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_feed),
-                    )
-                    is FeedList -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_list),
-                    )
-                    is StarterPack -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_starter_pack),
-                    )
-                }
-                FilledTonalIconButton(
-                    onClick = onRemoveEmbeddedRecordClicked,
-                    content = {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = contentDescription,
-                        )
-                    },
+                        .align(Alignment.CenterHorizontally)
+                        .size(32.dp),
                 )
             }
+
+            linkPreview?.let { preview ->
+                Row(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState)
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    ExternalEmbedPreview(
+                        modifier = Modifier
+                            .weight(1f),
+                        embed = preview.embed,
+                        externalRecord = preview.primaryRecord,
+                        paneTransitionScope = paneTransitionScope,
+                    )
+                    FilledTonalIconButton(
+                        onClick = {
+                            onRemoveUriClicked(preview.embed.uri)
+                        },
+                        content = {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = stringResource(Res.string.remove_link_preview),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
+        if (embeddedRecord != null) Row(
+            modifier = Modifier
+                .animateBounds(paneScaffoldState)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            EmbeddedRecord(
+                modifier = Modifier
+                    .weight(1f),
+                record = embeddedRecord,
+                appliedLabels = AppliedLabels.Empty,
+                sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                paneTransitionScope = paneTransitionScope,
+                postActions = PostActions.NoOp,
+            )
+            val contentDescription = when (embeddedRecord) {
+                is Labeler -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_labeler),
+                )
+                is Post -> stringResource(Res.string.remove_quoted_post)
+                is FeedGenerator -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_feed),
+                )
+                is FeedList -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_list),
+                )
+                is StarterPack -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_starter_pack),
+                )
+            }
+            FilledTonalIconButton(
+                onClick = {
+                    onRemoveUriClicked(embeddedRecord.embeddableRecordUri)
+                },
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = contentDescription,
+                    )
+                },
+            )
         }
     }
 }
@@ -342,7 +401,7 @@ private fun PostComposition(
     postText: TextFieldValue,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
-    onExternalLinkDetected: (String) -> Unit,
+    onUriDetected: (String) -> Unit,
 ) {
     val textFieldFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -364,7 +423,7 @@ private fun PostComposition(
             )
             when (val target = links.detectActiveLink(it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
-                is LinkTarget.ExternalLink -> onExternalLinkDetected(target.uri.uri)
+                is LinkTarget.ExternalLink -> onUriDetected(target.uri.uri)
                 is LinkTarget.Hashtag -> {
                     // TODO: Implement hashtag search
                 }

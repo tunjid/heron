@@ -68,13 +68,16 @@ data class MessageEntity(
     val id: MessageId,
     val rev: String,
     val text: String,
-    val senderId: ProfileId,
+    // Null for system messages (group member joins/leaves, edits, etc.) which have no sender.
+    val senderId: ProfileId?,
     val conversationId: ConversationId,
     val conversationOwnerId: ProfileId,
     val isDeleted: Boolean,
     val sentAt: Instant,
     @ColumnInfo(defaultValue = "NULL")
     val base64EncodedMetadata: String?,
+    @ColumnInfo(defaultValue = "NULL")
+    val base64EncodedSystemContent: String? = null,
 )
 
 data class PopulatedMessageEntity(
@@ -84,7 +87,7 @@ data class PopulatedMessageEntity(
         parentColumn = "senderId",
         entityColumn = "did",
     )
-    val sender: ProfileEntity,
+    val sender: ProfileEntity?,
     @Relation(
         parentColumn = "id",
         entityColumn = "messageId",
@@ -120,7 +123,7 @@ fun PopulatedMessageEntity.asExternalModel(
     text = entity.text,
     sentAt = entity.sentAt,
     isDeleted = entity.isDeleted,
-    sender = sender.asExternalModel(),
+    sender = sender?.asExternalModel(),
     embeddedRecord = embeddedRecord,
     reactions = reactions.map {
         Message.Reaction(
@@ -130,11 +133,19 @@ fun PopulatedMessageEntity.asExternalModel(
         )
     },
     metadata = entity.metadata(),
+    system = entity.systemContent(),
 )
 
 internal fun MessageEntity.metadata() =
     try {
         base64EncodedMetadata?.fromBase64EncodedUrl<Message.Metadata>()
+    } catch (_: Exception) {
+        null
+    }
+
+internal fun MessageEntity.systemContent() =
+    try {
+        base64EncodedSystemContent?.fromBase64EncodedUrl<Message.SystemContent>()
     } catch (_: Exception) {
         null
     }

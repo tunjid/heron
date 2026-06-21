@@ -137,6 +137,7 @@ private fun State.createPostAction(): Action.CreatePost? {
         links = postText.annotatedString.links(),
         media = video?.let(::listOf) ?: photos,
         embeddedRecordReference = embeddedRecord?.reference,
+        linkPreview = linkPreview,
         interactionPreference = interactionsPreference,
     )
 }

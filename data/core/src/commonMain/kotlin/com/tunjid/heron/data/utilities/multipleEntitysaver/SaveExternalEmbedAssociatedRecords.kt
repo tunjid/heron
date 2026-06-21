@@ -27,17 +27,15 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
-import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
-import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
+import com.tunjid.heron.data.network.models.associatedStandardRefs
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.stubProfileEntity
 import com.tunjid.heron.data.utilities.Collections
@@ -58,34 +56,15 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
     externalView: ExternalViewExternal,
     postUri: PostUri,
 ) {
-    val refs = externalView.associatedRefs?.takeIf(List<*>::isNotEmpty) ?: return
+    val refs = externalView.associatedStandardRefs() ?: return
     val externalEmbedUri = GenericUri(externalView.uri.uri)
     val associatedProfiles = externalView.associatedProfiles
         .orEmpty()
         .associateBy { it.did.did }
 
-    var documentUri: StandardDocumentUri? = null
-    var documentCid: StandardDocumentId? = null
-    var publicationUri: StandardPublicationUri? = null
-    var publicationCid: StandardPublicationId? = null
-
-    refs.forEach { ref ->
-        when (val recordUri = ref.uri.atUri.asEmbeddableRecordUriOrNull()) {
-            is StandardDocumentUri -> {
-                documentUri = recordUri
-                documentCid = StandardDocumentId(ref.cid.cid)
-            }
-            is StandardPublicationUri -> {
-                publicationUri = recordUri
-                publicationCid = StandardPublicationId(ref.cid.cid)
-            }
-            else -> Unit
-        }
-    }
-
     val source = externalView.source
 
-    publicationUri?.let { pubUri ->
+    refs.publicationUri?.let { pubUri ->
         addAssociatedProfile(
             profileId = pubUri.profileId(),
             associatedProfiles = associatedProfiles,
@@ -101,12 +80,12 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
                 postUri = postUri,
                 externalEmbedUri = externalEmbedUri,
                 recordUri = pubUri,
-                recordCid = publicationCid,
+                recordCid = refs.publicationCid,
             ),
         )
     }
 
-    documentUri?.let { docUri ->
+    refs.documentUri?.let { docUri ->
         addAssociatedProfile(
             profileId = docUri.profileId(),
             associatedProfiles = associatedProfiles,
@@ -115,7 +94,7 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
             stubStandardDocumentEntity(
                 uri = docUri,
                 view = externalView,
-                publicationUri = publicationUri,
+                publicationUri = refs.publicationUri,
             ),
         )
         add(
@@ -123,7 +102,7 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
                 postUri = postUri,
                 externalEmbedUri = externalEmbedUri,
                 recordUri = docUri,
-                recordCid = documentCid,
+                recordCid = refs.documentCid,
             ),
         )
     }

@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.timeline.ui.profile.displayNameOrBlank
 import com.tunjid.heron.ui.modifiers.shapedClickable
 
 /**
@@ -73,8 +74,8 @@ private fun PreviewConversationRow(
             )
         }
         ConversationDetails(
-            participants = listOf(row.profile),
-            signedInProfileId = null,
+            title = row.profile.displayNameOrBlank,
+            description = null,
             conversationSummary = row.summary,
         )
     }

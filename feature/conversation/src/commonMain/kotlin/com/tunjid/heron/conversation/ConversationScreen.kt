@@ -59,6 +59,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
@@ -87,6 +88,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
@@ -121,41 +123,49 @@ internal fun ConversationScreen(
             count = state.tiledItems.size,
             key = { state.tiledItems[it].id },
         ) { index ->
-            val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
-            val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
             val content = state.tiledItems[index]
-            val isFirstMessageByAuthor = prevAuthor != content.sender
-            val isLastMessageByAuthor = nextAuthor != content.sender
+            val systemContent = content.systemContent
+            if (systemContent != null) {
+                SystemMessageRow(
+                    modifier = Modifier.animateItem(),
+                    systemContent = systemContent,
+                )
+            } else {
+                val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
+                val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
+                val isFirstMessageByAuthor = prevAuthor != content.sender
+                val isLastMessageByAuthor = nextAuthor != content.sender
 
-            Message(
-                modifier = Modifier
-                    .animateItem(),
-                item = content,
-                side = when {
-                    content.sender.did == state.signedInProfile?.did -> Side.Sender
-                    else -> Side.Receiver
-                },
-                isFirstMessageByAuthor = isFirstMessageByAuthor,
-                isLastMessageByAuthor = isLastMessageByAuthor,
-                paneScaffoldState = paneScaffoldState,
-                actions = actions,
-                onMessageLongPressed = { item ->
-                    when (item) {
-                        is MessageItem.Pending -> Unit
-                        is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
-                    }
-                },
-                onLinkTargetClicked = { linkTarget ->
-                    if (linkTarget is LinkTarget.Navigable) actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = linkTarget.path,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                Message(
+                    modifier = Modifier
+                        .animateItem(),
+                    item = content,
+                    side = when {
+                        content.sender?.did == state.signedInProfile?.did -> Side.Sender
+                        else -> Side.Receiver
+                    },
+                    isFirstMessageByAuthor = isFirstMessageByAuthor,
+                    isLastMessageByAuthor = isLastMessageByAuthor,
+                    paneScaffoldState = paneScaffoldState,
+                    actions = actions,
+                    onMessageLongPressed = { item ->
+                        when (item) {
+                            is MessageItem.Pending -> Unit
+                            is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
+                        }
+                    },
+                    onLinkTargetClicked = { linkTarget ->
+                        if (linkTarget is LinkTarget.Navigable) actions(
+                            Action.Navigate.To(
+                                pathDestination(
+                                    path = linkTarget.path,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                ),
                             ),
-                        ),
-                    )
-                },
-            )
+                        )
+                    },
+                )
+            }
         }
     }
 
@@ -232,15 +242,17 @@ private fun Message(
             boundsTransform = paneScaffoldState.childBoundsTransform,
         ),
         onAvatarClicked = {
-            actions(
-                Action.Navigate.To(
-                    profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        profile = item.sender,
-                        avatarSharedElementKey = item.avatarSharedElementKey(),
+            item.sender?.let { profile ->
+                actions(
+                    Action.Navigate.To(
+                        profileDestination(
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            profile = profile,
+                            avatarSharedElementKey = item.avatarSharedElementKey(),
+                        ),
                     ),
-                ),
-            )
+                )
+            }
         },
         onMessageLongPressed = onMessageLongPressed,
         onLinkTargetClicked = onLinkTargetClicked,
@@ -346,9 +358,9 @@ private fun MessageAvatar(
             sharedContentState = paneScaffoldState.rememberSharedContentState(
                 key = item.avatarSharedElementKey(),
             ),
-            state = remember(item.sender.avatar) {
+            state = remember(item.sender?.avatar) {
                 ImageArgs(
-                    url = item.sender.avatar?.uri,
+                    url = item.sender?.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                     shape = RoundedPolygonShape.Circle,
@@ -411,7 +423,7 @@ private fun AuthorNameTimestamp(
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
-            text = item.sender.displayName ?: "",
+            text = item.sender?.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -599,7 +611,29 @@ private fun MessageRecord(
 }
 
 private fun MessageItem.avatarSharedElementKey(): String {
-    return "$id-${conversationId.id}-${sender.did.id}"
+    return "$id-${conversationId.id}-${sender?.did?.id}"
+}
+
+@Composable
+private fun SystemMessageRow(
+    systemContent: Message.SystemContent,
+    modifier: Modifier = Modifier,
+) {
+    val summary = systemContent.summary()
+    if (summary.isEmpty()) return
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 private fun Instant.toTimestamp(): String {
