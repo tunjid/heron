@@ -101,6 +101,7 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
@@ -120,7 +121,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
@@ -474,10 +474,8 @@ internal class OfflinePostRepository(
             ?.let {
                 runCatchingUnlessCancelled {
                     httpClient.prepareGet(it).execute { response ->
-                        networkService.uploadImageBlob(
-                            // Piping a hot stream, only one attempt
-                            attempts = 1,
-                            data = response::bodyAsChannel,
+                        networkService.pipeNetworkBlob(
+                            data = response,
                         ).getOrThrow()
                     }
                 }.getOrNull()
@@ -831,8 +829,8 @@ internal class OfflinePostRepository(
                 metadata.embeddedMedia.map { file ->
                     async {
                         when (file) {
-                            is File.Media.Photo -> fileManager.source(file).use {
-                                networkService.uploadImageBlob(data = it)
+                            is File.Media.Photo -> with(fileManager) {
+                                networkService.uploadFileBlob(file = file)
                             }
                             is File.Media.Video -> videoUploadService.uploadVideo(
                                 file = file,
@@ -861,24 +859,23 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
-private suspend fun NetworkService.uploadImageBlob(
-    data: Source,
-): Result<Blob> = uploadImageBlob(
-    attempts = 3,
-    // Create a new channel each invocation
-    // so the source may be re-read
-    data = {
-        ByteReadChannel(data)
-    },
-)
+context(fileManager: FileManager)
+private suspend fun NetworkService.uploadFileBlob(
+    file: File.Media,
+): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
+    fileManager.source(file).use {
+        uploadBlob(ByteReadChannel(it))
+            .map(UploadBlobResponse::blob)
+    }
+}
 
-private suspend inline fun NetworkService.uploadImageBlob(
-    attempts: Int,
-    crossinline data: suspend () -> ByteReadChannel,
+private suspend fun NetworkService.pipeNetworkBlob(
+    data: HttpResponse,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry(
-    times = attempts,
+    // Response is a one-shot stream
+    times = 1,
 ) {
-    uploadBlob(data())
+    uploadBlob(data.bodyAsChannel())
         .map(UploadBlobResponse::blob)
 }
 
