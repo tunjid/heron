@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
@@ -51,6 +52,10 @@ interface State {
         val signedInProfile: Profile? = null,
         val fabExpanded: Boolean = true,
         val embeddedRecord: Record.Embeddable.Native? = null,
+        @Transient
+        val linkPreview: LinkPreview? = null,
+        @Transient
+        val isLoadingLinkPreview: Boolean = false,
         @Transient
         val dismissedEmbedUrl: String? = null,
         @Transient
@@ -122,6 +127,7 @@ sealed class Action(val key: String) {
         val links: List<Link>,
         val media: List<RestrictedFile.Media>,
         val embeddedRecordReference: Record.Reference?,
+        val linkPreview: LinkPreview?,
         val interactionPreference: PostInteractionSettingsPreference?,
     ) : Action("CreatePost")
 

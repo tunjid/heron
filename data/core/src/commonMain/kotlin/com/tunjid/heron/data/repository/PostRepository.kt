@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -98,7 +99,11 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.asSource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -117,6 +122,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.Source
+import kotlinx.io.buffered
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
@@ -176,6 +182,7 @@ internal class OfflinePostRepository(
     private val postDao: PostDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val httpClient: HttpClient,
     private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
     private val tidGenerator: TidGenerator,
@@ -459,12 +466,32 @@ internal class OfflinePostRepository(
             requireNotNull(blobsResult.exceptionOrNull()),
         )
 
+        // An external link card only applies when the post has no embedded records and no media.
+        val linkPreview = request.metadata.linkPreview?.takeIf {
+            request.metadata.embeddedRecordReference == null && blobs.isEmpty()
+        }
+        val externalThumbBlob = linkPreview?.embed
+            ?.thumb
+            ?.uri
+            ?.let {
+                runCatchingUnlessCancelled {
+                    networkService.uploadImageBlob(
+                        data = httpClient.get(it)
+                            .bodyAsChannel()
+                            .asSource()
+                            .buffered(),
+                    ).getOrThrow()
+                }.getOrNull()
+            }
+
         writes.add(
             ApplyWritesCreate(
                 collection = Nsid(PostUri.NAMESPACE),
                 rkey = rKey,
                 value = request.postNetworkRecord(
                     blobs = blobs,
+                    linkPreview = linkPreview,
+                    externalThumbBlob = externalThumbBlob,
                     createdAt = now,
                 ),
             ),
@@ -753,6 +780,8 @@ internal class OfflinePostRepository(
 
     private suspend fun Post.Create.Request.postNetworkRecord(
         blobs: List<MediaBlob>,
+        linkPreview: LinkPreview?,
+        externalThumbBlob: Blob?,
         createdAt: Instant,
     ): JsonContent {
         val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
@@ -785,6 +814,8 @@ internal class OfflinePostRepository(
             embed = postEmbedUnion(
                 embeddedRecordReference = metadata.embeddedRecordReference,
                 mediaBlobs = blobs,
+                linkPreview = linkPreview,
+                externalThumbBlob = externalThumbBlob,
             ),
             facets = resolvedLinks.facet(),
             createdAt = createdAt,
