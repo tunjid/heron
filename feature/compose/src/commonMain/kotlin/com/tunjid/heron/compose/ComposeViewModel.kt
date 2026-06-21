@@ -195,11 +195,8 @@ private fun Flow<Action.EmbedUrl>.launchEmbedUrlMutations(
     recordRepository: RecordRepository,
 ) = debounce(400.milliseconds)
     .launchedCollectLatest { action ->
-        when (
-            val uri = action.url
-                .trimEnd('/', '\n', '\r')
-                .asEmbeddableRecordUriOrNull()
-        ) {
+        val trimmedUrl = action.url.trimEnd('/', '\n', '\r', ' ')
+        when (val uri = trimmedUrl.asEmbeddableRecordUriOrNull()) {
             null -> try {
                 // Not an embeddable AT-record; resolve the URL to an external link card preview.
                 state.isLoadingLinkPreview = true

@@ -238,7 +238,7 @@ private fun Post(
             onMediaItemUpdated = onMediaItemUpdated,
         )
 
-        if (!photos.isNotEmpty() || video != null) {
+        if (photos.isEmpty() && video == null) {
             if (isLoadingLinkPreview && linkPreview == null) {
                 CircularProgressIndicator(
                     modifier = Modifier
