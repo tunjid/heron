@@ -20,7 +20,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
@@ -28,6 +27,7 @@ import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
@@ -57,7 +57,7 @@ interface State {
         @Transient
         val isLoadingLinkPreview: Boolean = false,
         @Transient
-        val dismissedEmbedUrl: String? = null,
+        val dismissedUri: Uri? = null,
         @Transient
         val interactionsPreference: PostInteractionSettingsPreference? = null,
         @Serializable(with = TextFieldValueSerializer::class)
@@ -116,9 +116,9 @@ sealed class Action(val key: String) {
         val textFieldValue: TextFieldValue,
     ) : Action("PostTextChanged")
 
-    data class EmbedUrl(
+    data class UriDetected(
         val url: String,
-    ) : Action("EmbedUrl")
+    ) : Action("UriDetected")
 
     data class CreatePost(
         val postType: Post.Create?,
@@ -171,7 +171,7 @@ sealed class Action(val key: String) {
 
     data object ClearSuggestions : Action("ClearSuggestions")
 
-    data class RemoveEmbeddedRecord(
-        val url: String? = null,
-    ) : Action("RemoveEmbeddedRecord")
+    data class RemoveDetectedUri(
+        val uri: Uri,
+    ) : Action("RemoveDetectedUri")
 }
