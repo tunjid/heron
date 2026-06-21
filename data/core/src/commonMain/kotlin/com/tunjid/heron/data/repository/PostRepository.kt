@@ -466,7 +466,7 @@ internal class OfflinePostRepository(
 
         // An external link card only applies when the post has no embedded records and no media.
         val linkPreview = request.metadata.linkPreview?.takeIf {
-            request.metadata.embeddedRecordReference == null && blobs.isEmpty()
+            blobs.isEmpty()
         }
         val externalThumbBlob = linkPreview?.embed
             ?.thumb
@@ -875,6 +875,9 @@ private suspend fun NetworkService.pipeNetworkBlob(
     // Response is a one-shot stream
     times = 1,
 ) {
+    if (data.status.value !in 200..299) {
+        throw Exception("Failed to fetch network blob: ${data.status}")
+    }
     uploadBlob(data.bodyAsChannel())
         .map(UploadBlobResponse::blob)
 }

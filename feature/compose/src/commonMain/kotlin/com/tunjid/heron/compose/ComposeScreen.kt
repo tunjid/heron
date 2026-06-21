@@ -230,87 +230,83 @@ private fun Post(
             },
         )
 
-        when {
-            hasMedia -> Unit
-            embeddedRecord != null -> {
+        if (embeddedRecord != null) Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            EmbeddedRecord(
+                modifier = Modifier
+                    .weight(1f),
+                record = embeddedRecord,
+                appliedLabels = AppliedLabels.Empty,
+                sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                paneTransitionScope = paneTransitionScope,
+                postActions = PostActions.NoOp,
+            )
+            val contentDescription = when (embeddedRecord) {
+                is Labeler -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_labeler),
+                )
+                is Post -> stringResource(Res.string.remove_quoted_post)
+                is FeedGenerator -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_feed),
+                )
+                is FeedList -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_list),
+                )
+                is StarterPack -> stringResource(
+                    Res.string.remove_shared_record,
+                    stringResource(CommonStrings.record_starter_pack),
+                )
+            }
+            FilledTonalIconButton(
+                onClick = onRemoveEmbeddedRecordClicked,
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = contentDescription,
+                    )
+                },
+            )
+        }
+
+        if (!hasMedia) {
+            if (isLoadingLinkPreview && linkPreview == null) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(32.dp),
+                )
+            }
+
+            linkPreview?.let { preview ->
                 Row(
                     modifier = Modifier
                         .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.Top,
                 ) {
-                    EmbeddedRecord(
+                    ExternalEmbedPreview(
                         modifier = Modifier
                             .weight(1f),
-                        record = embeddedRecord,
-                        appliedLabels = AppliedLabels.Empty,
-                        sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                        embed = preview.embed,
+                        externalRecord = preview.primaryRecord,
                         paneTransitionScope = paneTransitionScope,
-                        postActions = PostActions.NoOp,
                     )
-                    val contentDescription = when (embeddedRecord) {
-                        is Labeler -> stringResource(
-                            Res.string.remove_shared_record,
-                            stringResource(CommonStrings.record_labeler),
-                        )
-                        is Post -> stringResource(Res.string.remove_quoted_post)
-                        is FeedGenerator -> stringResource(
-                            Res.string.remove_shared_record,
-                            stringResource(CommonStrings.record_feed),
-                        )
-                        is FeedList -> stringResource(
-                            Res.string.remove_shared_record,
-                            stringResource(CommonStrings.record_list),
-                        )
-                        is StarterPack -> stringResource(
-                            Res.string.remove_shared_record,
-                            stringResource(CommonStrings.record_starter_pack),
-                        )
-                    }
                     FilledTonalIconButton(
                         onClick = onRemoveEmbeddedRecordClicked,
                         content = {
                             Icon(
                                 imageVector = Icons.Rounded.Close,
-                                contentDescription = contentDescription,
+                                contentDescription = stringResource(Res.string.remove_link_preview),
                             )
                         },
                     )
-                }
-            }
-            else -> {
-                if (isLoadingLinkPreview && linkPreview == null) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(32.dp),
-                    )
-                }
-
-                linkPreview?.let { preview ->
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        ExternalEmbedPreview(
-                            modifier = Modifier
-                                .weight(1f),
-                            embed = preview.embed,
-                            externalRecord = preview.primaryRecord,
-                            paneTransitionScope = paneTransitionScope,
-                        )
-                        FilledTonalIconButton(
-                            onClick = onRemoveEmbeddedRecordClicked,
-                            content = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = stringResource(Res.string.remove_link_preview),
-                                )
-                            },
-                        )
-                    }
                 }
             }
         }
