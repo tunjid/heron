@@ -41,8 +41,11 @@ import com.tunjid.mutator.compose.produceState
 @Stable
 class SelectListSheetState(
     scope: BottomSheetScope,
-    val viewModel: SelectListViewModel,
+    internal val viewModel: SelectListViewModel,
 ) : BottomSheetState(scope) {
+
+    val state: SelectListState
+        get() = viewModel.state
 
     override fun onHidden() {
         // No-op

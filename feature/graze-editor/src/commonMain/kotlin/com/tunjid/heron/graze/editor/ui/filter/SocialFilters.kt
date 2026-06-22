@@ -220,8 +220,7 @@ fun PaneScaffoldState.SocialListMemberFilter(
             onUpdate(filter.copy(url = list.uri.uri))
         },
     )
-    val selectListState = sheetState.viewModel.produceState()
-    val displayValue = selectListState.lists
+    val displayValue = sheetState.state.lists
         .find { it.uri.uri == filter.url }
         ?.name
         ?: filter.url
