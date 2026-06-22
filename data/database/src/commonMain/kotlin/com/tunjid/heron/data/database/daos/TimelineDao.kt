@@ -84,6 +84,18 @@ interface TimelineDao {
                 OR parentPostUri IS NULL
             )
             AND (
+                :hideRepliesByUnfollowed = FALSE
+                OR parentPostUri IS NULL
+                OR EXISTS (
+                    SELECT 1 FROM posts
+                    LEFT JOIN profileViewerStates
+                        ON profileViewerStates.profileId = :viewingProfileId
+                        AND profileViewerStates.otherProfileId = posts.authorId
+                    WHERE posts.uri = timelineItems.parentPostUri
+                    AND profileViewerStates.following IS NOT NULL
+                )
+            )
+            AND (
                 :hideReposts = FALSE
                 OR reposter IS NULL
             )
@@ -105,6 +117,7 @@ interface TimelineDao {
         limit: Long,
         offset: Long,
         hideReplies: Boolean,
+        hideRepliesByUnfollowed: Boolean,
         hideReposts: Boolean,
         hideQuotePosts: Boolean,
     ): Flow<List<PopulatedTimelineItemEntity>>

@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideQuotes
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReplies
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepliesByUnfollowed
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -897,6 +898,7 @@ internal class OfflineTimelineRepository(
                                     limit = 1,
                                     offset = 0,
                                     hideReplies = feedPreference.shouldHideReplies,
+                                    hideRepliesByUnfollowed = feedPreference.shouldHideRepliesByUnfollowed,
                                     hideReposts = feedPreference.shouldHideReposts,
                                     hideQuotePosts = feedPreference.shouldHideQuotes,
                                 )
@@ -908,6 +910,7 @@ internal class OfflineTimelineRepository(
                             limit = 1,
                             offset = 0,
                             hideReplies = feedPreference.shouldHideReplies,
+                            hideRepliesByUnfollowed = feedPreference.shouldHideRepliesByUnfollowed,
                             hideReposts = feedPreference.shouldHideReposts,
                             hideQuotePosts = feedPreference.shouldHideQuotes,
                         ),
@@ -944,6 +947,7 @@ internal class OfflineTimelineRepository(
                         offset = query.data.offset,
                         limit = query.data.limit,
                         hideReplies = feedPreference.shouldHideReplies,
+                        hideRepliesByUnfollowed = feedPreference.shouldHideRepliesByUnfollowed,
                         hideReposts = feedPreference.shouldHideReposts,
                         hideQuotePosts = feedPreference.shouldHideQuotes,
                     )
@@ -1362,7 +1366,14 @@ private fun SavedStateDataSource.timelineFeedPreference(
         .distinctUntilChangedMap {
             it.signedProfilePreferencesOrDefault().feedPreferences.homeFeedOrDefault()
         }
-    else flowOf(FeedPreference(source.id))
+    else flowOf(
+        // hideRepliesByUnfollowed defaults to true on FeedPreference; disable it for
+        // sources without the toggle so replies are only hidden on the following feed.
+        FeedPreference(
+            feed = source.id,
+            hideRepliesByUnfollowed = false,
+        ),
+    )
 
 private val TimelineItem.Threaded.Linear.nextGeneration
     get() = generation?.let { it + nodes.size }
