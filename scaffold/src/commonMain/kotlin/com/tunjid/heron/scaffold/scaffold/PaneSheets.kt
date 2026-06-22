@@ -2,7 +2,6 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Conversation
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
@@ -11,7 +10,6 @@ import com.tunjid.heron.timeline.ui.sheets.mutedwords.MutedWordsSheetState
 import com.tunjid.heron.timeline.ui.sheets.postinteractions.PostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
-import com.tunjid.heron.timeline.ui.sheets.selectlist.SelectListSheetState
 import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState
 
 @Composable
@@ -60,15 +58,6 @@ fun PaneScaffoldState.rememberEmbeddableRecordOptionsSheetState(
         onEditClicked = onEditClicked,
         onShareInConversationClicked = onShareInConversationClicked,
         onShareInPostClicked = onShareInPostClicked,
-    )
-
-@Composable
-fun PaneScaffoldState.rememberSelectListSheetState(
-    onListSelected: (FeedList) -> Unit,
-): SelectListSheetState =
-    SelectListSheetState.rememberUpdatedSelectListSheetState(
-        initializer = appState.sheetsViewModelInitializers.selectListViewModelInitializer,
-        onListSelected = onListSelected,
     )
 
 @Composable

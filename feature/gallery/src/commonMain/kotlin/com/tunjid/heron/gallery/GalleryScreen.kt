@@ -139,6 +139,7 @@ internal fun GalleryScreen(
             )
         },
     )
+
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

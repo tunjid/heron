@@ -1371,6 +1371,7 @@ private fun ProfileTimeline(
             )
         },
     )
+
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
