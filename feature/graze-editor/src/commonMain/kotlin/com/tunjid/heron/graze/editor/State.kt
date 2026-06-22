@@ -44,8 +44,6 @@ data class State(
     val sharedElementPrefix: String,
     val isLoading: Boolean = false,
     @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
@@ -121,8 +119,6 @@ sealed class Action(val key: String) {
         val displayName: String,
         val description: String?,
     ) : Action("Metadata")
-
-    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

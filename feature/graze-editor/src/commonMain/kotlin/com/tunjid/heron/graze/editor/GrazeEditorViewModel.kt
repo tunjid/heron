@@ -113,9 +113,6 @@ class ActualGrazeEditorViewModel(
                         is Action.EditorNavigation -> action.flow.editorNavigationMutations()
                         is Action.EditFilter -> action.flow.editFilterFilterMutations()
                         is Action.Metadata -> action.flow.updateMetadataMutations()
-                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                            recordRepository = recordRepository,
-                        )
                     }
                 }
         },
@@ -270,16 +267,6 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
                 is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
             },
         )
-    }
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
     }
 
 private fun Filter.Root.updateAt(

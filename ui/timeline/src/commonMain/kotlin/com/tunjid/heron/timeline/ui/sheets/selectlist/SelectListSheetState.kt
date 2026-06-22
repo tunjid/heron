@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui
+package com.tunjid.heron.timeline.ui.sheets.selectlist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,9 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,13 +36,16 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.mutator.compose.produceState
 
 @Stable
-class SelectListSheetState private constructor(
-    lists: List<FeedList>,
+class SelectListSheetState(
     scope: BottomSheetScope,
+    internal val viewModel: SelectListViewModel,
 ) : BottomSheetState(scope) {
-    internal var lists by mutableStateOf(lists)
+
+    val state: SelectListState
+        get() = viewModel.state
 
     override fun onHidden() {
         // No-op
@@ -53,18 +53,14 @@ class SelectListSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberSelectListSheetState(
-            lists: List<FeedList>,
+        fun rememberUpdatedSelectListSheetState(
+            initializer: SelectListViewModelInitializer,
             onListSelected: (FeedList) -> Unit,
         ): SelectListSheetState {
-            val state = rememberBottomSheetState {
-                SelectListSheetState(
-                    lists = lists,
-                    scope = it,
-                )
-            }.also {
-                it.lists = lists
-            }
+            val state = rememberBottomSheetState(
+                viewModelInitializer = initializer::invoke,
+                block = ::SelectListSheetState,
+            )
 
             SelectListBottomSheet(
                 state = state,
@@ -82,12 +78,14 @@ private fun SelectListBottomSheet(
     onListSelected: (FeedList) -> Unit,
 ) {
     state.ModalBottomSheet {
+        val selectListState = state.viewModel.produceState()
+
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(
-                items = state.lists,
+                items = selectListState.lists,
                 key = { it.uri.uri },
             ) { list ->
                 BottomSheetItemCard(
