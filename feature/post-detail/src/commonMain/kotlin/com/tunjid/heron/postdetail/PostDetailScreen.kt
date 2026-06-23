@@ -57,12 +57,12 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
+import com.tunjid.heron.scaffold.scaffold.rememberPostInteractionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -98,8 +98,7 @@ internal fun PostDetailScreen(
             actions(Action.Navigate.To(destination))
         }
     }
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
