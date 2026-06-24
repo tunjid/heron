@@ -52,7 +52,7 @@ import heron.ui.timeline.generated.resources.repost
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class PostInteractionsSheetState(
+class PostInteractionsSheetState internal constructor(
     scope: BottomSheetScope,
     internal val viewModel: PostInteractionsViewModel,
 ) : BottomSheetState(scope) {
