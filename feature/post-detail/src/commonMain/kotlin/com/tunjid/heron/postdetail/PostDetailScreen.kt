@@ -102,9 +102,6 @@ internal fun PostDetailScreen(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
         onQuotePostClicked = { repost ->
             navigateTo(
                 composePostDestination(
@@ -114,11 +111,7 @@ internal fun PostDetailScreen(
             )
         },
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

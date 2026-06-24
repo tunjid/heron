@@ -158,10 +158,6 @@ class ActualProfileViewModel(
                             state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                         }
                     }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
                     is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
@@ -419,18 +415,6 @@ private fun Flow<Action.Mute>.launchMuteAccountMutations(
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
     toWritable = { it.toMuteWritable() },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

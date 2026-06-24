@@ -240,10 +240,6 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
     data class TogglePublicationSubscription(
         val publication: StandardPublication,
     ) : Action(key = "TogglePublicationSubscription")

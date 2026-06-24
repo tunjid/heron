@@ -24,7 +24,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -72,7 +71,6 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
-    recordRepository: RecordRepository,
     searchRepository: SearchRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -117,10 +115,6 @@ class ActualHomeViewModel(
                             state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                         }
                     }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -252,18 +246,6 @@ private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
         }
     }
 }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(

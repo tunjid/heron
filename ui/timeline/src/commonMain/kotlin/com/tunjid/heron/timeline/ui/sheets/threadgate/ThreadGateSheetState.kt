@@ -42,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,10 +74,8 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
-import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.compose.produceState
-import heron.ui.core.generated.resources.collapse_icon
-import heron.ui.core.generated.resources.expand_icon
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.thread_gate_anyone
 import heron.ui.timeline.generated.resources.thread_gate_info
@@ -95,6 +94,12 @@ sealed class ThreadGateSheetState private constructor(
     scope: BottomSheetScope,
     internal val viewModel: ThreadGateViewModel,
 ) : BottomSheetState(scope) {
+
+    val messages: List<Memo> get() = viewModel.state.messages
+
+    fun onSnackbarMessageConsumed(memo: Memo) {
+        viewModel.accept(ThreadGateAction.SnackbarDismissed(memo))
+    }
 
     override fun onHidden() {
         viewModel.accept(ThreadGateAction.Reset)
@@ -136,13 +141,13 @@ sealed class ThreadGateSheetState private constructor(
         @Composable
         fun rememberUpdatedThreadGateSheetState(
             initializer: ThreadGateViewModelInitializer,
-            onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
         ): OfTimeline = rememberUpdatedGenericThreadGateSheetState(
             initializer = initializer,
             block = ::OfTimeline,
-        ) { mode, allowed ->
+        ) { state, mode, allowed ->
             require(mode is Mode.Timeline)
-            onThreadGateUpdated(mode.update(allowed))
+            // Enqueue from the ViewModel; it dismisses the sheet only after the write is enqueued.
+            state.viewModel.accept(ThreadGateAction.SendInteraction(mode.update(allowed)))
         }
 
         @Composable
@@ -152,16 +157,17 @@ sealed class ThreadGateSheetState private constructor(
         ): OfPreference = rememberUpdatedGenericThreadGateSheetState(
             initializer = initializer,
             block = ::OfPreference,
-        ) { mode, allowed ->
+        ) { state, mode, allowed ->
             require(mode is Mode.Preferences)
             onDefaultThreadGateUpdated(mode.update(allowed))
+            state.hide()
         }
 
         @Composable
         private inline fun <reified T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
             initializer: ThreadGateViewModelInitializer,
             crossinline block: (BottomSheetScope, ThreadGateViewModel) -> T,
-            noinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
+            crossinline onSave: (T, Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
             val state = rememberBottomSheetState(
                 viewModelInitializer = initializer::invoke,
@@ -170,7 +176,7 @@ sealed class ThreadGateSheetState private constructor(
 
             ThreadGateBottomSheet(
                 state = state,
-                onThreadGateUpdated = onThreadGateUpdated,
+                onSave = { mode, allowed -> onSave(state, mode, allowed) },
             )
 
             return state
@@ -181,12 +187,17 @@ sealed class ThreadGateSheetState private constructor(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
-    onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
+    onSave: (Mode, ThreadGate.Allowed?) -> Unit,
 ) {
     var listsExpanded by remember { mutableStateOf(false) }
 
     state.ModalBottomSheet {
         val threadGateState = state.viewModel.produceState()
+        // The timeline ViewModel flips `dismiss` only after its write is enqueued, so the sheet
+        // stays shown (state production active) until the enqueue can't be cancelled.
+        LaunchedEffect(threadGateState.dismiss) {
+            if (threadGateState.dismiss) state.hide()
+        }
         val allowed = threadGateState.allowed
         val selectedUris = allowed.allowedListUrisOrEmpty
         val enabled = !allowed.allowsNone
@@ -333,8 +344,7 @@ private fun ThreadGateBottomSheet(
                 onClick = {
                     val mode = threadGateState.mode
                     val currentAllowed = threadGateState.allowed
-                    if (mode != null) onThreadGateUpdated(mode, currentAllowed)
-                    state.hide()
+                    if (mode != null) onSave(mode, currentAllowed)
                 },
             ) {
                 Text(stringResource(Res.string.thread_gate_save))

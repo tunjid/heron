@@ -205,12 +205,6 @@ internal fun SearchScreen(
             )
         }
     }
-    val sendPostInteraction = remember {
-        { interaction: Post.Interaction ->
-            actions(Action.SendPostInteraction(interaction))
-        }
-    }
-
     AnimatedContent(
         targetState = state.layout,
     ) { targetLayout ->
@@ -262,7 +256,6 @@ internal fun SearchScreen(
                 onPublicationSubscriptionToggled = { actions(Action.TogglePublicationSubscription(it)) },
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,
-                onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
                 onMuteAccountClicked = { signInProfileId, profileId ->

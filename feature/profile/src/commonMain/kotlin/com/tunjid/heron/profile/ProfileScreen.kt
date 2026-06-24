@@ -1357,9 +1357,6 @@ private fun ProfileTimeline(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
@@ -1372,11 +1369,7 @@ private fun ProfileTimeline(
         },
     )
 
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

@@ -36,13 +36,16 @@ fun PaneScaffoldState.rememberPostOptionsSheetState(
     )
 
 @Composable
-fun PaneScaffoldState.rememberTimelineThreadGateSheetState(
-    onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
-): ThreadGateSheetState.OfTimeline =
-    ThreadGateSheetState.rememberUpdatedThreadGateSheetState(
+fun PaneScaffoldState.rememberTimelineThreadGateSheetState(): ThreadGateSheetState.OfTimeline {
+    val sheetState = ThreadGateSheetState.rememberUpdatedThreadGateSheetState(
         initializer = appState.sheetsViewModelInitializers.threadGateViewModelInitializer,
-        onThreadGateUpdated = onThreadGateUpdated,
     )
+    SnackbarDisplayEffect(
+        messages = sheetState.messages,
+        onMessageConsumed = sheetState::onSnackbarMessageConsumed,
+    )
+    return sheetState
+}
 
 @Composable
 fun PaneScaffoldState.rememberPreferenceThreadGateSheetState(
@@ -80,12 +83,16 @@ fun PaneScaffoldState.rememberSelectListSheetState(
 @Composable
 fun PaneScaffoldState.rememberPostInteractionsSheetState(
     onSignInClicked: () -> Unit,
-    onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
-): PostInteractionsSheetState =
-    PostInteractionsSheetState.rememberUpdatedPostInteractionsSheetState(
+): PostInteractionsSheetState {
+    val sheetState = PostInteractionsSheetState.rememberUpdatedPostInteractionsSheetState(
         initializer = appState.sheetsViewModelInitializers.postInteractionsViewModelInitializer,
         onSignInClicked = onSignInClicked,
-        onInteractionConfirmed = onInteractionConfirmed,
         onQuotePostClicked = onQuotePostClicked,
     )
+    SnackbarDisplayEffect(
+        messages = sheetState.messages,
+        onMessageConsumed = sheetState::onSnackbarMessageConsumed,
+    )
+    return sheetState
+}

@@ -42,6 +42,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.compose.produceState
 import heron.ui.core.generated.resources.cancel
 import heron.ui.core.generated.resources.sign_in
@@ -62,6 +63,12 @@ class PostInteractionsSheetState internal constructor(
 
     val state: PostInteractionsState get() = viewModel.state
 
+    val messages: List<Memo> get() = viewModel.state.messages
+
+    fun onSnackbarMessageConsumed(memo: Memo) {
+        viewModel.accept(PostInteractionsAction.SnackbarDismissed(memo))
+    }
+
     fun onInteraction(interaction: PostAction.OfInteraction) {
         showingAction = interaction
     }
@@ -75,7 +82,6 @@ class PostInteractionsSheetState internal constructor(
         fun rememberUpdatedPostInteractionsSheetState(
             initializer: PostInteractionsViewModelInitializer,
             onSignInClicked: () -> Unit,
-            onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
         ): PostInteractionsSheetState {
             val state = rememberBottomSheetState(
@@ -86,7 +92,6 @@ class PostInteractionsSheetState internal constructor(
             PostInteractionsBottomSheet(
                 state = state,
                 onSignInClicked = onSignInClicked,
-                onInteractionConfirmed = onInteractionConfirmed,
                 onQuotePostClicked = onQuotePostClicked,
             )
 
@@ -99,7 +104,6 @@ class PostInteractionsSheetState internal constructor(
 private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
     onSignInClicked: () -> Unit,
-    onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
     LaunchedEffect(state.showingAction) {
@@ -115,7 +119,7 @@ private fun PostInteractionsBottomSheet(
             is Post.Interaction.Upsert.Gate,
             -> {
                 if (state.state.isSignedIn) {
-                    onInteractionConfirmed(interaction)
+                    state.viewModel.accept(PostInteractionsAction.SendInteraction(interaction))
                     state.showingAction = null
                 } else {
                     state.show()
@@ -147,7 +151,7 @@ private fun PostInteractionsBottomSheet(
                             enabled = true,
                             icon = Icons.Rounded.Repeat,
                             onClick = {
-                                onInteractionConfirmed(currentInteraction)
+                                state.viewModel.accept(PostInteractionsAction.SendInteraction(currentInteraction))
                                 state.hide()
                             },
                         )

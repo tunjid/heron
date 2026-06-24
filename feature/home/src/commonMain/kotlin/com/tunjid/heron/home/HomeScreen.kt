@@ -50,15 +50,12 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.home.ui.ExpandableTabsState
@@ -180,8 +177,6 @@ internal fun HomeScreen(
                 HomeTimeline(
                     gridState = gridState,
                     paneScaffoldState = paneScaffoldState,
-                    signedInProfileId = state.signedInProfile?.did,
-                    mutedWordsPreferences = state.preferences.mutedWordPreferences,
                     autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                     showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                     timelineStateHolder = timelineStateHolder,
@@ -299,8 +294,6 @@ internal fun HomeScreen(
 private fun HomeTimeline(
     gridState: LazyStaggeredGridState,
     paneScaffoldState: PaneScaffoldState,
-    signedInProfileId: ProfileId?,
-    mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
     timelineStateHolder: TimelineStateHolder,
@@ -320,9 +313,6 @@ private fun HomeTimeline(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(
@@ -334,11 +324,7 @@ private fun HomeTimeline(
             )
         },
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

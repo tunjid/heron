@@ -151,10 +151,6 @@ class SearchViewModel(
                         state = state,
                         searchRepository = searchRepository,
                     )
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                     is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                         state = state,
                         writeQueue = writeQueue,
@@ -477,18 +473,6 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
             recordUri = action.recordUri,
         )
     },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action -> Writable.Interaction(action.interaction) },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

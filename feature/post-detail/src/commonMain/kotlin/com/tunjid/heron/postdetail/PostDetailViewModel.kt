@@ -106,10 +106,6 @@ class ActualPostDetailViewModel(
                             timelineRepository = timelineRepository,
                             userDataRepository = userDataRepository,
                         )
-                        is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                            state = state,
-                            writeQueue = writeQueue,
-                        )
                         is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                             state = state,
                             writeQueue = writeQueue,
@@ -212,18 +208,6 @@ private fun launchLoadPreferencesMutations(
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
     state: State.SnapshotMutable,
