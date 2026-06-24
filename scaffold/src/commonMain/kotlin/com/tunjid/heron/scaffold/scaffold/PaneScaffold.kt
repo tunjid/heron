@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -337,7 +338,7 @@ fun PaneScaffoldState.PaneSnackbarHost(
 }
 
 @Composable
-fun PaneScaffoldState.SnackbarDisplayEffect(
+internal fun PaneScaffoldState.SnackbarDisplayEffect(
     messages: List<Memo>,
     onMessageConsumed: (Memo) -> Unit,
 ) {
@@ -349,20 +350,21 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
             policy = referentialEqualityPolicy(),
         )
     }.apply { value = messages.firstOrNull() }
+    val onConsumedState = rememberUpdatedState(onMessageConsumed)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(this) {
         snapshotFlow { incomingState.value }
             .collect { incoming ->
                 if (incoming == null) return@collect
                 snackbarMessages += incoming
-                onMessageConsumed(incoming)
+                onConsumedState.value(incoming)
             }
     }
 }
 
 @Composable
 private fun PaneScaffoldState.SnackbarConsumptionEffect() {
-    LaunchedEffect(Unit) {
+    LaunchedEffect(this) {
         snapshotFlow { snackbarMessages.isNotEmpty() }
             .filter { it }
             .collect {
