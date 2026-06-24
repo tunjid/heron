@@ -366,9 +366,10 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
         snapshotFlow { snackbarMessages.isNotEmpty() }
             .filter { it }
             .collect {
-                while (snackbarMessages.isNotEmpty()) {
-                    snackbarHostState.showSnackbar(snackbarMessages.first().message())
-                    if (snackbarMessages.isNotEmpty()) snackbarMessages.removeAt(0)
+                while (isActive) {
+                    val message = snackbarMessages.firstOrNull() ?: break
+                    snackbarHostState.showSnackbar(message.message())
+                    snackbarMessages.remove(message)
                 }
             }
     }
