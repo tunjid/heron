@@ -368,7 +368,7 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
             .collect {
                 while (snackbarMessages.isNotEmpty()) {
                     snackbarHostState.showSnackbar(snackbarMessages.first().message())
-                    snackbarMessages.removeAt(0)
+                    if (snackbarMessages.isNotEmpty()) snackbarMessages.removeAt(0)
                 }
             }
     }
