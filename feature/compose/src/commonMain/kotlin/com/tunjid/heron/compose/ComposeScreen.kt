@@ -172,9 +172,17 @@ internal fun ComposeScreen(
         )
 
         LaunchedEffect(Unit) {
+            // Only scroll the scroll state if there's no embed preview.
             snapshotFlow { state.postText.text.length }
                 .collect {
-                    scrollState.scrollTo(Int.MAX_VALUE)
+                    val hasPreview = state.photos.isNotEmpty() ||
+                        state.video != null ||
+                        state.linkPreview != null ||
+                        state.embeddedRecord != null
+                    val isCursorAtEnd = state.postText.selection.start == state.postText.text.length
+                    if (scrollState.canScrollForward && isCursorAtEnd && !hasPreview) {
+                        scrollState.scrollTo(Int.MAX_VALUE)
+                    }
                 }
         }
     }
