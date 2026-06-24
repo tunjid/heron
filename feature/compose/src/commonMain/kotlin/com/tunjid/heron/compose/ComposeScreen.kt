@@ -177,8 +177,10 @@ internal fun ComposeScreen(
                 .collect {
                     val hasPreview = state.photos.isNotEmpty() ||
                         state.video != null ||
-                        state.linkPreview != null
-                    if (scrollState.canScrollForward && !hasPreview) {
+                        state.linkPreview != null ||
+                        state.embeddedRecord != null
+                    val isCursorAtEnd = state.postText.selection.start == state.postText.text.length
+                    if (scrollState.canScrollForward && isCursorAtEnd && !hasPreview) {
                         scrollState.scrollTo(Int.MAX_VALUE)
                     }
                 }
