@@ -344,7 +344,7 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
     onMessageConsumed: (Memo) -> Unit,
 ) {
     val incoming = messages.firstOrNull()
-    LaunchedEffect(incoming) {
+    LaunchedEffect(incoming, messages.size) {
         if (incoming == null) return@LaunchedEffect
         enqueueMessage(incoming)
         onMessageConsumed(incoming)
