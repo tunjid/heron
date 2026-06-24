@@ -42,6 +42,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
@@ -343,11 +345,22 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
     messages: List<Memo>,
     onMessageConsumed: (Memo) -> Unit,
 ) {
-    val incoming = messages.firstOrNull()
-    LaunchedEffect(incoming, messages.size) {
-        if (incoming == null) return@LaunchedEffect
-        enqueueMessage(incoming)
-        onMessageConsumed(incoming)
+    val incomingState = remember {
+        mutableStateOf(
+            value = messages.firstOrNull(),
+            // This is so consecutive identical messages are
+            // seen as distinct and do not halt processing
+            policy = referentialEqualityPolicy(),
+        )
+    }.apply { value = messages.firstOrNull() }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { incomingState.value }
+            .collect { incoming ->
+                if (incoming == null) return@collect
+                enqueueMessage(incoming)
+                onMessageConsumed(incoming)
+            }
     }
 }
 
