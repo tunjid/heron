@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
@@ -114,11 +116,23 @@ internal fun SignInScreen(
                                 mostRecentSession = state.mostRecentSession,
                             )
                         },
+                        suffix = if (field.id == Username) {
+                            {
+                                state.profileHandleSuffix?.let { handleSuffix ->
+                                    Text(
+                                        text = handleSuffix,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        } else null,
                         onValueChange = { field, newValue ->
                             actions(
                                 Action.FieldChanged(
                                     id = field.id,
                                     text = newValue,
+                                    selectedServer = state.selectedServer,
                                 ),
                             )
                         },
@@ -142,6 +156,7 @@ internal fun SignInScreen(
                             Action.FieldChanged(
                                 id = Username,
                                 text = field.value,
+                                selectedServer = state.selectedServer,
                             ),
                         )
                     }

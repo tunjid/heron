@@ -178,13 +178,19 @@ private fun Flow<Action.FieldChanged>.formEditMutations(
         replay = 1,
     )
     return merge(
-        shared.mapToMutation { (id, text) ->
+        shared.mapToMutation { (id, text, _) ->
             copy(fields = fields.copyWithValidation(id, text))
         },
-        shared.filter { it.id == Username && DomainRegex.matches(it.text) }
+        shared.filter { (id, text, selectedServer) ->
+            id == Username && DomainRegex.matches(
+                text.normalizedProfileHandle(server = selectedServer).id,
+            )
+        }
             .debounce(HandleResolutionDebounceMs)
-            .mapLatestToManyMutations { (_, text) ->
-                val server = authRepository.resolveServer(ProfileHandle(text))
+            .mapLatestToManyMutations { (_, text, selectedServer) ->
+                val server = authRepository.resolveServer(
+                    text.normalizedProfileHandle(server = selectedServer),
+                )
                     .getOrNull()
                     ?.normalized()
 
