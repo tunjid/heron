@@ -102,10 +102,6 @@ class PaneScaffoldState internal constructor(
 
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
-    internal fun enqueueMessage(memo: Memo) {
-        snackbarMessages += memo
-    }
-
     val isMediumScreenWidthOrWider: Boolean
         get() = splitPaneState.isMediumScreenWidthOrWider
 
@@ -358,7 +354,7 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
         snapshotFlow { incomingState.value }
             .collect { incoming ->
                 if (incoming == null) return@collect
-                enqueueMessage(incoming)
+                snackbarMessages += incoming
                 onMessageConsumed(incoming)
             }
     }
