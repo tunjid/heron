@@ -8,6 +8,7 @@ import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.timeline.ui.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.mutedwords.MutedWordsSheetState
+import com.tunjid.heron.timeline.ui.sheets.postinteractions.PostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.selectlist.SelectListSheetState
@@ -68,4 +69,17 @@ fun PaneScaffoldState.rememberSelectListSheetState(
     SelectListSheetState.rememberUpdatedSelectListSheetState(
         initializer = appState.sheetsViewModelInitializers.selectListViewModelInitializer,
         onListSelected = onListSelected,
+    )
+
+@Composable
+fun PaneScaffoldState.rememberPostInteractionsSheetState(
+    onSignInClicked: () -> Unit,
+    onInteractionConfirmed: (Post.Interaction) -> Unit,
+    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+): PostInteractionsSheetState =
+    PostInteractionsSheetState.rememberUpdatedPostInteractionsSheetState(
+        initializer = appState.sheetsViewModelInitializers.postInteractionsViewModelInitializer,
+        onSignInClicked = onSignInClicked,
+        onInteractionConfirmed = onInteractionConfirmed,
+        onQuotePostClicked = onQuotePostClicked,
     )

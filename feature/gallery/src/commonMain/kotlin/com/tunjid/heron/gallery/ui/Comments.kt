@@ -92,10 +92,10 @@ import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.scaffold.rememberPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -196,8 +196,7 @@ fun Comments(
         val presentation = Timeline.Presentation.Text.WithEmbed
         val displayState = rememberTimelineDisplayState()
 
-        val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-            isSignedIn = paneScaffoldState.isSignedIn,
+        val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
             onSignInClicked = {
                 actions(Action.Navigate.To(signInDestination()))
             },

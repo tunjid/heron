@@ -139,6 +139,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
+import com.tunjid.heron.scaffold.scaffold.rememberPostInteractionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
 import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
@@ -153,7 +154,6 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
@@ -1353,8 +1353,7 @@ private fun ProfileTimeline(
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
@@ -1372,6 +1371,7 @@ private fun ProfileTimeline(
             )
         },
     )
+
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
