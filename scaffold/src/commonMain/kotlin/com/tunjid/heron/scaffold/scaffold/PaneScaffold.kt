@@ -41,9 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +77,7 @@ import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransit
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -97,6 +97,12 @@ class PaneScaffoldState internal constructor(
     }
 
     internal val snackbarHostState = SnackbarHostState()
+
+    internal val snackbarMessages = mutableStateListOf<Memo>()
+
+    internal fun enqueueMessage(memo: Memo) {
+        snackbarMessages += memo
+    }
 
     val isMediumScreenWidthOrWider: Boolean
         get() = splitPaneState.isMediumScreenWidthOrWider
@@ -302,18 +308,11 @@ fun PaneScaffoldState.PaneScaffold(
             )
         },
     )
-    val updatedMessages = rememberUpdatedState(snackBarMessages.firstOrNull())
-    LaunchedEffect(Unit) {
-        snapshotFlow { updatedMessages.value }
-            .filterNotNull()
-            .collect { message ->
-                val text = message.message()
-                snackbarHostState.showSnackbar(
-                    message = text,
-                )
-                onSnackBarMessageConsumed(message)
-            }
-    }
+    SnackbarConsumptionEffect()
+    SnackbarDisplayEffect(
+        messages = snackBarMessages,
+        onMessageConsumed = onSnackBarMessageConsumed,
+    )
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
@@ -337,6 +336,33 @@ fun PaneScaffoldState.PaneSnackbarHost(
             )
         },
     )
+}
+
+@Composable
+fun PaneScaffoldState.SnackbarDisplayEffect(
+    messages: List<Memo>,
+    onMessageConsumed: (Memo) -> Unit,
+) {
+    val incoming = messages.firstOrNull()
+    LaunchedEffect(incoming) {
+        if (incoming == null) return@LaunchedEffect
+        enqueueMessage(incoming)
+        onMessageConsumed(incoming)
+    }
+}
+
+@Composable
+private fun PaneScaffoldState.SnackbarConsumptionEffect() {
+    LaunchedEffect(Unit) {
+        snapshotFlow { snackbarMessages.isNotEmpty() }
+            .filter { it }
+            .collect {
+                while (snackbarMessages.isNotEmpty()) {
+                    snackbarHostState.showSnackbar(snackbarMessages.first().message())
+                    snackbarMessages.removeAt(0)
+                }
+            }
+    }
 }
 
 @Composable

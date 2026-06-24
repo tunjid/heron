@@ -84,6 +84,9 @@ class MutedWordsViewModel(
                         state = state,
                         writeQueue = writeQueue,
                     )
+                    is MutedWordsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                        state = state,
+                    )
                 }
             }
         },
@@ -199,6 +202,13 @@ private fun Flow<MutedWordsAction.UpdateMutedWord>.launchUpdateMutedWordMutation
     if (memo != null) state.messages += memo
 }
 
+context(productionScope: CoroutineScope)
+private fun Flow<MutedWordsAction.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: MutedWordsState.SnapshotMutable,
+) = launchedCollect {
+    state.messages -= it.message
+}
+
 @Stable
 @Snapshottable
 interface MutedWordsState {
@@ -242,4 +252,8 @@ sealed class MutedWordsAction(val key: String) {
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : MutedWordsAction(key = "UpdateMutedWord")
+
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : MutedWordsAction(key = "SnackbarDismissed")
 }

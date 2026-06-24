@@ -15,10 +15,16 @@ import com.tunjid.heron.timeline.ui.sheets.selectlist.SelectListSheetState
 import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState
 
 @Composable
-fun PaneScaffoldState.rememberMutedWordsSheetState(): MutedWordsSheetState =
-    MutedWordsSheetState.rememberUpdatedMutedWordsSheetState(
+fun PaneScaffoldState.rememberMutedWordsSheetState(): MutedWordsSheetState {
+    val sheetState = MutedWordsSheetState.rememberUpdatedMutedWordsSheetState(
         initializer = appState.sheetsViewModelInitializers.mutedWordsViewModelInitializer,
     )
+    SnackbarDisplayEffect(
+        messages = sheetState.messages,
+        onMessageConsumed = sheetState::onSnackbarMessageConsumed,
+    )
+    return sheetState
+}
 
 @Composable
 fun PaneScaffoldState.rememberPostOptionsSheetState(

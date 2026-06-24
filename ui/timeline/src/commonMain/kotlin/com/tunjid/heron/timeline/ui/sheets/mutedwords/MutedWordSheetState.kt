@@ -55,6 +55,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.compose.produceState
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.add_muted_word
@@ -85,10 +86,16 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class MutedWordsSheetState(
+class MutedWordsSheetState internal constructor(
     scope: BottomSheetScope,
     internal val viewModel: MutedWordsViewModel,
 ) : BottomSheetState(scope) {
+
+    val messages: List<Memo> get() = viewModel.state.messages
+
+    fun onSnackbarMessageConsumed(
+        memo: Memo,
+    ) = viewModel.accept(MutedWordsAction.SnackbarDismissed(memo))
 
     override fun onHidden() {}
 
