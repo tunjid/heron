@@ -97,9 +97,6 @@ internal fun NotificationsScreen(
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
         },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
         onQuotePostClicked = { repost ->
             actions(
                 Action.Navigate.To(

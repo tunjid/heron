@@ -100,10 +100,6 @@ sealed class Action(val key: String) {
         val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
     data class TogglePublicationSubscription(
         val publication: StandardPublication,
     ) : Action(key = "TogglePublicationSubscription")

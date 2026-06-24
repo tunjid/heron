@@ -98,7 +98,6 @@ internal fun PostSearchResults(
     onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
-    onSendPostInteraction: (Post.Interaction) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -112,7 +111,6 @@ internal fun PostSearchResults(
         onSignInClicked = {
             onNavigate(signInDestination())
         },
-        onInteractionConfirmed = onSendPostInteraction,
         onQuotePostClicked = { repost ->
             onNavigate(
                 composePostDestination(
@@ -122,9 +120,7 @@ internal fun PostSearchResults(
             )
         },
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = onSendPostInteraction,
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

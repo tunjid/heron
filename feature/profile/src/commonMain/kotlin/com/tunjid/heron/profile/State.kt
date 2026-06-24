@@ -311,10 +311,6 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")

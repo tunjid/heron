@@ -200,9 +200,6 @@ fun Comments(
             onSignInClicked = {
                 actions(Action.Navigate.To(signInDestination()))
             },
-            onInteractionConfirmed = {
-                actions(Action.SendPostInteraction(it))
-            },
             onQuotePostClicked = { repost ->
                 navigateTo(
                     composePostDestination(
