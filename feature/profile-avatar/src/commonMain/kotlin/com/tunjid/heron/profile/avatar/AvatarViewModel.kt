@@ -27,8 +27,8 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.avatar.di.avatarSharedElementKey
 import com.tunjid.heron.profile.avatar.di.profile
 import com.tunjid.heron.profile.avatar.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator

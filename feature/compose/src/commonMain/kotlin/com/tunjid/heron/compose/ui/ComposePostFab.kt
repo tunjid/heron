@@ -36,9 +36,9 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.compose.ui.ComposeThreadGate
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.links
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post

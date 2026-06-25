@@ -62,12 +62,12 @@ import com.tunjid.heron.graze.editor.ui.filter.SocialStarterPackFilter
 import com.tunjid.heron.graze.editor.ui.filter.SocialUserListFilter
 import com.tunjid.heron.graze.editor.ui.filter.UnsupportedFilter
 import com.tunjid.heron.graze.editor.ui.filter.validationTint
-import com.tunjid.heron.scaffold.scaffold.NestedNavigation
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.scaffold.scaffold.NestedNavigation
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and

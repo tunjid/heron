@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.splash
 
-import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

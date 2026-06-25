@@ -30,10 +30,10 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.editprofile.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
-import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.timeline.state.RecordStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.avatarSharedElementKey
+import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator

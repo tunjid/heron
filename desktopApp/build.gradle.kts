@@ -26,7 +26,7 @@ plugins {
 
 dependencies {
     implementation(project(":composeApp"))
-    implementation(project(":scaffold"))
+    implementation(project(":ui:scaffold"))
 
     implementation(compose.desktop.currentOs)
 }

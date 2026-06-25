@@ -34,8 +34,8 @@ import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
 import com.tunjid.heron.media.video.linux.GStreamerPlayerController
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.NoOpNotifier
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.NoOpNotifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import java.io.File
 import javax.crypto.Cipher

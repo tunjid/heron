@@ -26,8 +26,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import com.tunjid.heron.scaffold.notifications.notificationPermissionsLauncher
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.scaffold.notifications.notificationPermissionsLauncher
 import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.notification_permissions_request
 import kotlin.math.PI

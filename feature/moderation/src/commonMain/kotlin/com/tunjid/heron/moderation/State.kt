@@ -24,7 +24,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
 import heron.ui.core.generated.resources.graphic_media_label

@@ -22,10 +22,10 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable

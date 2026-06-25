@@ -75,7 +75,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run scaffold tests
-        run: ./gradlew :scaffold:desktopTest
+        run: ./gradlew :ui:scaffold:desktopTest
 
   compile-ios:
     runs-on: macos-latest

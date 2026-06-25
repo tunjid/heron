@@ -17,7 +17,7 @@
 package com.tunjid.heron.profile.avatar
 
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

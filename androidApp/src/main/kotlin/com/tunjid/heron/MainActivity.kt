@@ -34,9 +34,9 @@ import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.scaffold.notifications.NotificationAction
-import com.tunjid.heron.scaffold.scaffold.App
-import com.tunjid.heron.scaffold.scaffold.isShowingSplashScreen
+import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
+import com.tunjid.heron.ui.scaffold.scaffold.App
+import com.tunjid.heron.ui.scaffold.scaffold.isShowingSplashScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 

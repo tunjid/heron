@@ -33,9 +33,9 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlinx.coroutines.launch

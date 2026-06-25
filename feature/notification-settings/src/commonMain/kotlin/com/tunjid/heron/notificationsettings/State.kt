@@ -18,7 +18,7 @@ package com.tunjid.heron.notificationsettings
 
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
-import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

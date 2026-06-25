@@ -24,10 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.rememberPreferenceThreadGateSheetState
+import com.tunjid.heron.sheets.rememberPreferenceThreadGateSheetState
+import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.PostInteractionStatus
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 fun PaneScaffoldState.ComposeThreadGate(
