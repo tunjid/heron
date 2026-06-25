@@ -31,7 +31,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
@@ -49,7 +48,7 @@ import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
 import com.tunjid.heron.list.ListScreenStateHolders
 import com.tunjid.heron.list.ListStateHolder
-import com.tunjid.heron.list.RouteViewModelInitializer
+import com.tunjid.heron.list.ListViewModelInitializer
 import com.tunjid.heron.list.timelineState
 import com.tunjid.heron.list.withListTimelineOrNull
 import com.tunjid.heron.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
@@ -59,7 +58,7 @@ import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -74,6 +73,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -88,6 +88,7 @@ import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -200,14 +201,19 @@ class ListBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualListViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: ListViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(ListRoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -216,11 +222,9 @@ class ListBindings(
     @StringKey(ListRouteUriPattern)
     fun provideUriPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -229,11 +233,9 @@ class ListBindings(
     @StringKey(StarterPackRoutePattern)
     fun provideStarterPackRoutePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -242,17 +244,14 @@ class ListBindings(
     @StringKey(StarterPackRouteUriPattern)
     fun provideStarterPackUriPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -263,14 +262,11 @@ class ListBindings(
             )
         },
         render = { route ->
-            val stateHolder: ListStateHolder = viewModel<ActualListViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: ListStateHolder = paneScaffoldState.rememberRouteViewModel<ActualListViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
                 invert = true,

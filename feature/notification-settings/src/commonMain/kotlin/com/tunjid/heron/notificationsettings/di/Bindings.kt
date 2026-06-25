@@ -26,16 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notificationsettings.Action
 import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
 import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
 import com.tunjid.heron.notificationsettings.NotificationSettingsStateHolder
-import com.tunjid.heron.notificationsettings.RouteViewModelInitializer
+import com.tunjid.heron.notificationsettings.NotificationSettingsViewModelInitializer
 import com.tunjid.heron.notificationsettings.updates
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -52,6 +51,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
@@ -64,6 +64,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -104,20 +105,24 @@ class NotificationSettingsBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualNotificationSettingsViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: NotificationSettingsViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -128,14 +133,11 @@ class NotificationSettingsBindings(
             )
         },
         render = { route ->
-            val stateHolder: NotificationSettingsStateHolder = viewModel<ActualNotificationSettingsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: NotificationSettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualNotificationSettingsViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state by stateHolder.state.collectAsStateWithLifecycle()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()

@@ -18,7 +18,6 @@ package com.tunjid.heron.conversation
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
@@ -35,7 +34,6 @@ import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
@@ -44,6 +42,7 @@ import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.removeQueryParamsFromCurrentRoute
 import com.tunjid.heron.ui.scaffold.navigation.sharedUri
@@ -73,8 +72,8 @@ import kotlinx.coroutines.launch
 internal typealias ConversationStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ConversationViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualConversationViewModel
@@ -92,7 +91,7 @@ class ActualConversationViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     ConversationStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

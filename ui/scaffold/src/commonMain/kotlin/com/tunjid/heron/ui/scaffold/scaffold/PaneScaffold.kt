@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -66,8 +67,11 @@ import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.coroutines.RouteViewModel
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.coroutines.SheetViewModel
 import com.tunjid.heron.ui.coroutines.SheetViewModelInitializer
+import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -134,6 +138,19 @@ class PaneScaffoldState internal constructor(
                 "No SheetViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in SheetBindings.",
             )
 
+    /**
+     * Resolves the [RouteViewModelInitializer] for [modelClass] from the app graph. Together with
+     * [rememberRouteViewModel] this makes [PaneScaffoldState] the only dependency needed to create a
+     * screen's ViewModel; each feature contributes its initializer in its own `Bindings`.
+     */
+    fun routeViewModelInitializer(
+        modelClass: KClass<out RouteViewModel>,
+    ): RouteViewModelInitializer =
+        appState.routeViewModelInitializers[modelClass]
+            ?: throw IllegalStateException(
+                "No RouteViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in the feature's Bindings.",
+            )
+
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
 
@@ -183,6 +200,16 @@ class PaneScaffoldState internal constructor(
     interface NestedNavigationKey {
         val isRoot: Boolean
     }
+}
+
+@Composable
+inline fun <reified VM : RouteViewModel> PaneScaffoldState.rememberRouteViewModel(
+    route: Route,
+): VM = viewModel<VM> {
+    routeViewModelInitializer(VM::class).invoke(
+        scope = viewModelCoroutineScope(),
+        route = route,
+    ) as VM
 }
 
 @Composable
