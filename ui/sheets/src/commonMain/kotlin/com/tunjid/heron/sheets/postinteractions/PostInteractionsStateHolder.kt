@@ -7,6 +7,8 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.SheetViewModel
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -20,6 +22,7 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -38,6 +41,7 @@ fun interface PostInteractionsViewModelInitializer {
 class PostInteractionsViewModel(
     authRepository: AuthRepository,
     writeQueue: WriteQueue,
+    navActions: (NavigationMutation) -> Unit,
     @Assisted scope: CoroutineScope,
 ) : SheetViewModel(scope),
     PostInteractionsStateHolder by scope.actionSuspendingStateMutator(
@@ -65,6 +69,9 @@ class PostInteractionsViewModel(
                     is PostInteractionsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
                         state = state,
                     )
+                    is PostInteractionsAction.Navigate -> action.flow.collect { navAction ->
+                        navActions(navAction.navigationMutation)
+                    }
                 }
             }
         },
@@ -118,4 +125,14 @@ sealed class PostInteractionsAction(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : PostInteractionsAction("SnackbarDismissed")
+
+    sealed class Navigate :
+        PostInteractionsAction(key = "Navigate"),
+        NavigationAction {
+
+        data class To(
+            val delegate: NavigationAction.Destination,
+        ) : Navigate(),
+            NavigationAction by delegate
+    }
 }

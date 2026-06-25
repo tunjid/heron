@@ -143,19 +143,7 @@ private fun FeedTimeline(
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()

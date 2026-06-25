@@ -69,9 +69,7 @@ import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
-import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
-import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -108,17 +106,7 @@ internal fun PostSearchResults(
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            onNavigate(signInDestination())
-        },
-        onQuotePostClicked = { repost ->
-            onNavigate(
-                composePostDestination(
-                    type = Post.Create.Quote(repost),
-                    sharedElementPrefix = null,
-                ),
-            )
-        },
+        sharedElementPrefix = null,
     )
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()

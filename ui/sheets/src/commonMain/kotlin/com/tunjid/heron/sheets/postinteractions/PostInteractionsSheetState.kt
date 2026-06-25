@@ -36,6 +36,8 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.canQuote
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -81,8 +83,7 @@ class PostInteractionsSheetState internal constructor(
         @Composable
         fun rememberUpdatedPostInteractionsSheetState(
             initializer: (CoroutineScope) -> PostInteractionsViewModel,
-            onSignInClicked: () -> Unit,
-            onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+            sharedElementPrefix: String?,
         ): PostInteractionsSheetState {
             val state = rememberBottomSheetState(
                 viewModelInitializer = initializer,
@@ -91,8 +92,7 @@ class PostInteractionsSheetState internal constructor(
 
             PostInteractionsBottomSheet(
                 state = state,
-                onSignInClicked = onSignInClicked,
-                onQuotePostClicked = onQuotePostClicked,
+                sharedElementPrefix = sharedElementPrefix,
             )
 
             return state
@@ -103,8 +103,7 @@ class PostInteractionsSheetState internal constructor(
 @Composable
 private fun PostInteractionsBottomSheet(
     state: PostInteractionsSheetState,
-    onSignInClicked: () -> Unit,
-    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+    sharedElementPrefix: String?,
 ) {
     LaunchedEffect(state.showingAction) {
         when (val interaction = state.showingAction?.interaction) {
@@ -160,12 +159,19 @@ private fun PostInteractionsBottomSheet(
                             enabled = action.viewerStats.canQuote,
                             icon = Icons.Rounded.FormatQuote,
                             onClick = {
-                                onQuotePostClicked(
-                                    Post.Interaction.Create.Repost(
-                                        postUri = currentInteraction.postUri,
-                                        postId = if (currentInteraction is Post.Interaction.Create.Repost)
-                                            currentInteraction.postId
-                                        else PostId(""),
+                                state.viewModel.accept(
+                                    PostInteractionsAction.Navigate.To(
+                                        composePostDestination(
+                                            type = Post.Create.Quote(
+                                                Post.Interaction.Create.Repost(
+                                                    postUri = currentInteraction.postUri,
+                                                    postId = if (currentInteraction is Post.Interaction.Create.Repost)
+                                                        currentInteraction.postId
+                                                    else PostId(""),
+                                                ),
+                                            ),
+                                            sharedElementPrefix = sharedElementPrefix,
+                                        ),
                                     ),
                                 )
                                 state.hide()
@@ -179,7 +185,11 @@ private fun PostInteractionsBottomSheet(
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    if (!postInteractionsState.isSignedIn) onSignInClicked()
+                    if (!postInteractionsState.isSignedIn) {
+                        state.viewModel.accept(
+                            PostInteractionsAction.Navigate.To(signInDestination()),
+                        )
+                    }
                     state.hide()
                 },
                 content = {

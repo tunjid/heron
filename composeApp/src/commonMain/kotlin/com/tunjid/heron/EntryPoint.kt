@@ -253,6 +253,7 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         sheetBindings = SheetBindings(
+            scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
     )

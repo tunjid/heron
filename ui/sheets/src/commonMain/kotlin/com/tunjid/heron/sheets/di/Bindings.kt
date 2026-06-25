@@ -30,6 +30,7 @@ import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModel
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModelInitializer
 import com.tunjid.heron.ui.coroutines.SheetViewModelInitializer
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
@@ -46,6 +47,7 @@ import dev.zacsweers.metro.Provides
 @BindingContainer
 class SheetBindings(
     @Includes val dataBindings: DataBindings,
+    @Includes val scaffoldBindings: ScaffoldBindings,
 ) {
     @Provides
     @IntoMap

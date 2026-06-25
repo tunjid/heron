@@ -62,7 +62,6 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoom
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -100,9 +99,7 @@ import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
-import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
-import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
@@ -122,19 +119,7 @@ internal fun GalleryScreen(
     actions: (Action) -> Unit,
 ) {
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+        sharedElementPrefix = state.sharedElementPrefix,
     )
 
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()

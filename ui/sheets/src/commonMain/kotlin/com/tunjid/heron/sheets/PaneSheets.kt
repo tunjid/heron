@@ -19,7 +19,6 @@ package com.tunjid.heron.sheets
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
@@ -116,13 +115,11 @@ fun PaneScaffoldState.rememberSelectListSheetState(
 
 @Composable
 fun PaneScaffoldState.rememberPostInteractionsSheetState(
-    onSignInClicked: () -> Unit,
-    onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
+    sharedElementPrefix: String?,
 ): PostInteractionsSheetState {
     val sheetState = PostInteractionsSheetState.rememberUpdatedPostInteractionsSheetState(
         initializer = sheetInitializer<PostInteractionsViewModel>(),
-        onSignInClicked = onSignInClicked,
-        onQuotePostClicked = onQuotePostClicked,
+        sharedElementPrefix = sharedElementPrefix,
     )
     SnackbarDisplayEffect(
         messages = sheetState.messages,
