@@ -17,7 +17,7 @@
 package com.tunjid.heron
 
 import android.app.Application
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 
 class HeronApplication : Application() {
 

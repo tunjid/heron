@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tasks.ui.FailedTaskCard
 import com.tunjid.heron.tasks.ui.InFlightTaskCard
 import com.tunjid.heron.tasks.ui.TaskItem
@@ -41,6 +40,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.tabIndex
 import heron.feature.tasks.generated.resources.Res
 import heron.feature.tasks.generated.resources.empty_failed

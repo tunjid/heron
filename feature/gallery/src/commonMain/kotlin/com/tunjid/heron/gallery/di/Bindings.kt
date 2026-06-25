@@ -28,12 +28,12 @@ import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.GalleryStateHolder
 import com.tunjid.heron.gallery.RouteViewModelInitializer
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
-import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
-import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane

@@ -36,8 +36,8 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.graze.editor.di.initialLoad
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation

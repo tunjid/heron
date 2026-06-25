@@ -34,12 +34,12 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.profile.AppLogoZIndex
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.profile.nameOrHandleOrUnknown
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import heron.feature.atmosphereapp.generated.resources.Res

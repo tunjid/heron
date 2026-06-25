@@ -26,9 +26,9 @@ import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.IosNotifier
-import com.tunjid.heron.scaffold.notifications.NotificationAction
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
+import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope

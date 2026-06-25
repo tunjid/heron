@@ -37,9 +37,6 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.removeQueryParamsFromCurrentRoute
-import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
@@ -47,6 +44,9 @@ import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.removeQueryParamsFromCurrentRoute
+import com.tunjid.heron.ui.scaffold.navigation.sharedUri
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator

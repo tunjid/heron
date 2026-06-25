@@ -31,9 +31,9 @@ import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.Status
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator

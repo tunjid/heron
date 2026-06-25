@@ -33,8 +33,8 @@ import com.tunjid.heron.editprofile.di.profileHandleOrId
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator

@@ -39,9 +39,9 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tasks.ui.failedTaskItem
 import com.tunjid.heron.tasks.ui.inFlightTaskItem
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator

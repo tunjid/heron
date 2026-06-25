@@ -19,13 +19,13 @@ package com.tunjid.heron
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 
 @Suppress("FunctionName")
 fun MainViewController(
     appState: AppState,
 ) = ComposeUIViewController {
-    com.tunjid.heron.scaffold.scaffold.App(
+    com.tunjid.heron.ui.scaffold.scaffold.App(
         appState = appState,
         modifier = Modifier.fillMaxSize(),
     )

@@ -23,8 +23,8 @@ import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
-import com.tunjid.heron.scaffold.notifications.AndroidNotifier
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.coroutines.Dispatchers
 import okio.FileSystem

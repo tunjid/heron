@@ -29,9 +29,9 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.snapshottable.SnapshotSpec

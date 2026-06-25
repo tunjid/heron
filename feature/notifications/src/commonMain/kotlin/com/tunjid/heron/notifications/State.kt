@@ -27,9 +27,9 @@ import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.NotificationsQuery
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable

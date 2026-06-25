@@ -22,8 +22,8 @@ import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable

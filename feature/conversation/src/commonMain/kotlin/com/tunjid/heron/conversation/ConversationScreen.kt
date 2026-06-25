@@ -75,12 +75,6 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
@@ -90,6 +84,12 @@ import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect

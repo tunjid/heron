@@ -61,7 +61,6 @@ include(
     ":data:database",
     ":data:lexicons",
     ":ui:tiling",
-    ":scaffold",
     ":feature:atmosphereapp",
     ":feature:auth",
     ":feature:compose",
@@ -91,6 +90,8 @@ include(
     ":ui:core",
     ":ui:media",
     ":ui:profile",
+    ":ui:scaffold",
+    ":ui:sheets",
     ":ui:tiling",
     ":ui:timeline",
 )

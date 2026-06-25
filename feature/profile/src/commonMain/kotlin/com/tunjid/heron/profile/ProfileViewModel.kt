@@ -50,10 +50,10 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records.Documents
 import com.tunjid.heron.profile.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator

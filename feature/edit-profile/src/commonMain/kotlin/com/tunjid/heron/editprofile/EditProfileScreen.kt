@@ -84,11 +84,11 @@ import com.tunjid.heron.profile.profileBioTabBackground
 import com.tunjid.heron.profile.withProfileAvatarHaloSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf

@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.graze_editor
 import heron.feature.graze_editor.generated.resources.no_display_name

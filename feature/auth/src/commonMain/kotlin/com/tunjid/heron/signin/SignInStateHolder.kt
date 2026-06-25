@@ -27,10 +27,10 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.ActionStateMutator

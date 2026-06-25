@@ -30,7 +30,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
-                implementation(project(":scaffold"))
+                implementation(project(":ui:scaffold"))
                 implementation(project(":feature:template"))
                 implementation(project(":ui:tiling"))
 
