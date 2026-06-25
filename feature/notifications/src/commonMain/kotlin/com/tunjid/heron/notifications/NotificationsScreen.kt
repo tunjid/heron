@@ -94,19 +94,7 @@ internal fun NotificationsScreen(
 ) {
     val listState = rememberLazyListState()
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    ),
-                ),
-            )
-        },
+        sharedElementPrefix = null,
     )
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 

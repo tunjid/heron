@@ -34,7 +34,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Post.Create.Reply
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -99,17 +98,7 @@ internal fun PostDetailScreen(
         }
     }
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onQuotePostClicked = { repost ->
-            navigateTo(
-                composePostDestination(
-                    type = Post.Create.Quote(repost),
-                    sharedElementPrefix = state.sharedElementPrefix,
-                ),
-            )
-        },
+        sharedElementPrefix = state.sharedElementPrefix,
     )
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()

@@ -95,19 +95,7 @@ internal fun PostsScreen(
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = SharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+        sharedElementPrefix = SharedElementPrefix,
     )
 
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()

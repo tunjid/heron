@@ -197,17 +197,7 @@ fun Comments(
         val displayState = rememberTimelineDisplayState()
 
         val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
-            onSignInClicked = {
-                actions(Action.Navigate.To(signInDestination()))
-            },
-            onQuotePostClicked = { repost ->
-                navigateTo(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = commentSharedElementPrefix,
-                    ),
-                )
-            },
+            sharedElementPrefix = commentSharedElementPrefix,
         )
 
         ElevatedCard(
