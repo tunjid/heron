@@ -30,19 +30,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.home.Action
 import com.tunjid.heron.home.ActualHomeViewModel
 import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.HomeStateHolder
-import com.tunjid.heron.home.RouteViewModelInitializer
+import com.tunjid.heron.home.HomeViewModelInitializer
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.home.ui.TrendsTicker
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -61,6 +60,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -74,6 +74,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -113,29 +114,30 @@ class HomeBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualHomeViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: HomeViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: HomeStateHolder = viewModel<ActualHomeViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: HomeStateHolder = paneScaffoldState.rememberRouteViewModel<ActualHomeViewModel>(
+                route = route,
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()

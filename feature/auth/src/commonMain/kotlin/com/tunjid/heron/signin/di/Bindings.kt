@@ -44,22 +44,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
-import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolder
+import com.tunjid.heron.signin.SignInViewModelInitializer
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
 import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
@@ -71,6 +70,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -82,6 +82,7 @@ import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -137,12 +138,17 @@ class SignInBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualSignInViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: SignInViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -150,28 +156,22 @@ class SignInBindings(
     @IntoMap
     @StringKey(OAuthPattern)
     fun provideOAuthPaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     @OptIn(ExperimentalSharedTransitionApi::class)
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: SignInStateHolder = viewModel<ActualSignInViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: SignInStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSignInViewModel>(
+                route = route,
+            )
+            val state by stateHolder.state.collectAsStateWithLifecycle()
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier

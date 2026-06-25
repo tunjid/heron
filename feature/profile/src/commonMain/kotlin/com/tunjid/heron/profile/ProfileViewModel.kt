@@ -17,7 +17,6 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -46,13 +45,13 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records.Documents
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -85,8 +84,8 @@ import kotlinx.coroutines.flow.shareIn
 internal typealias ProfileStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ProfileViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualProfileViewModel
@@ -106,7 +105,7 @@ class ActualProfileViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     ProfileStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

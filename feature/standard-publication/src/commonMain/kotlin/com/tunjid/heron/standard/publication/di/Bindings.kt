@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.Uri
@@ -29,12 +28,12 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.ActualStandardPublicationViewModel
-import com.tunjid.heron.standard.publication.RouteViewModelInitializer
 import com.tunjid.heron.standard.publication.StandardPublicationScreen
 import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
+import com.tunjid.heron.standard.publication.StandardPublicationViewModelInitializer
 import com.tunjid.heron.standard.publication.ui.PublicationTitle
 import com.tunjid.heron.standard.publication.ui.SubscribeButton
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -44,6 +43,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -60,6 +60,7 @@ import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -145,14 +146,19 @@ class StandardPublicationBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualStandardPublicationViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: StandardPublicationViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(StandardPublicationRoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -161,17 +167,14 @@ class StandardPublicationBindings(
     @StringKey(StandardPublicationUriRoutePattern)
     fun provideUriPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -182,14 +185,11 @@ class StandardPublicationBindings(
             )
         },
         render = { route ->
-            val stateHolder: StandardPublicationStateHolder = viewModel<ActualStandardPublicationViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: StandardPublicationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualStandardPublicationViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()

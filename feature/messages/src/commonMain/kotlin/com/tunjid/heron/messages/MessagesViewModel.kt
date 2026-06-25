@@ -17,7 +17,6 @@
 package com.tunjid.heron.messages
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -28,10 +27,10 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -65,8 +64,8 @@ import kotlinx.coroutines.withTimeout
 internal typealias MessagesStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface MessagesViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualMessagesViewModel
@@ -81,10 +80,9 @@ class ActualMessagesViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     MessagesStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

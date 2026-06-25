@@ -16,17 +16,16 @@
 
 package com.tunjid.heron.profile.avatar
 
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.avatar.di.avatarSharedElementKey
 import com.tunjid.heron.profile.avatar.di.profile
 import com.tunjid.heron.profile.avatar.di.profileHandleOrId
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -46,8 +45,8 @@ import kotlinx.coroutines.flow.StateFlow
 internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ProfileAvatarViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualProfileAvatarViewModel
@@ -61,7 +60,7 @@ class ActualProfileAvatarViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     ProfileStateHolder by scope.actionStateFlowMutator(
         initialState = State(
             avatarSharedElementKey = route.avatarSharedElementKey ?: "",

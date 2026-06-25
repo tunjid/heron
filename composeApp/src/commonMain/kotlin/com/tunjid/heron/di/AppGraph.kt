@@ -48,6 +48,7 @@ import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.tasks.di.TasksBindings
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.coroutines.SheetViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
@@ -119,6 +120,7 @@ interface AppGraph {
         writeQueue: WriteQueue,
         databaseCleanup: DatabaseCleanup,
         sheetViewModelInitializers: Map<KClass<*>, SheetViewModelInitializer>,
+        routeViewModelInitializers: Map<KClass<*>, RouteViewModelInitializer>,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -127,6 +129,7 @@ interface AppGraph {
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         sheetViewModelInitializers = sheetViewModelInitializers,
+        routeViewModelInitializers = routeViewModelInitializers,
     )
 
     val appState: AppState

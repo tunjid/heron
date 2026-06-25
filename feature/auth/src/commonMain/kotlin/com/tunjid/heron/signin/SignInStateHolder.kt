@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.signin
 
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
@@ -25,10 +24,10 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
@@ -60,8 +59,8 @@ import kotlinx.coroutines.flow.shareIn
 internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface SignInViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualSignInViewModel
@@ -75,7 +74,7 @@ class ActualSignInViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     SignInStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

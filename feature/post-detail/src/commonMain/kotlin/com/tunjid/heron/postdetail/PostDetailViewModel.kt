@@ -17,7 +17,6 @@
 package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
@@ -32,11 +31,11 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.postdetail.di.postRecordKey
 import com.tunjid.heron.postdetail.di.profileHandleOrId
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -56,8 +55,8 @@ import kotlinx.coroutines.flow.onStart
 internal typealias PostDetailStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface PostDetailViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualPostDetailViewModel
@@ -77,7 +76,7 @@ class ActualPostDetailViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     PostDetailStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

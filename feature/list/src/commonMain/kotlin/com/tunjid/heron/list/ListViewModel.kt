@@ -17,7 +17,6 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
@@ -38,7 +37,6 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.list.di.timelineRequest
 import com.tunjid.heron.tiling.TilingState
@@ -46,6 +44,7 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -71,8 +70,8 @@ import kotlinx.coroutines.flow.take
 internal typealias ListStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ListViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualListViewModel
@@ -93,7 +92,7 @@ class ActualListViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     ListStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

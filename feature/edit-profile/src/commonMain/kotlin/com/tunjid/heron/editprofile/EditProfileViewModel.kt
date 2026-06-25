@@ -17,7 +17,6 @@
 package com.tunjid.heron.editprofile
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
@@ -30,10 +29,10 @@ import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.profileHandleOrId
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
 import com.tunjid.heron.timeline.state.recordStateHolder
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
@@ -60,8 +59,8 @@ import kotlinx.coroutines.flow.take
 internal typealias EditProfileStateHolder = ActionSuspendingStateMutator<Action, State.SnapshotMutable>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface EditProfileViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualEditProfileViewModel
@@ -80,7 +79,7 @@ class ActualEditProfileViewModel(
     scope: CoroutineScope,
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     EditProfileStateHolder by scope.actionSuspendingStateMutator(
         state = State(route).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

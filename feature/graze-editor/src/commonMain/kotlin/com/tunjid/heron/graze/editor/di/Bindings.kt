@@ -24,21 +24,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.GrazeEditorStateHolder
-import com.tunjid.heron.graze.editor.RouteViewModelInitializer
+import com.tunjid.heron.graze.editor.GrazeEditorViewModelInitializer
 import com.tunjid.heron.graze.editor.State
 import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
 import com.tunjid.heron.graze.editor.ui.Title
 import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -49,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -61,6 +61,7 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -127,14 +128,19 @@ class GrazeEditorBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualGrazeEditorViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: GrazeEditorViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -143,29 +149,23 @@ class GrazeEditorBindings(
     @StringKey(EditPattern)
     fun provideEditPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: GrazeEditorStateHolder = viewModel<ActualGrazeEditorViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: GrazeEditorStateHolder = paneScaffoldState.rememberRouteViewModel<ActualGrazeEditorViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state by stateHolder.state.collectAsStateWithLifecycle()
 
             val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
                 stateHolder.accept(

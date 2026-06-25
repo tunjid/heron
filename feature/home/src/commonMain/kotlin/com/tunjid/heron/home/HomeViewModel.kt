@@ -17,7 +17,6 @@
 package com.tunjid.heron.home
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -30,13 +29,13 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -60,8 +59,8 @@ import kotlinx.coroutines.flow.take
 internal typealias HomeStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface HomeViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualHomeViewModel
@@ -78,10 +77,9 @@ class ActualHomeViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     HomeStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

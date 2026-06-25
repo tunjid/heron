@@ -18,15 +18,15 @@ package com.tunjid.heron.splash.di
 
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.splash.ActualSplashViewModel
-import com.tunjid.heron.splash.RouteViewModelInitializer
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashStateHolder
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.splash.SplashViewModelInitializer
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -36,6 +36,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -70,27 +71,26 @@ class SplashBindings(
 
     @Provides
     @IntoMap
-    @StringKey(RoutePattern)
-    fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+    @ClassKey(ActualSplashViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: SplashViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
+    @Provides
+    @IntoMap
+    @StringKey(RoutePattern)
+    fun providePaneEntry(): PaneEntry<ThreePane, Route> = routePaneEntry()
+
+    private fun routePaneEntry() = threePaneEntry(
         render = { route ->
-            val stateHolder: SplashStateHolder = viewModel<ActualSplashViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
+            val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: SplashStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSplashViewModel>(
+                route = route,
+            )
             stateHolder.state.collectAsStateWithLifecycle()
 
             SplashScreen(
-                paneScaffoldState = rememberPaneScaffoldState(),
+                paneScaffoldState = paneScaffoldState,
                 modifier = Modifier,
             )
         },

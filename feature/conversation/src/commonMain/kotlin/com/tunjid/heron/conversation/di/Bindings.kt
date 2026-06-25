@@ -27,12 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.conversation.Action
 import com.tunjid.heron.conversation.ActualConversationViewModel
 import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.ConversationStateHolder
-import com.tunjid.heron.conversation.RouteViewModelInitializer
+import com.tunjid.heron.conversation.ConversationViewModelInitializer
 import com.tunjid.heron.conversation.pendingRecord
 import com.tunjid.heron.conversation.ui.ConversationOverflowMenu
 import com.tunjid.heron.conversation.ui.ConversationTitle
@@ -42,7 +41,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -55,6 +54,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -67,6 +67,7 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -108,17 +109,21 @@ class ConversationBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualConversationViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: ConversationViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -129,14 +134,11 @@ class ConversationBindings(
             )
         },
         render = { route ->
-            val stateHolder: ConversationStateHolder = viewModel<ActualConversationViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: ConversationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualConversationViewModel>(
+                route = route,
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(

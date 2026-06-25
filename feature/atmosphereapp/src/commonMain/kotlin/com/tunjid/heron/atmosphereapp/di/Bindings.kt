@@ -20,15 +20,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.atmosphereapp.Action
 import com.tunjid.heron.atmosphereapp.ActualAtmosphereAppViewModel
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
 import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
-import com.tunjid.heron.atmosphereapp.RouteViewModelInitializer
+import com.tunjid.heron.atmosphereapp.AtmosphereAppViewModelInitializer
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -39,6 +38,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -53,6 +53,7 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -96,20 +97,24 @@ class AtmosphereAppBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualAtmosphereAppViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: AtmosphereAppViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -120,14 +125,11 @@ class AtmosphereAppBindings(
             )
         },
         render = { route ->
-            val stateHolder: AtmosphereAppStateHolder = viewModel<ActualAtmosphereAppViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: AtmosphereAppStateHolder = paneScaffoldState.rememberRouteViewModel<ActualAtmosphereAppViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()

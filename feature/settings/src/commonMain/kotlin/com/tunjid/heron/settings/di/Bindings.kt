@@ -24,17 +24,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.ActualSettingsViewModel
-import com.tunjid.heron.settings.RouteViewModelInitializer
 import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
 import com.tunjid.heron.settings.SettingsStateHolder
+import com.tunjid.heron.settings.SettingsViewModelInitializer
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -49,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -59,6 +59,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -99,20 +100,24 @@ class SettingsBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualSettingsViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: SettingsViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -123,14 +128,11 @@ class SettingsBindings(
             )
         },
         render = { route ->
-            val stateHolder: SettingsStateHolder = viewModel<ActualSettingsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: SettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSettingsViewModel>(
+                route = routeParser.hydrate(route),
+            )
+            val state by stateHolder.state.collectAsStateWithLifecycle()
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(

@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -43,7 +42,7 @@ import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolder
-import com.tunjid.heron.feed.RouteViewModelInitializer
+import com.tunjid.heron.feed.FeedViewModelInitializer
 import com.tunjid.heron.feed.timelineState
 import com.tunjid.heron.feed.withFeedTimelineOrNull
 import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
@@ -52,7 +51,7 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -68,6 +67,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -84,6 +84,7 @@ import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -160,14 +161,19 @@ class FeedBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualFeedViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: FeedViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -176,17 +182,14 @@ class FeedBindings(
     @StringKey(RouteUriPattern)
     fun provideUriPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -197,14 +200,12 @@ class FeedBindings(
             )
         },
         render = { route ->
-            val stateHolder: FeedStateHolder = viewModel<ActualFeedViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
+            val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: FeedStateHolder =
+                paneScaffoldState.rememberRouteViewModel<ActualFeedViewModel>(
                     route = routeParser.hydrate(route),
                 )
-            }
             val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
 
             val editFeedText = stringResource(Res.string.edit_feed)
             val recordOptionsSheetState = paneScaffoldState.rememberEmbeddableRecordOptionsSheetState(

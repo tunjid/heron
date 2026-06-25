@@ -16,9 +16,8 @@
 
 package com.tunjid.heron.splash
 
-import androidx.lifecycle.ViewModel
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -35,8 +34,8 @@ import kotlinx.coroutines.flow.StateFlow
 internal typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface SplashViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualSplashViewModel
@@ -47,10 +46,9 @@ class ActualSplashViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     SplashStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

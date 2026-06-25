@@ -27,20 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteQuery
-import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolder
 import com.tunjid.heron.search.SearchViewModel
+import com.tunjid.heron.search.SearchViewModelInitializer
 import com.tunjid.heron.search.isQueryEditable
 import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.profileHandle
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -55,6 +54,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -68,6 +68,7 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -124,12 +125,17 @@ class SearchBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(SearchViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: SearchViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -137,28 +143,22 @@ class SearchBindings(
     @IntoMap
     @StringKey(RouteQueryPattern)
     fun providePaneQueryEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: SearchStateHolder = viewModel<SearchViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
+            val stateHolder: SearchStateHolder = paneScaffoldState.rememberRouteViewModel<SearchViewModel>(
+                route = route,
+            )
+            val state = stateHolder.produceStateWithLifecycle()
 
             val searchFocusRequester = remember { FocusRequester() }
 

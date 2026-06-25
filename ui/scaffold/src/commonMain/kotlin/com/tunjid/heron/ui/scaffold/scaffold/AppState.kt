@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.coroutines.SheetViewModel
 import com.tunjid.heron.ui.coroutines.SheetViewModelInitializer
 import com.tunjid.heron.ui.coroutines.withSnapshotNotifications
@@ -94,6 +95,7 @@ class AppState(
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     internal val sheetViewModelInitializers: Map<KClass<*>, SheetViewModelInitializer>,
+    internal val routeViewModelInitializers: Map<KClass<*>, RouteViewModelInitializer>,
 ) {
     internal val identityState
         get() = identityStateHolder.state

@@ -19,7 +19,6 @@ package com.tunjid.heron.profiles.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
@@ -28,8 +27,8 @@ import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolder
-import com.tunjid.heron.profiles.RouteViewModelInitializer
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.profiles.ProfilesViewModelInitializer
+import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -39,6 +38,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -53,6 +53,7 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -191,14 +192,19 @@ class ProfilesBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(ActualProfilesViewModel::class)
+    fun provideRouteViewModelInitializer(
+        initializer: ProfilesViewModelInitializer,
+    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(BlockedProfilesPattern)
     fun provideBlocksPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -207,11 +213,9 @@ class ProfilesBindings(
     @StringKey(MutedProfilesPattern)
     fun provideMutesPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -220,11 +224,9 @@ class ProfilesBindings(
     @StringKey(PostLikesPattern)
     fun providePostLikesPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -233,11 +235,9 @@ class ProfilesBindings(
     @StringKey(PostRepostsPattern)
     fun providePostRepostsPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -246,11 +246,9 @@ class ProfilesBindings(
     @StringKey(ProfileFollowersPattern)
     fun provideProfileFollowersPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -259,17 +257,14 @@ class ProfilesBindings(
     @StringKey(ProfileFollowingPattern)
     fun provideProfileFollowingPaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -280,18 +275,15 @@ class ProfilesBindings(
             )
         },
         render = { route ->
+            val paneScaffoldState = rememberPaneScaffoldState()
             val hydratedRoute = routeParser.hydrate(route)
             val load = hydratedRoute.load
             val titleRes = load.titleRes()
 
-            val stateHolder: ProfilesStateHolder = viewModel<ActualProfilesViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
+            val stateHolder: ProfilesStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfilesViewModel>(
+                route = routeParser.hydrate(route),
+            )
             val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier

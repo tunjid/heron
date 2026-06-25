@@ -17,17 +17,16 @@
 package com.tunjid.heron.standard.subscription
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -46,8 +45,8 @@ import kotlinx.coroutines.flow.map
 internal typealias StandardSubscriptionStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface StandardSubscriptionViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualStandardSubscriptionViewModel
@@ -63,7 +62,7 @@ class ActualStandardSubscriptionViewModel(
     scope: CoroutineScope,
     @Suppress("unused") @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

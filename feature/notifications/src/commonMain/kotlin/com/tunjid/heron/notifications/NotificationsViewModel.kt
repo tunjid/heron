@@ -17,7 +17,6 @@
 package com.tunjid.heron.notifications
 
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthRepository
@@ -25,13 +24,13 @@ import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -51,8 +50,8 @@ import kotlinx.coroutines.flow.map
 internal typealias NotificationsStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface NotificationsViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualNotificationsViewModel
@@ -68,10 +67,9 @@ class ActualNotificationsViewModel(
     userDataRepository: UserDataRepository,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     NotificationsStateHolder by scope.actionSuspendingStateMutator(
         state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),

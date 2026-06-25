@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.Timeline
@@ -25,9 +24,9 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.utilities.enqueueMutations
+import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
@@ -62,8 +61,8 @@ import kotlinx.coroutines.withContext
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface SettingsViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualSettingsViewModel
@@ -77,9 +76,8 @@ class ActualSettingsViewModel(
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted route: Route,
-) : ViewModel(viewModelScope = scope),
+) : RouteViewModel(scope, route),
     SettingsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
