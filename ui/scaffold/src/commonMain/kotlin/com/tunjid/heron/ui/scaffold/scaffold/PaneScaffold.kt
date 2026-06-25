@@ -129,7 +129,10 @@ class PaneScaffoldState internal constructor(
     fun sheetViewModelInitializer(
         modelClass: KClass<out SheetViewModel>,
     ): SheetViewModelInitializer =
-        appState.sheetViewModelInitializers.getValue(modelClass)
+        appState.sheetViewModelInitializers[modelClass]
+            ?: throw IllegalStateException(
+                "No SheetViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in SheetBindings."
+            )
 
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
