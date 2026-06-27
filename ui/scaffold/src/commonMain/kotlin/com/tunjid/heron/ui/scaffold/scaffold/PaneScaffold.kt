@@ -91,7 +91,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Stable
-class PaneScaffoldState internal constructor(
+class PaneScaffoldState(
     internal val displayScaffoldState: DisplayScaffoldState,
     viewModelInitializer: ViewModelInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
