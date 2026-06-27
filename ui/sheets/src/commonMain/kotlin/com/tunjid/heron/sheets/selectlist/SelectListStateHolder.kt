@@ -4,7 +4,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetViewModel
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchedCollect

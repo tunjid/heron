@@ -34,9 +34,9 @@ import com.tunjid.heron.sheets.selectlist.SelectListSheetState
 import com.tunjid.heron.sheets.selectlist.SelectListViewModel
 import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModel
-import com.tunjid.heron.ui.coroutines.SheetViewModel
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SnackbarDisplayEffect
+import com.tunjid.heron.ui.stateproduction.SheetViewModel
 import kotlinx.coroutines.CoroutineScope
 
 /**

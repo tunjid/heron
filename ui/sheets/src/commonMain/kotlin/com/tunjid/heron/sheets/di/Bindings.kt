@@ -29,8 +29,8 @@ import com.tunjid.heron.sheets.selectlist.SelectListViewModel
 import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModel
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModelInitializer
-import com.tunjid.heron.ui.coroutines.SheetViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
@@ -38,7 +38,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 
 /**
- * Contributes each sheet [com.tunjid.heron.ui.coroutines.SheetViewModel]'s assisted initializer into
+ * Contributes each sheet [com.tunjid.heron.ui.stateproduction.SheetViewModel]'s assisted initializer into
  * the app graph's `Map<KClass<out SheetViewModel>, SheetViewModelInitializer>`, keyed by the
  * ViewModel class. This mirrors how feature modules contribute their navigation entries, and lets
  * `PaneScaffoldState` create a sheet ViewModel reflectively without the scaffold layer depending on

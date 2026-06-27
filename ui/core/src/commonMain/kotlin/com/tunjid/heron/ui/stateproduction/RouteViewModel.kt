@@ -14,27 +14,30 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.ui.coroutines
+package com.tunjid.heron.ui.stateproduction
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * Base class for the [ViewModel]s that back app level bottom sheets. Their lifecycle is owned by
- * the [scope] passed in (typically a [viewModelCoroutineScope]), so they can be created on demand
- * from the app's dependency graph via a [SheetViewModelInitializer].
+ * Base class for the [ViewModel]s that back navigation destinations (feature screens). Its lifecycle
+ * is owned by the [scope] passed in (typically a [viewModelCoroutineScope]) and it is created on
+ * demand for its [route] from the app's dependency graph via a [RouteViewModelInitializer].
  */
-abstract class SheetViewModel(
+abstract class RouteViewModel(
     scope: CoroutineScope,
+    val route: Route,
 ) : ViewModel(viewModelScope = scope)
 
 /**
- * Factory for a [SheetViewModel] given its [CoroutineScope]. Sheet modules contribute one of these
- * per sheet into the app graph's `Map<KClass<out SheetViewModel>, SheetViewModelInitializer>`,
- * mirroring how feature modules contribute their navigation entries.
+ * Factory for a [RouteViewModel] given its [CoroutineScope] and [Route]. Each feature contributes one
+ * of these into the app graph's `Map<KClass<out RouteViewModel>, RouteViewModelInitializer>`, keyed
+ * by ViewModel type, so any screen's ViewModel can be resolved through `PaneScaffoldState`.
  */
-fun interface SheetViewModelInitializer {
+fun interface RouteViewModelInitializer {
     fun invoke(
         scope: CoroutineScope,
-    ): SheetViewModel
+        route: Route,
+    ): RouteViewModel
 }

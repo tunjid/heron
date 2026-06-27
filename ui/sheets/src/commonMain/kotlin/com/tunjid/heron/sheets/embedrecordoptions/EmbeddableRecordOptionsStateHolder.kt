@@ -7,7 +7,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.coroutines.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetViewModel
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
