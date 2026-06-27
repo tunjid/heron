@@ -35,6 +35,9 @@ import kotlinx.serialization.Serializable
  * @param codeVerifier A unique string that will be used to verify the token request.
  * @param state A unique string to maintain state between the request and callback.
  * @param nonce A unique string to prevent replay attacks.
+ * @param keyPair The DPoP key pair generated for and bound to this authorization request,
+ * starting with the PAR request. The same key pair must be reused for the subsequent token
+ * exchange, so callers should persist it across the authorization callback.
  */
 @Serializable
 data class OAuthAuthorizationRequest(
@@ -43,4 +46,5 @@ data class OAuthAuthorizationRequest(
     val codeVerifier: String,
     val state: String,
     val nonce: String,
+    val keyPair: DpopKeyPair,
 )

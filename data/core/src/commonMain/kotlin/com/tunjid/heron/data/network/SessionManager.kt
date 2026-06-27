@@ -153,6 +153,10 @@ internal class PersistedSessionManager(
                     nonce = it.nonce,
                     state = it.state,
                     expiresAt = Clock.System.now() + it.expiresIn,
+                    keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
+                        publicKey = it.keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
+                        privateKey = it.keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
+                    ),
                 )
             }
     }
@@ -213,6 +217,18 @@ internal class PersistedSessionManager(
                     nonce = pendingRequest.nonce,
                     codeVerifier = pendingRequest.codeVerifier,
                     code = code,
+                    // Reuse the DPoP key bound to the PAR request so the authorization code
+                    // exchange presents a proof for the same key the server bound it to.
+                    keyPair = pendingRequest.keyPair?.let {
+                        DpopKeyPair.fromKeyPair(
+                            publicKey = it.publicKey,
+                            publicKeyFormat = DpopKeyPair.PublicKeyFormat.DER,
+                            privateKey = it.privateKey,
+                            privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
+                        )
+                    } ?: throw IllegalStateException(
+                        "Missing DPoP key pair for pending authorization request. Please restart the sign-in flow.",
+                    ),
                 )
 
                 val callingDid = api.resolveHandle(
