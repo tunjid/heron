@@ -99,7 +99,7 @@ fun PaneScaffoldState.PaneNavigationBar(
         exit = exitTransition,
         content = {
             with(displayScaffoldState) {
-                if (canUseMovableNavigationBar) displayScaffoldState.staticStates.movableNavigationBar(
+                if (canUseMovableNavigationBar) staticStates.movableNavigationBar(
                     this,
                     Modifier,
                     onNavItemReselected,

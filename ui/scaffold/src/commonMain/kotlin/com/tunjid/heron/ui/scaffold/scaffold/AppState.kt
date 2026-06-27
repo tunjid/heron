@@ -203,7 +203,7 @@ class AppState(
 }
 
 internal val LocalDisplayScaffoldState = staticCompositionLocalOf<DisplayScaffoldState> {
-    throw IllegalStateException("No SplitPaneState provided")
+    throw IllegalStateException("No DisplayScaffoldState provided")
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
