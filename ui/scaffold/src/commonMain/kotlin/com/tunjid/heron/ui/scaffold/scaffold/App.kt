@@ -123,9 +123,13 @@ fun App(
                         modifier = Modifier.fillMaxSize(),
                         state = displayState,
                     ) {
-                        val displayScaffoldState = remember(displayScaffoldStates) {
+                        val displayScope = this
+                        val displayScaffoldState = remember(
+                            displayScaffoldStates,
+                            displayScope,
+                        ) {
                             DisplayScaffoldState(
-                                paneNavigationState = { this.paneNavigationState },
+                                paneNavigationState = { displayScope.paneNavigationState },
                                 density = density,
                                 windowWidth = windowWidth,
                                 staticStates = displayScaffoldStates,
@@ -154,7 +158,10 @@ fun App(
                                 },
                             )
                         }
-                        LaunchedEffect(Unit) {
+                        LaunchedEffect(
+                            displayScaffoldState,
+                            displayScope,
+                        ) {
                             snapshotFlow {
                                 displayScaffoldState.paneAnchorState.currentPaneAnchor
                             }.collect { anchor ->
@@ -168,7 +175,10 @@ fun App(
                         val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
                             .navigationEventDispatcher
 
-                        LaunchedEffect(navigationEventDispatcher) {
+                        LaunchedEffect(
+                            navigationEventDispatcher,
+                            displayScaffoldState,
+                        ) {
                             combine(
                                 navigationEventDispatcher.transitionState,
                                 navigationEventDispatcher.history,
