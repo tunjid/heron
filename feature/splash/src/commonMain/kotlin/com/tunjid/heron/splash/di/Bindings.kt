@@ -17,7 +17,6 @@
 package com.tunjid.heron.splash.di
 
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
@@ -27,6 +26,7 @@ import com.tunjid.heron.ui.coroutines.RouteViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -87,7 +87,7 @@ class SplashBindings(
             val stateHolder: SplashStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSplashViewModel>(
                 route = route,
             )
-            stateHolder.state.collectAsStateWithLifecycle()
+            stateHolder.produceStateWithLifecycle()
 
             SplashScreen(
                 paneScaffoldState = paneScaffoldState,

@@ -20,10 +20,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
@@ -49,6 +47,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -165,7 +164,7 @@ class GrazeEditorBindings(
             val stateHolder: GrazeEditorStateHolder = paneScaffoldState.rememberRouteViewModel<ActualGrazeEditorViewModel>(
                 route = routeParser.hydrate(route),
             )
-            val state by stateHolder.state.collectAsStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
 
             val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
                 stateHolder.accept(

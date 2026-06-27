@@ -19,11 +19,9 @@ package com.tunjid.heron.settings.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
@@ -49,6 +47,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -132,7 +131,7 @@ class SettingsBindings(
             val stateHolder: SettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSettingsViewModel>(
                 route = routeParser.hydrate(route),
             )
-            val state by stateHolder.state.collectAsStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(

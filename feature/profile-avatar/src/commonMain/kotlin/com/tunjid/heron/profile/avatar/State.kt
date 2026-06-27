@@ -16,19 +16,28 @@
 
 package com.tunjid.heron.profile.avatar
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val avatarSharedElementKey: String? = null,
-    val profile: Profile?,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val avatarSharedElementKey: String? = null,
+        val profile: Profile?,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+}
 
 sealed class Action(val key: String) {
 

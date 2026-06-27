@@ -25,18 +25,15 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.timeline.utilities.enqueueMutations
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -49,16 +46,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SettingsStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SettingsViewModelInitializer {
@@ -78,78 +73,89 @@ class ActualSettingsViewModel(
     scope: CoroutineScope,
     @Assisted route: Route,
 ) : RouteViewModel(scope, route),
-    SettingsStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+    SettingsStateHolder by scope.actionSuspendingStateMutator(
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            signedInProfileSavedStateMutations(
+        producer = { state, actions ->
+            launchSignedInProfileSavedStateMutations(
+                state = state,
                 userDataRepository = userDataRepository,
-            ),
-            loadOpenSourceLibraryMutations(),
-            loadSessionSummaryMutations(
+            )
+            launchLoadOpenSourceLibraryMutations(
+                state = state,
+            )
+            launchLoadSessionSummaryMutations(
+                state = state,
                 authRepository = authRepository,
-            ),
-            observeActiveProfileMutations(
+            )
+            launchObserveActiveProfileMutations(
+                state = state,
                 authRepository = authRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+            )
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.UpdateSection -> action.flow.updateSectionMutations()
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                        state = state,
+                    )
+                    is Action.UpdateSection -> action.flow.launchUpdateSectionMutations(
+                        state = state,
+                    )
 
-                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
+                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.launchHomeTimelineRefreshOnLaunchMutations(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetAutoPlayTimelineVideos -> action.flow.timelineVideoAutoPlayMutations(
+                    is Action.SetAutoPlayTimelineVideos -> action.flow.launchTimelineVideoAutoPlayMutations(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetCurrentThemeOrdinal -> action.flow.setCurrentThemeOrdinal(
+                    is Action.SetCurrentThemeOrdinal -> action.flow.launchSetCurrentThemeOrdinal(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetDarkThemeConfigOrdinal -> action.flow.setDarkThemeConfigOrdinal(
+                    is Action.SetDarkThemeConfigOrdinal -> action.flow.launchSetDarkThemeConfigOrdinal(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetCompactNavigation -> action.flow.toggleCompactNavigation(
+                    is Action.SetCompactNavigation -> action.flow.launchToggleCompactNavigation(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetAutoHideBottomNavigation -> action.flow.toggleAutoHideBottomNavigation(
+                    is Action.SetAutoHideBottomNavigation -> action.flow.launchToggleAutoHideBottomNavigation(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetShowPostEngagementMetrics -> action.flow.toggleShowPostEngagementMetrics(
+                    is Action.SetShowPostEngagementMetrics -> action.flow.launchToggleShowPostEngagementMetrics(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetShowTrendingTopics -> action.flow.toggleShowTrendingTopics(
+                    is Action.SetShowTrendingTopics -> action.flow.launchToggleShowTrendingTopics(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetAllowAllTimelinePresentations -> action.flow.toggleAllowAllTimelinePresentations(
+                    is Action.SetAllowAllTimelinePresentations -> action.flow.launchToggleAllowAllTimelinePresentations(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
+                    is Action.SwitchSession -> action.flow.launchHandleSwitchSessionMutations(
+                        state = state,
                         authRepository = authRepository,
                     )
-                    is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
+                    is Action.UpdateFeedPreference -> action.flow.launchUpdateFeedPreferenceMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateThreadViewPreference -> action.flow.updateThreadPreferenceMutations(
+                    is Action.UpdateThreadViewPreference -> action.flow.launchUpdateThreadPreferenceMutations(
+                        state = state,
                         writeQueue = writeQueue,
                     )
-                    Action.SignOut -> action.flow.mapToManyMutations {
+                    Action.SignOut -> action.flow.collect {
                         authRepository.signOut()
                     }
                 }
@@ -157,192 +163,203 @@ class ActualSettingsViewModel(
         },
     )
 
-fun signedInProfileSavedStateMutations(
+context(productionScope: CoroutineScope)
+fun launchSignedInProfileSavedStateMutations(
+    state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(signedInProfilePreferences = it)
-        }
+) = userDataRepository.preferences
+    .launchedCollect {
+        state.signedInProfilePreferences = it
+    }
 
-fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
+context(productionScope: CoroutineScope)
+fun launchLoadOpenSourceLibraryMutations(
+    state: State.SnapshotMutable,
+) = flow {
     val libs = withContext(Dispatchers.IO) {
         Libs.Builder()
             .withJson(Res.readBytes("files/aboutlibraries.json").decodeToString())
             .build()
     }
-    emit { copy(openSourceLibraries = libs) }
+    emit(libs)
+}.launchedCollect {
+    state.openSourceLibraries = it
 }
 
-private fun loadSessionSummaryMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadSessionSummaryMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.pastSessions
-        .mapToMutation { sessionSummaries ->
-            copy(pastSessions = sessionSummaries)
-        }
-
-private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(section = action.section)
+) = authRepository.pastSessions
+    .launchedCollect { sessionSummaries ->
+        state.pastSessions = sessionSummaries
     }
 
-private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateSection>.launchUpdateSectionMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.section = action.section
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateFeedPreference>.launchUpdateFeedPreferenceMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    this.enqueueMutations(
-        writeQueue,
-        toWritable = { action ->
-            Writable.TimelineUpdate(
-                update = Timeline.Update.OfFeedPreference.Add(
-                    action.feedPreference,
-                ),
-            )
-        },
-    ) { _, memo ->
-        if (memo != null) emit { copy(messages = messages + memo) }
-    }
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.TimelineUpdate(
+            update = Timeline.Update.OfFeedPreference.Add(
+                action.feedPreference,
+            ),
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateThreadViewPreference>.launchUpdateThreadPreferenceMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    this.enqueueMutations(
-        writeQueue,
-        toWritable = { action ->
-            Writable.TimelineUpdate(
-                update = Timeline.Update.OfThreadViewPreference.ThreadView(
-                    action.threadViewPreference,
-                ),
-            )
-        },
-    ) { _, memo ->
-        if (memo != null) emit { copy(messages = messages + memo) }
-    }
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.TimelineUpdate(
+            update = Timeline.Update.OfThreadViewPreference.ThreadView(
+                action.threadViewPreference,
+            ),
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SwitchSession>.launchHandleSwitchSessionMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    debounce(SwitchActionDebounce)
-        .mapLatestToManyMutations {
-            switchSessionMutation(
-                authRepository = authRepository,
-                sessionSummary = it.sessionSummary,
-            )
-        }
-
-private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
-    authRepository: AuthRepository,
-    sessionSummary: SessionSummary,
-) {
-    emit {
-        copy(
-            switchPhase = AccountSwitchPhase.MORPHING,
-            switchingSession = sessionSummary,
+) = debounce(SwitchActionDebounce)
+    .launchedCollectLatest {
+        switchSessionMutation(
+            state = state,
+            authRepository = authRepository,
+            sessionSummary = it.sessionSummary,
         )
     }
 
+private suspend fun switchSessionMutation(
+    state: State.SnapshotMutable,
+    authRepository: AuthRepository,
+    sessionSummary: SessionSummary,
+) {
+    state.switchPhase = AccountSwitchPhase.MORPHING
+    state.switchingSession = sessionSummary
+
     delay(AccountSwitchPhase.MORPHING.changeDelay)
 
-    emit { copy(switchPhase = AccountSwitchPhase.LOADING) }
+    state.switchPhase = AccountSwitchPhase.LOADING
 
     when (val outcome = authRepository.switchSession(sessionSummary)) {
         is Outcome.Success -> {
-            emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
+            state.switchPhase = AccountSwitchPhase.SUCCESS
             delay(AccountSwitchPhase.SUCCESS.changeDelay)
         }
 
         is Outcome.Failure -> {
-            emit {
-                copy(
-                    switchPhase = AccountSwitchPhase.IDLE,
-                    switchingSession = null,
-                    messages = messages.plus(
-                        outcome.exception.message?.let(Memo::Text)
-                            ?: Memo.Resource(Res.string.switch_account_failed),
-                    ).distinct(),
-                )
-            }
+            state.switchPhase = AccountSwitchPhase.IDLE
+            state.switchingSession = null
+            state.messages = state.messages.plus(
+                outcome.exception.message?.let(Memo::Text)
+                    ?: Memo.Resource(Res.string.switch_account_failed),
+            ).distinct()
         }
     }
 }
 
-private fun observeActiveProfileMutations(
+context(productionScope: CoroutineScope)
+private fun launchObserveActiveProfileMutations(
+    state: State.SnapshotMutable,
     authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser
-        .map { it?.did }
-        .distinctUntilChanged()
-        .mapToMutation { profileId ->
-            copy(activeProfileId = profileId)
-        }
+) = authRepository.signedInUser
+    .map { it?.did }
+    .distinctUntilChanged()
+    .launchedCollect { profileId ->
+        state.activeProfileId = profileId
+    }
 
-private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.launchHomeTimelineRefreshOnLaunchMutations(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (refreshOnLaunch) ->
-        userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
-    }
+) = launchedCollect { (refreshOnLaunch) ->
+    userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+}
 
-private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetAutoPlayTimelineVideos>.launchTimelineVideoAutoPlayMutations(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (autoPlayTimelineVideos) ->
-        userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
-    }
+) = launchedCollect { (autoPlayTimelineVideos) ->
+    userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
+}
 
-private fun Flow<Action.SetCurrentThemeOrdinal>.setCurrentThemeOrdinal(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetCurrentThemeOrdinal>.launchSetCurrentThemeOrdinal(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (themeOrdinal) ->
-        userDataRepository.setCurrentThemeOrdinal(themeOrdinal)
-    }
+) = launchedCollect { (themeOrdinal) ->
+    userDataRepository.setCurrentThemeOrdinal(themeOrdinal)
+}
 
-private fun Flow<Action.SetDarkThemeConfigOrdinal>.setDarkThemeConfigOrdinal(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetDarkThemeConfigOrdinal>.launchSetDarkThemeConfigOrdinal(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (darkThemeConfigOrdinal) ->
-        userDataRepository.setDarkThemeConfigOrdinal(darkThemeConfigOrdinal)
-    }
+) = launchedCollect { (darkThemeConfigOrdinal) ->
+    userDataRepository.setDarkThemeConfigOrdinal(darkThemeConfigOrdinal)
+}
 
-private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetCompactNavigation>.launchToggleCompactNavigation(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (compactNavigation) ->
-        userDataRepository.setCompactNavigation(compactNavigation)
-    }
+) = launchedCollect { (compactNavigation) ->
+    userDataRepository.setCompactNavigation(compactNavigation)
+}
 
-private fun Flow<Action.SetAutoHideBottomNavigation>.toggleAutoHideBottomNavigation(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetAutoHideBottomNavigation>.launchToggleAutoHideBottomNavigation(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (autoHideBottomNavigation) ->
-        userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
-    }
+) = launchedCollect { (autoHideBottomNavigation) ->
+    userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
+}
 
-private fun Flow<Action.SetShowPostEngagementMetrics>.toggleShowPostEngagementMetrics(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetShowPostEngagementMetrics>.launchToggleShowPostEngagementMetrics(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (showPostEngagementMetrics) ->
-        userDataRepository.setShowPostEngagementMetrics(showPostEngagementMetrics)
-    }
+) = launchedCollect { (showPostEngagementMetrics) ->
+    userDataRepository.setShowPostEngagementMetrics(showPostEngagementMetrics)
+}
 
-private fun Flow<Action.SetShowTrendingTopics>.toggleShowTrendingTopics(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetShowTrendingTopics>.launchToggleShowTrendingTopics(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (showTrendingTopics) ->
-        userDataRepository.setShowTrendingTopics(showTrendingTopics)
-    }
+) = launchedCollect { (showTrendingTopics) ->
+    userDataRepository.setShowTrendingTopics(showTrendingTopics)
+}
 
-private fun Flow<Action.SetAllowAllTimelinePresentations>.toggleAllowAllTimelinePresentations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetAllowAllTimelinePresentations>.launchToggleAllowAllTimelinePresentations(
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (allowAllTimelinePresentations) ->
-        userDataRepository.setAllowAllTimelinePresentations(allowAllTimelinePresentations)
-    }
+) = launchedCollect { (allowAllTimelinePresentations) ->
+    userDataRepository.setAllowAllTimelinePresentations(allowAllTimelinePresentations)
+}
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}
 
 private val AccountSwitchPhase.changeDelay
     get() = when (this) {

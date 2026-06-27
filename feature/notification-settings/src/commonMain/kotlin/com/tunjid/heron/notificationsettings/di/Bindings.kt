@@ -21,11 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notificationsettings.Action
 import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
@@ -54,6 +52,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -137,7 +136,7 @@ class NotificationSettingsBindings(
             val stateHolder: NotificationSettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualNotificationSettingsViewModel>(
                 route = routeParser.hydrate(route),
             )
-            val state by stateHolder.state.collectAsStateWithLifecycle()
+            val state = stateHolder.produceStateWithLifecycle()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()

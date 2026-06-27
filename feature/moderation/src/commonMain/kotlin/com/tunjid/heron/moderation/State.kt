@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.moderation
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.FeedList
@@ -27,6 +28,8 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import heron.ui.core.generated.resources.graphic_media_label
 import heron.ui.core.generated.resources.graphic_media_label_description
 import heron.ui.core.generated.resources.nudity_label
@@ -39,18 +42,28 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 
-@Serializable
-data class State(
-    val adultContentEnabled: Boolean = false,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val adultLabelItems: List<AdultLabelItem> = emptyList(),
-    @Transient
-    val subscribedLabelers: List<Labeler> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val adultContentEnabled: Boolean = false,
+        @Transient
+        val preferences: Preferences = Preferences.EmptyPreferences,
+        @Transient
+        val adultLabelItems: List<AdultLabelItem> = emptyList(),
+        @Transient
+        val subscribedLabelers: List<Labeler> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 data class AdultLabelItem(
     val adult: Label.Adult,
