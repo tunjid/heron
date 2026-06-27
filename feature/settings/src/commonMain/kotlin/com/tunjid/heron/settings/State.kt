@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.settings
 
+import androidx.compose.runtime.Stable
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Preferences
@@ -25,21 +26,33 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val activeProfileId: ProfileId? = null,
-    val section: Section = Section.Main,
-    val switchPhase: AccountSwitchPhase = AccountSwitchPhase.IDLE,
-    val switchingSession: SessionSummary? = null,
-    val signedInProfilePreferences: Preferences? = null,
-    val openSourceLibraries: Libs? = null,
-    val pastSessions: List<SessionSummary> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val activeProfileId: ProfileId? = null,
+        val section: Section = Section.Main,
+        val switchPhase: AccountSwitchPhase = AccountSwitchPhase.IDLE,
+        val switchingSession: SessionSummary? = null,
+        val signedInProfilePreferences: Preferences? = null,
+        val openSourceLibraries: Libs? = null,
+        val pastSessions: List<SessionSummary> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 @Serializable
 sealed class Section {

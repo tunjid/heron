@@ -23,17 +23,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.profile.LabelerSettingsStateHolder
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.utilities.locale
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.label_hide
 import heron.feature.profile.generated.resources.label_off
@@ -46,7 +45,7 @@ fun LabelerSettings(
     stateHolder: LabelerSettingsStateHolder,
     prefersCompactBottomNav: Boolean,
 ) {
-    val state by stateHolder.state.collectAsStateWithLifecycle()
+    val state = stateHolder.produceStateWithLifecycle()
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),

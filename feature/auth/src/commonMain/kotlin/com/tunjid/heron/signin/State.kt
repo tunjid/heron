@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -38,6 +39,8 @@ import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
 import com.tunjid.heron.ui.text.valueFor
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.at_sign_not_allowed
 import heron.feature.auth.generated.resources.empty_form
@@ -73,23 +76,33 @@ sealed class AuthMode {
     data object Password : AuthMode()
 }
 
-@Serializable
-data class State(
-    val isSignedIn: Boolean = false,
-    val isSubmitting: Boolean = false,
-    val prefersPassword: Boolean = false,
-    val isOauthAvailable: Boolean = false,
-    val isServerResolvedFromHandle: Boolean = false,
-    val oauthRequestUri: GenericUri? = null,
-    val selectedServer: Server = Server.BlueSky,
-    val availableServers: List<Server> = StartingServers,
-    val showCustomServerPopup: Boolean = false,
-    val pastSessions: List<SessionSummary> = emptyList(),
-    @Transient
-    val fields: List<FormField> = InitialFields,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val isSignedIn: Boolean = false,
+        val isSubmitting: Boolean = false,
+        val prefersPassword: Boolean = false,
+        val isOauthAvailable: Boolean = false,
+        val isServerResolvedFromHandle: Boolean = false,
+        val oauthRequestUri: GenericUri? = null,
+        val selectedServer: Server = Server.BlueSky,
+        val availableServers: List<Server> = StartingServers,
+        val showCustomServerPopup: Boolean = false,
+        val pastSessions: List<SessionSummary> = emptyList(),
+        @Transient
+        val fields: List<FormField> = InitialFields,
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 val State.mostRecentSession
     get() = pastSessions.firstOrNull()

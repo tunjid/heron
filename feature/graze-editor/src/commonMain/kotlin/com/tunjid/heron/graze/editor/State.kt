@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
@@ -27,31 +28,39 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val grazeFeed: GrazeFeed.Editable = GrazeFeed.Pending(
-        recordKey = RecordKey.generate(),
-        filter = Filter.And(
-            filters = emptyList(),
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val grazeFeed: GrazeFeed.Editable = GrazeFeed.Pending(
+            recordKey = RecordKey.generate(),
+            filter = Filter.And(
+                filters = emptyList(),
+            ),
         ),
-    ),
-    val currentPath: List<Int> = emptyList(),
-    val feedGenerator: FeedGenerator? = null,
-    val sharedElementPrefix: String,
-    val isLoading: Boolean = false,
-    @Transient
-    val suggestedProfiles: List<Profile> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-) {
+        val currentPath: List<Int> = emptyList(),
+        val feedGenerator: FeedGenerator? = null,
+        val sharedElementPrefix: String,
+        val isLoading: Boolean = false,
+        @Transient
+        val suggestedProfiles: List<Profile> = emptyList(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
     companion object {
         operator fun invoke(
             route: Route,
-        ) = State(
+        ): Immutable = Immutable(
             feedGenerator = route.model(),
             sharedElementPrefix = route.sharedElementPrefix,
         )

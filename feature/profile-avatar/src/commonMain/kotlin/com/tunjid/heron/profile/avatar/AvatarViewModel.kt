@@ -27,12 +27,10 @@ import com.tunjid.heron.profile.avatar.di.profile
 import com.tunjid.heron.profile.avatar.di.profileHandleOrId
 import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -40,9 +38,8 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 
-internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias ProfileStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ProfileAvatarViewModelInitializer {
@@ -61,45 +58,50 @@ class ActualProfileAvatarViewModel(
     @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfileStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
+    ProfileStateHolder by scope.actionSuspendingStateMutator(
+        state = State.Immutable(
             avatarSharedElementKey = route.avatarSharedElementKey ?: "",
             profile = route.profile ?: stubProfile(
                 did = ProfileId(route.profileHandleOrId.id),
                 handle = ProfileHandle(route.profileHandleOrId.id),
                 avatar = null,
             ),
-        ),
+        ).toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
+        producer = { state, actions ->
+            launchLoadProfileMutations(
+                state = state,
                 profileId = route.profileHandleOrId,
                 profileRepository = profileRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+            )
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
+                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                        state = state,
                     )
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
                 }
             }
         },
     )
 
-private fun loadProfileMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadProfileMutations(
+    state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    profileRepository.profile(profileId).mapToMutation {
-        copy(profile = it)
-    }
+) = profileRepository.profile(profileId).launchedCollect {
+    state.profile = it
+}
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}

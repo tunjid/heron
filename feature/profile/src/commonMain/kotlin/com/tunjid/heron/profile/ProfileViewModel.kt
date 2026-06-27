@@ -54,13 +54,10 @@ import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.launchedCollectLatest
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
@@ -610,10 +607,21 @@ private fun CoroutineScope.labelerSettingsStateHolder(
     recordRepository: RecordRepository,
 ): ProfileScreenStateHolders.LabelerSettings =
     ProfileScreenStateHolders.LabelerSettings(
-        mutator = actionStateFlowMutator(
-            initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
-            actionTransform = { actions ->
-                actions.mapLatestToManyMutations { action ->
+        mutator = actionSuspendingStateMutator(
+            state = ProfileScreenStateHolders.LabelerSettings.Settings.Immutable().toSnapshotMutable(),
+            producer = { state, actions ->
+                launchSubscribedLabelerSettingMutations(
+                    state = state,
+                    profileId = profileId,
+                    recordRepository = recordRepository,
+                )
+                launchLabelSettingMutations(
+                    state = state,
+                    profileId = profileId,
+                    timelineRepository = timelineRepository,
+                    recordRepository = recordRepository,
+                )
+                actions.launchedCollectLatest { action ->
                     writeQueue.enqueue(
                         Writable.TimelineUpdate(
                             Timeline.Update.OfContentLabel.LabelVisibilityChange(
@@ -625,38 +633,47 @@ private fun CoroutineScope.labelerSettingsStateHolder(
                     )
                 }
             },
-            inputs = listOf(
-                recordRepository.subscribedLabelers.mapToMutation { labelers ->
-                    copy(subscribed = labelers.any { it.creator.did == profileId })
-                },
-                combine(
-                    flow = timelineRepository.preferences
-                        .map { it.contentLabelPreferences }
-                        .distinctUntilChanged(),
-                    flow2 = recordRepository.embeddableRecord(
-                        uri = profileId.asSelfLabelerUri(),
-                    )
-                        .filterIsInstance<Labeler>()
-                        .distinctUntilChanged(),
-                    transform = ::Pair,
-                ).mapToMutation { (contentLabelPreferences, labeler) ->
-                    val visibilityMap = contentLabelPreferences.associateBy(
-                        keySelector = ContentLabelPreference::label,
-                        valueTransform = ContentLabelPreference::visibility,
-                    )
-                    copy(
-                        labelSettings = labeler.definitions.map { definition ->
-                            ProfileScreenStateHolders.LabelerSettings.LabelSetting(
-                                definition = definition,
-                                visibility = visibilityMap[definition.identifier]
-                                    ?: definition.defaultSetting,
-                            )
-                        },
-                    )
-                },
-            ),
         ),
     )
+
+context(productionScope: CoroutineScope)
+private fun launchSubscribedLabelerSettingMutations(
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    profileId: ProfileId,
+    recordRepository: RecordRepository,
+) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
+    state.subscribed = labelers.any { it.creator.did == profileId }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchLabelSettingMutations(
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    profileId: ProfileId,
+    timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
+) = combine(
+    flow = timelineRepository.preferences
+        .map { it.contentLabelPreferences }
+        .distinctUntilChanged(),
+    flow2 = recordRepository.embeddableRecord(
+        uri = profileId.asSelfLabelerUri(),
+    )
+        .filterIsInstance<Labeler>()
+        .distinctUntilChanged(),
+    transform = ::Pair,
+).launchedCollect { (contentLabelPreferences, labeler) ->
+    val visibilityMap = contentLabelPreferences.associateBy(
+        keySelector = ContentLabelPreference::label,
+        valueTransform = ContentLabelPreference::visibility,
+    )
+    state.labelSettings = labeler.definitions.map { definition ->
+        ProfileScreenStateHolders.LabelerSettings.LabelSetting(
+            definition = definition,
+            visibility = visibilityMap[definition.identifier]
+                ?: definition.defaultSetting,
+        )
+    }
+}
 
 private fun ProfileTab.shouldShow(
     isSignedIn: Boolean,

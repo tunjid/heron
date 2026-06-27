@@ -19,19 +19,17 @@ package com.tunjid.heron.splash
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.coroutines.RouteViewModel
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.scaffold.navigation.consumeNavigationActions
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 
-internal typealias SplashStateHolder = ActionStateMutator<Action, StateFlow<State>>
+internal typealias SplashStateHolder = ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SplashViewModelInitializer {
@@ -49,19 +47,19 @@ class ActualSplashViewModel(
     @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    SplashStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
+    SplashStateHolder by scope.actionSuspendingStateMutator(
+        state = State().toSnapshotMutable(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
+        producer = { _, actions ->
+            actions.launchMutationsIn(
+                productionScope = this,
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                    is Action.Navigate -> action.flow.collect {
+                        navActions(it.navigationMutation)
+                    }
                 }
             }
         },

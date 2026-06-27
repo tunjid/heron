@@ -61,14 +61,13 @@ import com.tunjid.heron.ui.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.ui.scaffold.navigation.currentRoute
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import kotlin.collections.any
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -162,10 +161,15 @@ sealed class ProfileScreenStateHolders {
     ) : ProfileScreenStateHolders(),
         LabelerSettingsStateHolder by mutator {
 
-        data class Settings(
-            val subscribed: Boolean = false,
-            val labelSettings: List<LabelSetting> = emptyList(),
-        )
+        @Stable
+        @Snapshottable
+        interface Settings {
+            @SnapshotSpec
+            data class Immutable(
+                val subscribed: Boolean = false,
+                val labelSettings: List<LabelSetting> = emptyList(),
+            ) : Settings
+        }
 
         data class LabelSetting(
             val definition: Label.Definition,
@@ -244,7 +248,7 @@ val ProfileScreenStateHolders?.canRefresh
         -> false
     }
 
-typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
+typealias LabelerSettingsStateHolder = ActionSuspendingStateMutator<LabelerSettings.LabelSetting, Settings>
 
 sealed class Action(val key: String) {
 

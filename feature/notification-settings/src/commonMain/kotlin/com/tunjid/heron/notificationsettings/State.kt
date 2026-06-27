@@ -16,20 +16,33 @@
 
 package com.tunjid.heron.notificationsettings
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.snapshottable.SnapshotSpec
+import com.tunjid.snapshottable.Snapshottable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
-data class State(
-    val notificationPreferences: NotificationPreferences? = null,
-    val pendingUpdates: Map<Notification.Reason, NotificationPreferences.Update> = emptyMap(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
-)
+@Stable
+@Snapshottable
+interface State {
+
+    @Serializable
+    @SnapshotSpec
+    data class Immutable(
+        val notificationPreferences: NotificationPreferences? = null,
+        val pendingUpdates: Map<Notification.Reason, NotificationPreferences.Update> = emptyMap(),
+        @Transient
+        val messages: List<Memo> = emptyList(),
+    ) : State
+
+    companion object {
+        operator fun invoke(): Immutable = Immutable()
+    }
+}
 
 fun State.updates() = pendingUpdates.values.toList()
 
