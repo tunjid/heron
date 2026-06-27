@@ -159,6 +159,7 @@ class OAuthApi(
         request: OAuthParRequest,
         keyPair: DpopKeyPair,
         nonce: String?,
+        retryCount: Int = 0,
     ): Pair<OAuthParResponse, String> {
         val dpopHeader = createDpopHeaderValue(
             keyPair = keyPair,
@@ -175,13 +176,17 @@ class OAuthApi(
         }
 
         return callResponse.mapResponse<OAuthParResponse, Pair<OAuthParResponse, String>>(
-            onSuccess = { it to responseDpopNonce },
+            onSuccess = { it to requireResponseDPoPNonce },
             onNewNonce = { newNonce ->
+                if (retryCount >= 3) {
+                    error("Failed to create PAR request: too many DPoP nonce retries")
+                }
                 pushAuthorizationRequest(
                     endpoint = endpoint,
                     request = request,
                     keyPair = keyPair,
                     nonce = newNonce,
+                    retryCount = retryCount + 1,
                 )
             },
             onFailure = {
@@ -296,7 +301,7 @@ class OAuthApi(
                     expiresIn = tokenResponse.expiresInSeconds.seconds,
                     scopes = tokenResponse.scopes.split(" ").map { OAuthScope(it) },
                     subject = tokenResponse.subject,
-                    nonce = responseDpopNonce,
+                    nonce = requireResponseDPoPNonce,
                 )
             },
             onNewNonce = { newNonce ->
@@ -470,18 +475,25 @@ class OAuthApi(
             val maybeErrorDescription = runCatching { body<AtpErrorDescription>() }.getOrNull()
             if (maybeErrorDescription?.error == "use_dpop_nonce") {
                 // If the error indicates we need to use a DPoP nonce, we can retry with the new nonce.
-                onNewNonce(responseDpopNonce)
+                onNewNonce(requireResponseDPoPNonce)
             } else {
                 onFailure(maybeErrorDescription)
             }
         }
     }
 
-    private val HttpResponse.responseDpopNonce: String
-        get() = requireNotNull(headers["DPoP-Nonce"]) { "DPoP-Nonce header not found in response" }
+    private val HttpResponse.maybeResponseDPoPNonce: String?
+        get() = headers[DPoPNonceKey]
+
+    private val HttpResponse.requireResponseDPoPNonce: String
+        get() = requireNotNull(maybeResponseDPoPNonce) {
+            "DPoP-Nonce header not found in response"
+        }
 
     companion object {
         private val CODE_VERIFIER_CHARS: List<Char> =
             ('A'..'Z') + ('a'..'z') + ('0'..'9') + listOf('-', '.', '_', '~')
     }
 }
+
+private const val DPoPNonceKey = "DPoP-Nonce"

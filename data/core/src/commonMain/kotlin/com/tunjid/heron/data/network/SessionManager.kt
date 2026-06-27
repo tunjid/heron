@@ -226,7 +226,9 @@ internal class PersistedSessionManager(
                             privateKey = it.privateKey,
                             privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
                         )
-                    },
+                    } ?: throw IllegalStateException(
+                        "Missing DPoP key pair for pending authorization request. Please restart the sign-in flow.",
+                    ),
                 )
 
                 val callingDid = api.resolveHandle(
