@@ -43,6 +43,7 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.oauth_flow_failed
 import heron.feature.auth.generated.resources.oauth_start_error
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -94,7 +95,6 @@ class ActualSignInViewModel(
                 when (val action = type()) {
                     is Action.FieldChanged -> action.flow.launchFormEditMutations(
                         state = state,
-                        scope = scope,
                         authRepository = authRepository,
                     )
                     is Action.TogglePasswordPreference -> action.flow.launchPasswordPreferenceMutations(
@@ -181,29 +181,34 @@ private fun launchAuthDeeplinkMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FieldChanged>.launchFormEditMutations(
     state: State.SnapshotMutable,
-    scope: CoroutineScope,
     authRepository: AuthRepository,
 ) {
     val shared = shareIn(
-        scope = scope,
+        scope = productionScope,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         replay = 1,
     )
     shared.launchedCollect { (id, text) ->
         state.fields = state.fields.copyWithValidation(id, text)
     }
-    shared.filter { it.id == Username && DomainRegex.matches(it.text) }
-        .debounce(HandleResolutionDebounceMs)
+    shared.filter { it.id == Username }
+        .debounce(HandleResolutionDebounce)
         .launchedCollectLatest { (_, text) ->
-            val server = authRepository.resolveServer(ProfileHandle(text))
-                .getOrNull()
-                ?.normalized()
+            state.isResolvingServer = DomainRegex.matches(text)
+            if (!state.isResolvingServer) return@launchedCollectLatest
+            try {
+                val server = authRepository.resolveServer(ProfileHandle(text))
+                    .getOrNull()
+                    ?.normalized()
 
-            state.isServerResolvedFromHandle = server != null
-            state.selectedServer = server ?: state.selectedServer
-            state.availableServers = when (server) {
-                null -> StartingServers
-                else -> listOf(server)
+                state.isServerResolvedFromHandle = server != null
+                state.selectedServer = server ?: state.selectedServer
+                state.availableServers = when (server) {
+                    null -> StartingServers
+                    else -> listOf(server)
+                }
+            } finally {
+                state.isResolvingServer = false
             }
         }
 }
@@ -303,7 +308,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.CreateSession>.launchSubmissionMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = debounce(200)
+) = debounce(SubmissionDebounce)
     .launchedCollectLatest { (sessionRequest) ->
         createSessionMutations(
             state = state,
@@ -330,5 +335,6 @@ private suspend fun createSessionMutations(
     state.isSubmitting = false
 }
 
-private const val HandleResolutionDebounceMs = 500L
+private val SubmissionDebounce = 200.milliseconds
+private val HandleResolutionDebounce = 500.milliseconds
 private const val PLACEHOLDER_OAUTH_HOST = "https://placeholder.com"
