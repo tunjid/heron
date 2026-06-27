@@ -36,7 +36,8 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.scaffold.App
-import com.tunjid.heron.ui.scaffold.scaffold.isShowingSplashScreen
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isShowingSplashScreen
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
@@ -73,7 +74,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(isSystemInDarkTheme) {
                 snapshotFlow { appState.isShowingSplashScreen }
                     .first { !it }
-                delay(STATUS_BAR_ICON_DELAY_MS)
+                delay(STATUS_BAR_ICON_DELAY)
                 windowInsetsController.isAppearanceLightStatusBars = !isSystemInDarkTheme
             }
         }
@@ -126,4 +127,4 @@ fun AppAndroidPreview() {
     App()
 }
 
-private const val STATUS_BAR_ICON_DELAY_MS = 500L
+private val STATUS_BAR_ICON_DELAY = 500.milliseconds

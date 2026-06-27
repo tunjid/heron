@@ -1,5 +1,6 @@
 package com.tunjid.heron.ui.scaffold.identity
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.network.NetworkMonitor
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+@Stable
 interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
 
 @Inject

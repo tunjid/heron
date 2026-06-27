@@ -1,19 +1,13 @@
 package com.tunjid.heron.ui.scaffold.identity
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
-import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
-import kotlin.time.Clock
-import kotlinx.serialization.Transient
 
 sealed class IdentityAction(
     val key: String,
@@ -67,3 +61,9 @@ internal val IdentityState.isSignedIn
 
 internal val IdentityState.isStable
     get() = switchStatus is IdentityState.SwitchStatus.Stable
+
+internal val IdentityState.prefersCompactBottomNav: Boolean
+    get() = preferences?.local?.useCompactNavigation ?: false
+
+internal val IdentityState.prefersAutoHidingBottomNav: Boolean
+    get() = preferences?.local?.autoHideBottomNavigation ?: true
