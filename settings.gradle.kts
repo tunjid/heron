@@ -89,6 +89,7 @@ include(
     ":feature:template",
     ":ui:core",
     ":ui:media",
+    ":ui:preview",
     ":ui:profile",
     ":ui:scaffold",
     ":ui:sheets",
