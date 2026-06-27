@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui.scaffold.navigation
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.AuthRepository
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
+@Stable
 interface NavigationStateHolder : ActionSuspendingStateMutator<NavigationMutation, NavigationState>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 

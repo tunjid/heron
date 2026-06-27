@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui.scaffold.notifications
 
+import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.logging.LogPriority
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
 
+@Stable
 interface NotificationStateHolder : ActionSuspendingStateMutator<NotificationAction, NotificationState>
 
 @Inject

@@ -72,11 +72,11 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isSignedIn
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
+import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
 import com.tunjid.heron.ui.stateproduction.RouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
-import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
 import com.tunjid.heron.ui.stateproduction.viewModelCoroutineScope
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
@@ -85,7 +85,6 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
-import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -93,16 +92,17 @@ import kotlinx.coroutines.launch
 
 @Stable
 class PaneScaffoldState internal constructor(
-    internal val appState: AppState,
-    internal val splitPaneState: SplitPaneState,
+    internal val displayScaffoldState: DisplayScaffoldState,
+    viewModelInitializer: ViewModelInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : PaneTransitionScope,
+    ViewModelInitializer by viewModelInitializer,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
         BoundsTransformSpring.skipIf {
-            appState.dismissBehavior is AppState.DismissBehavior.Gesture.DragToPop ||
-                splitPaneState.paneAnchorState.hasInteractions
+            displayScaffoldState.dismissBehavior is DisplayScaffoldState.DismissBehavior.Gesture.DragToPop ||
+                displayScaffoldState.paneAnchorState.hasInteractions
         }
     }
 
@@ -111,48 +111,22 @@ class PaneScaffoldState internal constructor(
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
     val isMediumScreenWidthOrWider: Boolean
-        get() = splitPaneState.isMediumScreenWidthOrWider
+        get() = displayScaffoldState.isMediumScreenWidthOrWider
 
-    val dismissBehavior: AppState.DismissBehavior
-        get() = appState.dismissBehavior
+    internal val dismissBehavior: DisplayScaffoldState.DismissBehavior
+        get() = displayScaffoldState.dismissBehavior
 
     val isSignedOut
-        get() = !appState.identityState.isSignedIn
+        get() = !displayScaffoldState.staticStates.identityState.isSignedIn
 
     val isSignedIn
-        get() = appState.identityState.isSignedIn
+        get() = displayScaffoldState.staticStates.identityState.isSignedIn
 
     val prefersCompactBottomNav
-        get() = appState.prefersCompactBottomNav
-
-    /**
-     * Resolves the [SheetViewModelInitializer] for [modelClass] from the app graph. This is the
-     * single entry point through which the `ui:sheets` module reaches the sheet ViewModel
-     * factories held by [AppState], without the scaffold layer depending on that module.
-     */
-    fun sheetViewModelInitializer(
-        modelClass: KClass<out SheetViewModel>,
-    ): SheetViewModelInitializer =
-        appState.sheetViewModelInitializers[modelClass]
-            ?: throw IllegalStateException(
-                "No SheetViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in SheetBindings.",
-            )
-
-    /**
-     * Resolves the [RouteViewModelInitializer] for [modelClass] from the app graph. Together with
-     * [rememberRouteViewModel] this makes [PaneScaffoldState] the only dependency needed to create a
-     * screen's ViewModel; each feature contributes its initializer in its own `Bindings`.
-     */
-    fun routeViewModelInitializer(
-        modelClass: KClass<out RouteViewModel>,
-    ): RouteViewModelInitializer =
-        appState.routeViewModelInitializers[modelClass]
-            ?: throw IllegalStateException(
-                "No RouteViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in the feature's Bindings.",
-            )
+        get() = displayScaffoldState.staticStates.identityState.prefersCompactBottomNav
 
     val prefersAutoHidingBottomNav
-        get() = appState.prefersAutoHidingBottomNav
+        get() = displayScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
 
     internal val nestedNavigationState = PaneNestedNavigationState(
         paneScaffoldState = this,
@@ -165,7 +139,7 @@ class PaneScaffoldState internal constructor(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
+        get() = displayScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane &&
             isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
@@ -213,19 +187,19 @@ inline fun <reified VM : RouteViewModel> PaneScaffoldState.rememberRouteViewMode
 }
 
 @Composable
-fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
-    val appState = LocalAppState.current
-    val splitPaneState = LocalSplitPaneState.current
-    val paneMovableElementSharedTransitionScope =
-        rememberThreePaneMovableElementSharedTransitionScope()
+fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
+    displayScaffoldState: DisplayScaffoldState = LocalDisplayScaffoldState.current,
+    viewModelInitializer: ViewModelInitializer = LocalAppState.current.viewModelInitializer,
+    paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route> = rememberThreePaneMovableElementSharedTransitionScope(),
+): PaneScaffoldState {
     val paneScaffoldState = remember(
-        appState,
-        splitPaneState,
+        displayScaffoldState,
+        viewModelInitializer,
         paneMovableElementSharedTransitionScope,
     ) {
         PaneScaffoldState(
-            appState = appState,
-            splitPaneState = splitPaneState,
+            displayScaffoldState = displayScaffoldState,
+            viewModelInitializer = viewModelInitializer,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
     }
@@ -288,17 +262,17 @@ fun PaneScaffoldState.PaneScaffold(
         content = {
             NonSubComposingScaffold(
                 modifier = when {
-                    splitPaneState.paneAnchorState.hasInteractions -> Modifier
+                    displayScaffoldState.paneAnchorState.hasInteractions -> Modifier
                     else -> when (dismissBehavior) {
-                        AppState.DismissBehavior.None,
-                        AppState.DismissBehavior.Gesture.DragToPop,
+                        DisplayScaffoldState.DismissBehavior.None,
+                        DisplayScaffoldState.DismissBehavior.Gesture.DragToPop,
                         -> Modifier.animateBounds(
                             lookaheadScope = this,
                             boundsTransform = childBoundsTransform,
                         )
 
-                        AppState.DismissBehavior.Gesture.SlideToPop,
-                        AppState.DismissBehavior.Gesture.ScaleToPop,
+                        DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop,
+                        DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
                 },
@@ -316,7 +290,7 @@ fun PaneScaffoldState.PaneScaffold(
                     snackBarHost()
                 },
                 content = { paddingValues ->
-                    val isStable = appState.identityState.isStable
+                    val isStable = displayScaffoldState.staticStates.identityState.isStable
                     val blurState = animateFloatAsState(
                         if (isStable) 0f else 1f,
                     )
@@ -339,7 +313,7 @@ fun PaneScaffoldState.PaneScaffold(
                             )
                             .constrainedSizePlacement(
                                 orientation = Orientation.Horizontal,
-                                minSize = splitPaneState.minPaneWidth,
+                                minSize = displayScaffoldState.minPaneWidth,
                                 atStart = paneState.pane == ThreePane.Secondary,
                             ),
                     ) {
@@ -358,7 +332,7 @@ fun PaneScaffoldState.PaneScaffold(
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
-            appState.showNavigation = showNavigation
+            displayScaffoldState.showNavigation = showNavigation
         }
     }
 }

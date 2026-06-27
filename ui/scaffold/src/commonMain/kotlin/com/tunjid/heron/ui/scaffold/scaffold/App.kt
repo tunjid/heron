@@ -34,10 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.navigationevent.NavigationEvent
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.displayStates
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.rememberMultiPaneDisplayState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.ui.scaffold.ui.theme.AppTheme
 import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
@@ -48,6 +53,8 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 
 /**
  * Root scaffold for the app
@@ -57,7 +64,10 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    val localPrefs = appState.identityState.preferences?.local
+    val displayScaffoldStates = remember(appState) {
+        appState.displayStates()
+    }
+    val localPrefs = displayScaffoldStates.identityState.preferences?.local
     AppTheme(
         useDarkTheme = when (
             DarkThemeConfig.fromOrdinal(localPrefs?.darkThemeConfigOrdinal ?: 0)
@@ -113,15 +123,12 @@ fun App(
                         modifier = Modifier.fillMaxSize(),
                         state = displayState,
                     ) {
-                        val splitPaneState = remember {
-                            SplitPaneState(
+                        val displayScaffoldState = remember(displayScaffoldStates) {
+                            DisplayScaffoldState(
                                 paneNavigationState = { this.paneNavigationState },
                                 density = density,
                                 windowWidth = windowWidth,
-                                initialAnchor = appState.lastPaneAnchor,
-                                hasCompatBottomNav = {
-                                    appState.prefersCompactBottomNav
-                                },
+                                staticStates = displayScaffoldStates,
                             )
                         }.also {
                             it.update(
@@ -129,33 +136,57 @@ fun App(
                             )
                         }
                         CompositionLocalProvider(
-                            LocalSplitPaneState provides splitPaneState,
+                            LocalDisplayScaffoldState provides displayScaffoldState,
                         ) {
                             SplitLayout(
-                                state = splitPaneState.splitLayoutState,
+                                state = displayScaffoldState.splitLayoutState,
                                 modifier = modifier
                                     .fillMaxSize(),
                                 itemSeparators = { _, offset ->
                                     DraggableThumb(
-                                        splitLayoutState = splitPaneState.splitLayoutState,
-                                        paneAnchorState = splitPaneState.paneAnchorState,
+                                        splitLayoutState = displayScaffoldState.splitLayoutState,
+                                        paneAnchorState = displayScaffoldState.paneAnchorState,
                                         offset = offset,
                                     )
                                 },
                                 itemContent = { index ->
-                                    Destination(splitPaneState.filteredPaneOrder[index])
+                                    Destination(displayScaffoldState.filteredPaneOrder[index])
                                 },
                             )
                         }
                         LaunchedEffect(Unit) {
                             snapshotFlow {
-                                splitPaneState.paneAnchorState.currentPaneAnchor
+                                displayScaffoldState.paneAnchorState.currentPaneAnchor
                             }.collect { anchor ->
-                                appState.onPaneAnchorChanged(
+                                displayScaffoldState.onPaneAnchorChanged(
                                     anchor = anchor,
                                     destinationId = paneNavigationState.destinationId,
                                 )
                             }
+                        }
+
+                        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+                            .navigationEventDispatcher
+
+                        LaunchedEffect(navigationEventDispatcher) {
+                            combine(
+                                navigationEventDispatcher.transitionState,
+                                navigationEventDispatcher.history,
+                            ) { transitionState, navigationEventHistory ->
+                                val navigationEventInfo = navigationEventHistory.mergedHistory
+                                    .getOrNull(navigationEventHistory.currentIndex)
+                                when (transitionState) {
+                                    NavigationEventTransitionState.Idle -> DisplayScaffoldState.DismissBehavior.None
+                                    is NavigationEventTransitionState.InProgress -> when {
+                                        navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop
+                                        transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DisplayScaffoldState.DismissBehavior.Gesture.DragToPop
+                                        else -> DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop
+                                    }
+                                }
+                            }
+                                .collectLatest {
+                                    displayScaffoldState.dismissBehavior = it
+                                }
                         }
                     }
                 }

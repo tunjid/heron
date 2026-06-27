@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -97,14 +98,17 @@ fun PaneScaffoldState.PaneNavigationBar(
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationBar) appState.movableNavigationBar(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationBar(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            with(displayScaffoldState) {
+                if (canUseMovableNavigationBar) displayScaffoldState.staticStates.movableNavigationBar(
+                    this,
+                    Modifier,
+                    onNavItemReselected,
+                )
+                else displayScaffoldState.PaneNavigationBar(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
+            }
         },
     )
 }
@@ -131,23 +135,26 @@ fun PaneScaffoldState.PaneNavigationRail(
         ) enterTransition else EnterTransition.None,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationRail) appState.movableNavigationRail(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationRail(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            with(displayScaffoldState) {
+                if (canUseMovableNavigationRail) staticStates.movableNavigationRail(
+                    this,
+                    Modifier,
+                    onNavItemReselected,
+                )
+                else PaneNavigationRail(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
+            }
         },
     )
 }
 
 @Composable
-internal fun AppState.PaneNavigationBar(
+internal fun DisplayScaffoldState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
-) {
+) = with(staticStates) {
     LookaheadScope {
         Surface(
             modifier = modifier
@@ -157,13 +164,17 @@ internal fun AppState.PaneNavigationBar(
                 ),
             color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
-            shape = navigationBarShape(prefersCompactBottomNav),
+            shape = navigationBarShape(identityState.prefersCompactBottomNav),
         ) {
             Row(
                 modifier = Modifier
                     .navigationBarsPadding()
                     .fillMaxWidth()
-                    .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
+                    .height(
+                        UiTokens.bottomNavHeight(
+                            isCompact = identityState.prefersCompactBottomNav,
+                        ),
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 navItems.forEach { item ->
@@ -197,17 +208,17 @@ internal fun AppState.PaneNavigationBar(
 }
 
 @Composable
-internal fun AppState.PaneNavigationRail(
+internal fun DisplayScaffoldState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
-) {
+) = with(staticStates) {
     Box(
         modifier = modifier
             .padding(start = 8.dp)
             .fillMaxSize(),
     ) {
         val color by animateColorAsState(
-            if (LocalSplitPaneState.current.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
+            if (shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
             else MaterialTheme.colorScheme.surface,
         )
         Column(
@@ -296,7 +307,7 @@ fun navigationBarShape(
 }
 
 @Composable
-private fun SplitPaneState.shouldElevateNavRail(): Boolean = remember(this) {
+private fun DisplayScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
     derivedStateOf {
         splitLayoutState.weightAt(0)
             .times(splitLayoutState.size)
