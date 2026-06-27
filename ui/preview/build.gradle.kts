@@ -23,9 +23,6 @@ kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.ui.preview"
     }
-}
-
-kotlin {
     sourceSets {
         commonMain {
             dependencies {
