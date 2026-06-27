@@ -24,7 +24,9 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.navItemSelected
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
+import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
+import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
 import com.tunjid.mutator.invoke
 import com.tunjid.treenav.StackNav
 import com.tunjid.treenav.compose.PaneNavigationState
@@ -138,6 +140,7 @@ class DisplayScaffoldState internal constructor(
         private val identityStateHolder: IdentityStateHolder,
         private val navigationStateHolder: NavigationStateHolder,
         private val notificationStateHolder: NotificationStateHolder,
+        internal val viewModelInitializer: ViewModelInitializer,
     ) {
         internal val identityState
             get() = identityStateHolder.state
@@ -179,6 +182,10 @@ class DisplayScaffoldState internal constructor(
         fun onNavigationAction(
             action: NavigationMutation,
         ) = navigationStateHolder(action)
+
+        fun onNotificationAction(
+            action: NotificationAction,
+        ) = notificationStateHolder(action)
 
         private fun currentNavItems(): List<NavItem> {
             return navigationState.multiStackNav

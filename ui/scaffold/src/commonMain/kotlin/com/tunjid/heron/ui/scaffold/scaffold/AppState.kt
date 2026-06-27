@@ -198,14 +198,11 @@ class AppState(
             identityStateHolder = identityStateHolder,
             navigationStateHolder = navigationStateHolder,
             notificationStateHolder = notificationStateHolder,
+            viewModelInitializer = viewModelInitializer,
         )
     }
 }
 
 internal val LocalDisplayScaffoldState = staticCompositionLocalOf<DisplayScaffoldState> {
     throw IllegalStateException("No DisplayScaffoldState provided")
-}
-
-internal val LocalAppState = staticCompositionLocalOf<AppState> {
-    throw IllegalStateException("No AppState provided")
 }

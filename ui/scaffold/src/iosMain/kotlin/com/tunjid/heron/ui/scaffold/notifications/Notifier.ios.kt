@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.tunjid.heron.ui.scaffold.scaffold.LocalAppState
+import com.tunjid.heron.ui.scaffold.scaffold.LocalDisplayScaffoldState
 import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.launch
@@ -57,14 +57,15 @@ actual fun hasNotificationPermissions(): Boolean {
 actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
-    val appState = LocalAppState.current
+    val displayScaffoldState = LocalDisplayScaffoldState.current
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
     rationale?.let {
         NotificationsRationaleDialog(it) { callingRationale, shouldRequestPermissions ->
             if (shouldRequestPermissions) {
-                appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                displayScaffoldState.staticStates
+                    .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                 when (callingRationale) {
                     NotificationDialogRationale.GoToSettings -> openAppSettings()
                     NotificationDialogRationale.RequestPermissions -> {
@@ -80,7 +81,7 @@ actual fun notificationPermissionsLauncher(
 
     val scope = rememberCoroutineScope()
 
-    return remember(appState, scope) {
+    return remember(displayScaffoldState, scope) {
         {
             scope.launch {
                 val status = getNotificationAuthorizationStatus()
@@ -92,7 +93,8 @@ actual fun notificationPermissionsLauncher(
                         onPermissionResult(true)
                     }
                     else -> {
-                        appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                        displayScaffoldState.staticStates
+                            .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                         requestNotificationPermission { granted ->
                             onPermissionResult(granted)
                             if (!granted) {

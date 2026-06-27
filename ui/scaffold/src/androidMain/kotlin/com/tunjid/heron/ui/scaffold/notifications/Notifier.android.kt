@@ -36,14 +36,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.tunjid.heron.ui.scaffold.scaffold.LocalAppState
+import com.tunjid.heron.ui.scaffold.scaffold.LocalDisplayScaffoldState
 
 @Composable
 actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
     val activity = LocalActivity.current
-    val appState = LocalAppState.current
+    val displayScaffoldState = LocalDisplayScaffoldState.current
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
@@ -60,7 +60,8 @@ actual fun notificationPermissionsLauncher(
         rationale?.let {
             NotificationsRationaleDialog(it) { callingRationale, shouldRequestPermissions ->
                 if (shouldRequestPermissions) {
-                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                    displayScaffoldState.staticStates
+                        .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                     when (callingRationale) {
                         NotificationDialogRationale.GoToSettings -> activity.maybeOpenAppSettings()
                         NotificationDialogRationale.RequestPermissions -> permissionRequestLauncher.launch(
@@ -71,12 +72,13 @@ actual fun notificationPermissionsLauncher(
                 rationale = null
             }
         }
-        return remember(permissionRequestLauncher, appState) {
+        return remember(permissionRequestLauncher, displayScaffoldState) {
             {
                 if (activity.shouldShowRationale()) {
                     rationale = NotificationDialogRationale.RequestPermissions
                 } else {
-                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                    displayScaffoldState.staticStates
+                        .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                     permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }

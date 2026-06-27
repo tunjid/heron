@@ -79,7 +79,6 @@ fun App(
         theme = Theme.fromOrdinal(localPrefs?.currentThemeOrdinal ?: 0),
     ) {
         CompositionLocalProvider(
-            LocalAppState provides appState,
             LocalImageLoader provides appState.imageLoader,
             LocalVideoPlayerController provides appState.videoPlayerController,
         ) {

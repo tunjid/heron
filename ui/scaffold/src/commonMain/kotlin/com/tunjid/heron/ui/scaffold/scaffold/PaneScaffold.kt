@@ -189,7 +189,7 @@ inline fun <reified VM : RouteViewModel> PaneScaffoldState.rememberRouteViewMode
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
     displayScaffoldState: DisplayScaffoldState = LocalDisplayScaffoldState.current,
-    viewModelInitializer: ViewModelInitializer = LocalAppState.current.viewModelInitializer,
+    viewModelInitializer: ViewModelInitializer = LocalDisplayScaffoldState.current.staticStates.viewModelInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route> = rememberThreePaneMovableElementSharedTransitionScope(),
 ): PaneScaffoldState {
     val paneScaffoldState = remember(
