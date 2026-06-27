@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -53,6 +54,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
@@ -133,168 +135,178 @@ class HomeBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: HomeStateHolder = paneScaffoldState.rememberRouteViewModel<ActualHomeViewModel>(
+            Route(
                 route = route,
-            )
-            val state = stateHolder.produceStateWithLifecycle()
-
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
-
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        title = {
-                            AnimatedVisibility(
-                                visible = state.preferences.local.showTrendingTopics,
-                                enter = remember(::fadeIn),
-                                exit = remember(::fadeOut),
-                            ) {
-                                TrendsTicker(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    sharedTransitionScope = paneScaffoldState,
-                                    trends = state.trends,
-                                    onTrendClicked = { trend ->
-                                        stateHolder.accept(
-                                            Action.Navigate.To(
-                                                pathDestination(
-                                                    path = trend.link,
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                )
-                            }
-                        },
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        onLogoClicked = {
-                            stateHolder.accept(
-                                Action.SetTabLayout(
-                                    layout = if (state.tabLayout is TabLayout.Expanded) {
-                                        TabLayout.Collapsed.All
-                                    } else {
-                                        TabLayout.Expanded
-                                    },
-                                ),
-                            )
-                        },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                state.tabLayout is TabLayout.Expanded -> Res.string.save
-                                else -> Res.string.create_post
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
-                            else -> Icons.Rounded.Edit
-                        },
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(
-                                when {
-                                    isSignedOut -> Action.Navigate.To(
-                                        signInDestination(),
-                                    )
-
-                                    state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
-                                    else -> Action.Navigate.To(
-                                        composePostDestination(
-                                            type = Post.Create.Timeline,
-                                            sharedElementPrefix = null,
-                                        ),
-                                    )
-                                },
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.RefreshCurrentTab)
-                            true
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.RefreshCurrentTab)
-                            true
-                        },
-                    )
-                },
-                content = {
-                    HomeScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
-            )
-
-            topAppBarNestedScrollConnection.TabsExpansionEffect(
-                isExpanded = state.tabLayout is TabLayout.Expanded,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
         },
+    )
+}
+
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: HomeStateHolder = paneScaffoldState.rememberRouteViewModel<ActualHomeViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
+
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            RootDestinationTopAppBar(
+                modifier = Modifier.offset {
+                    topAppBarNestedScrollConnection.offset.round()
+                },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                title = {
+                    AnimatedVisibility(
+                        visible = state.preferences.local.showTrendingTopics,
+                        enter = remember(::fadeIn),
+                        exit = remember(::fadeOut),
+                    ) {
+                        TrendsTicker(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            sharedTransitionScope = paneScaffoldState,
+                            trends = state.trends,
+                            onTrendClicked = { trend ->
+                                stateHolder.accept(
+                                    Action.Navigate.To(
+                                        pathDestination(
+                                            path = trend.link,
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                        ),
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                },
+                onSignedInProfileClicked = { profile, sharedElementKey ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                profile = profile,
+                                avatarSharedElementKey = sharedElementKey,
+                            ),
+                        ),
+                    )
+                },
+                onLogoClicked = {
+                    stateHolder.accept(
+                        Action.SetTabLayout(
+                            layout = if (state.tabLayout is TabLayout.Expanded) {
+                                TabLayout.Collapsed.All
+                            } else {
+                                TabLayout.Expanded
+                            },
+                        ),
+                    )
+                },
+            )
+        },
+        snackBarHost = {
+            PaneSnackbarHost(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                text = stringResource(
+                    when {
+                        isSignedOut -> CommonStrings.sign_in
+                        state.tabLayout is TabLayout.Expanded -> Res.string.save
+                        else -> Res.string.create_post
+                    },
+                ),
+                icon = when {
+                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                    state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
+                    else -> Icons.Rounded.Edit
+                },
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
+                },
+                onClick = {
+                    stateHolder.accept(
+                        when {
+                            isSignedOut -> Action.Navigate.To(
+                                signInDestination(),
+                            )
+
+                            state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
+                            else -> Action.Navigate.To(
+                                composePostDestination(
+                                    type = Post.Create.Timeline,
+                                    sharedElementPrefix = null,
+                                ),
+                            )
+                        },
+                    )
+                },
+            )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier
+                    .offset {
+                        bottomNavigationNestedScrollConnection.offset.round()
+                    },
+                onNavItemReselected = {
+                    stateHolder.accept(Action.RefreshCurrentTab)
+                    true
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail(
+                onNavItemReselected = {
+                    stateHolder.accept(Action.RefreshCurrentTab)
+                    true
+                },
+            )
+        },
+        content = {
+            HomeScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+            )
+        },
+    )
+
+    topAppBarNestedScrollConnection.TabsExpansionEffect(
+        isExpanded = state.tabLayout is TabLayout.Expanded,
     )
 }

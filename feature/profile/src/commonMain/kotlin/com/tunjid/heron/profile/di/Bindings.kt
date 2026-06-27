@@ -18,6 +18,7 @@ package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
@@ -161,100 +162,110 @@ class ProfileBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: ProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfileViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: ProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfileViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
 
-            paneScaffoldState.PaneScaffold(
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        topBar = {
+            PoppableDestinationTopAppBar(
+                transparencyFactor = ::fullAppbarTransparency,
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+            )
+        },
+        snackBarHost = {
+            PaneSnackbarHost(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
-                showNavigation = true,
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
+            )
+        },
+        floatingActionButton = {
+            ProfileFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                fabExpanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
                 },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                state = profileFabState(state),
+                profileHandle = state.profile.handle,
+                onStateClicked = { fabState ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            when (fabState) {
+                                ProfileFabState.SignedOut -> signInDestination()
+                                ProfileFabState.SignedIn.Feed -> grazeEditorDestination()
+                                ProfileFabState.SignedIn.Edit -> composePostDestination(
+                                    type = Post.Create.Timeline,
+                                    sharedElementPrefix = null,
+                                )
+                                ProfileFabState.SignedIn.Mention -> composePostDestination(
+                                    type = Post.Create.Mention(state.profile),
+                                    sharedElementPrefix = null,
+                                )
+                                ProfileFabState.SignedIn.Writing -> error("Handled above")
                             },
+                        ),
                     )
-                },
-                floatingActionButton = {
-                    ProfileFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        fabExpanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        state = profileFabState(state),
-                        profileHandle = state.profile.handle,
-                        onStateClicked = { fabState ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    when (fabState) {
-                                        ProfileFabState.SignedOut -> signInDestination()
-                                        ProfileFabState.SignedIn.Feed -> grazeEditorDestination()
-                                        ProfileFabState.SignedIn.Edit -> composePostDestination(
-                                            type = Post.Create.Timeline,
-                                            sharedElementPrefix = null,
-                                        )
-                                        ProfileFabState.SignedIn.Mention -> composePostDestination(
-                                            type = Post.Create.Mention(state.profile),
-                                            sharedElementPrefix = null,
-                                        )
-                                        ProfileFabState.SignedIn.Writing -> error("Handled above")
-                                    },
-                                ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    ProfileScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
                 },
             )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier.offset {
+                    bottomNavigationNestedScrollConnection.offset.round()
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        content = {
+            ProfileScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier,
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

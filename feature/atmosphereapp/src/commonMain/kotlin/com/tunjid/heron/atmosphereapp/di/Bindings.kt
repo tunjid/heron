@@ -18,6 +18,7 @@ package com.tunjid.heron.atmosphereapp.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.atmosphereapp.Action
@@ -32,6 +33,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
@@ -125,44 +127,54 @@ class AtmosphereAppBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: AtmosphereAppStateHolder = paneScaffoldState.rememberRouteViewModel<ActualAtmosphereAppViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: AtmosphereAppStateHolder = paneScaffoldState.rememberRouteViewModel<ActualAtmosphereAppViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            paneScaffoldState.PaneScaffold(
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection),
+        showNavigation = true,
+        topBar = {
+            PoppableDestinationTopAppBar(
+                transparencyFactor = ::fullAppbarTransparency,
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+            )
+        },
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        content = { paddingValues ->
+            AtmosphereAppScreen(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection),
-                showNavigation = true,
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                content = { paddingValues ->
-                    AtmosphereAppScreen(
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
             )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

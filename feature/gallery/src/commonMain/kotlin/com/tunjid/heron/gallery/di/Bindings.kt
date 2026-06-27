@@ -17,6 +17,7 @@
 package com.tunjid.heron.gallery.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.tunjid.heron.data.core.types.ProfileId
@@ -30,6 +31,7 @@ import com.tunjid.heron.gallery.GalleryViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
@@ -113,29 +115,39 @@ class GalleryBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: GalleryStateHolder = paneScaffoldState.rememberRouteViewModel<ActualGalleryViewModel>(
+            Route(
                 route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                containerColor = Color.Transparent,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    GalleryScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: GalleryStateHolder = paneScaffoldState.rememberRouteViewModel<ActualGalleryViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+        showNavigation = false,
+        containerColor = Color.Transparent,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        content = {
+            GalleryScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
             )
         },
     )

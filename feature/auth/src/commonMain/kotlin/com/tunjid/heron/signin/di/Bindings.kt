@@ -167,68 +167,78 @@ class SignInBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: SignInStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSignInViewModel>(
+            Route(
                 route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            paneScaffoldState.PaneScaffold(
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: SignInStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSignInViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+        showNavigation = false,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.MessageConsumed(it))
+        },
+        topBar = {
+            TopBar(
+                authMode = state.authMode,
+                oauthAvailable = state.isOauthAvailable,
+                selectedServer = state.selectedServer,
+                onPasswordPreferenceToggled = {
+                    stateHolder.accept(Action.TogglePasswordPreference)
+                },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.MessageConsumed(it))
+                    .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
+                    .windowInsetsPadding(WindowInsets.ime),
+                text = stringResource(
+                    when {
+                        state.isSubmitting -> Res.string.signing_in
+                        state.canSignInLater -> Res.string.sign_in_later
+                        else -> when (state.authMode) {
+                            AuthMode.Oauth -> Res.string.sign_with_oauth
+                            AuthMode.Password -> Res.string.sign_with_password
+                        }
+                    },
+                    stringResource(state.selectedServer.stringResource),
+                ),
+                icon = when {
+                    state.canSignInLater -> Icons.Rounded.Timer
+                    state.canSwitchAccount -> Icons.Rounded.SwapHoriz
+                    else -> Icons.Rounded.Check
                 },
-                topBar = {
-                    TopBar(
-                        authMode = state.authMode,
-                        oauthAvailable = state.isOauthAvailable,
-                        selectedServer = state.selectedServer,
-                        onPasswordPreferenceToggled = {
-                            stateHolder.accept(Action.TogglePasswordPreference)
-                        },
-                    )
+                enabled = state.submitButtonEnabled,
+                expanded = true,
+                onClick = {
+                    stateHolder.accept(state.createSessionAction())
                 },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
-                            .windowInsetsPadding(WindowInsets.ime),
-                        text = stringResource(
-                            when {
-                                state.isSubmitting -> Res.string.signing_in
-                                state.canSignInLater -> Res.string.sign_in_later
-                                else -> when (state.authMode) {
-                                    AuthMode.Oauth -> Res.string.sign_with_oauth
-                                    AuthMode.Password -> Res.string.sign_with_password
-                                }
-                            },
-                            stringResource(state.selectedServer.stringResource),
-                        ),
-                        icon = when {
-                            state.canSignInLater -> Icons.Rounded.Timer
-                            state.canSwitchAccount -> Icons.Rounded.SwapHoriz
-                            else -> Icons.Rounded.Check
-                        },
-                        enabled = state.submitButtonEnabled,
-                        expanded = true,
-                        onClick = {
-                            stateHolder.accept(state.createSessionAction())
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    SignInScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
-                    )
-                },
+            )
+        },
+        content = { paddingValues ->
+            SignInScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .padding(paddingValues = paddingValues),
             )
         },
     )
