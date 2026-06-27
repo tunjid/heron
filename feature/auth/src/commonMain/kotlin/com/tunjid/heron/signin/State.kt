@@ -88,6 +88,7 @@ interface State {
         val prefersPassword: Boolean = false,
         val isOauthAvailable: Boolean = false,
         val isServerResolvedFromHandle: Boolean = false,
+        val isResolvingServer: Boolean = false,
         val oauthRequestUri: GenericUri? = null,
         val selectedServer: Server = Server.BlueSky,
         val availableServers: List<Server> = StartingServers,

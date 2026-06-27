@@ -195,15 +195,20 @@ private fun Flow<Action.FieldChanged>.launchFormEditMutations(
     shared.filter { it.id == Username && DomainRegex.matches(it.text) }
         .debounce(HandleResolutionDebounceMs)
         .launchedCollectLatest { (_, text) ->
-            val server = authRepository.resolveServer(ProfileHandle(text))
-                .getOrNull()
-                ?.normalized()
+            state.isResolvingServer = true
+            try {
+                val server = authRepository.resolveServer(ProfileHandle(text))
+                    .getOrNull()
+                    ?.normalized()
 
-            state.isServerResolvedFromHandle = server != null
-            state.selectedServer = server ?: state.selectedServer
-            state.availableServers = when (server) {
-                null -> StartingServers
-                else -> listOf(server)
+                state.isServerResolvedFromHandle = server != null
+                state.selectedServer = server ?: state.selectedServer
+                state.availableServers = when (server) {
+                    null -> StartingServers
+                    else -> listOf(server)
+                }
+            } finally {
+                state.isResolvingServer = false
             }
         }
 }
