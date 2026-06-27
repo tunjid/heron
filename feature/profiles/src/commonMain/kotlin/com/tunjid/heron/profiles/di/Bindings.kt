@@ -18,6 +18,7 @@ package com.tunjid.heron.profiles.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
@@ -34,6 +35,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
@@ -275,46 +277,55 @@ class ProfilesBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val hydratedRoute = routeParser.hydrate(route)
-            val load = hydratedRoute.load
-            val titleRes = load.titleRes()
-
-            val stateHolder: ProfilesStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfilesViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            paneScaffoldState.PaneScaffold(
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val load = route.load
+    val titleRes = load.titleRes()
+
+    val stateHolder: ProfilesStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfilesViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                title = {
+                    AppBarTitle(
+                        title = stringResource(titleRes),
+                    )
+                },
+            )
+        },
+        content = { paddingValues ->
+            ProfilesScreen(
+                paneScaffoldState = this,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(titleRes),
-                            )
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    ProfilesScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+                state = state,
+                actions = stateHolder.accept,
             )
         },
     )

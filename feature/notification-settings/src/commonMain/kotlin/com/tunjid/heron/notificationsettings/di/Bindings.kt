@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
@@ -42,6 +43,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
@@ -132,84 +134,94 @@ class NotificationSettingsBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: NotificationSettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualNotificationSettingsViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: NotificationSettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualNotificationSettingsViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
 
-            paneScaffoldState.PaneScaffold(
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                title = {
+                    AppBarTitle(title = stringResource(CommonStrings.notification_settings))
+                },
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
+                text = stringResource(CommonStrings.save),
+                icon = Icons.Rounded.Save,
+                enabled = state.pendingUpdates.isNotEmpty(),
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
                 },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            AppBarTitle(title = stringResource(CommonStrings.notification_settings))
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                onClick = {
+                    stateHolder.accept(
+                        Action.UpdateNotificationPreferences(state.updates()),
                     )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(CommonStrings.save),
-                        icon = Icons.Rounded.Save,
-                        enabled = state.pendingUpdates.isNotEmpty(),
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(
-                                Action.UpdateNotificationPreferences(state.updates()),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    NotificationSettingsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                    )
-                    SecondaryPaneCloseBackHandler()
                 },
             )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier.offset {
+                    bottomNavigationNestedScrollConnection.offset.round()
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = { paddingValues ->
+            NotificationSettingsScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

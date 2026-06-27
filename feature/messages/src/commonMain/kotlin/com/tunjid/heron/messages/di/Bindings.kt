@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ForwardToInbox
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -60,6 +61,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
@@ -138,153 +140,163 @@ class MessagesBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: MessagesStateHolder = paneScaffoldState.rememberRouteViewModel<ActualMessagesViewModel>(
+            Route(
                 route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
-
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
-
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
-
-            val searchFocusRequester = remember { FocusRequester() }
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        title = {
-                            val keyboardController = LocalSoftwareKeyboardController.current
-                            AnimatedContent(
-                                targetState = state.isSearching,
-                                transitionSpec = {
-                                    SearchbarEnterAnimation togetherWith
-                                        SearchbarExitAnimation
-                                },
-                            ) { isSearching ->
-                                if (isSearching) {
-                                    SearchBar(
-                                        searchQuery = state.searchQuery,
-                                        focusRequester = searchFocusRequester,
-                                        onQueryChanged = { query ->
-                                            stateHolder.accept(Action.SearchQueryChanged(query))
-                                        },
-                                        onQueryConfirmed = {
-                                            stateHolder.accept(Action.SearchQueryChanged(query = ""))
-                                            keyboardController?.hide()
-                                        },
-                                    )
-                                    LaunchedEffect(Unit) {
-                                        searchFocusRequester.requestFocus()
-                                    }
-                                } else {
-                                    AppBarTitle(
-                                        title = stringResource(Res.string.title),
-                                    )
-                                }
-                            }
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        onLogoClicked = {
-                            stateHolder.accept(Action.Navigate.Home)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(Res.string.write_new_dm),
-                        icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(Action.SetIsSearching(isSearching = true))
-                        },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .imePadding(),
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    MessagesScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .imePadding(),
-                    )
-                },
-            )
-
-            val imePadding = WindowInsets.ime.asPaddingValues()
-            val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
-            val imeShowing by remember {
-                derivedStateOf {
-                    imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
-                }
-            }
-
-            val lifeCycleOwner = LocalLifecycleOwner.current
-            LaunchedEffect(imeShowing, lifeCycleOwner) {
-                if (imeShowing) return@LaunchedEffect
-                if (!lifeCycleOwner.lifecycle.currentState
-                        .isAtLeast(Lifecycle.State.RESUMED)
-                ) return@LaunchedEffect
-
-                searchFocusRequester.freeFocus()
-                stateHolder.accept(Action.SetIsSearching(isSearching = false))
-            }
         },
     )
+}
+
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: MessagesStateHolder = paneScaffoldState.rememberRouteViewModel<ActualMessagesViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
+
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    val searchFocusRequester = remember { FocusRequester() }
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            RootDestinationTopAppBar(
+                modifier = Modifier.offset {
+                    topAppBarNestedScrollConnection.offset.round()
+                },
+                title = {
+                    val keyboardController = LocalSoftwareKeyboardController.current
+                    AnimatedContent(
+                        targetState = state.isSearching,
+                        transitionSpec = {
+                            SearchbarEnterAnimation togetherWith
+                                SearchbarExitAnimation
+                        },
+                    ) { isSearching ->
+                        if (isSearching) {
+                            SearchBar(
+                                searchQuery = state.searchQuery,
+                                focusRequester = searchFocusRequester,
+                                onQueryChanged = { query ->
+                                    stateHolder.accept(Action.SearchQueryChanged(query))
+                                },
+                                onQueryConfirmed = {
+                                    stateHolder.accept(Action.SearchQueryChanged(query = ""))
+                                    keyboardController?.hide()
+                                },
+                            )
+                            LaunchedEffect(Unit) {
+                                searchFocusRequester.requestFocus()
+                            }
+                        } else {
+                            AppBarTitle(
+                                title = stringResource(Res.string.title),
+                            )
+                        }
+                    }
+                },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                onSignedInProfileClicked = { profile, sharedElementKey ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                profile = profile,
+                                avatarSharedElementKey = sharedElementKey,
+                            ),
+                        ),
+                    )
+                },
+                onLogoClicked = {
+                    stateHolder.accept(Action.Navigate.Home)
+                },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                text = stringResource(Res.string.write_new_dm),
+                icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
+                },
+                onClick = {
+                    stateHolder.accept(Action.SetIsSearching(isSearching = true))
+                },
+            )
+        },
+        snackBarHost = {
+            PaneSnackbarHost(
+                modifier = Modifier
+                    .imePadding(),
+            )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier
+                    .offset {
+                        bottomNavigationNestedScrollConnection.offset.round()
+                    },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = {
+            MessagesScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .imePadding(),
+            )
+        },
+    )
+
+    val imePadding = WindowInsets.ime.asPaddingValues()
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+    val imeShowing by remember {
+        derivedStateOf {
+            imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
+        }
+    }
+
+    val lifeCycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(imeShowing, lifeCycleOwner) {
+        if (imeShowing) return@LaunchedEffect
+        if (!lifeCycleOwner.lifecycle.currentState
+                .isAtLeast(Lifecycle.State.RESUMED)
+        ) return@LaunchedEffect
+
+        searchFocusRequester.freeFocus()
+        stateHolder.accept(Action.SetIsSearching(isSearching = false))
+    }
 }
 
 private val SearchbarEnterAnimation = fadeIn() + slideInVertically()

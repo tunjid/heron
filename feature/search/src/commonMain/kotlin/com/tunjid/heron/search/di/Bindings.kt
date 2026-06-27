@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -47,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
@@ -154,146 +156,157 @@ class SearchBindings(
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: SearchStateHolder = paneScaffoldState.rememberRouteViewModel<SearchViewModel>(
+            Route(
                 route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val searchFocusRequester = remember { FocusRequester() }
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: SearchStateHolder = paneScaffoldState.rememberRouteViewModel<SearchViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            LaunchedEffect(Unit) {
-                searchFocusRequester.requestFocus()
-            }
+    val searchFocusRequester = remember { FocusRequester() }
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+    LaunchedEffect(Unit) {
+        searchFocusRequester.requestFocus()
+    }
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
+
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            val searchHint = when (val query = state.query) {
+                is RouteQuery.ProfilePostSearch -> stringResource(
+                    Res.string.hint_profile_post_search,
+                    query.profileHandle,
                 )
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
+                RouteQuery.FullSearch -> stringResource(
+                    Res.string.hint_general_search,
+                )
+                is RouteQuery.HashtaggedPostsSearch -> state.searchBarText
+            }
+            if (state.query.isRoot) RootDestinationTopAppBar(
+                modifier = Modifier.offset {
+                    topAppBarNestedScrollConnection.offset.round()
                 },
-                topBar = {
-                    val searchHint = when (val query = state.query) {
-                        is RouteQuery.ProfilePostSearch -> stringResource(
-                            Res.string.hint_profile_post_search,
-                            query.profileHandle,
-                        )
-                        RouteQuery.FullSearch -> stringResource(
-                            Res.string.hint_general_search,
-                        )
-                        is RouteQuery.HashtaggedPostsSearch -> state.searchBarText
-                    }
-                    if (state.query.isRoot) RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        title = {
-                            SearchBar(
-                                searchQuery = state.searchBarText,
-                                searchHint = searchHint,
-                                focusRequester = searchFocusRequester,
-                                onQueryChanged = { query ->
-                                    stateHolder.accept(
-                                        Action.Search.OnSearchQueryChanged(query),
-                                    )
-                                },
-                                onQueryConfirmed = {
-                                    stateHolder.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
-                                    )
-                                },
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
+                title = {
+                    SearchBar(
+                        searchQuery = state.searchBarText,
+                        searchHint = searchHint,
+                        focusRequester = searchFocusRequester,
+                        onQueryChanged = { query ->
                             stateHolder.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
+                                Action.Search.OnSearchQueryChanged(query),
                             )
                         },
-                        onLogoClicked = {
-                            stateHolder.accept(Action.Navigate.Home)
-                        },
-                    )
-                    else PoppableDestinationTopAppBar(
-                        title = {
-                            if (state.query.isQueryEditable) SearchBar(
-                                searchQuery = state.searchBarText,
-                                searchHint = searchHint,
-                                focusRequester = searchFocusRequester,
-                                onQueryChanged = { query ->
-                                    stateHolder.accept(
-                                        Action.Search.OnSearchQueryChanged(query),
-                                    )
-                                },
-                                onQueryConfirmed = {
-                                    stateHolder.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
-                                    )
-                                },
-                            )
-                            else Text(
-                                text = searchHint,
-                                style = MaterialTheme.typography.titleSmallEmphasized,
+                        onQueryConfirmed = {
+                            stateHolder.accept(
+                                Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                             )
                         },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = {
-                            stateHolder.accept(Action.Navigate.Pop)
+                    )
+                },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                onSignedInProfileClicked = { profile, sharedElementKey ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                profile = profile,
+                                avatarSharedElementKey = sharedElementKey,
+                            ),
+                        ),
+                    )
+                },
+                onLogoClicked = {
+                    stateHolder.accept(Action.Navigate.Home)
+                },
+            )
+            else PoppableDestinationTopAppBar(
+                title = {
+                    if (state.query.isQueryEditable) SearchBar(
+                        searchQuery = state.searchBarText,
+                        searchHint = searchHint,
+                        focusRequester = searchFocusRequester,
+                        onQueryChanged = { query ->
+                            stateHolder.accept(
+                                Action.Search.OnSearchQueryChanged(query),
+                            )
+                        },
+                        onQueryConfirmed = {
+                            stateHolder.accept(
+                                Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
+                            )
                         },
                     )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
+                    else Text(
+                        text = searchHint,
+                        style = MaterialTheme.typography.titleSmallEmphasized,
                     )
                 },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            searchFocusRequester.requestFocus()
-                            true
-                        },
-                    )
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                onBackPressed = {
+                    stateHolder.accept(Action.Navigate.Pop)
                 },
-                navigationRail = {
-                    PaneNavigationRail()
+            )
+        },
+        snackBarHost = {
+            PaneSnackbarHost(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+            )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier
+                    .offset {
+                        bottomNavigationNestedScrollConnection.offset.round()
+                    },
+                onNavItemReselected = {
+                    searchFocusRequester.requestFocus()
+                    true
                 },
-                content = {
-                    SearchScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = {
+            SearchScreen(
+                paneScaffoldState = this,
+                modifier = Modifier,
+                state = state,
+                actions = stateHolder.accept,
             )
         },
     )

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -174,124 +176,134 @@ class PostDetailBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: PostDetailStateHolder = paneScaffoldState.rememberRouteViewModel<ActualPostDetailViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: PostDetailStateHolder = paneScaffoldState.rememberRouteViewModel<ActualPostDetailViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
 
-            paneScaffoldState.PaneScaffold(
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                title = {
+                    AppBarTitle(
+                        title = stringResource(Res.string.title),
+                    )
+                },
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                actions = {
+                    ThreadDisplayOptions(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp),
+                        order = state.order,
+                        viewMode = state.viewMode,
+                        onOrderChanged = {
+                            stateHolder.accept(Action.Load.Order(it))
+                        },
+                        onViewModeChanged = {
+                            stateHolder.accept(Action.Load.ViewMode(it))
+                        },
+                    )
+                },
+            )
+        },
+        snackBarHost = {
+            PaneSnackbarHost(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
+            )
+        },
+        floatingActionButton = {
+            if (state.anchorPost?.viewerStats.canReply) PaneFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                text = stringResource(
+                    when {
+                        isSignedOut -> CommonStrings.sign_in
+                        else -> Res.string.reply
+                    },
+                ),
+                icon = when {
+                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                    else -> Icons.AutoMirrored.Rounded.Reply
                 },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.title),
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                        actions = {
-                            ThreadDisplayOptions(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp),
-                                order = state.order,
-                                viewMode = state.viewMode,
-                                onOrderChanged = {
-                                    stateHolder.accept(Action.Load.Order(it))
-                                },
-                                onViewModeChanged = {
-                                    stateHolder.accept(Action.Load.ViewMode(it))
-                                },
-                            )
-                        },
-                    )
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
                 },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                floatingActionButton = {
-                    if (state.anchorPost?.viewerStats.canReply) PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
+                onClick = onClick@{
+                    val anchorPost = state.anchorPost ?: return@onClick
+                    stateHolder.accept(
+                        Action.Navigate.To(
                             when {
-                                isSignedOut -> CommonStrings.sign_in
-                                else -> Res.string.reply
+                                isSignedOut -> signInDestination()
+                                else -> composePostDestination(
+                                    type = Post.Create.Reply(
+                                        parent = anchorPost,
+                                    ),
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                )
                             },
                         ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            else -> Icons.AutoMirrored.Rounded.Reply
-                        },
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = onClick@{
-                            val anchorPost = state.anchorPost ?: return@onClick
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    when {
-                                        isSignedOut -> signInDestination()
-                                        else -> composePostDestination(
-                                            type = Post.Create.Reply(
-                                                parent = anchorPost,
-                                            ),
-                                            sharedElementPrefix = state.sharedElementPrefix,
-                                        )
-                                    },
-                                ),
-                            )
-                        },
                     )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    PostDetailScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
                 },
             )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier.offset {
+                    bottomNavigationNestedScrollConnection.offset.round()
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = {
+            PostDetailScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier,
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

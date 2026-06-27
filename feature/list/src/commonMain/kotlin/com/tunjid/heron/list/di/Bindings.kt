@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
@@ -67,6 +68,7 @@ import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
@@ -262,171 +264,181 @@ class ListBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: ListStateHolder = paneScaffoldState.rememberRouteViewModel<ActualListViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-                invert = true,
-                maxOffset = maxOffset@{
-                    Offset(
-                        x = 0f,
-                        y = UiTokens.bottomNavHeight(
-                            isCompact = paneScaffoldState.prefersCompactBottomNav,
-                        ).toPx(),
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: ListStateHolder = paneScaffoldState.rememberRouteViewModel<ActualListViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
+        invert = true,
+        maxOffset = maxOffset@{
+            Offset(
+                x = 0f,
+                y = UiTokens.bottomNavHeight(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                ).toPx(),
+            )
+        },
+        minOffset = { Offset.Zero },
+    )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(fabExpansionNestedScrollConnection)
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
+                editTitle = null,
+                onEditClicked = {},
+                onShareInConversationClicked = { recordUri, conversation ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = conversation.id,
+                                members = conversation.members,
+                                sharedElementPrefix = conversation.id.id,
+                                sharedUri = recordUri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
                     )
                 },
-                minOffset = { Offset.Zero },
+                onShareInPostClicked = { recordUri ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            composePostDestination(
+                                sharedUri = recordUri.asGenericUri(),
+                            ),
+                        ),
+                    )
+                },
             )
-
-            paneScaffoldState.PaneScaffold(
+            PoppableDestinationTopAppBar(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .nestedScroll(fabExpansionNestedScrollConnection)
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
-                        editTitle = null,
-                        onEditClicked = {},
-                        onShareInConversationClicked = { recordUri, conversation ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    conversationDestination(
-                                        id = conversation.id,
-                                        members = conversation.members,
-                                        sharedElementPrefix = conversation.id.id,
-                                        sharedUri = recordUri.asGenericUri(),
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    ),
-                                ),
-                            )
-                        },
-                        onShareInPostClicked = { recordUri ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        sharedUri = recordUri.asGenericUri(),
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                    PoppableDestinationTopAppBar(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surface),
-                        title = {
-                            TimelineTitle(
-                                paneTransitionScope = this,
-                                timeline = state.timelineState?.timeline,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                // Indicated on the tab instead
-                                hasUpdates = false,
-                                onPresentationSelected = { timeline, presentation ->
-                                    state.stateHolders
-                                        .filterIsInstance<ListScreenStateHolders.Timeline>()
-                                        .firstOrNull()
-                                        ?.accept
-                                        ?.invoke(
-                                            TimelineState.Action.UpdatePreferredPresentation(
-                                                timeline = timeline,
-                                                presentation = presentation,
-                                            ),
-                                        )
-                                },
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                        actions = {
-                            state.timelineState
-                                ?.timeline
-                                ?.withListTimelineOrNull { listTimeline ->
-                                    FeedListStatus(
-                                        status = state.listStatus,
-                                        uri = listTimeline.feedList.uri,
-                                        onListStatusUpdated = {
-                                            stateHolder.accept(Action.UpdateFeedListStatus(it))
-                                        },
-                                    )
-                                }
-                            ShareRecordButton(
-                                onShareClicked = {
-                                    state.timelineState?.timeline?.uri
-                                        ?.asEmbeddableRecordUriOrNull()
-                                        ?.let { recordUri ->
-                                            recordOptionsSheetState.showOptions(recordUri)
-                                        }
-                                },
-                            )
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    val signedInProfileId = state.signedInProfileId
-                    val listUri = state.timelineState?.timeline
-                        ?.withListTimelineOrNull { it.feedList.uri }
-
-                    val addListMemberSheetState = rememberSelectProfileIdState(
-                        title = stringResource(Res.string.add_list_member),
-                        suggestedProfiles = state.suggestedProfiles,
-                        onProfileIdSelected = { profileId ->
-                            listUri?.let { uri ->
-                                stateHolder.accept(
-                                    Action.AddListMember(
-                                        profileId = profileId,
-                                        listUri = uri,
+                    .background(MaterialTheme.colorScheme.surface),
+                title = {
+                    TimelineTitle(
+                        paneTransitionScope = this,
+                        timeline = state.timelineState?.timeline,
+                        sharedElementPrefix = state.sharedElementPrefix,
+                        // Indicated on the tab instead
+                        hasUpdates = false,
+                        onPresentationSelected = { timeline, presentation ->
+                            state.stateHolders
+                                .filterIsInstance<ListScreenStateHolders.Timeline>()
+                                .firstOrNull()
+                                ?.accept
+                                ?.invoke(
+                                    TimelineState.Action.UpdatePreferredPresentation(
+                                        timeline = timeline,
+                                        presentation = presentation,
                                     ),
                                 )
-                            }
                         },
                     )
-
-                    AnimatedVisibility(
-                        visible = state.isOnProfilesTab && remember(
-                            signedInProfileId,
-                            listUri,
-                        ) {
-                            signedInProfileId != null && signedInProfileId == listUri?.profileId()
-                        },
-                        enter = FabEnter,
-                        exit = FabExit,
-                    ) {
-                        PaneFab(
-                            text = stringResource(Res.string.add_list_member),
-                            icon = Icons.Rounded.Add,
-                            expanded = isFabExpanded {
-                                fabExpansionNestedScrollConnection.offset
-                            },
-                            onClick = addListMemberSheetState::show,
-                        )
-
-                        LaunchedEffect(Unit) {
-                            snapshotFlow { addListMemberSheetState.options.text }
-                                .collect { query ->
-                                    stateHolder.accept(Action.SearchProfiles(query))
-                                }
-                        }
-                    }
                 },
-                content = { paddingValues ->
-                    ListScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        state = state,
-                        actions = stateHolder.accept,
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                actions = {
+                    state.timelineState
+                        ?.timeline
+                        ?.withListTimelineOrNull { listTimeline ->
+                            FeedListStatus(
+                                status = state.listStatus,
+                                uri = listTimeline.feedList.uri,
+                                onListStatusUpdated = {
+                                    stateHolder.accept(Action.UpdateFeedListStatus(it))
+                                },
+                            )
+                        }
+                    ShareRecordButton(
+                        onShareClicked = {
+                            state.timelineState?.timeline?.uri
+                                ?.asEmbeddableRecordUriOrNull()
+                                ?.let { recordUri ->
+                                    recordOptionsSheetState.showOptions(recordUri)
+                                }
+                        },
                     )
-                    SecondaryPaneCloseBackHandler()
                 },
             )
+        },
+        floatingActionButton = {
+            val signedInProfileId = state.signedInProfileId
+            val listUri = state.timelineState?.timeline
+                ?.withListTimelineOrNull { it.feedList.uri }
+
+            val addListMemberSheetState = rememberSelectProfileIdState(
+                title = stringResource(Res.string.add_list_member),
+                suggestedProfiles = state.suggestedProfiles,
+                onProfileIdSelected = { profileId ->
+                    listUri?.let { uri ->
+                        stateHolder.accept(
+                            Action.AddListMember(
+                                profileId = profileId,
+                                listUri = uri,
+                            ),
+                        )
+                    }
+                },
+            )
+
+            AnimatedVisibility(
+                visible = state.isOnProfilesTab && remember(
+                    signedInProfileId,
+                    listUri,
+                ) {
+                    signedInProfileId != null && signedInProfileId == listUri?.profileId()
+                },
+                enter = FabEnter,
+                exit = FabExit,
+            ) {
+                PaneFab(
+                    text = stringResource(Res.string.add_list_member),
+                    icon = Icons.Rounded.Add,
+                    expanded = isFabExpanded {
+                        fabExpansionNestedScrollConnection.offset
+                    },
+                    onClick = addListMemberSheetState::show,
+                )
+
+                LaunchedEffect(Unit) {
+                    snapshotFlow { addListMemberSheetState.options.text }
+                        .collect { query ->
+                            stateHolder.accept(Action.SearchProfiles(query))
+                        }
+                }
+            }
+        },
+        content = { paddingValues ->
+            ListScreen(
+                paneScaffoldState = this,
+                modifier = Modifier
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+                state = state,
+                actions = stateHolder.accept,
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

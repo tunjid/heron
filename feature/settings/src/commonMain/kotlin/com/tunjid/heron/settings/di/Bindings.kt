@@ -19,6 +19,7 @@ package com.tunjid.heron.settings.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
@@ -41,6 +42,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.NestedNavigationEventHandler
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
@@ -127,75 +129,85 @@ class SettingsBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: SettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSettingsViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: SettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSettingsViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.settings),
-                            )
-                        },
-                        onBackPressed = {
-                            if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                                stateHolder.accept(
-                                    if (state.section == Section.Main) Action.Navigate.Pop
-                                    else Action.UpdateSection(Section.Main),
-                                )
-                            }
-                        },
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                title = {
+                    AppBarTitle(
+                        title = stringResource(Res.string.settings),
                     )
                 },
-                navigationBar = {
+                onBackPressed = {
                     if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                        PaneNavigationBar(
-                            modifier = Modifier.offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
+                        stateHolder.accept(
+                            if (state.section == Section.Main) Action.Navigate.Pop
+                            else Action.UpdateSection(Section.Main),
                         )
                     }
                 },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    SettingsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
             )
-
-            paneScaffoldState.NestedNavigationEventHandler {
-                stateHolder.accept(Action.UpdateSection(Section.Main))
+        },
+        navigationBar = {
+            if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                PaneNavigationBar(
+                    modifier = Modifier.offset {
+                        bottomNavigationNestedScrollConnection.offset.round()
+                    },
+                )
             }
         },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = { paddingValues ->
+            SettingsScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+            )
+            SecondaryPaneCloseBackHandler()
+        },
     )
+
+    paneScaffoldState.NestedNavigationEventHandler {
+        stateHolder.accept(Action.UpdateSection(Section.Main))
+    }
 }

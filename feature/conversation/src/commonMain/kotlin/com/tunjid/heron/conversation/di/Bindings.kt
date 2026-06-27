@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -49,6 +50,7 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
@@ -134,119 +136,129 @@ class ConversationBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: ConversationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualConversationViewModel>(
+            Route(
                 route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: ConversationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualConversationViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            ConversationTitle(
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                signedInProfileId = state.signedInProfile?.did,
-                                participants = state.conversation?.members.orEmpty(),
-                                conversationName = state.conversation?.group?.name,
-                                paneScaffoldState = this,
-                                onProfileClicked = { profile ->
-                                    stateHolder.accept(
-                                        Action.Navigate.To(
-                                            profileDestination(
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                profile = profile,
-                                                avatarSharedElementKey = profile.avatarSharedElementKey(
-                                                    prefix = state.sharedElementPrefix,
-                                                ),
-                                            ),
-                                        ),
-                                    )
-                                },
-                            )
-                        },
-                        actions = {
-                            ConversationOverflowMenu(
-                                conversation = state.conversation,
-                                onAccept = {
-                                    stateHolder.accept(Action.AcceptConversation)
-                                },
-                                onLeave = {
-                                    stateHolder.accept(Action.LeaveConversation)
-                                },
-                                onToggleMute = { muted ->
-                                    stateHolder.accept(Action.ToggleMute(muted))
-                                },
-                            )
-                        },
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                navigationBar = {
-                    UserInput(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .imePadding()
-                            .windowInsetsPadding(WindowInsets.navigationBars)
-                            .bottomNavigationSharedBounds(this),
-                        inputText = state.inputText,
-                        pendingRecord = state.sharedRecord.pendingRecord,
-                        sendMessage = remember(
-                            stateHolder,
-                            state.id,
-                            state.sharedRecord,
-                        ) {
-                            { annotatedString: AnnotatedString ->
-                                stateHolder.accept(
-                                    Action.SendMessage(
-                                        Message.Create(
-                                            conversationId = state.id,
-                                            text = annotatedString.text,
-                                            links = annotatedString.links(),
-                                            recordReference = state.sharedRecord
-                                                .pendingRecord
-                                                ?.reference,
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                title = {
+                    ConversationTitle(
+                        sharedElementPrefix = state.sharedElementPrefix,
+                        signedInProfileId = state.signedInProfile?.did,
+                        participants = state.conversation?.members.orEmpty(),
+                        conversationName = state.conversation?.group?.name,
+                        paneScaffoldState = this,
+                        onProfileClicked = { profile ->
+                            stateHolder.accept(
+                                Action.Navigate.To(
+                                    profileDestination(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                        profile = profile,
+                                        avatarSharedElementKey = profile.avatarSharedElementKey(
+                                            prefix = state.sharedElementPrefix,
                                         ),
                                     ),
-                                )
-                            }
-                        },
-                        removePendingRecordClicked = {
-                            stateHolder.accept(Action.SharedRecord.Remove)
-                        },
-                        onTextChanged = {
-                            stateHolder.accept(Action.TextChanged(it))
+                                ),
+                            )
                         },
                     )
                 },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    ConversationScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(paddingValues),
+                actions = {
+                    ConversationOverflowMenu(
+                        conversation = state.conversation,
+                        onAccept = {
+                            stateHolder.accept(Action.AcceptConversation)
+                        },
+                        onLeave = {
+                            stateHolder.accept(Action.LeaveConversation)
+                        },
+                        onToggleMute = { muted ->
+                            stateHolder.accept(Action.ToggleMute(muted))
+                        },
                     )
                 },
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+            )
+        },
+        navigationBar = {
+            UserInput(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .imePadding()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .bottomNavigationSharedBounds(this),
+                inputText = state.inputText,
+                pendingRecord = state.sharedRecord.pendingRecord,
+                sendMessage = remember(
+                    stateHolder,
+                    state.id,
+                    state.sharedRecord,
+                ) {
+                    { annotatedString: AnnotatedString ->
+                        stateHolder.accept(
+                            Action.SendMessage(
+                                Message.Create(
+                                    conversationId = state.id,
+                                    text = annotatedString.text,
+                                    links = annotatedString.links(),
+                                    recordReference = state.sharedRecord
+                                        .pendingRecord
+                                        ?.reference,
+                                ),
+                            ),
+                        )
+                    }
+                },
+                removePendingRecordClicked = {
+                    stateHolder.accept(Action.SharedRecord.Remove)
+                },
+                onTextChanged = {
+                    stateHolder.accept(Action.TextChanged(it))
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = { paddingValues ->
+            ConversationScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .padding(paddingValues),
             )
         },
     )

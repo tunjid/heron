@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
@@ -140,86 +142,96 @@ class EditProfileBindings(
             )
         },
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: EditProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualEditProfileViewModel>(
+            Route(
                 route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
-            val state = stateHolder.produceStateWithLifecycle()
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: EditProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualEditProfileViewModel>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                        actions = {
-                            EditButton(
-                                modifier = Modifier
-                                    .padding(8.dp),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
+    val bottomNavigationNestedScrollConnection =
+        bottomNavigationNestedScrollConnection(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        )
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            PoppableDestinationTopAppBar(
+                transparencyFactor = ::fullAppbarTransparency,
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                actions = {
+                    EditButton(
                         modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            if (state.submitting) Res.string.profile_updating
-                            else Res.string.save,
-                        ),
-                        icon = Icons.Rounded.Save,
-                        enabled = !state.submitting,
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(state.saveProfileAction())
-                        },
+                            .padding(8.dp),
                     )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    EditProfileScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
                 },
             )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier.offset {
+                    bottomNavigationNestedScrollConnection.offset.round()
+                },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                text = stringResource(
+                    if (state.submitting) Res.string.profile_updating
+                    else Res.string.save,
+                ),
+                icon = Icons.Rounded.Save,
+                enabled = !state.submitting,
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
+                },
+                onClick = {
+                    stateHolder.accept(state.saveProfileAction())
+                },
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail()
+        },
+        content = {
+            EditProfileScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier,
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

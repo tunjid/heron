@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.splash.di
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.splash.ActualSplashViewModel
@@ -23,6 +24,7 @@ import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashStateHolder
 import com.tunjid.heron.splash.SplashViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
 import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
@@ -83,16 +85,26 @@ class SplashBindings(
 
     private fun routePaneEntry() = threePaneEntry(
         render = { route ->
-            val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: SplashStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSplashViewModel>(
+            Route(
                 route = route,
-            )
-            stateHolder.produceStateWithLifecycle()
-
-            SplashScreen(
-                paneScaffoldState = paneScaffoldState,
-                modifier = Modifier,
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
         },
+    )
+}
+
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder: SplashStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSplashViewModel>(
+        route = route,
+    )
+    stateHolder.produceStateWithLifecycle()
+
+    SplashScreen(
+        paneScaffoldState = paneScaffoldState,
+        modifier = Modifier,
     )
 }
