@@ -51,65 +51,75 @@ fun interface ModerationViewModelInitializer {
     ): ActualModerationViewModel
 }
 
-@AssistedInject
 class ActualModerationViewModel(
-    authRepository: AuthRepository,
-    timelineRepository: TimelineRepository,
-    recordRepository: RecordRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ModerationStateHolder,
     scope: CoroutineScope,
-    @Assisted route: Route,
+    route: Route,
 ) : RouteViewModel(scope, route),
-    ModerationStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchAdultContentAndGlobalLabelPreferenceMutations(
-                state = state,
-                timelineRepository = timelineRepository,
-            )
-            launchSubscribedLabelerMutations(
-                state = state,
-                recordRepository = recordRepository,
-            )
-            launchLoadPreferenceMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdateAdultLabelVisibility -> action.flow.launchUpdateGlobalLabelMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateAdultContentPreferences -> action.flow.launchUpdateAdultContentPreferencesMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
+    ModerationStateHolder by mutator {
 
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.UpdateThreadGates -> action.flow.launchUpdateThreadGateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    Action.SignOut -> action.flow.collect {
-                        authRepository.signOut()
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        timelineRepository: TimelineRepository,
+        recordRepository: RecordRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchAdultContentAndGlobalLabelPreferenceMutations(
+                    state = state,
+                    timelineRepository = timelineRepository,
+                )
+                launchSubscribedLabelerMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+                launchLoadPreferenceMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdateAdultLabelVisibility -> action.flow.launchUpdateGlobalLabelMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateAdultContentPreferences -> action.flow.launchUpdateAdultContentPreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.UpdateThreadGates -> action.flow.launchUpdateThreadGateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        Action.SignOut -> action.flow.collect {
+                            authRepository.signOut()
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 fun launchAdultContentAndGlobalLabelPreferenceMutations(

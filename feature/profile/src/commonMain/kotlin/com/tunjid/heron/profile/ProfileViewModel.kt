@@ -89,123 +89,132 @@ fun interface ProfileViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualProfileViewModel(
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    profileRepository: ProfileRepository,
-    timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ProfileStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfileStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchCommonFollowerMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchProfileRelationshipMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchSupportedAppMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchFeedGeneratorUrisToStatusMutations(
-                state = state,
-                timelineRepository = timelineRepository,
-            )
-            launchSubscribedLabelerMutations(
-                state = state,
-                recordRepository = recordRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchLoadProfileMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                viewModelScope = scope,
-                writeQueue = writeQueue,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                profileRepository = profileRepository,
-                timelineRepository = timelineRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
-                        if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
-                            state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
-                        }
-                    }
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+    ProfileStateHolder by mutator {
 
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.UpdatePreferences -> action.flow.launchFeedGeneratorStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.BioLinkClicked -> action.flow.collect { event ->
-                        when (val target = event.target) {
-                            is LinkTarget.Navigable -> navActions {
-                                routeString(target.path, queryParams = emptyMap())
-                                    .toRoute
-                                    .let(navState::push)
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        profileRepository: ProfileRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchCommonFollowerMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchProfileRelationshipMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchSupportedAppMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchFeedGeneratorUrisToStatusMutations(
+                    state = state,
+                    timelineRepository = timelineRepository,
+                )
+                launchSubscribedLabelerMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchLoadProfileMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    viewModelScope = scope,
+                    writeQueue = writeQueue,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    profileRepository = profileRepository,
+                    timelineRepository = timelineRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
+                            if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
+                                state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                             }
-                            else -> Unit
                         }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.UpdatePreferences -> action.flow.launchFeedGeneratorStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BioLinkClicked -> action.flow.collect { event ->
+                            when (val target = event.target) {
+                                is LinkTarget.Navigable -> navActions {
+                                    routeString(target.path, queryParams = emptyMap())
+                                        .toRoute
+                                        .let(navState::push)
+                                }
+                                else -> Unit
+                            }
+                        }
+                        is Action.Block -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Mute -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.PageChanged -> action.flow.collect { event ->
+                            state.currentPage = event.page
+                        }
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateLiveStatus -> action.flow.launchLiveStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.Block -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Mute -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.PageChanged -> action.flow.collect { event ->
-                        state.currentPage = event.page
-                    }
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateLiveStatus -> action.flow.launchLiveStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(

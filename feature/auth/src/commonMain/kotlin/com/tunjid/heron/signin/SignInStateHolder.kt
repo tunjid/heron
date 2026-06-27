@@ -62,72 +62,81 @@ fun interface SignInViewModelInitializer {
     ): ActualSignInViewModel
 }
 
-@AssistedInject
 class ActualSignInViewModel(
-    authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: SignInStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    SignInStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchPastSessionMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchIsSignedInMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchAuthDeeplinkMutations(
-                state = state,
-                route = route,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.FieldChanged -> action.flow.launchFormEditMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
-                    is Action.TogglePasswordPreference -> action.flow.launchPasswordPreferenceMutations(
-                        state = state,
-                    )
-                    is Action.MessageConsumed -> action.flow.launchMessageConsumptionMutations(
-                        state = state,
-                    )
-                    is Action.CreateSession -> action.flow.launchSubmissionMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
-                    is Action.BeginOauthFlow -> action.flow.launchBeginOauthMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
-                    is Action.OauthFlowResultAvailable -> action.flow.launchOauthFlowResultMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
-                    is Action.OauthAvailabilityChanged -> action.flow.launchOauthAvailabilityChangedMutations(
-                        state = state,
-                    )
-                    is Action.SetServer -> action.flow.launchSetServerMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    SignInStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchPastSessionMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchIsSignedInMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchAuthDeeplinkMutations(
+                    state = state,
+                    route = route,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.FieldChanged -> action.flow.launchFormEditMutations(
+                            state = state,
+                            authRepository = authRepository,
+                        )
+                        is Action.TogglePasswordPreference -> action.flow.launchPasswordPreferenceMutations(
+                            state = state,
+                        )
+                        is Action.MessageConsumed -> action.flow.launchMessageConsumptionMutations(
+                            state = state,
+                        )
+                        is Action.CreateSession -> action.flow.launchSubmissionMutations(
+                            state = state,
+                            authRepository = authRepository,
+                        )
+                        is Action.BeginOauthFlow -> action.flow.launchBeginOauthMutations(
+                            state = state,
+                            authRepository = authRepository,
+                        )
+                        is Action.OauthFlowResultAvailable -> action.flow.launchOauthFlowResultMutations(
+                            state = state,
+                            authRepository = authRepository,
+                        )
+                        is Action.OauthAvailabilityChanged -> action.flow.launchOauthAvailabilityChangedMutations(
+                            state = state,
+                        )
+                        is Action.SetServer -> action.flow.launchSetServerMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchIsSignedInMutations(

@@ -72,54 +72,63 @@ fun interface GrazeEditorViewModelInitializer {
     ): ActualGrazeEditorViewModel
 }
 
-@AssistedInject
 class ActualGrazeEditorViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    searchRepository: SearchRepository,
-    recordRepository: RecordRepository,
-    authRepository: AuthRepository,
-    @Assisted
+    mutator: GrazeEditorStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    GrazeEditorStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            actions
-                .withInitialLoad(route)
-                .launchMutationsIn(
-                    productionScope = this,
-                    keySelector = Action::key,
-                ) {
-                    when (val action = type()) {
-                        is Action.Navigate -> action.flow.collect {
-                            navActions(it.navigationMutation)
+    GrazeEditorStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        searchRepository: SearchRepository,
+        recordRepository: RecordRepository,
+        authRepository: AuthRepository,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                actions
+                    .withInitialLoad(route)
+                    .launchMutationsIn(
+                        productionScope = this,
+                        keySelector = Action::key,
+                    ) {
+                        when (val action = type()) {
+                            is Action.Navigate -> action.flow.collect {
+                                navActions(it.navigationMutation)
+                            }
+                            is Action.SearchProfiles -> action.flow.launchSearchMutations(
+                                state = state,
+                                searchRepository = searchRepository,
+                            )
+                            is Action.Update -> action.flow.launchUpdateMutations(
+                                state = state,
+                                recordRepository = recordRepository,
+                                authRepository = authRepository,
+                                navActions = navActions,
+                            )
+                            is Action.EditorNavigation -> action.flow.launchEditorNavigationMutations(
+                                state = state,
+                            )
+                            is Action.EditFilter -> action.flow.launchEditFilterMutations(
+                                state = state,
+                            )
+                            is Action.Metadata -> action.flow.launchUpdateMetadataMutations(
+                                state = state,
+                            )
                         }
-                        is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                            state = state,
-                            searchRepository = searchRepository,
-                        )
-                        is Action.Update -> action.flow.launchUpdateMutations(
-                            state = state,
-                            recordRepository = recordRepository,
-                            authRepository = authRepository,
-                            navActions = navActions,
-                        )
-                        is Action.EditorNavigation -> action.flow.launchEditorNavigationMutations(
-                            state = state,
-                        )
-                        is Action.EditFilter -> action.flow.launchEditFilterMutations(
-                            state = state,
-                        )
-                        is Action.Metadata -> action.flow.launchUpdateMetadataMutations(
-                            state = state,
-                        )
                     }
-                }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 private fun Flow<Action>.withInitialLoad(
     route: Route,

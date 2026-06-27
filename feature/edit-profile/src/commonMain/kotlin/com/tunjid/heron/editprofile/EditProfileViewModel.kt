@@ -67,66 +67,75 @@ fun interface EditProfileViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualEditProfileViewModel(
-    authRepository: AuthRepository,
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    fileManager: FileManager,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: EditProfileStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    EditProfileStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchPendingUpdateSubmissionMutations(
-                state = state,
-                writeQueue = writeQueue,
-            )
-            launchProfileTabMutations(
-                state = state,
-                route = route,
-                profileRepository = profileRepository,
-            )
-            launchScreenTabMutations(
-                state = state,
-                viewModelScope = scope,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    EditProfileStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        fileManager: FileManager,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchPendingUpdateSubmissionMutations(
+                    state = state,
+                    writeQueue = writeQueue,
+                )
+                launchProfileTabMutations(
+                    state = state,
+                    route = route,
+                    profileRepository = profileRepository,
+                )
+                launchScreenTabMutations(
+                    state = state,
+                    viewModelScope = scope,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.AvatarPicked -> action.flow.launchAvatarPickedMutations(state)
+                        is Action.BannerPicked -> action.flow.launchBannerPickedMutations(state)
+                        is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
+                        is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
+                        is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
+                            state = state,
+                            navActions = navActions,
+                            writeQueue = writeQueue,
+                            fileManager = fileManager,
+                        )
                     }
-                    is Action.AvatarPicked -> action.flow.launchAvatarPickedMutations(state)
-                    is Action.BannerPicked -> action.flow.launchBannerPickedMutations(state)
-                    is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
-                    is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
-                    is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
-                        state = state,
-                        navActions = navActions,
-                        writeQueue = writeQueue,
-                        fileManager = fileManager,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(

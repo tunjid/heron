@@ -33,45 +33,54 @@ fun interface ThreadGateViewModelInitializer {
     ): ThreadGateViewModel
 }
 
-@AssistedInject
 class ThreadGateViewModel(
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    @Assisted scope: CoroutineScope,
+    mutator: ThreadGateStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    ThreadGateStateHolder by scope.actionSuspendingStateMutator(
-        state = ThreadGateState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadRecentListsMutations(
-                state = state,
-                recordRepository = recordRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = ThreadGateAction::key,
-            ) {
-                when (val action = type()) {
-                    is ThreadGateAction.Initialize -> action.flow.launchInitializeMutations(
-                        state = state,
-                    )
-                    is ThreadGateAction.UpdateAllowed -> action.flow.launchUpdateAllowedMutations(
-                        state = state,
-                    )
-                    is ThreadGateAction.Reset -> action.flow.launchResetMutations(
-                        state = state,
-                    )
-                    is ThreadGateAction.SendInteraction -> action.flow.launchSendInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is ThreadGateAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
+    ThreadGateStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = ThreadGateState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadRecentListsMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = ThreadGateAction::key,
+                ) {
+                    when (val action = type()) {
+                        is ThreadGateAction.Initialize -> action.flow.launchInitializeMutations(
+                            state = state,
+                        )
+                        is ThreadGateAction.UpdateAllowed -> action.flow.launchUpdateAllowedMutations(
+                            state = state,
+                        )
+                        is ThreadGateAction.Reset -> action.flow.launchResetMutations(
+                            state = state,
+                        )
+                        is ThreadGateAction.SendInteraction -> action.flow.launchSendInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is ThreadGateAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                    }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadRecentListsMutations(

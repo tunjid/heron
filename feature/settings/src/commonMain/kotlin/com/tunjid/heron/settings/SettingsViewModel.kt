@@ -63,105 +63,115 @@ fun interface SettingsViewModelInitializer {
     ): ActualSettingsViewModel
 }
 
-@AssistedInject
 class ActualSettingsViewModel(
-    authRepository: AuthRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: SettingsStateHolder,
     scope: CoroutineScope,
-    @Assisted route: Route,
+    route: Route,
 ) : RouteViewModel(scope, route),
-    SettingsStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchSignedInProfileSavedStateMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchLoadOpenSourceLibraryMutations(
-                state = state,
-            )
-            launchLoadSessionSummaryMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchObserveActiveProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.UpdateSection -> action.flow.launchUpdateSectionMutations(
-                        state = state,
-                    )
+    SettingsStateHolder by mutator {
 
-                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.launchHomeTimelineRefreshOnLaunchMutations(
-                        userDataRepository = userDataRepository,
-                    )
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchSignedInProfileSavedStateMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchLoadOpenSourceLibraryMutations(
+                    state = state,
+                )
+                launchLoadSessionSummaryMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchObserveActiveProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.UpdateSection -> action.flow.launchUpdateSectionMutations(
+                            state = state,
+                        )
 
-                    is Action.SetAutoPlayTimelineVideos -> action.flow.launchTimelineVideoAutoPlayMutations(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.launchHomeTimelineRefreshOnLaunchMutations(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetCurrentThemeOrdinal -> action.flow.launchSetCurrentThemeOrdinal(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetAutoPlayTimelineVideos -> action.flow.launchTimelineVideoAutoPlayMutations(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetDarkThemeConfigOrdinal -> action.flow.launchSetDarkThemeConfigOrdinal(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetCurrentThemeOrdinal -> action.flow.launchSetCurrentThemeOrdinal(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetCompactNavigation -> action.flow.launchToggleCompactNavigation(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetDarkThemeConfigOrdinal -> action.flow.launchSetDarkThemeConfigOrdinal(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetAutoHideBottomNavigation -> action.flow.launchToggleAutoHideBottomNavigation(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetCompactNavigation -> action.flow.launchToggleCompactNavigation(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetShowPostEngagementMetrics -> action.flow.launchToggleShowPostEngagementMetrics(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetAutoHideBottomNavigation -> action.flow.launchToggleAutoHideBottomNavigation(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetShowTrendingTopics -> action.flow.launchToggleShowTrendingTopics(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetShowPostEngagementMetrics -> action.flow.launchToggleShowPostEngagementMetrics(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.SetAllowAllTimelinePresentations -> action.flow.launchToggleAllowAllTimelinePresentations(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetShowTrendingTopics -> action.flow.launchToggleShowTrendingTopics(
+                            userDataRepository = userDataRepository,
+                        )
 
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.SwitchSession -> action.flow.launchHandleSwitchSessionMutations(
-                        state = state,
-                        authRepository = authRepository,
-                    )
-                    is Action.UpdateFeedPreference -> action.flow.launchUpdateFeedPreferenceMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateThreadViewPreference -> action.flow.launchUpdateThreadPreferenceMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    Action.SignOut -> action.flow.collect {
-                        authRepository.signOut()
+                        is Action.SetAllowAllTimelinePresentations -> action.flow.launchToggleAllowAllTimelinePresentations(
+                            userDataRepository = userDataRepository,
+                        )
+
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SwitchSession -> action.flow.launchHandleSwitchSessionMutations(
+                            state = state,
+                            authRepository = authRepository,
+                        )
+                        is Action.UpdateFeedPreference -> action.flow.launchUpdateFeedPreferenceMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateThreadViewPreference -> action.flow.launchUpdateThreadPreferenceMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        Action.SignOut -> action.flow.collect {
+                            authRepository.signOut()
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 fun launchSignedInProfileSavedStateMutations(

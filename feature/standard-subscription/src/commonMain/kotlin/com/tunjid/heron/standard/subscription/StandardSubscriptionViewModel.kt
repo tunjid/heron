@@ -53,41 +53,50 @@ fun interface StandardSubscriptionViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualStandardSubscriptionViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: StandardSubscriptionStateHolder,
     scope: CoroutineScope,
-    @Suppress("unused") @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    StandardSubscriptionStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    StandardSubscriptionStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Suppress("unused") @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.Tile -> action.flow.launchSubscriptionLoadMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.Tile -> action.flow.launchSubscriptionLoadMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchSubscriptionLoadMutations(

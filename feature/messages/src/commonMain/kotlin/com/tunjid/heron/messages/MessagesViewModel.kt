@@ -72,60 +72,69 @@ fun interface MessagesViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualMessagesViewModel(
-    authRepository: AuthRepository,
-    messagesRepository: MessageRepository,
-    searchRepository: SearchRepository,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: MessagesStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    MessagesStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    MessagesStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        messagesRepository: MessageRepository,
+        searchRepository: SearchRepository,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
+                        is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
+                            state = state,
+                            navActions = navActions,
+                            messagesRepository = messagesRepository,
+                        )
+                        is Action.Tile ->
+                            action.flow
+                                .map { it.tilingAction }
+                                .launchTilingMutations(
+                                    state = state,
+                                    updateQueryData = { copy(data = it) },
+                                    refreshQuery = { copy(data = data.reset()) },
+                                    cursorListLoader = messagesRepository::conversations,
+                                    onNewItems = { items ->
+                                        items.distinctBy(Conversation::id)
+                                    },
+                                )
                     }
-                    is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
-                    is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
-                        state = state,
-                        navActions = navActions,
-                        messagesRepository = messagesRepository,
-                    )
-                    is Action.Tile ->
-                        action.flow
-                            .map { it.tilingAction }
-                            .launchTilingMutations(
-                                state = state,
-                                updateQueryData = { copy(data = it) },
-                                refreshQuery = { copy(data = data.reset()) },
-                                cursorListLoader = messagesRepository::conversations,
-                                onNewItems = { items ->
-                                    items.distinctBy(Conversation::id)
-                                },
-                            )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(

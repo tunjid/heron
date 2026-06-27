@@ -32,36 +32,45 @@ fun interface EmbeddableRecordOptionsViewModelInitializer {
     ): EmbeddableRecordOptionsViewModel
 }
 
-@AssistedInject
 class EmbeddableRecordOptionsViewModel(
-    authRepository: AuthRepository,
-    messageRepository: MessageRepository,
-    @Assisted scope: CoroutineScope,
+    mutator: EmbeddableRecordOptionsStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    EmbeddableRecordOptionsStateHolder by scope.actionSuspendingStateMutator(
-        state = EmbeddableRecordOptionsState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadSignedInProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadRecentConversationsMutations(
-                state = state,
-                messageRepository = messageRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = EmbeddableRecordOptionsAction::key,
-            ) {
-                when (val action = type()) {
-                    is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchedCollect {
-                        state.editTitle = it.title
+    EmbeddableRecordOptionsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        messageRepository: MessageRepository,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = EmbeddableRecordOptionsState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadSignedInProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadRecentConversationsMutations(
+                    state = state,
+                    messageRepository = messageRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = EmbeddableRecordOptionsAction::key,
+                ) {
+                    when (val action = type()) {
+                        is EmbeddableRecordOptionsAction.SetEditTitle -> action.flow.launchedCollect {
+                            state.editTitle = it.title
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(

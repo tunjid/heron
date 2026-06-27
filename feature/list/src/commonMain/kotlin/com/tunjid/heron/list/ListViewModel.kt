@@ -78,99 +78,108 @@ fun interface ListViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualListViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    writeQueue: WriteQueue,
-    timelineRepository: TimelineRepository,
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    searchRepository: SearchRepository,
-    authRepository: AuthRepository,
-    userDataRepository: UserDataRepository,
-    @Assisted
+    mutator: ListStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ListStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchSignedInProfileIdMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchTimelineStateHolderMutations(
-                state = state,
-                request = route.timelineRequest,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-                profileRepository = profileRepository,
-            )
-            launchListMemberStateHolderMutations(
-                state = state,
-                request = route.timelineRequest,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-                recordRepository = recordRepository,
-                authRepository = authRepository,
-            )
+    ListStateHolder by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        writeQueue: WriteQueue,
+        timelineRepository: TimelineRepository,
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        searchRepository: SearchRepository,
+        authRepository: AuthRepository,
+        userDataRepository: UserDataRepository,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchSignedInProfileIdMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchTimelineStateHolderMutations(
+                    state = state,
+                    request = route.timelineRequest,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                    profileRepository = profileRepository,
+                )
+                launchListMemberStateHolderMutations(
+                    state = state,
+                    request = route.timelineRequest,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                    recordRepository = recordRepository,
+                    authRepository = authRepository,
+                )
 
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateFeedListStatus -> action.flow.launchFeedListStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.AddListMember -> action.flow.launchAddListMemberMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.CurrentPageChanged -> action.flow.collect { event ->
-                        state.isOnProfilesTab =
-                            state.stateHolders.getOrNull(event.currentPage) is ListScreenStateHolders.Members
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateFeedListStatus -> action.flow.launchFeedListStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.AddListMember -> action.flow.launchAddListMemberMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SearchProfiles -> action.flow.launchSearchMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.CurrentPageChanged -> action.flow.collect { event ->
+                            state.isOnProfilesTab =
+                                state.stateHolders.getOrNull(event.currentPage) is ListScreenStateHolders.Members
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(

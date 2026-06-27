@@ -36,45 +36,54 @@ fun interface PostInteractionsViewModelInitializer {
     ): PostInteractionsViewModel
 }
 
-@AssistedInject
 class PostInteractionsViewModel(
-    authRepository: AuthRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted scope: CoroutineScope,
+    mutator: PostInteractionsStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    PostInteractionsStateHolder by scope.actionSuspendingStateMutator(
-        state = PostInteractionsState.Immutable().toSnapshotMutable(),
-        // Produced eagerly so the immediate-confirm path (like/bookmark) can read isSignedIn and
-        // dispatch SendInteraction while the sheet is still hidden — that only works if the producer
-        // is always running. Because collection is eager, take care adding flows here: they are
-        // collected for the ViewModel's whole lifetime. authRepository.signedInUser is a hot, shared
-        // (multicast) flow, so collecting it eagerly is cheap.
-        started = SharingStarted.Eagerly,
-        producer = { state, actions ->
-            launchLoadSignedInMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = PostInteractionsAction::key,
-            ) {
-                when (val action = type()) {
-                    is PostInteractionsAction.SendInteraction -> action.flow.launchSendInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is PostInteractionsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is PostInteractionsAction.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+    PostInteractionsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = PostInteractionsState.Immutable().toSnapshotMutable(),
+            // Produced eagerly so the immediate-confirm path (like/bookmark) can read isSignedIn and
+            // dispatch SendInteraction while the sheet is still hidden — that only works if the producer
+            // is always running. Because collection is eager, take care adding flows here: they are
+            // collected for the ViewModel's whole lifetime. authRepository.signedInUser is a hot, shared
+            // (multicast) flow, so collecting it eagerly is cheap.
+            started = SharingStarted.Eagerly,
+            producer = { state, actions ->
+                launchLoadSignedInMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = PostInteractionsAction::key,
+                ) {
+                    when (val action = type()) {
+                        is PostInteractionsAction.SendInteraction -> action.flow.launchSendInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is PostInteractionsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is PostInteractionsAction.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInMutations(
