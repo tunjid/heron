@@ -57,14 +57,14 @@ actual fun hasNotificationPermissions(): Boolean {
 actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
-    val displayScaffoldState = LocalDisplayScaffoldState.current
+    val staticStates = LocalDisplayScaffoldState.current.staticStates
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
     rationale?.let {
         NotificationsRationaleDialog(it) { callingRationale, shouldRequestPermissions ->
             if (shouldRequestPermissions) {
-                displayScaffoldState.staticStates
+                staticStates
                     .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                 when (callingRationale) {
                     NotificationDialogRationale.GoToSettings -> openAppSettings()
@@ -81,7 +81,7 @@ actual fun notificationPermissionsLauncher(
 
     val scope = rememberCoroutineScope()
 
-    return remember(displayScaffoldState, scope) {
+    return remember(staticStates, scope) {
         {
             scope.launch {
                 val status = getNotificationAuthorizationStatus()
@@ -93,7 +93,7 @@ actual fun notificationPermissionsLauncher(
                         onPermissionResult(true)
                     }
                     else -> {
-                        displayScaffoldState.staticStates
+                        staticStates
                             .onNotificationAction(NotificationAction.RequestedNotificationPermission)
                         requestNotificationPermission { granted ->
                             onPermissionResult(granted)
