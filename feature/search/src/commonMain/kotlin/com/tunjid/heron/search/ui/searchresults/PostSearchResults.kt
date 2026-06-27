@@ -32,9 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -82,8 +80,6 @@ internal fun PostSearchResults(
     state: SearchState.OfPosts,
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
-    signedInProfileId: ProfileId?,
-    mutedWordPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
