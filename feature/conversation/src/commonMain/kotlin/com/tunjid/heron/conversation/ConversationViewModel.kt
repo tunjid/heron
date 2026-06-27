@@ -80,98 +80,107 @@ fun interface ConversationViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualConversationViewModel(
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    messagesRepository: MessageRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ConversationStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ConversationStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchPendingMessageFlushMutations(
-                state = state,
-                writeQueue = writeQueue,
-            )
-            launch { messagesRepository.monitorConversationLogs() }
-            launchConversationMutations(
-                state = state,
-                messagesRepository = messagesRepository,
-            )
-            launch {
-                consumeSharedUri(
+    ConversationStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        messagesRepository: MessageRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
                     state = state,
-                    sharedUri = route.sharedUri,
-                    overrideExisting = false,
-                    recordRepository = recordRepository,
+                    authRepository = authRepository,
                 )
-            }
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
-                    }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
+                launchPendingMessageFlushMutations(
+                    state = state,
+                    writeQueue = writeQueue,
+                )
+                launch { messagesRepository.monitorConversationLogs() }
+                launchConversationMutations(
+                    state = state,
+                    messagesRepository = messagesRepository,
+                )
+                launch {
+                    consumeSharedUri(
                         state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SharedRecord -> action.flow.launchRecordSharingMutations(
-                        state = state,
+                        sharedUri = route.sharedUri,
+                        overrideExisting = false,
                         recordRepository = recordRepository,
-                        navActions = navActions,
-                    )
-                    is Action.SendMessage -> action.flow.launchSendMessageMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                        navActions = navActions,
-                    )
-                    is Action.TextChanged -> action.flow.launchInputTextChangeMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.UpdateMessageReaction -> action.flow.launchUpdateMessageReactionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.AcceptConversation -> action.flow.launchConversationUpdateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                        navActions = navActions,
-                    )
-                    is Action.LeaveConversation -> action.flow.launchConversationUpdateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                        navActions = navActions,
-                    )
-                    is Action.ToggleMute -> action.flow.launchConversationUpdateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                        navActions = navActions,
-                    )
-                    is Action.Tile -> action.flow.launchMessagingTilingMutations(
-                        state = state,
-                        messagesRepository = messagesRepository,
                     )
                 }
-            }
-        },
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SharedRecord -> action.flow.launchRecordSharingMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                            navActions = navActions,
+                        )
+                        is Action.SendMessage -> action.flow.launchSendMessageMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                            navActions = navActions,
+                        )
+                        is Action.TextChanged -> action.flow.launchInputTextChangeMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.UpdateMessageReaction -> action.flow.launchUpdateMessageReactionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.AcceptConversation -> action.flow.launchConversationUpdateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                            navActions = navActions,
+                        )
+                        is Action.LeaveConversation -> action.flow.launchConversationUpdateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                            navActions = navActions,
+                        )
+                        is Action.ToggleMute -> action.flow.launchConversationUpdateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                            navActions = navActions,
+                        )
+                        is Action.Tile -> action.flow.launchMessagingTilingMutations(
+                            state = state,
+                            messagesRepository = messagesRepository,
+                        )
+                    }
+                }
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(

@@ -26,21 +26,30 @@ fun interface SelectListViewModelInitializer {
     ): SelectListViewModel
 }
 
-@AssistedInject
 class SelectListViewModel(
-    recordRepository: RecordRepository,
-    @Assisted scope: CoroutineScope,
+    mutator: SelectListStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    SelectListStateHolder by scope.actionSuspendingStateMutator(
-        state = SelectListState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, _ ->
-            launchLoadListsMutations(
-                state = state,
-                recordRepository = recordRepository,
-            )
-        },
+    SelectListStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        recordRepository: RecordRepository,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = SelectListState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
+            producer = { state, _ ->
+                launchLoadListsMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadListsMutations(

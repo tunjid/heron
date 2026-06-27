@@ -60,60 +60,69 @@ fun interface PostsViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualPostsViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    postsRepository: PostRepository,
-    recordRepository: RecordRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: PostsStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    PostsStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route.postsRequest).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    PostsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        postsRepository: PostRepository,
+        recordRepository: RecordRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route.postsRequest).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.Tile -> action.flow.launchPostsLoadMutations(
+                            state = state,
+                            request = route.postsRequest,
+                            postsRepository = postsRepository,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.Tile -> action.flow.launchPostsLoadMutations(
-                        state = state,
-                        request = route.postsRequest,
-                        postsRepository = postsRepository,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchPostsLoadMutations(

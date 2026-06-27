@@ -35,38 +35,47 @@ fun interface PostOptionsViewModelInitializer {
     ): PostOptionsViewModel
 }
 
-@AssistedInject
 class PostOptionsViewModel(
-    authRepository: AuthRepository,
-    messageRepository: MessageRepository,
-    writeQueue: WriteQueue,
-    @Assisted scope: CoroutineScope,
+    mutator: PostOptionsStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    PostOptionsStateHolder by scope.actionSuspendingStateMutator(
-        state = PostOptionsState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadSignedInProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchUpdateRecentConversionsMutations(
-                state = state,
-                messageRepository = messageRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = PostOptionsAction::key,
-            ) {
-                when (val action = type()) {
-                    is PostOptionsAction.UpdatePostReference ->
-                        action.flow.launchUpdatePostReferenceMutations(
-                            writeQueue = writeQueue,
-                        )
+    PostOptionsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        messageRepository: MessageRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = PostOptionsState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadSignedInProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchUpdateRecentConversionsMutations(
+                    state = state,
+                    messageRepository = messageRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = PostOptionsAction::key,
+                ) {
+                    when (val action = type()) {
+                        is PostOptionsAction.UpdatePostReference ->
+                            action.flow.launchUpdatePostReferenceMutations(
+                                writeQueue = writeQueue,
+                            )
+                    }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(

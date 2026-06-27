@@ -59,51 +59,60 @@ fun interface ProfilesViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualProfilesViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    postRepository: PostRepository,
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: ProfilesStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfilesStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadSignedInProfileIdMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Tile -> action.flow.launchProfilesLoadMutations(
-                        state = state,
-                        load = route.load,
-                        postRepository = postRepository,
-                        profileRepository = profileRepository,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    ProfilesStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        postRepository: PostRepository,
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadSignedInProfileIdMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Tile -> action.flow.launchProfilesLoadMutations(
+                            state = state,
+                            load = route.load,
+                            postRepository = postRepository,
+                            profileRepository = profileRepository,
+                            recordRepository = recordRepository,
+                        )
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(

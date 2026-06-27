@@ -45,45 +45,55 @@ fun interface NotificationSettingsViewModelInitializer {
     ): ActualNotificationSettingsViewModel
 }
 
-@AssistedInject
 class ActualNotificationSettingsViewModel(
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: NotificationSettingsStateHolder,
     scope: CoroutineScope,
-    @Assisted route: Route,
+    route: Route,
 ) : RouteViewModel(scope, route),
-    NotificationSettingsStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadNotificationPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    NotificationSettingsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadNotificationPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.CacheNotificationPreferenceUpdate -> action.flow.launchCacheUpdateMutations(
+                            state = state,
+                        )
+                        is Action.UpdateNotificationPreferences -> action.flow.launchUpdateNotificationPreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.CacheNotificationPreferenceUpdate -> action.flow.launchCacheUpdateMutations(
-                        state = state,
-                    )
-                    is Action.UpdateNotificationPreferences -> action.flow.launchUpdateNotificationPreferencesMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadNotificationPreferencesMutations(

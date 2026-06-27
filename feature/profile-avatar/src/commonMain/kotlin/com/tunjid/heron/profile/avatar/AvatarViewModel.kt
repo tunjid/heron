@@ -49,46 +49,55 @@ fun interface ProfileAvatarViewModelInitializer {
     ): ActualProfileAvatarViewModel
 }
 
-@AssistedInject
 class ActualProfileAvatarViewModel(
-    profileRepository: ProfileRepository,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ProfileStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfileStateHolder by scope.actionSuspendingStateMutator(
-        state = State.Immutable(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            profile = route.profile ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
-            ),
-        ).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    ProfileStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        profileRepository: ProfileRepository,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State.Immutable(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                profile = route.profile ?: stubProfile(
+                    did = ProfileId(route.profileHandleOrId.id),
+                    handle = ProfileHandle(route.profileHandleOrId.id),
+                    avatar = null,
+                ),
+            ).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(

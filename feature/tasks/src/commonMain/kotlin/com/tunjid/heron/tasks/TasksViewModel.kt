@@ -75,55 +75,64 @@ fun interface TasksViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualTasksViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: TasksStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    TasksStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadInFlightWrites(
-                state = state,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                writeQueue = writeQueue,
-            )
-            launchLoadFailedWrites(
-                state = state,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                writeQueue = writeQueue,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Retry -> action.flow.launchRetryMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Dismiss -> action.flow.launchDismissMutations(
-                        writeQueue = writeQueue,
-                        state = state,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.launchedCollect {
-                        navActions(it.navigationMutation)
+    TasksStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadInFlightWrites(
+                    state = state,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    writeQueue = writeQueue,
+                )
+                launchLoadFailedWrites(
+                    state = state,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    writeQueue = writeQueue,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Retry -> action.flow.launchRetryMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Dismiss -> action.flow.launchDismissMutations(
+                            writeQueue = writeQueue,
+                            state = state,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.launchedCollect {
+                            navActions(it.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadInFlightWrites(

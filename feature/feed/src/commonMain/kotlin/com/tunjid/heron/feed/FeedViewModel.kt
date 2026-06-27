@@ -63,75 +63,84 @@ fun interface FeedViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualFeedViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    writeQueue: WriteQueue,
-    authRepository: AuthRepository,
-    timelineRepository: TimelineRepository,
-    profileRepository: ProfileRepository,
-    userDataRepository: UserDataRepository,
-    @Assisted
+    mutator: FeedStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    FeedStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchSignedInProfileIdMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchTimelineStateHolderMutations(
-                state = state,
-                request = route.timelineRequest,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-                profileRepository = profileRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+    FeedStateHolder by mutator {
 
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        writeQueue: WriteQueue,
+        authRepository: AuthRepository,
+        timelineRepository: TimelineRepository,
+        profileRepository: ProfileRepository,
+        userDataRepository: UserDataRepository,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchSignedInProfileIdMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchTimelineStateHolderMutations(
+                    state = state,
+                    request = route.timelineRequest,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                    profileRepository = profileRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.ScrollToTop -> action.flow.launchScrollToTopMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+                        is Action.ScrollToTop -> action.flow.launchScrollToTopMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(

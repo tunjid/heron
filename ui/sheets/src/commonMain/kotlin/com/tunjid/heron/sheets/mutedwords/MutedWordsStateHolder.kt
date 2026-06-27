@@ -37,60 +37,69 @@ fun interface MutedWordsViewModelInitializer {
     ): MutedWordsViewModel
 }
 
-@AssistedInject
 class MutedWordsViewModel(
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    @Assisted scope: CoroutineScope,
+    mutator: MutedWordsStateHolder,
+    scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    MutedWordsStateHolder by scope.actionSuspendingStateMutator(
-        state = MutedWordsState.Immutable().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = MutedWordsAction::key,
-            ) {
-                when (val action = type()) {
-                    is MutedWordsAction.UpdateNewWord -> action.flow.launchUpdateNewWordMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.UpdateDuration -> action.flow.launchUpdateDurationMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.UpdateTargets -> action.flow.launchUpdateTargetsMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.UpdateExcludeNonFollowers -> action.flow.launchUpdateExcludeNonFollowersMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.AddMutedWord -> action.flow.launchAddWordMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.RemoveMutedWord -> action.flow.launchRemoveMutedWordMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.ClearAll -> action.flow.launchClearAllMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.ResetErrors -> action.flow.launchResetErrorsMutations(
-                        state = state,
-                    )
-                    is MutedWordsAction.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is MutedWordsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
+    MutedWordsStateHolder by mutator {
+
+    @AssistedInject
+    constructor(
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = MutedWordsState.Immutable().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = MutedWordsAction::key,
+                ) {
+                    when (val action = type()) {
+                        is MutedWordsAction.UpdateNewWord -> action.flow.launchUpdateNewWordMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.UpdateDuration -> action.flow.launchUpdateDurationMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.UpdateTargets -> action.flow.launchUpdateTargetsMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.UpdateExcludeNonFollowers -> action.flow.launchUpdateExcludeNonFollowersMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.AddMutedWord -> action.flow.launchAddWordMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.RemoveMutedWord -> action.flow.launchRemoveMutedWordMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.ClearAll -> action.flow.launchClearAllMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.ResetErrors -> action.flow.launchResetErrorsMutations(
+                            state = state,
+                        )
+                        is MutedWordsAction.UpdateMutedWord -> action.flow.launchUpdateMutedWordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is MutedWordsAction.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                    }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(

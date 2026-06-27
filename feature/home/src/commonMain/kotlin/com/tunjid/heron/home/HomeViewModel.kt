@@ -67,93 +67,102 @@ fun interface HomeViewModelInitializer {
 }
 
 @Stable
-@AssistedInject
 class ActualHomeViewModel(
-    authRepository: AuthRepository,
-    searchRepository: SearchRepository,
-    timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: HomeStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    HomeStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchTimelineMutations(
-                state = state,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-                userDataRepository = userDataRepository,
-            )
-            launchTrendsMutations(
-                state = state,
-                searchRepository = searchRepository,
-            )
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
+    HomeStateHolder by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
-                        if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
-                            state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        searchRepository: SearchRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchTimelineMutations(
+                    state = state,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                    userDataRepository = userDataRepository,
+                )
+                launchTrendsMutations(
+                    state = state,
+                    searchRepository = searchRepository,
+                )
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
+                            if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
+                                state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
+                            }
                         }
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.RefreshCurrentTab -> action.flow.launchTabRefreshMutations(
+                            state = state,
+                        )
+
+                        is Action.UpdateTimeline -> action.flow.launchSaveTimelinePreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.SetCurrentTab -> action.flow.launchSetCurrentTabMutations(
+                            state = state,
+                            userDataRepository = userDataRepository,
+                        )
+                        is Action.SetTabLayout -> action.flow.launchSetTabLayoutMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-
-                    is Action.RefreshCurrentTab -> action.flow.launchTabRefreshMutations(
-                        state = state,
-                    )
-
-                    is Action.UpdateTimeline -> action.flow.launchSaveTimelinePreferencesMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.SetCurrentTab -> action.flow.launchSetCurrentTabMutations(
-                        state = state,
-                        userDataRepository = userDataRepository,
-                    )
-                    is Action.SetTabLayout -> action.flow.launchSetTabLayoutMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(

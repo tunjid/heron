@@ -71,51 +71,60 @@ fun interface AtmosphereAppViewModelInitializer {
     ): ActualAtmosphereAppViewModel
 }
 
-@AssistedInject
 class ActualAtmosphereAppViewModel(
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: AtmosphereAppStateHolder,
     scope: CoroutineScope,
-    @Assisted
     route: Route,
 ) : RouteViewModel(scope, route),
-    AtmosphereAppStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchProfileLoadMutations(
-                profileRepository,
-                route,
-                scope,
-                state,
-                recordRepository,
-            )
+    AtmosphereAppStateHolder by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.PageChanged -> action.flow.collect { event ->
-                        state.currentPage = event.page
-                    }
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+    @AssistedInject
+    constructor(
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchProfileLoadMutations(
+                    profileRepository,
+                    route,
+                    scope,
+                    state,
+                    recordRepository,
+                )
+
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.PageChanged -> action.flow.collect { event ->
+                            state.currentPage = event.page
+                        }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
+        route = route,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchProfileLoadMutations(
