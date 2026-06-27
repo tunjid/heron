@@ -283,7 +283,7 @@ internal class PaneAnchorState(
  */
 @Composable
 fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
-    val currentlyEnabled = remember {
+    val currentlyEnabled = remember(this) {
         derivedStateOf {
             paneState.pane == ThreePane.Primary &&
                 displayScaffoldState.filteredPaneOrder.size > 1 &&
