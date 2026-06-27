@@ -59,16 +59,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.ListMember
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.sourceId
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -79,7 +76,6 @@ import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
-import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
@@ -255,11 +251,9 @@ internal fun ListScreen(
                             )
 
                             is ListScreenStateHolders.Timeline -> ListTimeline(
-                                signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
-                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             )
@@ -428,11 +422,9 @@ private fun ListMembers(
 
 @Composable
 private fun ListTimeline(
-    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {

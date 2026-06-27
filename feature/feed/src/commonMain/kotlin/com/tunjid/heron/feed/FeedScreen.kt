@@ -39,14 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.sourceId
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -56,7 +53,6 @@ import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
-import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
@@ -112,8 +108,6 @@ internal fun FeedScreen(
                 paneScaffoldState = paneScaffoldState,
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
-                signedInProfileId = state.signedInProfileId,
-                mutedWordsPreferences = state.preferences.mutedWordPreferences,
                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
             )
@@ -124,11 +118,9 @@ internal fun FeedScreen(
 @Composable
 private fun FeedTimeline(
     scrollToTopRequestId: String?,
-    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {

@@ -199,8 +199,6 @@ internal fun GeneralSearchResults(
                             state = searchResultState,
                             gridState = gridState,
                             modifier = modifier,
-                            signedInProfileId = state.signedInProfile?.did,
-                            mutedWordPreferences = state.preferences.mutedWordPreferences,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             videoStates = videoStates,

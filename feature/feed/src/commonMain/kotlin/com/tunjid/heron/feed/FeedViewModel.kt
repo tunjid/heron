@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -41,7 +40,6 @@ import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.isNoOp
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
-import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -70,7 +68,6 @@ class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,
     authRepository: AuthRepository,
-    recordRepository: RecordRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     userDataRepository: UserDataRepository,

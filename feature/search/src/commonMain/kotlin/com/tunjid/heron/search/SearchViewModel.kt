@@ -379,7 +379,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
     }
     shared
         .filterIsInstance<Action.Search.OnSearchQueryChanged>()
-        .debounce(300.milliseconds.inWholeMilliseconds)
+        .debounce(300.milliseconds)
         .flatMapLatest {
             searchRepository.autoCompleteProfileSearch(
                 query = SearchQuery.OfProfiles(
