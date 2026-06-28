@@ -33,7 +33,7 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
-import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
 import com.tunjid.mutator.compose.produceState
 import com.tunjid.mutator.invoke
 import com.tunjid.treenav.MultiStackNav
@@ -158,7 +158,7 @@ class DisplayScaffoldState internal constructor(
         private val notificationStateHolder: NotificationStateHolder,
         internal val imageLoader: ImageLoader,
         internal val videoPlayerController: VideoPlayerController,
-        internal val viewModelInitializer: ViewModelInitializer,
+        internal val stateHolderInitializer: StateHolderInitializer,
     ) {
         internal val identityState
             get() = identityStateHolder.state

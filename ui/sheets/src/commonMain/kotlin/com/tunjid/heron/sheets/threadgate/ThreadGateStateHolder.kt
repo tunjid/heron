@@ -1,6 +1,7 @@
 package com.tunjid.heron.sheets.threadgate
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -9,7 +10,7 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -24,7 +25,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-interface ThreadGateStateHolder : ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>
+interface ThreadGateStateHolder :
+    SheetStateHolder,
+    ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>
 
 @AssistedFactory
 fun interface ThreadGateViewModelInitializer {
@@ -36,7 +39,7 @@ fun interface ThreadGateViewModelInitializer {
 class ThreadGateViewModel(
     mutator: ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>,
     scope: CoroutineScope,
-) : SheetViewModel(scope),
+) : ViewModel(viewModelScope = scope),
     ThreadGateStateHolder,
     ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState> by mutator {
 

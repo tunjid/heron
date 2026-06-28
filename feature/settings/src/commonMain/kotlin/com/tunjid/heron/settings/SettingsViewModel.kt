@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.settings
 
+import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.Timeline
@@ -27,7 +28,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -53,7 +54,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-internal interface SettingsStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface SettingsStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SettingsViewModelInitializer {
@@ -66,8 +69,7 @@ fun interface SettingsViewModelInitializer {
 class ActualSettingsViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     SettingsStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -170,7 +172,6 @@ class ActualSettingsViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

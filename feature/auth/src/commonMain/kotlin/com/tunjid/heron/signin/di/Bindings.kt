@@ -68,8 +68,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -138,10 +138,10 @@ class SignInBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualSignInViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(SignInStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: SignInViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -180,7 +180,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: SignInStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSignInViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<SignInStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

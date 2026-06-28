@@ -28,11 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.ui.stateproduction.viewModelCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -88,19 +83,11 @@ class BottomSheetScope(
         }
 
         @Composable
-        inline fun <reified T : BottomSheetState, reified VM : ViewModel> rememberBottomSheetState(
+        fun <T : BottomSheetState, H : Any> rememberBottomSheetState(
+            stateHolder: H,
             skipPartiallyExpanded: Boolean = true,
-            crossinline viewModelInitializer: (CoroutineScope) -> VM,
-            crossinline block: (BottomSheetScope, VM) -> T,
+            block: (BottomSheetScope, H) -> T,
         ): T {
-            val viewModel: VM = viewModel<VM>(
-                viewModelStoreOwner = rememberViewModelStoreOwner(
-                    provider = rememberViewModelStoreProvider(),
-                ),
-                initializer = {
-                    viewModelInitializer(viewModelCoroutineScope())
-                },
-            )
             val sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = skipPartiallyExpanded,
             )
@@ -109,14 +96,14 @@ class BottomSheetScope(
             return remember(
                 key1 = sheetState,
                 key2 = scope,
-                key3 = viewModel,
+                key3 = stateHolder,
             ) {
                 block(
                     BottomSheetScope(
                         sheetState = sheetState,
                         coroutineScope = scope,
                     ),
-                    viewModel,
+                    stateHolder,
                 )
             }
         }

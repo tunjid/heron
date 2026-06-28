@@ -62,7 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 class PostOptionsSheetState(
     scope: BottomSheetScope,
-    internal val viewModel: PostOptionsViewModel,
+    internal val stateHolder: PostOptionsStateHolder,
 ) : BottomSheetState(scope) {
 
     var currentPost: Post? by mutableStateOf(null)
@@ -80,11 +80,11 @@ class PostOptionsSheetState(
     companion object {
         @Composable
         fun rememberUpdatedPostOptionsSheetState(
-            initializer: (CoroutineScope) -> PostOptionsViewModel,
+            stateHolder: PostOptionsStateHolder,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
             val state = rememberBottomSheetState(
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = ::PostOptionsSheetState,
             )
 
@@ -104,7 +104,7 @@ private fun PostOptionsBottomSheet(
     onOptionClicked: (PostOption) -> Unit,
 ) {
     state.ModalBottomSheet {
-        val postOptionsState = state.viewModel.produceState()
+        val postOptionsState = state.stateHolder.produceState()
 
         val signedInProfileId = postOptionsState.signedInProfileId
         Column(
@@ -225,7 +225,7 @@ private fun PostManagementMenuSection(
                 val overwriteDialogState = rememberSimpleDialogState()
                 val isLinkedPost = ownDocument.bskyPostRef?.uri == post.uri
                 val dispatch = {
-                    state.viewModel.accept(
+                    state.stateHolder.accept(
                         PostOptionsAction.UpdatePostReference(
                             if (isLinkedPost) StandardDocument.PostReference.Unlink(
                                 documentUri = ownDocument.uri,

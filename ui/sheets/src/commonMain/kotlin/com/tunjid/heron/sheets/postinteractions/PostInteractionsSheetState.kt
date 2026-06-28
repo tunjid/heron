@@ -57,18 +57,18 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 class PostInteractionsSheetState internal constructor(
     scope: BottomSheetScope,
-    internal val viewModel: PostInteractionsViewModel,
+    internal val stateHolder: PostInteractionsStateHolder,
 ) : BottomSheetState(scope) {
 
     var showingAction by mutableStateOf<PostAction.OfInteraction?>(null)
         internal set
 
-    val state: PostInteractionsState get() = viewModel.state
+    val state: PostInteractionsState get() = stateHolder.state
 
-    val messages: List<Memo> get() = viewModel.state.messages
+    val messages: List<Memo> get() = stateHolder.state.messages
 
     fun onSnackbarMessageConsumed(memo: Memo) {
-        viewModel.accept(PostInteractionsAction.SnackbarDismissed(memo))
+        stateHolder.accept(PostInteractionsAction.SnackbarDismissed(memo))
     }
 
     fun onInteraction(interaction: PostAction.OfInteraction) {
@@ -82,11 +82,11 @@ class PostInteractionsSheetState internal constructor(
     companion object {
         @Composable
         fun rememberUpdatedPostInteractionsSheetState(
-            initializer: (CoroutineScope) -> PostInteractionsViewModel,
+            stateHolder: PostInteractionsStateHolder,
             sharedElementPrefix: String?,
         ): PostInteractionsSheetState {
             val state = rememberBottomSheetState(
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = ::PostInteractionsSheetState,
             )
 
@@ -118,7 +118,7 @@ private fun PostInteractionsBottomSheet(
             is Post.Interaction.Upsert.Gate,
             -> {
                 if (state.state.isSignedIn) {
-                    state.viewModel.accept(PostInteractionsAction.SendInteraction(interaction))
+                    state.stateHolder.accept(PostInteractionsAction.SendInteraction(interaction))
                     state.showingAction = null
                 } else {
                     state.show()
@@ -128,7 +128,7 @@ private fun PostInteractionsBottomSheet(
     }
 
     state.ModalBottomSheet {
-        val postInteractionsState = state.viewModel.produceState()
+        val postInteractionsState = state.stateHolder.produceState()
         val action = state.showingAction
         val currentInteraction = action?.interaction
 
@@ -150,7 +150,7 @@ private fun PostInteractionsBottomSheet(
                             enabled = true,
                             icon = Icons.Rounded.Repeat,
                             onClick = {
-                                state.viewModel.accept(PostInteractionsAction.SendInteraction(currentInteraction))
+                                state.stateHolder.accept(PostInteractionsAction.SendInteraction(currentInteraction))
                                 state.hide()
                             },
                         )
@@ -159,7 +159,7 @@ private fun PostInteractionsBottomSheet(
                             enabled = action.viewerStats.canQuote,
                             icon = Icons.Rounded.FormatQuote,
                             onClick = {
-                                state.viewModel.accept(
+                                state.stateHolder.accept(
                                     PostInteractionsAction.Navigate.To(
                                         composePostDestination(
                                             type = Post.Create.Quote(
@@ -186,7 +186,7 @@ private fun PostInteractionsBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (!postInteractionsState.isSignedIn) {
-                        state.viewModel.accept(
+                        state.stateHolder.accept(
                             PostInteractionsAction.Navigate.To(signInDestination()),
                         )
                     }

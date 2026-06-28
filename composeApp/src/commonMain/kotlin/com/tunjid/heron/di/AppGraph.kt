@@ -53,8 +53,8 @@ import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -119,8 +119,8 @@ interface AppGraph {
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
         databaseCleanup: DatabaseCleanup,
-        sheetViewModelInitializers: Map<KClass<*>, SheetViewModelInitializer>,
-        routeViewModelInitializers: Map<KClass<*>, RouteViewModelInitializer>,
+        sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
+        routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -128,8 +128,8 @@ interface AppGraph {
         notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
-        sheetViewModelInitializers = sheetViewModelInitializers,
-        routeViewModelInitializers = routeViewModelInitializers,
+        sheetStateHolderInitializers = sheetStateHolderInitializers,
+        routeStateHolderInitializers = routeStateHolderInitializers,
     )
 
     val appState: AppState

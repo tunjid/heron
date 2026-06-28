@@ -1,13 +1,14 @@
 package com.tunjid.heron.sheets.embedrecordoptions
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -22,7 +23,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
-interface EmbeddableRecordOptionsStateHolder : ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
+interface EmbeddableRecordOptionsStateHolder :
+    SheetStateHolder,
+    ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
 
 @AssistedFactory
 fun interface EmbeddableRecordOptionsViewModelInitializer {
@@ -34,7 +37,7 @@ fun interface EmbeddableRecordOptionsViewModelInitializer {
 class EmbeddableRecordOptionsViewModel(
     mutator: ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>,
     scope: CoroutineScope,
-) : SheetViewModel(scope),
+) : ViewModel(viewModelScope = scope),
     EmbeddableRecordOptionsStateHolder,
     ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState> by mutator {
 

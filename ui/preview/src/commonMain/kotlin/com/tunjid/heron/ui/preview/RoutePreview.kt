@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.StubImageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
-import com.tunjid.heron.sheets.preview.stubSheetViewModelInitializer
+import com.tunjid.heron.sheets.preview.stubSheetStateHolder
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityState
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
@@ -36,11 +36,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.AppScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.DisplayScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
-import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
+import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -50,12 +48,14 @@ import kotlin.reflect.KClass
 
 @Composable
 fun RoutePreview(
-    routeViewModel: RouteViewModel,
+    route: Route,
+    routeStateHolder: RouteStateHolder,
     signedInProfile: Profile? = null,
     render: @Composable (Route, PaneScaffoldState) -> Unit,
 ) {
     val staticStates = remember(
-        routeViewModel,
+        route,
+        routeStateHolder,
         signedInProfile,
     ) {
         DisplayScaffoldState.StaticStates(
@@ -63,21 +63,20 @@ fun RoutePreview(
                 signedInProfile = signedInProfile,
             ),
             navigationStateHolder = stubNavigationStateHolder(
-                route = routeViewModel.route,
+                route = route,
             ),
             notificationStateHolder = stubNotificationStateHolder(),
             imageLoader = StubImageLoader,
             videoPlayerController = StubVideoPlayerController,
-            viewModelInitializer = object : ViewModelInitializer {
-                override fun sheetViewModelInitializer(
-                    modelClass: KClass<out SheetViewModel>,
-                ): SheetViewModelInitializer = stubSheetViewModelInitializer(modelClass)
+            stateHolderInitializer = object : StateHolderInitializer {
+                override fun createRouteStateHolder(
+                    type: KClass<out RouteStateHolder>,
+                    route: Route,
+                ): RouteStateHolder = routeStateHolder
 
-                override fun routeViewModelInitializer(
-                    modelClass: KClass<out RouteViewModel>,
-                ): RouteViewModelInitializer = RouteViewModelInitializer { _, _ ->
-                    routeViewModel
-                }
+                override fun createSheetStateHolder(
+                    type: KClass<out SheetStateHolder>,
+                ): SheetStateHolder = stubSheetStateHolder(type)
             },
         )
     }
@@ -89,7 +88,7 @@ fun RoutePreview(
             threePaneEntry(
                 render = {
                     render(
-                        routeViewModel.route,
+                        route,
                         rememberPaneScaffoldState(),
                     )
                 },

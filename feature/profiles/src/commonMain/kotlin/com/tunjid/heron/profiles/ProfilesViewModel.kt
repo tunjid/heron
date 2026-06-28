@@ -17,6 +17,7 @@
 package com.tunjid.heron.profiles
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthRepository
@@ -33,7 +34,7 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -48,7 +49,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal interface ProfilesStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ProfilesStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ProfilesViewModelInitializer {
@@ -62,8 +65,7 @@ fun interface ProfilesViewModelInitializer {
 class ActualProfilesViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ProfilesStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -111,7 +113,6 @@ class ActualProfilesViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

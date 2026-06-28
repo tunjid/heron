@@ -18,6 +18,7 @@ package com.tunjid.heron.conversation
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
@@ -45,7 +46,7 @@ import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.removeQueryParamsFromCurrentRoute
 import com.tunjid.heron.ui.scaffold.navigation.sharedUri
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -69,7 +70,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-internal interface ConversationStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ConversationStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ConversationViewModelInitializer {
@@ -83,8 +86,7 @@ fun interface ConversationViewModelInitializer {
 class ActualConversationViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ConversationStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -179,7 +181,6 @@ class ActualConversationViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

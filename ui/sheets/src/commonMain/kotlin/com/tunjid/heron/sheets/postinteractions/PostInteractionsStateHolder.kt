@@ -1,6 +1,7 @@
 package com.tunjid.heron.sheets.postinteractions
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -8,7 +9,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -26,7 +27,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-interface PostInteractionsStateHolder : ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>
+interface PostInteractionsStateHolder :
+    SheetStateHolder,
+    ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>
 
 @AssistedFactory
 fun interface PostInteractionsViewModelInitializer {
@@ -38,7 +41,7 @@ fun interface PostInteractionsViewModelInitializer {
 class PostInteractionsViewModel(
     mutator: ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>,
     scope: CoroutineScope,
-) : SheetViewModel(scope),
+) : ViewModel(viewModelScope = scope),
     PostInteractionsStateHolder,
     ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState> by mutator {
 

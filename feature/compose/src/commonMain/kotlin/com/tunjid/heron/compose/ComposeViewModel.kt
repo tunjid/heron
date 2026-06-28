@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
@@ -40,7 +41,7 @@ import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.navigation.sharedUri
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -65,7 +66,9 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
-internal interface ComposeStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ComposeStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ComposeViewModelInitializer {
@@ -79,8 +82,7 @@ fun interface ComposeViewModelInitializer {
 class ActualComposeViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ComposeStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -165,7 +167,6 @@ class ActualComposeViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

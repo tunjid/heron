@@ -16,9 +16,10 @@
 
 package com.tunjid.heron.splash
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -29,7 +30,9 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 
-internal interface SplashStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface SplashStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SplashViewModelInitializer {
@@ -42,8 +45,7 @@ fun interface SplashViewModelInitializer {
 class ActualSplashViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     SplashStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -71,6 +73,5 @@ class ActualSplashViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }

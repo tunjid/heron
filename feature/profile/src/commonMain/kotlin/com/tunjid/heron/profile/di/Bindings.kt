@@ -56,8 +56,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -123,10 +123,10 @@ class ProfileBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualProfileViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(ProfileStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: ProfileViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -175,7 +175,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: ProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfileViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<ProfileStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

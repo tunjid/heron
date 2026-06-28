@@ -1,6 +1,7 @@
 package com.tunjid.heron.sheets.mutedwords
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -8,7 +9,7 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -28,7 +29,9 @@ import kotlinx.coroutines.flow.take
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-interface MutedWordsStateHolder : ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>
+interface MutedWordsStateHolder :
+    SheetStateHolder,
+    ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>
 
 @AssistedFactory
 fun interface MutedWordsViewModelInitializer {
@@ -40,7 +43,7 @@ fun interface MutedWordsViewModelInitializer {
 class MutedWordsViewModel(
     mutator: ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>,
     scope: CoroutineScope,
-) : SheetViewModel(scope),
+) : ViewModel(viewModelScope = scope),
     MutedWordsStateHolder,
     ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState> by mutator {
 

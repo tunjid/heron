@@ -92,26 +92,26 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 sealed class ThreadGateSheetState private constructor(
     scope: BottomSheetScope,
-    internal val viewModel: ThreadGateViewModel,
+    internal val stateHolder: ThreadGateStateHolder,
 ) : BottomSheetState(scope) {
 
-    val messages: List<Memo> get() = viewModel.state.messages
+    val messages: List<Memo> get() = stateHolder.state.messages
 
     fun onSnackbarMessageConsumed(memo: Memo) {
-        viewModel.accept(ThreadGateAction.SnackbarDismissed(memo))
+        stateHolder.accept(ThreadGateAction.SnackbarDismissed(memo))
     }
 
     override fun onHidden() {
-        viewModel.accept(ThreadGateAction.Reset)
+        stateHolder.accept(ThreadGateAction.Reset)
     }
 
     @Stable
     class OfTimeline(
         scope: BottomSheetScope,
-        viewModel: ThreadGateViewModel,
-    ) : ThreadGateSheetState(scope, viewModel) {
+        stateHolder: ThreadGateStateHolder,
+    ) : ThreadGateSheetState(scope, stateHolder) {
         fun show(timelineItem: TimelineItem) {
-            viewModel.accept(
+            stateHolder.accept(
                 ThreadGateAction.Initialize(
                     mode = Mode.Timeline(timelineItem),
                     allowed = timelineItem.threadGate?.allowed,
@@ -124,10 +124,10 @@ sealed class ThreadGateSheetState private constructor(
     @Stable
     class OfPreference(
         scope: BottomSheetScope,
-        viewModel: ThreadGateViewModel,
-    ) : ThreadGateSheetState(scope, viewModel) {
+        stateHolder: ThreadGateStateHolder,
+    ) : ThreadGateSheetState(scope, stateHolder) {
         fun show(preference: PostInteractionSettingsPreference?) {
-            viewModel.accept(
+            stateHolder.accept(
                 ThreadGateAction.Initialize(
                     mode = Mode.Preferences(preference),
                     allowed = preference?.threadGateAllowed,
@@ -140,22 +140,22 @@ sealed class ThreadGateSheetState private constructor(
     companion object {
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            initializer: (CoroutineScope) -> ThreadGateViewModel,
+            stateHolder: ThreadGateStateHolder,
         ): OfTimeline = rememberUpdatedGenericThreadGateSheetState(
-            initializer = initializer,
+            stateHolder = stateHolder,
             block = ::OfTimeline,
         ) { state, mode, allowed ->
             require(mode is Mode.Timeline)
             // Enqueue from the ViewModel; it dismisses the sheet only after the write is enqueued.
-            state.viewModel.accept(ThreadGateAction.SendInteraction(mode.update(allowed)))
+            state.stateHolder.accept(ThreadGateAction.SendInteraction(mode.update(allowed)))
         }
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            initializer: (CoroutineScope) -> ThreadGateViewModel,
+            stateHolder: ThreadGateStateHolder,
             onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit,
         ): OfPreference = rememberUpdatedGenericThreadGateSheetState(
-            initializer = initializer,
+            stateHolder = stateHolder,
             block = ::OfPreference,
         ) { state, mode, allowed ->
             require(mode is Mode.Preferences)
@@ -165,12 +165,12 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         private inline fun <reified T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
-            crossinline initializer: (CoroutineScope) -> ThreadGateViewModel,
-            crossinline block: (BottomSheetScope, ThreadGateViewModel) -> T,
+            stateHolder: ThreadGateStateHolder,
+            noinline block: (BottomSheetScope, ThreadGateStateHolder) -> T,
             crossinline onSave: (T, Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
             val state = rememberBottomSheetState(
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = block,
             )
 
@@ -192,7 +192,7 @@ private fun ThreadGateBottomSheet(
     var listsExpanded by remember { mutableStateOf(false) }
 
     state.ModalBottomSheet {
-        val threadGateState = state.viewModel.produceState()
+        val threadGateState = state.stateHolder.produceState()
         // The timeline ViewModel flips `dismiss` only after its write is enqueued, so the sheet
         // stays shown (state production active) until the enqueue can't be cancelled.
         LaunchedEffect(threadGateState.dismiss) {
@@ -228,7 +228,7 @@ private fun ThreadGateBottomSheet(
                     selected = allowed.allowsAll,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(null))
+                        state.stateHolder.accept(ThreadGateAction.UpdateAllowed(null))
                     },
                 )
                 SelectionCard(
@@ -236,7 +236,7 @@ private fun ThreadGateBottomSheet(
                     selected = allowed.allowsNone,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        state.viewModel.accept(ThreadGateAction.UpdateAllowed(NoneAllowed))
+                        state.stateHolder.accept(ThreadGateAction.UpdateAllowed(NoneAllowed))
                     },
                 )
             }
@@ -248,7 +248,7 @@ private fun ThreadGateBottomSheet(
                     checked = allowed.allowsFollowers,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.viewModel.accept(
+                        state.stateHolder.accept(
                             ThreadGateAction.UpdateAllowed(
                                 (allowed ?: NoneAllowed).run { copy(allowsFollowers = !allowsFollowers) },
                             ),
@@ -260,7 +260,7 @@ private fun ThreadGateBottomSheet(
                     checked = allowed.allowsFollowing,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.viewModel.accept(
+                        state.stateHolder.accept(
                             ThreadGateAction.UpdateAllowed(
                                 (allowed ?: NoneAllowed).run { copy(allowsFollowing = !allowsFollowing) },
                             ),
@@ -272,7 +272,7 @@ private fun ThreadGateBottomSheet(
                     checked = allowed.allowsMentioned,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.viewModel.accept(
+                        state.stateHolder.accept(
                             ThreadGateAction.UpdateAllowed(
                                 (allowed ?: NoneAllowed).run { copy(allowsMentioned = !allowsMentioned) },
                             ),
@@ -322,7 +322,7 @@ private fun ThreadGateBottomSheet(
                                     val currentUris = current.allowedListUrisOrEmpty
                                     val newLists = if (checked) currentUris - list.uri
                                     else currentUris + list.uri
-                                    state.viewModel.accept(
+                                    state.stateHolder.accept(
                                         ThreadGateAction.UpdateAllowed(
                                             current.copy(
                                                 allowedLists = emptyList(),

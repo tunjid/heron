@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile.avatar
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -26,7 +27,7 @@ import com.tunjid.heron.profile.avatar.di.avatarSharedElementKey
 import com.tunjid.heron.profile.avatar.di.profile
 import com.tunjid.heron.profile.avatar.di.profileHandleOrId
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -39,7 +40,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-internal interface ProfileStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ProfileStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ProfileAvatarViewModelInitializer {
@@ -52,8 +55,7 @@ fun interface ProfileAvatarViewModelInitializer {
 class ActualProfileAvatarViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ProfileStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -96,7 +98,6 @@ class ActualProfileAvatarViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

@@ -16,25 +16,34 @@
 
 package com.tunjid.heron.ui.stateproduction
 
-import androidx.lifecycle.ViewModel
+import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.CoroutineScope
 
 /**
- * Base class for the [ViewModel]s that back app level bottom sheets. Their lifecycle is owned by
- * the [scope] passed in (typically a [viewModelCoroutineScope]), so they can be created on demand
- * from the app's dependency graph via a [SheetViewModelInitializer].
+ * Marker type for the state holders that back navigation destinations (feature screens).
  */
-abstract class SheetViewModel(
-    scope: CoroutineScope,
-) : ViewModel(viewModelScope = scope)
+interface RouteStateHolder
 
 /**
- * Factory for a [SheetViewModel] given its [CoroutineScope]. Sheet modules contribute one of these
- * per sheet into the app graph's `Map<KClass<out SheetViewModel>, SheetViewModelInitializer>`,
- * mirroring how feature modules contribute their navigation entries.
+ * Marker type for the state holders that back app level bottom sheets.
  */
-fun interface SheetViewModelInitializer {
+interface SheetStateHolder
+
+/**
+ * Factory for a [RouteStateHolder] given its [CoroutineScope] and [Route].
+ */
+fun interface RouteStateHolderInitializer {
     fun invoke(
         scope: CoroutineScope,
-    ): SheetViewModel
+        route: Route,
+    ): RouteStateHolder
+}
+
+/**
+ * Factory for a [SheetStateHolder] given its [CoroutineScope].
+ */
+fun interface SheetStateHolderInitializer {
+    fun invoke(
+        scope: CoroutineScope,
+    ): SheetStateHolder
 }

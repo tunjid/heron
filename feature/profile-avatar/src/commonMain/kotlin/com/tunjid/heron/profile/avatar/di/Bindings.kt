@@ -42,8 +42,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -106,10 +106,10 @@ class ProfileAvatarBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualProfileAvatarViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(ProfileStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: ProfileAvatarViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -135,7 +135,7 @@ class ProfileAvatarBindings(
         },
         render = { route ->
             val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: ProfileStateHolder = paneScaffoldState.rememberRouteViewModel<ActualProfileAvatarViewModel>(
+            val stateHolder = paneScaffoldState.retainRouteStateHolder<ProfileStateHolder>(
                 route = routeParser.hydrate(route),
             )
             val state = stateHolder.produceStateWithLifecycle()

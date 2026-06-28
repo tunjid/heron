@@ -55,8 +55,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavigationSharedBounds
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -111,10 +111,10 @@ class ConversationBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualConversationViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(ConversationStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: ConversationViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -149,7 +149,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: ConversationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualConversationViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<ConversationStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

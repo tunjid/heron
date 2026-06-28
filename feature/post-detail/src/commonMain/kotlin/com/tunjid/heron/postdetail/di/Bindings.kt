@@ -59,8 +59,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -137,10 +137,10 @@ class PostDetailBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualPostDetailViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(PostDetailStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: PostDetailViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -189,7 +189,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: PostDetailStateHolder = paneScaffoldState.rememberRouteViewModel<ActualPostDetailViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<PostDetailStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

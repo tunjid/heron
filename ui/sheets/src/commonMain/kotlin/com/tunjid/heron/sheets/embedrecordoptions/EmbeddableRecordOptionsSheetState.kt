@@ -50,7 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 @Stable
 class EmbeddableRecordOptionsSheetState(
     scope: BottomSheetScope,
-    internal val viewModel: EmbeddableRecordOptionsViewModel,
+    internal val stateHolder: EmbeddableRecordOptionsStateHolder,
 ) : BottomSheetState(scope) {
 
     var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
@@ -68,18 +68,18 @@ class EmbeddableRecordOptionsSheetState(
     companion object {
         @Composable
         fun rememberUpdatedEmbeddableRecordOptionsState(
-            initializer: (CoroutineScope) -> EmbeddableRecordOptionsViewModel,
+            stateHolder: EmbeddableRecordOptionsStateHolder,
             editTitle: String?,
             onEditClicked: (EmbeddableRecordUri) -> Unit,
             onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
             onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
         ): EmbeddableRecordOptionsSheetState {
             val state = rememberBottomSheetState(
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = ::EmbeddableRecordOptionsSheetState,
             )
             LaunchedEffect(editTitle) {
-                state.viewModel.accept(EmbeddableRecordOptionsAction.SetEditTitle(editTitle))
+                state.stateHolder.accept(EmbeddableRecordOptionsAction.SetEditTitle(editTitle))
             }
 
             EmbeddableRecordOptionsBottomSheet(
@@ -102,7 +102,7 @@ private fun EmbeddableRecordOptionsBottomSheet(
     onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
 ) {
     state.ModalBottomSheet {
-        val embeddableState = state.viewModel.produceState()
+        val embeddableState = state.stateHolder.produceState()
 
         val editTitle = embeddableState.editTitle
 

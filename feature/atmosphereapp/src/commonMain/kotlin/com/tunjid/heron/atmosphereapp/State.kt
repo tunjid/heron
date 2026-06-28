@@ -44,6 +44,7 @@ import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
@@ -84,7 +85,9 @@ interface State {
     }
 }
 
-internal interface AtmosphereAppStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface AtmosphereAppStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @Stable
 sealed class AppScreenStateHolders {

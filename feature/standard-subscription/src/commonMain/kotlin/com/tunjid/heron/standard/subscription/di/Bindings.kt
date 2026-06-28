@@ -41,8 +41,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -97,10 +97,10 @@ class StandardSubscriptionBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualStandardSubscriptionViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(StandardSubscriptionStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: StandardSubscriptionViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -126,7 +126,7 @@ class StandardSubscriptionBindings(
         },
         render = { route ->
             val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: StandardSubscriptionStateHolder = paneScaffoldState.rememberRouteViewModel<ActualStandardSubscriptionViewModel>(
+            val stateHolder = paneScaffoldState.retainRouteStateHolder<StandardSubscriptionStateHolder>(
                 route = routeParser.hydrate(route),
             )
             val state = stateHolder.produceStateWithLifecycle()
