@@ -18,9 +18,9 @@ package com.tunjid.heron.tasks
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tasks.di.showFailedWrites
 import com.tunjid.heron.tasks.ui.TaskItem
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable

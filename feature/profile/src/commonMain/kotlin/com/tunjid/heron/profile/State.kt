@@ -48,27 +48,26 @@ import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
 import com.tunjid.heron.profile.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
-import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
-import com.tunjid.heron.scaffold.navigation.currentRoute
-import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.avatarSharedElementKey
+import com.tunjid.heron.ui.scaffold.navigation.currentRoute
+import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import kotlin.collections.any
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -162,10 +161,15 @@ sealed class ProfileScreenStateHolders {
     ) : ProfileScreenStateHolders(),
         LabelerSettingsStateHolder by mutator {
 
-        data class Settings(
-            val subscribed: Boolean = false,
-            val labelSettings: List<LabelSetting> = emptyList(),
-        )
+        @Stable
+        @Snapshottable
+        interface Settings {
+            @SnapshotSpec
+            data class Immutable(
+                val subscribed: Boolean = false,
+                val labelSettings: List<LabelSetting> = emptyList(),
+            ) : Settings
+        }
 
         data class LabelSetting(
             val definition: Label.Definition,
@@ -244,7 +248,7 @@ val ProfileScreenStateHolders?.canRefresh
         -> false
     }
 
-typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
+typealias LabelerSettingsStateHolder = ActionSuspendingStateMutator<LabelerSettings.LabelSetting, Settings>
 
 sealed class Action(val key: String) {
 
@@ -310,10 +314,6 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
 
     data class SnackbarDismissed(
         val message: Memo,

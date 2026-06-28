@@ -16,20 +16,19 @@
 
 package com.tunjid.heron.notificationsettings
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.enqueueMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -37,84 +36,104 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 
-internal typealias NotificationSettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
+@Stable
+internal interface NotificationSettingsStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface NotificationSettingsViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualNotificationSettingsViewModel
 }
 
-@AssistedInject
 class ActualNotificationSettingsViewModel(
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted route: Route,
 ) : ViewModel(viewModelScope = scope),
-    NotificationSettingsStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadNotificationPreferencesMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.CacheNotificationPreferenceUpdate -> action.flow.cacheUpdateMutations()
-                    is Action.UpdateNotificationPreferences -> action.flow.updateNotificationPreferencesMutations(
-                        writeQueue = writeQueue,
-                    )
+    NotificationSettingsStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadNotificationPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.CacheNotificationPreferenceUpdate -> action.flow.launchCacheUpdateMutations(
+                            state = state,
+                        )
+                        is Action.UpdateNotificationPreferences -> action.flow.launchUpdateNotificationPreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                    }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
-private fun loadNotificationPreferencesMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadNotificationPreferencesMutations(
+    state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.notificationPreferences
-        .mapToMutation { notificationPreferences ->
-            copy(notificationPreferences = notificationPreferences)
-        }
-
-private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            pendingUpdates = pendingUpdates + (action.update.reason to action.update),
-        )
+) = userDataRepository.notificationPreferences
+    .launchedCollect { notificationPreferences ->
+        state.notificationPreferences = notificationPreferences
     }
 
-private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.CacheNotificationPreferenceUpdate>.launchCacheUpdateMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.pendingUpdates += (action.update.reason to action.update)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateNotificationPreferences>.launchUpdateNotificationPreferencesMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    this.enqueueMutations(
-        writeQueue,
-        toWritable = { action ->
-            Writable.NotificationUpdate(
-                updates = action.updates,
-            )
-        },
-    ) { _, memo ->
-        if (memo != null) emit { copy(messages = messages + memo) }
-    }
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.NotificationUpdate(
+            updates = action.updates,
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}

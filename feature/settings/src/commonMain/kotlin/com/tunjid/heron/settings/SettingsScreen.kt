@@ -27,13 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
-import com.tunjid.heron.scaffold.navigation.moderationDestination
-import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.navigation.standardSubscriptionsDestination
-import com.tunjid.heron.scaffold.navigation.tasksDestination
-import com.tunjid.heron.scaffold.scaffold.NestedNavigation
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.AppearanceSection
@@ -47,6 +40,13 @@ import com.tunjid.heron.settings.ui.PublicationSubscriptionsItem
 import com.tunjid.heron.settings.ui.SignOutItem
 import com.tunjid.heron.settings.ui.TasksItem
 import com.tunjid.heron.settings.ui.ThreadPreferencesSection
+import com.tunjid.heron.ui.scaffold.navigation.moderationDestination
+import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardSubscriptionsDestination
+import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
+import com.tunjid.heron.ui.scaffold.scaffold.NestedNavigation
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 internal fun SettingsScreen(

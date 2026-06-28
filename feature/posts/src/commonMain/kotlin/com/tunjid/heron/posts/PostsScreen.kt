@@ -46,35 +46,34 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
@@ -95,30 +94,11 @@ internal fun PostsScreen(
     val presentation = remember { Timeline.Presentation.Text.WithEmbed }
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = SharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = SharedElementPrefix,
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

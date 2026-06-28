@@ -29,10 +29,10 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.models
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.models
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.snapshottable.SnapshotSpec

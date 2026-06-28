@@ -58,9 +58,11 @@ There are 5 kinds of modules:
     - Higher level, aggregated abstractions also live here, most notably `ui-timeline` which holds
       the `TimelineState` and `timelineStateHolder` that drive timeline data production with the
       [Tiling library](https://github.com/tunjid/Tiler).
-3. `scaffold` contains the application state in the `AppState` class, and coordinates app level
-   UI logic like pane display, drag to dismiss, back previews and so on. It is the entry point to
-   the multiplatform application
+    - `ui-sheets` holds the app's bottom sheets. Unusually for a `ui-*` module it depends on
+      `ui-scaffold`, so the sheets can drive their own navigation.
+3. `ui-scaffold` (a `ui-*` module) contains the application state in the `AppState` class, and
+   coordinates app level UI logic like pane display, drag to dismiss, back previews and so on. It
+   is the entry point to the multiplatform application
 4. `feature-*` contains navigation destinations or screens in the app. Multiple features can
    run side by side in app panes depending on the navigation configuration and device screen size.
 5. `/composeApp` is the module that assembles the fully wired app and depends on all other modules.
@@ -87,12 +89,16 @@ level below it is built on the levels above. The fully assembled `composeApp` si
   the Room database, the Ktor network stack and the `WriteQueue`. Depends on no other layer.
   Contributed to the graph via `DataBindings`.
 * **UI** (`ui-*`) — depends on data. Reusable Compose components and effects. It can also host
-  ViewModels that have access to the data layer, for example the sheet ViewModels contributed via
-  `SheetBindings`.
-* **Scaffold** (`scaffold`) — depends on data and ui. Navigation lives here. It manages global app
+  ViewModels that have access to the data layer, for example the sheet ViewModels in `ui-sheets`,
+  each contributed via `SheetBindings` into a `Map` keyed by ViewModel type that `AppState` exposes
+  through `PaneScaffoldState`.
+* **Scaffold** (`ui-scaffold`) — depends on data and ui. Navigation lives here. It manages global app
   logic in discrete states — `IdentityState`, `NotificationState` and `NavigationState` — that are
   coordinated by `AppState`, the app level state holding app level concerns. `PaneScaffoldState` is
   a slice into `AppState` that feature modules can see. Contributed via `ScaffoldBindings`.
+* **Sheets** (`ui-sheets`) — depends on `ui-scaffold` and `ui-timeline`. Holds the app's bottom
+  sheets and their ViewModels; because it can see `PaneScaffoldState`, the sheets navigate
+  themselves. Contributed via `SheetBindings`.
 * **Feature** (`feature-*`) — navigation destinations. Depends on data and scaffold. Its ViewModels
   have access to the data layer and to navigation semantics, and it uses `PaneScaffoldState` to glean
   app level scope from the scaffold. Each feature contributes a `*NavigationBindings` (route matchers)
@@ -105,7 +111,8 @@ level below it is built on the levels above. The fully assembled `composeApp` si
 graph TD
     Data["Data · data-*<br/>repositories, database, network, WriteQueue<br/>(root — depends on nothing)"]
     UI["UI · ui-*<br/>reusable Compose components + ViewModels"]
-    Scaffold["Scaffold · scaffold<br/>navigation + AppState<br/>(IdentityState, NotificationState, NavigationState)<br/>exposes PaneScaffoldState"]
+    Scaffold["Scaffold · ui-scaffold<br/>navigation + AppState<br/>(IdentityState, NotificationState, NavigationState)<br/>exposes PaneScaffoldState"]
+    Sheets["Sheets · ui-sheets<br/>app bottom sheets<br/>(depends on scaffold to self-navigate)"]
     Feature["Feature · feature-*<br/>navigation destinations; ViewModels with<br/>data + navigation; read scope via PaneScaffoldState"]
     App["Compose App · composeApp<br/>AppGraph assembles all layers · per-platform entry points"]
 
@@ -113,9 +120,12 @@ graph TD
     Data --> Scaffold
     Data --> Feature
     UI --> Scaffold
+    Scaffold --> Sheets
     Scaffold --> Feature
+    Sheets --> Feature
     UI --> App
     Scaffold --> App
+    Sheets --> App
     Feature --> App
 ```
 
@@ -141,7 +151,7 @@ The items in the dependency graph are:
 `composeApp` produces the assembled app for every target — an Android library, an iOS framework and the
 desktop application — but the OS-level launcher for each platform lives outside it. Every platform follows
 the same two steps: build an `AppState` once, then hand it to the single shared root composable,
-`scaffold`'s `App(appState, modifier)`.
+`ui-scaffold`'s `App(appState, modifier)`.
 
 The wiring lives in the `EntryPoint*.kt` files in `composeApp`:
 

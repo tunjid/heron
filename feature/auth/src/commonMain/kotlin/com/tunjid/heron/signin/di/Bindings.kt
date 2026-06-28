@@ -43,35 +43,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
-import com.tunjid.heron.scaffold.scaffold.AppLogo
-import com.tunjid.heron.scaffold.scaffold.LogoPresentation
-import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
-import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
-import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolder
+import com.tunjid.heron.signin.SignInViewModelInitializer
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
 import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.platformStatusBars
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.ui.scaffold.scaffold.AppLogo
+import com.tunjid.heron.ui.scaffold.scaffold.LogoPresentation
+import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -82,6 +82,7 @@ import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -137,12 +138,17 @@ class SignInBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(SignInStateHolder::class)
+    fun provideRouteStateHolderInitializer(
+        initializer: SignInViewModelInitializer,
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
@@ -150,85 +156,89 @@ class SignInBindings(
     @IntoMap
     @StringKey(OAuthPattern)
     fun provideOAuthPaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     @OptIn(ExperimentalSharedTransitionApi::class)
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: SignInStateHolder = viewModel<ActualSignInViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by stateHolder.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            Route(
+                route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
+            )
+        },
+    )
+}
 
-            paneScaffoldState.PaneScaffold(
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<SignInStateHolder>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+        showNavigation = false,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.MessageConsumed(it))
+        },
+        topBar = {
+            TopBar(
+                authMode = state.authMode,
+                oauthAvailable = state.isOauthAvailable,
+                selectedServer = state.selectedServer,
+                onPasswordPreferenceToggled = {
+                    stateHolder.accept(Action.TogglePasswordPreference)
+                },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.MessageConsumed(it))
+                    .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
+                    .windowInsetsPadding(WindowInsets.ime),
+                text = stringResource(
+                    when {
+                        state.isSubmitting -> Res.string.signing_in
+                        state.canSignInLater -> Res.string.sign_in_later
+                        else -> when (state.authMode) {
+                            AuthMode.Oauth -> Res.string.sign_with_oauth
+                            AuthMode.Password -> Res.string.sign_with_password
+                        }
+                    },
+                    stringResource(state.selectedServer.stringResource),
+                ),
+                icon = when {
+                    state.canSignInLater -> Icons.Rounded.Timer
+                    state.canSwitchAccount -> Icons.Rounded.SwapHoriz
+                    else -> Icons.Rounded.Check
                 },
-                topBar = {
-                    TopBar(
-                        authMode = state.authMode,
-                        oauthAvailable = state.isOauthAvailable,
-                        selectedServer = state.selectedServer,
-                        onPasswordPreferenceToggled = {
-                            stateHolder.accept(Action.TogglePasswordPreference)
-                        },
-                    )
+                enabled = state.submitButtonEnabled,
+                expanded = true,
+                onClick = {
+                    stateHolder.accept(state.createSessionAction())
                 },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
-                            .windowInsetsPadding(WindowInsets.ime),
-                        text = stringResource(
-                            when {
-                                state.isSubmitting -> Res.string.signing_in
-                                state.canSignInLater -> Res.string.sign_in_later
-                                else -> when (state.authMode) {
-                                    AuthMode.Oauth -> Res.string.sign_with_oauth
-                                    AuthMode.Password -> Res.string.sign_with_password
-                                }
-                            },
-                            stringResource(state.selectedServer.stringResource),
-                        ),
-                        icon = when {
-                            state.canSignInLater -> Icons.Rounded.Timer
-                            state.canSwitchAccount -> Icons.Rounded.SwapHoriz
-                            else -> Icons.Rounded.Check
-                        },
-                        enabled = state.submitButtonEnabled,
-                        expanded = true,
-                        onClick = {
-                            stateHolder.accept(state.createSessionAction())
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    SignInScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
-                    )
-                },
+            )
+        },
+        content = { paddingValues ->
+            SignInScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+                modifier = Modifier
+                    .padding(paddingValues = paddingValues),
             )
         },
     )

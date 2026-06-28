@@ -22,9 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.scaffold.ui.theme.DarkThemeConfig
-import com.tunjid.heron.scaffold.ui.theme.Theme
-import com.tunjid.heron.scaffold.ui.theme.ordinal
+import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
+import com.tunjid.heron.ui.scaffold.ui.theme.Theme
+import com.tunjid.heron.ui.scaffold.ui.theme.ordinal
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.autohide_bottom_navigation
 import heron.feature.settings.generated.resources.dark_theme

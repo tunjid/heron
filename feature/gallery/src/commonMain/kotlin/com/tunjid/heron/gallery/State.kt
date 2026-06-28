@@ -44,10 +44,10 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
 import com.tunjid.heron.gallery.di.startIndex
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.snapshottable.SnapshotSpec
@@ -214,10 +214,6 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.tunjid.heron.scaffold.scaffold.App
+import com.tunjid.heron.ui.scaffold.scaffold.App
 
 fun main() {
     // Point JNA to pre-bundled native libraries so it loads libjnidispatch.jnilib

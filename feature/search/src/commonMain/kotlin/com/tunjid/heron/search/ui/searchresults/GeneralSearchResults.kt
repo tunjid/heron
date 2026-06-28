@@ -61,8 +61,6 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
@@ -76,6 +74,8 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -104,7 +104,6 @@ internal fun GeneralSearchResults(
     onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
-    onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -200,8 +199,6 @@ internal fun GeneralSearchResults(
                             state = searchResultState,
                             gridState = gridState,
                             modifier = modifier,
-                            signedInProfileId = state.signedInProfile?.did,
-                            mutedWordPreferences = state.preferences.mutedWordPreferences,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             videoStates = videoStates,
@@ -214,7 +211,6 @@ internal fun GeneralSearchResults(
                             onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
                             onMediaClicked = onMediaClicked,
                             onNavigate = onNavigate,
-                            onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,

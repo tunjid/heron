@@ -30,9 +30,9 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -130,10 +130,6 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

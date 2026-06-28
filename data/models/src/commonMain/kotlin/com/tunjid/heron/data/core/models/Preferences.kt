@@ -214,7 +214,7 @@ data class VerificationPreference(
 data class FeedPreference(
     val feed: String,
     val hideReplies: Boolean? = null,
-    val hideRepliesByUnfollowed: Boolean? = true,
+    val hideRepliesByUnfollowed: Boolean? = false,
     val hideRepliesByLikeCount: Long? = null,
     val hideReposts: Boolean? = null,
     val hideQuotePosts: Boolean? = null,
@@ -224,6 +224,9 @@ data class FeedPreference(
 
         val FeedPreference.shouldHideReplies: Boolean
             get() = hideReplies.isTrue
+
+        val FeedPreference.shouldHideRepliesByUnfollowed: Boolean
+            get() = hideRepliesByUnfollowed.isTrue
 
         val FeedPreference.shouldHideReposts: Boolean
             get() = hideReposts.isTrue

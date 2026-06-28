@@ -62,7 +62,6 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoom
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -85,27 +84,25 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.PlaybackStatus
 import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.postinteractions.PostInteractionsSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState
+import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -121,25 +118,10 @@ internal fun GalleryScreen(
     state: State,
     actions: (Action) -> Unit,
 ) {
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = state.sharedElementPrefix,
     )
+
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

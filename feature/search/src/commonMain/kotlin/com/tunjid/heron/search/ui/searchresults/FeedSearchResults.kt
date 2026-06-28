@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
@@ -40,6 +39,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable

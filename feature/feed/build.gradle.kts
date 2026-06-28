@@ -31,7 +31,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:core"))
                 implementation(project(":data:graze"))
-                implementation(project(":scaffold"))
+                implementation(project(":ui:scaffold"))
                 implementation(project(":feature:template"))
                 implementation(project(":ui:tiling"))
 

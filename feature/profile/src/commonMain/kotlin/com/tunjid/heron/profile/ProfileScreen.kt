@@ -121,26 +121,12 @@ import com.tunjid.heron.profile.ui.ProfileApps
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
 import com.tunjid.heron.profile.ui.profileActionMenuItems
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.atmosphereAppDestination
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.editProfileDestination
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
-import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.searchProfilePostsDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
-import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
@@ -153,15 +139,12 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.record.RecordList
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
@@ -186,6 +169,23 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.editProfileDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileFollowersDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileFollowsDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.searchProfilePostsDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
+import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
@@ -1353,30 +1353,11 @@ private fun ProfileTimeline(
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(

@@ -46,22 +46,19 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records.Documents
 import com.tunjid.heron.profile.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.launchedCollectLatest
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
@@ -82,138 +79,145 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias ProfileStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface ProfileStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ProfileViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualProfileViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualProfileViewModel(
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    profileRepository: ProfileRepository,
-    timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    ProfileStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchCommonFollowerMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchProfileRelationshipMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchSupportedAppMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            )
-            launchFeedGeneratorUrisToStatusMutations(
-                state = state,
-                timelineRepository = timelineRepository,
-            )
-            launchSubscribedLabelerMutations(
-                state = state,
-                recordRepository = recordRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchLoadProfileMutations(
-                state = state,
-                profileId = route.profileHandleOrId,
-                viewModelScope = scope,
-                writeQueue = writeQueue,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                profileRepository = profileRepository,
-                timelineRepository = timelineRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
-                        if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
-                            state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
-                        }
-                    }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+    ProfileStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.UpdatePreferences -> action.flow.launchFeedGeneratorStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.BioLinkClicked -> action.flow.collect { event ->
-                        when (val target = event.target) {
-                            is LinkTarget.Navigable -> navActions {
-                                routeString(target.path, queryParams = emptyMap())
-                                    .toRoute
-                                    .let(navState::push)
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        profileRepository: ProfileRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchCommonFollowerMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchProfileRelationshipMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchSupportedAppMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                launchFeedGeneratorUrisToStatusMutations(
+                    state = state,
+                    timelineRepository = timelineRepository,
+                )
+                launchSubscribedLabelerMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchLoadProfileMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    viewModelScope = scope,
+                    writeQueue = writeQueue,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    profileRepository = profileRepository,
+                    timelineRepository = timelineRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
+                            if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
+                                state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                             }
-                            else -> Unit
                         }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.UpdatePreferences -> action.flow.launchFeedGeneratorStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BioLinkClicked -> action.flow.collect { event ->
+                            when (val target = event.target) {
+                                is LinkTarget.Navigable -> navActions {
+                                    routeString(target.path, queryParams = emptyMap())
+                                        .toRoute
+                                        .let(navState::push)
+                                }
+                                else -> Unit
+                            }
+                        }
+                        is Action.Block -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Mute -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.PageChanged -> action.flow.collect { event ->
+                            state.currentPage = event.page
+                        }
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateLiveStatus -> action.flow.launchLiveStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.Block -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Mute -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.PageChanged -> action.flow.collect { event ->
-                        state.currentPage = event.page
-                    }
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateLiveStatus -> action.flow.launchLiveStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
@@ -424,18 +428,6 @@ private fun Flow<Action.Mute>.launchMuteAccountMutations(
     },
 )
 
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
 private fun Action.UpdateLiveStatus.toLiveStatusWritable(): Writable.StatusUpdate =
     Writable.StatusUpdate(
         when (this) {
@@ -627,10 +619,21 @@ private fun CoroutineScope.labelerSettingsStateHolder(
     recordRepository: RecordRepository,
 ): ProfileScreenStateHolders.LabelerSettings =
     ProfileScreenStateHolders.LabelerSettings(
-        mutator = actionStateFlowMutator(
-            initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
-            actionTransform = { actions ->
-                actions.mapLatestToManyMutations { action ->
+        mutator = actionSuspendingStateMutator(
+            state = ProfileScreenStateHolders.LabelerSettings.Settings.Immutable().toSnapshotMutable(),
+            producer = { state, actions ->
+                launchSubscribedLabelerSettingMutations(
+                    state = state,
+                    profileId = profileId,
+                    recordRepository = recordRepository,
+                )
+                launchLabelSettingMutations(
+                    state = state,
+                    profileId = profileId,
+                    timelineRepository = timelineRepository,
+                    recordRepository = recordRepository,
+                )
+                actions.launchedCollectLatest { action ->
                     writeQueue.enqueue(
                         Writable.TimelineUpdate(
                             Timeline.Update.OfContentLabel.LabelVisibilityChange(
@@ -642,38 +645,47 @@ private fun CoroutineScope.labelerSettingsStateHolder(
                     )
                 }
             },
-            inputs = listOf(
-                recordRepository.subscribedLabelers.mapToMutation { labelers ->
-                    copy(subscribed = labelers.any { it.creator.did == profileId })
-                },
-                combine(
-                    flow = timelineRepository.preferences
-                        .map { it.contentLabelPreferences }
-                        .distinctUntilChanged(),
-                    flow2 = recordRepository.embeddableRecord(
-                        uri = profileId.asSelfLabelerUri(),
-                    )
-                        .filterIsInstance<Labeler>()
-                        .distinctUntilChanged(),
-                    transform = ::Pair,
-                ).mapToMutation { (contentLabelPreferences, labeler) ->
-                    val visibilityMap = contentLabelPreferences.associateBy(
-                        keySelector = ContentLabelPreference::label,
-                        valueTransform = ContentLabelPreference::visibility,
-                    )
-                    copy(
-                        labelSettings = labeler.definitions.map { definition ->
-                            ProfileScreenStateHolders.LabelerSettings.LabelSetting(
-                                definition = definition,
-                                visibility = visibilityMap[definition.identifier]
-                                    ?: definition.defaultSetting,
-                            )
-                        },
-                    )
-                },
-            ),
         ),
     )
+
+context(productionScope: CoroutineScope)
+private fun launchSubscribedLabelerSettingMutations(
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    profileId: ProfileId,
+    recordRepository: RecordRepository,
+) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
+    state.subscribed = labelers.any { it.creator.did == profileId }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchLabelSettingMutations(
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    profileId: ProfileId,
+    timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
+) = combine(
+    flow = timelineRepository.preferences
+        .map { it.contentLabelPreferences }
+        .distinctUntilChanged(),
+    flow2 = recordRepository.embeddableRecord(
+        uri = profileId.asSelfLabelerUri(),
+    )
+        .filterIsInstance<Labeler>()
+        .distinctUntilChanged(),
+    transform = ::Pair,
+).launchedCollect { (contentLabelPreferences, labeler) ->
+    val visibilityMap = contentLabelPreferences.associateBy(
+        keySelector = ContentLabelPreference::label,
+        valueTransform = ContentLabelPreference::visibility,
+    )
+    state.labelSettings = labeler.definitions.map { definition ->
+        ProfileScreenStateHolders.LabelerSettings.LabelSetting(
+            definition = definition,
+            visibility = visibilityMap[definition.identifier]
+                ?: definition.defaultSetting,
+        )
+    }
+}
 
 private fun ProfileTab.shouldShow(
     isSignedIn: Boolean,

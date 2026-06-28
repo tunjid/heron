@@ -33,9 +33,7 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.search.di.query
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
@@ -43,6 +41,8 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -68,125 +68,132 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias SearchStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface SearchStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface SearchViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): SearchViewModel
 }
 
 @Stable
-@AssistedInject
 class SearchViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    searchRepository: SearchRepository,
-    timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    SearchStateHolder by scope.actionSuspendingStateMutator(
-        state = State.Immutable(
-            searchBarText = route.query.initialSearchBarText,
-            query = route.query,
-            layout = route.query.initialLayout,
-            searchStateHolders = route.searchStates()
-                .mapNotNull { searchState ->
-                    scope.searchStateHolder(searchState, searchRepository)
-                },
-        ).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchSearchStateHolderMutations(
-                state = state,
-                routeScope = scope,
-                availableSearchStates = route.searchStates(),
-                authRepository = authRepository,
-                searchRepository = searchRepository,
-            )
-            launchTrendsMutations(
-                state = state,
-                searchRepository = searchRepository,
-            )
-            launchSuggestedStarterPackMutations(
-                state = state,
-                searchRepository = searchRepository,
-                recordRepository = recordRepository,
-            )
-            launchSuggestedFeedGeneratorMutations(
-                state = state,
-                searchRepository = searchRepository,
-            )
-            launchFeedGeneratorUrisToStatusMutations(
-                state = state,
-                timelineRepository = timelineRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Search -> action.flow.launchSearchQueryMutations(
-                        state = state,
-                        coroutineScope = scope,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.FetchSuggestedProfiles -> action.flow.launchSuggestedProfilesMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    SearchStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        searchRepository: SearchRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State.Immutable(
+                searchBarText = route.query.initialSearchBarText,
+                query = route.query,
+                layout = route.query.initialLayout,
+                searchStateHolders = route.searchStates()
+                    .mapNotNull { searchState ->
+                        scope.searchStateHolder(searchState, searchRepository)
+                    },
+            ).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchSearchStateHolderMutations(
+                    state = state,
+                    routeScope = scope,
+                    availableSearchStates = route.searchStates(),
+                    authRepository = authRepository,
+                    searchRepository = searchRepository,
+                )
+                launchTrendsMutations(
+                    state = state,
+                    searchRepository = searchRepository,
+                )
+                launchSuggestedStarterPackMutations(
+                    state = state,
+                    searchRepository = searchRepository,
+                    recordRepository = recordRepository,
+                )
+                launchSuggestedFeedGeneratorMutations(
+                    state = state,
+                    searchRepository = searchRepository,
+                )
+                launchFeedGeneratorUrisToStatusMutations(
+                    state = state,
+                    timelineRepository = timelineRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Search -> action.flow.launchSearchQueryMutations(
+                            state = state,
+                            coroutineScope = scope,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.FetchSuggestedProfiles -> action.flow.launchSuggestedProfilesMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateFeedGeneratorStatus -> action.flow.launchFeedGeneratorStatusMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
@@ -384,7 +391,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
     }
     shared
         .filterIsInstance<Action.Search.OnSearchQueryChanged>()
-        .debounce(300.milliseconds.inWholeMilliseconds)
+        .debounce(300.milliseconds)
         .flatMapLatest {
             searchRepository.autoCompleteProfileSearch(
                 query = SearchQuery.OfProfiles(
@@ -477,18 +484,6 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
             recordUri = action.recordUri,
         )
     },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action -> Writable.Interaction(action.interaction) },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

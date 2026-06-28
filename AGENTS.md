@@ -29,7 +29,7 @@ Kotlin Multiplatform and Jetpack Compose. It targets **Android, iOS, and Desktop
 
 ## Module map
 
-Five kinds of modules, in a layered dependency graph: `data → ui → scaffold → feature → composeApp`
+Five kinds of modules, in a layered dependency graph: `data → ui → ui-scaffold → feature → composeApp`
 (arrows point from a layer to what's built on top of it; compile-time deps run the opposite way).
 The DI graph mirrors these layers — see [README · Dependency Injection](README.md#dependency-injection).
 
@@ -37,7 +37,7 @@ The DI graph mirrors these layers — see [README · Dependency Injection](READM
 |---|---|---|
 | `data:*` | `data/core`, `data/models`, `data/database`, `data/lexicons` (generated), … | Root layer. Repositories, Room, Ktor/[Ozone](https://github.com/christiandeange/ozone) ATProto, `WriteQueue`. Depends on no other layer. Reads never error; writes are queued. |
 | `ui:*` | `ui/core`, `ui/media`, `ui/timeline`, `ui/tiling`, `ui/profile` | Reusable Compose components/effects. `ui/timeline` holds `TimelineState`/`timelineStateHolder` (paging via [Tiler](https://github.com/tunjid/Tiler)). |
-| `scaffold` | `scaffold` (single module) | `AppState`, navigation, pane coordination, back previews. Exposes `PaneScaffoldState` to features. |
+| `ui/scaffold` | `ui/scaffold`, `ui/sheets` | `ui/scaffold` (formerly `scaffold`) holds `AppState`, navigation, pane coordination, back previews, and exposes `PaneScaffoldState` to features. `ui/sheets` sits just above it with the app's bottom sheets, which depend on `ui/scaffold` so they self-navigate. |
 | `feature:*` | ~23 destinations: `feature/feed`, `feature/profile`, `feature/home`, … | Navigation destinations (screens). `feature/template` is the shared abstraction they depend on — **not** a copy-me scaffold. |
 | app modules | `composeApp`, `androidApp`, `desktopApp` | `composeApp` = shared assembly + per-platform `EntryPoint*.kt`. `androidApp`/`desktopApp` are OS launchers; iOS launches from the `iosApp` Xcode project. |
 

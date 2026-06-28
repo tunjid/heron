@@ -37,11 +37,11 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tasks.ui.failedTaskItem
 import com.tunjid.heron.tasks.ui.inFlightTaskItem
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -65,66 +65,77 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias TasksStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface TasksStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface TasksViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualTasksViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualTasksViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    TasksStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadInFlightWrites(
-                state = state,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                writeQueue = writeQueue,
-            )
-            launchLoadFailedWrites(
-                state = state,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-                writeQueue = writeQueue,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Retry -> action.flow.launchRetryMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Dismiss -> action.flow.launchDismissMutations(
-                        writeQueue = writeQueue,
-                        state = state,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.launchedCollect {
-                        navActions(it.navigationMutation)
+    TasksStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadInFlightWrites(
+                    state = state,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    writeQueue = writeQueue,
+                )
+                launchLoadFailedWrites(
+                    state = state,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                    writeQueue = writeQueue,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Retry -> action.flow.launchRetryMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Dismiss -> action.flow.launchDismissMutations(
+                            writeQueue = writeQueue,
+                            state = state,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.launchedCollect {
+                            navActions(it.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadInFlightWrites(

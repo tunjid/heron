@@ -71,7 +71,6 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.post.ExternalEmbedPreview
 import com.tunjid.heron.timeline.ui.profile.ProfileName
@@ -82,6 +81,7 @@ import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.detectActiveLink
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.formatTextPost
@@ -172,9 +172,17 @@ internal fun ComposeScreen(
         )
 
         LaunchedEffect(Unit) {
+            // Only scroll the scroll state if there's no embed preview.
             snapshotFlow { state.postText.text.length }
                 .collect {
-                    scrollState.scrollTo(Int.MAX_VALUE)
+                    val hasPreview = state.photos.isNotEmpty() ||
+                        state.video != null ||
+                        state.linkPreview != null ||
+                        state.embeddedRecord != null
+                    val isCursorAtEnd = state.postText.selection.start == state.postText.text.length
+                    if (scrollState.canScrollForward && isCursorAtEnd && !hasPreview) {
+                        scrollState.scrollTo(Int.MAX_VALUE)
+                    }
                 }
         }
     }

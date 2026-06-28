@@ -113,6 +113,11 @@ abstract class SavedState {
                 val nonce: String,
                 val state: String,
                 val expiresAt: Instant,
+                // The DPoP key pair bound to the PAR request, persisted so the token exchange
+                // (which may happen after a process death during the browser hand-off) reuses
+                // the same key. Nullable + defaulted for backward compatibility with pending
+                // states persisted before this field existed.
+                val keyPair: Authenticated.DPoP.DERKeyPair? = null,
             ) : Pending() {
                 override val authProfileId: ProfileId = Constants.pendingProfileId
             }

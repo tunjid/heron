@@ -60,27 +60,26 @@ import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.SubscribedRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
@@ -94,24 +93,8 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    ),
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = null,
     )
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 

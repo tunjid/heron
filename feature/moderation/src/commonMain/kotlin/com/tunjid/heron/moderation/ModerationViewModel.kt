@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.moderation
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
@@ -24,17 +25,14 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.enqueueMutations
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -42,108 +40,127 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
-internal typealias ModerationStateHolder = ActionStateMutator<Action, StateFlow<State>>
+@Stable
+internal interface ModerationStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ModerationViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualModerationViewModel
 }
 
-@AssistedInject
 class ActualModerationViewModel(
-    authRepository: AuthRepository,
-    timelineRepository: TimelineRepository,
-    recordRepository: RecordRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted route: Route,
 ) : ViewModel(viewModelScope = scope),
-    ModerationStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            adultContentAndGlobalLabelPreferenceMutations(
-                timelineRepository = timelineRepository,
-            ),
-            subscribedLabelerMutations(
-                recordRepository = recordRepository,
-            ),
-            loadPreferenceMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdateAdultLabelVisibility -> action.flow.updateGlobalLabelMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateAdultContentPreferences -> action.flow.updateAdultContentPreferencesMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+    ModerationStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
-                        writeQueue = writeQueue,
-                    )
-                    Action.SignOut -> action.flow.mapToManyMutations {
-                        authRepository.signOut()
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        timelineRepository: TimelineRepository,
+        recordRepository: RecordRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchAdultContentAndGlobalLabelPreferenceMutations(
+                    state = state,
+                    timelineRepository = timelineRepository,
+                )
+                launchSubscribedLabelerMutations(
+                    state = state,
+                    recordRepository = recordRepository,
+                )
+                launchLoadPreferenceMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdateAdultLabelVisibility -> action.flow.launchUpdateGlobalLabelMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UpdateAdultContentPreferences -> action.flow.launchUpdateAdultContentPreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.UpdateThreadGates -> action.flow.launchUpdateThreadGateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        Action.SignOut -> action.flow.collect {
+                            authRepository.signOut()
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
-fun adultContentAndGlobalLabelPreferenceMutations(
+context(productionScope: CoroutineScope)
+fun launchAdultContentAndGlobalLabelPreferenceMutations(
+    state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.preferences
-        .map { it.allowAdultContent to it.contentLabelPreferences }
-        .distinctUntilChanged()
-        .mapToMutation { (allowAdultContent, contentLabelPreferences) ->
-            copy(
-                adultContentEnabled = allowAdultContent,
-                adultLabelItems = adultLabels(contentLabelPreferences),
-            )
-        }
+) = timelineRepository.preferences
+    .map { it.allowAdultContent to it.contentLabelPreferences }
+    .distinctUntilChanged()
+    .launchedCollect { (allowAdultContent, contentLabelPreferences) ->
+        state.adultContentEnabled = allowAdultContent
+        state.adultLabelItems = adultLabels(contentLabelPreferences)
+    }
 
-fun subscribedLabelerMutations(
+context(productionScope: CoroutineScope)
+fun launchSubscribedLabelerMutations(
+    state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    recordRepository.subscribedLabelers
-        .mapToMutation {
-            copy(subscribedLabelers = it)
-        }
+) = recordRepository.subscribedLabelers
+    .launchedCollect {
+        state.subscribedLabelers = it
+    }
 
-private fun loadPreferenceMutations(
+context(productionScope: CoroutineScope)
+private fun launchLoadPreferenceMutations(
+    state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
+) = userDataRepository.preferences
+    .launchedCollect {
+        state.preferences = it
+    }
 
-private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateThreadGates>.launchUpdateThreadGateMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = {
         Writable.TimelineUpdate(
             Timeline.Update.OfInteractionSettings(
@@ -151,14 +168,17 @@ private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateAdultLabelVisibility>.launchUpdateGlobalLabelMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         Writable.TimelineUpdate(
             Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
@@ -167,14 +187,17 @@ private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateAdultContentPreferences>.launchUpdateAdultContentPreferencesMutations(
+    state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = this.enqueueMutations(
-    writeQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
     toWritable = { action ->
         Writable.TimelineUpdate(
             Timeline.Update.OfAdultContent(
@@ -182,11 +205,14 @@ private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPrefere
             ),
         )
     },
-) { _, memo ->
-    if (memo != null) emit { copy(messages = messages + memo) }
-}
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}

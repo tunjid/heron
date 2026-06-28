@@ -18,27 +18,29 @@ package com.tunjid.heron.atmosphereapp.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.atmosphereapp.Action
 import com.tunjid.heron.atmosphereapp.ActualAtmosphereAppViewModel
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
 import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
-import com.tunjid.heron.atmosphereapp.RouteViewModelInitializer
+import com.tunjid.heron.atmosphereapp.AtmosphereAppViewModelInitializer
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
-import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
-import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
-import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
+import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -53,6 +55,7 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -96,20 +99,24 @@ class AtmosphereAppBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(AtmosphereAppStateHolder::class)
+    fun provideRouteStateHolderInitializer(
+        initializer: AtmosphereAppViewModelInitializer,
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
         routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
         routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry<Route>(
         contentTransform = navigationContentTransformer::contentTransform,
@@ -120,47 +127,54 @@ class AtmosphereAppBindings(
             )
         },
         render = { route ->
-            val stateHolder: AtmosphereAppStateHolder = viewModel<ActualAtmosphereAppViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
-
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection),
-                showNavigation = true,
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                    )
-                },
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
-                },
-                content = { paddingValues ->
-                    AtmosphereAppScreen(
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
+            Route(
+                route = routeParser.hydrate(route),
+                paneScaffoldState = rememberPaneScaffoldState(),
             )
+        },
+    )
+}
+
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<AtmosphereAppStateHolder>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
+
+    val topAppBarNestedScrollConnection =
+        topAppBarNestedScrollConnection()
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection),
+        showNavigation = true,
+        topBar = {
+            PoppableDestinationTopAppBar(
+                transparencyFactor = ::fullAppbarTransparency,
+                onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+            )
+        },
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        content = { paddingValues ->
+            AtmosphereAppScreen(
+                modifier = Modifier
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                    ),
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
+            )
+            SecondaryPaneCloseBackHandler()
         },
     )
 }

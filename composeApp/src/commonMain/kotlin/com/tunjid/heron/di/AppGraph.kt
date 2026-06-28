@@ -40,20 +40,21 @@ import com.tunjid.heron.posts.di.PostsBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
 import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.identity.IdentityStateHolder
-import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
-import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
-import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.settings.di.SettingsBindings
+import com.tunjid.heron.sheets.di.SheetBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.tasks.di.TasksBindings
-import com.tunjid.heron.timeline.di.SheetBindings
-import com.tunjid.heron.timeline.utilities.SheetsViewModelInitializers
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -62,6 +63,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
 
 @DependencyGraph(
@@ -117,7 +119,8 @@ interface AppGraph {
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
         databaseCleanup: DatabaseCleanup,
-        sheetInitializer: SheetsViewModelInitializers,
+        sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
+        routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -125,7 +128,8 @@ interface AppGraph {
         notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
-        sheetsViewModelInitializers = sheetInitializer,
+        sheetStateHolderInitializers = sheetStateHolderInitializers,
+        routeStateHolderInitializers = routeStateHolderInitializers,
     )
 
     val appState: AppState

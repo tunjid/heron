@@ -47,10 +47,6 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.rocksky.RockskyAlbum
 import com.tunjid.heron.timeline.ui.rocksky.RockskyArtist
@@ -60,6 +56,10 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

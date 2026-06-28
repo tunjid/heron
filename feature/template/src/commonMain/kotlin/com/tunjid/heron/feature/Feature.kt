@@ -16,10 +16,4 @@
 
 package com.tunjid.heron.feature
 
-import androidx.lifecycle.ViewModel
-import com.tunjid.treenav.strings.Route
-import kotlinx.coroutines.CoroutineScope
-
 const val FeatureWhileSubscribed = 2_000L
-
-interface AssistedViewModelFactory : (CoroutineScope, Route) -> ViewModel

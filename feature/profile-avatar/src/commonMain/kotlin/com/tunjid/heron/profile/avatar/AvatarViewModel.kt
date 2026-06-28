@@ -16,24 +16,23 @@
 
 package com.tunjid.heron.profile.avatar
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.avatar.di.avatarSharedElementKey
 import com.tunjid.heron.profile.avatar.di.profile
 import com.tunjid.heron.profile.avatar.di.profileHandleOrId
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -41,66 +40,81 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 
-internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<State>>
+@Stable
+internal interface ProfileStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ProfileAvatarViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualProfileAvatarViewModel
 }
 
-@AssistedInject
 class ActualProfileAvatarViewModel(
-    profileRepository: ProfileRepository,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    ProfileStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            profile = route.profile ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
-            ),
-        ),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
-            ),
-        ),
-        actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                }
-            }
-        },
-    )
+    ProfileStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-private fun loadProfileMutations(
+    @AssistedInject
+    constructor(
+        profileRepository: ProfileRepository,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State.Immutable(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                profile = route.profile ?: stubProfile(
+                    did = ProfileId(route.profileHandleOrId.id),
+                    handle = ProfileHandle(route.profileHandleOrId.id),
+                    avatar = null,
+                ),
+            ).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                    }
+                }
+            },
+        ),
+        scope = scope,
+    )
+}
+
+context(productionScope: CoroutineScope)
+private fun launchLoadProfileMutations(
+    state: State.SnapshotMutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    profileRepository.profile(profileId).mapToMutation {
-        copy(profile = it)
-    }
+) = profileRepository.profile(profileId).launchedCollect {
+    state.profile = it
+}
 
-private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(messages = messages - action.message)
-    }
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}

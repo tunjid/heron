@@ -64,14 +64,11 @@ import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profile.di.ProfileNavigationBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.notifications.Notifier
-import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
 import com.tunjid.heron.settings.di.SettingsBindings
 import com.tunjid.heron.settings.di.SettingsNavigationBindings
+import com.tunjid.heron.sheets.di.SheetBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashBindings
@@ -82,7 +79,10 @@ import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
 import com.tunjid.heron.tasks.di.TasksBindings
 import com.tunjid.heron.tasks.di.TasksNavigationBindings
-import com.tunjid.heron.timeline.di.SheetBindings
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindingArgs
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.notifications.Notifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -253,6 +253,7 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         sheetBindings = SheetBindings(
+            scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
     )

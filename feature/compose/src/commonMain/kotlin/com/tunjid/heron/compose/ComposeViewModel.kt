@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
@@ -37,12 +36,12 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedUri
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -67,99 +66,110 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
-internal typealias ComposeStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface ComposeStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface ComposeViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualComposeViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualComposeViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    searchRepository: SearchRepository,
-    userDataRepository: UserDataRepository,
-    recordRepository: RecordRepository,
-    fileManager: FileManager,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    ComposeStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadSignedInProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchInteractionSettingsMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchEmbeddedRecordMutations(
-                state = state,
-                embeddedRecordUri = when (val creationType = route.model<Post.Create.Quote>()) {
-                    is Post.Create.Quote -> creationType.interaction.postUri
-                    else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
-                },
-                recordRepository = recordRepository,
-            )
+    ComposeStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.PostTextChanged -> action.flow.launchPostTextMutations(
-                        state = state,
-                    )
-                    is Action.SetFabExpanded -> action.flow.launchFabExpansionMutations(
-                        state = state,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.UpdateInteractionSettings -> action.flow.launchUpdateInteractionSettingsMutations(
-                        state = state,
-                    )
-                    is Action.EditMedia -> action.flow.launchEditMediaMutations(
-                        state = state,
-                    )
-                    is Action.CreatePost -> action.flow.launchCreatePostMutations(
-                        state = state,
-                        navActions = navActions,
-                        writeQueue = writeQueue,
-                        fileManager = fileManager,
-                    )
-                    is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.ClearSuggestions -> action.flow.launchClearSuggestionsMutations(
-                        state = state,
-                    )
-                    is Action.RemoveDetectedUri -> action.flow.launchRemoveDetectedUriMutations(
-                        state = state,
-                    )
-                    is Action.UriDetected -> action.flow.launchEmbedUrlMutations(
-                        state = state,
-                        recordRepository = recordRepository,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        searchRepository: SearchRepository,
+        userDataRepository: UserDataRepository,
+        recordRepository: RecordRepository,
+        fileManager: FileManager,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadSignedInProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchInteractionSettingsMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchEmbeddedRecordMutations(
+                    state = state,
+                    embeddedRecordUri = when (val creationType = route.model<Post.Create.Quote>()) {
+                        is Post.Create.Quote -> creationType.interaction.postUri
+                        else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
+                    },
+                    recordRepository = recordRepository,
+                )
+
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.PostTextChanged -> action.flow.launchPostTextMutations(
+                            state = state,
+                        )
+                        is Action.SetFabExpanded -> action.flow.launchFabExpansionMutations(
+                            state = state,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.UpdateInteractionSettings -> action.flow.launchUpdateInteractionSettingsMutations(
+                            state = state,
+                        )
+                        is Action.EditMedia -> action.flow.launchEditMediaMutations(
+                            state = state,
+                        )
+                        is Action.CreatePost -> action.flow.launchCreatePostMutations(
+                            state = state,
+                            navActions = navActions,
+                            writeQueue = writeQueue,
+                            fileManager = fileManager,
+                        )
+                        is Action.SearchProfiles -> action.flow.launchSearchMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.ClearSuggestions -> action.flow.launchClearSuggestionsMutations(
+                            state = state,
+                        )
+                        is Action.RemoveDetectedUri -> action.flow.launchRemoveDetectedUriMutations(
+                            state = state,
+                        )
+                        is Action.UriDetected -> action.flow.launchEmbedUrlMutations(
+                            state = state,
+                            recordRepository = recordRepository,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(
