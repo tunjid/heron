@@ -125,5 +125,5 @@ class AppState(
 }
 
 internal val LocalAppScaffoldState = staticCompositionLocalOf<AppScaffoldState> {
-    throw IllegalStateException("No DisplayScaffoldState provided")
+    throw IllegalStateException("No AppScaffoldState provided")
 }

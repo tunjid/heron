@@ -68,12 +68,12 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    val displayScaffoldStates = remember(appState) {
+    val staticStates = remember(appState) {
         appState.staticStates()
     }
     AppScaffold(
         modifier = modifier,
-        staticStates = displayScaffoldStates,
+        staticStates = staticStates,
         entryDecorator = appState.splashVisibilityNavEntryDecorator,
         entryProvider = appState::entry,
     )
