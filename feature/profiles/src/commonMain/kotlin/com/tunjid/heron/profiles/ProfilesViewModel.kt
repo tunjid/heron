@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
+@Stable
 internal interface ProfilesStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 
+@Stable
 internal interface GalleryStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

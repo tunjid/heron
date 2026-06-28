@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
+@Stable
 internal interface TasksStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

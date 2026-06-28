@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile.avatar
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.Id
@@ -40,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
+@Stable
 internal interface ProfileStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

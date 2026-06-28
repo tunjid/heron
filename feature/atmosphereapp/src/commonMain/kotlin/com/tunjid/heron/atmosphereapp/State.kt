@@ -85,6 +85,7 @@ interface State {
     }
 }
 
+@Stable
 internal interface AtmosphereAppStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

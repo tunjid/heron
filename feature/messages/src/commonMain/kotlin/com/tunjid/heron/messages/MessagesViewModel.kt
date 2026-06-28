@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withTimeout
 
+@Stable
 internal interface MessagesStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

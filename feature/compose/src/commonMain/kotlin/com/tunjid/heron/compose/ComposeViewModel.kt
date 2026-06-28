@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
+@Stable
 internal interface ComposeStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

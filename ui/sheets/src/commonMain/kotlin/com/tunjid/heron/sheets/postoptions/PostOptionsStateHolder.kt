@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
+@Stable
 interface PostOptionsStateHolder :
     SheetStateHolder,
     ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>

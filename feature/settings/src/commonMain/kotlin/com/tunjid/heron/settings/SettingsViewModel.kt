@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.settings
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.SessionSummary
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
+@Stable
 internal interface SettingsStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 
+@Stable
 internal interface SignInStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

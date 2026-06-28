@@ -57,6 +57,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.take
 
+@Stable
 internal interface HomeStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

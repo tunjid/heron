@@ -57,6 +57,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.take
 
+@Stable
 internal interface EditProfileStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State.SnapshotMutable>

@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 
+@Stable
 internal interface SearchStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

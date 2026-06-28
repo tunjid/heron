@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 
+@Stable
 internal interface FeedStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

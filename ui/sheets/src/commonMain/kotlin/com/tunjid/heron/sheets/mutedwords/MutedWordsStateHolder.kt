@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
+@Stable
 interface MutedWordsStateHolder :
     SheetStateHolder,
     ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>

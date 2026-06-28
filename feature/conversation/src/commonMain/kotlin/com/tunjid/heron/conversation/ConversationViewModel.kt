@@ -70,6 +70,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+@Stable
 internal interface ConversationStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>
