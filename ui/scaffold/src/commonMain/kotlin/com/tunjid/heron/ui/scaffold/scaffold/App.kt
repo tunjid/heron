@@ -44,8 +44,8 @@ import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.displayStates
-import com.tunjid.heron.ui.scaffold.scaffold.DisplayScaffoldState.StaticStates.Companion.rememberMultiPaneDisplayState
+import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState.StaticStates.Companion.rememberMultiPaneDisplayState
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.staticStates
 import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.ui.scaffold.ui.theme.AppTheme
 import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
@@ -69,7 +69,7 @@ fun App(
     appState: AppState,
 ) {
     val displayScaffoldStates = remember(appState) {
-        appState.displayStates()
+        appState.staticStates()
     }
     AppScaffold(
         modifier = modifier,
@@ -82,7 +82,7 @@ fun App(
 @Composable
 fun AppScaffold(
     modifier: Modifier,
-    staticStates: DisplayScaffoldState.StaticStates,
+    staticStates: AppScaffoldState.StaticStates,
     entryDecorator: NavEntryDecorator<Route>? = null,
     entryProvider: (Route) -> PaneEntry<ThreePane, Route>,
 ) {
@@ -157,11 +157,11 @@ fun AppScaffold(
                     state = displayState,
                 ) {
                     val displayScope = this
-                    val displayScaffoldState = remember(
+                    val appScaffoldState = remember(
                         staticStates,
                         displayScope,
                     ) {
-                        DisplayScaffoldState(
+                        AppScaffoldState(
                             paneNavigationState = { displayScope.paneNavigationState },
                             density = density,
                             windowWidth = windowWidth,
@@ -173,34 +173,34 @@ fun AppScaffold(
                         )
                     }
                     CompositionLocalProvider(
-                        LocalDisplayScaffoldState provides displayScaffoldState,
+                        LocalAppScaffoldState provides appScaffoldState,
                         LocalImageLoader provides staticStates.imageLoader,
                         LocalVideoPlayerController provides staticStates.videoPlayerController,
                     ) {
                         SplitLayout(
-                            state = displayScaffoldState.splitLayoutState,
+                            state = appScaffoldState.splitLayoutState,
                             modifier = Modifier
                                 .fillMaxSize(),
                             itemSeparators = { _, offset ->
                                 DraggableThumb(
-                                    splitLayoutState = displayScaffoldState.splitLayoutState,
-                                    paneAnchorState = displayScaffoldState.paneAnchorState,
+                                    splitLayoutState = appScaffoldState.splitLayoutState,
+                                    paneAnchorState = appScaffoldState.paneAnchorState,
                                     offset = offset,
                                 )
                             },
                             itemContent = { index ->
-                                Destination(displayScaffoldState.filteredPaneOrder[index])
+                                Destination(appScaffoldState.filteredPaneOrder[index])
                             },
                         )
                     }
                     LaunchedEffect(
-                        displayScaffoldState,
+                        appScaffoldState,
                         displayScope,
                     ) {
                         snapshotFlow {
-                            displayScaffoldState.paneAnchorState.currentPaneAnchor
+                            appScaffoldState.paneAnchorState.currentPaneAnchor
                         }.collect { anchor ->
-                            displayScaffoldState.onPaneAnchorChanged(
+                            appScaffoldState.onPaneAnchorChanged(
                                 anchor = anchor,
                                 destinationId = paneNavigationState.destinationId,
                             )
@@ -213,7 +213,7 @@ fun AppScaffold(
 
                     LaunchedEffect(
                         navigationEventDispatcher,
-                        displayScaffoldState,
+                        appScaffoldState,
                     ) {
                         combine(
                             navigationEventDispatcher.transitionState,
@@ -222,16 +222,16 @@ fun AppScaffold(
                             val navigationEventInfo = navigationEventHistory.mergedHistory
                                 .getOrNull(navigationEventHistory.currentIndex)
                             when (transitionState) {
-                                NavigationEventTransitionState.Idle -> DisplayScaffoldState.DismissBehavior.None
+                                NavigationEventTransitionState.Idle -> AppScaffoldState.DismissBehavior.None
                                 is NavigationEventTransitionState.InProgress -> when {
-                                    navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop
-                                    transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DisplayScaffoldState.DismissBehavior.Gesture.DragToPop
-                                    else -> DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop
+                                    navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> AppScaffoldState.DismissBehavior.Gesture.SlideToPop
+                                    transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> AppScaffoldState.DismissBehavior.Gesture.DragToPop
+                                    else -> AppScaffoldState.DismissBehavior.Gesture.ScaleToPop
                                 }
                             }
                         }
                             .collectLatest {
-                                displayScaffoldState.dismissBehavior = it
+                                appScaffoldState.dismissBehavior = it
                             }
                     }
                 }

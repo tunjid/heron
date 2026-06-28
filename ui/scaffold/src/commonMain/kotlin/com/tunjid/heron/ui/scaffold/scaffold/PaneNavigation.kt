@@ -98,13 +98,13 @@ fun PaneScaffoldState.PaneNavigationBar(
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            with(displayScaffoldState) {
+            with(appScaffoldState) {
                 if (canUseMovableNavigationBar) staticStates.movableNavigationBar(
                     this,
                     Modifier,
                     onNavItemReselected,
                 )
-                else displayScaffoldState.PaneNavigationBar(
+                else appScaffoldState.PaneNavigationBar(
                     modifier = Modifier,
                     onNavItemReselected = onNavItemReselected,
                 )
@@ -135,7 +135,7 @@ fun PaneScaffoldState.PaneNavigationRail(
         ) enterTransition else EnterTransition.None,
         exit = exitTransition,
         content = {
-            with(displayScaffoldState) {
+            with(appScaffoldState) {
                 if (canUseMovableNavigationRail) staticStates.movableNavigationRail(
                     this,
                     Modifier,
@@ -151,7 +151,7 @@ fun PaneScaffoldState.PaneNavigationRail(
 }
 
 @Composable
-internal fun DisplayScaffoldState.PaneNavigationBar(
+internal fun AppScaffoldState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) = with(staticStates) {
@@ -208,7 +208,7 @@ internal fun DisplayScaffoldState.PaneNavigationBar(
 }
 
 @Composable
-internal fun DisplayScaffoldState.PaneNavigationRail(
+internal fun AppScaffoldState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) = with(staticStates) {
@@ -307,7 +307,7 @@ fun navigationBarShape(
 }
 
 @Composable
-private fun DisplayScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
+private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
     derivedStateOf {
         splitLayoutState.weightAt(0)
             .times(splitLayoutState.size)

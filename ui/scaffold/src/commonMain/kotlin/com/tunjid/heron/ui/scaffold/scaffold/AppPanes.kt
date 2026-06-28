@@ -286,14 +286,14 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
     val currentlyEnabled = remember(this) {
         derivedStateOf {
             paneState.pane == ThreePane.Primary &&
-                displayScaffoldState.filteredPaneOrder.size > 1 &&
-                displayScaffoldState.dismissBehavior != DisplayScaffoldState.DismissBehavior.Gesture.DragToPop &&
+                appScaffoldState.filteredPaneOrder.size > 1 &&
+                appScaffoldState.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop &&
                 // Only enable if going back to a single pane layout
-                displayScaffoldState.staticStates.navigationState.multiStackNav.pop().current?.children?.isEmpty() ?: false
+                appScaffoldState.staticStates.navigationState.multiStackNav.pop().current?.children?.isEmpty() ?: false
         }
     }
 
-    val paneAnchorState = displayScaffoldState.paneAnchorState
+    val paneAnchorState = appScaffoldState.paneAnchorState
     var started by remember { mutableStateOf(false) }
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
@@ -308,7 +308,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
         },
         onBackCompleted = {
             started = false
-            displayScaffoldState.pop()
+            appScaffoldState.pop()
         },
     )
 
@@ -323,7 +323,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
                 when (state) {
                     NavigationEventTransitionState.Idle -> wasIdle = true
                     is NavigationEventTransitionState.InProgress -> if (currentlyEnabled.value) {
-                        check(displayScaffoldState.dismissBehavior != DisplayScaffoldState.DismissBehavior.Gesture.DragToPop) {
+                        check(appScaffoldState.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop) {
                             "The secondary pane close back handler should not run when dragging to dismiss"
                         }
                         if (wasIdle) {
@@ -368,10 +368,10 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
 
     // Pop when fully expanded
     LaunchedEffect(Unit) {
-        snapshotFlow { displayScaffoldState.paneAnchorState.currentPaneAnchor }
+        snapshotFlow { appScaffoldState.paneAnchorState.currentPaneAnchor }
             .collect { anchor ->
                 if (currentlyEnabled.value && anchor == PaneAnchor.Full) {
-                    displayScaffoldState.pop()
+                    appScaffoldState.pop()
                 }
             }
     }

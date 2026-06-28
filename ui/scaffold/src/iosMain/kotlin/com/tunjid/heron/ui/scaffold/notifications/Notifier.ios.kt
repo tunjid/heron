@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.tunjid.heron.ui.scaffold.scaffold.LocalDisplayScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.LocalAppScaffoldState
 import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.launch
@@ -57,7 +57,7 @@ actual fun hasNotificationPermissions(): Boolean {
 actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
-    val staticStates = LocalDisplayScaffoldState.current.staticStates
+    val staticStates = LocalAppScaffoldState.current.staticStates
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 

@@ -36,14 +36,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.tunjid.heron.ui.scaffold.scaffold.LocalDisplayScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.LocalAppScaffoldState
 
 @Composable
 actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
     val activity = LocalActivity.current
-    val staticStates = LocalDisplayScaffoldState.current.staticStates
+    val staticStates = LocalAppScaffoldState.current.staticStates
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
