@@ -54,7 +54,10 @@ fun RoutePreview(
     signedInProfile: Profile? = null,
     render: @Composable (Route, PaneScaffoldState) -> Unit,
 ) {
-    val staticStates = remember {
+    val staticStates = remember(
+        routeViewModel,
+        signedInProfile,
+    ) {
         DisplayScaffoldState.StaticStates(
             identityStateHolder = stubIdentityStateHolder(
                 signedInProfile = signedInProfile,

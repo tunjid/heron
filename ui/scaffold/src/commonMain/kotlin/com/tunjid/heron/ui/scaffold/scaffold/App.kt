@@ -179,7 +179,7 @@ fun AppScaffold(
                     ) {
                         SplitLayout(
                             state = displayScaffoldState.splitLayoutState,
-                            modifier = modifier
+                            modifier = Modifier
                                 .fillMaxSize(),
                             itemSeparators = { _, offset ->
                                 DraggableThumb(
