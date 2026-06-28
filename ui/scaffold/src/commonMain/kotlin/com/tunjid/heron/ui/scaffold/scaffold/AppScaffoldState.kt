@@ -50,8 +50,10 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.Route
 
 /**
- * The scaffold state for the app for
- * a given [com.tunjid.treenav.compose.MultiPaneDisplayScope].
+ * The scaffold state for the app hosting UI logic.
+ *
+ * A new [AppScaffoldState] is created per [com.tunjid.treenav.compose.MultiPaneDisplayScope].
+ * Elements that are retained across scopes are in [AppScaffoldState.StaticStates].
  */
 @Stable
 class AppScaffoldState internal constructor(
