@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.splash
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -30,6 +31,7 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 
+@Stable
 internal interface SplashStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

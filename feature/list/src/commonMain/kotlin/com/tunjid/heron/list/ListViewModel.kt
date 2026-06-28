@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 
+@Stable
 internal interface ListStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -63,6 +64,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 
+@Stable
 internal interface GrazeEditorStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

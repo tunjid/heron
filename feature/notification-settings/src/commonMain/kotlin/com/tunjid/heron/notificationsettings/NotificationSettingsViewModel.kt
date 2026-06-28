@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.notificationsettings
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -36,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
+@Stable
 internal interface NotificationSettingsStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

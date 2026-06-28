@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
+@Stable
 interface PostInteractionsStateHolder :
     SheetStateHolder,
     ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>

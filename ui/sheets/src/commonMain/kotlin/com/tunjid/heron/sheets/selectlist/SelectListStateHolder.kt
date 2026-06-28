@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.serialization.Serializable
 
+@Stable
 interface SelectListStateHolder :
     SheetStateHolder,
     ActionSuspendingStateMutator<SelectListAction, SelectListState>

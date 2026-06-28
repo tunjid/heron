@@ -79,6 +79,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
+@Stable
 internal interface ProfileStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>

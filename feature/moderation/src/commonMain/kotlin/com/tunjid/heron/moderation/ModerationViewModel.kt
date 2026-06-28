@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.moderation
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
+@Stable
 internal interface ModerationStateHolder :
     RouteStateHolder,
     ActionSuspendingStateMutator<Action, State>
