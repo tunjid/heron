@@ -50,11 +50,13 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.Route
 
 /**
- * The scaffold state for the app for
- * a given [com.tunjid.treenav.compose.MultiPaneDisplayScope].
+ * The scaffold state for the app hosting UI logic.
+ *
+ * A new [AppScaffoldState] is created per [com.tunjid.treenav.compose.MultiPaneDisplayScope].
+ * Elements that are retained across scopes are in [AppScaffoldState.StaticStates].
  */
 @Stable
-class DisplayScaffoldState internal constructor(
+class AppScaffoldState internal constructor(
     paneNavigationState: () -> PaneNavigationState<ThreePane, Route>,
     density: Density,
     internal val staticStates: StaticStates,
@@ -144,9 +146,9 @@ class DisplayScaffoldState internal constructor(
     }
 
     /**
-     * Elements on [DisplayScaffoldState] that are effectively singletons from
-     * the App's UI scaffold POV, though necessarily from the [AppState]'s.
-     * i.e, all [DisplayScaffoldState] instances share identical [DisplayScaffoldState.StaticStates]
+     * Elements on [AppScaffoldState] that are effectively singletons from
+     * the App's UI scaffold POV, though not necessarily from the [AppState]'s.
+     * i.e, all [AppScaffoldState] instances share identical [AppScaffoldState.StaticStates]
      * instances.
      *
      * It also acts as a mixin for app level properties.
@@ -170,7 +172,7 @@ class DisplayScaffoldState internal constructor(
             get() = notificationStateHolder.state
 
         internal val movableNavigationBar =
-            movableContentWithReceiverOf<DisplayScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
                 PaneNavigationBar(
                     modifier = modifier,
                     onNavItemReselected = onNavItemReselected,
@@ -178,7 +180,7 @@ class DisplayScaffoldState internal constructor(
             }
 
         internal val movableNavigationRail =
-            movableContentWithReceiverOf<DisplayScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
                 PaneNavigationRail(
                     modifier = modifier,
                     onNavItemReselected = onNavItemReselected,

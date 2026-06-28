@@ -127,13 +127,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     onSignedInProfileClicked: (Profile, String) -> Unit,
     onLogoClicked: (() -> Unit)? = null,
 ) {
-    val identityState = displayScaffoldState.staticStates.identityState
+    val identityState = appScaffoldState.staticStates.identityState
     ClickPassThroughToolbar(
         modifier = modifier
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
-                minSize = displayScaffoldState.minPaneWidth,
-                atStart = displayScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
+                minSize = appScaffoldState.minPaneWidth,
+                atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
@@ -211,13 +211,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                             signedInProfileId = identityState.signedInProfile?.did,
                             onLongClick = {
                                 if (identityState.pastSessions.isNotEmpty() && identityState.isStable)
-                                    displayScaffoldState.staticStates.onIdentityAction(
+                                    appScaffoldState.staticStates.onIdentityAction(
                                         action = IdentityAction.Switch.Choose,
                                     )
                             },
                             onClick = {
                                 when (identityState.switchStatus) {
-                                    IdentityState.SwitchStatus.Choosing -> displayScaffoldState.staticStates.onIdentityAction(
+                                    IdentityState.SwitchStatus.Choosing -> appScaffoldState.staticStates.onIdentityAction(
                                         action = IdentityAction.Switch.Transition(sessionSummary),
                                     )
                                     is IdentityState.SwitchStatus.Stable -> identityState.signedInProfile?.let { profile ->
@@ -240,7 +240,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             ) {
                 AppBarIconButton(
                     onClick = {
-                        displayScaffoldState.staticStates.onIdentityAction(
+                        appScaffoldState.staticStates.onIdentityAction(
                             action = IdentityAction.Switch.Cancel,
                         )
                     },
@@ -272,8 +272,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         modifier = modifier
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
-                minSize = displayScaffoldState.minPaneWidth,
-                atStart = displayScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
+                minSize = appScaffoldState.minPaneWidth,
+                atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
@@ -329,7 +329,7 @@ private fun PaneScaffoldState.SwitchStatus(
                         contentDescription = description
                         role = Role.Button
                     },
-                onClick = displayScaffoldState::addAccount,
+                onClick = appScaffoldState::addAccount,
                 content = {
                     Icon(
                         imageVector = Icons.Rounded.Error,
@@ -350,7 +350,7 @@ private fun PaneScaffoldState.SwitchStatus(
                         contentDescription = description
                         role = Role.Button
                     },
-                onClick = displayScaffoldState::addAccount,
+                onClick = appScaffoldState::addAccount,
                 content = {
                     Icon(
                         imageVector = Icons.Rounded.Add,
@@ -467,7 +467,7 @@ private fun PaneScaffoldState.OfflineIcon(
 private fun PaneScaffoldState.FailedWriteIcon(
     modifier: Modifier = Modifier,
 ) {
-    val failedWrite = displayScaffoldState.staticStates.identityState.lastFailedWrite ?: return
+    val failedWrite = appScaffoldState.staticStates.identityState.lastFailedWrite ?: return
     val description = remember(failedWrite) { failedWrite.writable.describe() }
     NavigationIconPopoverButton(
         modifier = modifier,
@@ -500,7 +500,7 @@ private fun PaneScaffoldState.FailedWriteIcon(
                 FilledTonalButton(
                     onClick = {
                         onClose()
-                        displayScaffoldState.onNavigateToTasks()
+                        appScaffoldState.onNavigateToTasks()
                     },
                 ) {
                     Text(text = stringResource(Res.string.failed_write_view_details))
@@ -508,7 +508,7 @@ private fun PaneScaffoldState.FailedWriteIcon(
             }
             DisposableEffect(Unit) {
                 onDispose {
-                    displayScaffoldState.staticStates.onIdentityAction(
+                    appScaffoldState.staticStates.onIdentityAction(
                         action = IdentityAction.ClearFailedWrite,
                     )
                 }
@@ -527,7 +527,7 @@ private fun PaneScaffoldState.NavigationIconBox(
     ) {
         content()
 
-        val identityState = displayScaffoldState.staticStates.identityState
+        val identityState = appScaffoldState.staticStates.identityState
 
         Box(
             modifier = Modifier

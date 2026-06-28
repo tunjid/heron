@@ -93,7 +93,7 @@ import kotlinx.coroutines.launch
 
 @Stable
 class PaneScaffoldState(
-    internal val displayScaffoldState: DisplayScaffoldState,
+    internal val appScaffoldState: AppScaffoldState,
     @PublishedApi
     internal val stateHolderInitializer: StateHolderInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
@@ -102,8 +102,8 @@ class PaneScaffoldState(
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
         BoundsTransformSpring.skipIf {
-            displayScaffoldState.dismissBehavior is DisplayScaffoldState.DismissBehavior.Gesture.DragToPop ||
-                displayScaffoldState.paneAnchorState.hasInteractions
+            appScaffoldState.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
+                appScaffoldState.paneAnchorState.hasInteractions
         }
     }
 
@@ -112,22 +112,22 @@ class PaneScaffoldState(
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
     val isMediumScreenWidthOrWider: Boolean
-        get() = displayScaffoldState.isMediumScreenWidthOrWider
+        get() = appScaffoldState.isMediumScreenWidthOrWider
 
-    internal val dismissBehavior: DisplayScaffoldState.DismissBehavior
-        get() = displayScaffoldState.dismissBehavior
+    internal val dismissBehavior: AppScaffoldState.DismissBehavior
+        get() = appScaffoldState.dismissBehavior
 
     val isSignedOut
-        get() = !displayScaffoldState.staticStates.identityState.isSignedIn
+        get() = !appScaffoldState.staticStates.identityState.isSignedIn
 
     val isSignedIn
-        get() = displayScaffoldState.staticStates.identityState.isSignedIn
+        get() = appScaffoldState.staticStates.identityState.isSignedIn
 
     val prefersCompactBottomNav
-        get() = displayScaffoldState.staticStates.identityState.prefersCompactBottomNav
+        get() = appScaffoldState.staticStates.identityState.prefersCompactBottomNav
 
     val prefersAutoHidingBottomNav
-        get() = displayScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
+        get() = appScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
 
     internal val nestedNavigationState = PaneNestedNavigationState(
         paneScaffoldState = this,
@@ -140,7 +140,7 @@ class PaneScaffoldState(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = displayScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane &&
+        get() = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane &&
             isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
@@ -193,17 +193,17 @@ inline fun <reified T : SheetStateHolder> PaneScaffoldState.retainSheetStateHold
 
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
-    displayScaffoldState: DisplayScaffoldState = LocalDisplayScaffoldState.current,
-    stateHolderInitializer: StateHolderInitializer = LocalDisplayScaffoldState.current.staticStates.stateHolderInitializer,
+    appScaffoldState: AppScaffoldState = LocalAppScaffoldState.current,
+    stateHolderInitializer: StateHolderInitializer = LocalAppScaffoldState.current.staticStates.stateHolderInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route> = rememberThreePaneMovableElementSharedTransitionScope(),
 ): PaneScaffoldState {
     val paneScaffoldState = remember(
-        displayScaffoldState,
+        appScaffoldState,
         stateHolderInitializer,
         paneMovableElementSharedTransitionScope,
     ) {
         PaneScaffoldState(
-            displayScaffoldState = displayScaffoldState,
+            appScaffoldState = appScaffoldState,
             stateHolderInitializer = stateHolderInitializer,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
@@ -267,17 +267,17 @@ fun PaneScaffoldState.PaneScaffold(
         content = {
             NonSubComposingScaffold(
                 modifier = when {
-                    displayScaffoldState.paneAnchorState.hasInteractions -> Modifier
+                    appScaffoldState.paneAnchorState.hasInteractions -> Modifier
                     else -> when (dismissBehavior) {
-                        DisplayScaffoldState.DismissBehavior.None,
-                        DisplayScaffoldState.DismissBehavior.Gesture.DragToPop,
+                        AppScaffoldState.DismissBehavior.None,
+                        AppScaffoldState.DismissBehavior.Gesture.DragToPop,
                         -> Modifier.animateBounds(
                             lookaheadScope = this,
                             boundsTransform = childBoundsTransform,
                         )
 
-                        DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop,
-                        DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop,
+                        AppScaffoldState.DismissBehavior.Gesture.SlideToPop,
+                        AppScaffoldState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
                 },
@@ -295,7 +295,7 @@ fun PaneScaffoldState.PaneScaffold(
                     snackBarHost()
                 },
                 content = { paddingValues ->
-                    val isStable = displayScaffoldState.staticStates.identityState.isStable
+                    val isStable = appScaffoldState.staticStates.identityState.isStable
                     val blurState = animateFloatAsState(
                         if (isStable) 0f else 1f,
                     )
@@ -318,7 +318,7 @@ fun PaneScaffoldState.PaneScaffold(
                             )
                             .constrainedSizePlacement(
                                 orientation = Orientation.Horizontal,
-                                minSize = displayScaffoldState.minPaneWidth,
+                                minSize = appScaffoldState.minPaneWidth,
                                 atStart = paneState.pane == ThreePane.Secondary,
                             ),
                     ) {
@@ -337,7 +337,7 @@ fun PaneScaffoldState.PaneScaffold(
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
-            displayScaffoldState.showNavigation = showNavigation
+            appScaffoldState.showNavigation = showNavigation
         }
     }
 }

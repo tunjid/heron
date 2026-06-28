@@ -100,7 +100,7 @@ fun PaneScaffoldState.PaneFab(
     var fabWidth by remember {
         mutableStateOf(DefaultFabSize)
     }
-    val clickable = enabled && displayScaffoldState.staticStates.identityState.isStable
+    val clickable = enabled && appScaffoldState.staticStates.identityState.isStable
     AnimatedVisibility(
         modifier = Modifier
             // Use the enter and exit transition on navigation
@@ -110,7 +110,7 @@ fun PaneScaffoldState.PaneFab(
                 animateEnterExit(enterTransition, exitTransition)
             }
             .onSizeChanged {
-                if (!displayScaffoldState.paneAnchorState.hasInteractions) {
+                if (!appScaffoldState.paneAnchorState.hasInteractions) {
                     fabWidth = with(density) { it.width.toDp() }
                 }
             }
@@ -205,9 +205,9 @@ private fun FabIcon(icon: ImageVector) {
 fun PaneScaffoldState.isFabExpanded(
     offset: () -> Offset,
 ): Boolean {
-    val derivedState = remember(displayScaffoldState.density) {
+    val derivedState = remember(appScaffoldState.density) {
         derivedStateOf {
-            offset().y < with(displayScaffoldState.density) { DefaultFabSize.toPx() }
+            offset().y < with(appScaffoldState.density) { DefaultFabSize.toPx() }
         }
     }
     return derivedState.value
@@ -219,7 +219,7 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
         x = offset.x.roundToInt(),
         y = min(
             offset.y.roundToInt(),
-            with(displayScaffoldState.density) {
+            with(appScaffoldState.density) {
                 UiTokens.bottomNavHeight(
                     isCompact = prefersCompactBottomNav,
                 ).roundToPx()

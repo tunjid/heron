@@ -113,7 +113,7 @@ class AppState(
         val AppState.isShowingSplashScreen: Boolean
             get() = navigationStateHolder.state.multiStackNav.isShowingSplashScreen
 
-        fun AppState.displayStates() = DisplayScaffoldState.StaticStates(
+        fun AppState.staticStates() = AppScaffoldState.StaticStates(
             identityStateHolder = identityStateHolder,
             navigationStateHolder = navigationStateHolder,
             notificationStateHolder = notificationStateHolder,
@@ -124,6 +124,6 @@ class AppState(
     }
 }
 
-internal val LocalDisplayScaffoldState = staticCompositionLocalOf<DisplayScaffoldState> {
-    throw IllegalStateException("No DisplayScaffoldState provided")
+internal val LocalAppScaffoldState = staticCompositionLocalOf<AppScaffoldState> {
+    throw IllegalStateException("No AppScaffoldState provided")
 }

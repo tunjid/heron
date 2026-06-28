@@ -33,7 +33,7 @@ import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationState
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffold
-import com.tunjid.heron.ui.scaffold.scaffold.DisplayScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -58,7 +58,7 @@ fun RoutePreview(
         routeStateHolder,
         signedInProfile,
     ) {
-        DisplayScaffoldState.StaticStates(
+        AppScaffoldState.StaticStates(
             identityStateHolder = stubIdentityStateHolder(
                 signedInProfile = signedInProfile,
             ),
