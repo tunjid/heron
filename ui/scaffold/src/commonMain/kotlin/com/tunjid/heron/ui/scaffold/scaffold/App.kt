@@ -34,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -42,13 +45,14 @@ import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.displayStates
-import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.rememberMultiPaneDisplayState
+import com.tunjid.heron.ui.scaffold.scaffold.DisplayScaffoldState.StaticStates.Companion.rememberMultiPaneDisplayState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.ui.scaffold.ui.theme.AppTheme
 import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
 import com.tunjid.heron.ui.scaffold.ui.theme.Theme
 import com.tunjid.treenav.compose.MovableSharedElementHostState
 import com.tunjid.treenav.compose.MultiPaneDisplay
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
@@ -67,7 +71,22 @@ fun App(
     val displayScaffoldStates = remember(appState) {
         appState.displayStates()
     }
-    val localPrefs = displayScaffoldStates.identityState.preferences?.local
+    AppScaffold(
+        modifier = modifier,
+        staticStates = displayScaffoldStates,
+        entryDecorator = appState.splashVisibilityNavEntryDecorator,
+        entryProvider = appState::entry,
+    )
+}
+
+@Composable
+fun AppScaffold(
+    modifier: Modifier,
+    staticStates: DisplayScaffoldState.StaticStates,
+    entryDecorator: NavEntryDecorator<Route>? = null,
+    entryProvider: (Route) -> PaneEntry<ThreePane, Route>,
+) {
+    val localPrefs = staticStates.identityState.preferences?.local
     AppTheme(
         useDarkTheme = when (
             DarkThemeConfig.fromOrdinal(localPrefs?.darkThemeConfigOrdinal ?: 0)
@@ -78,125 +97,142 @@ fun App(
         },
         theme = Theme.fromOrdinal(localPrefs?.currentThemeOrdinal ?: 0),
     ) {
-        CompositionLocalProvider(
-            LocalImageLoader provides appState.imageLoader,
-            LocalVideoPlayerController provides appState.videoPlayerController,
-        ) {
-            Surface {
-                // Root LookaheadScope used to anchor all shared element transitions
-                SharedTransitionLayout(
-                    modifier = modifier.fillMaxSize(),
+        Surface {
+            // Root LookaheadScope used to anchor all shared element transitions
+            SharedTransitionLayout(
+                modifier = modifier.fillMaxSize(),
+            ) {
+                val density = LocalDensity.current
+                val movableSharedElementHostState = remember {
+                    MovableSharedElementHostState<ThreePane, Route>(
+                        sharedTransitionScope = this,
+                    )
+                }
+                val windowWidth = rememberUpdatedState(
+                    with(density) {
+                        LocalWindowInfo.current.containerSize.width.toDp()
+                    },
+                )
+                if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
+
+                val saveableStateHolderNavEntryDecorator =
+                    rememberSaveableStateHolderNavEntryDecorator<Route>()
+                val viewModelStoreNavEntryDecorator =
+                    rememberViewModelStoreNavEntryDecorator<Route>()
+
+                val displayState = staticStates.rememberMultiPaneDisplayState(
+                    paneDecorators = remember(
+                        movableSharedElementHostState,
+                    ) {
+                        listOf(
+                            threePaneAdaptiveDecorator(
+                                secondaryPaneBreakPoint = mutableStateOf(
+                                    UiTokens.SecondaryPaneMinWidthBreakpoint,
+                                ),
+                                tertiaryPaneBreakPoint = mutableStateOf(
+                                    UiTokens.TertiaryPaneMinWidthBreakpoint,
+                                ),
+                                windowWidthState = windowWidth,
+                            ),
+                            threePaneMovableSharedElementDecorator(
+                                movableSharedElementHostState,
+                            ),
+                        )
+                    },
+                    entryDecorators = remember(
+                        saveableStateHolderNavEntryDecorator,
+                        viewModelStoreNavEntryDecorator,
+                        entryDecorator,
+                    ) {
+                        listOfNotNull(
+                            saveableStateHolderNavEntryDecorator,
+                            viewModelStoreNavEntryDecorator,
+                            entryDecorator,
+                        )
+                    },
+                    entryProvider = entryProvider,
+                )
+                MultiPaneDisplay(
+                    modifier = Modifier.fillMaxSize(),
+                    state = displayState,
                 ) {
-                    val density = LocalDensity.current
-                    val movableSharedElementHostState = remember {
-                        MovableSharedElementHostState<ThreePane, Route>(
-                            sharedTransitionScope = this,
+                    val displayScope = this
+                    val displayScaffoldState = remember(
+                        staticStates,
+                        displayScope,
+                    ) {
+                        DisplayScaffoldState(
+                            paneNavigationState = { displayScope.paneNavigationState },
+                            density = density,
+                            windowWidth = windowWidth,
+                            staticStates = staticStates,
+                        )
+                    }.also {
+                        it.update(
+                            density = density,
                         )
                     }
-                    val windowWidth = rememberUpdatedState(
-                        with(density) {
-                            LocalWindowInfo.current.containerSize.width.toDp()
-                        },
-                    )
-                    if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
-
-                    val displayState = appState.rememberMultiPaneDisplayState(
-                        paneDecorators = remember {
-                            listOf(
-                                threePaneAdaptiveDecorator(
-                                    secondaryPaneBreakPoint = mutableStateOf(
-                                        UiTokens.SecondaryPaneMinWidthBreakpoint,
-                                    ),
-                                    tertiaryPaneBreakPoint = mutableStateOf(
-                                        UiTokens.TertiaryPaneMinWidthBreakpoint,
-                                    ),
-                                    windowWidthState = windowWidth,
-                                ),
-                                threePaneMovableSharedElementDecorator(
-                                    movableSharedElementHostState,
-                                ),
-                            )
-                        },
-                    )
-                    MultiPaneDisplay(
-                        modifier = Modifier.fillMaxSize(),
-                        state = displayState,
+                    CompositionLocalProvider(
+                        LocalDisplayScaffoldState provides displayScaffoldState,
+                        LocalImageLoader provides staticStates.imageLoader,
+                        LocalVideoPlayerController provides staticStates.videoPlayerController,
                     ) {
-                        val displayScope = this
-                        val displayScaffoldState = remember(
-                            displayScaffoldStates,
-                            displayScope,
-                        ) {
-                            DisplayScaffoldState(
-                                paneNavigationState = { displayScope.paneNavigationState },
-                                density = density,
-                                windowWidth = windowWidth,
-                                staticStates = displayScaffoldStates,
-                            )
-                        }.also {
-                            it.update(
-                                density = density,
-                            )
-                        }
-                        CompositionLocalProvider(
-                            LocalDisplayScaffoldState provides displayScaffoldState,
-                        ) {
-                            SplitLayout(
-                                state = displayScaffoldState.splitLayoutState,
-                                modifier = modifier
-                                    .fillMaxSize(),
-                                itemSeparators = { _, offset ->
-                                    DraggableThumb(
-                                        splitLayoutState = displayScaffoldState.splitLayoutState,
-                                        paneAnchorState = displayScaffoldState.paneAnchorState,
-                                        offset = offset,
-                                    )
-                                },
-                                itemContent = { index ->
-                                    Destination(displayScaffoldState.filteredPaneOrder[index])
-                                },
-                            )
-                        }
-                        LaunchedEffect(
-                            displayScaffoldState,
-                            displayScope,
-                        ) {
-                            snapshotFlow {
-                                displayScaffoldState.paneAnchorState.currentPaneAnchor
-                            }.collect { anchor ->
-                                displayScaffoldState.onPaneAnchorChanged(
-                                    anchor = anchor,
-                                    destinationId = paneNavigationState.destinationId,
+                        SplitLayout(
+                            state = displayScaffoldState.splitLayoutState,
+                            modifier = modifier
+                                .fillMaxSize(),
+                            itemSeparators = { _, offset ->
+                                DraggableThumb(
+                                    splitLayoutState = displayScaffoldState.splitLayoutState,
+                                    paneAnchorState = displayScaffoldState.paneAnchorState,
+                                    offset = offset,
                                 )
-                            }
+                            },
+                            itemContent = { index ->
+                                Destination(displayScaffoldState.filteredPaneOrder[index])
+                            },
+                        )
+                    }
+                    LaunchedEffect(
+                        displayScaffoldState,
+                        displayScope,
+                    ) {
+                        snapshotFlow {
+                            displayScaffoldState.paneAnchorState.currentPaneAnchor
+                        }.collect { anchor ->
+                            displayScaffoldState.onPaneAnchorChanged(
+                                anchor = anchor,
+                                destinationId = paneNavigationState.destinationId,
+                            )
                         }
+                    }
 
-                        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+                    val navigationEventDispatcher =
+                        LocalNavigationEventDispatcherOwner.current!!
                             .navigationEventDispatcher
 
-                        LaunchedEffect(
-                            navigationEventDispatcher,
-                            displayScaffoldState,
-                        ) {
-                            combine(
-                                navigationEventDispatcher.transitionState,
-                                navigationEventDispatcher.history,
-                            ) { transitionState, navigationEventHistory ->
-                                val navigationEventInfo = navigationEventHistory.mergedHistory
-                                    .getOrNull(navigationEventHistory.currentIndex)
-                                when (transitionState) {
-                                    NavigationEventTransitionState.Idle -> DisplayScaffoldState.DismissBehavior.None
-                                    is NavigationEventTransitionState.InProgress -> when {
-                                        navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop
-                                        transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DisplayScaffoldState.DismissBehavior.Gesture.DragToPop
-                                        else -> DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop
-                                    }
+                    LaunchedEffect(
+                        navigationEventDispatcher,
+                        displayScaffoldState,
+                    ) {
+                        combine(
+                            navigationEventDispatcher.transitionState,
+                            navigationEventDispatcher.history,
+                        ) { transitionState, navigationEventHistory ->
+                            val navigationEventInfo = navigationEventHistory.mergedHistory
+                                .getOrNull(navigationEventHistory.currentIndex)
+                            when (transitionState) {
+                                NavigationEventTransitionState.Idle -> DisplayScaffoldState.DismissBehavior.None
+                                is NavigationEventTransitionState.InProgress -> when {
+                                    navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DisplayScaffoldState.DismissBehavior.Gesture.SlideToPop
+                                    transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DisplayScaffoldState.DismissBehavior.Gesture.DragToPop
+                                    else -> DisplayScaffoldState.DismissBehavior.Gesture.ScaleToPop
                                 }
                             }
-                                .collectLatest {
-                                    displayScaffoldState.dismissBehavior = it
-                                }
                         }
+                            .collectLatest {
+                                displayScaffoldState.dismissBehavior = it
+                            }
                     }
                 }
             }
