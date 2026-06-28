@@ -26,8 +26,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":ui:scaffold"))
+                api(project(":ui:core"))
+                api(project(":ui:media"))
                 api(project(":ui:sheets"))
+                api(project(":ui:scaffold"))
+
+                implementation(libs.lifecycle.multiplatform.viewmodel)
+                implementation(libs.lifecycle.multiplatform.viewmodel.compose)
             }
         }
     }

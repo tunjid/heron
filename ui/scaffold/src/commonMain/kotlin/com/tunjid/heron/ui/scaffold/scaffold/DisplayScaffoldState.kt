@@ -1,17 +1,24 @@
 package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentWithReceiverOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
@@ -27,12 +34,19 @@ import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
+import com.tunjid.mutator.compose.produceState
 import com.tunjid.mutator.invoke
+import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
+import com.tunjid.treenav.compose.MultiPaneDisplayState
+import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.PaneNavigationState
+import com.tunjid.treenav.compose.multiPaneDisplayBackstack
+import com.tunjid.treenav.compose.panedecorators.PaneDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
+import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.Route
 
 /**
@@ -134,12 +148,16 @@ class DisplayScaffoldState internal constructor(
      * the App's UI scaffold POV, though necessarily from the [AppState]'s.
      * i.e, all [DisplayScaffoldState] instances share identical [DisplayScaffoldState.StaticStates]
      * instances.
+     *
+     * It also acts as a mixin for app level properties.
      */
     @Stable
     class StaticStates(
         private val identityStateHolder: IdentityStateHolder,
         private val navigationStateHolder: NavigationStateHolder,
         private val notificationStateHolder: NotificationStateHolder,
+        internal val imageLoader: ImageLoader,
+        internal val videoPlayerController: VideoPlayerController,
         internal val viewModelInitializer: ViewModelInitializer,
     ) {
         internal val identityState
@@ -210,6 +228,55 @@ class DisplayScaffoldState internal constructor(
                         badgeCount = if (stack == AppStack.Notifications) notificationState.unreadCount else 0L,
                     )
                 }
+        }
+
+        companion object {
+            @Composable
+            internal fun StaticStates.rememberMultiPaneDisplayState(
+                paneDecorators: List<PaneDecorator<MultiStackNav, Route, ThreePane>>,
+                entryDecorators: List<NavEntryDecorator<Route>>,
+                entryProvider: (Route) -> PaneEntry<ThreePane, Route>,
+            ): MultiPaneDisplayState<MultiStackNav, Route, ThreePane> {
+                val displayState = remember {
+                    MultiPaneDisplayState(
+                        panes = ThreePane.entries.toList(),
+                        paneDecorators = paneDecorators,
+                        navigationState = derivedStateOf(navigationState::multiStackNav),
+                        backStackTransform = MultiStackNav::multiPaneDisplayBackstack,
+                        destinationTransform = MultiStackNav::requireCurrent,
+                        popTransform = MultiStackNav::pop,
+                        onPopped = { poppedNavigationState ->
+                            navigationStateHolder.accept {
+                                poppedNavigationState
+                            }
+                        },
+                        navEntryDecorators = entryDecorators,
+                        entryProvider = entryProvider,
+                    )
+                }
+
+                identityStateHolder.produceState()
+                navigationStateHolder.produceState()
+                notificationStateHolder.produceState()
+
+                // TODO: Figure out a way to do this in the background with KMP
+                LifecycleResumeEffect(Unit) {
+                    onNotificationAction(
+                        NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
+                    )
+                    onPauseOrDispose {
+                        onNotificationAction(
+                            NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false),
+                        )
+                    }
+                }
+
+                LifecycleStartEffect(videoPlayerController) {
+                    onStopOrDispose { videoPlayerController.pauseActiveVideo() }
+                }
+
+                return displayState
+            }
         }
     }
 }
