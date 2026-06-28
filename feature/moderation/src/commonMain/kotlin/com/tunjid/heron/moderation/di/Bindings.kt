@@ -44,8 +44,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -98,10 +98,10 @@ class ModerationBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualModerationViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(ModerationStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: ModerationViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -139,7 +139,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: ModerationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualModerationViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<ModerationStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

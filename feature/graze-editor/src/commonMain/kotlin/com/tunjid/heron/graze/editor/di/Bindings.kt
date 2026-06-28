@@ -45,8 +45,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -127,10 +127,10 @@ class GrazeEditorBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualGrazeEditorViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(GrazeEditorStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: GrazeEditorViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -161,7 +161,7 @@ class GrazeEditorBindings(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
             val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: GrazeEditorStateHolder = paneScaffoldState.rememberRouteViewModel<ActualGrazeEditorViewModel>(
+            val stateHolder = paneScaffoldState.retainRouteStateHolder<GrazeEditorStateHolder>(
                 route = routeParser.hydrate(route),
             )
             val state = stateHolder.produceStateWithLifecycle()

@@ -55,8 +55,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -127,10 +127,10 @@ class SearchBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(SearchViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(SearchStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: SearchViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -170,7 +170,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: SearchStateHolder = paneScaffoldState.rememberRouteViewModel<SearchViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<SearchStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

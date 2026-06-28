@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
@@ -35,7 +36,7 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.graze.editor.di.initialLoad
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -62,7 +63,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 
-internal interface GrazeEditorStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface GrazeEditorStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface GrazeEditorViewModelInitializer {
@@ -75,8 +78,7 @@ fun interface GrazeEditorViewModelInitializer {
 class ActualGrazeEditorViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     GrazeEditorStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -127,7 +129,6 @@ class ActualGrazeEditorViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

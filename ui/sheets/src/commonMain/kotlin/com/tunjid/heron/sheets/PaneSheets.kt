@@ -22,35 +22,26 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
-import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModel
+import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsSheetState
-import com.tunjid.heron.sheets.mutedwords.MutedWordsViewModel
+import com.tunjid.heron.sheets.mutedwords.MutedWordsStateHolder
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsSheetState
-import com.tunjid.heron.sheets.postinteractions.PostInteractionsViewModel
+import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState
-import com.tunjid.heron.sheets.postoptions.PostOptionsViewModel
+import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListSheetState
-import com.tunjid.heron.sheets.selectlist.SelectListViewModel
+import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState
-import com.tunjid.heron.sheets.threadgate.ThreadGateViewModel
+import com.tunjid.heron.sheets.threadgate.ThreadGateStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SnackbarDisplayEffect
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
-import kotlinx.coroutines.CoroutineScope
-
-/**
- * Builds the `(CoroutineScope) -> VM` initializer for a sheet [SheetViewModel] by resolving it from
- * the app graph through [PaneScaffoldState]. This is how the sheets reach their DI-provided
- * ViewModels without the scaffold layer depending on this module.
- */
-private inline fun <reified VM : SheetViewModel> PaneScaffoldState.sheetInitializer(): (CoroutineScope) -> VM =
-    { scope -> sheetViewModelInitializer(VM::class).invoke(scope) as VM }
+import com.tunjid.heron.ui.scaffold.scaffold.retainSheetStateHolder
 
 @Composable
 fun PaneScaffoldState.rememberMutedWordsSheetState(): MutedWordsSheetState {
     val sheetState = MutedWordsSheetState.rememberUpdatedMutedWordsSheetState(
-        initializer = sheetInitializer<MutedWordsViewModel>(),
+        stateHolder = retainSheetStateHolder<MutedWordsStateHolder>(),
     )
     SnackbarDisplayEffect(
         messages = sheetState.messages,
@@ -64,14 +55,14 @@ fun PaneScaffoldState.rememberPostOptionsSheetState(
     onOptionClicked: (PostOption) -> Unit,
 ): PostOptionsSheetState =
     PostOptionsSheetState.rememberUpdatedPostOptionsSheetState(
-        initializer = sheetInitializer<PostOptionsViewModel>(),
+        stateHolder = retainSheetStateHolder<PostOptionsStateHolder>(),
         onOptionClicked = onOptionClicked,
     )
 
 @Composable
 fun PaneScaffoldState.rememberTimelineThreadGateSheetState(): ThreadGateSheetState.OfTimeline {
     val sheetState = ThreadGateSheetState.rememberUpdatedThreadGateSheetState(
-        initializer = sheetInitializer<ThreadGateViewModel>(),
+        stateHolder = retainSheetStateHolder<ThreadGateStateHolder>(),
     )
     SnackbarDisplayEffect(
         messages = sheetState.messages,
@@ -85,7 +76,7 @@ fun PaneScaffoldState.rememberPreferenceThreadGateSheetState(
     onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit,
 ): ThreadGateSheetState.OfPreference =
     ThreadGateSheetState.rememberUpdatedThreadGateSheetState(
-        initializer = sheetInitializer<ThreadGateViewModel>(),
+        stateHolder = retainSheetStateHolder<ThreadGateStateHolder>(),
         onDefaultThreadGateUpdated = onDefaultThreadGateUpdated,
     )
 
@@ -97,7 +88,7 @@ fun PaneScaffoldState.rememberEmbeddableRecordOptionsSheetState(
     onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
 ): EmbeddableRecordOptionsSheetState =
     EmbeddableRecordOptionsSheetState.rememberUpdatedEmbeddableRecordOptionsState(
-        initializer = sheetInitializer<EmbeddableRecordOptionsViewModel>(),
+        stateHolder = retainSheetStateHolder<EmbeddableRecordOptionsStateHolder>(),
         editTitle = editTitle,
         onEditClicked = onEditClicked,
         onShareInConversationClicked = onShareInConversationClicked,
@@ -109,7 +100,7 @@ fun PaneScaffoldState.rememberSelectListSheetState(
     onListSelected: (FeedList) -> Unit,
 ): SelectListSheetState =
     SelectListSheetState.rememberUpdatedSelectListSheetState(
-        initializer = sheetInitializer<SelectListViewModel>(),
+        stateHolder = retainSheetStateHolder<SelectListStateHolder>(),
         onListSelected = onListSelected,
     )
 
@@ -118,7 +109,7 @@ fun PaneScaffoldState.rememberPostInteractionsSheetState(
     sharedElementPrefix: String?,
 ): PostInteractionsSheetState {
     val sheetState = PostInteractionsSheetState.rememberUpdatedPostInteractionsSheetState(
-        initializer = sheetInitializer<PostInteractionsViewModel>(),
+        stateHolder = retainSheetStateHolder<PostInteractionsStateHolder>(),
         sharedElementPrefix = sharedElementPrefix,
     )
     SnackbarDisplayEffect(

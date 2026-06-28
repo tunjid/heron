@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.atmosphereapp
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.RockskyAlbum
@@ -40,7 +41,6 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -75,8 +75,7 @@ fun interface AtmosphereAppViewModelInitializer {
 class ActualAtmosphereAppViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     AtmosphereAppStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -124,7 +123,6 @@ class ActualAtmosphereAppViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

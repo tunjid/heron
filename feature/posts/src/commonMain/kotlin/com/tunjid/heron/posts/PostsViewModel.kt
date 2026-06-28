@@ -17,6 +17,7 @@
 package com.tunjid.heron.posts
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -34,7 +35,7 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -49,7 +50,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal interface PostsStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface PostsStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface PostsViewModelInitializer {
@@ -63,8 +66,7 @@ fun interface PostsViewModelInitializer {
 class ActualPostsViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     PostsStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -121,7 +123,6 @@ class ActualPostsViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

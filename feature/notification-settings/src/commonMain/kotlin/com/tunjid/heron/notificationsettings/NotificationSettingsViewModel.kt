@@ -16,13 +16,14 @@
 
 package com.tunjid.heron.notificationsettings
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -35,7 +36,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-internal interface NotificationSettingsStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface NotificationSettingsStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface NotificationSettingsViewModelInitializer {
@@ -48,8 +51,7 @@ fun interface NotificationSettingsViewModelInitializer {
 class ActualNotificationSettingsViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     NotificationSettingsStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -92,7 +94,6 @@ class ActualNotificationSettingsViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

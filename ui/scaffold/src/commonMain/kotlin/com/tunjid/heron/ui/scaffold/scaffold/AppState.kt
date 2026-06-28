@@ -34,11 +34,9 @@ import com.tunjid.heron.ui.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
-import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.ViewModelBackedStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.withSnapshotNotifications
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -58,8 +56,8 @@ class AppState(
     private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
-    internal val sheetViewModelInitializers: Map<KClass<*>, SheetViewModelInitializer>,
-    internal val routeViewModelInitializers: Map<KClass<*>, RouteViewModelInitializer>,
+    internal val sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
+    internal val routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
 ) {
     var showPlatformSplashScreen by mutableStateOf(true)
         private set
@@ -75,23 +73,10 @@ class AppState(
             }
         }
 
-    internal val viewModelInitializer = object : ViewModelInitializer {
-        override fun sheetViewModelInitializer(
-            modelClass: KClass<out SheetViewModel>,
-        ): SheetViewModelInitializer =
-            sheetViewModelInitializers[modelClass]
-                ?: throw IllegalStateException(
-                    "No SheetViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in SheetBindings.",
-                )
-
-        override fun routeViewModelInitializer(
-            modelClass: KClass<out RouteViewModel>,
-        ): RouteViewModelInitializer =
-            routeViewModelInitializers[modelClass]
-                ?: throw IllegalStateException(
-                    "No RouteViewModelInitializer registered for ${modelClass.simpleName}. Ensure it is contributed in the feature's Bindings.",
-                )
-    }
+    internal val stateHolderInitializer = ViewModelBackedStateHolderInitializer(
+        routeStateHolderInitializers = routeStateHolderInitializers,
+        sheetStateHolderInitializers = sheetStateHolderInitializers,
+    )
 
     private val entryTrie = entryMap
         .mapKeys { (template) -> PathPattern(template) }
@@ -134,7 +119,7 @@ class AppState(
             notificationStateHolder = notificationStateHolder,
             imageLoader = imageLoader,
             videoPlayerController = videoPlayerController,
-            viewModelInitializer = viewModelInitializer,
+            stateHolderInitializer = stateHolderInitializer,
         )
     }
 }

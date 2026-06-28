@@ -43,8 +43,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -105,10 +105,10 @@ class TasksBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualTasksViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(TasksStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: TasksViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -145,7 +145,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: TasksStateHolder = paneScaffoldState.rememberRouteViewModel<ActualTasksViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<TasksStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

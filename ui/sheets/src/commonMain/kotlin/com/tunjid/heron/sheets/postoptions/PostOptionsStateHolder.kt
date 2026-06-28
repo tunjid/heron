@@ -1,6 +1,7 @@
 package com.tunjid.heron.sheets.postoptions
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.types.ProfileId
@@ -10,7 +11,7 @@ import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.stateproduction.SheetViewModel
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -26,7 +27,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
-interface PostOptionsStateHolder : ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>
+interface PostOptionsStateHolder :
+    SheetStateHolder,
+    ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>
 
 @AssistedFactory
 fun interface PostOptionsViewModelInitializer {
@@ -38,7 +41,7 @@ fun interface PostOptionsViewModelInitializer {
 class PostOptionsViewModel(
     mutator: ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState>,
     scope: CoroutineScope,
-) : SheetViewModel(scope),
+) : ViewModel(viewModelScope = scope),
     PostOptionsStateHolder,
     ActionSuspendingStateMutator<PostOptionsAction, PostOptionsState> by mutator {
 

@@ -17,6 +17,7 @@
 package com.tunjid.heron.search
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
@@ -41,7 +42,7 @@ import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -67,7 +68,9 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 
-internal interface SearchStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface SearchStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SearchViewModelInitializer {
@@ -81,8 +84,7 @@ fun interface SearchViewModelInitializer {
 class SearchViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     SearchStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -189,7 +191,6 @@ class SearchViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

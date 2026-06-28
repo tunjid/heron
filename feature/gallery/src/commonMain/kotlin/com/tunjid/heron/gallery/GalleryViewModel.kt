@@ -18,6 +18,7 @@ package com.tunjid.heron.gallery
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
@@ -43,7 +44,7 @@ import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -65,7 +66,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 
-internal interface GalleryStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface GalleryStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface GalleryViewModelInitializer {
@@ -79,8 +82,7 @@ fun interface GalleryViewModelInitializer {
 class ActualGalleryViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     GalleryStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -174,7 +176,6 @@ class ActualGalleryViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

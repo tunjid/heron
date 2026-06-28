@@ -17,20 +17,20 @@
 package com.tunjid.heron.sheets.di
 
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModel
+import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModelInitializer
-import com.tunjid.heron.sheets.mutedwords.MutedWordsViewModel
+import com.tunjid.heron.sheets.mutedwords.MutedWordsStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsViewModelInitializer
-import com.tunjid.heron.sheets.postinteractions.PostInteractionsViewModel
+import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsViewModelInitializer
-import com.tunjid.heron.sheets.postoptions.PostOptionsViewModel
+import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOptionsViewModelInitializer
-import com.tunjid.heron.sheets.selectlist.SelectListViewModel
+import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
-import com.tunjid.heron.sheets.threadgate.ThreadGateViewModel
+import com.tunjid.heron.sheets.threadgate.ThreadGateStateHolder
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.ui.stateproduction.SheetViewModelInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
@@ -38,11 +38,11 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 
 /**
- * Contributes each sheet [com.tunjid.heron.ui.stateproduction.SheetViewModel]'s assisted initializer into
- * the app graph's `Map<KClass<out SheetViewModel>, SheetViewModelInitializer>`, keyed by the
- * ViewModel class. This mirrors how feature modules contribute their navigation entries, and lets
- * `PaneScaffoldState` create a sheet ViewModel reflectively without the scaffold layer depending on
- * this module.
+ * Contributes each sheet's assisted [com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer]
+ * into the app graph's `Map<KClass<*>, SheetStateHolderInitializer>`, keyed by the sheet's state
+ * holder interface. This mirrors how feature modules contribute their navigation entries, and lets
+ * `PaneScaffoldState` resolve a sheet's state holder without the scaffold layer depending on this
+ * module.
  */
 @BindingContainer
 class SheetBindings(
@@ -51,49 +51,49 @@ class SheetBindings(
 ) {
     @Provides
     @IntoMap
-    @ClassKey(MutedWordsViewModel::class)
+    @ClassKey(MutedWordsStateHolder::class)
     fun provideMutedWordsViewModelInitializer(
         initializer: MutedWordsViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
-    @ClassKey(PostOptionsViewModel::class)
+    @ClassKey(PostOptionsStateHolder::class)
     fun providePostOptionsViewModelInitializer(
         initializer: PostOptionsViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
-    @ClassKey(ThreadGateViewModel::class)
+    @ClassKey(ThreadGateStateHolder::class)
     fun provideThreadGateViewModelInitializer(
         initializer: ThreadGateViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
-    @ClassKey(EmbeddableRecordOptionsViewModel::class)
+    @ClassKey(EmbeddableRecordOptionsStateHolder::class)
     fun provideEmbeddableRecordOptionsViewModelInitializer(
         initializer: EmbeddableRecordOptionsViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
-    @ClassKey(SelectListViewModel::class)
+    @ClassKey(SelectListStateHolder::class)
     fun provideSelectListViewModelInitializer(
         initializer: SelectListViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
-    @ClassKey(PostInteractionsViewModel::class)
+    @ClassKey(PostInteractionsStateHolder::class)
     fun providePostInteractionsViewModelInitializer(
         initializer: PostInteractionsViewModelInitializer,
-    ): SheetViewModelInitializer =
-        SheetViewModelInitializer(initializer::invoke)
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
 }

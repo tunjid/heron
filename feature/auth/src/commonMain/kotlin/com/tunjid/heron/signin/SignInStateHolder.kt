@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.signin
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
@@ -28,7 +29,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -52,7 +53,9 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 
-internal interface SignInStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface SignInStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SignInViewModelInitializer {
@@ -65,8 +68,7 @@ fun interface SignInViewModelInitializer {
 class ActualSignInViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     SignInStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -135,7 +137,6 @@ class ActualSignInViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

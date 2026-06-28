@@ -88,25 +88,25 @@ import org.jetbrains.compose.resources.stringResource
 @Stable
 class MutedWordsSheetState internal constructor(
     scope: BottomSheetScope,
-    internal val viewModel: MutedWordsViewModel,
+    internal val stateHolder: MutedWordsStateHolder,
 ) : BottomSheetState(scope) {
 
-    val messages: List<Memo> get() = viewModel.state.messages
+    val messages: List<Memo> get() = stateHolder.state.messages
 
     fun onSnackbarMessageConsumed(
         memo: Memo,
-    ) = viewModel.accept(MutedWordsAction.SnackbarDismissed(memo))
+    ) = stateHolder.accept(MutedWordsAction.SnackbarDismissed(memo))
 
     override fun onHidden() {}
 
     companion object {
         @Composable
         fun rememberUpdatedMutedWordsSheetState(
-            initializer: (CoroutineScope) -> MutedWordsViewModel,
+            stateHolder: MutedWordsStateHolder,
         ): MutedWordsSheetState {
             val state = rememberBottomSheetState(
                 skipPartiallyExpanded = false,
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = ::MutedWordsSheetState,
             )
 
@@ -123,7 +123,7 @@ private fun MutedWordsBottomSheet(
     state: MutedWordsSheetState,
 ) {
     state.ModalBottomSheet {
-        val mutedWordsState = state.viewModel.produceState()
+        val mutedWordsState = state.stateHolder.produceState()
 
         val initialMutedWords =
             remember { mutableStateOf<List<MutedWordPreference>?>(null) }
@@ -135,7 +135,7 @@ private fun MutedWordsBottomSheet(
             onDispose {
                 val currentWords = mutedWordsState.mutedWords
                 if (initialMutedWords.value != null && initialMutedWords.value != currentWords) {
-                    state.viewModel.accept(
+                    state.stateHolder.accept(
                         MutedWordsAction.UpdateMutedWord(currentWords),
                     )
                 }
@@ -146,7 +146,7 @@ private fun MutedWordsBottomSheet(
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
             sheetState = state,
             state = mutedWordsState,
-            actions = state.viewModel.accept,
+            actions = state.stateHolder.accept,
         )
     }
 }

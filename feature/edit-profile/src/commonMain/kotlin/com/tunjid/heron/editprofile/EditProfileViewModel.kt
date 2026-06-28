@@ -17,6 +17,7 @@
 package com.tunjid.heron.editprofile
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
@@ -33,7 +34,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -56,7 +57,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.take
 
-internal interface EditProfileStateHolder : ActionSuspendingStateMutator<Action, State.SnapshotMutable>
+internal interface EditProfileStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State.SnapshotMutable>
 
 @AssistedFactory
 fun interface EditProfileViewModelInitializer {
@@ -70,8 +73,7 @@ fun interface EditProfileViewModelInitializer {
 class ActualEditProfileViewModel(
     mutator: ActionSuspendingStateMutator<Action, State.SnapshotMutable>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     EditProfileStateHolder,
     ActionSuspendingStateMutator<Action, State.SnapshotMutable> by mutator {
 
@@ -134,7 +136,6 @@ class ActualEditProfileViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

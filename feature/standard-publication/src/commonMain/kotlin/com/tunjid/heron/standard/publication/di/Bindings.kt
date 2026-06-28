@@ -42,8 +42,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -146,10 +146,10 @@ class StandardPublicationBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualStandardPublicationViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(StandardPublicationStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: StandardPublicationViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -186,7 +186,7 @@ class StandardPublicationBindings(
         },
         render = { route ->
             val paneScaffoldState = rememberPaneScaffoldState()
-            val stateHolder: StandardPublicationStateHolder = paneScaffoldState.rememberRouteViewModel<ActualStandardPublicationViewModel>(
+            val stateHolder = paneScaffoldState.retainRouteStateHolder<StandardPublicationStateHolder>(
                 route = routeParser.hydrate(route),
             )
             val state = stateHolder.produceStateWithLifecycle()

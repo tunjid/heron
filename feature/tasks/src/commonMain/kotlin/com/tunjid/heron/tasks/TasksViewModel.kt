@@ -17,6 +17,7 @@
 package com.tunjid.heron.tasks
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
@@ -40,7 +41,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tasks.ui.failedTaskItem
 import com.tunjid.heron.tasks.ui.inFlightTaskItem
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -64,7 +65,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
-internal interface TasksStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface TasksStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface TasksViewModelInitializer {
@@ -78,8 +81,7 @@ fun interface TasksViewModelInitializer {
 class ActualTasksViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     TasksStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -131,7 +133,6 @@ class ActualTasksViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

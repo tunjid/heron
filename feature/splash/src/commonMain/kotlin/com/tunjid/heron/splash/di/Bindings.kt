@@ -26,8 +26,8 @@ import com.tunjid.heron.splash.SplashViewModelInitializer
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -73,10 +73,10 @@ class SplashBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualSplashViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(SplashStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: SplashViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -98,7 +98,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: SplashStateHolder = paneScaffoldState.rememberRouteViewModel<ActualSplashViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<SplashStateHolder>(
         route = route,
     )
     stateHolder.produceStateWithLifecycle()

@@ -17,6 +17,7 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
@@ -45,7 +46,7 @@ import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.isNoOp
@@ -67,7 +68,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 
-internal interface ListStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ListStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ListViewModelInitializer {
@@ -81,8 +84,7 @@ fun interface ListViewModelInitializer {
 class ActualListViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ListStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -178,7 +180,6 @@ class ActualListViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

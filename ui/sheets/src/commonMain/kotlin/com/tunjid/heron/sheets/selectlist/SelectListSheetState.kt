@@ -41,11 +41,11 @@ import kotlinx.coroutines.CoroutineScope
 @Stable
 class SelectListSheetState(
     scope: BottomSheetScope,
-    internal val viewModel: SelectListViewModel,
+    internal val stateHolder: SelectListStateHolder,
 ) : BottomSheetState(scope) {
 
     val state: SelectListState
-        get() = viewModel.state
+        get() = stateHolder.state
 
     override fun onHidden() {
         // No-op
@@ -54,11 +54,11 @@ class SelectListSheetState(
     companion object {
         @Composable
         fun rememberUpdatedSelectListSheetState(
-            initializer: (CoroutineScope) -> SelectListViewModel,
+            stateHolder: SelectListStateHolder,
             onListSelected: (FeedList) -> Unit,
         ): SelectListSheetState {
             val state = rememberBottomSheetState(
-                viewModelInitializer = initializer,
+                stateHolder = stateHolder,
                 block = ::SelectListSheetState,
             )
 
@@ -78,7 +78,7 @@ private fun SelectListBottomSheet(
     onListSelected: (FeedList) -> Unit,
 ) {
     state.ModalBottomSheet {
-        val selectListState = state.viewModel.produceState()
+        val selectListState = state.stateHolder.produceState()
 
         LazyColumn(
             contentPadding = PaddingValues(16.dp),

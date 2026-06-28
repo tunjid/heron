@@ -17,6 +17,7 @@
 package com.tunjid.heron.standard.publication
 
 import androidx.compose.runtime.Stable
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.RecordKey
@@ -33,7 +34,7 @@ import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -48,7 +49,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 
-internal interface StandardPublicationStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface StandardPublicationStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface StandardPublicationViewModelInitializer {
@@ -62,8 +65,7 @@ fun interface StandardPublicationViewModelInitializer {
 class ActualStandardPublicationViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     StandardPublicationStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -105,7 +107,6 @@ class ActualStandardPublicationViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 

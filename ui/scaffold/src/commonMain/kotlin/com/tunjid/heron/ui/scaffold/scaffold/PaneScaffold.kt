@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.LifecycleStartEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -75,9 +74,11 @@ import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
-import com.tunjid.heron.ui.stateproduction.ViewModelInitializer
-import com.tunjid.heron.ui.stateproduction.viewModelCoroutineScope
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.heron.ui.stateproduction.SheetStateHolder
+import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.retainSheetStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
@@ -93,10 +94,10 @@ import kotlinx.coroutines.launch
 @Stable
 class PaneScaffoldState(
     internal val displayScaffoldState: DisplayScaffoldState,
-    viewModelInitializer: ViewModelInitializer,
+    @PublishedApi
+    internal val stateHolderInitializer: StateHolderInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : PaneTransitionScope,
-    ViewModelInitializer by viewModelInitializer,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
@@ -177,29 +178,33 @@ class PaneScaffoldState(
 }
 
 @Composable
-inline fun <reified VM : RouteViewModel> PaneScaffoldState.rememberRouteViewModel(
+inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
     route: Route,
-): VM = viewModel<VM> {
-    routeViewModelInitializer(VM::class).invoke(
-        scope = viewModelCoroutineScope(),
-        route = route,
-    ) as VM
-}
+): T = stateHolderInitializer.retainRouteStateHolder(
+    type = T::class,
+    route = route,
+) as T
+
+@Composable
+inline fun <reified T : SheetStateHolder> PaneScaffoldState.retainSheetStateHolder(): T =
+    stateHolderInitializer.retainSheetStateHolder(
+        type = T::class,
+    ) as T
 
 @Composable
 fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
     displayScaffoldState: DisplayScaffoldState = LocalDisplayScaffoldState.current,
-    viewModelInitializer: ViewModelInitializer = LocalDisplayScaffoldState.current.staticStates.viewModelInitializer,
+    stateHolderInitializer: StateHolderInitializer = LocalDisplayScaffoldState.current.staticStates.stateHolderInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route> = rememberThreePaneMovableElementSharedTransitionScope(),
 ): PaneScaffoldState {
     val paneScaffoldState = remember(
         displayScaffoldState,
-        viewModelInitializer,
+        stateHolderInitializer,
         paneMovableElementSharedTransitionScope,
     ) {
         PaneScaffoldState(
             displayScaffoldState = displayScaffoldState,
-            viewModelInitializer = viewModelInitializer,
+            stateHolderInitializer = stateHolderInitializer,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
     }

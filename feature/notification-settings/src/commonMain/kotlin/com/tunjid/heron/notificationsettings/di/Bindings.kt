@@ -50,8 +50,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberRouteViewModel
-import com.tunjid.heron.ui.stateproduction.RouteViewModelInitializer
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -106,10 +106,10 @@ class NotificationSettingsBindings(
 
     @Provides
     @IntoMap
-    @ClassKey(ActualNotificationSettingsViewModel::class)
-    fun provideRouteViewModelInitializer(
+    @ClassKey(NotificationSettingsStateHolder::class)
+    fun provideRouteStateHolderInitializer(
         initializer: NotificationSettingsViewModelInitializer,
-    ): RouteViewModelInitializer = RouteViewModelInitializer(initializer::invoke)
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
     @IntoMap
@@ -147,7 +147,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder: NotificationSettingsStateHolder = paneScaffoldState.rememberRouteViewModel<ActualNotificationSettingsViewModel>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<NotificationSettingsStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()

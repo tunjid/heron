@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.moderation
 
+import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
@@ -26,7 +27,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -41,7 +42,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-internal interface ModerationStateHolder : ActionSuspendingStateMutator<Action, State>
+internal interface ModerationStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ModerationViewModelInitializer {
@@ -54,8 +57,7 @@ fun interface ModerationViewModelInitializer {
 class ActualModerationViewModel(
     mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    route: Route,
-) : RouteViewModel(scope, route),
+) : ViewModel(viewModelScope = scope),
     ModerationStateHolder,
     ActionSuspendingStateMutator<Action, State> by mutator {
 
@@ -118,7 +120,6 @@ class ActualModerationViewModel(
             },
         ),
         scope = scope,
-        route = route,
     )
 }
 
