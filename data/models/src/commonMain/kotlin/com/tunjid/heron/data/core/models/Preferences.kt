@@ -225,6 +225,9 @@ data class FeedPreference(
         val FeedPreference.shouldHideReplies: Boolean
             get() = hideReplies.isTrue
 
+        val FeedPreference.shouldHideRepliesByUnfollowed: Boolean
+            get() = hideRepliesByUnfollowed.isTrue
+
         val FeedPreference.shouldHideReposts: Boolean
             get() = hideReposts.isTrue
 

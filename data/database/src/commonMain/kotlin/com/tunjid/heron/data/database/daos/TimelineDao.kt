@@ -84,6 +84,24 @@ interface TimelineDao {
                 OR parentPostUri IS NULL
             )
             AND (
+                -- Keep the cheap constant first: SQLite short-circuits the OR and skips
+                -- the EXISTS entirely when the toggle is off, so this costs unfollowed
+                -- filtering nothing for users who leave it disabled.
+                :hideRepliesByUnfollowed = FALSE
+                OR parentPostUri IS NULL
+                OR EXISTS (
+                    SELECT 1 FROM posts
+                    LEFT JOIN profileViewerStates
+                        ON profileViewerStates.profileId = :viewingProfileId
+                        AND profileViewerStates.otherProfileId = posts.authorId
+                    WHERE posts.uri = timelineItems.parentPostUri
+                    AND (
+                        profileViewerStates.following IS NOT NULL
+                        OR posts.authorId = :viewingProfileId
+                    )
+                )
+            )
+            AND (
                 :hideReposts = FALSE
                 OR reposter IS NULL
             )
@@ -105,6 +123,7 @@ interface TimelineDao {
         limit: Long,
         offset: Long,
         hideReplies: Boolean,
+        hideRepliesByUnfollowed: Boolean,
         hideReposts: Boolean,
         hideQuotePosts: Boolean,
     ): Flow<List<PopulatedTimelineItemEntity>>
