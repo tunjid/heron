@@ -37,7 +37,7 @@ fun Modifier.predictiveBackPlacement(
     val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
         inPredictiveBack &&
         isActive &&
-        appScaffoldState.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop
+        appScaffoldState.staticStates.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop
 
     ifTrue(shouldDrawBackground) {
         backPreview(backPreviewState)
