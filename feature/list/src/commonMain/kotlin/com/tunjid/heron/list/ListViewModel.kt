@@ -67,7 +67,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 
-internal typealias ListStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ListStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ListViewModelInitializer {
@@ -79,11 +79,12 @@ fun interface ListViewModelInitializer {
 
 @Stable
 class ActualListViewModel(
-    mutator: ListStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ListStateHolder by mutator {
+    ListStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

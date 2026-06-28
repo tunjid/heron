@@ -39,7 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-internal typealias ProfileStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ProfileStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ProfileAvatarViewModelInitializer {
@@ -50,11 +50,12 @@ fun interface ProfileAvatarViewModelInitializer {
 }
 
 class ActualProfileAvatarViewModel(
-    mutator: ProfileStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfileStateHolder by mutator {
+    ProfileStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

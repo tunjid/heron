@@ -41,6 +41,7 @@ import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteViewModel
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
@@ -72,11 +73,12 @@ fun interface AtmosphereAppViewModelInitializer {
 }
 
 class ActualAtmosphereAppViewModel(
-    mutator: AtmosphereAppStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    AtmosphereAppStateHolder by mutator {
+    AtmosphereAppStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

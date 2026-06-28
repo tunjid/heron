@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.take
 
-internal typealias HomeStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface HomeStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface HomeViewModelInitializer {
@@ -68,11 +68,12 @@ fun interface HomeViewModelInitializer {
 
 @Stable
 class ActualHomeViewModel(
-    mutator: HomeStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    HomeStateHolder by mutator {
+    HomeStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

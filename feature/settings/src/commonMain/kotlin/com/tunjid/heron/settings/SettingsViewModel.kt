@@ -53,7 +53,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-internal typealias SettingsStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface SettingsStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SettingsViewModelInitializer {
@@ -64,11 +64,12 @@ fun interface SettingsViewModelInitializer {
 }
 
 class ActualSettingsViewModel(
-    mutator: SettingsStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    SettingsStateHolder by mutator {
+    SettingsStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-internal typealias ModerationStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ModerationStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ModerationViewModelInitializer {
@@ -52,11 +52,12 @@ fun interface ModerationViewModelInitializer {
 }
 
 class ActualModerationViewModel(
-    mutator: ModerationStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ModerationStateHolder by mutator {
+    ModerationStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

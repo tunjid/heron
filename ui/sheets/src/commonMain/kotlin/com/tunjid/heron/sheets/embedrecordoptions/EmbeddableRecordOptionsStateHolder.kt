@@ -22,8 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 
-typealias EmbeddableRecordOptionsStateHolder =
-    ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
+interface EmbeddableRecordOptionsStateHolder : ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
 
 @AssistedFactory
 fun interface EmbeddableRecordOptionsViewModelInitializer {
@@ -33,10 +32,11 @@ fun interface EmbeddableRecordOptionsViewModelInitializer {
 }
 
 class EmbeddableRecordOptionsViewModel(
-    mutator: EmbeddableRecordOptionsStateHolder,
+    mutator: ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>,
     scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    EmbeddableRecordOptionsStateHolder by mutator {
+    EmbeddableRecordOptionsStateHolder,
+    ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState> by mutator {
 
     @AssistedInject
     constructor(

@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.serialization.Serializable
 
-typealias SelectListStateHolder = ActionSuspendingStateMutator<SelectListAction, SelectListState>
+interface SelectListStateHolder : ActionSuspendingStateMutator<SelectListAction, SelectListState>
 
 @AssistedFactory
 fun interface SelectListViewModelInitializer {
@@ -27,10 +27,11 @@ fun interface SelectListViewModelInitializer {
 }
 
 class SelectListViewModel(
-    mutator: SelectListStateHolder,
+    mutator: ActionSuspendingStateMutator<SelectListAction, SelectListState>,
     scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    SelectListStateHolder by mutator {
+    SelectListStateHolder,
+    ActionSuspendingStateMutator<SelectListAction, SelectListState> by mutator {
 
     @AssistedInject
     constructor(

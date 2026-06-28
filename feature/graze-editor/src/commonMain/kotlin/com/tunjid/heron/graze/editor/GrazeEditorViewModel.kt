@@ -62,7 +62,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 
-internal typealias GrazeEditorStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface GrazeEditorStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface GrazeEditorViewModelInitializer {
@@ -73,11 +73,12 @@ fun interface GrazeEditorViewModelInitializer {
 }
 
 class ActualGrazeEditorViewModel(
-    mutator: GrazeEditorStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    GrazeEditorStateHolder by mutator {
+    GrazeEditorStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

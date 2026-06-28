@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal typealias StandardSubscriptionStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface StandardSubscriptionStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface StandardSubscriptionViewModelInitializer {
@@ -54,11 +54,12 @@ fun interface StandardSubscriptionViewModelInitializer {
 
 @Stable
 class ActualStandardSubscriptionViewModel(
-    mutator: StandardSubscriptionStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    StandardSubscriptionStateHolder by mutator {
+    StandardSubscriptionStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

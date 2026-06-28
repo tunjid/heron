@@ -84,7 +84,7 @@ interface State {
     }
 }
 
-internal typealias AtmosphereAppStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface AtmosphereAppStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @Stable
 sealed class AppScreenStateHolders {

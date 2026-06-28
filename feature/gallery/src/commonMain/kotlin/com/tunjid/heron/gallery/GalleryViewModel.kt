@@ -65,7 +65,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 
-internal typealias GalleryStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface GalleryStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface GalleryViewModelInitializer {
@@ -77,11 +77,12 @@ fun interface GalleryViewModelInitializer {
 
 @Stable
 class ActualGalleryViewModel(
-    mutator: GalleryStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    GalleryStateHolder by mutator {
+    GalleryStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

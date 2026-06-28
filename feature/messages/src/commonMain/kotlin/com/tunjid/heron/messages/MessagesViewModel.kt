@@ -61,7 +61,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withTimeout
 
-internal typealias MessagesStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface MessagesStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface MessagesViewModelInitializer {
@@ -73,11 +73,12 @@ fun interface MessagesViewModelInitializer {
 
 @Stable
 class ActualMessagesViewModel(
-    mutator: MessagesStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    MessagesStateHolder by mutator {
+    MessagesStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

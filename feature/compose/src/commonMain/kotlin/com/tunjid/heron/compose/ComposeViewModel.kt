@@ -65,7 +65,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
-internal typealias ComposeStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ComposeStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ComposeViewModelInitializer {
@@ -77,11 +77,12 @@ fun interface ComposeViewModelInitializer {
 
 @Stable
 class ActualComposeViewModel(
-    mutator: ComposeStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ComposeStateHolder by mutator {
+    ComposeStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(
