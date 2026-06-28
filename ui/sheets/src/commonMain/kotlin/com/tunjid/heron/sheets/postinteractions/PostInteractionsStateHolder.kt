@@ -26,8 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-typealias PostInteractionsStateHolder =
-    ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>
+interface PostInteractionsStateHolder : ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>
 
 @AssistedFactory
 fun interface PostInteractionsViewModelInitializer {
@@ -37,10 +36,11 @@ fun interface PostInteractionsViewModelInitializer {
 }
 
 class PostInteractionsViewModel(
-    mutator: PostInteractionsStateHolder,
+    mutator: ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState>,
     scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    PostInteractionsStateHolder by mutator {
+    PostInteractionsStateHolder,
+    ActionSuspendingStateMutator<PostInteractionsAction, PostInteractionsState> by mutator {
 
     @AssistedInject
     constructor(

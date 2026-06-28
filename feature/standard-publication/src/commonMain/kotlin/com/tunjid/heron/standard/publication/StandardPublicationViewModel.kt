@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 
-internal typealias StandardPublicationStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface StandardPublicationStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface StandardPublicationViewModelInitializer {
@@ -60,11 +60,12 @@ fun interface StandardPublicationViewModelInitializer {
 
 @Stable
 class ActualStandardPublicationViewModel(
-    mutator: StandardPublicationStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    StandardPublicationStateHolder by mutator {
+    StandardPublicationStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

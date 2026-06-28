@@ -51,7 +51,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 
-internal typealias PostDetailStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface PostDetailStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface PostDetailViewModelInitializer {
@@ -63,11 +63,12 @@ fun interface PostDetailViewModelInitializer {
 
 @Stable
 class ActualPostDetailViewModel(
-    mutator: PostDetailStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    PostDetailStateHolder by mutator {
+    PostDetailStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

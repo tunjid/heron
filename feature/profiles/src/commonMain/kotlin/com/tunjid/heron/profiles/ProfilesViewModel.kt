@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal typealias ProfilesStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ProfilesStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ProfilesViewModelInitializer {
@@ -60,11 +60,12 @@ fun interface ProfilesViewModelInitializer {
 
 @Stable
 class ActualProfilesViewModel(
-    mutator: ProfilesStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ProfilesStateHolder by mutator {
+    ProfilesStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

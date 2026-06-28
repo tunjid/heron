@@ -56,7 +56,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.take
 
-internal typealias EditProfileStateHolder = ActionSuspendingStateMutator<Action, State.SnapshotMutable>
+internal interface EditProfileStateHolder : ActionSuspendingStateMutator<Action, State.SnapshotMutable>
 
 @AssistedFactory
 fun interface EditProfileViewModelInitializer {
@@ -68,11 +68,12 @@ fun interface EditProfileViewModelInitializer {
 
 @Stable
 class ActualEditProfileViewModel(
-    mutator: EditProfileStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State.SnapshotMutable>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    EditProfileStateHolder by mutator {
+    EditProfileStateHolder,
+    ActionSuspendingStateMutator<Action, State.SnapshotMutable> by mutator {
 
     @AssistedInject
     constructor(

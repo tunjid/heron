@@ -24,7 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-typealias ThreadGateStateHolder = ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>
+interface ThreadGateStateHolder : ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>
 
 @AssistedFactory
 fun interface ThreadGateViewModelInitializer {
@@ -34,10 +34,11 @@ fun interface ThreadGateViewModelInitializer {
 }
 
 class ThreadGateViewModel(
-    mutator: ThreadGateStateHolder,
+    mutator: ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState>,
     scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    ThreadGateStateHolder by mutator {
+    ThreadGateStateHolder,
+    ActionSuspendingStateMutator<ThreadGateAction, ThreadGateState> by mutator {
 
     @AssistedInject
     constructor(

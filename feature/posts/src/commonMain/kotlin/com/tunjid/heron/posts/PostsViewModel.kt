@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal typealias PostsStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface PostsStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface PostsViewModelInitializer {
@@ -61,11 +61,12 @@ fun interface PostsViewModelInitializer {
 
 @Stable
 class ActualPostsViewModel(
-    mutator: PostsStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    PostsStateHolder by mutator {
+    PostsStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

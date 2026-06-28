@@ -69,7 +69,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-internal typealias ConversationStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface ConversationStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface ConversationViewModelInitializer {
@@ -81,11 +81,12 @@ fun interface ConversationViewModelInitializer {
 
 @Stable
 class ActualConversationViewModel(
-    mutator: ConversationStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    ConversationStateHolder by mutator {
+    ConversationStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

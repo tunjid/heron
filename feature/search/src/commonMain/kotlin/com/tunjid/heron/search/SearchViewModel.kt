@@ -67,7 +67,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias SearchStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface SearchStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SearchViewModelInitializer {
@@ -79,11 +79,12 @@ fun interface SearchViewModelInitializer {
 
 @Stable
 class SearchViewModel(
-    mutator: SearchStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    SearchStateHolder by mutator {
+    SearchStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

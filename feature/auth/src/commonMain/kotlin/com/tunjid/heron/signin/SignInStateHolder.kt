@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias SignInStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface SignInStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SignInViewModelInitializer {
@@ -63,11 +63,12 @@ fun interface SignInViewModelInitializer {
 }
 
 class ActualSignInViewModel(
-    mutator: SignInStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    SignInStateHolder by mutator {
+    SignInStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

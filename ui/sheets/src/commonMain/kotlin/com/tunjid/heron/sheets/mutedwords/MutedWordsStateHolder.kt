@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-typealias MutedWordsStateHolder = ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>
+interface MutedWordsStateHolder : ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>
 
 @AssistedFactory
 fun interface MutedWordsViewModelInitializer {
@@ -38,10 +38,11 @@ fun interface MutedWordsViewModelInitializer {
 }
 
 class MutedWordsViewModel(
-    mutator: MutedWordsStateHolder,
+    mutator: ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState>,
     scope: CoroutineScope,
 ) : SheetViewModel(scope),
-    MutedWordsStateHolder by mutator {
+    MutedWordsStateHolder,
+    ActionSuspendingStateMutator<MutedWordsAction, MutedWordsState> by mutator {
 
     @AssistedInject
     constructor(

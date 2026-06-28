@@ -35,7 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 
-internal typealias NotificationSettingsStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface NotificationSettingsStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface NotificationSettingsViewModelInitializer {
@@ -46,11 +46,12 @@ fun interface NotificationSettingsViewModelInitializer {
 }
 
 class ActualNotificationSettingsViewModel(
-    mutator: NotificationSettingsStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    NotificationSettingsStateHolder by mutator {
+    NotificationSettingsStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

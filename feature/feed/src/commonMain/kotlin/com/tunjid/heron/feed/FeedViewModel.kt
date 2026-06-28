@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 
-internal typealias FeedStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface FeedStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface FeedViewModelInitializer {
@@ -64,11 +64,12 @@ fun interface FeedViewModelInitializer {
 
 @Stable
 class ActualFeedViewModel(
-    mutator: FeedStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    FeedStateHolder by mutator {
+    FeedStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

@@ -64,7 +64,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
-internal typealias TasksStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface TasksStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface TasksViewModelInitializer {
@@ -76,11 +76,12 @@ fun interface TasksViewModelInitializer {
 
 @Stable
 class ActualTasksViewModel(
-    mutator: TasksStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    TasksStateHolder by mutator {
+    TasksStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(

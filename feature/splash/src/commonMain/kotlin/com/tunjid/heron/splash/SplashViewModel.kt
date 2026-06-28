@@ -29,7 +29,7 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 
-internal typealias SplashStateHolder = ActionSuspendingStateMutator<Action, State>
+internal interface SplashStateHolder : ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
 fun interface SplashViewModelInitializer {
@@ -40,11 +40,12 @@ fun interface SplashViewModelInitializer {
 }
 
 class ActualSplashViewModel(
-    mutator: SplashStateHolder,
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
     route: Route,
 ) : RouteViewModel(scope, route),
-    SplashStateHolder by mutator {
+    SplashStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
     @AssistedInject
     constructor(
