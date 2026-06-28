@@ -64,15 +64,9 @@ class AppScaffoldState internal constructor(
 ) {
     internal var density by mutableStateOf(density)
 
-    internal var showNavigation by mutableStateOf(false)
-    internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
-
-    internal var currentPaneAnchor by mutableStateOf(PaneAnchor.Half)
-        private set
-
     internal val paneAnchorState = PaneAnchorState(
         initialMaxWidth = with(density) { windowWidth.value.roundToPx() },
-        initialAnchor = currentPaneAnchor,
+        initialAnchor = staticStates.currentPaneAnchor,
     )
 
     internal val filteredPaneOrder by derivedStateOf {
@@ -123,14 +117,6 @@ class AppScaffoldState internal constructor(
         )
     }
 
-    internal fun onPaneAnchorChanged(
-        anchor: PaneAnchor,
-        destinationId: String,
-    ) {
-        if (destinationId != staticStates.navigationState.multiStackNav.current?.id || anchor == PaneAnchor.Full) return
-        currentPaneAnchor = anchor
-    }
-
     internal fun pop() =
         staticStates.onNavigationAction {
             navState.pop()
@@ -162,6 +148,12 @@ class AppScaffoldState internal constructor(
         internal val videoPlayerController: VideoPlayerController,
         internal val stateHolderInitializer: StateHolderInitializer,
     ) {
+        internal var showNavigation by mutableStateOf(false)
+        internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
+
+        internal var currentPaneAnchor by mutableStateOf(PaneAnchor.Half)
+            private set
+
         internal val identityState
             get() = identityStateHolder.state
 
@@ -193,6 +185,14 @@ class AppScaffoldState internal constructor(
 
         internal fun onNavItemSelected(navItem: NavItem) {
             onNavigationAction { navState.navItemSelected(item = navItem) }
+        }
+
+        internal fun onPaneAnchorChanged(
+            anchor: PaneAnchor,
+            destinationId: String,
+        ) {
+            if (destinationId != navigationState.multiStackNav.current?.id || anchor == PaneAnchor.Full) return
+            currentPaneAnchor = anchor
         }
 
         fun onIdentityAction(

@@ -200,7 +200,7 @@ fun AppScaffold(
                         snapshotFlow {
                             appScaffoldState.paneAnchorState.currentPaneAnchor
                         }.collect { anchor ->
-                            appScaffoldState.onPaneAnchorChanged(
+                            appScaffoldState.staticStates.onPaneAnchorChanged(
                                 anchor = anchor,
                                 destinationId = paneNavigationState.destinationId,
                             )
@@ -231,7 +231,7 @@ fun AppScaffold(
                             }
                         }
                             .collectLatest {
-                                appScaffoldState.dismissBehavior = it
+                                appScaffoldState.staticStates.dismissBehavior = it
                             }
                     }
                 }

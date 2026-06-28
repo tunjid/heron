@@ -102,7 +102,7 @@ class PaneScaffoldState(
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
         BoundsTransformSpring.skipIf {
-            appScaffoldState.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
+            appScaffoldState.staticStates.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
                 appScaffoldState.paneAnchorState.hasInteractions
         }
     }
@@ -115,7 +115,7 @@ class PaneScaffoldState(
         get() = appScaffoldState.isMediumScreenWidthOrWider
 
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
-        get() = appScaffoldState.dismissBehavior
+        get() = appScaffoldState.staticStates.dismissBehavior
 
     val isSignedOut
         get() = !appScaffoldState.staticStates.identityState.isSignedIn
@@ -337,7 +337,7 @@ fun PaneScaffoldState.PaneScaffold(
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
-            appScaffoldState.showNavigation = showNavigation
+            appScaffoldState.staticStates.showNavigation = showNavigation
         }
     }
 }

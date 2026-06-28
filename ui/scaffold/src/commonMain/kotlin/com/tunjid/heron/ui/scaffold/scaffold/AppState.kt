@@ -48,6 +48,9 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
 
+/**
+ * Application level state.
+ */
 @Stable
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
