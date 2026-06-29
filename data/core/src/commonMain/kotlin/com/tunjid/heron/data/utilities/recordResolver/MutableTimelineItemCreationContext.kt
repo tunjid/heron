@@ -18,7 +18,7 @@ package com.tunjid.heron.data.utilities.recordResolver
 
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedPreference
-import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.feedPreference
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -166,14 +166,7 @@ internal class MutableTimelineItemCreationContext(
     override fun feedPreference(
         source: Timeline.Source,
     ): FeedPreference = feedPreferencesBySource.getOrPut(source.id) {
-        if (source is Timeline.Source.Following) {
-            preferences.feedPreferences.homeFeedOrDefault()
-        } else {
-            FeedPreference(
-                feed = source.id,
-                hideRepliesByUnfollowed = false,
-            )
-        }
+        preferences.feedPreference(source)
     }
 
     /**

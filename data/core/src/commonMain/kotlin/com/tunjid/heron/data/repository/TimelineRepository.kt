@@ -38,6 +38,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.feedPreference
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideQuotes
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReplies
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepliesByUnfollowed
@@ -878,34 +879,41 @@ internal class OfflineTimelineRepository(
         }
     }
         .flatMapLatest { (signedInProfileId, pollInstant) ->
-            combine(
-                timelineDao.lastFetchKey(
-                    viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.source.id,
-                )
-                    .map { it?.lastFetchedAt ?: pollInstant }
-                    .distinctUntilChangedBy(Instant::toEpochMilliseconds)
-                    .flatMapLatest {
-                        timelineDao.feedItems(
+            savedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault()
+                .map { it.feedPreference(timeline.source) }
+                .distinctUntilChanged()
+                .flatMapLatest { feedPreference ->
+                    combine(
+                        timelineDao.lastFetchKey(
                             viewingProfileId = signedInProfileId?.id,
                             sourceId = timeline.source.id,
-                            before = it,
-                            limit = 1,
-                            offset = 0,
                         )
-                    },
-                timelineDao.feedItems(
-                    viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.source.id,
-                    before = pollInstant,
-                    limit = 1,
-                    offset = 0,
-                ),
-            ) { latestSeen, latestSaved ->
-                latestSaved
-                    .firstOrNull()
-                    ?.entity?.id != latestSeen.firstOrNull()?.entity?.id
-            }
+                            .map { it?.lastFetchedAt ?: pollInstant }
+                            .distinctUntilChangedBy(Instant::toEpochMilliseconds)
+                            .flatMapLatest {
+                                timelineDao.latestVisibleTimelineItemId(
+                                    viewingProfileId = signedInProfileId?.id,
+                                    sourceId = timeline.source.id,
+                                    before = it,
+                                    hideReplies = feedPreference.shouldHideReplies,
+                                    hideRepliesByUnfollowed = feedPreference.shouldHideRepliesByUnfollowed,
+                                    hideReposts = feedPreference.shouldHideReposts,
+                                    hideQuotePosts = feedPreference.shouldHideQuotes,
+                                )
+                            },
+                        timelineDao.latestVisibleTimelineItemId(
+                            viewingProfileId = signedInProfileId?.id,
+                            sourceId = timeline.source.id,
+                            before = pollInstant,
+                            hideReplies = feedPreference.shouldHideReplies,
+                            hideRepliesByUnfollowed = feedPreference.shouldHideRepliesByUnfollowed,
+                            hideReposts = feedPreference.shouldHideReposts,
+                            hideQuotePosts = feedPreference.shouldHideQuotes,
+                        ),
+                    ) { latestSeen, latestSaved ->
+                        latestSaved != latestSeen
+                    }
+                }
         }
         .flowOn(ioDispatcher)
 
