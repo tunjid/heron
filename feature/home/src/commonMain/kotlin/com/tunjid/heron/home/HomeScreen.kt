@@ -301,7 +301,6 @@ private fun HomeTimeline(
     actions: (Action) -> Unit,
 ) {
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
-    val items = timelineState.tiledItems
 
     val now = remember { Clock.System.now() }
     val density = LocalDensity.current
@@ -353,7 +352,7 @@ private fun HomeTimeline(
                     )
 
                 is PostOption.ThreadGate ->
-                    items.firstOrNull { it.post.uri == option.postUri }
+                    timelineState.tiledItems.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockAccount ->
@@ -429,7 +428,7 @@ private fun HomeTimeline(
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
-                    items = items,
+                    items = timelineState.tiledItems,
                     key = TimelineItem::id,
                     contentType = TimelineItem::contentType,
                     itemContent = { item ->
@@ -574,11 +573,11 @@ private fun HomeTimeline(
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,
-            itemsAvailable = items.size,
+            itemsAvailable = timelineState.tiledItems.size,
         ) { interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
+            timelineState.tiledItems.getOrNull(flooredIndex)
                 ?.takeIf(TimelineItem::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
@@ -588,7 +587,7 @@ private fun HomeTimeline(
     }
 
     gridState.PivotedTilingEffect(
-        items = items,
+        items = timelineState.tiledItems,
         onQueryChanged = { query ->
             timelineStateHolder.accept(
                 TimelineState.Action.Tile(

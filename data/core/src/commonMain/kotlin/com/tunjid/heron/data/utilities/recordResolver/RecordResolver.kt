@@ -35,6 +35,7 @@ import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -52,6 +53,7 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.types.AlbumUri
@@ -213,6 +215,7 @@ internal interface RecordResolver {
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
         fun isMuted(post: Post): Boolean
+        fun feedPreference(source: Timeline.Source): FeedPreference
     }
 }
 

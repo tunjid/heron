@@ -238,6 +238,16 @@ data class FeedPreference(
             firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
                 feed = HOME_FEED,
             )
+
+        fun Preferences.feedPreference(source: Timeline.Source): FeedPreference =
+            if (source is Timeline.Source.Following) {
+                feedPreferences.homeFeedOrDefault()
+            } else {
+                FeedPreference(
+                    feed = source.id,
+                    hideRepliesByUnfollowed = false,
+                )
+            }
     }
 }
 

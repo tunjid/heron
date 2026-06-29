@@ -38,10 +38,15 @@ interface TimelineDao {
         """
         DELETE FROM timelineItems
         WHERE sourceId = :sourceId
+        AND (
+            (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+            OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+        )
     """,
     )
     suspend fun deleteAllFeedsFor(
         sourceId: String,
+        viewingProfileId: String?,
     )
 
     @Upsert
@@ -73,6 +78,29 @@ interface TimelineDao {
     @Query(
         """
             SELECT * FROM timelineItems
+            WHERE sourceId = :sourceId
+            AND indexedAt < :before
+            AND (
+                (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+                OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+            )
+            ORDER BY itemSort
+            DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun feedItems(
+        viewingProfileId: String?,
+        sourceId: String,
+        before: Instant,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedTimelineItemEntity>>
+
+    @Query(
+        """
+            SELECT id FROM timelineItems
             WHERE sourceId = :sourceId
             AND indexedAt < :before
             AND (
@@ -112,21 +140,18 @@ interface TimelineDao {
             )
             ORDER BY itemSort
             DESC
-            LIMIT :limit
-            OFFSET :offset
+            LIMIT 1
         """,
     )
-    fun feedItems(
+    fun latestVisibleTimelineItemId(
         viewingProfileId: String?,
         sourceId: String,
         before: Instant,
-        limit: Long,
-        offset: Long,
         hideReplies: Boolean,
         hideRepliesByUnfollowed: Boolean,
         hideReposts: Boolean,
         hideQuotePosts: Boolean,
-    ): Flow<List<PopulatedTimelineItemEntity>>
+    ): Flow<String?>
 
     @Query(
         """
