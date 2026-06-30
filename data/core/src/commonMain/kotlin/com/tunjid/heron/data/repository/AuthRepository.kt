@@ -313,14 +313,14 @@ internal class AuthTokenRepository(
             },
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForActor()
+                    getPreferencesForAppBskyActor()
                 }
                     .getOrNull()
                     ?.let { savePreferences(it) } != null
             },
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForNotification()
+                    getPreferencesForAppBskyNotification()
                 }
                     .getOrNull()
                     ?.let { saveNotificationPreferences(it) } != null

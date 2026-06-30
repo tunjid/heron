@@ -314,6 +314,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PaneScaffoldState.SwitchStatus(
     currentState: IdentityState.SwitchStatus,
