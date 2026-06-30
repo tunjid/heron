@@ -778,7 +778,7 @@ internal class OfflineTimelineRepository(
     override suspend fun updateHomeTimelines(
         update: Timeline.Update,
     ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
-        getPreferencesForActor()
+        getPreferencesForAppBskyActor()
     }
         .fold(
             onSuccess = { preferencesResponse ->

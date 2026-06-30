@@ -18,7 +18,6 @@ package com.tunjid.heron.ui.modifiers
 
 import androidx.compose.animation.core.AnimationVector2D
 import androidx.compose.animation.core.DeferredTargetAnimation
-import androidx.compose.animation.core.ExperimentalAnimatableApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.approachLayout
 import androidx.compose.ui.unit.Constraints
@@ -26,7 +25,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import kotlinx.coroutines.CoroutineScope
 
-@OptIn(ExperimentalAnimatableApi::class)
 fun Modifier.animateConstraints(
     sizeAnimation: DeferredTargetAnimation<IntSize, AnimationVector2D>,
     coroutineScope: CoroutineScope,
