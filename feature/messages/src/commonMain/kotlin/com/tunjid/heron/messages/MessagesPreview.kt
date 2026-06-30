@@ -17,6 +17,7 @@
 package com.tunjid.heron.messages
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.messages.di.Route as MessagesRoute
@@ -27,12 +28,15 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun MessagesPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/messages"),
-        routeStateHolder = ActualMessagesViewModel(
-            mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualMessagesViewModel(
+                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             MessagesRoute(
                 route = route,

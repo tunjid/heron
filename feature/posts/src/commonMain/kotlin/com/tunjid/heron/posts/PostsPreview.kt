@@ -17,6 +17,7 @@
 package com.tunjid.heron.posts
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.posts.di.Route as PostsRoute
@@ -27,12 +28,15 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun PostsPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/saved"),
-        routeStateHolder = ActualPostsViewModel(
-            mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualPostsViewModel(
+                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             PostsRoute(
                 route = route,

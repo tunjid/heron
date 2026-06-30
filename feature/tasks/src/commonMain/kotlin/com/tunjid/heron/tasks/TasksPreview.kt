@@ -17,6 +17,7 @@
 package com.tunjid.heron.tasks
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.tasks.di.Route as TasksRoute
@@ -27,12 +28,15 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun TasksPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/tasks"),
-        routeStateHolder = ActualTasksViewModel(
-            mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualTasksViewModel(
+                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             TasksRoute(
                 route = route,

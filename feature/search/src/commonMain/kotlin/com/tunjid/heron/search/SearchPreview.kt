@@ -17,6 +17,7 @@
 package com.tunjid.heron.search
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.search.di.Route as SearchRoute
@@ -27,12 +28,15 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun SearchPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/search"),
-        routeStateHolder = SearchViewModel(
-            mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            SearchViewModel(
+                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             SearchRoute(
                 route = route,

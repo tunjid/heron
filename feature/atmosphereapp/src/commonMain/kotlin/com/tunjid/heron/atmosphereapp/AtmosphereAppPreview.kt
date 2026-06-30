@@ -17,6 +17,7 @@
 package com.tunjid.heron.atmosphereapp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.atmosphereapp.di.Route as AtmosphereAppRoute
@@ -27,16 +28,19 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun AtmosphereAppPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/profile/alice.bsky.social/app/myapp"),
-        routeStateHolder = ActualAtmosphereAppViewModel(
-            mutator = State.Immutable(
-                app = null,
-                profile = null,
-                avatarSharedElementKey = "preview",
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualAtmosphereAppViewModel(
+                mutator = State.Immutable(
+                    app = null,
+                    profile = null,
+                    avatarSharedElementKey = "preview",
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             AtmosphereAppRoute(
                 route = route,

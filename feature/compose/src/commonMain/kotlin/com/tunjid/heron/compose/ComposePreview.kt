@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.compose.di.Route as ComposeRoute
@@ -27,14 +28,17 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun ComposePreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/compose"),
-        routeStateHolder = ActualComposeViewModel(
-            mutator = State.Immutable(
-                sharedElementPrefix = null,
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualComposeViewModel(
+                mutator = State.Immutable(
+                    sharedElementPrefix = null,
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             ComposeRoute(
                 route = route,

@@ -17,6 +17,7 @@
 package com.tunjid.heron.list
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.list.di.Route as ListRoute
@@ -27,12 +28,15 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun ListPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/profile/did:example:123/lists/mylist"),
-        routeStateHolder = ActualListViewModel(
-            mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualListViewModel(
+                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             ListRoute(
                 route = route,

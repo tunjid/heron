@@ -17,6 +17,7 @@
 package com.tunjid.heron.editprofile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.core.models.stubProfile
@@ -30,18 +31,21 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun EditProfilePreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/profile/alice.bsky.social/edit"),
-        routeStateHolder = ActualEditProfileViewModel(
-            mutator = State.Immutable(
-                profile = stubProfile(
-                    ProfileId("did:example:123"),
-                    ProfileHandle("alice.bsky.social"),
-                ),
-                avatarSharedElementKey = "preview",
-            ).toSnapshotMutable().asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualEditProfileViewModel(
+                mutator = State.Immutable(
+                    profile = stubProfile(
+                        ProfileId("did:example:123"),
+                        ProfileHandle("alice.bsky.social"),
+                    ),
+                    avatarSharedElementKey = "preview",
+                ).toSnapshotMutable().asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             EditProfileRoute(
                 route = route,

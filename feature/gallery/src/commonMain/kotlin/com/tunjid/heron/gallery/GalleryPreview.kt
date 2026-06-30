@@ -17,6 +17,7 @@
 package com.tunjid.heron.gallery
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.core.types.ProfileId
@@ -28,16 +29,19 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun GalleryPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/profile/did:example:123/post/abc/gallery"),
-        routeStateHolder = ActualGalleryViewModel(
-            mutator = State.Immutable(
-                sharedElementPrefix = "preview",
-                viewedProfileId = ProfileId("did:example:123"),
-                cursorData = null,
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualGalleryViewModel(
+                mutator = State.Immutable(
+                    sharedElementPrefix = "preview",
+                    viewedProfileId = ProfileId("did:example:123"),
+                    cursorData = null,
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             GalleryRoute(
                 route = route,

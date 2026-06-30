@@ -17,6 +17,7 @@
 package com.tunjid.heron.home
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.core.models.Timeline
@@ -31,6 +32,7 @@ import kotlin.time.Instant
 @Preview
 @Composable
 internal fun HomePreview() {
+    val scope = rememberCoroutineScope()
     val timeline = Timeline.Home.Following(
         name = "Following",
         position = 0,
@@ -41,20 +43,22 @@ internal fun HomePreview() {
     )
     RoutePreview(
         route = routeOf(path = "/home"),
-        routeStateHolder = ActualHomeViewModel(
-            mutator = State.Immutable(
-                currentTabUri = timeline.uri,
-                timelines = listOf(timeline),
-                timelineStateHolders = listOf(
-                    HomeScreenStateHolders.Pinned(
-                        mutator = stubTimelineStateHolder(
-                            timeline = timeline,
+        routeStateHolder = remember(scope) {
+            ActualHomeViewModel(
+                mutator = State.Immutable(
+                    currentTabUri = timeline.uri,
+                    timelines = listOf(timeline),
+                    timelineStateHolders = listOf(
+                        HomeScreenStateHolders.Pinned(
+                            mutator = stubTimelineStateHolder(
+                                timeline = timeline,
+                            ),
                         ),
                     ),
-                ),
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             HomeRoute(
                 route = route,

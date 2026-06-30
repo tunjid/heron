@@ -17,6 +17,7 @@
 package com.tunjid.heron.conversation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.conversation.di.Route as ConversationRoute
@@ -32,25 +33,28 @@ import kotlin.time.Instant
 @Preview
 @Composable
 internal fun ConversationRoutePreview() {
+    val scope = rememberCoroutineScope()
     val conversationId = ConversationId("conv123")
     RoutePreview(
         route = routeOf(path = "/messages/conv123"),
-        routeStateHolder = ActualConversationViewModel(
-            mutator = State.Immutable(
-                sharedElementPrefix = "preview",
-                id = conversationId,
-                tilingData = TilingState.Data(
-                    currentQuery = MessageQuery(
-                        conversationId = conversationId,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Instant.DISTANT_PAST,
+        routeStateHolder = remember(scope) {
+            ActualConversationViewModel(
+                mutator = State.Immutable(
+                    sharedElementPrefix = "preview",
+                    id = conversationId,
+                    tilingData = TilingState.Data(
+                        currentQuery = MessageQuery(
+                            conversationId = conversationId,
+                            data = CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Instant.DISTANT_PAST,
+                            ),
                         ),
                     ),
-                ),
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             ConversationRoute(
                 route = route,

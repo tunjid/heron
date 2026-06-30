@@ -17,6 +17,7 @@
 package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.postdetail.di.Route as PostDetailRoute
@@ -27,15 +28,18 @@ import com.tunjid.treenav.strings.routeOf
 @Preview
 @Composable
 internal fun PostDetailPreview() {
+    val scope = rememberCoroutineScope()
     RoutePreview(
         route = routeOf(path = "/profile/alice.bsky.social/post/abc"),
-        routeStateHolder = ActualPostDetailViewModel(
-            mutator = State.Immutable(
-                anchorPost = null,
-                sharedElementPrefix = "preview",
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+        routeStateHolder = remember(scope) {
+            ActualPostDetailViewModel(
+                mutator = State.Immutable(
+                    anchorPost = null,
+                    sharedElementPrefix = "preview",
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             PostDetailRoute(
                 route = route,

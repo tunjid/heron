@@ -17,6 +17,7 @@
 package com.tunjid.heron.profiles
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -32,26 +33,29 @@ import kotlin.time.Instant
 @Preview
 @Composable
 internal fun ProfilesPreview() {
+    val scope = rememberCoroutineScope()
     val profileId = ProfileId("did:example:123")
     RoutePreview(
         route = routeOf(path = "/profile/alice.bsky.social/followers"),
-        routeStateHolder = ActualProfilesViewModel(
-            mutator = State.Immutable(
-                load = Load.Profile.Followers(
-                    profileId = profileId,
-                ),
-                tilingData = TilingState.Data(
-                    currentQuery = ProfilesQuery(
+        routeStateHolder = remember(scope) {
+            ActualProfilesViewModel(
+                mutator = State.Immutable(
+                    load = Load.Profile.Followers(
                         profileId = profileId,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Instant.DISTANT_PAST,
+                    ),
+                    tilingData = TilingState.Data(
+                        currentQuery = ProfilesQuery(
+                            profileId = profileId,
+                            data = CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Instant.DISTANT_PAST,
+                            ),
                         ),
                     ),
-                ),
-            ).asNoOpActionSuspendingStateMutator(),
-            scope = rememberCoroutineScope(),
-        ),
+                ).asNoOpActionSuspendingStateMutator(),
+                scope = scope,
+            )
+        },
         render = { route, paneScaffoldState ->
             ProfilesRoute(
                 route = route,
