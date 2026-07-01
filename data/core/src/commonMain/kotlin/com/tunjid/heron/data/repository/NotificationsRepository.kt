@@ -368,7 +368,7 @@ internal class OfflineNotificationsRepository(
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForNotification()
+            getPreferencesForAppBskyNotification()
         }.mapToResult { response ->
             val updateRequest = updates.fold(
                 initial = PutPreferencesV2Request(

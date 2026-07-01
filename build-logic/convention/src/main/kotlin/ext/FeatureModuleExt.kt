@@ -34,6 +34,7 @@ fun Project.configureFeatureModule(
                 implementation(project(":ui:tiling"))
                 implementation(project(":ui:timeline"))
                 implementation(project(":ui:sheets"))
+                implementation(project(":ui:preview"))
 
                 api(libs.lifecycle.multiplatform.viewmodel)
                 api(libs.lifecycle.multiplatform.viewmodel.compose)

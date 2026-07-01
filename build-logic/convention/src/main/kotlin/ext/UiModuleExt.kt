@@ -15,6 +15,7 @@
  */
 
 import ext.libs
+import org.gradle.kotlin.dsl.invoke
 import org.jetbrains.compose.ComposePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -69,5 +70,8 @@ fun org.gradle.api.Project.configureUiModule(
                 runtimeOnly(composeDependencies.desktop.currentOs)
             }
         }
+    }
+    dependencies {
+        runtimeOnly(libs.compose.multiplatform.ui.tooling)
     }
 }

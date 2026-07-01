@@ -33,6 +33,8 @@ kotlin {
 
                 implementation(libs.lifecycle.multiplatform.viewmodel)
                 implementation(libs.lifecycle.multiplatform.viewmodel.compose)
+
+                implementation(libs.navigation.event.compose)
             }
         }
     }
