@@ -17,8 +17,12 @@
 package com.tunjid.heron.ui.preview
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigationevent.NavigationEventDispatcher
+import androidx.navigationevent.NavigationEventDispatcherOwner
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.StubImageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
@@ -53,6 +57,12 @@ fun RoutePreview(
     signedInProfile: Profile? = null,
     render: @Composable (Route, PaneScaffoldState) -> Unit,
 ) {
+    val stubDispatcherOwner = remember {
+        object : NavigationEventDispatcherOwner {
+            override val navigationEventDispatcher: NavigationEventDispatcher =
+                NavigationEventDispatcher()
+        }
+    }
     val staticStates = remember(
         route,
         routeStateHolder,
@@ -81,20 +91,24 @@ fun RoutePreview(
         )
     }
 
-    AppScaffold(
-        modifier = Modifier,
-        staticStates = staticStates,
-        entryProvider = {
-            threePaneEntry(
-                render = {
-                    render(
-                        route,
-                        rememberPaneScaffoldState(),
-                    )
-                },
-            )
-        },
-    )
+    CompositionLocalProvider(
+        LocalNavigationEventDispatcherOwner provides stubDispatcherOwner,
+    ) {
+        AppScaffold(
+            modifier = Modifier,
+            staticStates = staticStates,
+            entryProvider = {
+                threePaneEntry(
+                    render = {
+                        render(
+                            route,
+                            rememberPaneScaffoldState(),
+                        )
+                    },
+                )
+            },
+        )
+    }
 }
 
 private fun stubIdentityStateHolder(
