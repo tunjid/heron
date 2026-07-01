@@ -28,6 +28,8 @@ import com.tunjid.heron.ui.scaffold.ui.theme.herons.CappedHeronDarkScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.CappedHeronLightScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.GreenHeronDarkScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.GreenHeronLightScheme
+import com.tunjid.heron.ui.scaffold.ui.theme.herons.PiedHeronDarkScheme
+import com.tunjid.heron.ui.scaffold.ui.theme.herons.PiedHeronLightScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.ReddishEgretDarkScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.ReddishEgretLightScheme
 import com.tunjid.heron.ui.scaffold.ui.theme.herons.TricoloredHeronDarkScheme
@@ -87,6 +89,13 @@ sealed interface Theme {
                 get() = GreenHeronDarkScheme
         }
 
+        data object Pied : Herons {
+            override val light: ColorScheme
+                get() = PiedHeronLightScheme
+            override val dark: ColorScheme
+                get() = PiedHeronDarkScheme
+        }
+
         data object Reddish : Herons {
             override val light: ColorScheme
                 get() = ReddishEgretLightScheme
@@ -113,6 +122,7 @@ sealed interface Theme {
             Herons.Green,
             Herons.Reddish,
             Herons.Tricolored,
+            Herons.Pied,
         )
 
         fun fromOrdinal(ordinal: Int): Theme =
@@ -131,6 +141,7 @@ val Theme.ordinal: Int
         Theme.Herons.Green -> 6
         Theme.Herons.Reddish -> 7
         Theme.Herons.Tricolored -> 8
+        Theme.Herons.Pied -> 9
     }
 
 internal val lightScheme = lightColorScheme(
