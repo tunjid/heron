@@ -31,6 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
@@ -50,6 +52,7 @@ fun PaneScaffoldState.TopAppBarFab(
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     FloatingActionButton(
         modifier = modifier
             .height(36.dp)
@@ -63,7 +66,10 @@ fun PaneScaffoldState.TopAppBarFab(
             },
         shape = CircleShape,
         onClick = onClick@{
-            state.createPostAction()?.let(onCreatePost)
+            state.createPostAction()?.let {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                onCreatePost(it)
+            }
         },
         content = {
             Text(
@@ -110,6 +116,7 @@ private fun PaneScaffoldState.ComposePostFab(
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     PaneFab(
         modifier = modifier
             .sharedElementWithCallerManagedVisibility(
@@ -122,7 +129,10 @@ private fun PaneScaffoldState.ComposePostFab(
         icon = Icons.AutoMirrored.Rounded.Send,
         expanded = state.fabExpanded,
         onClick = onClick@{
-            state.createPostAction()?.let(onCreatePost)
+            state.createPostAction()?.let {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                onCreatePost(it)
+            }
         },
     )
 }
