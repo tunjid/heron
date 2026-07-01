@@ -39,6 +39,7 @@ import heron.feature.settings.generated.resources.theme_capped
 import heron.feature.settings.generated.resources.theme_default
 import heron.feature.settings.generated.resources.theme_dynamic
 import heron.feature.settings.generated.resources.theme_green
+import heron.feature.settings.generated.resources.theme_pied
 import heron.feature.settings.generated.resources.theme_reddish
 import heron.feature.settings.generated.resources.theme_tricolored
 import heron.feature.settings.generated.resources.use_compact_navigation
@@ -121,6 +122,7 @@ private fun Theme.themeStringResource(): StringResource = when (this) {
     Theme.Herons.Blue -> Res.string.theme_blue
     Theme.Herons.Capped -> Res.string.theme_capped
     Theme.Herons.Green -> Res.string.theme_green
+    Theme.Herons.Pied -> Res.string.theme_pied
     Theme.Herons.Reddish -> Res.string.theme_reddish
     Theme.Herons.Tricolored -> Res.string.theme_tricolored
 }

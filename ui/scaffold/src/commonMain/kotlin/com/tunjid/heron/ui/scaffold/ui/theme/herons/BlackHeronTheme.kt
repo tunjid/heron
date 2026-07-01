@@ -21,31 +21,31 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 // Black Heron
-private val BlackHeronPrimaryLight = Color(0xFF5F5E5E)
+private val BlackHeronPrimaryLight = Color(0xFF1A1A1A)
 private val BlackHeronOnPrimaryLight = Color(0xFFFFFFFF)
-private val BlackHeronPrimaryContainerLight = Color(0xFFE5E2E1)
-private val BlackHeronOnPrimaryContainerLight = Color(0xFF1C1C1C)
-private val BlackHeronSecondaryLight = Color(0xFF5D5F5F)
+private val BlackHeronPrimaryContainerLight = Color(0xFFE0E0E0)
+private val BlackHeronOnPrimaryContainerLight = Color(0xFF000000)
+private val BlackHeronSecondaryLight = Color(0xFF3D3D3D)
 private val BlackHeronOnSecondaryLight = Color(0xFFFFFFFF)
-private val BlackHeronSecondaryContainerLight = Color(0xFFE2E4E4)
-private val BlackHeronOnSecondaryContainerLight = Color(0xFF1A1C1C)
-private val BlackHeronTertiaryLight = Color(0xFF6A5F00)
+private val BlackHeronSecondaryContainerLight = Color(0xFFEBEBEB)
+private val BlackHeronOnSecondaryContainerLight = Color(0xFF1A1A1A)
+private val BlackHeronTertiaryLight = Color(0xFF5C5C5C)
 private val BlackHeronOnTertiaryLight = Color(0xFFFFFFFF)
-private val BlackHeronTertiaryContainerLight = Color(0xFFFFE342)
-private val BlackHeronOnTertiaryContainerLight = Color(0xFF201C00)
+private val BlackHeronTertiaryContainerLight = Color(0xFFF0F0F0)
+private val BlackHeronOnTertiaryContainerLight = Color(0xFF2E2E2E)
 
-private val BlackHeronPrimaryDark = Color(0xFFC8C6C6)
-private val BlackHeronOnPrimaryDark = Color(0xFF313030)
-private val BlackHeronPrimaryContainerDark = Color(0xFF474646)
-private val BlackHeronOnPrimaryContainerDark = Color(0xFFE5E2E1)
-private val BlackHeronSecondaryDark = Color(0xFFC6C7C7)
-private val BlackHeronOnSecondaryDark = Color(0xFF2F3131)
-private val BlackHeronSecondaryContainerDark = Color(0xFF454748)
-private val BlackHeronOnSecondaryContainerDark = Color(0xFFE2E4E4)
-private val BlackHeronTertiaryDark = Color(0xFFDEC700)
-private val BlackHeronOnTertiaryDark = Color(0xFF373100)
-private val BlackHeronTertiaryContainerDark = Color(0xFF504800)
-private val BlackHeronOnTertiaryContainerDark = Color(0xFFFFE342)
+private val BlackHeronPrimaryDark = Color(0xFFE6E6E6)
+private val BlackHeronOnPrimaryDark = Color(0xFF000000)
+private val BlackHeronPrimaryContainerDark = Color(0xFF262626)
+private val BlackHeronOnPrimaryContainerDark = Color(0xFFFFFFFF)
+private val BlackHeronSecondaryDark = Color(0xFFC2C2C2)
+private val BlackHeronOnSecondaryDark = Color(0xFF000000)
+private val BlackHeronSecondaryContainerDark = Color(0xFF1C1C1C)
+private val BlackHeronOnSecondaryContainerDark = Color(0xFFE6E6E6)
+private val BlackHeronTertiaryDark = Color(0xFF9E9E9E)
+private val BlackHeronOnTertiaryDark = Color(0xFF000000)
+private val BlackHeronTertiaryContainerDark = Color(0xFF161616)
+private val BlackHeronOnTertiaryContainerDark = Color(0xFFD1D1D1)
 
 val BlackHeronLightScheme = lightColorScheme(
     primary = BlackHeronPrimaryLight,
@@ -60,12 +60,15 @@ val BlackHeronLightScheme = lightColorScheme(
     onTertiary = BlackHeronOnTertiaryLight,
     tertiaryContainer = BlackHeronTertiaryContainerLight,
     onTertiaryContainer = BlackHeronOnTertiaryContainerLight,
-    surface = Color(0xFFF5F5F5),
-    onSurface = Color(0xFF191C20),
-    surfaceContainerLow = Color(0xFFEFEFEF),
-    surfaceContainer = Color(0xFFE8E8E8),
-    surfaceContainerHigh = Color(0xFFDEDEDE),
-    surfaceContainerHighest = Color(0xFFD3D3D3),
+    background = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF000000),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF000000),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFAFAFA),
+    surfaceContainer = Color(0xFFF5F5F5),
+    surfaceContainerHigh = Color(0xFFEFEFEF),
+    surfaceContainerHighest = Color(0xFFE8E8E8),
 )
 
 val BlackHeronDarkScheme = darkColorScheme(
@@ -81,11 +84,13 @@ val BlackHeronDarkScheme = darkColorScheme(
     onTertiary = BlackHeronOnTertiaryDark,
     tertiaryContainer = BlackHeronTertiaryContainerDark,
     onTertiaryContainer = BlackHeronOnTertiaryContainerDark,
-    surface = Color(0xFF1C1C1C),
-    onSurface = Color(0xFFE1E2E8),
-    surfaceContainerLowest = Color(0xFF0E0E0E),
-    surfaceContainerLow = Color(0xFF242424),
-    surfaceContainer = Color(0xFF2A2A2A),
-    surfaceContainerHigh = Color(0xFF333333),
-    surfaceContainerHighest = Color(0xFF3D3D3D),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFFFFFFF),
+    surface = Color(0xFF000000),
+    onSurface = Color(0xFFFFFFFF),
+    surfaceContainerLowest = Color(0xFF000000),
+    surfaceContainerLow = Color(0xFF0A0A0A),
+    surfaceContainer = Color(0xFF121212),
+    surfaceContainerHigh = Color(0xFF1C1C1C),
+    surfaceContainerHighest = Color(0xFF262626),
 )
