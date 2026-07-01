@@ -1,12 +1,12 @@
 package com.tunjid.heron.ui.scaffold.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Circle
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeOf
@@ -58,7 +58,7 @@ enum class AppStack(
     Splash(
         stackName = "splash-stack",
         titleRes = Res.string.splash,
-        icon = Icons.Rounded.Start,
+        icon = Icons.Rounded.Circle,
         rootRoute = routeOf("/splash"),
     ),
 }
