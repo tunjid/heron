@@ -39,6 +39,7 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             export(project(":ui:scaffold"))
+            export(project(":data:ml"))
             // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
             // (>100k LOC) codebases during the release link — the memory is
             // consumed by ConstraintGraphBuilder. We also disable the
@@ -65,6 +66,7 @@ kotlin {
             implementation(project(":data:database"))
             implementation(project(":data:core"))
             implementation(project(":data:logging"))
+            implementation(project(":data:ml"))
             implementation(project(":data:platform"))
             implementation(project(":ui:scaffold"))
             implementation(project(":feature:atmosphereapp"))
@@ -124,6 +126,7 @@ kotlin {
         }
         iosMain.dependencies {
             api(project(":ui:scaffold"))
+            api(project(":data:ml"))
             implementation(libs.connectivity.device)
         }
     }

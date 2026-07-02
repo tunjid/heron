@@ -27,13 +27,31 @@ kotlin {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
     sourceSets {
+        val litertMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                compileOnly(libs.litertlm.jvm)
+            }
+        }
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.core)
                 implementation(libs.okio)
+            }
+        }
+        androidMain {
+            dependsOn(litertMain)
+            dependencies {
+                implementation(libs.litertlm.android)
+            }
+        }
+        desktopMain {
+            dependsOn(litertMain)
+            dependencies {
+                implementation(libs.litertlm.jvm)
             }
         }
         commonTest {
@@ -42,9 +60,5 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-        // androidMain / iosMain / desktopMain hold the platform `createGemmaEngine`
-        // actuals. They intentionally carry no LiteRT-LM SDK dependency yet — the
-        // real bindings land once the artifact coordinates are confirmed (see plan
-        // open items 1-2). Until then the actuals are compile-green scaffolds.
     }
 }

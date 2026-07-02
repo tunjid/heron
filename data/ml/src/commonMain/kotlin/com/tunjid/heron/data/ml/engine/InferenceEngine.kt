@@ -22,11 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 /**
- * On-device Gemma inference engine. A single instance wraps one loaded model and
- * streams generated tokens. Platform actuals back this with LiteRT-LM (see
- * [createGemmaEngine]).
+ * On-device LLM inference engine. A single instance wraps one loaded model and
+ * streams generated tokens. The concrete model/runtime (e.g. Gemma via LiteRT-LM)
+ * is an implementation detail of the platform factories.
  */
-interface GemmaEngine {
+interface InferenceEngine {
     val state: StateFlow<EngineState>
 
     /** Loads [model] into the engine, transitioning [state] to [EngineState.Ready] on success. */

@@ -14,8 +14,10 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.ml.model
+package com.tunjid.heron.data.utilities
 
+import com.tunjid.heron.data.ml.model.GemmaModel
+import com.tunjid.heron.data.ml.model.LoadedModel
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header

@@ -38,6 +38,7 @@ import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
+import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.FeedCreationService
@@ -138,6 +139,7 @@ class DataBindingArgs(
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
+    val inferenceEngine: InferenceEngine,
 )
 
 @BindingContainer
@@ -179,6 +181,10 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
 
     @SingleIn(AppScope::class)
     @Provides

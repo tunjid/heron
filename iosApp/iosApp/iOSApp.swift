@@ -7,7 +7,7 @@ import ComposeApp
 class AppDelegate: NSObject, UIApplicationDelegate,
                    MessagingDelegate, UNUserNotificationCenterDelegate {
 
-    let appState = EntryPoint_iosKt.createAppState()
+    let appState = EntryPoint_iosKt.createAppState(inferenceBridge: GemmaBridge())
 
     func application(
         _ application: UIApplication,

@@ -24,14 +24,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 
 /**
- * A placeholder [GemmaEngine] used by every platform actual until the real
+ * A placeholder [InferenceEngine] used by every platform actual until the real
  * LiteRT-LM binding is wired. It compiles and reports [EngineState.Error] with
  * [reason] rather than performing inference, so the module builds green on every
  * target while the SDK integration is pending.
  */
-internal class StubGemmaEngine(
+internal class StubInferenceEngine(
     private val reason: String,
-) : GemmaEngine {
+) : InferenceEngine {
 
     private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
     override val state: StateFlow<EngineState> = _state.asStateFlow()

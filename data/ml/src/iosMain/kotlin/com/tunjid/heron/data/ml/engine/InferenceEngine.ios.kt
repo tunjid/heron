@@ -18,8 +18,12 @@ package com.tunjid.heron.data.ml.engine
 
 import kotlinx.coroutines.CoroutineDispatcher
 
-// TODO: back this with the LiteRT-LM Kotlin/Java API once the Android artifact
-//  coordinates are confirmed (plan open item 2). The streaming/session shape
-//  matches the AI Edge Gallery's LlmInference / generateResponseAsync usage.
-actual fun createGemmaEngine(ioDispatcher: CoroutineDispatcher): GemmaEngine =
-    ScaffoldGemmaEngine("Android LiteRT-LM engine not yet wired")
+/**
+ * Builds the iOS engine from the Swift-provided [bridge]. Call from the app entry
+ * point (`createAppState`) with the bridge Swift hands in, then inject the result —
+ * no global state. Exposed to Swift as `InferenceEngine_iosKt.createInferenceEngine`.
+ */
+fun createInferenceEngine(
+    bridge: IosInferenceBridge,
+    ioDispatcher: CoroutineDispatcher,
+): InferenceEngine = IosInferenceEngine(bridge, ioDispatcher)
