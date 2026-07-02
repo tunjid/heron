@@ -56,6 +56,7 @@ include(
     ":data:files",
     ":data:graze",
     ":data:logging",
+    ":data:ml",
     ":data:platform",
     ":data:models",
     ":data:database",
