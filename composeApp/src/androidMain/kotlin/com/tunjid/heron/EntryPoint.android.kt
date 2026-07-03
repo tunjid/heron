@@ -20,6 +20,7 @@ import android.content.Context
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.AndroidLogger
+import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
@@ -57,6 +58,7 @@ fun createAppState(context: Context): AppState =
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
+                inferenceEngine = createInferenceEngine(Dispatchers.IO),
             )
         },
     )

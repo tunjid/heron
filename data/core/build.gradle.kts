@@ -33,6 +33,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:files"))
                 implementation(project(":data:graze"))
+                implementation(project(":data:ml"))
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
                 implementation(project(":data:lexicons"))

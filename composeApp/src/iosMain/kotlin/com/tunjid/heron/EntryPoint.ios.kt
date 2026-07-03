@@ -23,6 +23,8 @@ import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
+import com.tunjid.heron.data.ml.engine.IosInferenceBridge
+import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
@@ -47,8 +49,11 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-fun createAppState(): AppState =
-    createAppState(
+fun createAppState(
+    inferenceBridge: IosInferenceBridge,
+): AppState {
+    val inferenceEngine = createInferenceEngine(inferenceBridge, Dispatchers.IO)
+    return createAppState(
         imageLoader = ::imageLoader,
         notifier = {
             IosNotifier()
@@ -69,9 +74,11 @@ fun createAppState(): AppState =
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),
+                inferenceEngine = inferenceEngine,
             )
         },
     )
+}
 
 /**
  * Called from Swift when Firebase provides a new FCM token.
