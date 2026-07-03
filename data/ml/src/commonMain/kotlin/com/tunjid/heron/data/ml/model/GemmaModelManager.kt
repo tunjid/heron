@@ -62,8 +62,18 @@ class GemmaModelManager(
         model: InferenceModel,
     ): Flow<ModelStatus> =
         active.map { current ->
-            if (current?.model == model) current.status else ModelStatus.NotDownloaded
-        }
+            if (current?.model == model) {
+                current.status
+            } else {
+                val gemma = model.asGemma()
+                val destination = modelPath(gemma)
+                if (fileSystem.exists(destination)) {
+                    ModelStatus.Ready(LoadedModel(gemma, destination))
+                } else {
+                    ModelStatus.NotDownloaded
+                }
+            }
+        }.flowOn(ioDispatcher)
 
     override fun download(
         model: InferenceModel,

@@ -55,22 +55,35 @@ internal class GemmaLiteRtLmInferenceEngine(
 
     private var engine: Engine? = null
 
-    override suspend fun load(model: LoadedModel) = mutex.withLock {
+    override suspend fun load(
+        model: LoadedModel,
+    ) = mutex.withLock {
         _state.value = EngineState.Loading
         try {
             withContext(ioDispatcher) {
                 engine?.close()
-                engine = Engine(
+                engine = null
+                val newEngine = Engine(
                     EngineConfig(
                         modelPath = model.path.toString(),
                         backend = Backend.CPU(),
                         maxNumTokens = model.model.asGemma().defaultConfig.maxTokens,
                     ),
-                ).apply { initialize() }
+                )
+                try {
+                    newEngine.initialize()
+                    engine = newEngine
+                } catch (throwable: Throwable) {
+                    newEngine.close()
+                    throw throwable
+                }
             }
             _state.value = EngineState.Ready(model)
         } catch (throwable: Throwable) {
-            _state.value = EngineState.Error(throwable.message ?: "Failed to load model", throwable)
+            _state.value = EngineState.Error(
+                throwable.message ?: "Failed to load model",
+                throwable,
+            )
             throw throwable
         }
     }
@@ -91,24 +104,22 @@ internal class GemmaLiteRtLmInferenceEngine(
                 ),
             ),
         )
-        conversation.use {
-            conversation.sendMessageAsync(
-                text = prompt,
-                callback = object : MessageCallback {
-                    override fun onMessage(message: Message) {
-                        trySend(textOf(message))
-                    }
+        conversation.sendMessageAsync(
+            text = prompt,
+            callback = object : MessageCallback {
+                override fun onMessage(message: Message) {
+                    trySend(textOf(message))
+                }
 
-                    override fun onDone() {
-                        channel.close()
-                    }
+                override fun onDone() {
+                    close()
+                }
 
-                    override fun onError(error: Throwable) {
-                        channel.close(error)
-                    }
-                },
-            )
-        }
+                override fun onError(throwable: Throwable) {
+                    close(throwable)
+                }
+            },
+        )
 
         awaitClose {
             conversation.cancelProcess()
