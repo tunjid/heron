@@ -55,6 +55,7 @@ fun createAppState(context: Context): AppState =
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
                 savedStatePath = context.savedStatePath(),
+                modelsDirectory = context.modelsDirectory(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
@@ -65,3 +66,6 @@ fun createAppState(context: Context): AppState =
 
 private fun Context.savedStatePath(): Path =
     filesDir.resolve("savedState").absolutePath.toPath()
+
+private fun Context.modelsDirectory(): Path =
+    noBackupFilesDir.resolve("models").absolutePath.toPath()
