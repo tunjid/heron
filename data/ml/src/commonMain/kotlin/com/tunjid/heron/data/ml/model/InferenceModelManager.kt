@@ -17,24 +17,34 @@
 package com.tunjid.heron.data.ml.model
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Downloads, stores, verifies and reports on on-device [InferenceModel] files.
  * Model files are large (multiple GB) and fetched on demand.
  */
 interface InferenceModelManager {
-    /** Observable status for [model]. */
-    fun status(model: InferenceModel): StateFlow<ModelStatus>
+    /**
+     * Observable status for [model]. Only one model downloads at a time, so while a
+     * download is in progress every other model reports [ModelStatus.NotDownloaded].
+     */
+    fun status(
+        model: InferenceModel,
+    ): Flow<ModelStatus>
 
     /** Returns a ready [LoadedModel], downloading and verifying first if needed. */
-    suspend fun ensure(model: InferenceModel): LoadedModel
+    suspend fun ensure(
+        model: InferenceModel,
+    ): LoadedModel
 
     /** Cold flow that performs the download and emits progress. */
-    fun download(model: InferenceModel): Flow<DownloadProgress>
+    fun download(
+        model: InferenceModel,
+    ): Flow<DownloadProgress>
 
     /** Removes the downloaded file for [model]. */
-    suspend fun delete(model: InferenceModel)
+    suspend fun delete(
+        model: InferenceModel,
+    )
 }
 
 sealed interface ModelStatus {

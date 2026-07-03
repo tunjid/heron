@@ -6,14 +6,13 @@ import LiteRTLM
 /// `:data:ml`, exported via the `ComposeApp` framework). Kotlin/Native can't call
 /// the Swift-only `LiteRTLM` package directly, so on-device inference lives here and
 /// `IosInferenceEngine` on the Kotlin side adapts these callbacks back into a Flow.
-///
-/// Passed to `EntryPoint_iosKt.createAppState(inferenceBridge:)` at startup.
 final class GemmaBridge: IosInferenceBridge {
 
     private var engine: Engine?
     private var currentTask: Task<Void, Never>?
-    // Guards `engine`/`currentTask`, which are touched from background async tasks.
-    // Recursive so `close()` can call `cancel()` while holding the lock.
+    private var loadTask: Task<Void, Never>?
+    // Guards `engine`/`currentTask`/`loadTask`, which are touched from background
+    // async tasks. Recursive so `close()` can call `cancel()` while holding the lock.
     private let lock = NSRecursiveLock()
 
     func load(
@@ -22,7 +21,7 @@ final class GemmaBridge: IosInferenceBridge {
         onReady: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
-        Task {
+        let task = Task {
             do {
                 let config = try EngineConfig(
                     modelPath: modelPath,
@@ -32,6 +31,7 @@ final class GemmaBridge: IosInferenceBridge {
                 )
                 let engine = Engine(engineConfig: config)
                 try await engine.initialize()
+                if Task.isCancelled { return }
                 lock.lock()
                 self.engine = engine
                 lock.unlock()
@@ -40,6 +40,9 @@ final class GemmaBridge: IosInferenceBridge {
                 onError(error.localizedDescription)
             }
         }
+        lock.lock()
+        loadTask = task
+        lock.unlock()
     }
 
     func generate(
@@ -53,6 +56,9 @@ final class GemmaBridge: IosInferenceBridge {
     ) {
         lock.lock()
         let activeEngine = engine
+        // Cancel any in-flight generation before starting a new one.
+        currentTask?.cancel()
+        currentTask = nil
         lock.unlock()
 
         guard let engine = activeEngine else {
@@ -94,6 +100,8 @@ final class GemmaBridge: IosInferenceBridge {
         lock.lock()
         defer { lock.unlock() }
         cancel()
+        loadTask?.cancel()
+        loadTask = nil
         engine = nil
     }
 }

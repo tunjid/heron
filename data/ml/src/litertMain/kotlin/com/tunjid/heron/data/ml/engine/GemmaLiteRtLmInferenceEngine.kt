@@ -22,18 +22,18 @@ import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.asGemma
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -78,7 +78,7 @@ internal class GemmaLiteRtLmInferenceEngine(
     override fun generate(
         prompt: String,
         params: GenerationParams,
-    ): Flow<String> = flow {
+    ): Flow<String> = callbackFlow {
         val activeEngine = mutex.withLock {
             checkNotNull(engine) { "generate() called before load()" }
         }
@@ -92,7 +92,27 @@ internal class GemmaLiteRtLmInferenceEngine(
             ),
         )
         conversation.use {
-            emitAll(it.sendMessageAsync(prompt).map(::textOf))
+            conversation.sendMessageAsync(
+                text = prompt,
+                callback = object : MessageCallback {
+                    override fun onMessage(message: Message) {
+                        trySend(textOf(message))
+                    }
+
+                    override fun onDone() {
+                        channel.close()
+                    }
+
+                    override fun onError(error: Throwable) {
+                        channel.close(error)
+                    }
+                },
+            )
+        }
+
+        awaitClose {
+            conversation.cancelProcess()
+            conversation.close()
         }
     }.flowOn(ioDispatcher)
 

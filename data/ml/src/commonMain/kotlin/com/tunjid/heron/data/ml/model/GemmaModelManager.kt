@@ -25,13 +25,13 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentLength
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readAvailable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -42,8 +42,8 @@ import okio.buffer
 
 /**
  * [InferenceModelManager] backed by Hugging Face-hosted `.litertlm` files. Only one
- * download runs at a time, so a single mutex + single status flow is enough — no
- * per-model bookkeeping.
+ * download runs at a time (serialized by [downloadMutex]); [active] holds the single
+ * model currently being tracked, so any other model reports [ModelStatus.NotDownloaded].
  */
 class GemmaModelManager(
     private val httpClient: HttpClient,
@@ -53,13 +53,17 @@ class GemmaModelManager(
     private val authTokenProvider: AuthTokenProvider = AuthTokenProvider.None,
 ) : InferenceModelManager {
 
+    private data class Active(val model: InferenceModel, val status: ModelStatus)
+
     private val downloadMutex = Mutex()
-    private val currentStatus = MutableStateFlow<ModelStatus>(ModelStatus.NotDownloaded)
+    private val active = MutableStateFlow<Active?>(null)
 
     override fun status(
         model: InferenceModel,
-    ): StateFlow<ModelStatus> =
-        currentStatus.asStateFlow()
+    ): Flow<ModelStatus> =
+        active.map { current ->
+            if (current?.model == model) current.status else ModelStatus.NotDownloaded
+        }
 
     override fun download(
         model: InferenceModel,
@@ -77,7 +81,7 @@ class GemmaModelManager(
             val destination = modelPath(gemma)
             if (fileSystem.exists(destination)) {
                 LoadedModel(gemma, destination)
-                    .also { currentStatus.value = ModelStatus.Ready(it) }
+                    .also { active.value = Active(gemma, ModelStatus.Ready(it)) }
             } else {
                 performDownload(gemma) {}
                 LoadedModel(gemma, destination)
@@ -87,8 +91,9 @@ class GemmaModelManager(
 
     override suspend fun delete(model: InferenceModel): Unit = withContext(ioDispatcher) {
         downloadMutex.withLock {
-            fileSystem.delete(modelPath(model.asGemma()), mustExist = false)
-            currentStatus.value = ModelStatus.NotDownloaded
+            val gemma = model.asGemma()
+            fileSystem.delete(modelPath(gemma), mustExist = false)
+            active.value = Active(gemma, ModelStatus.NotDownloaded)
         }
     }
 
@@ -122,14 +127,14 @@ class GemmaModelManager(
                         sink.write(buffer, 0, read)
                         downloaded += read
                         val progress = DownloadProgress(downloaded, total)
-                        currentStatus.value = ModelStatus.Downloading(progress)
+                        active.value = Active(model, ModelStatus.Downloading(progress))
                         emitProgress(progress)
                     }
                 } finally {
                     sink.close()
                 }
 
-                currentStatus.value = ModelStatus.Verifying
+                active.value = Active(model, ModelStatus.Verifying)
                 val expected = model.sha256
                 if (expected != null && !expected.equals(hashingSink.hash.hex(), ignoreCase = true)) {
                     fileSystem.delete(partial, mustExist = false)
@@ -137,10 +142,16 @@ class GemmaModelManager(
                 }
                 fileSystem.atomicMove(partial, destination)
             }
-            currentStatus.value = ModelStatus.Ready(LoadedModel(model, destination))
+            active.value = Active(model, ModelStatus.Ready(LoadedModel(model, destination)))
+        } catch (cancellation: CancellationException) {
+            // Unsubscribed / cancelled mid-download: drop the partial file and
+            // report the model as not downloaded rather than failed.
+            fileSystem.delete(partial, mustExist = false)
+            active.value = Active(model, ModelStatus.NotDownloaded)
+            throw cancellation
         } catch (throwable: Throwable) {
             fileSystem.delete(partial, mustExist = false)
-            currentStatus.value = ModelStatus.Failed(throwable.message ?: "Download failed")
+            active.value = Active(model, ModelStatus.Failed(throwable.message ?: "Download failed"))
             throw throwable
         }
     }
