@@ -47,7 +47,7 @@ internal class GemmaLiteRtLmInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
 ) : InferenceEngine {
 
-    // Serializes access to the mutable [engine] across load/generate/close.
+    // Serializes access to the mutable [engine] across load/generate/reset.
     private val mutex = Mutex()
 
     private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
@@ -127,7 +127,7 @@ internal class GemmaLiteRtLmInferenceEngine(
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun close() = mutex.withLock {
+    override suspend fun reset() = mutex.withLock {
         withContext(ioDispatcher) {
             engine?.close()
             engine = null

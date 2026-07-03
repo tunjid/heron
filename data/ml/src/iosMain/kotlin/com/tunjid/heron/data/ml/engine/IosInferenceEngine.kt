@@ -41,13 +41,15 @@ internal class IosInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
 ) : InferenceEngine {
 
-    // Serializes state transitions across load/close.
+    // Serializes state transitions across load/reset.
     private val mutex = Mutex()
 
     private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
-    override suspend fun load(model: LoadedModel) = mutex.withLock {
+    override suspend fun load(
+        model: LoadedModel,
+    ) = mutex.withLock {
         _state.value = EngineState.Loading
         try {
             suspendCancellableCoroutine { continuation ->
@@ -61,6 +63,9 @@ internal class IosInferenceEngine(
                         }
                     },
                 )
+                continuation.invokeOnCancellation {
+                    bridge.reset()
+                }
             }
             _state.value = EngineState.Ready(model)
         } catch (throwable: Throwable) {
@@ -85,8 +90,8 @@ internal class IosInferenceEngine(
         awaitClose { bridge.cancel() }
     }.flowOn(ioDispatcher)
 
-    override suspend fun close() = mutex.withLock {
-        bridge.close()
+    override suspend fun reset() = mutex.withLock {
+        bridge.reset()
         _state.value = EngineState.Uninitialized
     }
 }

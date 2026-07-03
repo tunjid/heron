@@ -38,8 +38,12 @@ interface InferenceEngine {
         params: GenerationParams = GenerationParams(),
     ): Flow<String>
 
-    /** Releases native resources held by the engine. */
-    suspend fun close()
+    /**
+     * Releases the loaded model and returns the engine to
+     * [EngineState.Uninitialized]. The engine remains usable — it can be
+     * [load]ed again afterwards.
+     */
+    suspend fun reset()
 }
 
 sealed interface EngineState {

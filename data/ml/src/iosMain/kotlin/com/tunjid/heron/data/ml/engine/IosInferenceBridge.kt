@@ -50,6 +50,6 @@ interface IosInferenceBridge {
     /** Cancels an in-flight [generate]. */
     fun cancel()
 
-    /** Releases the underlying engine. */
-    fun close()
+    /** Releases the underlying engine. The bridge stays usable and can [load] again. */
+    fun reset()
 }

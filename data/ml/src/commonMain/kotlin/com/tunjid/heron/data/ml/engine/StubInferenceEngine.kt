@@ -47,7 +47,7 @@ internal class StubInferenceEngine(
         throw UnsupportedOperationException(reason)
     }
 
-    override suspend fun close() {
+    override suspend fun reset() {
         _state.value = EngineState.Uninitialized
     }
 }
