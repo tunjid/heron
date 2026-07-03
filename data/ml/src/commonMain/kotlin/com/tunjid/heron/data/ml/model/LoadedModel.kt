@@ -18,8 +18,8 @@ package com.tunjid.heron.data.ml.model
 
 import okio.Path
 
-/** A [GemmaModel] whose file is present on disk at [path] and ready to load. */
+/** An [InferenceModel] whose file is present on disk at [path] and ready to load. */
 data class LoadedModel(
-    val model: GemmaModel,
+    val model: InferenceModel,
     val path: Path,
 )

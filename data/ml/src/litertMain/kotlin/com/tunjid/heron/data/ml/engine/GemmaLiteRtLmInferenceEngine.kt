@@ -24,6 +24,7 @@ import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.ml.model.asGemma
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,8 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -40,16 +43,19 @@ import kotlinx.coroutines.withContext
  * Android (`litertlm-android`) and desktop JVM (`litertlm-jvm`) targets, whose
  * `com.google.ai.edge.litertlm` API is identical.
  */
-internal class LiteRtLmInferenceEngine(
+internal class GemmaLiteRtLmInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
 ) : InferenceEngine {
+
+    // Serializes access to the mutable [engine] across load/generate/close.
+    private val mutex = Mutex()
 
     private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
     private var engine: Engine? = null
 
-    override suspend fun load(model: LoadedModel) {
+    override suspend fun load(model: LoadedModel) = mutex.withLock {
         _state.value = EngineState.Loading
         try {
             withContext(ioDispatcher) {
@@ -58,7 +64,7 @@ internal class LiteRtLmInferenceEngine(
                     EngineConfig(
                         modelPath = model.path.toString(),
                         backend = Backend.CPU(),
-                        maxNumTokens = model.model.defaultConfig.maxTokens,
+                        maxNumTokens = model.model.asGemma().defaultConfig.maxTokens,
                     ),
                 ).apply { initialize() }
             }
@@ -73,7 +79,9 @@ internal class LiteRtLmInferenceEngine(
         prompt: String,
         params: GenerationParams,
     ): Flow<String> = flow {
-        val activeEngine = checkNotNull(engine) { "generate() called before load()" }
+        val activeEngine = mutex.withLock {
+            checkNotNull(engine) { "generate() called before load()" }
+        }
         val conversation = activeEngine.createConversation(
             ConversationConfig(
                 samplerConfig = SamplerConfig(
@@ -88,7 +96,7 @@ internal class LiteRtLmInferenceEngine(
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun close() {
+    override suspend fun close() = mutex.withLock {
         withContext(ioDispatcher) {
             engine?.close()
             engine = null
@@ -104,4 +112,4 @@ internal class LiteRtLmInferenceEngine(
 
 /** Builds the LiteRT-LM engine for Android and desktop; call from the app entry point. */
 fun createInferenceEngine(ioDispatcher: CoroutineDispatcher): InferenceEngine =
-    LiteRtLmInferenceEngine(ioDispatcher)
+    GemmaLiteRtLmInferenceEngine(ioDispatcher)

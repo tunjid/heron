@@ -12,6 +12,9 @@ final class GemmaBridge: IosInferenceBridge {
 
     private var engine: Engine?
     private var currentTask: Task<Void, Never>?
+    // Guards `engine`/`currentTask`, which are touched from background async tasks.
+    // Recursive so `close()` can call `cancel()` while holding the lock.
+    private let lock = NSRecursiveLock()
 
     func load(
         modelPath: String,
@@ -29,7 +32,9 @@ final class GemmaBridge: IosInferenceBridge {
                 )
                 let engine = Engine(engineConfig: config)
                 try await engine.initialize()
+                lock.lock()
                 self.engine = engine
+                lock.unlock()
                 onReady()
             } catch {
                 onError(error.localizedDescription)
@@ -46,11 +51,15 @@ final class GemmaBridge: IosInferenceBridge {
         onComplete: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
-        guard let engine = engine else {
+        lock.lock()
+        let activeEngine = engine
+        lock.unlock()
+
+        guard let engine = activeEngine else {
             onError("generate() called before load()")
             return
         }
-        currentTask = Task {
+        let task = Task {
             do {
                 let samplerConfig = try SamplerConfig(
                     topK: Int(topK),
@@ -69,14 +78,21 @@ final class GemmaBridge: IosInferenceBridge {
                 onError(error.localizedDescription)
             }
         }
+        lock.lock()
+        currentTask = task
+        lock.unlock()
     }
 
     func cancel() {
+        lock.lock()
+        defer { lock.unlock() }
         currentTask?.cancel()
         currentTask = nil
     }
 
     func close() {
+        lock.lock()
+        defer { lock.unlock() }
         cancel()
         engine = nil
     }

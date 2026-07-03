@@ -14,10 +14,8 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.utilities
+package com.tunjid.heron.data.ml.model
 
-import com.tunjid.heron.data.ml.model.GemmaModel
-import com.tunjid.heron.data.ml.model.LoadedModel
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -34,6 +32,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okio.FileSystem
 import okio.HashingSink
@@ -41,89 +41,61 @@ import okio.Path
 import okio.buffer
 
 /**
- * Downloads, stores, verifies and reports on on-device [GemmaModel] files.
- * Model files are large (multiple GB) and fetched on demand — see the managed
- * download design in the plan.
+ * [InferenceModelManager] backed by Hugging Face-hosted `.litertlm` files. Only one
+ * download runs at a time, so a single mutex + single status flow is enough — no
+ * per-model bookkeeping.
  */
-interface GemmaModelManager {
-    /** Observable status for [model]. */
-    fun status(model: GemmaModel): StateFlow<ModelStatus>
-
-    /** Returns a ready [LoadedModel], downloading and verifying first if needed. */
-    suspend fun ensure(model: GemmaModel): LoadedModel
-
-    /** Cold flow that performs the download and emits progress. */
-    fun download(model: GemmaModel): Flow<DownloadProgress>
-
-    /** Removes the downloaded file for [model]. */
-    suspend fun delete(model: GemmaModel)
-}
-
-sealed interface ModelStatus {
-    data object NotDownloaded : ModelStatus
-    data class Downloading(val progress: DownloadProgress) : ModelStatus
-    data object Verifying : ModelStatus
-    data class Ready(val model: LoadedModel) : ModelStatus
-    data class Failed(val message: String) : ModelStatus
-}
-
-data class DownloadProgress(
-    val bytesDownloaded: Long,
-    val totalBytes: Long,
-) {
-    /** Download completion in `[0, 1]`, or `0` when the total size is unknown. */
-    val fraction: Float
-        get() = if (totalBytes <= 0L) 0f else bytesDownloaded.toFloat() / totalBytes
-}
-
-/** Supplies a bearer token for gated model hosts (e.g. Hugging Face license gating). */
-interface AuthTokenProvider {
-    suspend fun bearerToken(): String?
-
-    object None : AuthTokenProvider {
-        override suspend fun bearerToken(): String? = null
-    }
-}
-
-class DefaultGemmaModelManager(
+class GemmaModelManager(
     private val httpClient: HttpClient,
     private val fileSystem: FileSystem,
     private val modelsDirectory: Path,
     private val ioDispatcher: CoroutineDispatcher,
     private val authTokenProvider: AuthTokenProvider = AuthTokenProvider.None,
-) : GemmaModelManager {
+) : InferenceModelManager {
 
-    // Keyed by modelId. Lazily created; see note in statusFlow.
-    private val statuses = mutableMapOf<String, MutableStateFlow<ModelStatus>>()
+    private val downloadMutex = Mutex()
+    private val currentStatus = MutableStateFlow<ModelStatus>(ModelStatus.NotDownloaded)
 
-    override fun status(model: GemmaModel): StateFlow<ModelStatus> =
-        statusFlow(model).asStateFlow()
+    override fun status(
+        model: InferenceModel,
+    ): StateFlow<ModelStatus> =
+        currentStatus.asStateFlow()
 
-    override fun download(model: GemmaModel): Flow<DownloadProgress> = flow {
-        performDownload(model) { emit(it) }
+    override fun download(
+        model: InferenceModel,
+    ): Flow<DownloadProgress> = flow {
+        downloadMutex.withLock {
+            performDownload(model.asGemma()) { emit(it) }
+        }
     }.flowOn(ioDispatcher)
 
-    override suspend fun ensure(model: GemmaModel): LoadedModel = withContext(ioDispatcher) {
-        val destination = modelPath(model)
-        if (fileSystem.exists(destination)) {
-            LoadedModel(model, destination)
-                .also { statusFlow(model).value = ModelStatus.Ready(it) }
-        } else {
-            performDownload(model) {}
-            LoadedModel(model, destination)
+    override suspend fun ensure(
+        model: InferenceModel,
+    ): LoadedModel = withContext(ioDispatcher) {
+        downloadMutex.withLock {
+            val gemma = model.asGemma()
+            val destination = modelPath(gemma)
+            if (fileSystem.exists(destination)) {
+                LoadedModel(gemma, destination)
+                    .also { currentStatus.value = ModelStatus.Ready(it) }
+            } else {
+                performDownload(gemma) {}
+                LoadedModel(gemma, destination)
+            }
         }
     }
 
-    override suspend fun delete(model: GemmaModel): Unit = withContext(ioDispatcher) {
-        fileSystem.delete(modelPath(model), mustExist = false)
-        statusFlow(model).value = ModelStatus.NotDownloaded
+    override suspend fun delete(model: InferenceModel): Unit = withContext(ioDispatcher) {
+        downloadMutex.withLock {
+            fileSystem.delete(modelPath(model.asGemma()), mustExist = false)
+            currentStatus.value = ModelStatus.NotDownloaded
+        }
     }
 
     private suspend fun performDownload(
         model: GemmaModel,
         emitProgress: suspend (DownloadProgress) -> Unit,
     ) {
-        val status = statusFlow(model)
         val destination = modelPath(model)
         val partial = modelsDirectory / (model.modelFile + PartialSuffix)
         try {
@@ -150,14 +122,14 @@ class DefaultGemmaModelManager(
                         sink.write(buffer, 0, read)
                         downloaded += read
                         val progress = DownloadProgress(downloaded, total)
-                        status.value = ModelStatus.Downloading(progress)
+                        currentStatus.value = ModelStatus.Downloading(progress)
                         emitProgress(progress)
                     }
                 } finally {
                     sink.close()
                 }
 
-                status.value = ModelStatus.Verifying
+                currentStatus.value = ModelStatus.Verifying
                 val expected = model.sha256
                 if (expected != null && !expected.equals(hashingSink.hash.hex(), ignoreCase = true)) {
                     fileSystem.delete(partial, mustExist = false)
@@ -165,29 +137,16 @@ class DefaultGemmaModelManager(
                 }
                 fileSystem.atomicMove(partial, destination)
             }
-            status.value = ModelStatus.Ready(LoadedModel(model, destination))
+            currentStatus.value = ModelStatus.Ready(LoadedModel(model, destination))
         } catch (throwable: Throwable) {
             fileSystem.delete(partial, mustExist = false)
-            status.value = ModelStatus.Failed(throwable.message ?: "Download failed")
+            currentStatus.value = ModelStatus.Failed(throwable.message ?: "Download failed")
             throw throwable
         }
     }
 
     private fun modelPath(model: GemmaModel): Path =
         modelsDirectory / model.modelFile
-
-    // NOTE: creation is not concurrency-hardened; adequate for the current single
-    // consumer. Revisit with a lock if the manager is driven from multiple threads.
-    private fun statusFlow(model: GemmaModel): MutableStateFlow<ModelStatus> =
-        statuses.getOrPut(model.modelId) {
-            MutableStateFlow(
-                if (fileSystem.exists(modelPath(model))) {
-                    ModelStatus.Ready(LoadedModel(model, modelPath(model)))
-                } else {
-                    ModelStatus.NotDownloaded
-                },
-            )
-        }
 
     private companion object {
         const val DownloadBufferSize = 64 * 1024

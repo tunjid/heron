@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.ml.engine
 
 import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.ml.model.asGemma
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -28,6 +29,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * [InferenceEngine] that adapts the Swift-implemented [IosInferenceBridge] callbacks into
@@ -38,16 +41,19 @@ internal class IosInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
 ) : InferenceEngine {
 
+    // Serializes state transitions across load/close.
+    private val mutex = Mutex()
+
     private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
-    override suspend fun load(model: LoadedModel) {
+    override suspend fun load(model: LoadedModel) = mutex.withLock {
         _state.value = EngineState.Loading
         try {
             suspendCancellableCoroutine { continuation ->
                 bridge.load(
                     modelPath = model.path.toString(),
-                    maxTokens = model.model.defaultConfig.maxTokens,
+                    maxTokens = model.model.asGemma().defaultConfig.maxTokens,
                     onReady = { if (continuation.isActive) continuation.resume(Unit) },
                     onError = { message ->
                         if (continuation.isActive) {
@@ -79,7 +85,7 @@ internal class IosInferenceEngine(
         awaitClose { bridge.cancel() }
     }.flowOn(ioDispatcher)
 
-    override suspend fun close() {
+    override suspend fun close() = mutex.withLock {
         bridge.close()
         _state.value = EngineState.Uninitialized
     }
