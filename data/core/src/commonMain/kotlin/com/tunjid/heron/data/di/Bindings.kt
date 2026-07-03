@@ -39,6 +39,8 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.model.GemmaModelManager
+import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.FeedCreationService
@@ -136,6 +138,8 @@ class DataBindingArgs(
     val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
     val savedStatePath: Path,
+    /** Directory for on-device model files; a platform cache/no-backup location. */
+    val modelsDirectory: Path,
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
@@ -185,6 +189,19 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideInferenceModelManager(
+        httpClient: HttpClient,
+        fileSystem: FileSystem,
+        @IODispatcher ioDispatcher: CoroutineDispatcher,
+    ): InferenceModelManager = GemmaModelManager(
+        httpClient = httpClient,
+        fileSystem = fileSystem,
+        modelsDirectory = args.modelsDirectory,
+        ioDispatcher = ioDispatcher,
+    )
 
     @SingleIn(AppScope::class)
     @Provides

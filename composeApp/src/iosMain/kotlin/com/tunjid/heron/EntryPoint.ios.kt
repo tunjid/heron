@@ -44,6 +44,7 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
@@ -71,6 +72,7 @@ fun createAppState(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
                 savedStatePath = savedStatePath(),
+                modelsDirectory = modelsDirectory(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),
@@ -166,4 +168,16 @@ private fun savedStatePath(): Path {
         error = null,
     )
     return (requireNotNull(documentDirectory).path + "/heron").toPath()
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun modelsDirectory(): Path {
+    val cachesDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
+        directory = NSCachesDirectory,
+        inDomain = NSUserDomainMask,
+        appropriateForURL = null,
+        create = true,
+        error = null,
+    )
+    return (requireNotNull(cachesDirectory).path + "/models").toPath()
 }

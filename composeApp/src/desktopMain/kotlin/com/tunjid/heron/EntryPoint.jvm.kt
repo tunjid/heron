@@ -80,6 +80,7 @@ fun createAppState(): AppState =
                     appDataDir,
                     SAVED_STATE_FILE_NAME,
                 ).toOkioPath(),
+                modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
@@ -224,6 +225,7 @@ private fun decryptWithKek(
 
 private const val APP_NAME = "TunjiHeron"
 private const val SAVED_STATE_FILE_NAME = "heron-saved-state.ser"
+private const val MODELS_DIR_NAME = "models"
 private const val KEYSTORE_FILE_NAME = ".keystore"
 private const val MAC_APP_SUPPORT_PATH = "Library/Application Support"
 private const val LINUX_DEFAULT_DATA_PATH = ".local/share"
