@@ -21,11 +21,12 @@ final class GemmaBridge: IosInferenceBridge {
         onReady: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
-      lock.lock()
-            loadTask?.cancel()
-            loadTask = nil
-            engine = nil
-            lock.unlock()
+        lock.lock()
+        loadTask?.cancel()
+        loadTask = nil
+        cancel()
+        engine = nil
+        lock.unlock()
 
         let task = Task {
             do {
@@ -37,13 +38,15 @@ final class GemmaBridge: IosInferenceBridge {
                 )
                 let engine = Engine(engineConfig: config)
                 try await engine.initialize()
-                if Task.isCancelled { return }
                 lock.lock()
-                self.engine = engine
+                let cancelled = Task.isCancelled
+                if !cancelled { self.engine = engine }
                 lock.unlock()
-                onReady()
+                if !cancelled { onReady() }
+            } catch is CancellationError {
+                // Cancelled load is not an error.
             } catch {
-                onError(error.localizedDescription)
+                if !Task.isCancelled { onError(error.localizedDescription) }
             }
         }
         lock.lock()
@@ -85,9 +88,11 @@ final class GemmaBridge: IosInferenceBridge {
                     if Task.isCancelled { break }
                     onToken(chunk.toString)
                 }
-                onComplete()
+                if !Task.isCancelled { onComplete() }
+            } catch is CancellationError {
+                // Cancelled generation is not an error.
             } catch {
-                onError(error.localizedDescription)
+                if !Task.isCancelled { onError(error.localizedDescription) }
             }
         }
         lock.lock()

@@ -131,14 +131,21 @@ class GemmaModelManager(
                 val sink = hashingSink.buffer()
                 try {
                     val buffer = ByteArray(DownloadBufferSize)
+                    // Multi-GB files download in tens of thousands of chunks; only
+                    // surface a new status when the whole-number percent changes.
+                    var lastPercent = -1
                     while (true) {
                         val read = channel.readAvailable(buffer)
                         if (read <= 0) break
                         sink.write(buffer, 0, read)
                         downloaded += read
-                        val progress = DownloadProgress(downloaded, total)
-                        active.value = Active(model, ModelStatus.Downloading(progress))
-                        emitProgress(progress)
+                        val percent = if (total > 0L) (downloaded * 100 / total).toInt() else -1
+                        if (percent != lastPercent) {
+                            lastPercent = percent
+                            val progress = DownloadProgress(downloaded, total)
+                            active.value = Active(model, ModelStatus.Downloading(progress))
+                            emitProgress(progress)
+                        }
                     }
                 } finally {
                     sink.close()

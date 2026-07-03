@@ -26,6 +26,7 @@ import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.asGemma
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -80,6 +81,8 @@ internal class GemmaLiteRtLmInferenceEngine(
             }
             _state.value = EngineState.Ready(model)
         } catch (throwable: Throwable) {
+            // Cancellation is normal control flow, not a load failure.
+            if (throwable is CancellationException) throw throwable
             _state.value = EngineState.Error(
                 throwable.message ?: "Failed to load model",
                 throwable,
