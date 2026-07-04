@@ -52,53 +52,64 @@ suspend fun HttpClient.download(
     fileSystem.createDirectories(directory)
     val existing = if (fileSystem.exists(partial)) fileSystem.metadata(partial).size ?: 0L else 0L
 
-    onProgress(Progress(existing, request.sizeInBytes))
+    if (existing < request.sizeInBytes) {
+        onProgress(Progress(existing, request.sizeInBytes))
 
-    prepareGet(request.sourceUrl) {
-        if (authHeader != null) header(HttpHeaders.Authorization, authHeader)
-        if (existing > 0L) header(HttpHeaders.Range, "bytes=$existing-")
-    }.execute { response ->
-        val resumed = response.status == HttpStatusCode.PartialContent
-        if (!resumed && response.status != HttpStatusCode.OK) {
-            error("Download failed for ${destination.name}: HTTP ${response.status.value}")
-        }
-        // Server ignored our Range: start the partial file over.
-        if (!resumed && existing > 0L) fileSystem.delete(
-            path = partial,
-            mustExist = false,
-        )
+        prepareGet(request.sourceUrl) {
+            if (authHeader != null) header(HttpHeaders.Authorization, authHeader)
+            if (existing > 0L) header(HttpHeaders.Range, "bytes=$existing-")
+        }.execute { response ->
+            val resumed = response.status == HttpStatusCode.PartialContent
+            if (!resumed && response.status != HttpStatusCode.OK) {
+                error("Download failed for ${destination.name}: HTTP ${response.status.value}")
+            }
+            // Server ignored our Range: start the partial file over.
+            if (!resumed && existing > 0L) fileSystem.delete(
+                path = partial,
+                mustExist = false,
+            )
 
-        val startFrom = if (resumed) existing else 0L
-        val remaining = response.contentLength()
-        val total = when {
-            remaining == null -> request.sizeInBytes
-            resumed -> startFrom + remaining
-            else -> remaining
-        }
+            val startFrom = if (resumed) existing else 0L
+            val remaining = response.contentLength()
+            val total = when {
+                remaining == null -> request.sizeInBytes
+                resumed -> startFrom + remaining
+                else -> remaining
+            }
 
-        val channel = response.bodyAsChannel()
-        val sink = when {
-            resumed -> fileSystem.appendingSink(partial)
-            else -> fileSystem.sink(partial)
-        }.buffer()
-        var downloaded = startFrom
-        sink.use {
-            val buffer = ByteArray(DownloadBufferSize)
-            // Multi-GB files download in tens of thousands of chunks; only surface a new progress
-            // value when the whole-number percent changes.
-            var lastPercent = -1
-            while (true) {
-                val read = channel.readAvailable(buffer)
-                if (read <= 0) break
-                it.write(buffer, 0, read)
-                downloaded += read
-                val percent = if (total > 0L) (downloaded * 100 / total).toInt() else -1
-                if (total <= 0L || percent != lastPercent) {
-                    lastPercent = percent
-                    onProgress(Progress(downloaded, total))
+            val channel = response.bodyAsChannel()
+            val sink = when {
+                resumed -> fileSystem.appendingSink(partial)
+                else -> fileSystem.sink(partial)
+            }.buffer()
+            var downloaded = startFrom
+            sink.use {
+                val buffer = ByteArray(DownloadBufferSize)
+                // Multi-GB files download in tens of thousands of chunks; only surface a new progress
+                // value when the whole-number percent changes.
+                var lastPercent = -1
+                var lastReportedBytes = startFrom
+                while (true) {
+                    val read = channel.readAvailable(buffer)
+                    if (read <= 0) break
+                    it.write(buffer, 0, read)
+                    downloaded += read
+                    val percent = if (total > 0L) (downloaded * 100 / total).toInt() else -1
+                    val shouldReport = if (total > 0L) {
+                        percent != lastPercent
+                    } else {
+                        downloaded - lastReportedBytes >= 1024 * 1024
+                    }
+                    if (shouldReport) {
+                        lastPercent = percent
+                        lastReportedBytes = downloaded
+                        onProgress(Progress(downloaded, total))
+                    }
                 }
             }
         }
+    } else {
+        onProgress(Progress(request.sizeInBytes, request.sizeInBytes))
     }
 
     val expected = request.sha256

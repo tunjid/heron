@@ -53,9 +53,9 @@ abstract class BackgroundTaskScheduler(
             taskStore.failed,
             liveStatus(id),
         ) { pending, failed, running ->
+            val failedTask = failed.firstOrNull { it.task.id == id }
             when {
-                failed.any { it.task.id == id } ->
-                    TaskStatus.Failed(failed.first { it.task.id == id }.reason)
+                failedTask != null -> TaskStatus.Failed(failedTask.reason)
                 running != null -> running
                 pending.any { it.id == id } -> TaskStatus.Created
                 else -> TaskStatus.NotFound

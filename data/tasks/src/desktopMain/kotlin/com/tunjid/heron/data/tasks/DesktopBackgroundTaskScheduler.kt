@@ -21,6 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okio.FileSystem
 import okio.Path
 
@@ -76,7 +78,10 @@ internal class DesktopBackgroundTaskScheduler(
                 } catch (throwable: Throwable) {
                     taskStore.markFailed(task.id, throwable.message)
                 } finally {
-                    mutex.withLock { jobs.remove(task.id) }
+                    withContext(NonCancellable) {
+                        mutex.withLock { jobs.remove(task.id) }
+                        progresses.update { it - task.id }
+                    }
                     progresses.update { it - task.id }
                 }
             }
