@@ -66,9 +66,8 @@ abstract class BackgroundTaskScheduler(
     suspend fun cancel(
         id: TaskId,
     ) {
-        // Only forget the task if the platform actually had it scheduled; otherwise the store
-        // already reflects its terminal state.
-        if (cancelScheduled(id)) taskStore.remove(id)
+        cancelScheduled(id)
+        taskStore.remove(id)
     }
 
     /** Hand [task] to the OS for out-of-band execution. */

@@ -48,5 +48,5 @@ data class Progress(
 ) {
     /** Completion in `[0, 1]`, or `0` when the total size is unknown. */
     val fraction: Float
-        get() = if (totalBytes <= 0L) 0f else completedBytes.toFloat() / totalBytes
+        get() = if (totalBytes <= 0L) 0f else (completedBytes.toFloat() / totalBytes).coerceIn(0f, 1f)
 }

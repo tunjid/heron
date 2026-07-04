@@ -75,7 +75,10 @@ class BackgroundTaskSchedulerTest {
         val store = FakeTaskStore()
         val scheduler = scheduler(store = store)
         scheduler.enqueue(download)
-        assertEquals(listOf(download), store.pending.first())
+        assertEquals(
+            expected = listOf(element = download),
+            actual = store.pending.first(),
+        )
         assertTrue(scheduler.scheduled.contains(download))
     }
 
@@ -84,7 +87,10 @@ class BackgroundTaskSchedulerTest {
         val scheduler = scheduler()
         scheduler.enqueue(download)
         scheduler.enqueue(download)
-        assertEquals(listOf<Task>(download), scheduler.scheduled)
+        assertEquals(
+            expected = listOf<Task>(element = download),
+            actual = scheduler.scheduled,
+        )
     }
 
     @Test
@@ -93,16 +99,22 @@ class BackgroundTaskSchedulerTest {
         val scheduler = scheduler(store = store, cancelResult = true)
         scheduler.enqueue(download)
         scheduler.cancel(download.id)
-        assertEquals(emptyList<Task>(), store.pending.first())
+        assertEquals(
+            expected = emptyList(),
+            actual = store.pending.first(),
+        )
     }
 
     @Test
-    fun cancel_keeps_the_task_when_nothing_was_scheduled() = runTest {
+    fun cancel_clears_the_task_when_nothing_was_scheduled() = runTest {
         val store = FakeTaskStore()
         val scheduler = scheduler(store = store, cancelResult = false)
         scheduler.enqueue(download)
         scheduler.cancel(download.id)
-        assertEquals(listOf(download), store.pending.first())
+        assertEquals(
+            expected = emptyList(),
+            actual = store.pending.first(),
+        )
     }
 
     private fun scheduler(

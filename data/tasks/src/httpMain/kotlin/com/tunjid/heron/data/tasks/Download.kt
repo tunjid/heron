@@ -93,7 +93,7 @@ suspend fun HttpClient.download(
                 it.write(buffer, 0, read)
                 downloaded += read
                 val percent = if (total > 0L) (downloaded * 100 / total).toInt() else -1
-                if (percent != lastPercent) {
+                if (total <= 0L || percent != lastPercent) {
                     lastPercent = percent
                     onProgress(Progress(downloaded, total))
                 }

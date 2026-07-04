@@ -1,7 +1,5 @@
 package com.tunjid.heron.data.utilities.taskstore
 
-import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.tasks.FailedTask
 import com.tunjid.heron.data.tasks.Task
@@ -34,7 +32,10 @@ internal class SavedStateTaskStore(
                 pending.any { it.id == task.id } -> this
                 else -> {
                     added = true
-                    copy(pending = pending + task)
+                    copy(
+                        pending = pending + task,
+                        failed = failed.filterNot { it.task.id == task.id },
+                    )
                 }
             }
         }
@@ -69,11 +70,4 @@ internal class SavedStateTaskStore(
     }
 }
 
-private suspend inline fun SavedStateDataSource.updateWrites(
-    crossinline block: SavedState.Writes.(signedInProfileId: ProfileId?) -> SavedState.Writes,
-) {
-    updateSignedInProfileData { signedInProfileId ->
-        copy(writes = writes.block(signedInProfileId))
-    }
-}
 private const val MaximumFailedTasks = 10

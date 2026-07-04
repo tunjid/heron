@@ -117,6 +117,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.serialization.json)
 
+            implementation(libs.ktor.core)
+
             implementation(libs.okio)
         }
         desktopMain.dependencies {
