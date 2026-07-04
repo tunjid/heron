@@ -34,6 +34,8 @@ internal class SavedStateVersion6(
     private val profileData: Map<ProfileId, SavedState.ProfileData>,
     @ProtoNumber(5)
     private val activeProfileId: ProfileId?,
+    @ProtoNumber(6)
+    private val tasks: SavedState.Tasks = SavedState.Tasks(),
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
@@ -44,6 +46,7 @@ internal class SavedStateVersion6(
             navigation = navigation,
             profileData = profileData,
             activeProfileId = activeProfileId,
+            tasks = tasks,
         )
 
     companion object {

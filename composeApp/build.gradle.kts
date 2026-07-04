@@ -68,6 +68,7 @@ kotlin {
             implementation(project(":data:logging"))
             implementation(project(":data:ml"))
             implementation(project(":data:platform"))
+            implementation(project(":data:tasks"))
             implementation(project(":ui:scaffold"))
             implementation(project(":feature:atmosphereapp"))
             implementation(project(":feature:auth"))

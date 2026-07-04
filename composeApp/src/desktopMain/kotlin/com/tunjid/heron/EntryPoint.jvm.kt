@@ -31,6 +31,7 @@ import com.tunjid.heron.data.platform.JvmVariant
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
 import com.tunjid.heron.media.video.linux.GStreamerPlayerController
@@ -85,6 +86,16 @@ fun createAppState(): AppState =
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                backgroundTaskScheduler = { taskStore, httpClient ->
+                    createBackgroundTaskScheduler(
+                        scope = appMainScope,
+                        ioDispatcher = Dispatchers.IO,
+                        fileSystem = FileSystem.SYSTEM,
+                        modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath(),
+                        taskStore = taskStore,
+                        httpClient = httpClient,
+                    )
+                },
             )
         },
     )

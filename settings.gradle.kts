@@ -61,6 +61,7 @@ include(
     ":data:models",
     ":data:database",
     ":data:lexicons",
+    ":data:tasks",
     ":ui:tiling",
     ":feature:atmosphereapp",
     ":feature:auth",

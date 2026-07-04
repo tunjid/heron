@@ -26,6 +26,7 @@ import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.ml.engine.IosInferenceBridge
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
@@ -77,6 +78,9 @@ fun createAppState(
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = inferenceEngine,
+                backgroundTaskScheduler = { taskStore, httpClient ->
+                    NoOpBackgroundTaskScheduler(taskStore, httpClient)
+                },
             )
         },
     )

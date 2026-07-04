@@ -67,6 +67,8 @@ internal data class VersionedSavedState(
     val profileData: Map<ProfileId, ProfileData>,
     @ProtoNumber(5)
     val activeProfileId: ProfileId?,
+    @ProtoNumber(6)
+    override val tasks: Tasks = Tasks(),
 ) : SavedState() {
 
     override val signedInProfileData: ProfileData?
