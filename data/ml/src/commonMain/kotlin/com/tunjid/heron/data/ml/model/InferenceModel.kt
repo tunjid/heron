@@ -26,6 +26,8 @@ import kotlinx.serialization.Serializable
  * otherwise treat it as opaque.
  */
 sealed interface InferenceModel {
+    val name: String
+
     val sizeInBytes: Long
 
     /** Link to the model's card / docs, e.g. its Hugging Face page. */

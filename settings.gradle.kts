@@ -72,6 +72,7 @@ include(
     ":feature:gallery",
     ":feature:graze-editor",
     ":feature:home",
+    ":feature:inference",
     ":feature:list",
     ":feature:messages",
     ":feature:moderation",
