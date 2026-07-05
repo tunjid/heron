@@ -52,6 +52,7 @@ class LiteRtLmManager(
     override suspend fun delete(
         model: InferenceModel,
     ): Unit = withContext(ioDispatcher) {
+        cancelDownload(model)
         fileSystem.delete(
             path = modelPath(model.asLiteRtLmModel()),
             mustExist = false,

@@ -37,8 +37,7 @@ abstract class BackgroundTaskScheduler(
 ) {
 
     internal val httpClient = httpClient.config {
-
-        install(Logging) {
+        installOrReplace(Logging) {
             level = LogLevel.INFO
             logger = object : Logger {
                 override fun log(message: String) {
@@ -46,7 +45,7 @@ abstract class BackgroundTaskScheduler(
                 }
             }
         }
-        install(HttpTimeout) {
+        installOrReplace(HttpTimeout) {
             requestTimeoutMillis = 2.hours.inWholeMilliseconds
         }
     }
