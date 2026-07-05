@@ -31,7 +31,7 @@ class BackgroundTaskSchedulerTest {
 
     private val download = Task.Download(
         sourceUrl = "https://example.com/model.bin",
-        destination = "model.bin",
+        destination = "/tmp/heron/models/model.bin",
         sizeInBytes = 100L,
     )
 

@@ -20,6 +20,7 @@ import android.content.Context
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.first
 import okio.FileSystem
+import okio.Path.Companion.toPath
 
 /**
  * Runs the download for [id] on whichever OS component invoked it (worker or job service).
@@ -45,7 +46,7 @@ internal suspend fun Context.runTransfer(
         scheduler.httpClient.download(
             request = task,
             fileSystem = FileSystem.SYSTEM,
-            destination = modelsDirectory() / task.destination,
+            destination = task.destination.toPath(),
             authHeader = null, // TODO: resolve a gated-host bearer token (e.g. Hugging Face) at run time.
             onProgress = { progress -> onProgress(task, progress) },
         )

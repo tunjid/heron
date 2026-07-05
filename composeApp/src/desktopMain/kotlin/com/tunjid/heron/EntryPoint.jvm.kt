@@ -91,7 +91,6 @@ fun createAppState(): AppState =
                         scope = appMainScope,
                         ioDispatcher = Dispatchers.IO,
                         fileSystem = FileSystem.SYSTEM,
-                        modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath(),
                         taskStore = taskStore,
                         httpClient = httpClient,
                     )

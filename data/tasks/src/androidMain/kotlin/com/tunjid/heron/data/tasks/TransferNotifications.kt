@@ -22,17 +22,14 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
-import com.tunjid.heron.data.tasks.TransferNotifications.build
 
 /** The progress notification shown while a transfer runs (a FGS notification, or a UIDT job notification). */
 internal object TransferNotifications {
 
     const val ChannelId = "heron.transfers"
 
-    fun ensureChannel(
-        context: Context,
-    ) {
-        val manager = context.getSystemService(NotificationManager::class.java)
+    fun Context.ensureChannel() {
+        val manager = getSystemService(NotificationManager::class.java)
         if (manager.getNotificationChannel(ChannelId) == null) {
             manager.createNotificationChannel(
                 NotificationChannel(
@@ -44,13 +41,12 @@ internal object TransferNotifications {
         }
     }
 
-    fun build(
-        context: Context,
+    fun Context.progressNotification(
         title: String,
         progress: Progress?,
     ): Notification {
-        ensureChannel(context)
-        return NotificationCompat.Builder(context, ChannelId)
+        this.ensureChannel()
+        return NotificationCompat.Builder(this, ChannelId)
             .setContentTitle(title)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setOngoing(true)
@@ -78,12 +74,6 @@ internal object TransferNotifications {
         id: TaskId,
     ): Int = id.value.hashCode()
 
-    /**
-     * Reads a running transfer's [Progress] back from its own active notification — the byte counts
-     * [build] stashed in the notification extras — or `null` when there is no live notification or its
-     * total is unknown. This is how the UIDT delegate observes progress: a `JobService` job has no
-     * progress channel of its own, but its notification is queryable in-process.
-     */
     fun Context.notificationProgress(
         id: TaskId,
     ): Progress? {
