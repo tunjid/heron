@@ -20,26 +20,39 @@ import com.tunjid.heron.data.ml.engine.GenerationParams
 import kotlinx.serialization.Serializable
 
 /**
- * The internal [InferenceModel] implementation: a Gemma `.litertlm` file. Carries
- * the download and inference details that are deliberately kept off the public
- * [InferenceModel] surface. Shape mirrors an AI Edge Gallery `model_allowlist.json`
- * entry so a remote allowlist can populate it later.
+ * The internal [InferenceModel] implementation: a `.litertlm` file.
+ *
+ * [url] resolves the exact [commitHash] pinned in the model repo, so the download is
+ * reproducible for a given [LiteRtLmModel].
  */
 @Serializable
-internal data class GemmaModel(
+internal data class LiteRtLmModel(
     val name: String,
     val modelId: String,
+    val info: String,
+    override val learnMoreUrl: String,
     val modelFile: String,
-    val downloadUrl: String,
+    val url: String,
+    val commitHash: String,
     override val sizeInBytes: Long,
-    val estimatedPeakMemoryInBytes: Long,
-    val version: String,
-    val defaultConfig: GenerationParams = GenerationParams(),
+    val minDeviceMemoryInGb: Int,
     val sha256: String? = null,
+    val defaultConfig: GenerationParams = GenerationParams(),
+    val inputModes: Set<InputMode>,
+    override val abilities: List<InferenceModel.Ability>,
 ) : InferenceModel
 
-/**
- * Narrows an [InferenceModel] to its concrete [GemmaModel]. Safe because
- * [InferenceModel] is sealed and [GemmaModel] is its only implementation.
- */
-internal fun InferenceModel.asGemma(): GemmaModel = this as GemmaModel
+/** An input the model can consume. [Text] is always supported; richer modes vary by model. */
+@Serializable
+internal sealed class InputMode {
+    @Serializable
+    data object Text : InputMode()
+
+    @Serializable
+    data object Image : InputMode()
+
+    @Serializable
+    data object Audio : InputMode()
+}
+
+internal fun InferenceModel.asLiteRtLmModel(): LiteRtLmModel = this as LiteRtLmModel

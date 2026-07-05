@@ -39,8 +39,8 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
-import com.tunjid.heron.data.ml.model.GemmaModelManager
 import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.ml.model.LiteRtLmManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.FeedCreationService
@@ -197,14 +197,14 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideInferenceModelManager(
-        httpClient: HttpClient,
         fileSystem: FileSystem,
         @IODispatcher ioDispatcher: CoroutineDispatcher,
-    ): InferenceModelManager = GemmaModelManager(
-        httpClient = httpClient,
+        backgroundTaskScheduler: BackgroundTaskScheduler,
+    ): InferenceModelManager = LiteRtLmManager(
         fileSystem = fileSystem,
         modelsDirectory = args.modelsDirectory,
         ioDispatcher = ioDispatcher,
+        backgroundTaskScheduler = backgroundTaskScheduler,
     )
 
     @SingleIn(AppScope::class)
@@ -438,10 +438,10 @@ class DataBindings(
     @Provides
     fun provideBackgroundTaskScheduler(
         taskStore: TaskStore,
+        httpClient: HttpClient,
     ): BackgroundTaskScheduler = args.backgroundTaskScheduler(
         taskStore,
-        // A dedicated client without the API client's short request timeout; transfers run for minutes.
-        HttpClient(),
+        httpClient,
     )
 
     @SingleIn(AppScope::class)

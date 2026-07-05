@@ -17,7 +17,7 @@
 package com.tunjid.heron.data.ml.engine
 
 import com.tunjid.heron.data.ml.model.LoadedModel
-import com.tunjid.heron.data.ml.model.asGemma
+import com.tunjid.heron.data.ml.model.asLiteRtLmModel
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
@@ -56,7 +56,7 @@ internal class IosInferenceEngine(
             suspendCancellableCoroutine { continuation ->
                 bridge.load(
                     modelPath = model.path.toString(),
-                    maxTokens = model.model.asGemma().defaultConfig.maxTokens,
+                    maxTokens = model.model.asLiteRtLmModel().defaultConfig.maxTokens,
                     onReady = { if (continuation.isActive) continuation.resume(Unit) },
                     onError = { message ->
                         if (continuation.isActive) {

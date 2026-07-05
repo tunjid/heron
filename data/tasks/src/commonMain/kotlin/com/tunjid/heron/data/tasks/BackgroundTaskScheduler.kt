@@ -16,7 +16,13 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.logging.logcat
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -27,8 +33,22 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  */
 abstract class BackgroundTaskScheduler(
     internal val taskStore: TaskStore,
-    internal val httpClient: HttpClient,
+    httpClient: HttpClient,
 ) {
+
+    internal val httpClient = httpClient.config {
+        installOrReplace(Logging) {
+            level = LogLevel.INFO
+            logger = object : Logger {
+                override fun log(message: String) {
+                    logcat { "BackgroundTask: $message" }
+                }
+            }
+        }
+        installOrReplace(HttpTimeout) {
+            requestTimeoutMillis = 2.hours.inWholeMilliseconds
+        }
+    }
 
     val tasks: Flow<List<Task>>
         get() = taskStore.pending

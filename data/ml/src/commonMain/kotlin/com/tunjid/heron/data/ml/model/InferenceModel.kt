@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.ml.model
 
+import com.tunjid.heron.data.ml.engine.GenerationParams
+import kotlinx.serialization.Serializable
+
 /**
  * A downloadable on-device inference model. The concrete implementation (which
  * model, served by which runtime, and how it is fetched) is an internal detail;
@@ -23,30 +26,91 @@ package com.tunjid.heron.data.ml.model
  * otherwise treat it as opaque.
  */
 sealed interface InferenceModel {
-    /** Total download size in bytes. */
     val sizeInBytes: Long
 
+    /** Link to the model's card / docs, e.g. its Hugging Face page. */
+    val learnMoreUrl: String
+
+    val abilities: List<Ability>
+
     companion object {
-        // NOTE: the concrete values are placeholders pending confirmation of the
-        // published Gemma 4 `.litertlm` artifacts; not yet load-bearing.
-        val Gemma4E2B: InferenceModel = GemmaModel(
-            name = "Gemma-4-E2B-it",
-            modelId = "google/gemma-4-E2B-it-litert",
-            modelFile = "gemma-4-E2B-it-int4.litertlm",
-            downloadUrl = "https://huggingface.co/google/gemma-4-E2B-it-litert/resolve/main/gemma-4-E2B-it-int4.litertlm",
-            sizeInBytes = 2_580_000_000L,
-            estimatedPeakMemoryInBytes = 5_905_580_032L,
-            version = "20250520",
+        val Gemma31B: InferenceModel = LiteRtLmModel(
+            name = "Gemma3-1B-IT",
+            modelId = "litert-community/Gemma3-1B-IT",
+            info = "A variant of [google/Gemma-3-1B-IT](https://huggingface.co/google/Gemma-3-1B-IT) with 4-bit quantization ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/kotlin/README.md).",
+            learnMoreUrl = "https://huggingface.co/litert-community/Gemma3-1B-IT",
+            modelFile = "gemma3-1b-it-int4.litertlm",
+            url = "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/42d538a932e8d5b12e6b3b455f5572560bd60b2c/gemma3-1b-it-int4.litertlm?download=true",
+            commitHash = "42d538a932e8d5b12e6b3b455f5572560bd60b2c",
+            sizeInBytes = 584_417_280L,
+            minDeviceMemoryInGb = 6,
+            defaultConfig = GenerationParams(
+                maxTokens = 1024,
+            ),
+            inputModes = setOf(
+                InputMode.Text,
+            ),
+            abilities = listOf(
+                Ability.Translation,
+                Ability.Summary,
+            ),
         )
 
-        val Gemma4E4B: InferenceModel = GemmaModel(
-            name = "Gemma-4-E4B-it",
-            modelId = "google/gemma-4-E4B-it-litert",
-            modelFile = "gemma-4-E4B-it-int4.litertlm",
-            downloadUrl = "https://huggingface.co/google/gemma-4-E4B-it-litert/resolve/main/gemma-4-E4B-it-int4.litertlm",
-            sizeInBytes = 3_650_000_000L,
-            estimatedPeakMemoryInBytes = 9_372_000_000L,
-            version = "20250520",
+        val Gemma4E2B: InferenceModel = LiteRtLmModel(
+            name = "Gemma-4-E2B-it",
+            modelId = "litert-community/gemma-4-E2B-it-litert-lm",
+            info = "A variant of Gemma 4 E2B ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md). It supports multi-modality input, with up to 32K context length.",
+            learnMoreUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm",
+            modelFile = "gemma-4-E2B-it.litertlm",
+            url = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/6e5c4f1e395deb959c494953478fa5cec4b8008f/gemma-4-E2B-it.litertlm?download=true",
+            commitHash = "6e5c4f1e395deb959c494953478fa5cec4b8008f",
+            sizeInBytes = 2_588_147_712L,
+            minDeviceMemoryInGb = 8,
+            defaultConfig = GenerationParams(
+                maxTokens = 4000,
+            ),
+            inputModes = setOf(
+                InputMode.Text,
+                InputMode.Image,
+                InputMode.Audio,
+            ),
+            abilities = listOf(
+                Ability.Translation,
+                Ability.Summary,
+            ),
         )
+
+        val Gemma4E4B: InferenceModel = LiteRtLmModel(
+            name = "Gemma-4-E4B-it",
+            modelId = "litert-community/gemma-4-E4B-it-litert-lm",
+            info = "A variant of Gemma 4 E4B ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md). It supports multi-modality input, with up to 32K context length.",
+            learnMoreUrl = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm",
+            modelFile = "gemma-4-E4B-it.litertlm",
+            url = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/28299f30ee4d43294517a4ac93abd6163412f07f/gemma-4-E4B-it.litertlm?download=true",
+            commitHash = "28299f30ee4d43294517a4ac93abd6163412f07f",
+            sizeInBytes = 3_659_530_240L,
+            minDeviceMemoryInGb = 12,
+            defaultConfig = GenerationParams(
+                maxTokens = 4000,
+            ),
+            inputModes = setOf(
+                InputMode.Text,
+                InputMode.Image,
+                InputMode.Audio,
+            ),
+            abilities = listOf(
+                Ability.Translation,
+                Ability.Summary,
+            ),
+        )
+    }
+
+    @Serializable
+    sealed class Ability {
+        @Serializable
+        data object Translation : Ability()
+
+        @Serializable
+        data object Summary : Ability()
     }
 }

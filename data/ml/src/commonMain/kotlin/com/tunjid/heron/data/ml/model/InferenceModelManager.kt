@@ -16,59 +16,26 @@
 
 package com.tunjid.heron.data.ml.model
 
+import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Downloads, stores, verifies and reports on on-device [InferenceModel] files.
- * Model files are large (multiple GB) and fetched on demand.
- */
 interface InferenceModelManager {
-    /**
-     * Observable status for [model]. Only one model downloads at a time, so while a
-     * download is in progress every other model reports [ModelStatus.NotDownloaded].
-     */
+
+    val models: List<InferenceModel>
+
     fun status(
         model: InferenceModel,
-    ): Flow<ModelStatus>
+    ): Flow<TaskStatus>
 
-    /** Returns a ready [LoadedModel], downloading and verifying first if needed. */
-    suspend fun ensure(
+    suspend fun enqueueDownload(
         model: InferenceModel,
-    ): LoadedModel
+    )
 
-    /** Cold flow that performs the download and emits progress. */
-    fun download(
+    suspend fun cancelDownload(
         model: InferenceModel,
-    ): Flow<DownloadProgress>
+    )
 
-    /** Removes the downloaded file for [model]. */
     suspend fun delete(
         model: InferenceModel,
     )
-}
-
-sealed interface ModelStatus {
-    data object NotDownloaded : ModelStatus
-    data class Downloading(val progress: DownloadProgress) : ModelStatus
-    data object Verifying : ModelStatus
-    data class Ready(val model: LoadedModel) : ModelStatus
-    data class Failed(val message: String) : ModelStatus
-}
-
-data class DownloadProgress(
-    val bytesDownloaded: Long,
-    val totalBytes: Long,
-) {
-    /** Download completion in `[0, 1]`, or `0` when the total size is unknown. */
-    val fraction: Float
-        get() = if (totalBytes <= 0L) 0f else bytesDownloaded.toFloat() / totalBytes
-}
-
-/** Supplies a bearer token for gated model hosts (e.g. Hugging Face license gating). */
-interface AuthTokenProvider {
-    suspend fun bearerToken(): String?
-
-    object None : AuthTokenProvider {
-        override suspend fun bearerToken(): String? = null
-    }
 }

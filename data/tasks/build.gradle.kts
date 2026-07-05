@@ -38,9 +38,12 @@ kotlin {
         }
         commonMain {
             dependencies {
+                implementation(project(":data:logging"))
+
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.core)
+                implementation(libs.ktor.client.logging)
             }
         }
         androidMain {
