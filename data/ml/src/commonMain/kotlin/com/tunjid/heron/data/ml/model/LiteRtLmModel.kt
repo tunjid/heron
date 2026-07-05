@@ -22,8 +22,9 @@ import kotlinx.serialization.Serializable
 /**
  * The internal [InferenceModel] implementation: a `.litertlm` file.
  *
- * [url] resolves the exact [commitHash] pinned in the model repo, so the download is
- * reproducible for a given [LiteRtLmModel].
+ * [bucketPath] is the object path within the heron models bucket. The actual download URL is signed
+ * and short-lived, resolved at download time via [ModelDownloadUrlResolver]. [commitHash] records the
+ * upstream model revision the bucket object was produced from.
  */
 @Serializable
 internal data class LiteRtLmModel(
@@ -32,7 +33,7 @@ internal data class LiteRtLmModel(
     val info: String,
     override val learnMoreUrl: String,
     val modelFile: String,
-    val url: String,
+    val bucketPath: String,
     val commitHash: String,
     override val sizeInBytes: Long,
     val minDeviceMemoryInGb: Int,
