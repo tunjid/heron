@@ -21,6 +21,7 @@ import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
@@ -117,10 +118,9 @@ interface AppGraph {
         notificationStateHolder: NotificationStateHolder,
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
-        writeQueue: WriteQueue,
-        databaseCleanup: DatabaseCleanup,
         sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
         routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
+        backgroundTaskScheduler: BackgroundTaskScheduler,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -130,6 +130,7 @@ interface AppGraph {
         videoPlayerController = videoPlayerController,
         sheetStateHolderInitializers = sheetStateHolderInitializers,
         routeStateHolderInitializers = routeStateHolderInitializers,
+        backgroundTaskScheduler = backgroundTaskScheduler,
     )
 
     val appState: AppState

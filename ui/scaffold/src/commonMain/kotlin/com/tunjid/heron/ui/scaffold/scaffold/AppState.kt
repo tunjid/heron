@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
@@ -61,6 +62,7 @@ class AppState(
     internal val videoPlayerController: VideoPlayerController,
     internal val sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
     internal val routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
+    val backgroundTaskScheduler: BackgroundTaskScheduler,
 ) {
     var showPlatformSplashScreen by mutableStateOf(true)
         private set
