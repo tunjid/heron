@@ -19,13 +19,12 @@ plugins {
     id("feature-module-convention")
     id("ksp-convention")
 }
+
 kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.feature.inference"
     }
-}
 
-kotlin {
     sourceSets {
         commonMain {
             dependencies {
