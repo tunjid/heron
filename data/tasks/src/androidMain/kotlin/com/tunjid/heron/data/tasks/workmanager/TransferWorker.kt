@@ -28,7 +28,9 @@ import com.tunjid.heron.data.tasks.KeyTotalBytes
 import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
+import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
 import com.tunjid.heron.data.tasks.runTransfer
+import okio.Path.Companion.toPath
 
 /**
  * WorkManager fallback (API < 34) that streams the download as a foreground service, so it survives
@@ -48,7 +50,7 @@ internal class TransferWorker(
             setForeground(
                 foregroundInfo(
                     id = id,
-                    title = task.destination,
+                    title = task.destination.toPath().name,
                     progress = progress,
                 ),
             )
@@ -71,8 +73,7 @@ internal class TransferWorker(
         title: String,
         progress: Progress?,
     ): ForegroundInfo {
-        val notification = TransferNotifications.build(
-            context = applicationContext,
+        val notification = applicationContext.progressNotification(
             title = title,
             progress = progress,
         )

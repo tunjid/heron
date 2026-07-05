@@ -47,8 +47,8 @@ sealed interface Task {
     }
 
     /**
-     * A file download. [destination] is relative to the platform models directory. [auth] is a
-     * reference to how the request should be authenticated; the credential itself is resolved at
+     * A file download. [destination] is the absolute path to write the downloaded file to. [auth] is
+     * a reference to how the request should be authenticated; the credential itself is resolved at
      * run time and is never persisted with the task.
      */
     @Serializable

@@ -33,7 +33,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okio.FileSystem
-import okio.Path
+import okio.Path.Companion.toPath
 
 /**
  * Desktop [BackgroundTaskScheduler]: the process is long-lived, so transfers run in-process on
@@ -46,7 +46,6 @@ internal class DesktopBackgroundTaskScheduler(
     private val ioDispatcher: CoroutineDispatcher,
     httpClient: HttpClient,
     private val fileSystem: FileSystem,
-    private val modelsDirectory: Path,
     taskStore: TaskStore,
 ) : BackgroundTaskScheduler(taskStore, httpClient) {
 
@@ -68,7 +67,7 @@ internal class DesktopBackgroundTaskScheduler(
                     httpClient.download(
                         request = task,
                         fileSystem = fileSystem,
-                        destination = modelsDirectory / task.destination,
+                        destination = task.destination.toPath(),
                         authHeader = null,
                         onProgress = { progress -> progresses.update { it + (task.id to progress) } },
                     )
@@ -110,7 +109,6 @@ fun createBackgroundTaskScheduler(
     scope: CoroutineScope,
     ioDispatcher: CoroutineDispatcher,
     fileSystem: FileSystem,
-    modelsDirectory: Path,
     taskStore: TaskStore,
     httpClient: HttpClient,
 ): BackgroundTaskScheduler = DesktopBackgroundTaskScheduler(
@@ -118,6 +116,5 @@ fun createBackgroundTaskScheduler(
     ioDispatcher = ioDispatcher,
     httpClient = httpClient,
     fileSystem = fileSystem,
-    modelsDirectory = modelsDirectory,
     taskStore = taskStore,
 )
