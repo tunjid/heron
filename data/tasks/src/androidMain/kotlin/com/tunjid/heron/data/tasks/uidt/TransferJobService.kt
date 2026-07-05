@@ -22,6 +22,7 @@ import androidx.annotation.RequiresApi
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
 import com.tunjid.heron.data.tasks.runTransfer
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,7 +40,7 @@ class TransferJobService : JobService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val jobs = mutableMapOf<Int, Job>()
+    private val jobs = ConcurrentHashMap<Int, Job>()
 
     override fun onStartJob(
         params: JobParameters,
