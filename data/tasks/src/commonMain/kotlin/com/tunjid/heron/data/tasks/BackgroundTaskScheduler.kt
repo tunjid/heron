@@ -26,8 +26,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * for (via [taskStore]) and hands execution to the platform.
  */
 abstract class BackgroundTaskScheduler(
-    protected val taskStore: TaskStore,
-    protected val httpClient: HttpClient,
+    internal val taskStore: TaskStore,
+    internal val httpClient: HttpClient,
 ) {
 
     val tasks: Flow<List<Task>>

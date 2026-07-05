@@ -45,6 +45,10 @@ kotlin {
         }
         androidMain {
             dependsOn(httpMain)
+            dependencies {
+                implementation(libs.androidx.work.runtime)
+                implementation(libs.androidx.core.ktx)
+            }
         }
         desktopMain {
             dependsOn(httpMain)

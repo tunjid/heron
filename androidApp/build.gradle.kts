@@ -77,6 +77,7 @@ dependencies {
     implementation(project(":data:core"))
     implementation(project(":data:logging"))
     implementation(project(":data:platform"))
+    implementation(project(":data:tasks"))
     implementation(project(":ui:scaffold"))
 
     implementation(libs.compose.multiplatform.components.resources)
