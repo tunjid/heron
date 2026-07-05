@@ -37,6 +37,7 @@ kotlin {
         }
         commonMain {
             dependencies {
+                implementation(project(":data:models"))
                 implementation(project(":data:logging"))
                 implementation(project(":data:tasks"))
 

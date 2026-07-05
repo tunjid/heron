@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.ml.model
 
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -29,7 +30,7 @@ interface InferenceModelManager {
 
     suspend fun enqueueDownload(
         model: InferenceModel,
-    )
+    ): Outcome
 
     suspend fun cancelDownload(
         model: InferenceModel,

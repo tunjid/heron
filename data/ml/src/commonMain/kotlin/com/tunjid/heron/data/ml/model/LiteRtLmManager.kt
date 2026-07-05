@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.ml.model
 
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
@@ -47,15 +48,18 @@ class LiteRtLmManager(
 
     override suspend fun enqueueDownload(
         model: InferenceModel,
-    ) {
+    ): Outcome {
         val liteRtLmModel = model.asLiteRtLmModel()
         val signedUrl = modelDownloadUrlResolver.resolve(liteRtLmModel.bucketPath)
         if (signedUrl == null) {
-            logcat(LogPriority.WARN) {
-                "Not enqueuing download for ${liteRtLmModel.name}: " +
-                    "could not resolve a signed URL for ${liteRtLmModel.bucketPath}"
-            }
-            return
+            val error = """
+                Not enqueuing download for ${liteRtLmModel.name}: could not resolve a signed URL for ${liteRtLmModel.bucketPath}
+            """.trimIndent()
+
+            logcat(LogPriority.WARN) { error }
+            return Outcome.Failure(
+                Exception(error),
+            )
         }
         backgroundTaskScheduler.enqueue(
             Task.Download(
@@ -65,6 +69,7 @@ class LiteRtLmManager(
                 sha256 = liteRtLmModel.sha256,
             ),
         )
+        return Outcome.Success
     }
 
     override suspend fun cancelDownload(
