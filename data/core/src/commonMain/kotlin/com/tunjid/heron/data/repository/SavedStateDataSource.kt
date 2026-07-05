@@ -33,6 +33,8 @@ import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSeriali
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.SessionContext
+import com.tunjid.heron.data.tasks.FailedTask
+import com.tunjid.heron.data.tasks.Task
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -85,6 +87,8 @@ abstract class SavedState {
     abstract val signedInProfileData: ProfileData?
 
     abstract val pastSessions: List<SessionSummary>?
+
+    abstract val tasks: Tasks
 
     abstract fun profileData(
         profileId: ProfileId,
@@ -216,6 +220,13 @@ abstract class SavedState {
         val failedWrites: List<FailedWrite> = emptyList(),
     )
 
+    /** App-global background tasks. Unlike [Writes], these are not scoped to a signed-in profile. */
+    @Serializable
+    data class Tasks(
+        val pending: List<Task> = emptyList(),
+        val failed: List<FailedTask> = emptyList(),
+    )
+
     @Serializable
     data class ProfileData(
         val preferences: Preferences,
@@ -333,6 +344,10 @@ internal sealed class SavedStateDataSource {
 
     internal abstract suspend fun updateSignedInProfileData(
         block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+    )
+
+    internal abstract suspend fun updateTasks(
+        block: suspend SavedState.Tasks.() -> SavedState.Tasks,
     )
 }
 
@@ -463,6 +478,12 @@ internal class DataStoreSavedStateDataSource(
         copy(
             profileData = profileData + update,
         )
+    }
+
+    override suspend fun updateTasks(
+        block: suspend SavedState.Tasks.() -> SavedState.Tasks,
+    ) = updateState {
+        copy(tasks = tasks.block())
     }
 
     private suspend fun updateState(

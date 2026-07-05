@@ -68,6 +68,7 @@ kotlin {
             implementation(project(":data:logging"))
             implementation(project(":data:ml"))
             implementation(project(":data:platform"))
+            implementation(project(":data:tasks"))
             implementation(project(":ui:scaffold"))
             implementation(project(":feature:atmosphereapp"))
             implementation(project(":feature:auth"))
@@ -115,6 +116,8 @@ kotlin {
 
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.ktor.core)
 
             implementation(libs.okio)
         }

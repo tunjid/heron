@@ -86,6 +86,8 @@ import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperati
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
+import com.tunjid.heron.data.tasks.TaskStore
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
@@ -97,6 +99,7 @@ import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.taskstore.SavedStateTaskStore
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
@@ -144,6 +147,7 @@ class DataBindingArgs(
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
+    val backgroundTaskScheduler: (taskStore: TaskStore, httpClient: HttpClient) -> BackgroundTaskScheduler,
 )
 
 @BindingContainer
@@ -421,6 +425,24 @@ class DataBindings(
     internal fun provideWriteQueue(
         writeQueue: PersistedWriteQueue,
     ): WriteQueue = writeQueue
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideTaskStore(
+        savedStateDataSource: SavedStateDataSource,
+    ): TaskStore = SavedStateTaskStore(
+        savedStateDataSource = savedStateDataSource,
+    )
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideBackgroundTaskScheduler(
+        taskStore: TaskStore,
+    ): BackgroundTaskScheduler = args.backgroundTaskScheduler(
+        taskStore,
+        // A dedicated client without the API client's short request timeout; transfers run for minutes.
+        HttpClient(),
+    )
 
     @SingleIn(AppScope::class)
     @Provides

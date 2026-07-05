@@ -22,6 +22,7 @@ import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
 import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier
@@ -60,6 +61,9 @@ fun createAppState(context: Context): AppState =
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                backgroundTaskScheduler = { taskStore, httpClient ->
+                    NoOpBackgroundTaskScheduler(taskStore, httpClient)
+                },
             )
         },
     )
