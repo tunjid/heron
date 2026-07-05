@@ -37,9 +37,11 @@ kotlin {
         }
         commonMain {
             dependencies {
+                implementation(project(":data:logging"))
+                implementation(project(":data:tasks"))
+
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.core)
                 implementation(libs.okio)
             }
         }

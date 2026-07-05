@@ -57,17 +57,11 @@ sealed interface Task {
         val destination: String,
         val sizeInBytes: Long,
         val sha256: String? = null,
-        val auth: Auth = Auth.None,
     ) : Task {
         override val id: TaskId
             get() = TaskId("download:$destination")
 
         override val kind: Kind
             get() = Kind.Transfer
-    }
-
-    enum class Auth {
-        None,
-        HuggingFace,
     }
 }

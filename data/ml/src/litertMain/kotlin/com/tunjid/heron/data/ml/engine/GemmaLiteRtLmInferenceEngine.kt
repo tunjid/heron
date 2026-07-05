@@ -25,7 +25,7 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
-import com.tunjid.heron.data.ml.model.asGemma
+import com.tunjid.heron.data.ml.model.asLiteRtLmModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
@@ -68,7 +68,7 @@ internal class GemmaLiteRtLmInferenceEngine(
                     EngineConfig(
                         modelPath = model.path.toString(),
                         backend = Backend.CPU(),
-                        maxNumTokens = model.model.asGemma().defaultConfig.maxTokens,
+                        maxNumTokens = model.model.asLiteRtLmModel().defaultConfig.maxTokens,
                     ),
                 )
                 try {
