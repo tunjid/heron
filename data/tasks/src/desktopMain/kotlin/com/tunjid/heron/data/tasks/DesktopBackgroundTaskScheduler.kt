@@ -82,7 +82,6 @@ internal class DesktopBackgroundTaskScheduler(
                         mutex.withLock { jobs.remove(task.id) }
                         progresses.update { it - task.id }
                     }
-                    progresses.update { it - task.id }
                 }
             }
         }

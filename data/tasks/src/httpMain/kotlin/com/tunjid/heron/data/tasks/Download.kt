@@ -27,6 +27,7 @@ import io.ktor.utils.io.readAvailable
 import okio.FileSystem
 import okio.HashingSource
 import okio.Path
+import okio.Source
 import okio.blackholeSink
 import okio.buffer
 import okio.use
@@ -50,7 +51,31 @@ suspend fun HttpClient.download(
     val directory = requireNotNull(destination.parent)
     val partial = directory / (destination.name + PartialSuffix)
     fileSystem.createDirectories(directory)
-    val existing = if (fileSystem.exists(partial)) fileSystem.metadata(partial).size ?: 0L else 0L
+
+    if (fileSystem.exists(destination)) {
+        val destinationSize = fileSystem.metadata(destination).size ?: 0L
+        if (destinationSize == request.sizeInBytes) {
+            when (request.sha256?.lowercase()) {
+                null,
+                hash(fileSystem.source(destination)),
+                -> return onProgress(
+                    Progress(
+                        completedBytes = request.sizeInBytes,
+                        totalBytes = request.sizeInBytes,
+                    ),
+                )
+                else
+                -> fileSystem.delete(
+                    path = destination,
+                    mustExist = false,
+                )
+            }
+        }
+    }
+
+    val existing =
+        if (fileSystem.exists(partial)) fileSystem.metadata(partial).size ?: 0L
+        else 0L
 
     if (existing < request.sizeInBytes) {
         onProgress(Progress(existing, request.sizeInBytes))
@@ -115,16 +140,31 @@ suspend fun HttpClient.download(
     val expected = request.sha256
     if (expected != null) {
         // Streaming hash can't survive a resume, so hash the finished file once.
-        val actual = HashingSource.sha256(fileSystem.source(partial)).use { hashing ->
-            hashing.buffer().readAll(blackholeSink())
-            hashing.hash.hex()
-        }
+        val actual = hash(fileSystem.source(partial))
         if (!expected.equals(actual, ignoreCase = true)) {
             fileSystem.delete(partial, mustExist = false)
             error("Checksum mismatch for ${destination.name}")
         }
     }
-    fileSystem.atomicMove(partial, destination)
+    fileSystem.delete(
+        path = destination,
+        mustExist = false,
+    )
+    fileSystem.atomicMove(
+        source = partial,
+        target = destination,
+    )
+}
+
+private fun hash(
+    source: Source,
+): String = source.use {
+    HashingSource.sha256(it)
+        .use { hashing ->
+            hashing.buffer().readAll(blackholeSink())
+            hashing.hash.hex()
+        }
+        .lowercase()
 }
 
 private const val DownloadBufferSize = 64 * 1024
