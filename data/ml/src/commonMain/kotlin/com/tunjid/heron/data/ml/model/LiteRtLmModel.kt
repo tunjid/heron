@@ -27,7 +27,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal data class LiteRtLmModel(
-    val name: String,
+    override val name: String,
     val modelId: String,
     val info: String,
     override val learnMoreUrl: String,

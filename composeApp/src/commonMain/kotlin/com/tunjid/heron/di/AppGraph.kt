@@ -30,6 +30,7 @@ import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.graze.editor.di.GrazeEditorBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.inference.di.InferenceBindings
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
@@ -86,6 +87,7 @@ interface AppGraph {
             @Includes galleryBindings: GalleryBindings,
             @Includes grazeEditorBindings: GrazeEditorBindings,
             @Includes homeBindings: HomeBindings,
+            @Includes inferenceBindings: InferenceBindings,
             @Includes listBindings: ListBindings,
             @Includes messagesBindings: MessagesBindings,
             @Includes moderationBindings: ModerationBindings,

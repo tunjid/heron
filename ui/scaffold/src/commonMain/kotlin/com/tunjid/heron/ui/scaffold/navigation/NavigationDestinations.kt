@@ -173,6 +173,11 @@ fun tasksDestination(
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
+fun inferenceDestination(): NavigationAction.Destination = pathDestination(
+    path = "/inference",
+    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+)
+
 fun moderationDestination(): NavigationAction.Destination = pathDestination(
     path = "/moderation",
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
