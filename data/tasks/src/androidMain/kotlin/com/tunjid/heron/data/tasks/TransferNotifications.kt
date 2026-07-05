@@ -16,14 +16,12 @@
 
 package com.tunjid.heron.data.tasks
 
-import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
-import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
 
 /** The progress notification shown while a transfer runs (a FGS notification, or a UIDT job notification). */
 internal object TransferNotifications {
@@ -50,7 +48,7 @@ internal object TransferNotifications {
         this.ensureChannel()
         return NotificationCompat.Builder(this, ChannelId)
             .setContentTitle(title)
-            .setSmallIcon(R.drawable.stat_sys_download)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .apply {
