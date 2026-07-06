@@ -153,8 +153,7 @@ private fun InferenceOutcomeContent(
         null,
         is InferenceOutcome.Loading,
         is InferenceOutcome.Success,
-        -> Box {
-            val text = outcome?.text.orEmpty()
+        -> outcome?.text.orEmpty().let { text ->
             if (text.isBlank() && outcome is InferenceOutcome.Loading) CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 strokeWidth = 2.dp,
