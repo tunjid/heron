@@ -25,10 +25,14 @@ package com.tunjid.heron.data.ml.engine
  * startup via `createAppState`, which builds the engine with [createInferenceEngine].
  */
 interface IosInferenceBridge {
-    /** Loads the model at [modelPath]; invokes exactly one of [onReady] / [onError]. */
+    /**
+     * Loads the model at [modelPath] on [backend]; invokes exactly one of [onReady] /
+     * [onError].
+     */
     fun load(
         modelPath: String,
         maxTokens: Int,
+        backend: InferenceBackend,
         onReady: () -> Unit,
         onError: (message: String) -> Unit,
     )
