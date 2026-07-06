@@ -36,6 +36,8 @@ interface State {
     @SnapshotSpec
     data class Immutable(
         val engineState: EngineState? = null,
+        val loadDefaultModelOnLaunch: Boolean = false,
+        val defaultModelName: String? = null,
         @Transient
         val models: List<ModelItem> = emptyList(),
     ) : State
@@ -71,6 +73,10 @@ sealed class Action(val key: String) {
     data class Cancel(
         val model: InferenceModel,
     ) : Action(key = "Cancel")
+
+    data class SetLoadDefaultModelOnLaunch(
+        val loadOnLaunch: Boolean,
+    ) : Action(key = "SetLoadDefaultModelOnLaunch")
 
     sealed class Navigate :
         Action(key = "Navigate"),
