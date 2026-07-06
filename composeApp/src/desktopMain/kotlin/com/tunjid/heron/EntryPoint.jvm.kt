@@ -26,6 +26,7 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.platform.JVMPlatform
 import com.tunjid.heron.data.platform.JvmVariant
 import com.tunjid.heron.data.platform.Platform
@@ -47,7 +48,6 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
-import okio.Path
 import okio.Path.Companion.toOkioPath
 
 fun createAppState(): AppState =
@@ -86,6 +86,7 @@ fun createAppState(): AppState =
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                languageDetector = createLanguageDetector(),
                 backgroundTaskScheduler = { taskStore, httpClient ->
                     createBackgroundTaskScheduler(
                         scope = appMainScope,
