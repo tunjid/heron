@@ -28,4 +28,6 @@
    <string name="load_error">Load error</string>
     <string name="ability_translation">Translation</string>
     <string name="ability_summary">Summary</string>
+    <string name="load_default_model_on_launch">Load default model on launch</string>
+    <string name="no_default_model">Load a model to set it as the default</string>
 </resources>

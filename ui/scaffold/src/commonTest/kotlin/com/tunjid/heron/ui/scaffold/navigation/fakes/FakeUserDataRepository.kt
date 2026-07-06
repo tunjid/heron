@@ -51,4 +51,10 @@ class FakeUserDataRepository : UserDataRepository {
 
     override suspend fun setAllowAllTimelinePresentations(allowAllTimelinePresentations: Boolean): Outcome =
         Outcome.Success
+
+    override suspend fun setLoadDefaultModelOnLaunch(loadOnLaunch: Boolean): Outcome =
+        Outcome.Success
+
+    override suspend fun setDefaultModelName(modelName: String?): Outcome =
+        Outcome.Success
 }

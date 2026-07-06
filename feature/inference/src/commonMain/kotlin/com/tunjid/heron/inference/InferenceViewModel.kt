@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -63,6 +64,7 @@ class ActualInferenceViewModel(
         navActions: (NavigationMutation) -> Unit,
         inferenceEngine: InferenceEngine,
         inferenceModelManager: InferenceModelManager,
+        userDataRepository: UserDataRepository,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
     ) : this(
@@ -74,6 +76,10 @@ class ActualInferenceViewModel(
                     state = state,
                     inferenceModelManager = inferenceModelManager,
                 )
+                launchPreferenceMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
                 actions.launchMutationsIn(
                     productionScope = this,
                     keySelector = Action::key,
@@ -81,12 +87,16 @@ class ActualInferenceViewModel(
                     when (val action = type()) {
                         is Action.Load -> action.flow.launchLoadModelMutations(
                             inferenceEngine = inferenceEngine,
+                            userDataRepository = userDataRepository,
                         )
                         is Action.Download -> action.flow.launchDownloadMutations(
                             inferenceModelManager = inferenceModelManager,
                         )
                         is Action.Cancel -> action.flow.launchCancelMutations(
                             inferenceModelManager = inferenceModelManager,
+                        )
+                        is Action.SetLoadDefaultModelOnLaunch -> action.flow.launchSetLoadDefaultModelOnLaunchMutations(
+                            userDataRepository = userDataRepository,
                         )
                         is Action.Navigate -> action.flow.launchedCollect {
                             navActions(it.navigationMutation)
@@ -133,6 +143,18 @@ private fun launchModelStatusMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun launchPreferenceMutations(
+    state: State.SnapshotMutable,
+    userDataRepository: UserDataRepository,
+) {
+    userDataRepository.preferences
+        .launchedCollect { preferences ->
+            state.loadDefaultModelOnLaunch = preferences.local.loadDefaultModelOnLaunch
+            state.defaultModelName = preferences.local.defaultModelName
+        }
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.Download>.launchDownloadMutations(
     inferenceModelManager: InferenceModelManager,
 ) = launchedCollect { action ->
@@ -149,6 +171,15 @@ private fun Flow<Action.Cancel>.launchCancelMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Load>.launchLoadModelMutations(
     inferenceEngine: InferenceEngine,
+    userDataRepository: UserDataRepository,
 ) = launchedCollect { action ->
+    userDataRepository.setDefaultModelName(action.model.model.name)
     inferenceEngine.load(action.model)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetLoadDefaultModelOnLaunch>.launchSetLoadDefaultModelOnLaunchMutations(
+    userDataRepository: UserDataRepository,
+) = launchedCollect { (loadOnLaunch) ->
+    userDataRepository.setLoadDefaultModelOnLaunch(loadOnLaunch)
 }

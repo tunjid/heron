@@ -3,6 +3,10 @@ package com.tunjid.heron.ui.scaffold.identity
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.ml.engine.EngineState
+import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -42,6 +47,8 @@ class AppIdentityStateHolder(
     networkMonitor: NetworkMonitor,
     writeQueue: WriteQueue,
     databaseCleanup: DatabaseCleanup,
+    inferenceEngine: InferenceEngine,
+    inferenceModelManager: InferenceModelManager,
 ) : IdentityStateHolder,
     ActionSuspendingStateMutator<IdentityAction, IdentityState> by appMainScope.actionSuspendingStateMutator(
         state = IdentityState.Immutable().toSnapshotMutable(),
@@ -73,6 +80,11 @@ class AppIdentityStateHolder(
             launch {
                 databaseCleanup.cleanup()
             }
+            launchDefaultModelMutations(
+                userDataRepository = userDataRepository,
+                inferenceEngine = inferenceEngine,
+                inferenceModelManager = inferenceModelManager,
+            )
             actions.launchMutationsIn(
                 productionScope = this,
             ) {
@@ -141,4 +153,28 @@ private fun Flow<IdentityAction.ClearFailedWrite>.launchClearFailedWriteMutation
     state: IdentityState.SnapshotMutable,
 ) = launchedCollect {
     state.lastFailedWrite = null
+}
+
+context(productionScope: CoroutineScope)
+private fun launchDefaultModelMutations(
+    userDataRepository: UserDataRepository,
+    inferenceEngine: InferenceEngine,
+    inferenceModelManager: InferenceModelManager,
+) {
+    productionScope.launch {
+        val local = userDataRepository.preferences
+            .map { it.local }
+            .first { it.loadDefaultModelOnLaunch && it.defaultModelName != null }
+        val modelName = local.defaultModelName ?: return@launch
+        val model = inferenceModelManager.models
+            .firstOrNull { it.name == modelName }
+            ?: return@launch
+        when (val status = inferenceModelManager.status(model).first()) {
+            is ModelStatus.Downloaded ->
+                if (inferenceEngine.state.value is EngineState.Uninitialized) {
+                    inferenceEngine.load(status.loadedModel)
+                }
+            is ModelStatus.Pending -> Unit
+        }
+    }
 }

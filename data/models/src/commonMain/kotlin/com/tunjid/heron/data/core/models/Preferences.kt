@@ -79,6 +79,10 @@ data class Preferences(
         val allowAllTimelinePresentations: Boolean = false,
         @ProtoNumber(10)
         val darkThemeConfigOrdinal: Int = 0,
+        @ProtoNumber(11)
+        val loadDefaultModelOnLaunch: Boolean = false,
+        @ProtoNumber(12)
+        val defaultModelName: String? = null,
     )
 
     companion object {
