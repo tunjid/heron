@@ -16,27 +16,12 @@
 
 package com.tunjid.heron.data.ml.model
 
-import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.tasks.TaskStatus
-import kotlinx.coroutines.flow.Flow
+/**
+ * Resolves a short-lived signed download URL for a model file hosted in the heron models bucket.
+ */
+fun interface ModelDownloadUrlResolver {
 
-interface InferenceModelManager {
-
-    val models: List<InferenceModel>
-
-    fun status(
-        model: InferenceModel,
-    ): Flow<TaskStatus>
-
-    suspend fun enqueueDownload(
-        model: InferenceModel,
-    ): Outcome
-
-    suspend fun cancelDownload(
-        model: InferenceModel,
-    )
-
-    suspend fun delete(
-        model: InferenceModel,
-    )
+    suspend fun resolve(
+        bucketPath: String,
+    ): String?
 }

@@ -16,8 +16,12 @@
 
 package com.tunjid.heron.data.ml.model
 
+import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.tasks.Task
+import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +34,7 @@ class LiteRtLmManager(
     private val modelsDirectory: Path,
     private val ioDispatcher: CoroutineDispatcher,
     private val backgroundTaskScheduler: BackgroundTaskScheduler,
+    private val modelDownloadUrlResolver: ModelDownloadUrlResolver,
 ) : InferenceModelManager {
 
     override val models: List<InferenceModel> =
@@ -39,15 +44,37 @@ class LiteRtLmManager(
 
     override fun status(
         model: InferenceModel,
-    ): Flow<TaskStatus> = backgroundTaskScheduler.status(downloadTask(model).id)
+    ): Flow<TaskStatus> = backgroundTaskScheduler.status(downloadTaskId(model))
 
     override suspend fun enqueueDownload(
         model: InferenceModel,
-    ) = backgroundTaskScheduler.enqueue(downloadTask(model))
+    ): Outcome {
+        val liteRtLmModel = model.asLiteRtLmModel()
+        val signedUrl = modelDownloadUrlResolver.resolve(liteRtLmModel.bucketPath)
+        if (signedUrl == null) {
+            val error = """
+                Not enqueuing download for ${liteRtLmModel.name}: could not resolve a signed URL for ${liteRtLmModel.bucketPath}
+            """.trimIndent()
+
+            logcat(LogPriority.WARN) { error }
+            return Outcome.Failure(
+                Exception(error),
+            )
+        }
+        backgroundTaskScheduler.enqueue(
+            Task.Download(
+                sourceUrl = signedUrl,
+                destination = modelPath(liteRtLmModel).toString(),
+                sizeInBytes = liteRtLmModel.sizeInBytes,
+                sha256 = liteRtLmModel.sha256,
+            ),
+        )
+        return Outcome.Success
+    }
 
     override suspend fun cancelDownload(
         model: InferenceModel,
-    ) = backgroundTaskScheduler.cancel(downloadTask(model).id)
+    ) = backgroundTaskScheduler.cancel(downloadTaskId(model))
 
     override suspend fun delete(
         model: InferenceModel,
@@ -59,15 +86,16 @@ class LiteRtLmManager(
         )
     }
 
-    private fun downloadTask(model: InferenceModel): Task.Download {
+    private fun downloadTaskId(
+        model: InferenceModel,
+    ): TaskId {
         val liteRtLmModel = model.asLiteRtLmModel()
-        val task = Task.Download(
-            sourceUrl = liteRtLmModel.url,
+        return Task.Download(
+            sourceUrl = "",
             destination = modelPath(liteRtLmModel).toString(),
             sizeInBytes = liteRtLmModel.sizeInBytes,
             sha256 = liteRtLmModel.sha256,
-        )
-        return task
+        ).id
     }
 
     private fun modelPath(model: LiteRtLmModel): Path =
