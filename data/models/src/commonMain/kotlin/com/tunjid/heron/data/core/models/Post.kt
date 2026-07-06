@@ -238,6 +238,12 @@ val Post.ViewerStats?.canQuote
 val Post.ViewerStats?.isBookmarked
     get() = this?.bookmarked ?: false
 
+val Post?.flattenedText: String?
+    get() = this?.record
+        ?.text
+        ?.replace("\n", " ")
+        ?.trim()
+
 fun Post.appliedLabels(
     adultContentEnabled: Boolean,
     labelers: List<Labeler>,
