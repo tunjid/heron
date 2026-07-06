@@ -15,6 +15,12 @@
   -->
 
 <resources>
+    <string name="inference_sheet_translation_title">Translation</string>
+    <string name="inference_sheet_vibe_title">Vibe</string>
+    <string name="inference_error_model_not_loaded">Model not loaded</string>
+    <string name="inference_error_failed">Inference failed</string>
+    <string name="inference_no_model_title">No model downloaded</string>
+    <string name="inference_no_model_description">Tap to download an on-device model for inference.</string>
     <string name="reply">Reply</string>
     <string name="reply_to">Reply to %1$s</string>
     <string name="repost_by">Repost by %1$s</string>

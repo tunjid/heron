@@ -23,6 +23,8 @@ import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
+import com.tunjid.heron.sheets.inference.InferenceSheetState
+import com.tunjid.heron.sheets.inference.InferenceStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsSheetState
 import com.tunjid.heron.sheets.mutedwords.MutedWordsStateHolder
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsSheetState
@@ -118,3 +120,9 @@ fun PaneScaffoldState.rememberPostInteractionsSheetState(
     )
     return sheetState
 }
+
+@Composable
+fun PaneScaffoldState.rememberInferenceSheetState(): InferenceSheetState =
+    InferenceSheetState.rememberUpdatedInferenceSheetState(
+        stateHolder = retainSheetStateHolder<InferenceStateHolder>(),
+    )
