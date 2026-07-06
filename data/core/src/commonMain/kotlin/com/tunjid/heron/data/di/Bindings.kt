@@ -40,8 +40,6 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
-import com.tunjid.heron.data.ml.model.LiteRtLmManager
-import com.tunjid.heron.data.ml.model.ModelDownloadUrlResolver
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.FeedCreationService
@@ -56,7 +54,6 @@ import com.tunjid.heron.data.network.PlcDirectoryPdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
-import com.tunjid.heron.data.network.XrpcModelDownloadUrlResolver
 import com.tunjid.heron.data.network.isNetworkConnectionError
 import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
@@ -93,6 +90,7 @@ import com.tunjid.heron.data.tasks.TaskStore
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
@@ -198,24 +196,18 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideInferenceModelManager(
+    internal fun provideInferenceModelManager(
         fileSystem: FileSystem,
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         backgroundTaskScheduler: BackgroundTaskScheduler,
-        modelDownloadUrlResolver: ModelDownloadUrlResolver,
+        networkService: NetworkService,
     ): InferenceModelManager = LiteRtLmManager(
         fileSystem = fileSystem,
         modelsDirectory = args.modelsDirectory,
         ioDispatcher = ioDispatcher,
         backgroundTaskScheduler = backgroundTaskScheduler,
-        modelDownloadUrlResolver = modelDownloadUrlResolver,
+        networkService = networkService,
     )
-
-    @SingleIn(AppScope::class)
-    @Provides
-    internal fun provideModelDownloadUrlResolver(
-        resolver: XrpcModelDownloadUrlResolver,
-    ): ModelDownloadUrlResolver = resolver
 
     @SingleIn(AppScope::class)
     @Provides

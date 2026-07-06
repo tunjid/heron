@@ -56,7 +56,7 @@ internal class IosInferenceEngine(
             suspendCancellableCoroutine { continuation ->
                 bridge.load(
                     modelPath = model.path.toString(),
-                    maxTokens = model.model.asLiteRtLmModel().defaultConfig.maxTokens,
+                    maxTokens = model.model.maxTokens,
                     onReady = { if (continuation.isActive) continuation.resume(Unit) },
                     onError = { message ->
                         if (continuation.isActive) {
