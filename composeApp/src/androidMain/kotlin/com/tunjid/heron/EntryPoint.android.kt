@@ -21,6 +21,7 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
@@ -61,6 +62,7 @@ fun createAppState(context: Context): AppState =
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                languageDetector = createLanguageDetector(context, Dispatchers.IO),
                 backgroundTaskScheduler = { taskStore, httpClient ->
                     createBackgroundTaskScheduler(context, taskStore, httpClient)
                 },

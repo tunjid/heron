@@ -39,6 +39,7 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
@@ -147,6 +148,7 @@ class DataBindingArgs(
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
+    val languageDetector: LanguageDetector,
     val backgroundTaskScheduler: (taskStore: TaskStore, httpClient: HttpClient) -> BackgroundTaskScheduler,
 )
 
@@ -193,6 +195,10 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideLanguageDetector(): LanguageDetector = args.languageDetector
 
     @SingleIn(AppScope::class)
     @Provides
