@@ -18,6 +18,7 @@ package com.tunjid.heron.inference
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -60,6 +61,7 @@ class ActualInferenceViewModel(
     @AssistedInject
     constructor(
         navActions: (NavigationMutation) -> Unit,
+        inferenceEngine: InferenceEngine,
         inferenceModelManager: InferenceModelManager,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
@@ -68,7 +70,7 @@ class ActualInferenceViewModel(
             state = State(inferenceModelManager.models).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
-                launchStatusMutations(
+                launchModelStatusMutations(
                     state = state,
                     inferenceModelManager = inferenceModelManager,
                 )
@@ -77,6 +79,9 @@ class ActualInferenceViewModel(
                     keySelector = Action::key,
                 ) {
                     when (val action = type()) {
+                        is Action.Load -> action.flow.launchLoadModelMutations(
+                            inferenceEngine = inferenceEngine,
+                        )
                         is Action.Download -> action.flow.launchDownloadMutations(
                             inferenceModelManager = inferenceModelManager,
                         )
@@ -95,7 +100,18 @@ class ActualInferenceViewModel(
 }
 
 context(productionScope: CoroutineScope)
-private fun launchStatusMutations(
+private fun launchEngineStatesMutations(
+    state: State.SnapshotMutable,
+    inferenceEngine: InferenceEngine,
+) {
+    inferenceEngine.state
+        .launchedCollect {
+            state.engineState = it
+        }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchModelStatusMutations(
     state: State.SnapshotMutable,
     inferenceModelManager: InferenceModelManager,
 ) {
@@ -128,4 +144,11 @@ private fun Flow<Action.Cancel>.launchCancelMutations(
     inferenceModelManager: InferenceModelManager,
 ) = launchedCollect { action ->
     inferenceModelManager.cancelDownload(action.model)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Load>.launchLoadModelMutations(
+    inferenceEngine: InferenceEngine,
+) = launchedCollect { action ->
+    inferenceEngine.load(action.model)
 }

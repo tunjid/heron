@@ -3,16 +3,18 @@ package com.tunjid.heron.data.utilities.inference
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.tasks.Task
 import com.tunjid.heron.data.tasks.TaskId
-import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.tunji.heron.GetModelUrlQueryParams
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import okio.FileSystem
 import okio.Path
@@ -32,7 +34,19 @@ internal class LiteRtLmManager(
 
     override fun status(
         model: InferenceModel,
-    ): Flow<TaskStatus> = backgroundTaskScheduler.status(downloadTaskId(model))
+    ): Flow<ModelStatus> = backgroundTaskScheduler
+        .status(downloadTaskId(model))
+        .map {
+            if (fileSystem.exists(modelPath(model))) ModelStatus.Downloaded(
+                LoadedModel(
+                    model = model,
+                    path = modelPath(model),
+                ),
+            )
+            else ModelStatus.Pending(
+                taskStatus = it,
+            )
+        }
 
     override suspend fun enqueueDownload(
         model: InferenceModel,

@@ -48,9 +48,14 @@ interface InferenceEngine {
 
 sealed interface EngineState {
     data object Uninitialized : EngineState
-    data object Loading : EngineState
-    data class Ready(val model: LoadedModel) : EngineState
+    data class Loading(
+        val model: LoadedModel,
+    ) : EngineState
+    data class Ready(
+        val model: LoadedModel,
+    ) : EngineState
     data class Error(
+        val model: LoadedModel,
         val message: String,
         val cause: Throwable? = null,
     ) : EngineState

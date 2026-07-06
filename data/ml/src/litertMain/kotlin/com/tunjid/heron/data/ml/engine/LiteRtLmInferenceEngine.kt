@@ -53,7 +53,7 @@ internal class LiteRtLmInferenceEngine(
     override suspend fun load(
         model: LoadedModel,
     ) = mutex.withLock {
-        _state.value = EngineState.Loading
+        _state.value = EngineState.Loading(model)
         try {
             withContext(ioDispatcher) {
                 engine?.close()
@@ -78,8 +78,9 @@ internal class LiteRtLmInferenceEngine(
             // Cancellation is normal control flow, not a load failure.
             if (throwable is CancellationException) throw throwable
             _state.value = EngineState.Error(
-                throwable.message ?: "Failed to load model",
-                throwable,
+                model = model,
+                message = throwable.message ?: "Failed to load model",
+                cause = throwable,
             )
             throw throwable
         }
@@ -139,5 +140,7 @@ internal class LiteRtLmInferenceEngine(
 }
 
 /** Builds the LiteRT-LM engine for Android and desktop; call from the app entry point. */
-fun createInferenceEngine(ioDispatcher: CoroutineDispatcher): InferenceEngine =
+fun createInferenceEngine(
+    ioDispatcher: CoroutineDispatcher,
+): InferenceEngine =
     LiteRtLmInferenceEngine(ioDispatcher)

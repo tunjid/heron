@@ -17,7 +17,10 @@
 package com.tunjid.heron.inference
 
 import androidx.compose.runtime.Stable
+import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.InferenceModel
+import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.snapshottable.SnapshotSpec
@@ -32,6 +35,7 @@ interface State {
     @Serializable
     @SnapshotSpec
     data class Immutable(
+        val engineState: EngineState? = null,
         @Transient
         val models: List<ModelItem> = emptyList(),
     ) : State
@@ -49,7 +53,9 @@ interface State {
 @Stable
 data class ModelItem(
     val model: InferenceModel,
-    val status: TaskStatus = TaskStatus.NotFound,
+    val status: ModelStatus = ModelStatus.Pending(
+        TaskStatus.NotFound,
+    ),
 )
 
 sealed class Action(val key: String) {
@@ -57,6 +63,10 @@ sealed class Action(val key: String) {
     data class Download(
         val model: InferenceModel,
     ) : Action(key = "Download")
+
+    data class Load(
+        val model: LoadedModel,
+    ) : Action(key = "Load")
 
     data class Cancel(
         val model: InferenceModel,

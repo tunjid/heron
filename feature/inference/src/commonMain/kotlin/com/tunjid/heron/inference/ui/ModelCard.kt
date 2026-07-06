@@ -36,7 +36,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.InferenceModel
+import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.ModelItem
 import heron.feature.inference.generated.resources.Res
@@ -46,6 +49,10 @@ import heron.feature.inference.generated.resources.cancel
 import heron.feature.inference.generated.resources.download
 import heron.feature.inference.generated.resources.download_failed
 import heron.feature.inference.generated.resources.downloading
+import heron.feature.inference.generated.resources.load
+import heron.feature.inference.generated.resources.load_error
+import heron.feature.inference.generated.resources.loaded
+import heron.feature.inference.generated.resources.loading
 import heron.feature.inference.generated.resources.queued
 import heron.feature.inference.generated.resources.retry
 import kotlin.math.roundToInt
@@ -55,7 +62,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun ModelCard(
     modifier: Modifier = Modifier,
+    engineState: EngineState?,
     item: ModelItem,
+    onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -89,7 +98,9 @@ internal fun ModelCard(
                 }
             }
             ModelStatus(
+                engineState = engineState,
                 status = item.status,
+                onLoad = onLoad,
                 onDownload = onDownload,
                 onCancel = onCancel,
             )
@@ -99,56 +110,91 @@ internal fun ModelCard(
 
 @Composable
 private fun ModelStatus(
-    status: TaskStatus,
+    engineState: EngineState?,
+    status: ModelStatus,
+    onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
 ) {
     when (status) {
-        is TaskStatus.Running -> {
-            val fraction = status.progress?.fraction
-            if (fraction != null) LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth(),
-                progress = { fraction },
-            ) else LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth(),
-            )
-            StatusRow(
-                label = when (fraction) {
-                    null -> stringResource(Res.string.downloading)
-                    else -> "${stringResource(Res.string.downloading)} ${(fraction * 100).roundToInt()}%"
-                },
+        is ModelStatus.Downloaded -> StatusRow(
+            label = null,
+            action = {
+                Button(
+                    onClick = {
+                        onLoad(status.loadedModel)
+                    },
+                ) {
+                    Text(
+                        text = stringResource(
+                            when (engineState) {
+                                is EngineState.Error -> when (engineState.model.model.name) {
+                                    status.loadedModel.model.name -> Res.string.load_error
+                                    else -> Res.string.load
+                                }
+                                is EngineState.Loading -> when (engineState.model.model.name) {
+                                    status.loadedModel.model.name -> Res.string.loading
+                                    else -> Res.string.load
+                                }
+                                is EngineState.Ready -> when (engineState.model.model.name) {
+                                    status.loadedModel.model.name -> Res.string.loaded
+                                    else -> Res.string.load
+                                }
+                                EngineState.Uninitialized -> Res.string.load
+                                null -> Res.string.load
+                            },
+                        ),
+                    )
+                }
+            },
+        )
+        is ModelStatus.Pending -> when (val taskStatus = status.taskStatus) {
+            is TaskStatus.Running -> {
+                val fraction = taskStatus.progress?.fraction
+                if (fraction != null) LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    progress = { fraction },
+                ) else LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                StatusRow(
+                    label = when (fraction) {
+                        null -> stringResource(Res.string.downloading)
+                        else -> "${stringResource(Res.string.downloading)} ${(fraction * 100).roundToInt()}%"
+                    },
+                    action = {
+                        OutlinedButton(onClick = onCancel) {
+                            Text(text = stringResource(Res.string.cancel))
+                        }
+                    },
+                )
+            }
+            TaskStatus.Created -> StatusRow(
+                label = stringResource(Res.string.queued),
                 action = {
                     OutlinedButton(onClick = onCancel) {
                         Text(text = stringResource(Res.string.cancel))
                     }
                 },
             )
+            is TaskStatus.Failed -> StatusRow(
+                label = stringResource(Res.string.download_failed),
+                labelColor = MaterialTheme.colorScheme.error,
+                action = {
+                    Button(onClick = onDownload) {
+                        Text(text = stringResource(Res.string.retry))
+                    }
+                },
+            )
+            TaskStatus.NotFound -> StatusRow(
+                label = null,
+                action = {
+                    Button(onClick = onDownload) {
+                        Text(text = stringResource(Res.string.download))
+                    }
+                },
+            )
         }
-        TaskStatus.Created -> StatusRow(
-            label = stringResource(Res.string.queued),
-            action = {
-                OutlinedButton(onClick = onCancel) {
-                    Text(text = stringResource(Res.string.cancel))
-                }
-            },
-        )
-        is TaskStatus.Failed -> StatusRow(
-            label = stringResource(Res.string.download_failed),
-            labelColor = MaterialTheme.colorScheme.error,
-            action = {
-                Button(onClick = onDownload) {
-                    Text(text = stringResource(Res.string.retry))
-                }
-            },
-        )
-        TaskStatus.NotFound -> StatusRow(
-            label = null,
-            action = {
-                Button(onClick = onDownload) {
-                    Text(text = stringResource(Res.string.download))
-                }
-            },
-        )
     }
 }
 

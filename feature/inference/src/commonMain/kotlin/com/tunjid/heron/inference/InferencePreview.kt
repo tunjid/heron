@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.data.ml.model.InferenceModel
+import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.di.Route as InferenceRoute
@@ -40,16 +41,20 @@ internal fun InferencePreview() {
                     models = listOf(
                         ModelItem(
                             model = InferenceModel.Gemma31B,
-                            status = TaskStatus.Running(
-                                progress = Progress(
-                                    completedBytes = 210_000_000L,
-                                    totalBytes = InferenceModel.Gemma31B.sizeInBytes,
+                            status = ModelStatus.Pending(
+                                TaskStatus.Running(
+                                    progress = Progress(
+                                        completedBytes = 210_000_000L,
+                                        totalBytes = InferenceModel.Gemma31B.sizeInBytes,
+                                    ),
                                 ),
                             ),
                         ),
                         ModelItem(
                             model = InferenceModel.Gemma4E2B,
-                            status = TaskStatus.NotFound,
+                            status = ModelStatus.Pending(
+                                TaskStatus.NotFound,
+                            ),
                         ),
                     ),
                 ).asNoOpActionSuspendingStateMutator(),
