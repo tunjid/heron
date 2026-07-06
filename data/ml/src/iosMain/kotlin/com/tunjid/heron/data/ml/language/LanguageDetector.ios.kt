@@ -36,6 +36,7 @@ internal class NaturalLanguageDetector(
             NLLanguageRecognizer()
                 .apply { processString(text) }
                 .dominantLanguage
+                ?.takeIf { it != "und" }
         }
     }
 }
