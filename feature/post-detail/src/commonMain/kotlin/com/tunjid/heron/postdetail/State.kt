@@ -18,10 +18,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -49,6 +46,10 @@ interface State {
     data class Immutable(
         val anchorPost: Post?,
         val sharedElementPrefix: String,
+        @Transient
+        val currentLanguageTag: String? = null,
+        @Transient
+        val postLanguageTag: String? = null,
         @Transient
         val order: TimelineItem.Threaded.Order? = null,
         @Transient
@@ -105,6 +106,13 @@ interface State {
     }
 }
 
+val State.canTranslate: Boolean get() {
+    val currentLanguageTag = currentLanguageTag ?: return false
+    val postLanguageTag = postLanguageTag ?: return false
+
+    return !currentLanguageTag.startsWith(postLanguageTag)
+}
+
 sealed class Action(val key: String) {
 
     sealed class Load : Action(key = "Load") {
@@ -134,6 +142,10 @@ sealed class Action(val key: String) {
     data class TogglePublicationSubscription(
         val publication: StandardPublication,
     ) : Action(key = "TogglePublicationSubscription")
+
+    data class UpdateCurrentLanguageTag(
+        val languageTag: String,
+    ) : Action(key = "UpdateCurrentLanguageTag")
 
     data class SnackbarDismissed(
         val message: Memo,

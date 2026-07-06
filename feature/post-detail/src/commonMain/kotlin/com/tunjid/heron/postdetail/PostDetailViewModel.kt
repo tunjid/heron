@@ -17,12 +17,15 @@
 package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.flattenedText
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
@@ -47,10 +50,14 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 
 @Stable
 internal interface PostDetailStateHolder :
@@ -81,6 +88,7 @@ class ActualPostDetailViewModel(
         timelineRepository: TimelineRepository,
         userDataRepository: UserDataRepository,
         writeQueue: WriteQueue,
+        languageDetector: LanguageDetector,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
@@ -109,6 +117,7 @@ class ActualPostDetailViewModel(
                             is Action.Load -> action.flow.launchPostThreadsMutations(
                                 state = state,
                                 route = route,
+                                languageDetector = languageDetector,
                                 profileRepository = profileRepository,
                                 timelineRepository = timelineRepository,
                                 userDataRepository = userDataRepository,
@@ -134,6 +143,9 @@ class ActualPostDetailViewModel(
                                 state = state,
                                 writeQueue = writeQueue,
                             )
+                            is Action.UpdateCurrentLanguageTag -> action.flow.launchUpdateCurrentLanguageTagMutations(
+                                state = state,
+                            )
                         }
                     }
             },
@@ -146,6 +158,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.Load>.launchPostThreadsMutations(
     state: State.SnapshotMutable,
     route: Route,
+    languageDetector: LanguageDetector,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -178,28 +191,37 @@ private fun Flow<Action.Load>.launchPostThreadsMutations(
     }
     state.order = order
     state.viewMode = viewMode
-    timelineRepository.postThreadedItems(
-        postUri = postUri,
-        order = order,
-        viewMode = viewMode,
-    ).collect { timelineItems ->
-        if (timelineItems.isEmpty()) return@collect
-        state.items = timelineItems
-        state.anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
-            when (item) {
-                is TimelineItem.Pinned,
-                is TimelineItem.Repost,
-                is TimelineItem.Single,
-                is TimelineItem.Threaded.Tree,
-                -> item.post.takeIf {
-                    it.uri.recordKey == route.postRecordKey
+
+    coroutineScope {
+        timelineRepository.postThreadedItems(
+            postUri = postUri,
+            order = order,
+            viewMode = viewMode,
+        ).launchedCollect { timelineItems ->
+            if (timelineItems.isEmpty()) return@launchedCollect
+            state.items = timelineItems
+            state.anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
+                when (item) {
+                    is TimelineItem.Pinned,
+                    is TimelineItem.Repost,
+                    is TimelineItem.Single,
+                    is TimelineItem.Threaded.Tree,
+                    -> item.post.takeIf {
+                        it.uri.recordKey == route.postRecordKey
+                    }
+                    is TimelineItem.Threaded.Linear -> item.nodes.firstOrNull {
+                        it.post.uri.recordKey == route.postRecordKey
+                    }?.post
+                    is TimelineItem.Placeholder -> null
                 }
-                is TimelineItem.Threaded.Linear -> item.nodes.firstOrNull {
-                    it.post.uri.recordKey == route.postRecordKey
-                }?.post
-                is TimelineItem.Placeholder -> null
             }
         }
+        snapshotFlow { state.anchorPost }
+            .mapNotNull { it?.flattenedText }
+            .distinctUntilChanged()
+            .launchedCollectLatest {
+                state.postLanguageTag = languageDetector.detectLanguageTag(it)
+            }
     }
 }
 
@@ -281,8 +303,15 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 )
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateCurrentLanguageTag>.launchUpdateCurrentLanguageTagMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.currentLanguageTag = action.languageTag
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchedCollect { event ->
-    state.messages -= event.message
+) = launchedCollect { action ->
+    state.messages -= action.message
 }

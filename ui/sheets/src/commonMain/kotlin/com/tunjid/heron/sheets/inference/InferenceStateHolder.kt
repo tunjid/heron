@@ -19,6 +19,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.flattenedText
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.GenerationParams
 import com.tunjid.heron.data.ml.engine.InferenceEngine
@@ -238,7 +239,7 @@ private fun translationPrompt(
     targetLanguage: String,
 ): String = """
     You are a translation engine. Translate the text between <src></src> into the language
-    represented by the IETF language tag $targetLanguage.
+    represented by the IETF BCP-47 language tag $targetLanguage.
     Output the translation verbatim — no notes, no alternatives, no commentary, no quotes.
     <src>$text</src>
 """.trimIndent()
@@ -264,7 +265,7 @@ private fun vibePrompt(
     appendLine()
     appendLine("Recent posts:")
     posts.forEach { post ->
-        val postText = post.record?.text.orEmpty().replace("\n", " ").trim()
+        val postText = post.flattenedText.orEmpty()
         val postLabels = post.labels.joinToString { it.value.value }
         if (postText.isNotEmpty() || postLabels.isNotEmpty()) {
             append("- \"$postText\"")

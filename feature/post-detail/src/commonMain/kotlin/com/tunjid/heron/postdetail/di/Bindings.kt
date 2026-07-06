@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
+import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
@@ -33,11 +35,13 @@ import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.postdetail.Action
-import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailViewModelInitializer
+import com.tunjid.heron.postdetail.canTranslate
 import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
+import com.tunjid.heron.sheets.rememberInferenceSheetState
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
@@ -84,6 +88,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.post_detail.generated.resources.Res
 import heron.feature.post_detail.generated.resources.reply
 import heron.feature.post_detail.generated.resources.title
+import heron.feature.post_detail.generated.resources.translate_post_text
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
@@ -225,6 +230,20 @@ internal fun Route(
                 },
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                 actions = {
+                    val inferenceSheetState = rememberInferenceSheetState()
+                    val currentLanguageTag = Locale.current.toLanguageTag()
+                    if (state.canTranslate) AppBarIconButton(
+                        icon = Icons.Rounded.Translate,
+                        iconDescription = stringResource(Res.string.translate_post_text),
+                        onClick = {
+                            state.anchorPost?.let {
+                                inferenceSheetState.translate(
+                                    post = it,
+                                    targetLanguage = currentLanguageTag,
+                                )
+                            }
+                        },
+                    )
                     ThreadDisplayOptions(
                         modifier = Modifier
                             .padding(horizontal = 8.dp),

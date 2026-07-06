@@ -18,4 +18,5 @@
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
     <string name="title">Post</string>
+    <string name="translate_post_text">Translate post text</string>
 </resources>
