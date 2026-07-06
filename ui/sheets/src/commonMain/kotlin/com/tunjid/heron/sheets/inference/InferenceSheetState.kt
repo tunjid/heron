@@ -20,7 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -154,21 +152,16 @@ private fun InferenceOutcomeContent(
     when (outcome) {
         null,
         is InferenceOutcome.Loading,
-        -> Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CircularProgressIndicator(
+        -> {
+            val partial = outcome?.text.orEmpty()
+            if (partial.isEmpty()) Text(
+                text = partial,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            else CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 strokeWidth = 2.dp,
             )
-            val partial = outcome?.text.orEmpty()
-            if (partial.isNotEmpty()) {
-                Text(
-                    text = partial,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
         }
 
         is InferenceOutcome.NoModel -> Box(
