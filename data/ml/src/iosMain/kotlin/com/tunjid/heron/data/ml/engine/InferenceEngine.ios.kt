@@ -16,7 +16,65 @@
 
 package com.tunjid.heron.data.ml.engine
 
+import com.tunjid.heron.data.ml.model.LoadedModel
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.suspendCancellableCoroutine
+
+/**
+ * [InferenceEngine] that adapts the Swift-implemented [IosInferenceBridge] callbacks into
+ * the coroutine API. Inference happens in Swift/LiteRTLM; this only marshals. The [state]
+ * machine and idempotent [load] live in [BaseInferenceEngine].
+ */
+internal class IosInferenceEngine(
+    private val bridge: IosInferenceBridge,
+    private val ioDispatcher: CoroutineDispatcher,
+) : BaseInferenceEngine() {
+
+    override suspend fun onLoad(
+        model: LoadedModel,
+    ) = suspendCancellableCoroutine { continuation ->
+        bridge.load(
+            modelPath = model.path.toString(),
+            maxTokens = model.model.maxTokens,
+            backend = preferredBackend(model = model),
+            onReady = { if (continuation.isActive) continuation.resume(Unit) },
+            onError = { message ->
+                if (continuation.isActive) {
+                    continuation.resumeWithException(IllegalStateException(message))
+                }
+            },
+        )
+        continuation.invokeOnCancellation {
+            bridge.reset()
+        }
+    }
+
+    override suspend fun onReset() {
+        bridge.reset()
+    }
+
+    override fun generate(
+        prompt: String,
+        params: GenerationParams,
+    ): Flow<String> = callbackFlow {
+        bridge.generate(
+            prompt = prompt,
+            temperature = params.temperature,
+            topK = params.topK,
+            topP = params.topP,
+            onToken = { chunk -> trySend(chunk) },
+            onComplete = { close() },
+            onError = { message -> close(IllegalStateException(message)) },
+        )
+        awaitClose { bridge.cancel() }
+    }.flowOn(ioDispatcher)
+}
 
 /**
  * Builds the iOS engine from the Swift-provided [bridge]. Call from the app entry
@@ -30,3 +88,9 @@ fun createInferenceEngine(
     bridge = bridge,
     ioDispatcher = ioDispatcher,
 )
+
+// iOS runs Metal-backed GPU inference across the supported iPhone range; no device
+// blocklist is needed yet.
+internal actual fun preferredBackend(
+    model: LoadedModel,
+): InferenceBackend = InferenceBackend.Gpu

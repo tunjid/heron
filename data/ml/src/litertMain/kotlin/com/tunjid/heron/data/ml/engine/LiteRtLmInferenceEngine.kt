@@ -25,65 +25,44 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 internal class LiteRtLmInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
-) : InferenceEngine {
-
-    // Serializes access to the mutable [engine] across load/generate/reset.
-    private val mutex = Mutex()
-
-    private val _state = MutableStateFlow<EngineState>(EngineState.Uninitialized)
-    override val state: StateFlow<EngineState> = _state.asStateFlow()
+) : BaseInferenceEngine() {
 
     private var engine: Engine? = null
 
-    override suspend fun load(
+    override suspend fun onLoad(
         model: LoadedModel,
-    ) = mutex.withLock {
-        _state.value = EngineState.Loading(model)
+    ) = withContext(ioDispatcher) {
+        engine?.close()
+        engine = null
+        val newEngine = Engine(
+            EngineConfig(
+                modelPath = model.path.toString(),
+                backend = model.backend(),
+                maxNumTokens = model.model.maxTokens,
+            ),
+        )
         try {
-            withContext(ioDispatcher) {
-                engine?.close()
-                engine = null
-                val newEngine = Engine(
-                    EngineConfig(
-                        modelPath = model.path.toString(),
-                        backend = Backend.CPU(),
-                        maxNumTokens = model.model.maxTokens,
-                    ),
-                )
-                try {
-                    newEngine.initialize()
-                    engine = newEngine
-                } catch (throwable: Throwable) {
-                    newEngine.close()
-                    throw throwable
-                }
-            }
-            _state.value = EngineState.Ready(model)
+            newEngine.initialize()
+            engine = newEngine
         } catch (throwable: Throwable) {
-            // Cancellation is normal control flow, not a load failure.
-            if (throwable is CancellationException) throw throwable
-            _state.value = EngineState.Error(
-                model = model,
-                message = throwable.message ?: "Failed to load model",
-                cause = throwable,
-            )
+            newEngine.close()
             throw throwable
         }
+    }
+
+    override suspend fun onReset() = withContext(ioDispatcher) {
+        engine?.close()
+        engine = null
     }
 
     override fun generate(
@@ -125,19 +104,18 @@ internal class LiteRtLmInferenceEngine(
         }
     }.flowOn(ioDispatcher)
 
-    override suspend fun reset() = mutex.withLock {
-        withContext(ioDispatcher) {
-            engine?.close()
-            engine = null
-        }
-        _state.value = EngineState.Uninitialized
-    }
-
     private fun textOf(message: Message): String =
         message.contents.contents
             .filterIsInstance<Content.Text>()
             .joinToString(separator = "") { it.text }
 }
+
+/** Maps the device/platform [preferredBackend] onto the LiteRT-LM [Backend] to run on. */
+private fun LoadedModel.backend(): Backend =
+    when (preferredBackend(model = this)) {
+        InferenceBackend.Cpu -> Backend.CPU()
+        InferenceBackend.Gpu -> Backend.GPU()
+    }
 
 /** Builds the LiteRT-LM engine for Android and desktop; call from the app entry point. */
 fun createInferenceEngine(

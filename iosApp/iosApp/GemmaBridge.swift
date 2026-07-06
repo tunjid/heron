@@ -18,6 +18,7 @@ final class GemmaBridge: IosInferenceBridge {
     func load(
         modelPath: String,
         maxTokens: Int32,
+        backend: InferenceBackend,
         onReady: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
@@ -28,11 +29,12 @@ final class GemmaBridge: IosInferenceBridge {
         engine = nil
         lock.unlock()
 
+        let useGpu = backend == .gpu
         let task = Task {
             do {
                 let config = try EngineConfig(
                     modelPath: modelPath,
-                    backend: .cpu(),
+                    backend: useGpu ? .gpu() : .cpu(),
                     maxNumTokens: Int(maxTokens),
                     cacheDir: NSTemporaryDirectory()
                 )
