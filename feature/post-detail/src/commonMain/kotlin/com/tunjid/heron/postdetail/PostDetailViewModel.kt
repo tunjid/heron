@@ -55,9 +55,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 @Stable
 internal interface PostDetailStateHolder :
@@ -192,7 +192,7 @@ private fun Flow<Action.Load>.launchPostThreadsMutations(
     state.order = order
     state.viewMode = viewMode
 
-    coroutineScope {
+    supervisorScope {
         timelineRepository.postThreadedItems(
             postUri = postUri,
             order = order,
@@ -217,10 +217,12 @@ private fun Flow<Action.Load>.launchPostThreadsMutations(
             }
         }
         snapshotFlow { state.anchorPost }
-            .mapNotNull { it?.flattenedText }
+            .map { it?.flattenedText }
             .distinctUntilChanged()
-            .launchedCollectLatest {
-                state.postLanguageTag = languageDetector.detectLanguageTag(it)
+            .launchedCollectLatest { flattenedText ->
+                state.postLanguageTag = flattenedText
+                    .takeUnless(String?::isNullOrBlank)
+                    ?.let { languageDetector.detectLanguageTag(it) }
             }
     }
 }

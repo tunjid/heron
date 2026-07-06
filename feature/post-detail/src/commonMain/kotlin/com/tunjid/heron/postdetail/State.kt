@@ -110,7 +110,8 @@ val State.canTranslate: Boolean get() {
     val currentLanguageTag = currentLanguageTag ?: return false
     val postLanguageTag = postLanguageTag ?: return false
 
-    return !currentLanguageTag.startsWith(postLanguageTag)
+    return !currentLanguageTag.startsWith(postLanguageTag) &&
+        !postLanguageTag.startsWith(currentLanguageTag)
 }
 
 sealed class Action(val key: String) {
