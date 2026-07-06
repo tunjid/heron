@@ -265,9 +265,11 @@ private fun vibePrompt(
     posts.forEach { post ->
         val postText = post.record?.text.orEmpty().replace("\n", " ").trim()
         val postLabels = post.labels.joinToString { it.value.value }
-        append("- \"$postText\"")
-        if (postLabels.isNotEmpty()) append(" [labels: $postLabels]")
-        appendLine()
+        if (postText.isNotEmpty() || postLabels.isNotEmpty()) {
+            append("- \"$postText\"")
+            if (postLabels.isNotEmpty()) append(" [labels: $postLabels]")
+            appendLine()
+        }
     }
 }
 
