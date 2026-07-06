@@ -152,15 +152,15 @@ private fun InferenceOutcomeContent(
     when (outcome) {
         null,
         is InferenceOutcome.Loading,
-        -> {
-            val partial = outcome?.text.orEmpty()
-            if (partial.isEmpty()) Text(
-                text = partial,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            else CircularProgressIndicator(
+        is InferenceOutcome.Success,
+        -> outcome?.text.orEmpty().let { text ->
+            if (text.isBlank() && outcome is InferenceOutcome.Loading) CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 strokeWidth = 2.dp,
+            )
+            else Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
 
@@ -176,11 +176,6 @@ private fun InferenceOutcomeContent(
                 icon = Icons.Rounded.Download,
             )
         }
-
-        is InferenceOutcome.Success -> Text(
-            text = outcome.text,
-            style = MaterialTheme.typography.bodyMedium,
-        )
 
         is InferenceOutcome.Error -> Text(
             text = outcome.memo.message,
