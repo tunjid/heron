@@ -27,7 +27,7 @@ internal actual fun backendFor(): InferenceBackend =
     else InferenceBackend.Gpu
 
 private fun isPixel10(): Boolean =
-    Build.MODEL.lowercase().contains("pixel 10")
+    Build.MODEL.contains("pixel 10", ignoreCase = true)
 
 // Standard Build-property heuristics covering Android Studio AVDs (goldfish/ranchu, sdk_gphone*)
 // and Genymotion.

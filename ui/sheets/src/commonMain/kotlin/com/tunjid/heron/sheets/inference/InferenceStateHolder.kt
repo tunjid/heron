@@ -133,7 +133,7 @@ private fun Flow<InferenceAction.Generate>.launchInferenceMutations(
         is InferenceAction.Generate.Translate -> inferenceEngine.outcomes(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
-            // Deterministic decoding for faithful, reproducible translations.
+            // Loosened decoding parameters for more natural translations.
             params = GenerationParams(temperature = 0.6f),
             prompt = translationPrompt(
                 text = action.post.record?.text.orEmpty(),
@@ -237,8 +237,8 @@ private fun translationPrompt(
     text: String,
     targetLanguage: String,
 ): String = """
-    You are a translation engine. Translate the text between <src></src> into the IETF language tag
-    $targetLanguage.
+    You are a translation engine. Translate the text between <src></src> into the language
+    represented by the IETF language tag $targetLanguage.
     Output the translation verbatim — no notes, no alternatives, no commentary, no quotes.
     <src>$text</src>
 """.trimIndent()
