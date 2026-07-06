@@ -21,21 +21,17 @@ import kotlinx.serialization.Serializable
 
 /**
  * The internal [InferenceModel] implementation: a `.litertlm` file.
- *
- * [downloadUrl] is the object path within the heron models bucket. The actual download URL is signed
- * and short-lived, resolved at download time via [ModelDownloadUrlResolver]. [commitHash] records the
- * upstream model revision the bucket object was produced from.
  */
 @Serializable
 internal data class LiteRtLmModel(
     override val name: String,
     val modelId: String,
     val info: String,
-    override val learnMoreUrl: String,
+    override val termsOfServiceUrl: String? = null,
     override val fileName: String,
     val commitHash: String,
     override val sizeInBytes: Long,
-    val minDeviceMemoryInGb: Int,
+    override val minDeviceMemoryInGb: Int,
     override val sha256: String? = null,
     val defaultConfig: GenerationParams = GenerationParams(),
     val inputModes: Set<InputMode>,
@@ -57,5 +53,3 @@ internal sealed class InputMode {
     @Serializable
     data object Audio : InputMode()
 }
-
-internal fun InferenceModel.asLiteRtLmModel(): LiteRtLmModel = this as LiteRtLmModel

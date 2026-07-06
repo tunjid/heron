@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.inference.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -34,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.ml.engine.EngineState
@@ -42,19 +44,31 @@ import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.ModelItem
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogState
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.rememberSimpleDialogState
 import heron.feature.inference.generated.resources.Res
 import heron.feature.inference.generated.resources.ability_summary
 import heron.feature.inference.generated.resources.ability_translation
 import heron.feature.inference.generated.resources.cancel
 import heron.feature.inference.generated.resources.download
 import heron.feature.inference.generated.resources.download_failed
+import heron.feature.inference.generated.resources.download_size
 import heron.feature.inference.generated.resources.downloading
 import heron.feature.inference.generated.resources.load
 import heron.feature.inference.generated.resources.load_error
 import heron.feature.inference.generated.resources.loaded
 import heron.feature.inference.generated.resources.loading
+import heron.feature.inference.generated.resources.minimum_memory
 import heron.feature.inference.generated.resources.queued
 import heron.feature.inference.generated.resources.retry
+import heron.feature.inference.generated.resources.terms_of_use_link
+import heron.feature.inference.generated.resources.terms_of_use_message
+import heron.feature.inference.generated.resources.terms_of_use_title
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,6 +82,7 @@ internal fun ModelCard(
     onDownload: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val termsDialogState = rememberSimpleDialogState()
     ElevatedCard(
         modifier = modifier,
     ) {
@@ -84,7 +99,18 @@ internal fun ModelCard(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = formatModelSize(item.model.sizeInBytes),
+                    text = stringResource(
+                        Res.string.download_size,
+                        formatModelSize(item.model.sizeInBytes),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(
+                        Res.string.minimum_memory,
+                        item.model.minDeviceMemoryInGb,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -101,11 +127,72 @@ internal fun ModelCard(
                 engineState = engineState,
                 status = item.status,
                 onLoad = onLoad,
-                onDownload = onDownload,
+                onDownload = {
+                    if (item.model.termsOfServiceUrl != null) termsDialogState.show()
+                    else onDownload()
+                },
                 onCancel = onCancel,
+            )
+            TermsOfUseDialog(
+                state = termsDialogState,
+                model = item.model,
+                onAccept = {
+                    termsDialogState.hide()
+                    onDownload()
+                },
             )
         }
     }
+}
+
+@Composable
+private fun TermsOfUseDialog(
+    state: SimpleDialogState,
+    model: InferenceModel,
+    onAccept: () -> Unit,
+) {
+    val termsUrl = model.termsOfServiceUrl ?: return
+    val uriHandler = LocalUriHandler.current
+    SimpleDialog(
+        state = state,
+        title = {
+            SimpleDialogTitle(
+                text = stringResource(Res.string.terms_of_use_title),
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SimpleDialogText(
+                    text = stringResource(
+                        Res.string.terms_of_use_message,
+                        model.name,
+                    ),
+                )
+                Text(
+                    modifier = Modifier.clickable {
+                        runCatching { uriHandler.openUri(termsUrl) }
+                    },
+                    text = stringResource(Res.string.terms_of_use_link),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        },
+        confirmButton = {
+            PrimaryDialogButton(
+                text = stringResource(Res.string.download),
+                onClick = onAccept,
+            )
+        },
+        dismissButton = {
+            NeutralDialogButton(
+                text = stringResource(Res.string.cancel),
+                onClick = state::hide,
+            )
+        },
+    )
 }
 
 @Composable
