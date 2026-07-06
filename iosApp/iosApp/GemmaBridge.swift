@@ -29,7 +29,12 @@ final class GemmaBridge: IosInferenceBridge {
         engine = nil
         lock.unlock()
 
+        #if targetEnvironment(simulator)
+        let useGpu = false
+        #else
         let useGpu = backend == .gpu
+        #endif
+
         let task = Task {
             do {
                 let config = try EngineConfig(

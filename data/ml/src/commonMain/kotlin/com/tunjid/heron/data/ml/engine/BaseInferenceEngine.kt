@@ -20,7 +20,6 @@ import com.tunjid.heron.data.ml.model.LoadedModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -67,8 +66,11 @@ internal abstract class BaseInferenceEngine : InferenceEngine {
     }
 
     final override suspend fun reset() = mutex.withLock {
-        onReset()
-        state.value = EngineState.Uninitialized
+        try {
+            onReset()
+        } finally {
+            state.value = EngineState.Uninitialized
+        }
     }
 
     /**
