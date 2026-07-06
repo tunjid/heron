@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.ml.engine
 
 import com.tunjid.heron.data.ml.model.LoadedModel
-import com.tunjid.heron.data.ml.model.asLiteRtLmModel
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
@@ -51,7 +50,7 @@ internal class IosInferenceEngine(
     override suspend fun load(
         model: LoadedModel,
     ) = mutex.withLock {
-        _state.value = EngineState.Loading
+        _state.value = EngineState.Loading(model)
         try {
             suspendCancellableCoroutine { continuation ->
                 bridge.load(
@@ -72,7 +71,11 @@ internal class IosInferenceEngine(
         } catch (throwable: Throwable) {
             // Cancellation is normal control flow, not a load failure.
             if (throwable is CancellationException) throw throwable
-            _state.value = EngineState.Error(throwable.message ?: "Failed to load model", throwable)
+            _state.value = EngineState.Error(
+                model = model,
+                message = throwable.message ?: "Failed to load model",
+                cause = throwable,
+            )
             throw throwable
         }
     }

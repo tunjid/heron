@@ -19,6 +19,7 @@ package com.tunjid.heron.data.ml.model
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.flow.Flow
+import okio.Path
 
 interface InferenceModelManager {
 
@@ -26,7 +27,7 @@ interface InferenceModelManager {
 
     fun status(
         model: InferenceModel,
-    ): Flow<TaskStatus>
+    ): Flow<ModelStatus>
 
     suspend fun enqueueDownload(
         model: InferenceModel,
@@ -39,4 +40,14 @@ interface InferenceModelManager {
     suspend fun delete(
         model: InferenceModel,
     )
+}
+
+sealed class ModelStatus {
+    data class Downloaded(
+        val loadedModel: LoadedModel,
+    ) : ModelStatus()
+
+    data class Pending(
+        val taskStatus: TaskStatus,
+    ) : ModelStatus()
 }

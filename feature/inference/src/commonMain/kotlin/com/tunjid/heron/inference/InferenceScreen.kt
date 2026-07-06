@@ -60,9 +60,17 @@ internal fun InferenceScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem(),
+                        engineState = state.engineState,
                         item = item,
-                        onDownload = { actions(Action.Download(item.model)) },
-                        onCancel = { actions(Action.Cancel(item.model)) },
+                        onLoad = {
+                            actions(Action.Load(it))
+                        },
+                        onDownload = {
+                            actions(Action.Download(item.model))
+                        },
+                        onCancel = {
+                            actions(Action.Cancel(item.model))
+                        },
                     )
                 },
             )

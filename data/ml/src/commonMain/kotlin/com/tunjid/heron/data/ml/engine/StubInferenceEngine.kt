@@ -37,7 +37,10 @@ internal class StubInferenceEngine(
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
     override suspend fun load(model: LoadedModel) {
-        _state.value = EngineState.Error(reason)
+        _state.value = EngineState.Error(
+            model = model,
+            message = reason,
+        )
     }
 
     override fun generate(

@@ -26,4 +26,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 fun createInferenceEngine(
     bridge: IosInferenceBridge,
     ioDispatcher: CoroutineDispatcher,
-): InferenceEngine = IosInferenceEngine(bridge, ioDispatcher)
+): InferenceEngine = IosInferenceEngine(
+    bridge = bridge,
+    ioDispatcher = ioDispatcher,
+)
