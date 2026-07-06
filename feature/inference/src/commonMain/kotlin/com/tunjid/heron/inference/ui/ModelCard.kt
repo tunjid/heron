@@ -24,9 +24,14 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -35,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,7 +63,6 @@ import heron.feature.inference.generated.resources.ability_translation
 import heron.feature.inference.generated.resources.cancel
 import heron.feature.inference.generated.resources.download
 import heron.feature.inference.generated.resources.download_failed
-import heron.feature.inference.generated.resources.download_size
 import heron.feature.inference.generated.resources.downloading
 import heron.feature.inference.generated.resources.load
 import heron.feature.inference.generated.resources.load_error
@@ -78,6 +83,7 @@ internal fun ModelCard(
     modifier: Modifier = Modifier,
     engineState: EngineState?,
     item: ModelItem,
+    downloadEnabled: Boolean = true,
     onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
@@ -92,28 +98,28 @@ internal fun ModelCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = item.model.name,
                     style = MaterialTheme.typography.titleMedium,
                 )
-                Text(
-                    text = stringResource(
-                        Res.string.download_size,
-                        formatModelSize(item.model.sizeInBytes),
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(
-                        Res.string.minimum_memory,
-                        item.model.minDeviceMemoryInGb,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    MetadataChip(
+                        icon = Icons.Rounded.Storage,
+                        text = formatModelSize(item.model.sizeInBytes),
+                    )
+                    MetadataChip(
+                        icon = Icons.Rounded.Memory,
+                        text = stringResource(
+                            Res.string.minimum_memory,
+                            item.model.minDeviceMemoryInGb,
+                        ),
+                    )
+                }
             }
             if (item.model.abilities.isNotEmpty()) FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -126,6 +132,7 @@ internal fun ModelCard(
             ModelStatus(
                 engineState = engineState,
                 status = item.status,
+                downloadEnabled = downloadEnabled,
                 onLoad = onLoad,
                 onDownload = {
                     if (item.model.termsOfServiceUrl != null) termsDialogState.show()
@@ -199,6 +206,7 @@ private fun TermsOfUseDialog(
 private fun ModelStatus(
     engineState: EngineState?,
     status: ModelStatus,
+    downloadEnabled: Boolean,
     onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
@@ -268,7 +276,10 @@ private fun ModelStatus(
                 label = stringResource(Res.string.download_failed),
                 labelColor = MaterialTheme.colorScheme.error,
                 action = {
-                    Button(onClick = onDownload) {
+                    Button(
+                        onClick = onDownload,
+                        enabled = downloadEnabled,
+                    ) {
                         Text(text = stringResource(Res.string.retry))
                     }
                 },
@@ -276,7 +287,10 @@ private fun ModelStatus(
             TaskStatus.NotFound -> StatusRow(
                 label = null,
                 action = {
-                    Button(onClick = onDownload) {
+                    Button(
+                        onClick = onDownload,
+                        enabled = downloadEnabled,
+                    ) {
                         Text(text = stringResource(Res.string.download))
                     }
                 },
@@ -308,6 +322,40 @@ private fun StatusRow(
             overflow = TextOverflow.Ellipsis,
         )
         action()
+    }
+}
+
+@Composable
+private fun MetadataChip(
+    icon: ImageVector,
+    text: String,
+) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                start = 10.dp,
+                end = 12.dp,
+                top = 6.dp,
+                bottom = 6.dp,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                modifier = Modifier.size(16.dp),
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

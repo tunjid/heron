@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSProcessInfo
 
 /**
  * [InferenceEngine] that adapts the Swift-implemented [IosInferenceBridge] callbacks into
@@ -42,7 +43,7 @@ internal class IosInferenceEngine(
         bridge.load(
             modelPath = model.path.toString(),
             maxTokens = model.model.maxTokens,
-            backend = preferredBackend(model = model),
+            backend = backendFor(),
             onReady = { if (continuation.isActive) continuation.resume(Unit) },
             onError = { message ->
                 if (continuation.isActive) {
@@ -89,8 +90,8 @@ fun createInferenceEngine(
     ioDispatcher = ioDispatcher,
 )
 
-// iOS runs Metal-backed GPU inference across the supported iPhone range; no device
-// blocklist is needed yet.
-internal actual fun preferredBackend(
-    model: LoadedModel,
-): InferenceBackend = InferenceBackend.Gpu
+internal actual fun backendFor(): InferenceBackend =
+    if (isSimulator()) InferenceBackend.Cpu else InferenceBackend.Gpu
+
+private fun isSimulator(): Boolean =
+    NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null

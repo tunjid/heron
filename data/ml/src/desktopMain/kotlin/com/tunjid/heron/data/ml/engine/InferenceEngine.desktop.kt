@@ -16,9 +16,5 @@
 
 package com.tunjid.heron.data.ml.engine
 
-import com.tunjid.heron.data.ml.model.LoadedModel
-
 // LiteRT-LM ships no GPU delegate for the desktop JVM; always run on CPU.
-internal actual fun preferredBackend(
-    model: LoadedModel,
-): InferenceBackend = InferenceBackend.Cpu
+internal actual fun backendFor(): InferenceBackend = InferenceBackend.Cpu

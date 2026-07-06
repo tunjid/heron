@@ -134,17 +134,12 @@ private fun Flow<InferenceAction.Generate>.launchInferenceMutations(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
             // Deterministic decoding for faithful, reproducible translations.
-            params = GenerationParams(temperature = 0f),
+            params = GenerationParams(temperature = 0.6f),
             prompt = translationPrompt(
                 text = action.post.record?.text.orEmpty(),
                 targetLanguage = action.targetLanguage,
             ),
-            transform = { buffer ->
-                if (buffer.contains(TranslationMarker)) buffer.substringAfter(
-                    TranslationMarker,
-                ).trim()
-                else ""
-            },
+            transform = String::trim,
         ).map { InferenceKind.Translation to it }
 
         is InferenceAction.Generate.Vibe -> inferenceEngine.outcomes(
@@ -204,15 +199,21 @@ private fun InferenceEngine.outcomes(
     ).collect { token ->
         buffer.append(token)
         emit(
-            InferenceOutcome.Loading(text = transform(buffer.toString())),
+            InferenceOutcome.Loading(
+                text = buffer.transformedOrPlain(transform),
+            ),
         )
     }
     emit(
-        InferenceOutcome.Success(text = transform(buffer.toString())),
+        InferenceOutcome.Success(
+            text = buffer.transformedOrPlain(transform),
+        ),
     )
 }.catch {
     emit(
-        InferenceOutcome.Error(memo = Memo.Resource(Res.string.inference_error_failed)),
+        InferenceOutcome.Error(
+            memo = Memo.Resource(Res.string.inference_error_failed),
+        ),
     )
 }
 
@@ -236,9 +237,9 @@ private fun translationPrompt(
     text: String,
     targetLanguage: String,
 ): String = """
-    You are a translation engine. Translate the text between <src></src> into $targetLanguage.
+    You are a translation engine. Translate the text between <src></src> into the IETF language tag
+    $targetLanguage.
     Output the translation verbatim — no notes, no alternatives, no commentary, no quotes.
-    Begin your reply with the exact marker $TranslationMarker immediately followed by the translation.
     <src>$text</src>
 """.trimIndent()
 
@@ -347,8 +348,9 @@ sealed class InferenceAction(
     }
 }
 
-/**
- * Marker the model is instructed to emit immediately before the translation, so any preamble the
- * model adds can be stripped to recover just the translated text.
- */
-private const val TranslationMarker = "§§§"
+private inline fun StringBuilder.transformedOrPlain(
+    transform: (String) -> String,
+): String {
+    val string = toString()
+    return transform(string).ifEmpty { string.trim() }
+}

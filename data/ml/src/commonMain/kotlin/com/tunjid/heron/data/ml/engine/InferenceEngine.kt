@@ -82,30 +82,8 @@ enum class InferenceBackend {
 }
 
 /**
- * Device models — matched case-insensitively as substrings of the reported device model —
- * whose GPU delegate is unreliable for LiteRT-LM and must fall back to CPU. Mirrors the
- * Google AI Edge Gallery heuristic, which force-disables the GPU on the Pixel 10.
+ * The [InferenceBackend] to run inference on, resolved for the current device and platform.
+ * GPU by default; each platform actual falls back to CPU where the GPU delegate is unavailable
+ * or unreliable.
  */
-internal val CpuOnlyDeviceModels: List<String> = listOf(
-    "pixel 10",
-)
-
-/**
- * The backend policy: GPU by default, CPU when [deviceModel] matches an entry in
- * [CpuOnlyDeviceModels]. Extracted from [preferredBackend] so it is unit-testable without a
- * real device. A null [deviceModel] (unknown device) defaults to GPU.
- */
-internal fun backendFor(
-    deviceModel: String?,
-): InferenceBackend {
-    val normalized = deviceModel?.lowercase() ?: return InferenceBackend.Gpu
-    return when {
-        CpuOnlyDeviceModels.any { normalized.contains(it) } -> InferenceBackend.Cpu
-        else -> InferenceBackend.Gpu
-    }
-}
-
-/** The [InferenceBackend] to run [model] on, resolved for the current device and platform. */
-internal expect fun preferredBackend(
-    model: LoadedModel,
-): InferenceBackend
+internal expect fun backendFor(): InferenceBackend

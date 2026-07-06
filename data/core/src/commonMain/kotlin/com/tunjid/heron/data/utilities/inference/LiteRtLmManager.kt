@@ -30,6 +30,8 @@ internal class LiteRtLmManager(
     override val models: List<InferenceModel> =
         listOf(
             InferenceModel.Gemma31B,
+            InferenceModel.Gemma4E2B,
+            InferenceModel.Gemma4E4B,
         )
 
     override fun status(

@@ -24,6 +24,9 @@ import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.ml.model.LoadedModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
@@ -47,7 +50,7 @@ internal class LiteRtLmInferenceEngine(
         val newEngine = Engine(
             EngineConfig(
                 modelPath = model.path.toString(),
-                backend = model.backend(),
+                backend = litertBackend(),
                 maxNumTokens = model.model.maxTokens,
             ),
         )
@@ -55,6 +58,9 @@ internal class LiteRtLmInferenceEngine(
             newEngine.initialize()
             engine = newEngine
         } catch (throwable: Throwable) {
+            logcat(LogPriority.ERROR) {
+                "Model initialization failed: ${throwable.loggableText()}"
+            }
             newEngine.close()
             throw throwable
         }
@@ -110,9 +116,9 @@ internal class LiteRtLmInferenceEngine(
             .joinToString(separator = "") { it.text }
 }
 
-/** Maps the device/platform [preferredBackend] onto the LiteRT-LM [Backend] to run on. */
-private fun LoadedModel.backend(): Backend =
-    when (preferredBackend(model = this)) {
+/** Maps the device/platform [backendFor] decision onto the LiteRT-LM [Backend] to run on. */
+private fun litertBackend(): Backend =
+    when (backendFor()) {
         InferenceBackend.Cpu -> Backend.CPU()
         InferenceBackend.Gpu -> Backend.GPU()
     }

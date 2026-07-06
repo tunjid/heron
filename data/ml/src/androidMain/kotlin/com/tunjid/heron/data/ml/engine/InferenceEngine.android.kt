@@ -17,10 +17,32 @@
 package com.tunjid.heron.data.ml.engine
 
 import android.os.Build
-import com.tunjid.heron.data.ml.model.LoadedModel
 
-// GPU by default, with a CPU fallback for device models whose GPU delegate is unreliable
-// (see [CpuOnlyDeviceModels]).
-internal actual fun preferredBackend(
-    model: LoadedModel,
-): InferenceBackend = backendFor(deviceModel = Build.MODEL)
+/**
+ * GPU by default, falling back to CPU on the Pixel 10 (whose GPU delegate is unreliable for
+ * LiteRT-LM, mirroring Google's AI Edge Gallery) and on emulators (no usable GPU delegate).
+ */
+internal actual fun backendFor(): InferenceBackend =
+    if (isPixel10() || isEmulator()) InferenceBackend.Cpu
+    else InferenceBackend.Gpu
+
+private fun isPixel10(): Boolean =
+    Build.MODEL.lowercase().contains("pixel 10")
+
+// Standard Build-property heuristics covering Android Studio AVDs (goldfish/ranchu, sdk_gphone*)
+// and Genymotion.
+private fun isEmulator(): Boolean =
+    Build.FINGERPRINT.startsWith("generic") ||
+        Build.FINGERPRINT.startsWith("unknown") ||
+        Build.FINGERPRINT.contains("emulator") ||
+        Build.HARDWARE.contains("goldfish") ||
+        Build.HARDWARE.contains("ranchu") ||
+        Build.MODEL.contains("google_sdk") ||
+        Build.MODEL.contains("Emulator") ||
+        Build.MODEL.contains("Android SDK built for") ||
+        Build.MODEL.contains("sdk_gphone") ||
+        Build.PRODUCT.contains("sdk") ||
+        Build.PRODUCT.contains("emulator") ||
+        Build.PRODUCT.contains("simulator") ||
+        Build.MANUFACTURER.contains("Genymotion") ||
+        (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
