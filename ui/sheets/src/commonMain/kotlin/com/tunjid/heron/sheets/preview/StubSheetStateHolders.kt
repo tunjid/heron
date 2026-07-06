@@ -19,6 +19,9 @@ package com.tunjid.heron.sheets.preview
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsAction
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsState
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
+import com.tunjid.heron.sheets.inference.InferenceAction
+import com.tunjid.heron.sheets.inference.InferenceState
+import com.tunjid.heron.sheets.inference.InferenceStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsAction
 import com.tunjid.heron.sheets.mutedwords.MutedWordsState
 import com.tunjid.heron.sheets.mutedwords.MutedWordsStateHolder
@@ -84,6 +87,12 @@ fun stubSheetStateHolder(
             EmbeddableRecordOptionsStateHolder,
             ActionSuspendingStateMutator<EmbeddableRecordOptionsAction, EmbeddableRecordOptionsState>
             by EmbeddableRecordOptionsState.Immutable().asNoOpActionSuspendingStateMutator() {}
+
+    InferenceStateHolder::class ->
+        object :
+            InferenceStateHolder,
+            ActionSuspendingStateMutator<InferenceAction, InferenceState>
+            by InferenceState.Immutable().asNoOpActionSuspendingStateMutator() {}
 
     else -> error("No stub SheetStateHolder registered for $type")
 }

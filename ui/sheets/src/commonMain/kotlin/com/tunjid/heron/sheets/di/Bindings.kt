@@ -19,6 +19,8 @@ package com.tunjid.heron.sheets.di
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModelInitializer
+import com.tunjid.heron.sheets.inference.InferenceStateHolder
+import com.tunjid.heron.sheets.inference.InferenceViewModelInitializer
 import com.tunjid.heron.sheets.mutedwords.MutedWordsStateHolder
 import com.tunjid.heron.sheets.mutedwords.MutedWordsViewModelInitializer
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
@@ -94,6 +96,14 @@ class SheetBindings(
     @ClassKey(PostInteractionsStateHolder::class)
     fun providePostInteractionsViewModelInitializer(
         initializer: PostInteractionsViewModelInitializer,
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
+    @ClassKey(InferenceStateHolder::class)
+    fun provideInferenceViewModelInitializer(
+        initializer: InferenceViewModelInitializer,
     ): SheetStateHolderInitializer =
         SheetStateHolderInitializer(initializer::invoke)
 }
