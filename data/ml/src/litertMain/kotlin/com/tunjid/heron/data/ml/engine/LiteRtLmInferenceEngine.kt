@@ -25,7 +25,6 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.tunjid.heron.data.ml.model.LoadedModel
-import com.tunjid.heron.data.ml.model.asLiteRtLmModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
@@ -39,12 +38,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-/**
- * [InferenceEngine] backed by the LiteRT-LM `Engine`/`Conversation` API. Shared by the
- * Android (`litertlm-android`) and desktop JVM (`litertlm-jvm`) targets, whose
- * `com.google.ai.edge.litertlm` API is identical.
- */
-internal class GemmaLiteRtLmInferenceEngine(
+internal class LiteRtLmInferenceEngine(
     private val ioDispatcher: CoroutineDispatcher,
 ) : InferenceEngine {
 
@@ -68,7 +62,7 @@ internal class GemmaLiteRtLmInferenceEngine(
                     EngineConfig(
                         modelPath = model.path.toString(),
                         backend = Backend.CPU(),
-                        maxNumTokens = model.model.asLiteRtLmModel().defaultConfig.maxTokens,
+                        maxNumTokens = model.model.maxTokens,
                     ),
                 )
                 try {
@@ -146,4 +140,4 @@ internal class GemmaLiteRtLmInferenceEngine(
 
 /** Builds the LiteRT-LM engine for Android and desktop; call from the app entry point. */
 fun createInferenceEngine(ioDispatcher: CoroutineDispatcher): InferenceEngine =
-    GemmaLiteRtLmInferenceEngine(ioDispatcher)
+    LiteRtLmInferenceEngine(ioDispatcher)
