@@ -14,19 +14,24 @@
   ~    limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- WorkManager foreground-service fallback (API < 34). -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- User-initiated data-transfer jobs (API 34+). -->
-    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
+  <!-- WorkManager foreground-service fallback (API < 34). -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+  <!-- User-initiated data-transfer jobs (API 34+). -->
+  <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
 
-    <application>
-        <service
-            android:name="com.tunjid.heron.data.tasks.uidt.TransferJobService"
-            android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
-    </application>
+  <application>
+    <service
+      android:name="androidx.work.impl.foreground.SystemForegroundService"
+      android:foregroundServiceType="dataSync"
+      tools:node="merge" />
+    <service
+      android:name="com.tunjid.heron.data.tasks.uidt.TransferJobService"
+      android:exported="false"
+      android:permission="android.permission.BIND_JOB_SERVICE" />
+  </application>
 
 </manifest>
