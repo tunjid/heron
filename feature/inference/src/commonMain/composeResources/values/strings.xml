@@ -30,4 +30,9 @@
     <string name="ability_summary">Summary</string>
     <string name="load_default_model_on_launch">Load default model on launch</string>
     <string name="no_default_model">Load a model to set it as the default</string>
+    <string name="download_size">%1$s download</string>
+    <string name="minimum_memory">Requires %1$d GB of RAM</string>
+    <string name="terms_of_use_title">Terms of Use</string>
+    <string name="terms_of_use_message">Heron uses %1$s to provide local, private AI features. By downloading, you agree to the Terms of Use of the model author.</string>
+    <string name="terms_of_use_link">Terms of Use</string>
 </resources>
