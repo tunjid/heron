@@ -80,8 +80,8 @@ fun createAppState(
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = inferenceEngine,
                 languageDetector = createLanguageDetector(Dispatchers.IO),
-                backgroundTaskScheduler = { taskStore, httpClient ->
-                    NoOpBackgroundTaskScheduler(taskStore, httpClient)
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
+                    NoOpBackgroundTaskScheduler(taskStore, httpClient, fileManager)
                 },
             )
         },

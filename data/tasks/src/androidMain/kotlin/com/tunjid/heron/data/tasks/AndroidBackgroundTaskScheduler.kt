@@ -18,6 +18,7 @@ package com.tunjid.heron.data.tasks
 
 import android.content.Context
 import android.os.Build
+import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import com.tunjid.heron.data.tasks.uidt.UidtTransferDelegate
 import com.tunjid.heron.data.tasks.workmanager.WorkManagerTransferDelegate
@@ -34,7 +35,8 @@ class AndroidBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
     httpClient: HttpClient,
-) : BackgroundTaskScheduler(taskStore, httpClient) {
+    fileManager: FileManager,
+) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
 
     init {
         context.ensureChannel()
@@ -65,8 +67,10 @@ fun createBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
     httpClient: HttpClient,
+    fileManager: FileManager,
 ): BackgroundTaskScheduler = AndroidBackgroundTaskScheduler(
     context = context.applicationContext,
     taskStore = taskStore,
     httpClient = httpClient,
+    fileManager = fileManager,
 )

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.logging.logcat
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 abstract class BackgroundTaskScheduler(
     internal val taskStore: TaskStore,
     httpClient: HttpClient,
+    internal val fileManager: FileManager,
 ) {
 
     internal val httpClient = httpClient.config {

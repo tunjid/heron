@@ -65,6 +65,7 @@ kotlin {
             implementation(project(":data:models"))
             implementation(project(":data:database"))
             implementation(project(":data:core"))
+            implementation(project(":data:files"))
             implementation(project(":data:logging"))
             implementation(project(":data:ml"))
             implementation(project(":data:platform"))

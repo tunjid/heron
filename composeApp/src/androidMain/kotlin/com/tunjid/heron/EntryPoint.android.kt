@@ -63,8 +63,8 @@ fun createAppState(context: Context): AppState =
                 databaseBuilder = getDatabaseBuilder(context),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
                 languageDetector = createLanguageDetector(context, Dispatchers.IO),
-                backgroundTaskScheduler = { taskStore, httpClient ->
-                    createBackgroundTaskScheduler(context, taskStore, httpClient)
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
+                    createBackgroundTaskScheduler(context, taskStore, httpClient, fileManager)
                 },
             )
         },

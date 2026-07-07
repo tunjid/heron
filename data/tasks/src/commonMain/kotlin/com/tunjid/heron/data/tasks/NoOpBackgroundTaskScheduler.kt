@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.files.FileManager
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -27,7 +28,8 @@ import kotlinx.coroutines.flow.flowOf
 class NoOpBackgroundTaskScheduler(
     taskStore: TaskStore,
     httpClient: HttpClient,
-) : BackgroundTaskScheduler(taskStore, httpClient) {
+    fileManager: FileManager,
+) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
 
     override suspend fun schedule(
         task: Task,

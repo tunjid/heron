@@ -33,14 +33,29 @@ import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.source
 import io.github.vinceglb.filekit.write
 import kotlin.time.Clock
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.io.Source
 import kotlinx.io.buffered
+import okio.FileSystem
+import okio.Path
 
-internal class FileKitFileManager : FileManager {
+internal class FileKitFileManager(
+    override val fileSystem: FileSystem,
+) : FileManager {
 
     init {
         initializeFileKit()
     }
+
+    private val mutations = MutableSharedFlow<Path>(
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    override val fileMutations: Flow<Path> = mutations.asSharedFlow()
 
     override suspend fun cacheWithoutRestrictions(
         restrictedFile: RestrictedFile,
@@ -103,6 +118,43 @@ internal class FileKitFileManager : FileManager {
     ) {
         file.toPlatformFile()
             .safeDelete()
+    }
+
+    override fun exists(
+        path: Path,
+    ): Boolean =
+        fileSystem.exists(path)
+
+    override fun metadataSize(
+        path: Path,
+    ): Long? =
+        fileSystem.metadataOrNull(path)?.size
+
+    override suspend fun createDirectories(
+        path: Path,
+    ) {
+        fileSystem.createDirectories(path)
+    }
+
+    override suspend fun delete(
+        path: Path,
+    ) {
+        fileSystem.delete(
+            path = path,
+            mustExist = false,
+        )
+        mutations.emit(path)
+    }
+
+    override suspend fun atomicMove(
+        source: Path,
+        target: Path,
+    ) {
+        fileSystem.atomicMove(
+            source = source,
+            target = target,
+        )
+        mutations.emit(target)
     }
 }
 

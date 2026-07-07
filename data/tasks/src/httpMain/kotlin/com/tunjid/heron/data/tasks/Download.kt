@@ -24,7 +24,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentLength
 import io.ktor.utils.io.readAvailable
-import okio.FileSystem
 import okio.HashingSource
 import okio.Path
 import okio.Source
@@ -40,24 +39,27 @@ import okio.use
  * Shared by the JVM-family schedulers (Android + desktop). Each platform supplies [onProgress] so it
  * can surface progress its own way — a WorkManager / UIDT notification on Android, a `StateFlow` on
  * desktop.
+ *
+ * File I/O goes through the scheduler's [FileManager][com.tunjid.heron.data.files.FileManager] so that
+ * the terminal move — which makes the finished file appear — is observable via its mutation signal;
+ * streaming uses the exposed [okio.FileSystem] directly.
  */
-suspend fun HttpClient.download(
+suspend fun BackgroundTaskScheduler.download(
     request: Task.Download,
-    fileSystem: FileSystem,
     destination: Path,
     authHeader: String?,
     onProgress: suspend (Progress) -> Unit,
 ) {
     val directory = requireNotNull(destination.parent)
     val partial = directory / (destination.name + PartialSuffix)
-    fileSystem.createDirectories(directory)
+    fileManager.createDirectories(directory)
 
-    if (fileSystem.exists(destination)) {
-        val destinationSize = fileSystem.metadata(destination).size ?: 0L
+    if (fileManager.exists(destination)) {
+        val destinationSize = fileManager.metadataSize(destination) ?: 0L
         if (destinationSize == request.sizeInBytes) {
             when (request.sha256?.lowercase()) {
                 null,
-                hash(fileSystem.source(destination)),
+                hash(fileManager.fileSystem.source(destination)),
                 -> return onProgress(
                     Progress(
                         completedBytes = request.sizeInBytes,
@@ -65,22 +67,17 @@ suspend fun HttpClient.download(
                     ),
                 )
                 else
-                -> fileSystem.delete(
-                    path = destination,
-                    mustExist = false,
-                )
+                -> fileManager.delete(destination)
             }
         }
     }
 
-    val existing =
-        if (fileSystem.exists(partial)) fileSystem.metadata(partial).size ?: 0L
-        else 0L
+    val existing = fileManager.metadataSize(partial) ?: 0L
 
     if (existing < request.sizeInBytes) {
         onProgress(Progress(existing, request.sizeInBytes))
 
-        prepareGet(request.sourceUrl) {
+        httpClient.prepareGet(request.sourceUrl) {
             if (authHeader != null) header(HttpHeaders.Authorization, authHeader)
             if (existing > 0L) header(HttpHeaders.Range, "bytes=$existing-")
         }.execute { response ->
@@ -89,10 +86,7 @@ suspend fun HttpClient.download(
                 error("Download failed for ${destination.name}: HTTP ${response.status.value}")
             }
             // Server ignored our Range: start the partial file over.
-            if (!resumed && existing > 0L) fileSystem.delete(
-                path = partial,
-                mustExist = false,
-            )
+            if (!resumed && existing > 0L) fileManager.delete(partial)
 
             val startFrom = if (resumed) existing else 0L
             val remaining = response.contentLength()
@@ -104,8 +98,8 @@ suspend fun HttpClient.download(
 
             val channel = response.bodyAsChannel()
             val sink = when {
-                resumed -> fileSystem.appendingSink(partial)
-                else -> fileSystem.sink(partial)
+                resumed -> fileManager.fileSystem.appendingSink(partial)
+                else -> fileManager.fileSystem.sink(partial)
             }.buffer()
             var downloaded = startFrom
             sink.use {
@@ -140,17 +134,14 @@ suspend fun HttpClient.download(
     val expected = request.sha256
     if (expected != null) {
         // Streaming hash can't survive a resume, so hash the finished file once.
-        val actual = hash(fileSystem.source(partial))
+        val actual = hash(fileManager.fileSystem.source(partial))
         if (!expected.equals(actual, ignoreCase = true)) {
-            fileSystem.delete(partial, mustExist = false)
+            fileManager.delete(partial)
             error("Checksum mismatch for ${destination.name}")
         }
     }
-    fileSystem.delete(
-        path = destination,
-        mustExist = false,
-    )
-    fileSystem.atomicMove(
+    fileManager.delete(destination)
+    fileManager.atomicMove(
         source = partial,
         target = destination,
     )

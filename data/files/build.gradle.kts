@@ -26,6 +26,8 @@ kotlin {
 
                 implementation(libs.filekit.core)
 
+                implementation(libs.kotlinx.coroutines.core)
+
                 implementation(libs.okio)
             }
         }
