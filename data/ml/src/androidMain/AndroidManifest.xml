@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~    Copyright 2024 Adetunji Dahunsi
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
+    LiteRT-LM's Backend.GPU() runs on the ml_drift OpenCL delegate, which dlopen()s the
+    vendor OpenCL driver (/vendor/lib*/libOpenCL.so) at runtime. On Android 12+ (API 31)
+    an app's linker namespace cannot load a /vendor/lib* driver unless it is declared with
+    <uses-native-library>. required="false" so devices that lack these drivers still
+    install and run.
+
+    See https://github.com/google-ai-edge/LiteRT-LM/issues/2292
+  -->
+  <application>
+    <uses-native-library
+      android:name="libOpenCL.so"
+      android:required="false" />
+    <uses-native-library
+      android:name="libcdsprpc.so"
+      android:required="false" />
+  </application>
+</manifest>

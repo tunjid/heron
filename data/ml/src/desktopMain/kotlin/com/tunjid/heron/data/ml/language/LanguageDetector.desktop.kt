@@ -16,4 +16,11 @@
 
 package com.tunjid.heron.data.ml.language
 
+import java.util.Locale
+
 fun createLanguageDetector(): LanguageDetector = NoOpLanguageDetector
+
+actual fun englishDisplayName(languageTag: String): String =
+    Locale.forLanguageTag(languageTag)
+        .getDisplayLanguage(Locale.ENGLISH)
+        .ifBlank { languageTag }
