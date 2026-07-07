@@ -32,6 +32,7 @@ import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
+import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.SessionContext
 import com.tunjid.heron.data.tasks.FailedTask
 import com.tunjid.heron.data.tasks.Task
@@ -64,7 +65,6 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
-import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
@@ -354,7 +354,7 @@ internal sealed class SavedStateDataSource {
 @Inject
 internal class DataStoreSavedStateDataSource(
     path: Path,
-    fileSystem: FileSystem,
+    fileManager: FileManager,
     protoBuf: ProtoBuf,
     encryption: SavedStateEncryption,
     @AppMainScope
@@ -367,7 +367,7 @@ internal class DataStoreSavedStateDataSource(
 
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
-            fileSystem = fileSystem,
+            fileSystem = fileManager.fileSystem,
             serializer = VersionedSavedStateOkioSerializer(
                 protoBuf = protoBuf,
                 encryption = encryption,

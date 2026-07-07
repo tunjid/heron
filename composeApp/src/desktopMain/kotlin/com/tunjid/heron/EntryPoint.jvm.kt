@@ -87,11 +87,11 @@ fun createAppState(): AppState =
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
                 languageDetector = createLanguageDetector(),
-                backgroundTaskScheduler = { taskStore, httpClient ->
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
                     createBackgroundTaskScheduler(
                         scope = appMainScope,
                         ioDispatcher = Dispatchers.IO,
-                        fileSystem = FileSystem.SYSTEM,
+                        fileManager = fileManager,
                         taskStore = taskStore,
                         httpClient = httpClient,
                     )

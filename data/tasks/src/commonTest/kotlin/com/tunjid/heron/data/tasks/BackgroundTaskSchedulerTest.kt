@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.files.createFileManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import okio.FileSystem
 
 class BackgroundTaskSchedulerTest {
 
@@ -134,7 +136,13 @@ private class TestBackgroundTaskScheduler(
     httpClient: HttpClient,
     private val live: MutableStateFlow<TaskStatus.Running?>,
     private val cancelResult: Boolean,
-) : BackgroundTaskScheduler(taskStore, httpClient) {
+) : BackgroundTaskScheduler(
+    taskStore = taskStore,
+    httpClient = httpClient,
+    fileManager = createFileManager(
+        fileSystem = FileSystem.SYSTEM,
+    ),
+) {
 
     val scheduled = mutableListOf<Task>()
 

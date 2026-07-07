@@ -19,7 +19,6 @@ package com.tunjid.heron.data.tasks
 import android.content.Context
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.first
-import okio.FileSystem
 import okio.Path.Companion.toPath
 
 /**
@@ -43,9 +42,8 @@ internal suspend fun Context.runTransfer(
             task,
             Progress(0L, task.sizeInBytes),
         )
-        scheduler.httpClient.download(
+        scheduler.download(
             request = task,
-            fileSystem = FileSystem.SYSTEM,
             destination = task.destination.toPath(),
             authHeader = null, // TODO: resolve a gated-host bearer token (e.g. Hugging Face) at run time.
             onProgress = { progress -> onProgress(task, progress) },

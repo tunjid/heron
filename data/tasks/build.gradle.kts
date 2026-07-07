@@ -32,14 +32,16 @@ kotlin {
         // Shared by the JVM-family targets (Android + desktop), which download over Ktor.
         val httpMain by creating {
             dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.okio)
-            }
         }
         commonMain {
             dependencies {
+                implementation(project(":data:files"))
                 implementation(project(":data:logging"))
 
+                // FileManager (:data:files) exposes okio types in its API and is referenced here, so
+                // okio is needed on every target (iOS isn't in httpMain). :data:files keeps okio as
+                // an implementation detail, so consumers depend on it directly.
+                implementation(libs.okio)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.core)

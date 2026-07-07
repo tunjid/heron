@@ -149,7 +149,11 @@ class DataBindingArgs(
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
     val languageDetector: LanguageDetector,
-    val backgroundTaskScheduler: (taskStore: TaskStore, httpClient: HttpClient) -> BackgroundTaskScheduler,
+    val backgroundTaskScheduler: (
+        taskStore: TaskStore,
+        httpClient: HttpClient,
+        fileManager: FileManager,
+    ) -> BackgroundTaskScheduler,
 )
 
 @BindingContainer
@@ -182,10 +186,6 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStateFileSystem(): FileSystem = args.savedStateFileSystem
-
-    @SingleIn(AppScope::class)
-    @Provides
     fun provideSavedStateEncryption(): SavedStateEncryption = args.savedStateEncryption
 
     @SingleIn(AppScope::class)
@@ -203,12 +203,12 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideInferenceModelManager(
-        fileSystem: FileSystem,
+        fileManager: FileManager,
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         backgroundTaskScheduler: BackgroundTaskScheduler,
         networkService: NetworkService,
     ): InferenceModelManager = LiteRtLmManager(
-        fileSystem = fileSystem,
+        fileManager = fileManager,
         modelsDirectory = args.modelsDirectory,
         ioDispatcher = ioDispatcher,
         backgroundTaskScheduler = backgroundTaskScheduler,
@@ -221,7 +221,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideFileManager(): FileManager = createFileManager()
+    internal fun provideFileManager(): FileManager = createFileManager(
+        fileSystem = args.savedStateFileSystem,
+    )
 
     @SingleIn(AppScope::class)
     @Provides
@@ -447,9 +449,11 @@ class DataBindings(
     fun provideBackgroundTaskScheduler(
         taskStore: TaskStore,
         httpClient: HttpClient,
+        fileManager: FileManager,
     ): BackgroundTaskScheduler = args.backgroundTaskScheduler(
         taskStore,
         httpClient,
+        fileManager,
     )
 
     @SingleIn(AppScope::class)

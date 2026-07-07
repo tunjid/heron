@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.files.FileManager
 import io.ktor.client.HttpClient
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -32,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okio.FileSystem
 import okio.Path.Companion.toPath
 
 /**
@@ -45,9 +45,9 @@ internal class DesktopBackgroundTaskScheduler(
     private val scope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     httpClient: HttpClient,
-    private val fileSystem: FileSystem,
+    fileManager: FileManager,
     taskStore: TaskStore,
-) : BackgroundTaskScheduler(taskStore, httpClient) {
+) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
 
     private val mutex = Mutex()
     private val jobs = mutableMapOf<TaskId, Job>()
@@ -64,9 +64,8 @@ internal class DesktopBackgroundTaskScheduler(
             jobs[task.id] = scope.launch(ioDispatcher) {
                 try {
                     // TODO: resolve a gated-host bearer token (e.g. Hugging Face) at run time.
-                    httpClient.download(
+                    download(
                         request = task,
-                        fileSystem = fileSystem,
                         destination = task.destination.toPath(),
                         authHeader = null,
                         onProgress = { progress -> progresses.update { it + (task.id to progress) } },
@@ -108,13 +107,13 @@ internal class DesktopBackgroundTaskScheduler(
 fun createBackgroundTaskScheduler(
     scope: CoroutineScope,
     ioDispatcher: CoroutineDispatcher,
-    fileSystem: FileSystem,
+    fileManager: FileManager,
     taskStore: TaskStore,
     httpClient: HttpClient,
 ): BackgroundTaskScheduler = DesktopBackgroundTaskScheduler(
     scope = scope,
     ioDispatcher = ioDispatcher,
     httpClient = httpClient,
-    fileSystem = fileSystem,
+    fileManager = fileManager,
     taskStore = taskStore,
 )
