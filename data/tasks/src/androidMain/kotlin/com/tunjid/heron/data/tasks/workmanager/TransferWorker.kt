@@ -23,6 +23,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.tasks.KeyCompletedBytes
 import com.tunjid.heron.data.tasks.KeyTotalBytes
 import com.tunjid.heron.data.tasks.Progress
@@ -30,7 +31,6 @@ import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
 import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
 import com.tunjid.heron.data.tasks.runTransfer
-import okio.Path.Companion.toPath
 
 /**
  * WorkManager fallback (API < 34) that streams the download as a foreground service, so it survives
@@ -50,7 +50,7 @@ internal class TransferWorker(
             setForeground(
                 foregroundInfo(
                     id = id,
-                    title = task.destination.toPath().name,
+                    title = task.destination.path.name,
                     progress = progress,
                 ),
             )

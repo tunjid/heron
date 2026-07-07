@@ -19,6 +19,7 @@ package com.tunjid.heron.data.tasks.uidt
 import android.app.job.JobParameters
 import android.app.job.JobService
 import androidx.annotation.RequiresApi
+import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
 import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
@@ -30,7 +31,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import okio.Path.Companion.toPath
 
 /**
  * The user-initiated data-transfer job (API 34+). `onStartJob` returns `true` and keeps running on a
@@ -59,7 +59,7 @@ class TransferJobService : JobService() {
                     TransferNotifications.notificationId(id),
                     /* notification = */
                     applicationContext.progressNotification(
-                        title = task.destination.toPath().name,
+                        title = task.destination.path.name,
                         progress = progress,
                     ),
                     /* jobEndNotificationPolicy = */

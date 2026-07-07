@@ -19,6 +19,7 @@ package com.tunjid.heron
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
@@ -73,8 +74,8 @@ fun createAppState(
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = savedStatePath(),
-                modelsDirectory = modelsDirectory(),
+                savedStatePath = savedStatePath().asSystemFile(),
+                modelsDirectory = modelsDirectory().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),

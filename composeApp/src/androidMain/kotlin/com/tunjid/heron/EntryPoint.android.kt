@@ -19,6 +19,7 @@ package com.tunjid.heron
 import android.content.Context
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
@@ -56,8 +57,8 @@ fun createAppState(context: Context): AppState =
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = context.savedStatePath(),
-                modelsDirectory = context.modelsDirectory(),
+                savedStatePath = context.savedStatePath().asSystemFile(),
+                modelsDirectory = context.modelsDirectory().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),

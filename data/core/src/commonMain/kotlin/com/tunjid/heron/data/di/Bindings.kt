@@ -19,6 +19,7 @@ package com.tunjid.heron.data.di
 import androidx.room.RoomDatabase
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
@@ -124,7 +125,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
-import okio.Path
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -141,9 +141,9 @@ internal annotation class DefaultDispatcher
 class DataBindingArgs(
     val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
-    val savedStatePath: Path,
+    val savedStatePath: File.System,
     /** Directory for on-device model files; a platform cache/no-backup location. */
-    val modelsDirectory: Path,
+    val modelsDirectory: File.System,
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
@@ -182,7 +182,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStatePath(): Path = args.savedStatePath
+    fun provideSavedStatePath(): File.System = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides

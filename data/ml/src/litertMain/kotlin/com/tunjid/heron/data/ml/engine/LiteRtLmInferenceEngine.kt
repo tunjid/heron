@@ -49,7 +49,7 @@ internal class LiteRtLmInferenceEngine(
         engine = null
         val newEngine = Engine(
             EngineConfig(
-                modelPath = model.path.toString(),
+                modelPath = model.file.relativePath,
                 backend = litertBackend(),
                 maxNumTokens = model.model.maxTokens,
             ),

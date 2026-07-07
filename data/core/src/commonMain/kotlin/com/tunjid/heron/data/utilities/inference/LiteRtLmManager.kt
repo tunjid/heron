@@ -1,7 +1,10 @@
 package com.tunjid.heron.data.utilities.inference
 
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.asSystemFile
+import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
@@ -21,11 +24,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
-import okio.Path
 
 internal class LiteRtLmManager(
     private val fileManager: FileManager,
-    private val modelsDirectory: Path,
+    private val modelsDirectory: File.System,
     private val ioDispatcher: CoroutineDispatcher,
     private val backgroundTaskScheduler: BackgroundTaskScheduler,
     private val networkService: NetworkService,
@@ -45,13 +47,13 @@ internal class LiteRtLmManager(
         // A deletion (or a completed download's move) changes no task state, so react to the file
         // mutation directly; [onStart] seeds [combine]'s first emission.
         fileManager.fileMutations
-            .filter { it == modelPath(model) }
-            .onStart { emit(modelPath(model)) },
+            .filter { it == modelFile(model) }
+            .onStart { emit(modelFile(model)) },
     ) { taskStatus, _ ->
-        if (fileManager.exists(modelPath(model))) ModelStatus.Downloaded(
+        if (fileManager.exists(modelFile(model))) ModelStatus.Downloaded(
             LoadedModel(
                 model = model,
-                path = modelPath(model),
+                file = modelFile(model),
             ),
         )
         else ModelStatus.Pending(
@@ -74,7 +76,7 @@ internal class LiteRtLmManager(
             backgroundTaskScheduler.enqueue(
                 Task.Download(
                     sourceUrl = it.url.uri,
-                    destination = modelPath(model).toString(),
+                    destination = modelFile(model),
                     sizeInBytes = model.sizeInBytes,
                     sha256 = model.sha256,
                 ),
@@ -90,18 +92,18 @@ internal class LiteRtLmManager(
         model: InferenceModel,
     ): Unit = withContext(ioDispatcher) {
         cancelDownload(model)
-        fileManager.delete(modelPath(model))
+        fileManager.delete(modelFile(model))
     }
 
     private fun downloadTaskId(
         model: InferenceModel,
     ): TaskId = Task.Download(
         sourceUrl = "",
-        destination = modelPath(model).toString(),
+        destination = modelFile(model),
         sizeInBytes = model.sizeInBytes,
         sha256 = model.sha256,
     ).id
 
-    private fun modelPath(model: InferenceModel): Path =
-        modelsDirectory / model.fileName
+    private fun modelFile(model: InferenceModel): File.System =
+        (modelsDirectory.path / model.fileName).asSystemFile()
 }

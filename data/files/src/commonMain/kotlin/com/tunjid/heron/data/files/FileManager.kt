@@ -20,17 +20,16 @@ import com.tunjid.heron.data.core.utilities.File
 import kotlinx.coroutines.flow.Flow
 import kotlinx.io.Source
 import okio.FileSystem
-import okio.Path
 
 interface FileManager {
 
     val fileSystem: FileSystem
 
-    val fileMutations: Flow<Path>
+    val fileMutations: Flow<File.System>
 
     suspend fun cacheWithoutRestrictions(
         restrictedFile: RestrictedFile,
-    ): File?
+    ): File.Media?
 
     suspend fun source(
         file: File,
@@ -45,24 +44,20 @@ interface FileManager {
     )
 
     fun exists(
-        path: Path,
+        file: File.System,
     ): Boolean
 
     fun metadataSize(
-        path: Path,
+        file: File.System,
     ): Long?
 
     suspend fun createDirectories(
-        path: Path,
-    )
-
-    suspend fun delete(
-        path: Path,
+        file: File.System,
     )
 
     suspend fun atomicMove(
-        source: Path,
-        target: Path,
+        source: File.System,
+        target: File.System,
     )
 }
 

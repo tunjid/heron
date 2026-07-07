@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.files.asSystemFile
+import com.tunjid.heron.data.files.path
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
@@ -25,15 +27,14 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentLength
 import io.ktor.utils.io.readAvailable
 import okio.HashingSource
-import okio.Path
 import okio.Source
 import okio.blackholeSink
 import okio.buffer
 import okio.use
 
 /**
- * Streams [request] to [destination] using this [HttpClient], resuming from an on-disk `.part` file
- * (via an HTTP `Range` header) when one is present and verifying the SHA-256 when
+ * Streams [request] to its on-disk destination using the scheduler's [HttpClient], resuming from an
+ * on-disk `.part` file (via an HTTP `Range` header) when one is present and verifying the SHA-256 when
  * [Task.Download.sha256] is set.
  *
  * Shared by the JVM-family schedulers (Android + desktop). Each platform supplies [onProgress] so it
@@ -42,20 +43,22 @@ import okio.use
  */
 suspend fun BackgroundTaskScheduler.download(
     request: Task.Download,
-    destination: Path,
     authHeader: String?,
     onProgress: suspend (Progress) -> Unit,
 ) {
-    val directory = requireNotNull(destination.parent)
-    val partial = directory / (destination.name + PartialSuffix)
-    fileManager.createDirectories(directory)
+    val destination = request.destination
+    // Unwrap once for the path arithmetic below (parent directory + ".part" sibling).
+    val destinationPath = destination.path
+    val directory = requireNotNull(destinationPath.parent)
+    val partial = (directory / (destinationPath.name + PartialSuffix)).asSystemFile()
+    fileManager.createDirectories(directory.asSystemFile())
 
     if (fileManager.exists(destination)) {
         val destinationSize = fileManager.metadataSize(destination) ?: 0L
         if (destinationSize == request.sizeInBytes) {
             when (request.sha256?.lowercase()) {
                 null,
-                hash(fileManager.fileSystem.source(destination)),
+                hash(fileManager.fileSystem.source(destination.path)),
                 -> return onProgress(
                     Progress(
                         completedBytes = request.sizeInBytes,
@@ -79,7 +82,7 @@ suspend fun BackgroundTaskScheduler.download(
         }.execute { response ->
             val resumed = response.status == HttpStatusCode.PartialContent
             if (!resumed && response.status != HttpStatusCode.OK) {
-                error("Download failed for ${destination.name}: HTTP ${response.status.value}")
+                error("Download failed for ${destinationPath.name}: HTTP ${response.status.value}")
             }
             // Server ignored our Range: start the partial file over.
             if (!resumed && existing > 0L) fileManager.delete(partial)
@@ -94,8 +97,8 @@ suspend fun BackgroundTaskScheduler.download(
 
             val channel = response.bodyAsChannel()
             val sink = when {
-                resumed -> fileManager.fileSystem.appendingSink(partial)
-                else -> fileManager.fileSystem.sink(partial)
+                resumed -> fileManager.fileSystem.appendingSink(partial.path)
+                else -> fileManager.fileSystem.sink(partial.path)
             }.buffer()
             var downloaded = startFrom
             sink.use {
@@ -130,10 +133,10 @@ suspend fun BackgroundTaskScheduler.download(
     val expected = request.sha256
     if (expected != null) {
         // Streaming hash can't survive a resume, so hash the finished file once.
-        val actual = hash(fileManager.fileSystem.source(partial))
+        val actual = hash(fileManager.fileSystem.source(partial.path))
         if (!expected.equals(actual, ignoreCase = true)) {
             fileManager.delete(partial)
-            error("Checksum mismatch for ${destination.name}")
+            error("Checksum mismatch for ${destinationPath.name}")
         }
     }
     fileManager.delete(destination)

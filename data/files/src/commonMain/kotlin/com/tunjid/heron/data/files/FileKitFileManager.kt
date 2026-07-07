@@ -37,10 +37,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.io.Buffer
+import kotlinx.io.RawSource
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import okio.FileSystem
-import okio.Path
 
 internal class FileKitFileManager(
     override val fileSystem: FileSystem,
@@ -50,16 +51,16 @@ internal class FileKitFileManager(
         initializeFileKit()
     }
 
-    private val mutations = MutableSharedFlow<Path>(
+    private val mutations = MutableSharedFlow<File.System>(
         extraBufferCapacity = 64,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    override val fileMutations: Flow<Path> = mutations.asSharedFlow()
+    override val fileMutations: Flow<File.System> = mutations.asSharedFlow()
 
     override suspend fun cacheWithoutRestrictions(
         restrictedFile: RestrictedFile,
-    ): File? {
+    ): File.Media? {
         var cachedFile: PlatformFile? = null
 
         try {
@@ -102,57 +103,64 @@ internal class FileKitFileManager(
 
     override suspend fun source(
         file: File,
-    ): Source =
-        file.toPlatformFile()
+    ): Source = when (file) {
+        is File.System -> fileSystem.source(file.path)
+            .asKotlinxIoRawSource()
+            .buffered()
+        is File.Media -> file.toPlatformFile()
             .source()
             .buffered()
+    }
 
     override suspend fun size(
         file: File,
-    ): Long =
-        file.toPlatformFile()
+    ): Long = when (file) {
+        is File.System -> fileSystem.metadataOrNull(file.path)
+            ?.size
+            ?: 0L
+        is File.Media -> file.toPlatformFile()
             .size()
+    }
 
     override suspend fun delete(
         file: File,
     ) {
-        file.toPlatformFile()
-            .safeDelete()
+        when (file) {
+            is File.System -> {
+                fileSystem.delete(
+                    path = file.path,
+                    mustExist = false,
+                )
+                mutations.emit(file)
+            }
+            is File.Media -> file.toPlatformFile()
+                .safeDelete()
+        }
     }
 
     override fun exists(
-        path: Path,
+        file: File.System,
     ): Boolean =
-        fileSystem.exists(path)
+        fileSystem.exists(file.path)
 
     override fun metadataSize(
-        path: Path,
+        file: File.System,
     ): Long? =
-        fileSystem.metadataOrNull(path)?.size
+        fileSystem.metadataOrNull(file.path)?.size
 
     override suspend fun createDirectories(
-        path: Path,
+        file: File.System,
     ) {
-        fileSystem.createDirectories(path)
-    }
-
-    override suspend fun delete(
-        path: Path,
-    ) {
-        fileSystem.delete(
-            path = path,
-            mustExist = false,
-        )
-        mutations.emit(path)
+        fileSystem.createDirectories(file.path)
     }
 
     override suspend fun atomicMove(
-        source: Path,
-        target: Path,
+        source: File.System,
+        target: File.System,
     ) {
         fileSystem.atomicMove(
-            source = source,
-            target = target,
+            source = source.path,
+            target = target.path,
         )
         mutations.emit(target)
     }
@@ -161,11 +169,29 @@ internal class FileKitFileManager(
 private fun File.toPlatformFile() =
     PlatformFile(uri.uri)
 
-suspend fun PlatformFile.safeDelete() {
+private suspend fun PlatformFile.safeDelete() {
     try {
         if (exists()) delete()
     } catch (e: Exception) {
         println("Error deleting file $name with path $path: ${e.message}")
+    }
+}
+
+private fun okio.Source.asKotlinxIoRawSource(): RawSource {
+    val okioSource = this
+    val transfer = okio.Buffer()
+    return object : RawSource {
+        override fun readAtMostTo(
+            sink: Buffer,
+            byteCount: Long,
+        ): Long {
+            val read = okioSource.read(transfer, byteCount)
+            if (read == -1L) return -1L
+            sink.write(transfer.readByteArray())
+            return read
+        }
+
+        override fun close() = okioSource.close()
     }
 }
 
