@@ -18,8 +18,10 @@ package com.tunjid.heron.inference
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -36,6 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 @Stable
@@ -94,6 +97,11 @@ class ActualInferenceViewModel(
                         )
                         is Action.Cancel -> action.flow.launchCancelMutations(
                             inferenceModelManager = inferenceModelManager,
+                        )
+                        is Action.Delete -> action.flow.launchDeleteMutations(
+                            inferenceEngine = inferenceEngine,
+                            inferenceModelManager = inferenceModelManager,
+                            userDataRepository = userDataRepository,
                         )
                         is Action.SetLoadDefaultModelOnLaunch -> action.flow.launchSetLoadDefaultModelOnLaunchMutations(
                             userDataRepository = userDataRepository,
@@ -169,6 +177,25 @@ private fun Flow<Action.Cancel>.launchCancelMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.Delete>.launchDeleteMutations(
+    inferenceEngine: InferenceEngine,
+    inferenceModelManager: InferenceModelManager,
+    userDataRepository: UserDataRepository,
+) = launchedCollect { action ->
+    val model = action.model
+    // Release the engine before deleting the file it holds open (onReset closes the native handle);
+    // on desktop an in-use file can otherwise resist deletion.
+    if (inferenceEngine.state.value.loadedModel?.model?.name == model.name) {
+        inferenceEngine.reset()
+    }
+    // Clear the default if it points at the model being removed, so nothing dangles.
+    if (userDataRepository.preferences.first().local.defaultModelName == model.name) {
+        userDataRepository.setDefaultModelName(null)
+    }
+    inferenceModelManager.delete(model)
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.Load>.launchLoadModelMutations(
     inferenceEngine: InferenceEngine,
     userDataRepository: UserDataRepository,
@@ -183,3 +210,11 @@ private fun Flow<Action.SetLoadDefaultModelOnLaunch>.launchSetLoadDefaultModelOn
 ) = launchedCollect { (loadOnLaunch) ->
     userDataRepository.setLoadDefaultModelOnLaunch(loadOnLaunch)
 }
+
+private val EngineState.loadedModel: LoadedModel?
+    get() = when (this) {
+        is EngineState.Loading -> model
+        is EngineState.Ready -> model
+        is EngineState.Error -> model
+        EngineState.Uninitialized -> null
+    }

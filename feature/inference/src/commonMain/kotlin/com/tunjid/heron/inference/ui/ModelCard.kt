@@ -27,11 +27,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -50,6 +52,7 @@ import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.ModelItem
+import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
@@ -61,6 +64,9 @@ import heron.feature.inference.generated.resources.Res
 import heron.feature.inference.generated.resources.ability_summary
 import heron.feature.inference.generated.resources.ability_translation
 import heron.feature.inference.generated.resources.cancel
+import heron.feature.inference.generated.resources.delete
+import heron.feature.inference.generated.resources.delete_model_message
+import heron.feature.inference.generated.resources.delete_model_title
 import heron.feature.inference.generated.resources.download
 import heron.feature.inference.generated.resources.download_failed
 import heron.feature.inference.generated.resources.downloading
@@ -87,8 +93,10 @@ internal fun ModelCard(
     onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val termsDialogState = rememberSimpleDialogState()
+    val deleteDialogState = rememberSimpleDialogState()
     ElevatedCard(
         modifier = modifier,
     ) {
@@ -139,6 +147,7 @@ internal fun ModelCard(
                     else onDownload()
                 },
                 onCancel = onCancel,
+                onDeleteClick = deleteDialogState::show,
             )
             TermsOfUseDialog(
                 state = termsDialogState,
@@ -146,6 +155,14 @@ internal fun ModelCard(
                 onAccept = {
                     termsDialogState.hide()
                     onDownload()
+                },
+            )
+            DeleteModelDialog(
+                state = deleteDialogState,
+                model = item.model,
+                onConfirm = {
+                    deleteDialogState.hide()
+                    onDelete()
                 },
             )
         }
@@ -203,6 +220,42 @@ private fun TermsOfUseDialog(
 }
 
 @Composable
+private fun DeleteModelDialog(
+    state: SimpleDialogState,
+    model: InferenceModel,
+    onConfirm: () -> Unit,
+) {
+    SimpleDialog(
+        state = state,
+        title = {
+            SimpleDialogTitle(
+                text = stringResource(Res.string.delete_model_title),
+            )
+        },
+        text = {
+            SimpleDialogText(
+                text = stringResource(
+                    Res.string.delete_model_message,
+                    model.name,
+                ),
+            )
+        },
+        confirmButton = {
+            DestructiveDialogButton(
+                text = stringResource(Res.string.delete),
+                onClick = onConfirm,
+            )
+        },
+        dismissButton = {
+            NeutralDialogButton(
+                text = stringResource(Res.string.cancel),
+                onClick = state::hide,
+            )
+        },
+    )
+}
+
+@Composable
 private fun ModelStatus(
     engineState: EngineState?,
     status: ModelStatus,
@@ -210,11 +263,21 @@ private fun ModelStatus(
     onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
+    onDeleteClick: () -> Unit,
 ) {
     when (status) {
         is ModelStatus.Downloaded -> StatusRow(
             label = null,
             action = {
+                IconButton(
+                    onClick = onDeleteClick,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = stringResource(Res.string.delete),
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                }
                 Button(
                     onClick = {
                         onLoad(status.loadedModel)
