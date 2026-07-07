@@ -18,6 +18,8 @@ package com.tunjid.heron.data.ml.language
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import platform.Foundation.NSLocale
+import platform.Foundation.localizedStringForLanguageCode
 import platform.NaturalLanguage.NLLanguageRecognizer
 
 /**
@@ -46,3 +48,15 @@ fun createLanguageDetector(
 ): LanguageDetector = NaturalLanguageDetector(
     ioDispatcher = ioDispatcher,
 )
+
+/**
+ * `localizedStringForLanguageCode` expects a bare language code, so drop any region/script subtags
+ * from the BCP-47 [languageTag] first. An `"en"` locale forces the name into English regardless of
+ * the device locale, keeping it consistent with the English-language prompt.
+ */
+actual fun englishDisplayName(languageTag: String): String {
+    val languageCode = languageTag.substringBefore('-')
+    return NSLocale(localeIdentifier = "en")
+        .localizedStringForLanguageCode(languageCode)
+        ?: languageTag
+}

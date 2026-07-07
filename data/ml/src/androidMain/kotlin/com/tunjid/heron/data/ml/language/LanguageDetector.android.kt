@@ -20,6 +20,7 @@ import android.content.Context
 import android.view.textclassifier.TextClassificationManager
 import android.view.textclassifier.TextClassifier
 import android.view.textclassifier.TextLanguage
+import java.util.Locale
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -56,3 +57,8 @@ fun createLanguageDetector(
     context = context,
     ioDispatcher = ioDispatcher,
 )
+
+actual fun englishDisplayName(languageTag: String): String =
+    Locale.forLanguageTag(languageTag)
+        .getDisplayLanguage(Locale.ENGLISH)
+        .ifBlank { languageTag }

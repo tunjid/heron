@@ -27,3 +27,10 @@ interface LanguageDetector {
 internal object NoOpLanguageDetector : LanguageDetector {
     override suspend fun detectLanguageTag(text: String): String? = null
 }
+
+/**
+ * The English display name of the language identified by [languageTag] (a BCP-47 tag such as
+ * `"de"`, `"en-US"`, or `"zh-Hant"`) — e.g. `"German"`, `"English"`, `"Chinese"`. Falls back to
+ * [languageTag] verbatim when the platform cannot resolve a name.
+ */
+expect fun englishDisplayName(languageTag: String): String

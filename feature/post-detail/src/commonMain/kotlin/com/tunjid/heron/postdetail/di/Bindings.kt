@@ -231,17 +231,18 @@ internal fun Route(
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                 actions = {
                     val inferenceSheetState = rememberInferenceSheetState()
-                    val currentLanguageTag = Locale.current.toLanguageTag()
                     if (state.canTranslate) AppBarIconButton(
                         icon = Icons.Rounded.Translate,
                         iconDescription = stringResource(Res.string.translate_post_text),
-                        onClick = {
-                            state.anchorPost?.let {
-                                inferenceSheetState.translate(
-                                    post = it,
-                                    targetLanguage = currentLanguageTag,
-                                )
-                            }
+                        onClick = click@{
+                            val post = state.anchorPost ?: return@click
+                            val postLanguageTag = state.postLanguageTag ?: return@click
+                            val currentLanguageTag = state.currentLanguageTag ?: return@click
+                            inferenceSheetState.translate(
+                                post = post,
+                                sourceLanguage = postLanguageTag,
+                                targetLanguage = currentLanguageTag,
+                            )
                         },
                     )
                     ThreadDisplayOptions(

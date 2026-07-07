@@ -60,11 +60,13 @@ class InferenceSheetState internal constructor(
 
     fun translate(
         post: Post,
+        sourceLanguage: String,
         targetLanguage: String,
     ) {
         stateHolder(
             InferenceAction.Generate.Translate(
                 post = post,
+                sourceLanguage = sourceLanguage,
                 targetLanguage = targetLanguage,
             ),
         )

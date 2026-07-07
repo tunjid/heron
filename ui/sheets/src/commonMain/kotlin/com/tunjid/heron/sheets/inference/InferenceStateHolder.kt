@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.flattenedText
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.GenerationParams
 import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.language.englishDisplayName
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
@@ -134,13 +135,16 @@ private fun Flow<InferenceAction.Generate>.launchInferenceMutations(
         is InferenceAction.Generate.Translate -> inferenceEngine.outcomes(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
-            // Loosened decoding parameters for more natural translations.
-            params = GenerationParams(temperature = 0.6f),
+            // Near-greedy decoding: translation is a constrained task, so a low temperature keeps
+            // the output faithful and free of the preamble and format drift that higher
+            // temperatures invite on small on-device models.
+            params = GenerationParams(temperature = 0.2f),
             prompt = translationPrompt(
                 text = action.post.record?.text.orEmpty(),
-                targetLanguage = action.targetLanguage,
+                sourceLanguageTag = action.sourceLanguage,
+                targetLanguageTag = action.targetLanguage,
             ),
-            transform = String::trim,
+            transform = String::unwrapTranslation,
         ).map { InferenceKind.Translation to it }
 
         is InferenceAction.Generate.Vibe -> inferenceEngine.outcomes(
@@ -236,13 +240,22 @@ private suspend fun resolveDefaultModel(
 
 private fun translationPrompt(
     text: String,
-    targetLanguage: String,
-): String = """
-    You are a translation engine. Translate the text between <src></src> into the language
-    represented by the IETF BCP-47 language tag $targetLanguage.
-    Output the translation verbatim — no notes, no alternatives, no commentary, no quotes.
-    <src>$text</src>
-""".trimIndent()
+    sourceLanguageTag: String,
+    targetLanguageTag: String,
+): String {
+    val sourceLanguage = englishDisplayName(sourceLanguageTag)
+    val targetLanguage = englishDisplayName(targetLanguageTag)
+    return """
+        Translate the text between <text> tags from $sourceLanguage to $targetLanguage.
+        Reply with only the $targetLanguage translation: no quotes, no notes, no explanation.
+
+        <text>
+        $text
+        </text>
+
+        translation in $targetLanguage:
+    """.trimIndent()
+}
 
 private fun vibePrompt(
     posts: List<Post>,
@@ -329,6 +342,7 @@ sealed class InferenceAction(
     sealed class Generate : InferenceAction("Generate") {
         data class Translate(
             val post: Post,
+            val sourceLanguage: String,
             val targetLanguage: String,
         ) : Generate()
 
@@ -355,3 +369,15 @@ private inline fun StringBuilder.transformedOrPlain(
     val string = toString()
     return transform(string).ifEmpty { string.trim() }
 }
+
+/**
+ * Strips wrappers a model may add around a translation despite instructions — surrounding code
+ * fences or quotes — so the sheet always renders plain text. Only removes a wrapper present on
+ * both ends, leaving quotes that belong to the text itself untouched.
+ */
+private fun String.unwrapTranslation(): String =
+    trim()
+        .removeSurrounding("```").trim()
+        .removeSurrounding("\"")
+        .removeSurrounding("“", "”")
+        .trim()
