@@ -39,10 +39,6 @@ import okio.use
  * Shared by the JVM-family schedulers (Android + desktop). Each platform supplies [onProgress] so it
  * can surface progress its own way — a WorkManager / UIDT notification on Android, a `StateFlow` on
  * desktop.
- *
- * File I/O goes through the scheduler's [FileManager][com.tunjid.heron.data.files.FileManager] so that
- * the terminal move — which makes the finished file appear — is observable via its mutation signal;
- * streaming uses the exposed [okio.FileSystem] directly.
  */
 suspend fun BackgroundTaskScheduler.download(
     request: Task.Download,
