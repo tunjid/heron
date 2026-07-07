@@ -119,6 +119,9 @@ internal fun InferenceScreen(
                         onCancel = {
                             actions(Action.Cancel(item.model))
                         },
+                        onDelete = {
+                            actions(Action.Delete(item.model))
+                        },
                     )
                 },
             )

@@ -18,6 +18,9 @@
     <string name="inference">Inference</string>
     <string name="download">Download</string>
     <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="delete_model_title">Delete model?</string>
+    <string name="delete_model_message">Delete %1$s? You\'ll need to download it again to use it.</string>
     <string name="retry">Retry</string>
     <string name="queued">Queued</string>
     <string name="downloading">Downloading…</string>

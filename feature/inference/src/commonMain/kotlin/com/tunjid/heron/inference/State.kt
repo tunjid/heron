@@ -74,6 +74,10 @@ sealed class Action(val key: String) {
         val model: InferenceModel,
     ) : Action(key = "Cancel")
 
+    data class Delete(
+        val model: InferenceModel,
+    ) : Action(key = "Delete")
+
     data class SetLoadDefaultModelOnLaunch(
         val loadOnLaunch: Boolean,
     ) : Action(key = "SetLoadDefaultModelOnLaunch")
