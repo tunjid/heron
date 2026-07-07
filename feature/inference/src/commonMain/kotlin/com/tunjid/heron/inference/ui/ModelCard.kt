@@ -401,7 +401,7 @@ private fun ModelActionButton(
                 AnimatedContent(
                     targetState = icon,
                     transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
+                        IconTransition
                     },
                     content = { targetIcon ->
                         Icon(
@@ -505,3 +505,5 @@ private fun formatModelSize(
         else -> "${bytes / megabyte} MB"
     }
 }
+
+private val IconTransition = fadeIn() togetherWith fadeOut()
