@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.ml.engine
 
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.LoadedModel
 import kotlin.test.Test
@@ -28,15 +29,14 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import okio.Path.Companion.toPath
 
 private val ModelA = LoadedModel(
     model = InferenceModel.Gemma31B,
-    path = "model-a".toPath(),
+    file = File.System("model-a"),
 )
 private val ModelB = LoadedModel(
     model = InferenceModel.Gemma4E2B,
-    path = "model-b".toPath(),
+    file = File.System("model-b"),
 )
 
 /** [BaseInferenceEngine] with programmable [onLoad] behavior for exercising the state machine. */

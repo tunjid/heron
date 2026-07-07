@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.core.utilities.File
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 
@@ -47,19 +48,19 @@ sealed interface Task {
     }
 
     /**
-     * A file download. [destination] is the absolute path to write the downloaded file to. [auth] is
+     * A file download. [destination] is the on-device file to write the download to. [auth] is
      * a reference to how the request should be authenticated; the credential itself is resolved at
      * run time and is never persisted with the task.
      */
     @Serializable
     data class Download(
         val sourceUrl: String,
-        val destination: String,
+        val destination: File.System,
         val sizeInBytes: Long,
         val sha256: String? = null,
     ) : Task {
         override val id: TaskId
-            get() = TaskId("download:$destination")
+            get() = TaskId("download:${destination.relativePath}")
 
         override val kind: Kind
             get() = Kind.Transfer

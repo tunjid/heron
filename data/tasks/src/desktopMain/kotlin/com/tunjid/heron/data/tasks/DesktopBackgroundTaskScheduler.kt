@@ -33,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okio.Path.Companion.toPath
 
 /**
  * Desktop [BackgroundTaskScheduler]: the process is long-lived, so transfers run in-process on
@@ -66,7 +65,6 @@ internal class DesktopBackgroundTaskScheduler(
                     // TODO: resolve a gated-host bearer token (e.g. Hugging Face) at run time.
                     download(
                         request = task,
-                        destination = task.destination.toPath(),
                         authHeader = null,
                         onProgress = { progress -> progresses.update { it + (task.id to progress) } },
                     )

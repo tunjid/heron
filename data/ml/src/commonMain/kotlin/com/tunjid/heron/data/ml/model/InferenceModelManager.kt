@@ -19,7 +19,6 @@ package com.tunjid.heron.data.ml.model
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.flow.Flow
-import okio.Path
 
 interface InferenceModelManager {
 

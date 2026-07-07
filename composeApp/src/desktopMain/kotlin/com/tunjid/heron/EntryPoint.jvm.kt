@@ -24,6 +24,7 @@ import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.aead.PredefinedAeadParameters
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
@@ -80,8 +81,8 @@ fun createAppState(): AppState =
                 savedStatePath = File(
                     appDataDir,
                     SAVED_STATE_FILE_NAME,
-                ).toOkioPath(),
-                modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath(),
+                ).toOkioPath().asSystemFile(),
+                modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),

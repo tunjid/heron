@@ -27,12 +27,14 @@ import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.network.SessionContext
 import com.tunjid.heron.data.tasks.FailedTask
 import com.tunjid.heron.data.tasks.Task
@@ -65,7 +67,6 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
-import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
 interface SavedStateEncryption {
@@ -353,7 +354,7 @@ internal sealed class SavedStateDataSource {
 
 @Inject
 internal class DataStoreSavedStateDataSource(
-    path: Path,
+    path: File.System,
     fileManager: FileManager,
     protoBuf: ProtoBuf,
     encryption: SavedStateEncryption,
@@ -372,7 +373,7 @@ internal class DataStoreSavedStateDataSource(
                 protoBuf = protoBuf,
                 encryption = encryption,
             ),
-            producePath = { path },
+            producePath = { path.path },
         ),
         scope = scope,
     )

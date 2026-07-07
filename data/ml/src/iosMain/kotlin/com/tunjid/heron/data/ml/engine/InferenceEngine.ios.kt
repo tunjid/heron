@@ -41,7 +41,7 @@ internal class IosInferenceEngine(
         model: LoadedModel,
     ) = suspendCancellableCoroutine { continuation ->
         bridge.load(
-            modelPath = model.path.toString(),
+            modelPath = model.file.relativePath,
             maxTokens = model.model.maxTokens,
             backend = backendFor(),
             onReady = { if (continuation.isActive) continuation.resume(Unit) },

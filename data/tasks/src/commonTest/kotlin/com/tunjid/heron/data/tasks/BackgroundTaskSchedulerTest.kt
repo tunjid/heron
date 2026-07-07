@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.createFileManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -28,12 +29,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import okio.FileSystem
+import okio.SYSTEM
 
 class BackgroundTaskSchedulerTest {
 
     private val download = Task.Download(
         sourceUrl = "https://example.com/model.bin",
-        destination = "/tmp/heron/models/model.bin",
+        destination = File.System("/tmp/heron/models/model.bin"),
         sizeInBytes = 100L,
     )
 

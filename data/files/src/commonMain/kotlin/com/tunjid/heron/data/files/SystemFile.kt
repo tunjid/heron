@@ -14,12 +14,21 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.ml.model
+package com.tunjid.heron.data.files
 
 import com.tunjid.heron.data.core.utilities.File
+import okio.Path
+import okio.Path.Companion.toPath
 
-/** An [InferenceModel] whose [file] is present on disk and ready to load. */
-data class LoadedModel(
-    val model: InferenceModel,
-    val file: File.System,
-)
+/**
+ * Views this okio [Path] as a [File.System]. Preferred over the [File.System] constructor wherever a
+ * [Path] is already in hand, so the `Path` ↔ `String` conversion stays in one place.
+ */
+fun Path.asSystemFile(): File.System =
+    File.System(
+        relativePath = toString(),
+    )
+
+/** The okio [Path] this [File.System] addresses. */
+val File.System.path: Path
+    get() = relativePath.toPath()
