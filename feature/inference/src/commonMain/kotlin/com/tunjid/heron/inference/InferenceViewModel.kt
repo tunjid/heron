@@ -75,6 +75,10 @@ class ActualInferenceViewModel(
             state = State(inferenceModelManager.models).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
+                launchEngineStatesMutations(
+                    state = state,
+                    inferenceEngine = inferenceEngine,
+                )
                 launchModelStatusMutations(
                     state = state,
                     inferenceModelManager = inferenceModelManager,

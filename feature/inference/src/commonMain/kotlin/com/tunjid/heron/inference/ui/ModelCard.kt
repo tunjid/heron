@@ -16,35 +16,44 @@
 
 package com.tunjid.heron.inference.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.ModeStandby
 import androidx.compose.material.icons.rounded.Storage
-import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.InferenceModel
@@ -52,6 +61,7 @@ import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.ModelItem
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
@@ -59,6 +69,7 @@ import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogState
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import heron.feature.inference.generated.resources.Res
 import heron.feature.inference.generated.resources.ability_summary
@@ -68,14 +79,11 @@ import heron.feature.inference.generated.resources.delete
 import heron.feature.inference.generated.resources.delete_model_message
 import heron.feature.inference.generated.resources.delete_model_title
 import heron.feature.inference.generated.resources.download
-import heron.feature.inference.generated.resources.download_failed
-import heron.feature.inference.generated.resources.downloading
 import heron.feature.inference.generated.resources.load
 import heron.feature.inference.generated.resources.load_error
 import heron.feature.inference.generated.resources.loaded
 import heron.feature.inference.generated.resources.loading
 import heron.feature.inference.generated.resources.minimum_memory
-import heron.feature.inference.generated.resources.queued
 import heron.feature.inference.generated.resources.retry
 import heron.feature.inference.generated.resources.terms_of_use_link
 import heron.feature.inference.generated.resources.terms_of_use_message
@@ -105,30 +113,10 @@ internal fun ModelCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = item.model.name,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    MetadataChip(
-                        icon = Icons.Rounded.Storage,
-                        text = formatModelSize(item.model.sizeInBytes),
-                    )
-                    MetadataChip(
-                        icon = Icons.Rounded.Memory,
-                        text = stringResource(
-                            Res.string.minimum_memory,
-                            item.model.minDeviceMemoryInGb,
-                        ),
-                    )
-                }
-            }
+            Text(
+                text = item.model.name,
+                style = MaterialTheme.typography.titleMedium,
+            )
             if (item.model.abilities.isNotEmpty()) FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -137,18 +125,37 @@ internal fun ModelCard(
                     AbilityChip(ability = ability)
                 }
             }
-            ModelStatus(
-                engineState = engineState,
-                status = item.status,
-                downloadEnabled = downloadEnabled,
-                onLoad = onLoad,
-                onDownload = {
-                    if (item.model.termsOfServiceUrl != null) termsDialogState.show()
-                    else onDownload()
-                },
-                onCancel = onCancel,
-                onDeleteClick = deleteDialogState::show,
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MetadataChip(
+                    icon = Icons.Rounded.Storage,
+                    text = formatModelSize(item.model.sizeInBytes),
+                )
+                MetadataChip(
+                    icon = Icons.Rounded.Memory,
+                    text = stringResource(
+                        Res.string.minimum_memory,
+                        item.model.minDeviceMemoryInGb,
+                    ),
+                )
+                Spacer(Modifier.weight(1f))
+                ModelActions(
+                    engineState = engineState,
+                    status = item.status,
+                    downloadEnabled = downloadEnabled,
+                    onLoad = onLoad,
+                    onDownload = {
+                        if (item.model.termsOfServiceUrl != null) termsDialogState.show()
+                        else onDownload()
+                    },
+                    onCancel = onCancel,
+                    onDeleteClick = deleteDialogState::show,
+                )
+            }
             TermsOfUseDialog(
                 state = termsDialogState,
                 model = item.model,
@@ -256,7 +263,7 @@ private fun DeleteModelDialog(
 }
 
 @Composable
-private fun ModelStatus(
+private fun ModelActions(
     engineState: EngineState?,
     status: ModelStatus,
     downloadEnabled: Boolean,
@@ -265,127 +272,164 @@ private fun ModelStatus(
     onCancel: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
-    when (status) {
-        is ModelStatus.Downloaded -> StatusRow(
-            label = null,
-            action = {
-                IconButton(
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        when (status) {
+            is ModelStatus.Downloaded -> {
+                ModelActionButton(
+                    icon = Icons.Rounded.Delete,
+                    contentDescription = stringResource(Res.string.delete),
+                    tint = MaterialTheme.colorScheme.error,
+                    ring = Ring.None,
                     onClick = onDeleteClick,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Delete,
-                        contentDescription = stringResource(Res.string.delete),
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                }
-                Button(
-                    onClick = {
-                        onLoad(status.loadedModel)
-                    },
-                ) {
-                    Text(
-                        text = stringResource(
-                            when (engineState) {
-                                is EngineState.Error -> when (engineState.model.model.name) {
-                                    status.loadedModel.model.name -> Res.string.load_error
-                                    else -> Res.string.load
-                                }
-                                is EngineState.Loading -> when (engineState.model.model.name) {
-                                    status.loadedModel.model.name -> Res.string.loading
-                                    else -> Res.string.load
-                                }
-                                is EngineState.Ready -> when (engineState.model.model.name) {
-                                    status.loadedModel.model.name -> Res.string.loaded
-                                    else -> Res.string.load
-                                }
-                                EngineState.Uninitialized -> Res.string.load
-                                null -> Res.string.load
-                            },
-                        ),
-                    )
-                }
-            },
-        )
-        is ModelStatus.Pending -> when (val taskStatus = status.taskStatus) {
-            is TaskStatus.Running -> {
-                val fraction = taskStatus.progress?.fraction
-                if (fraction != null) LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    progress = { fraction },
-                ) else LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
                 )
-                StatusRow(
-                    label = when (fraction) {
-                        null -> stringResource(Res.string.downloading)
-                        else -> "${stringResource(Res.string.downloading)} ${(fraction * 100).roundToInt()}%"
-                    },
-                    action = {
-                        OutlinedButton(onClick = onCancel) {
-                            Text(text = stringResource(Res.string.cancel))
-                        }
-                    },
+                LoadButton(
+                    engineState = engineState,
+                    loadedModel = status.loadedModel,
+                    onLoad = onLoad,
                 )
             }
-            TaskStatus.Created -> StatusRow(
-                label = stringResource(Res.string.queued),
-                action = {
-                    OutlinedButton(onClick = onCancel) {
-                        Text(text = stringResource(Res.string.cancel))
-                    }
-                },
-            )
-            is TaskStatus.Failed -> StatusRow(
-                label = stringResource(Res.string.download_failed),
-                labelColor = MaterialTheme.colorScheme.error,
-                action = {
-                    Button(
-                        onClick = onDownload,
-                        enabled = downloadEnabled,
-                    ) {
-                        Text(text = stringResource(Res.string.retry))
-                    }
-                },
-            )
-            TaskStatus.NotFound -> StatusRow(
-                label = null,
-                action = {
-                    Button(
-                        onClick = onDownload,
-                        enabled = downloadEnabled,
-                    ) {
-                        Text(text = stringResource(Res.string.download))
-                    }
-                },
-            )
+            is ModelStatus.Pending -> when (val taskStatus = status.taskStatus) {
+                TaskStatus.NotFound -> ModelActionButton(
+                    icon = Icons.Rounded.Download,
+                    contentDescription = stringResource(Res.string.download),
+                    tint = MaterialTheme.colorScheme.primary,
+                    ring = Ring.None,
+                    enabled = downloadEnabled,
+                    onClick = onDownload,
+                )
+                TaskStatus.Created -> ModelActionButton(
+                    icon = Icons.Rounded.Close,
+                    contentDescription = stringResource(Res.string.cancel),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ring = Ring.Indeterminate,
+                    onClick = onCancel,
+                )
+                is TaskStatus.Running -> ModelActionButton(
+                    icon = Icons.Rounded.Close,
+                    contentDescription = stringResource(Res.string.cancel),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ring = when (val fraction = taskStatus.progress?.fraction) {
+                        null -> Ring.Indeterminate
+                        else -> Ring.Determinate(fraction)
+                    },
+                    onClick = onCancel,
+                )
+                is TaskStatus.Failed -> ModelActionButton(
+                    icon = Icons.Rounded.Download,
+                    contentDescription = stringResource(Res.string.retry),
+                    tint = MaterialTheme.colorScheme.error,
+                    ring = Ring.None,
+                    enabled = downloadEnabled,
+                    onClick = onDownload,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StatusRow(
-    label: String?,
-    labelColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    action: @Composable () -> Unit,
+private fun LoadButton(
+    engineState: EngineState?,
+    loadedModel: LoadedModel,
+    onLoad: (LoadedModel) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 8.dp,
-            alignment = Alignment.End,
-        ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (label != null) Text(
-            modifier = Modifier.weight(1f),
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = labelColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        action()
+    val matches = engineState?.modelName == loadedModel.model.name
+    val descriptionRes = when {
+        !matches -> Res.string.load
+        engineState is EngineState.Ready -> Res.string.loaded
+        engineState is EngineState.Loading -> Res.string.loading
+        engineState is EngineState.Error -> Res.string.load_error
+        else -> Res.string.load
     }
+    ModelActionButton(
+        icon = when {
+            matches && engineState is EngineState.Ready -> Icons.Rounded.Check
+            else -> Icons.Rounded.ModeStandby
+        },
+        contentDescription = stringResource(descriptionRes),
+        tint = when {
+            matches && engineState is EngineState.Ready -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.outline
+        },
+        ring = when {
+            matches && engineState is EngineState.Loading -> Ring.Indeterminate
+            else -> Ring.None
+        },
+        onClick = { onLoad(loadedModel) },
+    )
+}
+
+/**
+ * An [AppBarIconButton] whose icon and [tint] convey a single model action, optionally wrapped by
+ * a [CircularProgressIndicator] [ring] so in-flight downloads/loads show progress around the button.
+ * The [Box] is a fixed size (button + ring gap) so appearing/disappearing rings don't shift layout.
+ */
+@Composable
+private fun ModelActionButton(
+    icon: ImageVector,
+    contentDescription: String,
+    tint: Color,
+    ring: Ring,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(UiTokens.appBarButtonSize + 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (ring) {
+            Ring.None -> Unit
+            Ring.Indeterminate -> CircularProgressIndicator(
+                modifier = Modifier.matchParentSize(),
+            )
+            is Ring.Determinate -> CircularProgressIndicator(
+                modifier = Modifier.matchParentSize(),
+                // let is needed bc of compose lint about method references
+                progress = animateFloatAsState(ring.fraction).let { state ->
+                    state::value
+                },
+            )
+        }
+        FilledTonalIconButton(
+            enabled = enabled,
+            onClick = onClick,
+            content = {
+                AnimatedContent(
+                    targetState = icon,
+                    transitionSpec = {
+                        IconTransition
+                    },
+                    content = { targetIcon ->
+                        Icon(
+                            imageVector = targetIcon,
+                            contentDescription = contentDescription,
+                            tint = tint,
+                        )
+                    },
+                )
+            },
+        )
+    }
+}
+
+private val EngineState.modelName: String?
+    get() = when (this) {
+        is EngineState.Loading -> model.model.name
+        is EngineState.Ready -> model.model.name
+        is EngineState.Error -> model.model.name
+        EngineState.Uninitialized -> null
+    }
+
+private sealed interface Ring {
+    data object None : Ring
+    data object Indeterminate : Ring
+    data class Determinate(
+        val fraction: Float,
+    ) : Ring
 }
 
 @Composable
@@ -461,3 +505,5 @@ private fun formatModelSize(
         else -> "${bytes / megabyte} MB"
     }
 }
+
+private val IconTransition = fadeIn() togetherWith fadeOut()

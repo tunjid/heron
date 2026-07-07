@@ -20,7 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.ml.model.InferenceModel
+import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.TaskStatus
@@ -54,6 +56,17 @@ internal fun InferencePreview() {
                             model = InferenceModel.Gemma4E2B,
                             status = ModelStatus.Pending(
                                 TaskStatus.NotFound,
+                            ),
+                        ),
+                        ModelItem(
+                            model = InferenceModel.Gemma4E4B,
+                            status = ModelStatus.Downloaded(
+                                LoadedModel(
+                                    model = InferenceModel.Gemma4E4B,
+                                    file = File.System(
+                                        relativePath = InferenceModel.Gemma4E4B.fileName,
+                                    ),
+                                ),
                             ),
                         ),
                     ),
