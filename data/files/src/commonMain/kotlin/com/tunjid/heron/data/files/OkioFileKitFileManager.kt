@@ -43,7 +43,7 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import okio.FileSystem
 
-internal class FileKitFileManager(
+internal class OkioFileKitFileManager(
     override val fileSystem: FileSystem,
 ) : FileManager {
 
@@ -181,13 +181,18 @@ private fun okio.Source.asKotlinxIoRawSource(): RawSource {
     val okioSource = this
     val transfer = okio.Buffer()
     return object : RawSource {
+        private val tempArray = ByteArray(64 * 1024)
+
         override fun readAtMostTo(
             sink: Buffer,
             byteCount: Long,
         ): Long {
-            val read = okioSource.read(transfer, byteCount)
+            if (byteCount == 0L) return 0L
+            val toRead = minOf(byteCount, tempArray.size.toLong())
+            val read = okioSource.read(transfer, toRead)
             if (read == -1L) return -1L
-            sink.write(transfer.readByteArray())
+            transfer.read(tempArray, 0, read.toInt())
+            sink.write(tempArray, 0, read.toInt())
             return read
         }
 

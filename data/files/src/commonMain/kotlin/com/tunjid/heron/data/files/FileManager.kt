@@ -64,6 +64,6 @@ interface FileManager {
 fun createFileManager(
     fileSystem: FileSystem,
 ): FileManager =
-    FileKitFileManager(
+    OkioFileKitFileManager(
         fileSystem = fileSystem,
     )
