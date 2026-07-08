@@ -16,7 +16,7 @@
 
 <resources>
     <string name="inference_sheet_translation_title">Translation</string>
-    <string name="inference_sheet_vibe_title">Vibe</string>
+    <string name="inference_sheet_vibe_title">Profile Vibe Check</string>
     <string name="inference_error_model_not_loaded">Model not loaded</string>
     <string name="inference_error_failed">Inference failed</string>
     <string name="inference_no_model_title">No model downloaded</string>

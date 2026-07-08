@@ -17,9 +17,14 @@ package com.tunjid.heron.sheets.inference
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.flattenedText
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.GenerationParams
 import com.tunjid.heron.data.ml.engine.InferenceEngine
@@ -27,9 +32,11 @@ import com.tunjid.heron.data.ml.language.englishDisplayName
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.TimelineQuery
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
-import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.text.Memo
@@ -37,27 +44,23 @@ import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
-import com.tunjid.snapshottable.SnapshotSpec
-import com.tunjid.snapshottable.Snapshottable
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.inference_error_failed
 import heron.ui.timeline.generated.resources.inference_error_model_not_loaded
-import heron.ui.timeline.generated.resources.inference_sheet_translation_title
-import heron.ui.timeline.generated.resources.inference_sheet_vibe_title
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import org.jetbrains.compose.resources.StringResource
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Stable
 interface InferenceStateHolder :
@@ -83,6 +86,8 @@ class InferenceViewModel(
         inferenceEngine: InferenceEngine,
         inferenceModelManager: InferenceModelManager,
         userDataRepository: UserDataRepository,
+        profileRepository: ProfileRepository,
+        timelineRepository: TimelineRepository,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
     ) : this(
@@ -99,11 +104,19 @@ class InferenceViewModel(
                     keySelector = InferenceAction::key,
                 ) {
                     when (val action = type()) {
-                        is InferenceAction.Generate -> action.flow.launchInferenceMutations(
+                        is InferenceAction.Translate -> action.flow.launchTranslationMutations(
                             state = state,
                             inferenceEngine = inferenceEngine,
                             inferenceModelManager = inferenceModelManager,
                             userDataRepository = userDataRepository,
+                        )
+                        is InferenceAction.Vibe -> action.flow.launchVibeMutations(
+                            state = state,
+                            inferenceEngine = inferenceEngine,
+                            inferenceModelManager = inferenceModelManager,
+                            userDataRepository = userDataRepository,
+                            profileRepository = profileRepository,
+                            timelineRepository = timelineRepository,
                         )
                         is InferenceAction.Navigate.To -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
@@ -125,42 +138,88 @@ private fun launchEngineStateMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<InferenceAction.Generate>.launchInferenceMutations(
+private fun Flow<InferenceAction.Translate>.launchTranslationMutations(
     state: InferenceState.SnapshotMutable,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
-) = flatMapLatest { action ->
-    when (action) {
-        is InferenceAction.Generate.Translate -> inferenceEngine.outcomes(
-            inferenceModelManager = inferenceModelManager,
-            userDataRepository = userDataRepository,
-            // Near-greedy decoding: translation is a constrained task, so a low temperature keeps
-            // the output faithful and free of the preamble and format drift that higher
-            // temperatures invite on small on-device models.
-            params = GenerationParams(temperature = 0.2f),
-            prompt = translationPrompt(
-                text = action.post.record?.text.orEmpty(),
-                sourceLanguageTag = action.sourceLanguage,
-                targetLanguageTag = action.targetLanguage,
-            ),
-            transform = String::unwrapTranslation,
-        ).map { InferenceKind.Translation to it }
+) = launchedCollectLatest { action ->
+    state.kind = InferenceKind.Translation
+    inferenceEngine.outcomes(
+        inferenceModelManager = inferenceModelManager,
+        userDataRepository = userDataRepository,
+        // Near-greedy decoding: translation is a constrained task, so a low temperature keeps
+        // the output faithful and free of the preamble and format drift that higher
+        // temperatures invite on small on-device models.
+        params = GenerationParams(temperature = 0.2f),
+        prompt = translationPrompt(
+            text = action.post.record?.text.orEmpty(),
+            sourceLanguageTag = action.sourceLanguage,
+            targetLanguageTag = action.targetLanguage,
+        ),
+        transform = String::unwrapTranslation,
+    ).collect { outcome ->
+        state.translationOutcome = outcome
+    }
+}
 
-        is InferenceAction.Generate.Vibe -> inferenceEngine.outcomes(
+context(productionScope: CoroutineScope)
+private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
+    state: InferenceState.SnapshotMutable,
+    inferenceEngine: InferenceEngine,
+    inferenceModelManager: InferenceModelManager,
+    userDataRepository: UserDataRepository,
+    profileRepository: ProfileRepository,
+    timelineRepository: TimelineRepository,
+) = distinctUntilChanged()
+    .launchedCollectLatest { action ->
+        state.kind = InferenceKind.Vibe
+        // A new profile invalidates the lenses cached for the previous one.
+        if (state.vibeProfileId != action.profileId) {
+            state.vibeProfileId = action.profileId
+            state.postsOutcome = null
+            state.repliesOutcome = null
+        }
+        // A lens that already succeeded for this profile never needs regenerating.
+        if (state.vibeOutcome(action.type) is InferenceOutcome.Success) {
+            return@launchedCollectLatest
+        }
+        state.setVibeOutcome(
+            type = action.type,
+            outcome = InferenceOutcome.Loading(),
+        )
+
+        val profile = withTimeoutOrNull(VibeFetchTimeout) {
+            profileRepository.profile(action.profileId).first()
+        }
+        if (profile == null) {
+            state.setVibeOutcome(
+                type = action.type,
+                outcome = InferenceOutcome.Error(
+                    memo = Memo.Resource(Res.string.inference_error_failed),
+                ),
+            )
+            return@launchedCollectLatest
+        }
+        inferenceEngine.outcomes(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
             prompt = vibePrompt(
-                posts = action.posts,
-                profile = action.profile,
+                items = timelineRepository.recentTimelineItems(
+                    profileId = action.profileId,
+                    type = action.type,
+                ),
+                profile = profile,
+                type = action.type,
             ),
             transform = String::trim,
-        ).map { InferenceKind.Vibe to it }
+        ).collect { outcome ->
+            state.setVibeOutcome(
+                type = action.type,
+                outcome = outcome,
+            )
+        }
     }
-}.launchedCollect { (kind, outcome) ->
-    state.kind = kind
-    state.outcome = outcome
-}
 
 /**
  * Streams [InferenceOutcome]s for a single [prompt]: an initial [InferenceOutcome.Loading] whose
@@ -222,10 +281,6 @@ private fun InferenceEngine.outcomes(
     )
 }
 
-/**
- * Resolves the selected default model to a ready-to-load [LoadedModel], or null when no default is
- * set or that model has not been downloaded.
- */
 private suspend fun resolveDefaultModel(
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
@@ -237,6 +292,28 @@ private suspend fun resolveDefaultModel(
     return (inferenceModelManager.status(model).first() as? ModelStatus.Downloaded)
         ?.loadedModel
 }
+
+private suspend fun TimelineRepository.recentTimelineItems(
+    profileId: ProfileId,
+    type: Timeline.Profile.Type,
+): List<TimelineItem> =
+    withTimeoutOrNull(VibeFetchTimeout) {
+        timelineItems(
+            query = TimelineQuery(
+                data = CursorQuery.defaultStartData(limit = VibeSampleLimit),
+                source = Timeline.Source.Profile(
+                    profileId = profileId,
+                    type = type,
+                ),
+            ),
+            cursor = Cursor.Initial,
+        )
+            .mapNotNull { cursorList ->
+                cursorList.items.takeIf(List<TimelineItem>::isNotEmpty)
+            }
+            .first()
+    }
+        .orEmpty()
 
 private fun translationPrompt(
     text: String,
@@ -258,15 +335,29 @@ private fun translationPrompt(
 }
 
 private fun vibePrompt(
-    posts: List<Post>,
+    items: List<TimelineItem>,
     profile: Profile,
+    type: Timeline.Profile.Type,
 ): String = buildString {
-    appendLine(
-        "Describe the \"vibe\" of a social media profile in one short, evocative phrase " +
-            "(at most 12 words).",
-    )
-    appendLine("Base it on the author's bio and their recent posts, including any content labels.")
-    appendLine("Reply with only the phrase — no preamble, no quotes.")
+    // The two lenses read a profile differently: their posts show the voice they broadcast in,
+    // their replies show how they behave in conversation. Frame the ask and the samples to match.
+    val basis: String
+    val samplesHeader: String
+    when (type) {
+        Timeline.Profile.Type.Replies -> {
+            basis = "how they show up in replies to other people — their conversational tone, " +
+                "their wit, and how they treat the people they talk to"
+            samplesHeader = "Recent replies, shown within the conversations they belong to " +
+                "(the author's own lines are marked):"
+        }
+        else -> {
+            basis = "their recent posts — the topics they gravitate to and the voice they post in"
+            samplesHeader = "Recent posts:"
+        }
+    }
+    appendLine("Describe the \"vibe\" of a social media profile in two or three short sentences.")
+    appendLine("Base it on the author's bio and $basis, including any content labels.")
+    appendLine("Reply with only the description — no preamble, no headings, no quotes.")
     appendLine()
     appendLine("Profile:")
     appendLine("- handle: @${profile.handle.id}")
@@ -276,92 +367,92 @@ private fun vibePrompt(
         appendLine("- labels: ${labels.joinToString { it.value.value }}")
     }
     appendLine()
-    appendLine("Recent posts:")
+    appendLine(samplesHeader)
+    items.forEach { item ->
+        appendVibeSample(
+            item = item,
+            authorId = profile.did,
+        )
+    }
+}
+
+/**
+ * Appends one recent [item] as a vibe sample. Standalone posts render as a single line; reply and
+ * quote threads render as an indented conversation so the model sees the context [authorId] is
+ * responding to, with the author's own lines marked.
+ */
+private fun StringBuilder.appendVibeSample(
+    item: TimelineItem,
+    authorId: ProfileId,
+) {
+    when (item) {
+        is TimelineItem.Single,
+        is TimelineItem.Pinned,
+        -> appendVibePost(
+            prefix = "- ",
+            post = item.post,
+            authorId = authorId,
+            withHandle = false,
+        )
+
+        is TimelineItem.Repost -> appendVibePost(
+            prefix = "- reposted ",
+            post = item.post,
+            authorId = authorId,
+            withHandle = true,
+        )
+
+        is TimelineItem.Threaded.Linear -> appendVibeConversation(
+            posts = item.nodes.map { it.post },
+            authorId = authorId,
+        )
+
+        is TimelineItem.Threaded.Tree -> appendVibeConversation(
+            posts = listOf(item.anchor.post) + item.replies.map { it.post },
+            authorId = authorId,
+        )
+
+        is TimelineItem.Placeholder -> Unit
+    }
+}
+
+private fun StringBuilder.appendVibeConversation(
+    posts: List<Post>,
+    authorId: ProfileId,
+) {
+    if (posts.none { it.hasVibeContent }) return
+    appendLine("- conversation:")
     posts.forEach { post ->
-        val postText = post.flattenedText.orEmpty()
-        val postLabels = post.labels.joinToString { it.value.value }
-        if (postText.isNotEmpty() || postLabels.isNotEmpty()) {
-            append("- \"$postText\"")
-            if (postLabels.isNotEmpty()) append(" [labels: $postLabels]")
-            appendLine()
-        }
+        appendVibePost(
+            prefix = "    ",
+            post = post,
+            authorId = authorId,
+            withHandle = true,
+        )
     }
 }
 
-@Stable
-sealed interface InferenceOutcome {
-    /** The text produced so far; empty until the first usable token arrives. */
-    val text: String
-
-    data class Loading(
-        override val text: String = "",
-    ) : InferenceOutcome
-
-    data class Success(
-        override val text: String,
-    ) : InferenceOutcome
-
-    data class Error(
-        val memo: Memo,
-        override val text: String = "",
-    ) : InferenceOutcome
-
-    /** No on-device model is available; the UI should prompt the user to download one. */
-    data object NoModel : InferenceOutcome {
-        override val text: String = ""
-    }
-}
-
-/** What the engine is currently inferring; drives the inference sheet's title. */
-enum class InferenceKind(
-    val titleRes: StringResource,
+private fun StringBuilder.appendVibePost(
+    prefix: String,
+    post: Post,
+    authorId: ProfileId,
+    withHandle: Boolean,
 ) {
-    Translation(titleRes = Res.string.inference_sheet_translation_title),
-    Vibe(titleRes = Res.string.inference_sheet_vibe_title),
-}
-
-@Stable
-@Snapshottable
-interface InferenceState {
-    @SnapshotSpec
-    @Serializable
-    data class Immutable(
-        // Inference state is ephemeral runtime state mirroring the shared engine; never persisted.
-        @Transient
-        val engineState: EngineState? = null,
-        @Transient
-        val kind: InferenceKind? = null,
-        @Transient
-        val outcome: InferenceOutcome? = null,
-    ) : InferenceState
-}
-
-sealed class InferenceAction(
-    val key: String,
-) {
-    sealed class Generate : InferenceAction("Generate") {
-        data class Translate(
-            val post: Post,
-            val sourceLanguage: String,
-            val targetLanguage: String,
-        ) : Generate()
-
-        data class Vibe(
-            val posts: List<Post>,
-            val profile: Profile,
-        ) : Generate()
+    if (!post.hasVibeContent) return
+    append(prefix)
+    if (withHandle) {
+        append("@${post.author.handle.id}")
+        if (post.author.did == authorId) append(" (the author)")
+        append(": ")
     }
-
-    sealed class Navigate :
-        InferenceAction(key = "Navigate"),
-        NavigationAction {
-
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
-    }
+    append("\"${post.flattenedText.orEmpty()}\"")
+    val labels = post.labels.joinToString { it.value.value }
+    if (labels.isNotEmpty()) append(" [labels: $labels]")
+    appendLine()
 }
+
+private val Post.hasVibeContent: Boolean
+    get() = !flattenedText.isNullOrEmpty() || labels.isNotEmpty()
 
 private inline fun StringBuilder.transformedOrPlain(
     transform: (String) -> String,
@@ -381,3 +472,6 @@ private fun String.unwrapTranslation(): String =
         .removeSurrounding("\"")
         .removeSurrounding("“", "”")
         .trim()
+
+private const val VibeSampleLimit = 15L
+private val VibeFetchTimeout = 20.seconds
