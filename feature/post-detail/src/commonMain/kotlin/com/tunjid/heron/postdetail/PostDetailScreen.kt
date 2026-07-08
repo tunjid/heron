@@ -28,10 +28,12 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post.Create.Reply
@@ -150,6 +152,11 @@ internal fun PostDetailScreen(
             }
         },
     )
+
+    val currentLanguageTag = Locale.current.toLanguageTag()
+    LaunchedEffect(currentLanguageTag) {
+        actions(Action.UpdateCurrentLanguageTag(currentLanguageTag))
+    }
 
     LazyVerticalStaggeredGrid(
         modifier = modifier

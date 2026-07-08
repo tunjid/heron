@@ -21,6 +21,7 @@ import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
@@ -29,6 +30,7 @@ import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.graze.editor.di.GrazeEditorBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.inference.di.InferenceBindings
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
@@ -85,6 +87,7 @@ interface AppGraph {
             @Includes galleryBindings: GalleryBindings,
             @Includes grazeEditorBindings: GrazeEditorBindings,
             @Includes homeBindings: HomeBindings,
+            @Includes inferenceBindings: InferenceBindings,
             @Includes listBindings: ListBindings,
             @Includes messagesBindings: MessagesBindings,
             @Includes moderationBindings: ModerationBindings,
@@ -117,10 +120,9 @@ interface AppGraph {
         notificationStateHolder: NotificationStateHolder,
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
-        writeQueue: WriteQueue,
-        databaseCleanup: DatabaseCleanup,
         sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
         routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
+        backgroundTaskScheduler: BackgroundTaskScheduler,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -130,6 +132,7 @@ interface AppGraph {
         videoPlayerController = videoPlayerController,
         sheetStateHolderInitializers = sheetStateHolderInitializers,
         routeStateHolderInitializers = routeStateHolderInitializers,
+        backgroundTaskScheduler = backgroundTaskScheduler,
     )
 
     val appState: AppState

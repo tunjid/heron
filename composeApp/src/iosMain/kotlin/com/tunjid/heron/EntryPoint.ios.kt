@@ -19,11 +19,16 @@ package com.tunjid.heron
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
+import com.tunjid.heron.data.ml.engine.IosInferenceBridge
+import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
@@ -42,13 +47,17 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-fun createAppState(): AppState =
-    createAppState(
+fun createAppState(
+    inferenceBridge: IosInferenceBridge,
+): AppState {
+    val inferenceEngine = createInferenceEngine(inferenceBridge, Dispatchers.IO)
+    return createAppState(
         imageLoader = ::imageLoader,
         notifier = {
             IosNotifier()
@@ -65,13 +74,20 @@ fun createAppState(): AppState =
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = savedStatePath(),
+                savedStatePath = savedStatePath().asSystemFile(),
+                modelsDirectory = modelsDirectory().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),
+                inferenceEngine = inferenceEngine,
+                languageDetector = createLanguageDetector(Dispatchers.IO),
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
+                    NoOpBackgroundTaskScheduler(taskStore, httpClient, fileManager)
+                },
             )
         },
     )
+}
 
 /**
  * Called from Swift when Firebase provides a new FCM token.
@@ -159,4 +175,16 @@ private fun savedStatePath(): Path {
         error = null,
     )
     return (requireNotNull(documentDirectory).path + "/heron").toPath()
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun modelsDirectory(): Path {
+    val cachesDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
+        directory = NSCachesDirectory,
+        inDomain = NSUserDomainMask,
+        appropriateForURL = null,
+        create = true,
+        error = null,
+    )
+    return (requireNotNull(cachesDirectory).path + "/models").toPath()
 }

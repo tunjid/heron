@@ -123,6 +123,7 @@ import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.reme
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
@@ -206,6 +207,7 @@ import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.action_search_posts
+import heron.ui.core.generated.resources.action_vibe_check
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -270,6 +272,8 @@ internal fun ProfileScreen(
             )
         },
     )
+
+    val inferenceSheetState = paneScaffoldState.rememberInferenceSheetState()
 
     CollapsingHeaderLayout(
         modifier = modifier
@@ -381,6 +385,7 @@ internal fun ProfileScreen(
                 },
                 onModerationAction = actions,
                 onUpdateProfileLiveStatus = profileUpdateLiveStatusSheetState::show,
+                onVibeClicked = inferenceSheetState::profileVibeCheck,
             )
         },
         body = {
@@ -664,6 +669,7 @@ private fun ProfileHeader(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onVibeClicked: (ProfileId) -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -735,6 +741,7 @@ private fun ProfileHeader(
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
+                    onVibeClicked = onVibeClicked,
                     onNavigate = onNavigate,
                 )
                 ProfileStats(
@@ -995,6 +1002,7 @@ private fun ProfileHeadline(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onVibeClicked: (ProfileId) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
@@ -1110,6 +1118,8 @@ private fun ProfileHeadline(
                                                 }
                                             CommonStrings.action_search_posts ->
                                                 onNavigate(searchProfilePostsDestination(profile))
+                                            CommonStrings.action_vibe_check ->
+                                                onVibeClicked(profile.did)
                                             CommonStrings.action_go_live,
                                             CommonStrings.action_edit_live_status,
                                             -> onUpdateProfileLiveStatus()
@@ -1348,7 +1358,7 @@ private fun ProfileTimeline(
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
     val items = timelineState.tiledItems
 
-    val now = remember { Clock.System.now() }
+    val now = remember(timelineState.timeline.lastRefreshed) { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation

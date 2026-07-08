@@ -19,6 +19,7 @@ package com.tunjid.heron.data.di
 import androidx.room.RoomDatabase
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
@@ -38,6 +39,9 @@ import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
+import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.language.LanguageDetector
+import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.FeedCreationService
@@ -83,9 +87,12 @@ import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperati
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
+import com.tunjid.heron.data.tasks.TaskStore
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
@@ -94,6 +101,7 @@ import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.taskstore.SavedStateTaskStore
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
@@ -117,7 +125,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
-import okio.Path
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -134,10 +141,19 @@ internal annotation class DefaultDispatcher
 class DataBindingArgs(
     val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
-    val savedStatePath: Path,
+    val savedStatePath: File.System,
+    /** Directory for on-device model files; a platform cache/no-backup location. */
+    val modelsDirectory: File.System,
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
+    val inferenceEngine: InferenceEngine,
+    val languageDetector: LanguageDetector,
+    val backgroundTaskScheduler: (
+        taskStore: TaskStore,
+        httpClient: HttpClient,
+        fileManager: FileManager,
+    ) -> BackgroundTaskScheduler,
 )
 
 @BindingContainer
@@ -166,11 +182,7 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStatePath(): Path = args.savedStatePath
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideSavedStateFileSystem(): FileSystem = args.savedStateFileSystem
+    fun provideSavedStatePath(): File.System = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides
@@ -182,11 +194,36 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideLanguageDetector(): LanguageDetector = args.languageDetector
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideInferenceModelManager(
+        fileManager: FileManager,
+        @IODispatcher ioDispatcher: CoroutineDispatcher,
+        backgroundTaskScheduler: BackgroundTaskScheduler,
+        networkService: NetworkService,
+    ): InferenceModelManager = LiteRtLmManager(
+        fileManager = fileManager,
+        modelsDirectory = args.modelsDirectory,
+        ioDispatcher = ioDispatcher,
+        backgroundTaskScheduler = backgroundTaskScheduler,
+        networkService = networkService,
+    )
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideTidGenerator(): TidGenerator = TidGenerator()
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideFileManager(): FileManager = createFileManager()
+    internal fun provideFileManager(): FileManager = createFileManager(
+        fileSystem = args.savedStateFileSystem,
+    )
 
     @SingleIn(AppScope::class)
     @Provides
@@ -398,6 +435,26 @@ class DataBindings(
     internal fun provideWriteQueue(
         writeQueue: PersistedWriteQueue,
     ): WriteQueue = writeQueue
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideTaskStore(
+        savedStateDataSource: SavedStateDataSource,
+    ): TaskStore = SavedStateTaskStore(
+        savedStateDataSource = savedStateDataSource,
+    )
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideBackgroundTaskScheduler(
+        taskStore: TaskStore,
+        httpClient: HttpClient,
+        fileManager: FileManager,
+    ): BackgroundTaskScheduler = args.backgroundTaskScheduler(
+        taskStore,
+        httpClient,
+        fileManager,
+    )
 
     @SingleIn(AppScope::class)
     @Provides

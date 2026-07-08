@@ -36,6 +36,8 @@ kotlin {
                 implementation(project(":ui:core"))
                 implementation(project(":ui:media"))
 
+                implementation(project(":data:ml"))
+
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
 

@@ -665,6 +665,7 @@ private val HeronProxyPaths = listOf(
     "site.standard.heron.getDocuments",
     "site.standard.heron.getPublications",
     "site.standard.heron.getSubscribedPublications",
+    "dev.tunji.heron.getModelUrl",
     "app.rocksky.actor.getActorAlbums",
     "app.rocksky.actor.getActorSongs",
     "app.rocksky.actor.getActorArtists",

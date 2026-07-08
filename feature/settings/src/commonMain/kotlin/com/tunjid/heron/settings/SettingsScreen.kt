@@ -33,6 +33,7 @@ import com.tunjid.heron.settings.ui.AppearanceSection
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedPreferencesSection
 import com.tunjid.heron.settings.ui.FeedbackItem
+import com.tunjid.heron.settings.ui.InferenceItem
 import com.tunjid.heron.settings.ui.ModerationItem
 import com.tunjid.heron.settings.ui.NotificationSettingsItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
@@ -40,6 +41,7 @@ import com.tunjid.heron.settings.ui.PublicationSubscriptionsItem
 import com.tunjid.heron.settings.ui.SignOutItem
 import com.tunjid.heron.settings.ui.TasksItem
 import com.tunjid.heron.settings.ui.ThreadPreferencesSection
+import com.tunjid.heron.ui.scaffold.navigation.inferenceDestination
 import com.tunjid.heron.ui.scaffold.navigation.moderationDestination
 import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
@@ -188,6 +190,15 @@ private fun MainSection(
                     ),
             ) {
                 actions(Action.Navigate.To(tasksDestination()))
+            }
+            InferenceItem(
+                modifier = Modifier
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
+            ) {
+                actions(Action.Navigate.To(inferenceDestination()))
             }
             PublicationSubscriptionsItem(
                 modifier = Modifier

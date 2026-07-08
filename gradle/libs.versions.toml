@@ -6,6 +6,7 @@ androidx-appcompat = "1.7.1"
 androidx-browser = "1.10.0"
 androidx-constraintlayout = "2.2.1"
 androidx-core-ktx = "1.19.0"
+androidx-work = "2.10.0"
 androidx-collections = "1.6.0"
 androidx-datastore = "1.2.1"
 androidx-graphics-core = "1.0.4"
@@ -41,6 +42,7 @@ lifecycle-android = "2.11.0"
 lifecycle-multiplatform = "2.11.0-rc01"
 logcat = "0.4"
 leak-canary = "3.0-alpha-9"
+litertlm = "0.13.1"
 metro = "1.2.1"
 navigationEventCompose = "1.1.0"
 navigation3Multiplatform = "1.1.1"
@@ -76,6 +78,7 @@ android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 axion-release-gradlePlugin = { group = "pl.allegro.tech.build", name = "axion-release-plugin", version.ref = "axion-release" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidx-work" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso-core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
@@ -141,6 +144,8 @@ lifecycle-multiplatform-runtime = { group = "org.jetbrains.androidx.lifecycle", 
 lifecycle-multiplatform-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-multiplatform" }
 logcat = { module = "com.squareup.logcat:logcat", version.ref = "logcat" }
 leak-canary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leak-canary" }
+litertlm-android = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertlm" }
+litertlm-jvm = { group = "com.google.ai.edge.litertlm", name = "litertlm-jvm", version.ref = "litertlm" }
 savedstate-multiplatform-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "savedstate-multiplatform" }
 savedstate-multiplatform-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "savedstate-multiplatform" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
@@ -162,6 +167,7 @@ ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.r
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-java = { group = "io.ktor", name = "ktor-client-java", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 ktor-client-resources = { group = "io.ktor", name = "ktor-client-resources", version.ref = "ktor" }
 ktor-client-serialization = { group = "io.ktor", name = "ktor-client-serialization", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }

@@ -17,14 +17,15 @@
 package com.tunjid.heron.data.core.utilities
 
 import com.tunjid.heron.data.core.types.FileUri
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class File {
-    abstract val uri: FileUri
+sealed interface File {
+    val uri: FileUri
 
     @Serializable
-    sealed class Media : File() {
+    sealed class Media : File {
 
         // This is deliberately not a data class so the data class copy method is not leaked
         @Serializable
@@ -87,5 +88,19 @@ sealed class File {
                 return result
             }
         }
+    }
+
+    /**
+     * A file on the device's own filesystem, addressed by its [relativePath]. Distinct from [Media],
+     * which is user-picked content staged for upload. The okio `Path` is reconstructed from
+     * [relativePath] at the I/O layer, so this type stays free of an okio dependency.
+     */
+    @Serializable
+    @JvmInline
+    value class System(
+        val relativePath: String,
+    ) : File {
+        override val uri: FileUri
+            get() = FileUri(relativePath)
     }
 }

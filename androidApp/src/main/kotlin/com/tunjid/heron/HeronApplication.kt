@@ -17,13 +17,20 @@
 package com.tunjid.heron
 
 import android.app.Application
+import com.tunjid.heron.data.tasks.BackgroundTaskHost
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 
-class HeronApplication : Application() {
+class HeronApplication :
+    Application(),
+    BackgroundTaskHost {
 
     // This needs to be lateinit instead of lazy to ensure it is
     // instantiated on the main thread
     lateinit var appState: AppState
+
+    override val backgroundTaskScheduler: BackgroundTaskScheduler
+        get() = appState.backgroundTaskScheduler
 
     override fun onCreate() {
         super.onCreate()

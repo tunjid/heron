@@ -302,7 +302,7 @@ private fun HomeTimeline(
 ) {
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
 
-    val now = remember { Clock.System.now() }
+    val now = remember(timelineState.timeline.lastRefreshed) { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation

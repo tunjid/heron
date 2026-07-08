@@ -1,0 +1,44 @@
+<!--
+  ~    Copyright 2026 Adetunji Dahunsi
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<resources>
+    <string name="inference">Inference</string>
+    <string name="download">Download</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="delete_model_title">Delete model?</string>
+    <string name="delete_model_message">Delete %1$s? You\'ll need to download it again to use it.</string>
+    <string name="retry">Retry</string>
+    <string name="queued">Queued</string>
+    <string name="downloading">Downloading…</string>
+    <string name="download_failed">Download failed</string>
+    <string name="load">Load</string>
+    <string name="loaded">Loaded</string>
+    <string name="loading">Loading…</string>
+   <string name="load_error">Load error</string>
+    <string name="ability_translation">Translation</string>
+    <string name="ability_summary">Summary</string>
+    <string name="load_default_model_on_launch">Load default model on launch</string>
+    <string name="no_default_model">Load a model to set it as the default</string>
+    <string name="models_run_locally">All models run locally on your device, completely offline.</string>
+    <string name="minimum_memory">%1$d GB RAM</string>
+    <string name="terms_of_use_title">Terms of Use</string>
+    <string name="terms_of_use_message">Heron uses %1$s to provide local, private AI features. By downloading, you agree to the Terms of Use of the model author.</string>
+    <string name="terms_of_use_link">Terms of Use</string>
+    <string name="enable_notifications_title">Notifications required</string>
+    <string name="enable_notifications_message">Heron posts model download progress as a notification. Enable notifications to download models.</string>
+    <string name="enable_notifications">Enable notifications</string>
+</resources>

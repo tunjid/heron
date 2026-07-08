@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "dev.tunji.heron.getModelUrl",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get a short-lived signed download URL for a file in the heron-litertlm-models bucket. Requires atproto service auth.",
+      "parameters": {
+        "type": "params",
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Object path within the heron-litertlm-models bucket, e.g. 'gemma-2b/model.task'."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["url", "expiresAt"],
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "expiresAt": { "type": "string", "format": "datetime" },
+            "path": { "type": "string" }
+          }
+        }
+      },
+      "errors": [
+        { "name": "NotFound", "description": "No such object in the bucket." }
+      ]
+    }
+  }
+}

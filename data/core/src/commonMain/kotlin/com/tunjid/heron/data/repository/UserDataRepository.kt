@@ -62,6 +62,14 @@ interface UserDataRepository {
     suspend fun setAllowAllTimelinePresentations(
         allowAllTimelinePresentations: Boolean,
     ): Outcome
+
+    suspend fun setLoadDefaultModelOnLaunch(
+        loadOnLaunch: Boolean,
+    ): Outcome
+
+    suspend fun setDefaultModelName(
+        modelName: String?,
+    ): Outcome
 }
 
 @Inject
@@ -150,6 +158,18 @@ internal class OfflineUserDataRepository(
         allowAllTimelinePresentations: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(allowAllTimelinePresentations = allowAllTimelinePresentations))
+    }
+
+    override suspend fun setLoadDefaultModelOnLaunch(
+        loadOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(loadDefaultModelOnLaunch = loadOnLaunch))
+    }
+
+    override suspend fun setDefaultModelName(
+        modelName: String?,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(defaultModelName = modelName))
     }
 
     private suspend inline fun updatePreferences(
