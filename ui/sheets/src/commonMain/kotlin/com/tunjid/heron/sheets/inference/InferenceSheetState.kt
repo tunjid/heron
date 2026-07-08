@@ -248,7 +248,10 @@ private fun ProfileVibeContent(
         }
 
         val currentProfileId by rememberUpdatedState(profileId)
-        LaunchedEffect(pagerState) {
+        LaunchedEffect(
+            pagerState,
+            profileId,
+        ) {
             snapshotFlow { pagerState.settledPage }
                 .collect { page ->
                     val type = VibeTab.entries
