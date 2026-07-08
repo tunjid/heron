@@ -165,6 +165,7 @@
     <string name="action_edit_live_status">Edit Live Status</string>
     <string name="action_search_posts">Search posts</string>
     <string name="action_copy_profile_link">Copy link to profile</string>
+    <string name="action_vibe_check">Vibe check</string>
 
     <string name="live_badge">LIVE</string>
     <string name="action_close">Close</string>
