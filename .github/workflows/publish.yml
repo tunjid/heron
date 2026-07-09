@@ -86,36 +86,48 @@ jobs:
           debugSymbols: androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
 
 
-      - name: Extract and sign universal APK
+      - name: Build and sign per-ABI sideload APKs
         env:
+          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
           SIGNING_KEY_BASE_64: ${{ secrets.SIGNING_KEY_BASE_64 }}
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # bundletool signs extracted APKs with its built-in debug key unless
-          # given the release keystore, which made the GitHub-release APK
-          # unusable for sideloading. Decode the same keystore the AAB uses.
+          # Per-ABI split APKs (plus a universal fallback) for GitHub sideloads. litertlm's native
+          # runtime is packaged per architecture, so the arm64-v8a APK (~37 MB) is far smaller than
+          # the fused universal (~68 MB). This is a separate build from the Play AAB above; with
+          # heron.isRelease=true the APKs come out UNSIGNED, so zipalign + apksigner each with the
+          # same release keystore the AAB uses.
+          ./gradlew assembleRelease \
+            -Pheron.versionCode=${{ github.run_number }} \
+            -Pheron.isRelease=true \
+            -Pheron.endpoint="$HERON_ENDPOINT"
+
           echo "$SIGNING_KEY_BASE_64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
-
-          curl -L -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
-          java -jar bundletool.jar build-apks \
-            --bundle=${{ steps.sign_app.outputs.signedReleaseFile }} \
-            --output=androidApp/build/outputs/apk/release/heron.apks \
-            --mode=universal \
-            --ks="${RUNNER_TEMP}/release.keystore" \
-            --ks-pass="pass:${KEY_STORE_PASSWORD}" \
-            --ks-key-alias="${ALIAS}" \
-            --key-pass="pass:${KEY_PASSWORD}"
-
-          unzip -o androidApp/build/outputs/apk/release/heron.apks -d androidApp/build/outputs/apk/release/
+          BUILD_TOOLS="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)"
+          OUT=androidApp/build/outputs/apk/release/signed
+          mkdir -p "$OUT"
+          for apk in androidApp/build/outputs/apk/release/*-release-unsigned.apk; do
+            name="$(basename "$apk")"
+            base="${name%-unsigned.apk}"
+            "${BUILD_TOOLS}/zipalign" -f -p 4 "$apk" "${RUNNER_TEMP}/${base}-aligned.apk"
+            "${BUILD_TOOLS}/apksigner" sign \
+              --ks "${RUNNER_TEMP}/release.keystore" \
+              --ks-pass "pass:${KEY_STORE_PASSWORD}" \
+              --ks-key-alias "${ALIAS}" \
+              --key-pass "pass:${KEY_PASSWORD}" \
+              --out "${OUT}/${base}.apk" \
+              "${RUNNER_TEMP}/${base}-aligned.apk"
+          done
+          ls -lh "$OUT"
 
       - name: Upload to GitHub releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: androidApp/build/outputs/apk/release/universal.apk
+          files: androidApp/build/outputs/apk/release/signed/*.apk
           draft: true
           allow_updates: true
 
