@@ -1,3 +1,5 @@
+import java.util.zip.ZipFile
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -61,6 +63,39 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+    }
+}
+
+// Extract LiteRT-LM's macOS JNI library from the litertlm-jvm JAR so :desktopApp can copy it
+// into the sandboxed .app bundle and sign it with Developer ID. litertlm ships it only ad-hoc
+// signed, which fails notarization, and its NativeLibraryLoader would otherwise extract an
+// unsigned copy to a temp dir at runtime (blocked by the hardened runtime / sandbox).
+// arm64 only — litertlm publishes no x86-64 macOS binary. Mirrors JNA extraction in :ui:media.
+val litertlmJvmJar = configurations.named("desktopRuntimeClasspath").map { config ->
+    config.files.first { it.name.startsWith("litertlm-jvm") }
+}
+
+tasks.register("extractLitertlmNativeArm") {
+    val outputDir = layout.buildDirectory.dir("native-libs/darwin-aarch64")
+    val jarProvider = litertlmJvmJar
+    inputs.files(jarProvider)
+    outputs.file(outputDir.map { it.file("liblitertlm_jni.so") })
+
+    // Declared on all platforms to satisfy Gradle's implicit dependency detection,
+    // but only executes on macOS where the signed .app bundle is produced.
+    onlyIf { System.getProperty("os.name").startsWith("Mac") }
+
+    doLast {
+        val jarFile = jarProvider.get()
+        val entryPath = "com/google/ai/edge/litertlm/jni/darwin-aarch64/liblitertlm_jni.so"
+        val outputFile = outputDir.get().asFile.also { it.mkdirs() }.resolve("liblitertlm_jni.so")
+        ZipFile(jarFile).use { zip ->
+            val entry = zip.getEntry(entryPath)
+                ?: error("Entry $entryPath not found in ${jarFile.name}")
+            zip.getInputStream(entry).use { stream ->
+                outputFile.outputStream().use { out -> stream.copyTo(out) }
             }
         }
     }

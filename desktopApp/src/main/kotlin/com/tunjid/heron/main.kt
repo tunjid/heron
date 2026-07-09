@@ -26,6 +26,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.tunjid.heron.ui.scaffold.scaffold.App
+import java.io.File
 
 fun main() {
     // Point JNA to pre-bundled native libraries so it loads libjnidispatch.jnilib
@@ -34,6 +35,19 @@ fun main() {
     System.getProperty("compose.application.resources.dir")?.let { resourcesDir ->
         System.setProperty("jna.boot.library.path", resourcesDir)
         System.setProperty("jna.library.path", resourcesDir)
+
+        // Pre-load the Developer ID-signed LiteRT-LM JNI library from the app bundle so
+        // litertlm's NativeLibraryLoader short-circuits (isLoaded) instead of extracting an
+        // unsigned copy from its JAR to a temp dir, which the hardened runtime / sandbox blocks.
+        val litertLib = File(resourcesDir, "liblitertlm_jni.so")
+        if (litertLib.exists()) {
+            try {
+                System.load(litertLib.absolutePath)
+            } catch (throwable: Throwable) {
+                // Leave on-device ML unavailable rather than crash launch if the lib won't load.
+                System.err.println("Failed to pre-load ${litertLib.name}: ${throwable.message}")
+            }
+        }
     }
 
     application {
