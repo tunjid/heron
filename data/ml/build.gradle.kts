@@ -74,7 +74,9 @@ kotlin {
 // unsigned copy to a temp dir at runtime (blocked by the hardened runtime / sandbox).
 // arm64 only — litertlm publishes no x86-64 macOS binary. Mirrors JNA extraction in :ui:media.
 val litertlmJvmJar = configurations.named("desktopRuntimeClasspath").map { config ->
-    config.files.first { it.name.startsWith("litertlm-jvm") }
+    config.files
+        .firstOrNull { it.name.startsWith("litertlm-jvm") }
+        ?: error("litertlm-jvm JAR not found in desktopRuntimeClasspath")
 }
 
 tasks.register("extractLitertlmNativeArm") {
