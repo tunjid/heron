@@ -21,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,6 +52,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.ui.EmptyContent
+import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -62,6 +66,7 @@ import com.tunjid.heron.ui.text.message
 import com.tunjid.mutator.compose.produceState
 import com.tunjid.mutator.invoke
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.inference_disclaimer
 import heron.ui.timeline.generated.resources.inference_no_model_description
 import heron.ui.timeline.generated.resources.inference_no_model_title
 import heron.ui.timeline.generated.resources.posts
@@ -115,76 +120,93 @@ class InferenceSheetState internal constructor(
                 stateHolder = stateHolder,
                 block = ::InferenceSheetState,
             )
-            InferenceBottomSheet(
-                state = state,
-            )
+            state.ModalBottomSheet {
+                InferenceBottomSheet(
+                    state = state,
+                )
+            }
             return state
         }
     }
 }
 
 @Composable
-private fun InferenceBottomSheet(
+internal fun InferenceBottomSheet(
     state: InferenceSheetState,
 ) {
-    state.ModalBottomSheet {
-        val inferenceState = state.stateHolder.produceState()
-        val kind = inferenceState.kind
-        val onNavigateToModels = {
-            state.stateHolder(
-                InferenceAction.Navigate.To(inferenceDestination()),
-            )
+    val inferenceState = state.stateHolder.produceState()
+    val kind = inferenceState.kind
+    val onNavigateToModels = {
+        state.stateHolder(
+            InferenceAction.Navigate.To(inferenceDestination()),
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        // The outcome for the kind on screen decides whether the header is shown; vibe reads its
+        // posts slot since both vibe slots share the same no-model state.
+        val headerOutcome = when (kind) {
+            InferenceKind.Vibe -> inferenceState.postsOutcome
+            InferenceKind.Translation -> inferenceState.translationOutcome
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // The outcome for the kind on screen decides whether the header is shown; vibe reads its
-            // posts slot since both vibe slots share the same no-model state.
-            val headerOutcome = when (kind) {
-                InferenceKind.Vibe -> inferenceState.postsOutcome
-                InferenceKind.Translation -> inferenceState.translationOutcome
-            }
-            // The no-model prompt carries its own title, so only show the kind header otherwise.
-            if (headerOutcome !is InferenceOutcome.NoModel) {
+        // The no-model prompt carries its own title, so only show the kind header otherwise.
+        if (headerOutcome !is InferenceOutcome.NoModel) {
+            Text(
+                text = stringResource(kind.titleRes),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(
+                modifier = Modifier.padding(
+                    vertical = 8.dp,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = AtmosphereIcons.Help,
+                    contentDescription = null,
+                )
                 Text(
-                    text = stringResource(kind.titleRes),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    text = stringResource(Res.string.inference_disclaimer),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
-            AnimatedContent(
-                targetState = kind,
-            ) { targetKind ->
-                when (targetKind) {
-                    InferenceKind.Translation -> InferenceOutcomeContent(
-                        outcome = inferenceState.translationOutcome,
-                        onNavigateToModels = onNavigateToModels,
-                    )
-                    InferenceKind.Vibe -> ProfileVibeContent(
-                        profileId = inferenceState.vibeProfileId,
-                        postsOutcome = inferenceState.postsOutcome,
-                        repliesOutcome = inferenceState.repliesOutcome,
-                        onSelectLens = { profileId, type ->
-                            state.stateHolder(
-                                InferenceAction.Vibe(
-                                    profileId = profileId,
-                                    type = type,
-                                ),
-                            )
-                        },
-                        onNavigateToModels = onNavigateToModels,
-                    )
-                }
-            }
-            Spacer(
-                modifier = Modifier
-                    .height(24.dp)
-                    .navigationBarsPadding(),
-            )
         }
+        AnimatedContent(
+            targetState = kind,
+        ) { targetKind ->
+            when (targetKind) {
+                InferenceKind.Translation -> InferenceOutcomeContent(
+                    outcome = inferenceState.translationOutcome,
+                    onNavigateToModels = onNavigateToModels,
+                )
+                InferenceKind.Vibe -> ProfileVibeContent(
+                    profileId = inferenceState.vibeProfileId,
+                    postsOutcome = inferenceState.postsOutcome,
+                    repliesOutcome = inferenceState.repliesOutcome,
+                    onSelectLens = { profileId, type ->
+                        state.stateHolder(
+                            InferenceAction.Vibe(
+                                profileId = profileId,
+                                type = type,
+                            ),
+                        )
+                    },
+                    onNavigateToModels = onNavigateToModels,
+                )
+            }
+        }
+        Spacer(
+            modifier = Modifier
+                .height(24.dp)
+                .navigationBarsPadding(),
+        )
     }
 }
 
@@ -287,7 +309,6 @@ private fun InferenceOutcomeContent(
         is InferenceOutcome.NoModel -> Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
                 .clickable(onClick = onNavigateToModels),
         ) {
             EmptyContent(
