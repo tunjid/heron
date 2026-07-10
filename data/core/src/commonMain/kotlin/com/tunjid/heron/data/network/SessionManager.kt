@@ -46,12 +46,12 @@ import io.ktor.client.call.body
 import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
@@ -114,7 +114,7 @@ internal class PersistedSessionManager(
             sessionRequestUrl.value?.let(url::takeFrom)
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
-        install(HttpTimeout) {
+        installOrReplace(HttpTimeout) {
             requestTimeoutMillis = 15.seconds.inWholeMilliseconds
         }
         install(Logging) {
@@ -452,11 +452,8 @@ private fun atProtoAuth(
             }
         }
 
-        context.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeoutConfig ->
-            timeoutConfig.requestTimeoutMillis = when {
-                context.url.encodedPath.endsWith(UploadBlobPath) -> 2.minutes.inWholeMilliseconds
-                else -> timeoutConfig.requestTimeoutMillis
-            }
+        if (context.url.encodedPath.endsWith(UploadBlobPath)) context.timeout {
+            requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
 
         var resolvedOtherProfilePds = false
