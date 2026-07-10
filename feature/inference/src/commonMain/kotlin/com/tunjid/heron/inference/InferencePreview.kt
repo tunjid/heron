@@ -16,10 +16,14 @@
 
 package com.tunjid.heron.inference
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.LoadedModel
@@ -27,7 +31,9 @@ import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.di.Route as InferenceRoute
+import com.tunjid.heron.inference.ui.ModelCard
 import com.tunjid.heron.ui.preview.RoutePreview
+import com.tunjid.heron.ui.scaffold.ui.theme.AppTheme
 import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.treenav.strings.routeOf
 
@@ -81,4 +87,27 @@ internal fun InferencePreview() {
             )
         },
     )
+}
+
+@Preview
+@Composable
+internal fun ModelCardMemoryWarningPreview() {
+    AppTheme {
+        Surface {
+            ModelCard(
+                modifier = Modifier.padding(16.dp),
+                engineState = null,
+                item = ModelItem(
+                    model = InferenceModel.Gemma4E4B,
+                ),
+                // A 4 GB reading sits below the E4B model's 12 GB minimum, so the low-memory
+                // warning renders regardless of how much RAM the machine running the preview has.
+                deviceMemoryBytes = 4L * 1024 * 1024 * 1024,
+                onLoad = {},
+                onDownload = {},
+                onCancel = {},
+                onDelete = {},
+            )
+        }
+    }
 }
