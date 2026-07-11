@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.search.ui.filter
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -70,6 +71,7 @@ import heron.feature.search.generated.resources.filter_add_people_filter
 import heron.feature.search.generated.resources.filter_all_words
 import heron.feature.search.generated.resources.filter_cancel
 import heron.feature.search.generated.resources.filter_clear_date
+import heron.feature.search.generated.resources.filter_date_prompt
 import heron.feature.search.generated.resources.filter_exact_phrase
 import heron.feature.search.generated.resources.filter_exact_phrase_hint
 import heron.feature.search.generated.resources.filter_from
@@ -417,19 +419,25 @@ private fun DateField(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         OutlinedTextField(
-            value = date?.toString().orEmpty(),
+            modifier = Modifier
+                .fillMaxWidth(),
+            value = date?.toString() ?: stringResource(Res.string.filter_date_prompt),
             onValueChange = {},
             readOnly = true,
             singleLine = true,
             trailingIcon = {
-                IconButton(onClick = { showPicker = true }) {
-                    Icon(
-                        imageVector = Icons.Rounded.CalendarMonth,
-                        contentDescription = stringResource(Res.string.filter_pick_date),
-                    )
-                }
+                IconButton(
+                    onClick = {
+                        showPicker = true
+                    },
+                    content = {
+                        Icon(
+                            imageVector = Icons.Rounded.CalendarMonth,
+                            contentDescription = stringResource(Res.string.filter_pick_date),
+                        )
+                    },
+                )
             },
-            modifier = Modifier.fillMaxWidth(),
         )
     }
 

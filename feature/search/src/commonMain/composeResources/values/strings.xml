@@ -64,4 +64,5 @@
     <string name="filter_select_people">People</string>
     <string name="filter_pick_date">Pick date</string>
     <string name="filter_clear_date">Clear date</string>
+    <string name="filter_date_prompt">Tap Icon to edit</string>
 </resources>
