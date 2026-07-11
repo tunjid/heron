@@ -65,6 +65,8 @@ import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import dev.zacsweers.metro.Inject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -130,15 +132,12 @@ sealed class SearchQuery : CursorQuery {
         @Serializable
         enum class From { Anyone, Following }
 
-        /**
-         * One "include/exclude these people" row in the filter sheet, mapping to the
-         * `authors`/`excludeAuthors`/`mentions`/`excludeMentions` params.
-         */
         @Serializable
-        data class PersonGroup(
+        data class PersonGroup @OptIn(ExperimentalUuidApi::class) constructor(
             val mode: Mode = Mode.Include,
             val kind: Kind = Kind.Authors,
             val profileIds: List<ProfileId> = emptyList(),
+            val id: String = Uuid.random().toString(),
         ) {
             @Serializable
             enum class Mode { Include, Exclude }

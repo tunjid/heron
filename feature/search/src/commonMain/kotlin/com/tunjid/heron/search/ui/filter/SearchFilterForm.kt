@@ -27,13 +27,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -152,173 +150,195 @@ internal fun SearchFilterForm(
             onApply = onApply,
         )
         HorizontalDivider()
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            LabeledTextField(
-                label = stringResource(Res.string.filter_all_words),
-                value = queryText,
-                onValueChange = onQueryTextChanged,
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+            item(key = AllWordsKey) {
                 LabeledTextField(
                     modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_none_words),
-                    value = filter.noneOfWords.orEmpty(),
-                    placeholder = stringResource(Res.string.filter_none_words_hint),
-                    onValueChange = {
-                        onFilterChanged(filter.copy(noneOfWords = it.ifBlank { null }))
-                    },
-                )
-                LabeledTextField(
-                    modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_exact_phrase),
-                    value = filter.exactPhrase.orEmpty(),
-                    placeholder = stringResource(Res.string.filter_exact_phrase_hint),
-                    onValueChange = {
-                        onFilterChanged(filter.copy(exactPhrase = it.ifBlank { null }))
-                    },
+                        .animateItem(),
+                    label = stringResource(Res.string.filter_all_words),
+                    value = queryText,
+                    onValueChange = onQueryTextChanged,
                 )
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                DateField(
+            item(key = NoneAndPhraseKey) {
+                Row(
                     modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_since),
-                    date = filter.since,
-                    onDateChanged = { onFilterChanged(filter.copy(since = it)) },
-                )
-                DateField(
-                    modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_until),
-                    date = filter.until,
-                    onDateChanged = { onFilterChanged(filter.copy(until = it)) },
-                )
+                        .animateItem()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    LabeledTextField(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_none_words),
+                        value = filter.noneOfWords.orEmpty(),
+                        placeholder = stringResource(Res.string.filter_none_words_hint),
+                        onValueChange = {
+                            onFilterChanged(filter.copy(noneOfWords = it.ifBlank { null }))
+                        },
+                    )
+                    LabeledTextField(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_exact_phrase),
+                        value = filter.exactPhrase.orEmpty(),
+                        placeholder = stringResource(Res.string.filter_exact_phrase_hint),
+                        onValueChange = {
+                            onFilterChanged(filter.copy(exactPhrase = it.ifBlank { null }))
+                        },
+                    )
+                }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                LanguageDropdown(
+            item(key = DateRangeKey) {
+                Row(
                     modifier = Modifier
-                        .weight(1f),
-                    language = filter.language,
-                    onLanguageChanged = { onFilterChanged(filter.copy(language = it)) },
-                )
-                EnumDropdown(
-                    modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_media),
-                    options = SearchQuery.Filter.Media.entries,
-                    selected = filter.media,
-                    optionLabel = { stringResource(it.labelRes) },
-                    onSelected = { onFilterChanged(filter.copy(media = it)) },
-                )
+                        .animateItem()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    DateField(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_since),
+                        date = filter.since,
+                        onDateChanged = { onFilterChanged(filter.copy(since = it)) },
+                    )
+                    DateField(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_until),
+                        date = filter.until,
+                        onDateChanged = { onFilterChanged(filter.copy(until = it)) },
+                    )
+                }
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                EnumDropdown(
+            item(key = LanguageMediaKey) {
+                Row(
                     modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_include),
-                    options = SearchQuery.Filter.Replies.entries,
-                    selected = filter.replies,
-                    optionLabel = { stringResource(it.labelRes) },
-                    onSelected = { onFilterChanged(filter.copy(replies = it)) },
-                )
-                EnumDropdown(
+                        .animateItem()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    LanguageDropdown(
+                        modifier = Modifier
+                            .weight(1f),
+                        language = filter.language,
+                        onLanguageChanged = { onFilterChanged(filter.copy(language = it)) },
+                    )
+                    EnumDropdown(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_media),
+                        options = SearchQuery.Filter.Media.entries,
+                        selected = filter.media,
+                        optionLabel = { stringResource(it.labelRes) },
+                        onSelected = { onFilterChanged(filter.copy(media = it)) },
+                    )
+                }
+            }
+            item(key = IncludeFromKey) {
+                Row(
                     modifier = Modifier
-                        .weight(1f),
-                    label = stringResource(Res.string.filter_from),
-                    options = SearchQuery.Filter.From.entries,
-                    selected = filter.from,
-                    optionLabel = { stringResource(it.labelRes) },
-                    onSelected = { onFilterChanged(filter.copy(from = it)) },
-                )
+                        .animateItem()
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    EnumDropdown(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_include),
+                        options = SearchQuery.Filter.Replies.entries,
+                        selected = filter.replies,
+                        optionLabel = { stringResource(it.labelRes) },
+                        onSelected = { onFilterChanged(filter.copy(replies = it)) },
+                    )
+                    EnumDropdown(
+                        modifier = Modifier
+                            .weight(1f),
+                        label = stringResource(Res.string.filter_from),
+                        options = SearchQuery.Filter.From.entries,
+                        selected = filter.from,
+                        optionLabel = { stringResource(it.labelRes) },
+                        onSelected = { onFilterChanged(filter.copy(from = it)) },
+                    )
+                }
             }
 
             filter.people.forEachIndexed { index, group ->
-                PersonGroupCard(
-                    group = group,
-                    resolveHandle = { profileId ->
-                        profilePicker.cachedProfiles
-                            .firstOrNull { it.did == profileId }
-                            ?.handle
-                            ?.id
-                            ?: profileId.id
-                    },
-                    onModeChanged = { mode ->
+                item(key = group.id) {
+                    PersonGroupCard(
+                        modifier = Modifier
+                            .animateItem(),
+                        group = group,
+                        resolveHandle = { profileId ->
+                            profilePicker.cachedProfiles
+                                .firstOrNull { it.did == profileId }
+                                ?.handle
+                                ?.id
+                                ?: profileId.id
+                        },
+                        onModeChanged = { mode ->
+                            onFilterChanged(
+                                filter.copy(people = filter.people.updatedAt(index) { it.copy(mode = mode) }),
+                            )
+                        },
+                        onKindChanged = { kind ->
+                            onFilterChanged(
+                                filter.copy(people = filter.people.updatedAt(index) { it.copy(kind = kind) }),
+                            )
+                        },
+                        onAddPeople = {
+                            editingGroupIndex = index
+                            profilePicker.show(title = peopleTitle)
+                        },
+                        onRemovePerson = { profileId ->
+                            onFilterChanged(
+                                filter.copy(
+                                    people = filter.people.updatedAt(index) {
+                                        it.copy(profileIds = it.profileIds - profileId)
+                                    },
+                                ),
+                            )
+                        },
+                        onRemoveGroup = {
+                            onFilterChanged(
+                                filter.copy(
+                                    people = filter.people.filterIndexed { i, _ -> i != index },
+                                ),
+                            )
+                        },
+                    )
+                }
+            }
+            item(key = AddPeopleFilterKey) {
+                FilledTonalButton(
+                    onClick = {
                         onFilterChanged(
-                            filter.copy(people = filter.people.updatedAt(index) { it.copy(mode = mode) }),
+                            filter.copy(people = filter.people + SearchQuery.Filter.PersonGroup()),
                         )
                     },
-                    onKindChanged = { kind ->
-                        onFilterChanged(
-                            filter.copy(people = filter.people.updatedAt(index) { it.copy(kind = kind) }),
-                        )
-                    },
-                    onAddPeople = {
-                        editingGroupIndex = index
-                        profilePicker.show(title = peopleTitle)
-                    },
-                    onRemovePerson = { profileId ->
-                        onFilterChanged(
-                            filter.copy(
-                                people = filter.people.updatedAt(index) {
-                                    it.copy(profileIds = it.profileIds - profileId)
-                                },
-                            ),
-                        )
-                    },
-                    onRemoveGroup = {
-                        onFilterChanged(
-                            filter.copy(
-                                people = filter.people.filterIndexed { i, _ -> i != index },
-                            ),
-                        )
-                    },
+                    modifier = Modifier
+                        .animateItem()
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                ) {
+                    Text(text = stringResource(Res.string.filter_add_people_filter))
+                }
+            }
+            item(key = BottomSpacerKey) {
+                Spacer(
+                    modifier = Modifier
+                        .height(8.dp)
+                        .navigationBarsPadding()
+                        .imePadding(),
                 )
             }
-
-            FilledTonalButton(
-                onClick = {
-                    onFilterChanged(
-                        filter.copy(people = filter.people + SearchQuery.Filter.PersonGroup()),
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Text(text = stringResource(Res.string.filter_add_people_filter))
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .height(8.dp)
-                    .navigationBarsPadding()
-                    .imePadding(),
-            )
         }
     }
 }
@@ -447,6 +467,7 @@ private fun DateField(
 
 @Composable
 private fun PersonGroupCard(
+    modifier: Modifier = Modifier,
     group: SearchQuery.Filter.PersonGroup,
     resolveHandle: (ProfileId) -> String,
     onModeChanged: (SearchQuery.Filter.PersonGroup.Mode) -> Unit,
@@ -456,7 +477,8 @@ private fun PersonGroupCard(
     onRemoveGroup: () -> Unit,
 ) {
     OutlinedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier
@@ -687,3 +709,11 @@ private val SearchLanguages: List<SearchLanguage> = listOf(
     SearchLanguage("tr", "Turkish"),
     SearchLanguage("uk", "Ukrainian"),
 )
+
+private const val AllWordsKey = "com.tunjid.heron.search.filter.all_words"
+private const val NoneAndPhraseKey = "com.tunjid.heron.search.filter.none_and_phrase"
+private const val DateRangeKey = "com.tunjid.heron.search.filter.date_range"
+private const val LanguageMediaKey = "com.tunjid.heron.search.filter.language_media"
+private const val IncludeFromKey = "com.tunjid.heron.search.filter.include_from"
+private const val AddPeopleFilterKey = "com.tunjid.heron.search.filter.add_people_filter"
+private const val BottomSpacerKey = "com.tunjid.heron.search.filter.bottom_spacer"
