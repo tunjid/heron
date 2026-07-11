@@ -18,6 +18,8 @@ package com.tunjid.heron.search.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +40,8 @@ import com.tunjid.heron.search.SearchViewModelInitializer
 import com.tunjid.heron.search.isQueryEditable
 import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.profileHandle
+import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -76,6 +80,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.search.generated.resources.Res
+import heron.feature.search.generated.resources.filters_content_description
 import heron.feature.search.generated.resources.hint_general_search
 import heron.feature.search.generated.resources.hint_profile_post_search
 import org.jetbrains.compose.resources.stringResource
@@ -175,6 +180,20 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
+    val searchFilterSheetState = paneScaffoldState.rememberUpdatedSearchFilterSheetState(
+        queryText = state.searchBarText,
+        filter = state.draftFilter,
+        onQueryTextChanged = { query ->
+            stateHolder.accept(Action.Search.OnSearchQueryChanged(query))
+        },
+        onFilterChanged = { filter ->
+            stateHolder.accept(Action.Filter.Edit(filter))
+        },
+        onApply = {
+            stateHolder.accept(Action.Filter.Apply)
+        },
+    )
+
     val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -234,6 +253,15 @@ internal fun Route(
                         },
                     )
                 },
+                actions = {
+                    SearchFilterAction(
+                        isActive = state.appliedFilter != null,
+                        onClick = {
+                            stateHolder.accept(Action.Filter.Begin)
+                            searchFilterSheetState.show()
+                        },
+                    )
+                },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onSignedInProfileClicked = { profile, sharedElementKey ->
                     stateHolder.accept(
@@ -270,6 +298,15 @@ internal fun Route(
                     else Text(
                         text = searchHint,
                         style = MaterialTheme.typography.titleSmallEmphasized,
+                    )
+                },
+                actions = {
+                    SearchFilterAction(
+                        isActive = state.appliedFilter != null,
+                        onClick = {
+                            stateHolder.accept(Action.Filter.Begin)
+                            searchFilterSheetState.show()
+                        },
                     )
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
@@ -309,5 +346,21 @@ internal fun Route(
                 actions = stateHolder.accept,
             )
         },
+    )
+}
+
+@Composable
+private fun SearchFilterAction(
+    isActive: Boolean,
+    onClick: () -> Unit,
+) {
+    AppBarIconButton(
+        icon = Icons.Rounded.Tune,
+        iconDescription = stringResource(Res.string.filters_content_description),
+        tint = when {
+            isActive -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        onClick = onClick,
     )
 }
