@@ -107,10 +107,6 @@ class ActualGrazeEditorViewModel(
                             is Action.Navigate -> action.flow.collect {
                                 navActions(it.navigationMutation)
                             }
-                            is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                                state = state,
-                                searchRepository = searchRepository,
-                            )
                             is Action.Update -> action.flow.launchUpdateMutations(
                                 state = state,
                                 recordRepository = recordRepository,
@@ -139,28 +135,6 @@ private fun Flow<Action>.withInitialLoad(
 ) = onStart {
     route.initialLoad?.let { emit(it) }
 }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SearchProfiles>.launchSearchMutations(
-    state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
-) = debounce(SEARCH_DEBOUNCE_MILLIS)
-    .launchedCollectLatest { action ->
-        searchRepository.autoCompleteProfileSearch(
-            query = SearchQuery.OfProfiles(
-                query = action.query,
-                isLocalOnly = false,
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = Clock.System.now(),
-                    limit = MAX_SUGGESTED_PROFILES.toLong(),
-                ),
-            ),
-            cursor = Cursor.Initial,
-        ).collect { profiles ->
-            state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
-        }
-    }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Update>.launchUpdateMutations(
@@ -229,11 +203,9 @@ private fun Flow<Action.EditorNavigation>.launchEditorNavigationMutations(
 ) = launchedCollect { action ->
     when (action) {
         is Action.EditorNavigation.EnterFilter -> {
-            state.suggestedProfiles = emptyList()
-            state.currentPath = state.currentPath + action.index
+            state.currentPath += action.index
         }
         Action.EditorNavigation.ExitFilter -> {
-            state.suggestedProfiles = emptyList()
             if (state.currentPath.isNotEmpty()) {
                 state.currentPath = state.currentPath.dropLast(1)
             }
@@ -272,7 +244,6 @@ private fun Flow<Action.EditFilter>.launchEditFilterMutations(
             }
         }
     }
-    state.suggestedProfiles = emptyList()
     state.grazeFeed = when (val currentFeed = state.grazeFeed) {
         is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
         is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
@@ -339,6 +310,3 @@ private fun Action.Update.toErrorMessage(throwable: Throwable): Memo.Resource {
     }
     return Memo.Resource(stringResource = stringResource, args = listOf(message))
 }
-
-private const val SEARCH_DEBOUNCE_MILLIS = 300L
-const val MAX_SUGGESTED_PROFILES = 5
