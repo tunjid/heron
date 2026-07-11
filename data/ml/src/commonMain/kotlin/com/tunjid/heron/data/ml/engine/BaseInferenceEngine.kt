@@ -18,8 +18,12 @@ package com.tunjid.heron.data.ml.engine
 
 import com.tunjid.heron.data.ml.model.LoadedModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -50,7 +54,7 @@ internal abstract class BaseInferenceEngine : InferenceEngine {
         state.value = EngineState.Loading(model)
         try {
             onLoad(model)
-            state.value = EngineState.Ready(model)
+            state.value = EngineState.Ready.Idle(model)
         } catch (cancellation: CancellationException) {
             // A cancelled load leaves nothing loaded; don't strand [state] at Loading.
             state.value = EngineState.Uninitialized
@@ -74,6 +78,21 @@ internal abstract class BaseInferenceEngine : InferenceEngine {
     }
 
     /**
+     * Wraps the platform [onGenerate] to reflect activity in [state]: [EngineState.Ready.Streaming]
+     * while tokens flow, back to [EngineState.Ready.Idle] when the stream ends for any reason
+     * (completion, error, or cancellation). Lets consumers tell an in-use engine from an idle one.
+     */
+    final override fun generate(
+        prompt: String,
+        params: GenerationParams,
+    ): Flow<String> = onGenerate(
+        prompt = prompt,
+        params = params,
+    )
+        .onStart { markStreaming() }
+        .onCompletion { markIdle() }
+
+    /**
      * Loads [model] into the platform engine, replacing any previously loaded model and
      * throwing on failure. Called under [mutex] with [state] already at [EngineState.Loading];
      * the caller records [EngineState.Ready] / [EngineState.Error] from the outcome.
@@ -82,4 +101,19 @@ internal abstract class BaseInferenceEngine : InferenceEngine {
 
     /** Releases the platform engine, leaving the bridge/runtime reusable. Called under [mutex]. */
     protected abstract suspend fun onReset()
+
+    protected abstract fun onGenerate(
+        prompt: String,
+        params: GenerationParams,
+    ): Flow<String>
+
+    // Flip Ready.Idle <-> Ready.Streaming only; leave a concurrent reset() (Uninitialized) intact
+    // rather than resurrecting a released model.
+    private fun markStreaming() = state.update {
+        if (it is EngineState.Ready) EngineState.Ready.Streaming(it.model) else it
+    }
+
+    private fun markIdle() = state.update {
+        if (it is EngineState.Ready) EngineState.Ready.Idle(it.model) else it
+    }
 }

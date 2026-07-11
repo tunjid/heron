@@ -235,7 +235,7 @@ private fun InferenceEngine.outcomes(
     transform: (String) -> String = { it },
 ): Flow<InferenceOutcome> = flow {
     emit(InferenceOutcome.Loading())
-    if (state.value !is EngineState.Ready) {
+    if (state.first() !is EngineState.Ready) {
         // Opportunistically load the selected default model; prompt the user when there is none.
         val loadedModel = resolveDefaultModel(
             inferenceModelManager = inferenceModelManager,
@@ -248,7 +248,7 @@ private fun InferenceEngine.outcomes(
         // Loading an already loaded model is idempotent across engine implementations.
         load(loadedModel)
     }
-    if (state.value !is EngineState.Ready) {
+    if (state.first() !is EngineState.Ready) {
         emit(
             InferenceOutcome.Error(
                 memo = Memo.Resource(Res.string.inference_error_model_not_loaded),

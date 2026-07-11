@@ -23,6 +23,7 @@ import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
+import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
@@ -64,6 +65,7 @@ fun createAppState(context: Context): AppState =
                 databaseBuilder = getDatabaseBuilder(context),
                 inferenceEngine = createInferenceEngine(Dispatchers.IO),
                 languageDetector = createLanguageDetector(context, Dispatchers.IO),
+                memoryMonitor = createMemoryMonitor(context),
                 backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
                     createBackgroundTaskScheduler(context, taskStore, httpClient, fileManager)
                 },

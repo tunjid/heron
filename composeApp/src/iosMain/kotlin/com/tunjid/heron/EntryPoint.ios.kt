@@ -27,6 +27,7 @@ import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.ml.engine.IosInferenceBridge
 import com.tunjid.heron.data.ml.engine.createInferenceEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
+import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
@@ -81,6 +82,7 @@ fun createAppState(
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = inferenceEngine,
                 languageDetector = createLanguageDetector(Dispatchers.IO),
+                memoryMonitor = createMemoryMonitor(),
                 backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
                     NoOpBackgroundTaskScheduler(taskStore, httpClient, fileManager)
                 },

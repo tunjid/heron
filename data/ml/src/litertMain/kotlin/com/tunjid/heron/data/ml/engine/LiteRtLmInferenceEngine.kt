@@ -71,7 +71,7 @@ internal class LiteRtLmInferenceEngine(
         engine = null
     }
 
-    override fun generate(
+    override fun onGenerate(
         prompt: String,
         params: GenerationParams,
     ): Flow<String> = callbackFlow {

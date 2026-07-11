@@ -22,6 +22,7 @@ import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
+import com.tunjid.heron.data.platform.MemoryMonitor
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -68,11 +69,15 @@ class ActualInferenceViewModel(
         inferenceEngine: InferenceEngine,
         inferenceModelManager: InferenceModelManager,
         userDataRepository: UserDataRepository,
+        memoryMonitor: MemoryMonitor,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
     ) : this(
         mutator = scope.actionSuspendingStateMutator(
-            state = State(inferenceModelManager.models).toSnapshotMutable(),
+            state = State(
+                models = inferenceModelManager.models,
+                platformMemoryBytes = memoryMonitor.totalMemoryBytes,
+            ).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
                 launchEngineStatesMutations(
@@ -82,6 +87,7 @@ class ActualInferenceViewModel(
                 launchModelStatusMutations(
                     state = state,
                     inferenceModelManager = inferenceModelManager,
+                    platformMemoryBytes = memoryMonitor.totalMemoryBytes,
                 )
                 launchPreferenceMutations(
                     state = state,
@@ -136,6 +142,7 @@ context(productionScope: CoroutineScope)
 private fun launchModelStatusMutations(
     state: State.SnapshotMutable,
     inferenceModelManager: InferenceModelManager,
+    platformMemoryBytes: Long,
 ) {
     val models = inferenceModelManager.models
     if (models.isEmpty()) return
@@ -145,6 +152,7 @@ private fun launchModelStatusMutations(
                 ModelItem(
                     model = model,
                     status = status,
+                    platformMemoryBytes = platformMemoryBytes,
                 )
             }
         },
@@ -189,7 +197,7 @@ private fun Flow<Action.Delete>.launchDeleteMutations(
     val model = action.model
     // Release the engine before deleting the file it holds open (onReset closes the native handle);
     // on desktop an in-use file can otherwise resist deletion.
-    if (inferenceEngine.state.value.loadedModel?.model?.name == model.name) {
+    if (inferenceEngine.state.first().loadedModel?.model?.name == model.name) {
         inferenceEngine.reset()
     }
     // Clear the default if it points at the model being removed, so nothing dangles.
