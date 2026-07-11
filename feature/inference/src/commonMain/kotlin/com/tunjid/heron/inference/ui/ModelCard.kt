@@ -100,8 +100,6 @@ internal fun ModelCard(
     engineState: EngineState?,
     item: ModelItem,
     downloadEnabled: Boolean = true,
-    // Injectable so previews can force the low-memory state; production reads real device RAM.
-    deviceMemoryBytes: Long = rememberPlatformMemoryBytes(),
     onLoad: (LoadedModel) -> Unit,
     onDownload: () -> Unit,
     onCancel: () -> Unit,
@@ -111,7 +109,7 @@ internal fun ModelCard(
     val deleteDialogState = rememberSimpleDialogState()
     // A positive reading below the model's minimum means the device is undersized; 0 is "unknown",
     // so no warning is shown rather than a false alarm.
-    val memoryLow = deviceMemoryBytes in 1 until item.model.minDeviceMemoryInGb * BYTES_IN_GB
+    val memoryLow = item.platformMemoryBytes in 1 until item.model.minDeviceMemoryInGb * BYTES_IN_GB
     ElevatedCard(
         modifier = modifier,
     ) {
@@ -164,7 +162,7 @@ internal fun ModelCard(
                 )
             }
             if (memoryLow) MemoryWarning(
-                deviceMemoryBytes = deviceMemoryBytes,
+                deviceMemoryBytes = item.platformMemoryBytes,
             )
             TermsOfUseDialog(
                 state = termsDialogState,

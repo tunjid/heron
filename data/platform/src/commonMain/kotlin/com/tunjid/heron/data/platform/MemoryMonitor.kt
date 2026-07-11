@@ -14,17 +14,19 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.inference.ui
+package com.tunjid.heron.data.platform
 
-import androidx.compose.runtime.Composable
+import kotlinx.coroutines.flow.Flow
 
-/**
- * The device's total physical memory in bytes, or `0` if it can't be determined.
- *
- * Used to warn before loading an [com.tunjid.heron.data.ml.model.InferenceModel] whose
- * [com.tunjid.heron.data.ml.model.InferenceModel.minDeviceMemoryInGb] exceeds what the device
- * can comfortably hold. Reads total RAM rather than currently-available RAM: the model outlives
- * any momentary free-memory reading, so the ceiling that matters is the hardware's.
- */
-@Composable
-internal expect fun rememberPlatformMemoryBytes(): Long
+enum class MemoryPressure {
+    Normal,
+    Elevated,
+    Critical,
+}
+
+interface MemoryMonitor {
+    /** Total physical RAM in bytes; constant for the device, `0` if it can't be determined. */
+    val totalMemoryBytes: Long
+
+    val pressure: Flow<MemoryPressure>
+}

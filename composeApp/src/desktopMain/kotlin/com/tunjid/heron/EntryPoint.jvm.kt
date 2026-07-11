@@ -31,6 +31,7 @@ import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.platform.JVMPlatform
 import com.tunjid.heron.data.platform.JvmVariant
 import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
@@ -86,8 +87,13 @@ fun createAppState(): AppState =
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
-                inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                inferenceEngine = createInferenceEngine(
+                    ioDispatcher = Dispatchers.IO,
+                ),
                 languageDetector = createLanguageDetector(),
+                memoryMonitor = createMemoryMonitor(
+                    ioDispatcher = Dispatchers.IO,
+                ),
                 backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
                     createBackgroundTaskScheduler(
                         scope = appMainScope,

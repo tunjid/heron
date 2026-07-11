@@ -99,10 +99,10 @@ internal fun ModelCardMemoryWarningPreview() {
                 engineState = null,
                 item = ModelItem(
                     model = InferenceModel.Gemma4E4B,
+                    // A 4 GB reading sits below the E4B model's 12 GB minimum, so the low-memory
+                    // warning renders regardless of the host machine's real RAM.
+                    platformMemoryBytes = 4L * 1024 * 1024 * 1024,
                 ),
-                // A 4 GB reading sits below the E4B model's 12 GB minimum, so the low-memory
-                // warning renders regardless of how much RAM the machine running the preview has.
-                deviceMemoryBytes = 4L * 1024 * 1024 * 1024,
                 onLoad = {},
                 onDownload = {},
                 onCancel = {},

@@ -8,6 +8,8 @@ import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.ModelStatus
 import com.tunjid.heron.data.network.NetworkMonitor
+import com.tunjid.heron.data.platform.MemoryMonitor
+import com.tunjid.heron.data.platform.MemoryPressure
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.DatabaseCleanup
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -49,6 +52,7 @@ class AppIdentityStateHolder(
     databaseCleanup: DatabaseCleanup,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
+    memoryMonitor: MemoryMonitor,
 ) : IdentityStateHolder,
     ActionSuspendingStateMutator<IdentityAction, IdentityState> by appMainScope.actionSuspendingStateMutator(
         state = IdentityState.Immutable().toSnapshotMutable(),
@@ -84,6 +88,10 @@ class AppIdentityStateHolder(
                 userDataRepository = userDataRepository,
                 inferenceEngine = inferenceEngine,
                 inferenceModelManager = inferenceModelManager,
+            )
+            launchMemoryPressureResetMutations(
+                memoryMonitor = memoryMonitor,
+                inferenceEngine = inferenceEngine,
             )
             actions.launchMutationsIn(
                 productionScope = this,
@@ -171,10 +179,26 @@ private fun launchDefaultModelMutations(
             ?: return@launch
         when (val status = inferenceModelManager.status(model).first()) {
             is ModelStatus.Downloaded ->
-                if (inferenceEngine.state.value is EngineState.Uninitialized) {
+                if (inferenceEngine.state.first() is EngineState.Uninitialized) {
                     inferenceEngine.load(status.loadedModel)
                 }
             is ModelStatus.Pending -> Unit
         }
     }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchMemoryPressureResetMutations(
+    memoryMonitor: MemoryMonitor,
+    inferenceEngine: InferenceEngine,
+) {
+    memoryMonitor.pressure
+        .filter { it != MemoryPressure.Normal }
+        .launchedCollect {
+            // Under real memory pressure, shed a loaded-but-idle model to reclaim its footprint;
+            // never interrupt an in-flight generation. It lazily reloads on the next request.
+            if (inferenceEngine.state.first() is EngineState.Ready.Idle) {
+                inferenceEngine.reset()
+            }
+        }
 }
