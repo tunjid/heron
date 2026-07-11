@@ -19,12 +19,16 @@ package com.tunjid.heron.data.platform
 import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 
-internal class JvmMemoryMonitor : MemoryMonitor {
+internal class JvmMemoryMonitor(
+    ioDispatcher: CoroutineDispatcher,
+) : MemoryMonitor {
 
     private val osBean: OperatingSystemMXBean? =
         ManagementFactory.getOperatingSystemMXBean() as? OperatingSystemMXBean
@@ -49,7 +53,13 @@ internal class JvmMemoryMonitor : MemoryMonitor {
             )
             delay(3.seconds)
         }
-    }.distinctUntilChanged()
+    }
+        .flowOn(kotlinx.coroutines.Dispatchers.IO)
+        .distinctUntilChanged()
 }
 
-fun createMemoryMonitor(): MemoryMonitor = JvmMemoryMonitor()
+fun createMemoryMonitor(
+    ioDispatcher: CoroutineDispatcher,
+): MemoryMonitor = JvmMemoryMonitor(
+    ioDispatcher = ioDispatcher,
+)

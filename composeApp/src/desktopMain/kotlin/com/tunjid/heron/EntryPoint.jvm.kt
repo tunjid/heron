@@ -87,9 +87,13 @@ fun createAppState(): AppState =
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
-                inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                inferenceEngine = createInferenceEngine(
+                    ioDispatcher = Dispatchers.IO,
+                ),
                 languageDetector = createLanguageDetector(),
-                memoryMonitor = createMemoryMonitor(),
+                memoryMonitor = createMemoryMonitor(
+                    ioDispatcher = Dispatchers.IO,
+                ),
                 backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
                     createBackgroundTaskScheduler(
                         scope = appMainScope,
