@@ -18,11 +18,9 @@ package com.tunjid.heron.list
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
@@ -30,7 +28,6 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
@@ -52,7 +49,6 @@ import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.isNoOp
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
-import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -62,7 +58,6 @@ import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -139,7 +134,9 @@ class ActualListViewModel(
                             state = state,
                             writeQueue = writeQueue,
                         )
-                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state,
+                        )
 
                         is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
                             state = state,
@@ -167,10 +164,6 @@ class ActualListViewModel(
                         is Action.AddListMember -> action.flow.launchAddListMemberMutations(
                             state = state,
                             writeQueue = writeQueue,
-                        )
-                        is Action.SearchProfiles -> action.flow.launchSearchMutations(
-                            state = state,
-                            searchRepository = searchRepository,
                         )
                         is Action.CurrentPageChanged -> action.flow.collect { event ->
                             state.isOnProfilesTab =
@@ -392,31 +385,6 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SearchProfiles>.launchSearchMutations(
-    state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
-) = debounce(SEARCH_DEBOUNCE_MILLIS).launchedCollectLatest { action ->
-    if (action.query.isBlank()) {
-        state.suggestedProfiles = emptyList()
-        return@launchedCollectLatest
-    }
-    searchRepository.autoCompleteProfileSearch(
-        query = SearchQuery.OfProfiles(
-            query = action.query,
-            isLocalOnly = false,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = MAX_SUGGESTED_PROFILES.toLong(),
-            ),
-        ),
-        cursor = Cursor.Initial,
-    ).collect { profiles ->
-        state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
-    }
-}
-
-context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { event ->
@@ -532,6 +500,3 @@ internal inline fun <T> Timeline.withListTimelineOrNull(
 ) =
     if (this is Timeline.Home.List) block(this)
     else null
-
-private const val SEARCH_DEBOUNCE_MILLIS = 300L
-private const val MAX_SUGGESTED_PROFILES = 5

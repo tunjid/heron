@@ -278,6 +278,28 @@ fun FilterTextChips(
     onItemsUpdated: (List<String>) -> Unit,
     items: List<String>,
 ) {
+    FilterTextChips(
+        modifier = modifier,
+        buttonStringResource = buttonStringResource,
+        onItemsUpdated = onItemsUpdated,
+        items = items,
+        itemToString = { it },
+        onEditClicked = selectTextSheetState::show,
+        onAddClicked = selectTextSheetState::show,
+    )
+}
+
+@Composable
+fun <T> FilterTextChips(
+    modifier: Modifier = Modifier,
+    buttonStringResource: StringResource = Res.string.add_item,
+    onItemsUpdated: (List<T>) -> Unit,
+    items: List<T>,
+    itemToString: (T) -> String,
+    itemToDisplayText: (T) -> String = itemToString,
+    onEditClicked: (T) -> Unit,
+    onAddClicked: () -> Unit,
+) {
     LookaheadScope {
         FlowRow(
             modifier = modifier,
@@ -285,27 +307,32 @@ fun FilterTextChips(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
             content = {
-                items.forEach { text ->
+                items.forEach { item ->
+                    val text = itemToString(item)
                     key(text) {
                         InputChip(
                             modifier = Modifier
                                 .animateBounds(this@LookaheadScope),
                             selected = false,
                             onClick = {
-                                selectTextSheetState.show(currentText = text)
+                                onEditClicked(item)
                             },
                             trailingIcon = {
                                 Icon(
                                     modifier = Modifier
                                         .clickable {
-                                            onItemsUpdated(items.minus(text))
+                                            onItemsUpdated(
+                                                items.filter {
+                                                    itemToString(it) != text
+                                                },
+                                            )
                                         },
                                     imageVector = Icons.Rounded.Cancel,
                                     contentDescription = stringResource(CommonStrings.cancel),
                                 )
                             },
                             label = {
-                                Text(text = text)
+                                Text(text = itemToDisplayText(item))
                             },
                         )
                     }
@@ -313,9 +340,7 @@ fun FilterTextChips(
                 Spacer(Modifier.height(16.dp))
                 key("button") {
                     FilledTonalButton(
-                        onClick = {
-                            selectTextSheetState.show()
-                        },
+                        onClick = onAddClicked,
                         modifier = Modifier
                             .animateBounds(this@LookaheadScope)
                             .fillMaxWidth(),

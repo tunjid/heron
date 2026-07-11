@@ -20,8 +20,6 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
-import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -46,13 +44,8 @@ import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
-import kotlin.collections.List
-import kotlin.collections.emptyList
 import kotlin.collections.filterIsInstance
 import kotlin.collections.firstOrNull
-import kotlin.collections.listOfNotNull
-import kotlin.collections.map
-import kotlin.collections.take
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -139,6 +132,10 @@ val State.timelineState
         .filterIsInstance<ListScreenStateHolders.Timeline>()
         .firstOrNull()
         ?.state
+
+val State.listUri
+    get() = timelineState?.timeline
+        ?.withListTimelineOrNull { it.feedList.uri }
 
 @Stable
 sealed class ListScreenStateHolders {
@@ -242,10 +239,6 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
-
-    data class SearchProfiles(
-        val query: String,
-    ) : Action(key = "SearchProfiles")
 
     data class CurrentPageChanged(
         val currentPage: Int,

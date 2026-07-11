@@ -52,8 +52,6 @@ interface State {
         val sharedElementPrefix: String,
         val isLoading: Boolean = false,
         @Transient
-        val suggestedProfiles: List<Profile> = emptyList(),
-        @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
 
@@ -104,10 +102,6 @@ sealed class Action(val key: String) {
             val index: Int,
         ) : EditFilter()
     }
-
-    data class SearchProfiles(
-        val query: String,
-    ) : Action("SearchProfiles")
 
     sealed class Update : Action("Load") {
 
