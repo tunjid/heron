@@ -54,6 +54,7 @@ import kotlin.reflect.KClass
  */
 fun stubSheetStateHolder(
     type: KClass<*>,
+    additionalSheetStateHolderFactory: ((KClass<*>) -> SheetStateHolder?)? = null,
 ): SheetStateHolder = when (type) {
     ThreadGateStateHolder::class ->
         object :
@@ -103,5 +104,5 @@ fun stubSheetStateHolder(
             ActionSuspendingStateMutator<ProfileSearchAction, ProfileSearchState>
             by ProfileSearchState.Immutable().asNoOpActionSuspendingStateMutator() {}
 
-    else -> error("No stub SheetStateHolder registered for $type")
+    else -> additionalSheetStateHolderFactory?.invoke(type) ?: error("No stub SheetStateHolder registered for $type")
 }
