@@ -143,29 +143,28 @@ private fun Flow<ProfileSearchAction.Seed>.launchSeedMutations(
     state: ProfileSearchState.SnapshotMutable,
     profileRepository: ProfileRepository,
 ) = launchedCollectLatest { action ->
-    state.cachedProfiles = (
-        state.cachedProfiles + action.ids
-            .chunked(SEED_BATCH_SIZE)
-            .flatMap { batch ->
-                coroutineScope {
-                    batch.map { profileId ->
-                        async {
-                            state.cachedProfiles
-                                .firstOrNull { it.did == profileId || it.handle == profileId }
-                                ?: profileRepository.profile(profileId)
-                                    .map<Profile, Profile?> { it }
-                                    .timeout(5.seconds)
-                                    .catch { exception ->
-                                        if (exception is TimeoutCancellationException) emit(null)
-                                        else throw exception
-                                    }
-                                    .firstOrNull()
-                        }
-                    }.awaitAll()
-                }
+    val fetched = action.ids
+        .chunked(SEED_BATCH_SIZE)
+        .flatMap { batch ->
+            coroutineScope {
+                batch.map { profileId ->
+                    async {
+                        state.cachedProfiles
+                            .firstOrNull { it.did == profileId || it.handle == profileId }
+                            ?: profileRepository.profile(profileId)
+                                .map<Profile, Profile?> { it }
+                                .timeout(5.seconds)
+                                .catch { exception ->
+                                    if (exception is TimeoutCancellationException) emit(null)
+                                    else throw exception
+                                }
+                                .firstOrNull()
+                    }
+                }.awaitAll()
             }
-            .filterNotNull()
-        )
+        }
+        .filterNotNull()
+    state.cachedProfiles = (state.cachedProfiles + fetched)
         .distinctBy(Profile::did)
 }
 
@@ -200,7 +199,7 @@ internal sealed class ProfileSearchAction(
     ) : ProfileSearchAction("Seed")
 }
 
-private val SEARCH_DEBOUNCE = 3.milliseconds
+private val SEARCH_DEBOUNCE = 300.milliseconds
 
 const val MAX_SUGGESTED_PROFILES = 5
 const val SEED_BATCH_SIZE = 5
