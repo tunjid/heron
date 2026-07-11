@@ -121,6 +121,25 @@ fun RouteQuery.layoutFor(
     else -> ScreenLayout.GeneralSearchResults
 }
 
+val SearchQuery.Filter?.isMediaSearch: Boolean
+    get() = when (this?.media) {
+        SearchQuery.Filter.Media.WithMedia,
+        SearchQuery.Filter.Media.VideosOnly,
+        -> true
+        SearchQuery.Filter.Media.All,
+        null,
+        -> false
+    }
+
+fun State.presentationOptions(
+    currentPage: Int,
+): List<Timeline.Presentation> {
+    val isMediaSearch = searchStateHolders.getOrNull(currentPage)
+        ?.state is SearchState.OfPosts && appliedFilter.isMediaSearch
+    return if (isMediaSearch) Timeline.Presentation.All
+    else Timeline.Presentation.TextOnly
+}
+
 internal typealias SearchResultStateHolder = ActionSuspendingStateMutator<SearchState.Tile, SearchState>
 
 sealed interface SearchResult {
@@ -191,6 +210,7 @@ interface State {
         val layout: ScreenLayout = ScreenLayout.Suggested,
         val appliedFilter: SearchQuery.Filter? = null,
         val draftFilter: SearchQuery.Filter = SearchQuery.Filter(),
+        val preferredPresentation: Timeline.Presentation = Timeline.Presentation.Text.WithEmbed,
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
         val suggestedProfileCategory: String? = null,
@@ -251,6 +271,10 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
+
+    data class UpdatePresentation(
+        val presentation: Timeline.Presentation,
+    ) : Action(key = "UpdatePresentation")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

@@ -275,6 +275,7 @@ internal fun SearchScreen(
                     )
                 },
                 onDeletePostClicked = { actions(Action.DeleteRecord(it)) },
+                onPresentationSelected = { actions(Action.UpdatePresentation(it)) },
             )
         }
     }

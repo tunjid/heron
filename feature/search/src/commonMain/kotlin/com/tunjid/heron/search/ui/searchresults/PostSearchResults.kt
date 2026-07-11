@@ -18,19 +18,15 @@ package com.tunjid.heron.search.ui.searchresults
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -63,7 +59,6 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
-import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -73,13 +68,13 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 @Composable
 internal fun PostSearchResults(
     state: SearchState.OfPosts,
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
+    presentation: Timeline.Presentation,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
@@ -209,32 +204,35 @@ internal fun PostSearchResults(
         modifier = modifier,
         state = gridState,
         columns = StaggeredGridCells.Adaptive(
-            displayState.cardSize(Timeline.Presentation.Text.WithEmbed),
+            displayState.cardSize(presentation),
         ),
-        verticalItemSpacing = displayState.verticalItemSpacing(Timeline.Presentation.Text.WithEmbed),
+        verticalItemSpacing = displayState.verticalItemSpacing(presentation),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(
-            displayState.horizontalItemSpacing(Timeline.Presentation.Text.WithEmbed),
+            displayState.horizontalItemSpacing(presentation),
         ),
     ) {
         items(
             items = results,
             key = { it.id },
             itemContent = { result ->
-                PostSearchResult(
+                TimelineItem(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(result),
                         )
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
+                    presentationLookaheadScope = paneScaffoldState,
                     now = now,
-                    result = result,
+                    item = result.timelineItem,
                     sharedElementPrefix = state.sharedElementPrefix,
                     showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
                     postActions = postActions,
                 )
             },
@@ -265,48 +263,6 @@ internal fun PostSearchResults(
                         query ?: state.tilingData.currentQuery,
                     ),
                 ),
-            )
-        },
-    )
-}
-
-@Composable
-private fun PostSearchResult(
-    modifier: Modifier = Modifier,
-    paneTransitionScope: PaneTransitionScope,
-    now: Instant,
-    result: SearchResult.OfPost,
-    sharedElementPrefix: String,
-    showEngagementMetrics: Boolean,
-    postActions: PostActions,
-) {
-    ElevatedCard(
-        modifier = modifier,
-        onClick = {
-            postActions.onPostAction(
-                PostAction.OfPost(
-                    post = result.timelineItem.post,
-                    isMainPost = true,
-                    warnedAppliedLabels = result.timelineItem.appliedLabels.warned(),
-                ),
-            )
-        },
-        content = {
-            TimelineItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = 16.dp,
-                        bottom = 8.dp,
-                    ),
-                paneTransitionScope = paneTransitionScope,
-                presentationLookaheadScope = paneTransitionScope,
-                now = now,
-                item = result.timelineItem,
-                sharedElementPrefix = sharedElementPrefix,
-                showEngagementMetrics = showEngagementMetrics,
-                presentation = Timeline.Presentation.Text.WithEmbed,
-                postActions = postActions,
             )
         },
     )

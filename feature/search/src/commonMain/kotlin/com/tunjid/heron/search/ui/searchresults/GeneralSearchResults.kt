@@ -19,10 +19,12 @@ package com.tunjid.heron.search.ui.searchresults
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -39,6 +41,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -67,7 +70,9 @@ import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.State
 import com.tunjid.heron.search.id
 import com.tunjid.heron.search.key
+import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.Tab
@@ -109,6 +114,7 @@ internal fun GeneralSearchResults(
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
+    onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -129,6 +135,7 @@ internal fun GeneralSearchResults(
         )
         Box(
             modifier = Modifier
+                .padding(horizontal = 8.dp)
                 .fillMaxWidth()
                 .zIndex(1f)
                 .offset {
@@ -144,34 +151,57 @@ internal fun GeneralSearchResults(
                     )
                 },
         ) {
-            Tabs(
+            Row(
                 modifier = Modifier
-                    .drawBehind {
-                        val chipHeight = 32.dp.toPx()
-                        drawRoundRect(
-                            color = tabsBackgroundColor,
-                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                            size = size.copy(height = chipHeight),
-                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                        )
-                    }
-                    .wrapContentWidth()
-                    .animateContentSize(),
-                tabsState = rememberTabsState(
-                    tabs = searchTabs(
-                        isSignedIn = state.signedInProfile != null,
-                        query = state.query,
-                    ),
-                    isCollapsed = tabsCollapsed,
-                    selectedTabIndex = pagerState::tabIndex,
-                    onTabSelected = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(it)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Tabs(
+                    modifier = Modifier
+                        .drawBehind {
+                            val chipHeight = 32.dp.toPx()
+                            drawRoundRect(
+                                color = tabsBackgroundColor,
+                                topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                                size = size.copy(height = chipHeight),
+                                cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                            )
                         }
-                    },
-                    onTabReselected = { },
-                ),
-            )
+                        .weight(1f)
+                        .animateContentSize(),
+                    tabsState = rememberTabsState(
+                        tabs = searchTabs(
+                            isSignedIn = state.signedInProfile != null,
+                            query = state.query,
+                        ),
+                        isCollapsed = tabsCollapsed,
+                        selectedTabIndex = pagerState::tabIndex,
+                        onTabSelected = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(it)
+                            }
+                        },
+                        onTabReselected = { },
+                    ),
+                )
+                val availablePresentations = state.presentationOptions(pagerState.currentPage)
+                TimelinePresentationSelector(
+                    selected = state.preferredPresentation,
+                    available = availablePresentations,
+                    onPresentationSelected = onPresentationSelected,
+                )
+                LaunchedEffect(
+                    availablePresentations,
+                    onPresentationSelected,
+                ) {
+                    val onlyTextAvailable = availablePresentations.all { it is Timeline.Presentation.Text }
+                    val notCurrentlyText = state.preferredPresentation !is Timeline.Presentation.Text
+                    if (onlyTextAvailable && notCurrentlyText) onPresentationSelected(
+                        Timeline.Presentation.Text.WithEmbed,
+                    )
+                }
+            }
         }
         HorizontalPager(
             modifier = Modifier
@@ -199,6 +229,7 @@ internal fun GeneralSearchResults(
                             state = searchResultState,
                             gridState = gridState,
                             modifier = modifier,
+                            presentation = state.preferredPresentation,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             videoStates = videoStates,
