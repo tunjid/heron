@@ -186,21 +186,18 @@ internal fun GeneralSearchResults(
                     ),
                 )
                 val availablePresentations = state.presentationOptions(pagerState.currentPage)
+                val resolvedPresentation = remember(
+                    state.preferredPresentation,
+                    availablePresentations,
+                ) {
+                    if (state.preferredPresentation in availablePresentations) state.preferredPresentation
+                    else Timeline.Presentation.Text.WithEmbed
+                }
                 TimelinePresentationSelector(
-                    selected = state.preferredPresentation,
+                    selected = resolvedPresentation,
                     available = availablePresentations,
                     onPresentationSelected = onPresentationSelected,
                 )
-                LaunchedEffect(
-                    availablePresentations,
-                    onPresentationSelected,
-                ) {
-                    val onlyTextAvailable = availablePresentations.all { it is Timeline.Presentation.Text }
-                    val notCurrentlyText = state.preferredPresentation !is Timeline.Presentation.Text
-                    if (onlyTextAvailable && notCurrentlyText) onPresentationSelected(
-                        Timeline.Presentation.Text.WithEmbed,
-                    )
-                }
             }
         }
         HorizontalPager(
