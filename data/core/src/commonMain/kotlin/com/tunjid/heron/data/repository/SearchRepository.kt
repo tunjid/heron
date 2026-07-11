@@ -23,8 +23,8 @@ import app.bsky.actor.SearchActorsResponse
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
 import app.bsky.feed.GetSuggestedFeedsResponse
-import app.bsky.feed.SearchPostsQueryParams
-import app.bsky.feed.SearchPostsSort
+import app.bsky.feed.SearchPostsV2QueryParams
+import app.bsky.feed.SearchPostsV2Sort
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
@@ -73,7 +74,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import sh.christian.ozone.api.AtIdentifier
+import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Language
 
 @Serializable
 sealed class SearchQuery : CursorQuery {
@@ -83,17 +88,64 @@ sealed class SearchQuery : CursorQuery {
 
     @Serializable
     sealed class OfPosts : SearchQuery() {
+        abstract val filter: Filter?
+
         data class Top(
             override val query: String,
             override val isLocalOnly: Boolean,
             override val data: CursorQuery.Data,
+            override val filter: Filter? = null,
         ) : OfPosts()
 
         data class Latest(
             override val query: String,
             override val isLocalOnly: Boolean,
             override val data: CursorQuery.Data,
+            override val filter: Filter? = null,
         ) : OfPosts()
+    }
+
+    /**
+     * Advanced filters for [OfPosts] searches, mapped onto `app.bsky.feed.searchPostsV2`
+     * query parameters. All members are optional; an empty [Filter] adds no constraints.
+     */
+    @Serializable
+    data class Filter(
+        val exactPhrase: String? = null,
+        val noneOfWords: String? = null,
+        val since: LocalDate? = null,
+        val until: LocalDate? = null,
+        val language: String? = null,
+        val media: Media = Media.All,
+        val replies: Replies = Replies.PostsAndReplies,
+        val from: From = From.Anyone,
+        val people: List<PersonGroup> = emptyList(),
+    ) {
+        @Serializable
+        enum class Media { All, WithMedia, VideosOnly }
+
+        @Serializable
+        enum class Replies { PostsAndReplies, PostsOnly, RepliesOnly }
+
+        @Serializable
+        enum class From { Anyone, Following }
+
+        /**
+         * One "include/exclude these people" row in the filter sheet, mapping to the
+         * `authors`/`excludeAuthors`/`mentions`/`excludeMentions` params.
+         */
+        @Serializable
+        data class PersonGroup(
+            val mode: Mode = Mode.Include,
+            val kind: Kind = Kind.Authors,
+            val profileIds: List<ProfileId> = emptyList(),
+        ) {
+            @Serializable
+            enum class Mode { Include, Exclude }
+
+            @Serializable
+            enum class Kind { Authors, Mentions }
+        }
     }
 
     @Serializable
@@ -161,19 +213,13 @@ internal class OfflineSearchRepository(
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
+            if (!query.hasSearchCriteria) return@singleSessionFlow emptyFlow()
             if (!cursor.canRequestData) return@singleSessionFlow emptyFlow()
 
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                searchPosts(
-                    params = SearchPostsQueryParams(
-                        q = query.query,
-                        limit = query.data.limit,
-                        sort = when (query) {
-                            is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
-                            is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
-                        },
-                        cursor = cursor.value,
+                searchPostsV2(
+                    params = query.toSearchPostsV2Params(
+                        cursor = cursor,
                     ),
                 )
             }
@@ -464,3 +510,98 @@ private fun TrendView.trend() = Trend(
     category = category,
     actors = actors.map(ProfileViewBasic::profile),
 )
+
+private val SearchQuery.OfPosts.hasSearchCriteria: Boolean
+    get() = query.isNotBlank() || filter?.isEmpty == false
+
+private val SearchQuery.Filter.isEmpty: Boolean
+    get() = exactPhrase.isNullOrBlank() &&
+        noneOfWords.isNullOrBlank() &&
+        since == null &&
+        until == null &&
+        language == null &&
+        media == SearchQuery.Filter.Media.All &&
+        replies == SearchQuery.Filter.Replies.PostsAndReplies &&
+        from == SearchQuery.Filter.From.Anyone &&
+        people.all { it.profileIds.isEmpty() }
+
+private fun SearchQuery.OfPosts.toSearchPostsV2Params(
+    cursor: Cursor,
+): SearchPostsV2QueryParams {
+    val filter = filter
+    return SearchPostsV2QueryParams(
+        query = composedQueryString().ifBlank { null },
+        sort = when (this) {
+            is SearchQuery.OfPosts.Latest -> SearchPostsV2Sort.Recent
+            is SearchQuery.OfPosts.Top -> SearchPostsV2Sort.Top
+        },
+        limit = data.limit,
+        cursor = cursor.value,
+        authors = filter.atIdentifiers(
+            mode = SearchQuery.Filter.PersonGroup.Mode.Include,
+            kind = SearchQuery.Filter.PersonGroup.Kind.Authors,
+        ),
+        excludeAuthors = filter.atIdentifiers(
+            mode = SearchQuery.Filter.PersonGroup.Mode.Exclude,
+            kind = SearchQuery.Filter.PersonGroup.Kind.Authors,
+        ),
+        mentions = filter.atIdentifiers(
+            mode = SearchQuery.Filter.PersonGroup.Mode.Include,
+            kind = SearchQuery.Filter.PersonGroup.Kind.Mentions,
+        ),
+        excludeMentions = filter.atIdentifiers(
+            mode = SearchQuery.Filter.PersonGroup.Mode.Exclude,
+            kind = SearchQuery.Filter.PersonGroup.Kind.Mentions,
+        ),
+        since = filter?.since?.toString(),
+        until = filter?.until?.toString(),
+        languages = filter?.language?.let { listOf(Language(it)) },
+        hasMedia = (filter?.media == SearchQuery.Filter.Media.WithMedia).trueOrNull(),
+        hasVideo = (filter?.media == SearchQuery.Filter.Media.VideosOnly).trueOrNull(),
+        excludeReplies = (filter?.replies == SearchQuery.Filter.Replies.PostsOnly).trueOrNull(),
+        repliesOnly = (filter?.replies == SearchQuery.Filter.Replies.RepliesOnly).trueOrNull(),
+        following = (filter?.from == SearchQuery.Filter.From.Following).trueOrNull(),
+    )
+}
+
+private fun SearchQuery.OfPosts.composedQueryString(): String = buildString {
+    append(query.trim())
+    val filter = filter ?: return@buildString
+    filter.exactPhrase
+        ?.trim()
+        ?.takeIf(String::isNotEmpty)
+        ?.let { phrase ->
+            appendSeparatorIfNotEmpty()
+            append('"').append(phrase).append('"')
+        }
+    filter.noneOfWords
+        ?.trim()
+        ?.takeIf(String::isNotEmpty)
+        ?.split(WhitespaceRegex)
+        ?.forEach { word ->
+            appendSeparatorIfNotEmpty()
+            append('-').append(word)
+        }
+}
+
+private fun StringBuilder.appendSeparatorIfNotEmpty() {
+    if (isNotEmpty()) append(' ')
+}
+
+private fun SearchQuery.Filter?.atIdentifiers(
+    mode: SearchQuery.Filter.PersonGroup.Mode,
+    kind: SearchQuery.Filter.PersonGroup.Kind,
+): List<AtIdentifier>? =
+    this
+        ?.people
+        ?.asSequence()
+        ?.filter { it.mode == mode && it.kind == kind }
+        ?.flatMap { it.profileIds }
+        ?.distinct()
+        ?.map { Did(it.id) }
+        ?.toList()
+        ?.takeIf(List<AtIdentifier>::isNotEmpty)
+
+private fun Boolean.trueOrNull(): Boolean? = takeIf { it }
+
+private val WhitespaceRegex = "\\s+".toRegex()

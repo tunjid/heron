@@ -189,6 +189,8 @@ interface State {
         val searchBarText: String = "",
         val query: RouteQuery = RouteQuery.FullSearch,
         val layout: ScreenLayout = ScreenLayout.Suggested,
+        val appliedFilter: SearchQuery.Filter? = null,
+        val draftFilter: SearchQuery.Filter = SearchQuery.Filter(),
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
         val suggestedProfileCategory: String? = null,
@@ -220,6 +222,16 @@ sealed class Action(val key: String) {
         data class OnSearchQueryConfirmed(
             val isLocalOnly: Boolean,
         ) : Search()
+    }
+
+    sealed class Filter : Action(key = "Filter") {
+        data object Begin : Filter()
+
+        data class Edit(
+            val filter: SearchQuery.Filter,
+        ) : Filter()
+
+        data object Apply : Filter()
     }
 
     data class FetchSuggestedProfiles(
