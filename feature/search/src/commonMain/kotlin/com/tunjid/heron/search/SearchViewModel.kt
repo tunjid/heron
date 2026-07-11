@@ -189,6 +189,9 @@ class SearchViewModel(
                             state = state,
                             writeQueue = writeQueue,
                         )
+                        is Action.UpdatePresentation -> action.flow.launchUpdatePresentationMutations(
+                            state = state,
+                        )
                     }
                 }
             },
@@ -491,6 +494,13 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
         if (memo != null) state.messages += memo
     },
 )
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdatePresentation>.launchUpdatePresentationMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.preferredPresentation = action.presentation
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
