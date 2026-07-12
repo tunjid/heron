@@ -22,6 +22,7 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -157,34 +158,38 @@ internal fun GeneralSearchResults(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Tabs(
+                Box(
                     modifier = Modifier
-                        .drawBehind {
-                            val chipHeight = 32.dp.toPx()
-                            drawRoundRect(
-                                color = tabsBackgroundColor,
-                                topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                                size = size.copy(height = chipHeight),
-                                cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                            )
-                        }
-                        .weight(1f)
-                        .animateContentSize(),
-                    tabsState = rememberTabsState(
-                        tabs = searchTabs(
-                            isSignedIn = state.signedInProfile != null,
-                            query = state.query,
-                        ),
-                        isCollapsed = tabsCollapsed,
-                        selectedTabIndex = pagerState::tabIndex,
-                        onTabSelected = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(it)
+                        .weight(1f),
+                ) {
+                    Tabs(
+                        modifier = Modifier
+                            .drawBehind {
+                                val chipHeight = 32.dp.toPx()
+                                drawRoundRect(
+                                    color = tabsBackgroundColor,
+                                    topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                                    size = size.copy(height = chipHeight),
+                                    cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                                )
                             }
-                        },
-                        onTabReselected = { },
-                    ),
-                )
+                            .animateContentSize(),
+                        tabsState = rememberTabsState(
+                            tabs = searchTabs(
+                                isSignedIn = state.signedInProfile != null,
+                                query = state.query,
+                            ),
+                            isCollapsed = tabsCollapsed,
+                            selectedTabIndex = pagerState::tabIndex,
+                            onTabSelected = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(it)
+                                }
+                            },
+                            onTabReselected = { },
+                        ),
+                    )
+                }
                 val availablePresentations = state.presentationOptions(pagerState.currentPage)
                 val resolvedPresentation = remember(
                     state.preferredPresentation,
