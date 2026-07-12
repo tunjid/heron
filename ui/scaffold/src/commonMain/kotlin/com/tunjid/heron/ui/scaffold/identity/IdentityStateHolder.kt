@@ -204,9 +204,13 @@ private fun launchMemoryPressureResetMutations(
     merge(
         memoryMonitor.pressure
             .filter { it != MemoryPressure.Normal },
-        snapshotFlow { videoPlayerController.activePlayerState?.status }
-            .filterNotNull()
-            .filterIsInstance<PlayerStatus.Play>(),
+        snapshotFlow flow@{
+            val playerState = videoPlayerController.activePlayerState ?: return@flow null
+            val status = playerState.status
+            if (status !is PlayerStatus.Play) return@flow null
+            playerState.videoId
+        }
+            .filterNotNull(),
     )
         .launchedCollect {
             // Under real memory pressure, shed a loaded-but-idle model to reclaim its footprint;
