@@ -366,6 +366,122 @@ private fun HomeTimeline(
             }
         },
     )
+    val postActions = remember(timelineState.timeline.sourceId) {
+        PostActions { action ->
+            when (action) {
+                is PostAction.OfLinkTarget -> {
+                    val linkTarget = action.linkTarget
+                    if (linkTarget is LinkTarget.Navigable) actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = linkTarget.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfPost -> {
+                    actions(
+                        Action.Navigate.To(
+                            recordDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                otherModels = buildList {
+                                    action.warnedAppliedLabels?.let(::add)
+                                    if (action.isMainPost) {
+                                        add(timelineState.timeline.source)
+                                        add(timelineState.tilingData.currentQuery.data)
+                                    }
+                                },
+                                record = action.post,
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfProfile -> {
+                    actions(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                profile = action.profile,
+                                avatarSharedElementKey = action.post
+                                    .avatarSharedElementKey(
+                                        prefix = timelineState.timeline.sharedElementPrefix,
+                                        quotingPostUri = action.quotingPostUri,
+                                    )
+                                    .takeIf { action.post.author.did == action.profile.did },
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfRecord -> {
+                    actions(
+                        Action.Navigate.To(
+                            recordDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                    quotingPostUri = action.owningPostUri,
+                                ),
+                                record = action.record,
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfMedia -> {
+                    actions(
+                        Action.Navigate.To(
+                            galleryDestination(
+                                post = action.post,
+                                media = action.media,
+                                startIndex = action.index,
+                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                    quotingPostUri = action.quotingPostUri,
+                                ),
+                                otherModels = when {
+                                    action.isMainPost -> listOf(
+                                        timelineState.timeline.source,
+                                        timelineState.tilingData.currentQuery.data,
+                                    )
+                                    else -> emptyList()
+                                },
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfReply -> {
+                    actions(
+                        Action.Navigate.To(
+                            if (paneScaffoldState.isSignedOut) signInDestination()
+                            else composePostDestination(
+                                type = Post.Create.Reply(
+                                    parent = action.post,
+                                ),
+                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            ),
+                        ),
+                    )
+                }
+
+                is PostAction.OfInteraction -> {
+                    postInteractionSheetState.onInteraction(action)
+                }
+
+                is PostAction.OfMore -> {
+                    postOptionsSheetState.showOptions(action.post)
+                }
+
+                is PostAction.OfPublicationSubscription ->
+                    actions(Action.TogglePublicationSubscription(action.publication))
+
+                else -> Unit
+            }
+        }
+    }
 
     PullToRefreshBox(
         modifier = Modifier
@@ -446,122 +562,7 @@ private fun HomeTimeline(
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             showEngagementMetrics = showEngagementMetrics,
                             presentation = presentation,
-                            postActions = remember(timelineState.timeline.sourceId) {
-                                PostActions { action ->
-                                    when (action) {
-                                        is PostAction.OfLinkTarget -> {
-                                            val linkTarget = action.linkTarget
-                                            if (linkTarget is LinkTarget.Navigable) actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = linkTarget.path,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfPost -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                        otherModels = buildList {
-                                                            action.warnedAppliedLabels?.let(::add)
-                                                            if (action.isMainPost) {
-                                                                add(timelineState.timeline.source)
-                                                                add(timelineState.tilingData.currentQuery.data)
-                                                            }
-                                                        },
-                                                        record = action.post,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfProfile -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    profileDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                        profile = action.profile,
-                                                        avatarSharedElementKey = action.post
-                                                            .avatarSharedElementKey(
-                                                                prefix = timelineState.timeline.sharedElementPrefix,
-                                                                quotingPostUri = action.quotingPostUri,
-                                                            )
-                                                            .takeIf { action.post.author.did == action.profile.did },
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfRecord -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    recordDestination(
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                            quotingPostUri = action.owningPostUri,
-                                                        ),
-                                                        record = action.record,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfMedia -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    galleryDestination(
-                                                        post = action.post,
-                                                        media = action.media,
-                                                        startIndex = action.index,
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                            quotingPostUri = action.quotingPostUri,
-                                                        ),
-                                                        otherModels = when {
-                                                            action.isMainPost -> listOf(
-                                                                timelineState.timeline.source,
-                                                                timelineState.tilingData.currentQuery.data,
-                                                            )
-                                                            else -> emptyList()
-                                                        },
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfReply -> {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    if (paneScaffoldState.isSignedOut) signInDestination()
-                                                    else composePostDestination(
-                                                        type = Post.Create.Reply(
-                                                            parent = action.post,
-                                                        ),
-                                                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    ),
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfInteraction -> {
-                                            postInteractionSheetState.onInteraction(action)
-                                        }
-
-                                        is PostAction.OfMore -> {
-                                            postOptionsSheetState.showOptions(action.post)
-                                        }
-
-                                        is PostAction.OfPublicationSubscription ->
-                                            actions(Action.TogglePublicationSubscription(action.publication))
-
-                                        else -> Unit
-                                    }
-                                }
-                            },
+                            postActions = postActions,
                         )
                     },
                 )
