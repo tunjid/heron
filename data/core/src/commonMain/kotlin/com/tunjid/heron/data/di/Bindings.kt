@@ -60,6 +60,7 @@ import com.tunjid.heron.data.network.isNetworkConnectionError
 import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.network.oauth.oauthRedirect
+import com.tunjid.heron.data.platform.MemoryMonitor
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
@@ -149,6 +150,7 @@ class DataBindingArgs(
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
     val languageDetector: LanguageDetector,
+    val memoryMonitor: MemoryMonitor,
     val backgroundTaskScheduler: (
         taskStore: TaskStore,
         httpClient: HttpClient,
@@ -199,6 +201,10 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideLanguageDetector(): LanguageDetector = args.languageDetector
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideMemoryMonitor(): MemoryMonitor = args.memoryMonitor
 
     @SingleIn(AppScope::class)
     @Provides

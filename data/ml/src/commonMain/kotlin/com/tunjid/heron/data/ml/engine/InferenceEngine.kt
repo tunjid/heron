@@ -18,7 +18,6 @@ package com.tunjid.heron.data.ml.engine
 
 import com.tunjid.heron.data.ml.model.LoadedModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 /**
@@ -27,7 +26,7 @@ import kotlinx.serialization.Serializable
  * is an implementation detail of the platform factories.
  */
 interface InferenceEngine {
-    val state: StateFlow<EngineState>
+    val state: Flow<EngineState>
 
     /** Loads [model] into the engine, transitioning [state] to [EngineState.Ready] on success. */
     suspend fun load(
@@ -53,9 +52,18 @@ sealed interface EngineState {
     data class Loading(
         val model: LoadedModel,
     ) : EngineState
-    data class Ready(
-        val model: LoadedModel,
-    ) : EngineState
+
+    sealed class Ready(
+        open val model: LoadedModel,
+    ) : EngineState {
+        data class Idle(
+            override val model: LoadedModel,
+        ) : Ready(model)
+
+        data class Streaming(
+            override val model: LoadedModel,
+        ) : Ready(model)
+    }
     data class Error(
         val model: LoadedModel,
         val message: String,

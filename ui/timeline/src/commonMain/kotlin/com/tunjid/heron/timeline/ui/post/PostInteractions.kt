@@ -173,11 +173,13 @@ private inline fun PostInteractionsButtons(
             PaneStickySharedElement(
                 modifier = Modifier,
                 sharedContentState = rememberSharedContentState(
-                    key = postActionSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = post.cid,
-                        button = button,
-                    ),
+                    key = remember(sharedElementPrefix, post.cid, button) {
+                        postActionSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = post.cid,
+                            button = button,
+                        )
+                    },
                 ),
             ) {
                 val isChecked = when (button) {

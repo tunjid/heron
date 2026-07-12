@@ -26,9 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -45,15 +43,15 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.list.Action
-import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
 import com.tunjid.heron.list.ListScreenStateHolders
 import com.tunjid.heron.list.ListStateHolder
 import com.tunjid.heron.list.ListViewModelInitializer
+import com.tunjid.heron.list.listUri
 import com.tunjid.heron.list.timelineState
 import com.tunjid.heron.list.withListTimelineOrNull
-import com.tunjid.heron.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
 import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
+import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
@@ -383,49 +381,40 @@ internal fun Route(
         },
         floatingActionButton = {
             val signedInProfileId = state.signedInProfileId
-            val listUri = state.timelineState?.timeline
-                ?.withListTimelineOrNull { it.feedList.uri }
-
-            val addListMemberSheetState = rememberSelectProfileIdState(
-                title = stringResource(Res.string.add_list_member),
-                suggestedProfiles = state.suggestedProfiles,
-                onProfileIdSelected = { profileId ->
-                    listUri?.let { uri ->
-                        stateHolder.accept(
-                            Action.AddListMember(
-                                profileId = profileId,
-                                listUri = uri,
-                            ),
-                        )
-                    }
-                },
-            )
+            val addListMemberSheetState = rememberProfileSearchSheetState { profile ->
+                state.listUri?.let { uri ->
+                    stateHolder.accept(
+                        Action.AddListMember(
+                            profileId = profile.did,
+                            listUri = uri,
+                        ),
+                    )
+                }
+            }
 
             AnimatedVisibility(
                 visible = state.isOnProfilesTab && remember(
                     signedInProfileId,
-                    listUri,
+                    state.listUri,
                 ) {
-                    signedInProfileId != null && signedInProfileId == listUri?.profileId()
+                    signedInProfileId != null && signedInProfileId == state.listUri?.profileId()
                 },
                 enter = FabEnter,
                 exit = FabExit,
             ) {
+                val addListMember = stringResource(Res.string.add_list_member)
                 PaneFab(
-                    text = stringResource(Res.string.add_list_member),
+                    text = addListMember,
                     icon = Icons.Rounded.Add,
                     expanded = isFabExpanded {
                         fabExpansionNestedScrollConnection.offset
                     },
-                    onClick = addListMemberSheetState::show,
+                    onClick = {
+                        addListMemberSheetState.show(
+                            title = addListMember,
+                        )
+                    },
                 )
-
-                LaunchedEffect(Unit) {
-                    snapshotFlow { addListMemberSheetState.options.text }
-                        .collect { query ->
-                            stateHolder.accept(Action.SearchProfiles(query))
-                        }
-                }
             }
         },
         content = { paddingValues ->

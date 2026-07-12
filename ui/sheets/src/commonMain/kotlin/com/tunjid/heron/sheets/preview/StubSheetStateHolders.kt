@@ -31,6 +31,9 @@ import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOptionsAction
 import com.tunjid.heron.sheets.postoptions.PostOptionsState
 import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
+import com.tunjid.heron.sheets.profile.ProfileSearchAction
+import com.tunjid.heron.sheets.profile.ProfileSearchState
+import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListAction
 import com.tunjid.heron.sheets.selectlist.SelectListState
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
@@ -51,6 +54,7 @@ import kotlin.reflect.KClass
  */
 fun stubSheetStateHolder(
     type: KClass<*>,
+    additionalSheetStateHolderFactory: ((KClass<*>) -> SheetStateHolder?)? = null,
 ): SheetStateHolder = when (type) {
     ThreadGateStateHolder::class ->
         object :
@@ -94,5 +98,11 @@ fun stubSheetStateHolder(
             ActionSuspendingStateMutator<InferenceAction, InferenceState>
             by InferenceState.Immutable().asNoOpActionSuspendingStateMutator() {}
 
-    else -> error("No stub SheetStateHolder registered for $type")
+    ProfileSearchStateHolder::class ->
+        object :
+            ProfileSearchStateHolder,
+            ActionSuspendingStateMutator<ProfileSearchAction, ProfileSearchState>
+            by ProfileSearchState.Immutable().asNoOpActionSuspendingStateMutator() {}
+
+    else -> additionalSheetStateHolderFactory?.invoke(type) ?: error("No stub SheetStateHolder registered for $type")
 }

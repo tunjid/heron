@@ -50,6 +50,7 @@ kotlin {
                 implementation(project(":data:logging"))
                 implementation(project(":data:core"))
                 implementation(project(":data:ml"))
+                implementation(project(":data:platform"))
                 implementation(project(":data:tasks"))
                 implementation(project(":ui:core"))
                 implementation(project(":ui:profile"))

@@ -83,7 +83,7 @@ internal class SuspendingVideoUploadService(
                 }
             }
         }
-        install(HttpTimeout) {
+        installOrReplace(HttpTimeout) {
             requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
     }

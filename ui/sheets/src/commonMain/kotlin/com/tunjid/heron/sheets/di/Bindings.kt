@@ -27,6 +27,8 @@ import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsViewModelInitializer
 import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOptionsViewModelInitializer
+import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
+import com.tunjid.heron.sheets.profile.ProfileSearchViewModelInitializer
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.sheets.threadgate.ThreadGateStateHolder
@@ -104,6 +106,14 @@ class SheetBindings(
     @ClassKey(InferenceStateHolder::class)
     fun provideInferenceViewModelInitializer(
         initializer: InferenceViewModelInitializer,
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
+    @ClassKey(ProfileSearchStateHolder::class)
+    internal fun provideProfileSearchSViewModelInitializer(
+        initializer: ProfileSearchViewModelInitializer,
     ): SheetStateHolderInitializer =
         SheetStateHolderInitializer(initializer::invoke)
 }

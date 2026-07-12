@@ -60,7 +60,7 @@ internal class IosInferenceEngine(
         bridge.reset()
     }
 
-    override fun generate(
+    override fun onGenerate(
         prompt: String,
         params: GenerationParams,
     ): Flow<String> = callbackFlow {

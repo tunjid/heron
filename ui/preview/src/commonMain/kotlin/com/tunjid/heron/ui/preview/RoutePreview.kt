@@ -56,6 +56,7 @@ fun RoutePreview(
     route: Route,
     routeStateHolder: RouteStateHolder,
     signedInProfile: Profile? = null,
+    additionalSheetStateHolderFactory: ((KClass<*>) -> SheetStateHolder?)? = null,
     render: @Composable (Route, PaneScaffoldState) -> Unit,
 ) {
     val stubDispatcherOwner = remember {
@@ -87,7 +88,10 @@ fun RoutePreview(
 
                 override fun createSheetStateHolder(
                     type: KClass<out SheetStateHolder>,
-                ): SheetStateHolder = stubSheetStateHolder(type)
+                ): SheetStateHolder = stubSheetStateHolder(
+                    type = type,
+                    additionalSheetStateHolderFactory = additionalSheetStateHolderFactory,
+                )
             },
         )
     }

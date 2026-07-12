@@ -29,6 +29,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:ml"))
+                implementation(project(":data:platform"))
                 implementation(project(":data:tasks"))
 
                 implementation(libs.kotlinx.coroutines.core)

@@ -45,19 +45,25 @@ interface State {
     companion object {
         operator fun invoke(
             models: List<InferenceModel>,
+            platformMemoryBytes: Long,
         ): Immutable = Immutable(
-            models = models.map { model -> ModelItem(model = model) },
+            models = models.map { model ->
+                ModelItem(
+                    model = model,
+                    platformMemoryBytes = platformMemoryBytes,
+                )
+            },
         )
     }
 }
 
-/** A single available [model] paired with its current download [status]. */
 @Stable
 data class ModelItem(
     val model: InferenceModel,
     val status: ModelStatus = ModelStatus.Pending(
         TaskStatus.NotFound,
     ),
+    val platformMemoryBytes: Long = 0L,
 )
 
 sealed class Action(val key: String) {

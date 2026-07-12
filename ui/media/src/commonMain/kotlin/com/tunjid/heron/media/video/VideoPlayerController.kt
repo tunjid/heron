@@ -27,6 +27,8 @@ interface VideoPlayerController {
 
     var isMuted: Boolean
 
+    val activePlayerState: VideoPlayerState?
+
     /**
      * Registers a video for playback. If a unique ID is not specified, it
      * is defaulted to [videoUrl].

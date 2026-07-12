@@ -25,7 +25,9 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -39,9 +41,10 @@ private val ModelB = LoadedModel(
     file = File.System("model-b"),
 )
 
-/** [BaseInferenceEngine] with programmable [onLoad] behavior for exercising the state machine. */
+/** [BaseInferenceEngine] with programmable [onLoad]/[onGenerate] behavior for exercising the state machine. */
 private class FakeInferenceEngine(
     private val onLoadBehavior: suspend (LoadedModel) -> Unit = {},
+    private val generateFlow: Flow<String> = emptyFlow(),
 ) : BaseInferenceEngine() {
 
     var loadCount = 0
@@ -58,10 +61,10 @@ private class FakeInferenceEngine(
         resetCount++
     }
 
-    override fun generate(
+    override fun onGenerate(
         prompt: String,
         params: GenerationParams,
-    ): Flow<String> = emptyFlow()
+    ): Flow<String> = generateFlow
 }
 
 class BaseInferenceEngineTest {
@@ -74,7 +77,7 @@ class BaseInferenceEngineTest {
         engine.load(ModelA)
 
         assertEquals(1, engine.loadCount)
-        assertEquals(EngineState.Ready(ModelA), engine.state.value)
+        assertEquals(EngineState.Ready.Idle(ModelA), engine.state.value)
     }
 
     @Test
@@ -85,7 +88,7 @@ class BaseInferenceEngineTest {
         engine.load(ModelB)
 
         assertEquals(2, engine.loadCount)
-        assertEquals(EngineState.Ready(ModelB), engine.state.value)
+        assertEquals(EngineState.Ready.Idle(ModelB), engine.state.value)
     }
 
     @Test
@@ -104,7 +107,7 @@ class BaseInferenceEngineTest {
         engine.load(ModelA)
 
         assertEquals(2, engine.loadCount)
-        assertEquals(EngineState.Ready(ModelA), engine.state.value)
+        assertEquals(EngineState.Ready.Idle(ModelA), engine.state.value)
     }
 
     @Test
@@ -141,6 +144,30 @@ class BaseInferenceEngineTest {
 
         // The second caller observes Ready and repeats no work.
         assertEquals(1, engine.loadCount)
-        assertEquals(EngineState.Ready(ModelA), engine.state.value)
+        assertEquals(EngineState.Ready.Idle(ModelA), engine.state.value)
+    }
+
+    @Test
+    fun generatingTogglesReadyBetweenIdleAndStreaming() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val engine = FakeInferenceEngine(
+            generateFlow = flow {
+                emit("token")
+                gate.await()
+            },
+        )
+        engine.load(ModelA)
+        assertEquals(EngineState.Ready.Idle(ModelA), engine.state.value)
+
+        val job = launch { engine.generate("hi").collect {} }
+        advanceUntilIdle()
+        // The stream is held open on the gate, so the engine reports itself in use.
+        assertEquals(EngineState.Ready.Streaming(ModelA), engine.state.value)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        job.join()
+        // Stream finished; back to idle with the model still loaded.
+        assertEquals(EngineState.Ready.Idle(ModelA), engine.state.value)
     }
 }

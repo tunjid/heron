@@ -152,8 +152,10 @@ class SearchViewModel(
                     when (val action = type()) {
                         is Action.Search -> action.flow.launchSearchQueryMutations(
                             state = state,
-                            coroutineScope = scope,
                             searchRepository = searchRepository,
+                        )
+                        is Action.Filter -> action.flow.launchFilterMutations(
+                            state = state,
                         )
                         is Action.FetchSuggestedProfiles -> action.flow.launchSuggestedProfilesMutations(
                             state = state,
@@ -186,6 +188,9 @@ class SearchViewModel(
                         is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
                             state = state,
                             writeQueue = writeQueue,
+                        )
+                        is Action.UpdatePresentation -> action.flow.launchUpdatePresentationMutations(
+                            state = state,
                         )
                     }
                 }
@@ -336,11 +341,10 @@ private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Search>.launchSearchQueryMutations(
     state: State.SnapshotMutable,
-    coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
 ) {
     val shared = shareIn(
-        scope = coroutineScope,
+        scope = productionScope,
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         replay = 1,
     )
@@ -361,11 +365,13 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
                                 query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
+                                filter = state.appliedFilter,
                             )
                             is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
                                 query = currentQuery,
                                 isLocalOnly = action.isLocalOnly,
                                 data = defaultSearchQueryData(),
+                                filter = state.appliedFilter,
                             )
                         }
                         is SearchState.OfProfiles -> SearchQuery.OfProfiles(
@@ -488,6 +494,13 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
         if (memo != null) state.messages += memo
     },
 )
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdatePresentation>.launchUpdatePresentationMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.preferredPresentation = action.presentation
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
@@ -649,6 +662,58 @@ private fun CoroutineScope.searchStateHolder(
                     },
                 )
         },
+    )
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Filter>.launchFilterMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    when (action) {
+        Action.Filter.Begin ->
+            state.draftFilter = state.appliedFilter ?: SearchQuery.Filter()
+
+        is Action.Filter.Edit ->
+            state.draftFilter = action.filter
+
+        Action.Filter.Apply -> {
+            state.appliedFilter = state.draftFilter
+            val query = state.query.queryString(
+                searchBarText = state.searchBarText,
+            )
+            state.searchStateHolders.forEach { holder ->
+                val searchState = holder.state
+                if (searchState is SearchState.OfPosts) holder.accept(
+                    SearchState.Tile(
+                        tilingAction = TilingState.Action.LoadAround(
+                            searchState.confirmedPostsQuery(
+                                query = query,
+                                filter = state.appliedFilter,
+                            ),
+                        ),
+                    ),
+                )
+            }
+            state.layout = ScreenLayout.GeneralSearchResults
+        }
+    }
+}
+
+private fun SearchState.OfPosts.confirmedPostsQuery(
+    query: String,
+    filter: SearchQuery.Filter?,
+): SearchQuery.OfPosts = when (tilingData.currentQuery) {
+    is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
+        query = query,
+        isLocalOnly = false,
+        data = defaultSearchQueryData(),
+        filter = filter,
+    )
+    is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
+        query = query,
+        isLocalOnly = false,
+        data = defaultSearchQueryData(),
+        filter = filter,
     )
 }
 

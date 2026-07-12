@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsSheetState
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
@@ -32,6 +33,8 @@ import com.tunjid.heron.sheets.postinteractions.PostInteractionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
+import com.tunjid.heron.sheets.profile.ProfileSearchSheetState
+import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListSheetState
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState
@@ -125,4 +128,13 @@ fun PaneScaffoldState.rememberPostInteractionsSheetState(
 fun PaneScaffoldState.rememberInferenceSheetState(): InferenceSheetState =
     InferenceSheetState.rememberUpdatedInferenceSheetState(
         stateHolder = retainSheetStateHolder<InferenceStateHolder>(),
+    )
+
+@Composable
+fun PaneScaffoldState.rememberProfileSearchSheetState(
+    onProfileClicked: (Profile) -> Unit,
+): ProfileSearchSheetState =
+    ProfileSearchSheetState.rememberUpdatedProfileSearchSheetState(
+        stateHolder = retainSheetStateHolder<ProfileSearchStateHolder>(),
+        onProfileClicked = onProfileClicked,
     )

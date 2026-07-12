@@ -109,7 +109,6 @@ kotlin {
 
 val macTargets = listOf(
     Triple("Arm", "arm64-apple-macosx14.0", "aarch64"),
-    Triple("X64", "x86_64-apple-macosx14.0", "x86-64"),
 )
 
 val swiftSourceFile = file("src/desktopMain/swift/AVFoundationVideoPlayer.swift")
@@ -143,9 +142,7 @@ tasks.named("desktopProcessResources") {
     when {
         osName.startsWith("Mac") -> dependsOn(
             "buildAVFoundationMacArm",
-            "buildAVFoundationMacX64",
             "extractJnaNativeArm",
-            "extractJnaNativeX64",
         )
         osName.startsWith("Linux") -> dependsOn(
             "extractJnaNativeLinuxX64",
@@ -175,7 +172,6 @@ data class JnaTarget(
 
 val jnaTargets = buildList {
     add(JnaTarget("Arm", "darwin-aarch64", "darwin-aarch64", "libjnidispatch.jnilib", OsFamily.MAC))
-    add(JnaTarget("X64", "darwin-x86-64", "darwin-x86-64", "libjnidispatch.jnilib", OsFamily.MAC))
     add(JnaTarget("LinuxX64", "linux-x86-64", "linux-x86-64", "libjnidispatch.so", OsFamily.LINUX))
     add(JnaTarget("LinuxArm", "linux-aarch64", "linux-aarch64", "libjnidispatch.so", OsFamily.LINUX))
 }

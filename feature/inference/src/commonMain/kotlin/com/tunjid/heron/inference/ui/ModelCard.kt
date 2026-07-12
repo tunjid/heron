@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.ModeStandby
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalIconButton
@@ -83,6 +84,7 @@ import heron.feature.inference.generated.resources.load
 import heron.feature.inference.generated.resources.load_error
 import heron.feature.inference.generated.resources.loaded
 import heron.feature.inference.generated.resources.loading
+import heron.feature.inference.generated.resources.memory_warning
 import heron.feature.inference.generated.resources.minimum_memory
 import heron.feature.inference.generated.resources.retry
 import heron.feature.inference.generated.resources.terms_of_use_link
@@ -105,6 +107,9 @@ internal fun ModelCard(
 ) {
     val termsDialogState = rememberSimpleDialogState()
     val deleteDialogState = rememberSimpleDialogState()
+    // A positive reading below the model's minimum means the device is undersized; 0 is "unknown",
+    // so no warning is shown rather than a false alarm.
+    val memoryLow = item.platformMemoryBytes in 1 until item.model.minDeviceMemoryInGb * BYTES_IN_GB
     ElevatedCard(
         modifier = modifier,
     ) {
@@ -156,6 +161,9 @@ internal fun ModelCard(
                     onDeleteClick = deleteDialogState::show,
                 )
             }
+            if (memoryLow) MemoryWarning(
+                deviceMemoryBytes = item.platformMemoryBytes,
+            )
             TermsOfUseDialog(
                 state = termsDialogState,
                 model = item.model,
@@ -467,6 +475,34 @@ private fun MetadataChip(
 }
 
 @Composable
+private fun MemoryWarning(
+    deviceMemoryBytes: Long,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            modifier = Modifier.size(16.dp),
+            imageVector = Icons.Rounded.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+        )
+        Text(
+            // Floor to whole GB: never rounds up to the required minimum and so never contradicts
+            // the "N GB RAM" requirement chip shown alongside it.
+            text = stringResource(
+                Res.string.memory_warning,
+                (deviceMemoryBytes / BYTES_IN_GB).toInt(),
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+}
+
+@Composable
 private fun AbilityChip(
     ability: InferenceModel.Ability,
 ) {
@@ -495,15 +531,16 @@ private fun InferenceModel.Ability.label(): String = when (this) {
 private fun formatModelSize(
     bytes: Long,
 ): String {
-    val gigabyte = 1024L * 1024L * 1024L
     val megabyte = 1024L * 1024L
     return when {
-        bytes >= gigabyte -> {
-            val gigabytes = (bytes.toDouble() / gigabyte * 10).roundToInt() / 10.0
+        bytes >= BYTES_IN_GB -> {
+            val gigabytes = (bytes.toDouble() / BYTES_IN_GB * 10).roundToInt() / 10.0
             "$gigabytes GB"
         }
         else -> "${bytes / megabyte} MB"
     }
 }
+
+private const val BYTES_IN_GB = 1024L * 1024L * 1024L
 
 private val IconTransition = fadeIn() togetherWith fadeOut()
