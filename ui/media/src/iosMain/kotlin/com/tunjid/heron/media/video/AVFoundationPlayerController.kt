@@ -49,6 +49,8 @@ class AVFoundationPlayerController(
 
     override var isMuted: Boolean by states::isMuted
 
+    override val activePlayerState: VideoPlayerState? by states::activeState
+
     init {
         snapshotFlow { isMuted }
             .onEach { states.activeState?.applyVolume() }

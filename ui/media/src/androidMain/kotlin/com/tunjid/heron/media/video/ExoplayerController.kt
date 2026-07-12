@@ -86,6 +86,8 @@ class ExoplayerController(
 
     override var isMuted: Boolean by states::isMuted
 
+    override val activePlayerState: VideoPlayerState? by states::activeState
+
     /**
      * The ids of media available to play in the available [player] instance.
      */
