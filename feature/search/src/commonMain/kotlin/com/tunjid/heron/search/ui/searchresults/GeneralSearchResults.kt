@@ -317,14 +317,23 @@ internal fun GeneralSearchResults(
 private fun searchTabs(
     isSignedIn: Boolean,
     query: RouteQuery,
-): List<Tab> = buildList {
-    if (isSignedIn) {
-        add(stringResource(resource = Res.string.top))
-        add(stringResource(resource = Res.string.latest))
-    }
-    if (query.supportsNonPostSearch) {
-        add(stringResource(resource = Res.string.people))
-        add(stringResource(resource = Res.string.feeds))
+): List<Tab> {
+    val top = stringResource(resource = Res.string.top)
+    val latest = stringResource(resource = Res.string.latest)
+    val people = stringResource(resource = Res.string.people)
+    val feeds = stringResource(resource = Res.string.feeds)
+    val supportsNonPostSearch = query.supportsNonPostSearch
+    // only pass 1 string resource here to prevent allocation on >4 remember args
+    return remember(isSignedIn, supportsNonPostSearch, top) {
+        buildList {
+            if (isSignedIn) {
+                add(top)
+                add(latest)
+            }
+            if (supportsNonPostSearch) {
+                add(people)
+                add(feeds)
+            }
+        }.map { Tab(title = it, hasUpdate = false) }
     }
 }
-    .map { Tab(title = it, hasUpdate = false) }
