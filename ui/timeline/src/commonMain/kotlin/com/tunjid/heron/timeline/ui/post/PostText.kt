@@ -61,7 +61,7 @@ fun PostText(
             ) { onClick() },
         sharedContentState = rememberSharedContentState(
             key = remember(sharedElementPrefix, post.cid) {
-                post.textSharedElementKey(
+                post.rememberTextSharedElementKey(
                     prefix = sharedElementPrefix,
                 )
             },
@@ -82,6 +82,6 @@ fun PostText(
     }
 }
 
-private fun Post.textSharedElementKey(
+private fun Post.rememberTextSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-text"
