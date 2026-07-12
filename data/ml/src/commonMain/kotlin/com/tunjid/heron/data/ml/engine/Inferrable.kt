@@ -44,11 +44,14 @@ suspend inline fun <reified T : Inferrable> InferenceEngine.infer(
         generate(
             prompt = prompt,
             params = params,
-        ).collect(buffer::append)
+        ).collect { buffer.append(it) }
         val output = with(buffer.toString()) {
             val start = indexOf('{')
             val end = lastIndexOf('}')
-            if (start != -1 && end > start) substring(start, end + 1) else this
+            if (start == -1 || end <= start) {
+                throw InferenceParseException("No JSON object found in model output: $this")
+            }
+            substring(start, end + 1)
         }
 
         Result.success(
@@ -56,12 +59,13 @@ suspend inline fun <reified T : Inferrable> InferenceEngine.infer(
         )
     } catch (cancellation: CancellationException) {
         throw cancellation
-    } catch (throwable: Throwable) {
+    } catch (exception: Exception) {
         Result.failure(
-            InferenceParseException(
-                message = "Could not infer ${T::class.simpleName} from model output",
-                cause = throwable,
-            ),
+            exception as? InferenceParseException
+                ?: InferenceParseException(
+                    message = "Could not infer ${T::class.simpleName ?: "Unknown"} from model output",
+                    cause = exception,
+                ),
         )
     }
 }
