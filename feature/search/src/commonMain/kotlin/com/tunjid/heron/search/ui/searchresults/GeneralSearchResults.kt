@@ -22,6 +22,7 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -157,34 +158,38 @@ internal fun GeneralSearchResults(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Tabs(
+                Box(
                     modifier = Modifier
-                        .drawBehind {
-                            val chipHeight = 32.dp.toPx()
-                            drawRoundRect(
-                                color = tabsBackgroundColor,
-                                topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                                size = size.copy(height = chipHeight),
-                                cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                            )
-                        }
-                        .weight(1f)
-                        .animateContentSize(),
-                    tabsState = rememberTabsState(
-                        tabs = searchTabs(
-                            isSignedIn = state.signedInProfile != null,
-                            query = state.query,
-                        ),
-                        isCollapsed = tabsCollapsed,
-                        selectedTabIndex = pagerState::tabIndex,
-                        onTabSelected = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(it)
+                        .weight(1f),
+                ) {
+                    Tabs(
+                        modifier = Modifier
+                            .drawBehind {
+                                val chipHeight = 32.dp.toPx()
+                                drawRoundRect(
+                                    color = tabsBackgroundColor,
+                                    topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                                    size = size.copy(height = chipHeight),
+                                    cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                                )
                             }
-                        },
-                        onTabReselected = { },
-                    ),
-                )
+                            .animateContentSize(),
+                        tabsState = rememberTabsState(
+                            tabs = searchTabs(
+                                isSignedIn = state.signedInProfile != null,
+                                query = state.query,
+                            ),
+                            isCollapsed = tabsCollapsed,
+                            selectedTabIndex = pagerState::tabIndex,
+                            onTabSelected = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(it)
+                                }
+                            },
+                            onTabReselected = { },
+                        ),
+                    )
+                }
                 val availablePresentations = state.presentationOptions(pagerState.currentPage)
                 val resolvedPresentation = remember(
                     state.preferredPresentation,
@@ -312,14 +317,23 @@ internal fun GeneralSearchResults(
 private fun searchTabs(
     isSignedIn: Boolean,
     query: RouteQuery,
-): List<Tab> = buildList {
-    if (isSignedIn) {
-        add(stringResource(resource = Res.string.top))
-        add(stringResource(resource = Res.string.latest))
-    }
-    if (query.supportsNonPostSearch) {
-        add(stringResource(resource = Res.string.people))
-        add(stringResource(resource = Res.string.feeds))
+): List<Tab> {
+    val top = stringResource(resource = Res.string.top)
+    val latest = stringResource(resource = Res.string.latest)
+    val people = stringResource(resource = Res.string.people)
+    val feeds = stringResource(resource = Res.string.feeds)
+    val supportsNonPostSearch = query.supportsNonPostSearch
+    // only pass 1 string resource here to prevent allocation on >4 remember args
+    return remember(isSignedIn, supportsNonPostSearch, top) {
+        buildList {
+            if (isSignedIn) {
+                add(top)
+                add(latest)
+            }
+            if (supportsNonPostSearch) {
+                add(people)
+                add(feeds)
+            }
+        }.map { Tab(title = it, hasUpdate = false) }
     }
 }
-    .map { Tab(title = it, hasUpdate = false) }
