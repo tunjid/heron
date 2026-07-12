@@ -60,9 +60,11 @@ fun PostText(
                 indication = null,
             ) { onClick() },
         sharedContentState = rememberSharedContentState(
-            key = post.textSharedElementKey(
-                prefix = sharedElementPrefix,
-            ),
+            key = remember(sharedElementPrefix, post.cid) {
+                post.textSharedElementKey(
+                    prefix = sharedElementPrefix,
+                )
+            },
         ),
     ) {
         SelectionContainer {

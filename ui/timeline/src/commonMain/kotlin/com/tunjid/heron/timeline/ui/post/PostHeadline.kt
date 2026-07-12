@@ -24,6 +24,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
+import androidx.compose.runtime.cache
+import androidx.compose.runtime.currentComposer
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
@@ -53,11 +57,13 @@ fun PostHeadline(
         Row(horizontalArrangement = spacedBy(4.dp)) {
             PaneStickySharedElement(
                 sharedContentState = rememberSharedContentState(
-                    key = author.textSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                        text = primaryText,
-                    ),
+                    key = remember(sharedElementPrefix, postId, author.did, primaryText) {
+                        author.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = primaryText,
+                        )
+                    },
                 ),
             ) {
                 ProfileName(
@@ -83,11 +89,18 @@ fun PostHeadline(
                 PaneStickySharedElement(
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
-                        key = author.textSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = secondaryText,
-                        ),
+                        key = remember4(
+                            sharedElementPrefix,
+                            postId,
+                            author.did,
+                            secondaryText,
+                        ) {
+                            author.textSharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postId = postId,
+                                text = secondaryText,
+                            )
+                        },
                     ),
                 ) {
                     ProfileHandle(
@@ -106,6 +119,21 @@ fun PostHeadline(
         }
     }
 }
+
+@Composable
+private inline fun <T> remember4(
+    key1: Any?,
+    key2: Any?,
+    key3: Any?,
+    key4: Any?,
+    crossinline calculation: @DisallowComposableCalls () -> T,
+): T = currentComposer.cache(
+    currentComposer.changed(key1) or
+        currentComposer.changed(key2) or
+        currentComposer.changed(key3) or
+        currentComposer.changed(key4),
+    calculation,
+)
 
 private fun Profile.textSharedElementKey(
     prefix: String,

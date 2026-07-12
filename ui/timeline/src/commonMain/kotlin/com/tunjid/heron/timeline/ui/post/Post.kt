@@ -132,6 +132,8 @@ internal fun Post(
                 .padding(horizontal = 8.dp),
             content = timeline,
         )
+        val locale = Locale.current
+        val languageTag = remember(locale) { locale.toLanguageTag() }
         val postData = rememberUpdatedPostData(
             postActions = postActions,
             paneTransitionScope = paneTransitionScope,
@@ -147,7 +149,7 @@ internal fun Post(
             avatarShape = avatarShape,
             now = now,
             createdAt = createdAt,
-            languageTag = Locale.current.toLanguageTag(),
+            languageTag = languageTag,
         )
         SensitiveContentBox(
             modifier = Modifier
@@ -217,7 +219,9 @@ private fun AttributionContent(
                                 )
                             },
                         sharedContentState = rememberSharedContentState(
-                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                            key = remember(data.sharedElementPrefix, data.post.cid) {
+                                data.post.avatarSharedElementKey(data.sharedElementPrefix)
+                            },
                         ),
                         state = remember(data.post.author.avatar) {
                             ImageArgs(
@@ -236,8 +240,10 @@ private fun AttributionContent(
                         modifier = Modifier
                             .align(Alignment.BottomCenter),
                         sharedContentState = rememberSharedContentState(
-                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix)
-                                .withProfileAvatarLiveSharedElementPrefix(),
+                            key = remember(data.sharedElementPrefix, data.post.cid) {
+                                data.post.avatarSharedElementKey(data.sharedElementPrefix)
+                                    .withProfileAvatarLiveSharedElementPrefix()
+                            },
                         ),
                     ) {
                         ProfileLiveChip()
@@ -317,7 +323,9 @@ private fun LabelContent(
                     PaneStickySharedElement(
                         modifier = Modifier,
                         sharedContentState = rememberSharedContentState(
-                            data.sharedElementKey(label),
+                            remember(data.sharedElementPrefix, data.post.cid, label) {
+                                data.sharedElementKey(label)
+                            },
                         ),
                     ) {
                         Label(
