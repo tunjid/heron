@@ -50,6 +50,8 @@ class JavaFxPlayerController(
 
     override var isMuted: Boolean by states::isMuted
 
+    override val activePlayerState: VideoPlayerState? by states::activeState
+
     init {
         System.setProperty("compose.interop.blending", "true")
 

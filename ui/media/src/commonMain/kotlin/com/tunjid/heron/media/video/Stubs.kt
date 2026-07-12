@@ -30,6 +30,9 @@ object StubVideoPlayerController : VideoPlayerController {
         get() = true
         set(value) {}
 
+    override val activePlayerState: VideoPlayerState?
+        get() = null
+
     private val idsToStates = mutableStateMapOf<String, NoOpVideoPlayerState>()
 
     override fun registerVideo(
