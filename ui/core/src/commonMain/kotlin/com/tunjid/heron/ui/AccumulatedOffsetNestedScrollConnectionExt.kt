@@ -22,44 +22,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.geometry.Offset
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-
-@Composable
-fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
-    rememberAccumulatedOffsetNestedScrollConnection(
-        maxOffset = { Offset.Zero },
-        minOffset = {
-            Offset(
-                x = 0f,
-                y = -UiTokens.toolbarHeight.toPx(),
-            )
-        },
-    )
-
-@Composable
-fun bottomNavigationNestedScrollConnection(
-    isCompact: Boolean,
-): AccumulatedOffsetNestedScrollConnection {
-    val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
-    return rememberAccumulatedOffsetNestedScrollConnection(
-        invert = true,
-        maxOffset = maxOffset@{
-            Offset(
-                x = 0f,
-                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
-            )
-        },
-        minOffset = { Offset.Zero },
-    )
-}
 
 @Composable
 fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(

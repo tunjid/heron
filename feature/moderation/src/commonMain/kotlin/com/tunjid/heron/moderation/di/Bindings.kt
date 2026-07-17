@@ -29,7 +29,6 @@ import com.tunjid.heron.moderation.ActualModerationViewModel
 import com.tunjid.heron.moderation.ModerationScreen
 import com.tunjid.heron.moderation.ModerationStateHolder
 import com.tunjid.heron.moderation.ModerationViewModelInitializer
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -145,9 +144,7 @@ internal fun Route(
     val state = stateHolder.produceStateWithLifecycle()
 
     val bottomNavigationNestedScrollConnection =
-        bottomNavigationNestedScrollConnection(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        )
+        paneScaffoldState.bottomNavigationNestedScrollConnection
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
