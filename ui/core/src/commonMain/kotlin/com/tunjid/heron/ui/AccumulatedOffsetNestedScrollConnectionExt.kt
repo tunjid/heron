@@ -22,6 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.round
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -63,6 +65,15 @@ fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
             }
     }
 }
+
+/**
+ * The rounded difference between [maxOffset] and the current [offset]. For a bar that rests at
+ * `offset == minOffset` and hides by accumulating toward [maxOffset] (e.g. an auto-hiding bottom
+ * navigation bar), this is its still-on-screen extent: the full bar at rest, [IntOffset.Zero] once
+ * hidden.
+ */
+val AccumulatedOffsetNestedScrollConnection.roundedMaxDelta: IntOffset
+    get() = (maxOffset - offset).round()
 
 fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {
     val minDimension = min(

@@ -238,9 +238,6 @@ fun Timeline.sharedElementPrefix(
     quotingPostUri = quotingPostUri,
 )
 
-val TimelineItem.canAutoPlayVideo: Boolean
-    get() = appliedLabels.canAutoPlayVideo
-
 private fun Timeline.Home.Status.textResource(): StringResource =
     when (this) {
         Timeline.Home.Status.Pinned -> Res.string.pin_feed

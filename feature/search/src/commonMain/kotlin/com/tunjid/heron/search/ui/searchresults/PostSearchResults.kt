@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -37,11 +38,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
-import com.tunjid.heron.search.canAutoPlayVideo
 import com.tunjid.heron.search.id
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.sheets.postoptions.PostOption
@@ -55,18 +53,17 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlin.math.floor
 import kotlin.time.Clock
 
 @Composable
@@ -76,8 +73,8 @@ internal fun PostSearchResults(
     modifier: Modifier,
     presentation: Timeline.Presentation,
     autoPlayTimelineVideos: Boolean,
+    isActivePage: () -> Boolean,
     showEngagementMetrics: Boolean,
-    videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
@@ -94,6 +91,7 @@ internal fun PostSearchResults(
 ) {
     val now = remember { Clock.System.now() }
     val displayState = rememberTimelineDisplayState()
+    val videoPlayerController = LocalVideoPlayerController.current
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
@@ -201,7 +199,26 @@ internal fun PostSearchResults(
         }
     }
     LazyVerticalStaggeredGrid(
-        modifier = modifier,
+        modifier = modifier.onDominantVideoChange(
+            topLeftInset = {
+                IntOffset(
+                    x = 0,
+                    y = gridState.layoutInfo.beforeContentPadding,
+                ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+            },
+            bottomRightInset = {
+                paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+            },
+            isEnabled = {
+                paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                    autoPlayTimelineVideos &&
+                    isActivePage()
+            },
+            onIdChanged = { videoId ->
+                if (videoId != null) videoPlayerController.play(videoId = videoId)
+                else videoPlayerController.pauseActiveVideo()
+            },
+        ),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(
             displayState.cardSize(presentation),
@@ -222,9 +239,6 @@ internal fun PostSearchResults(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(result),
-                        )
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
@@ -237,22 +251,6 @@ internal fun PostSearchResults(
                 )
             },
         )
-    }
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = results.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            results.getOrNull(flooredIndex)
-                ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
-        }
     }
     gridState.PivotedTilingEffect(
         items = results,

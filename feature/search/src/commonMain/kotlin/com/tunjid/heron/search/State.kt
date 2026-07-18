@@ -160,9 +160,6 @@ sealed interface SearchResult {
 val SearchResult.OfPost.id: String
     get() = timelineItem.id
 
-val SearchResult.OfPost.canAutoPlayVideo: Boolean
-    get() = timelineItem.appliedLabels.canAutoPlayVideo
-
 @Stable
 sealed class SearchState {
     data class OfPosts(

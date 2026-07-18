@@ -51,7 +51,6 @@ import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -193,8 +192,7 @@ internal fun ThreadedPost(
                             .animateBounds(
                                 lookaheadScope = presentationLookaheadScope,
                                 boundsTransform = paneTransitionScope.childBoundsTransform,
-                            )
-                            .childThreadNode(videoId = null),
+                            ),
                         onClick = {
                             postActions.onPostAction(
                                 PostAction.OfPost(
@@ -219,8 +217,7 @@ internal fun ThreadedPost(
                             .animateBounds(
                                 lookaheadScope = presentationLookaheadScope,
                                 boundsTransform = paneTransitionScope.childBoundsTransform,
-                            )
-                            .childThreadNode(videoId = null),
+                            ),
                     )
                 }
             }
@@ -228,8 +225,7 @@ internal fun ThreadedPost(
                 key(node.decorationKey(NodeDecoration.ExtraSpacer)) {
                     Spacer(
                         Modifier
-                            .height(2.dp)
-                            .childThreadNode(videoId = null),
+                            .height(2.dp),
                     )
                 }
             }
