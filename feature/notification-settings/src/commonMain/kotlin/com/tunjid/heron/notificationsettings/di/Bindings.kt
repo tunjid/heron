@@ -32,7 +32,6 @@ import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
 import com.tunjid.heron.notificationsettings.NotificationSettingsStateHolder
 import com.tunjid.heron.notificationsettings.NotificationSettingsViewModelInitializer
 import com.tunjid.heron.notificationsettings.updates
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -53,7 +52,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -153,12 +151,10 @@ internal fun Route(
     val state = stateHolder.produceStateWithLifecycle()
 
     val topAppBarNestedScrollConnection =
-        topAppBarNestedScrollConnection()
+        paneScaffoldState.topAppBarNestedScrollConnection
 
     val bottomNavigationNestedScrollConnection =
-        bottomNavigationNestedScrollConnection(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        )
+        paneScaffoldState.bottomNavigationNestedScrollConnection
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier

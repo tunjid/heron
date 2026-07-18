@@ -41,7 +41,6 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -155,9 +154,7 @@ internal fun Route(
     val state = stateHolder.produceStateWithLifecycle()
 
     val bottomNavigationNestedScrollConnection =
-        bottomNavigationNestedScrollConnection(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        )
+        paneScaffoldState.bottomNavigationNestedScrollConnection
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
