@@ -832,8 +832,8 @@ internal class OfflineTimelineRepository(
                         }.toOutcome()
                     }
                 }
+                .awaitAll()
         }
-            .awaitAll()
             .firstOrNull { it is Outcome.Failure }
             ?: Outcome.Success
     } ?: expiredSessionOutcome()
