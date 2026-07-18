@@ -64,6 +64,7 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
@@ -120,6 +121,8 @@ internal fun Post(
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     postActions: PostActions,
+    feedContext: String? = null,
+    reqId: FeedReqId? = null,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(
@@ -152,6 +155,8 @@ internal fun Post(
             now = now,
             createdAt = createdAt,
             languageTag = languageTag,
+            feedContext = feedContext,
+            reqId = reqId,
         )
         SensitiveContentBox(
             modifier = Modifier
@@ -534,6 +539,8 @@ private fun ActionsContent(
                     presentation = data.presentation,
                 )
                 .animateContentBounds(data),
+            feedContext = data.feedContext,
+            reqId = data.reqId,
             onInteraction = data.postActions::onPostAction,
         )
 
@@ -719,6 +726,8 @@ private fun rememberUpdatedPostData(
     createdAt: Instant,
     languageTag: String,
     isMainPost: Boolean,
+    feedContext: String?,
+    reqId: FeedReqId?,
 ): PostData = rememberSaveable(
     saver = listSaver(
         save = { data ->
@@ -744,6 +753,8 @@ private fun rememberUpdatedPostData(
                 now = now,
                 created = createdAt,
                 languageTag = languageTag,
+                feedContext = feedContext,
+                reqId = reqId,
                 hasClickedThroughMutedWords = hasClickedThroughMutedWords,
                 hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
             )
@@ -766,6 +777,8 @@ private fun rememberUpdatedPostData(
         now = now,
         created = createdAt,
         languageTag = languageTag,
+        feedContext = feedContext,
+        reqId = reqId,
     )
 }.also {
     if (it.presentation != presentation) it.onPresentationChanged()
@@ -784,6 +797,8 @@ private fun rememberUpdatedPostData(
     it.now = now
     it.createdAt = createdAt
     it.languageTag = languageTag
+    it.feedContext = feedContext
+    it.reqId = reqId
 }
 
 @Stable
@@ -803,6 +818,8 @@ private class PostData(
     now: Instant,
     created: Instant,
     languageTag: String,
+    feedContext: String?,
+    reqId: FeedReqId?,
     hasClickedThroughMutedWords: Boolean = false,
     hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
@@ -823,6 +840,8 @@ private class PostData(
     var now by mutableStateOf(now)
     var createdAt by mutableStateOf(created)
     var languageTag by mutableStateOf(languageTag)
+    var feedContext by mutableStateOf(feedContext)
+    var reqId by mutableStateOf(reqId)
 
     var selectedLabel by mutableStateOf<Label?>(null)
 

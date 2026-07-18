@@ -60,6 +60,12 @@ data class FeedGenerator(
         abstract val feedContext: String?
         abstract val reqId: FeedReqId?
 
+        data class Context(
+            val feedUri: FeedGeneratorUri,
+            val feedContext: String?,
+            val reqId: FeedReqId?,
+        )
+
         @Serializable
         data class Request(
             override val feedUri: FeedGeneratorUri,

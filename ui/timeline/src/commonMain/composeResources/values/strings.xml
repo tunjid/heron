@@ -74,6 +74,8 @@
     <string name="pin_feed">Pin</string>
     <string name="save_feed">Save</string>
     <string name="expand_options">Expand options</string>
+    <string name="feed_interaction_show_more">Show more like this</string>
+    <string name="feed_interaction_show_less">Show less like this</string>
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
     <string name="muted_meta_format">Muted in %1$s · %2$s</string>

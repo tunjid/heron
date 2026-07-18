@@ -58,11 +58,17 @@ fun PaneScaffoldState.rememberMutedWordsSheetState(): MutedWordsSheetState {
 @Composable
 fun PaneScaffoldState.rememberPostOptionsSheetState(
     onOptionClicked: (PostOption) -> Unit,
-): PostOptionsSheetState =
-    PostOptionsSheetState.rememberUpdatedPostOptionsSheetState(
+): PostOptionsSheetState {
+    val sheetState = PostOptionsSheetState.rememberUpdatedPostOptionsSheetState(
         stateHolder = retainSheetStateHolder<PostOptionsStateHolder>(),
         onOptionClicked = onOptionClicked,
     )
+    SnackbarDisplayEffect(
+        messages = sheetState.messages,
+        onMessageConsumed = sheetState::onSnackbarMessageConsumed,
+    )
+    return sheetState
+}
 
 @Composable
 fun PaneScaffoldState.rememberTimelineThreadGateSheetState(): ThreadGateSheetState.OfTimeline {

@@ -83,6 +83,7 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
+import com.tunjid.heron.timeline.utilities.feedInteractionContext
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
@@ -472,7 +473,13 @@ private fun HomeTimeline(
                 }
 
                 is PostAction.OfMore -> {
-                    postOptionsSheetState.showOptions(action.post)
+                    postOptionsSheetState.showOptions(
+                        post = action.post,
+                        feedInteraction = timelineState.timeline.feedInteractionContext(
+                            feedContext = action.feedContext,
+                            reqId = action.reqId,
+                        ),
+                    )
                 }
 
                 is PostAction.OfPublicationSubscription ->
