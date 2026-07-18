@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.feedContext
+import com.tunjid.heron.data.core.models.reqId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
@@ -134,6 +136,8 @@ fun TimelineItem(
                         presentation = presentation,
                         appliedLabels = item.appliedLabels,
                         postActions = postActions,
+                        feedContext = item.feedContext,
+                        reqId = item.reqId,
                     )
                 }
             }

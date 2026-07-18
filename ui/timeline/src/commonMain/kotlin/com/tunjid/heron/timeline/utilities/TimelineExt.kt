@@ -41,9 +41,11 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
@@ -238,6 +240,22 @@ fun Timeline.sharedElementPrefix(
     quotingPostUri = quotingPostUri,
 )
 
+fun Timeline.feedInteractionContext(
+    feedContext: String?,
+    reqId: FeedReqId?,
+): FeedGenerator.Interaction.Context? = when {
+    this is Timeline.Home.Feed && acceptsInteractions ->
+        FeedGenerator.Interaction.Context(
+            feedUri = feedGenerator.uri,
+            feedContext = feedContext,
+            reqId = reqId,
+        )
+
+    else -> null
+}
+
+private val Timeline.Home.Feed.acceptsInteractions
+    get() = feedGenerator.acceptsInteractions == true || feedGenerator.uri == Constants.blueSkyDiscoverFeed
 private fun Timeline.Home.Status.textResource(): StringResource =
     when (this) {
         Timeline.Home.Status.Pinned -> Res.string.pin_feed
