@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post.Create.Reply
@@ -42,7 +43,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
@@ -50,19 +50,17 @@ import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
-import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostMetadata
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.contentType
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -77,7 +75,6 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlin.math.floor
 import kotlin.time.Clock
 
 @Composable
@@ -93,7 +90,7 @@ internal fun PostDetailScreen(
     val now = remember { Clock.System.now() }
     val presentation = Timeline.Presentation.Text.WithEmbed
     val displayState = rememberTimelineDisplayState()
-    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
+    val videoPlayerController = LocalVideoPlayerController.current
     val navigateTo = remember(actions) {
         { destination: NavigationAction.Destination ->
             actions(Action.Navigate.To(destination))
@@ -162,7 +159,26 @@ internal fun PostDetailScreen(
         modifier = modifier
             .padding(horizontal = 8.dp)
             .fillMaxSize()
-            .paneClip(),
+            .paneClip()
+            .onDominantVideoChange(
+                topLeftInset = {
+                    IntOffset(
+                        x = 0,
+                        y = gridState.layoutInfo.beforeContentPadding,
+                    ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                },
+                bottomRightInset = {
+                    paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                },
+                isEnabled = {
+                    paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                        state.preferences.local.autoPlayTimelineVideos
+                },
+                onIdChanged = { videoId ->
+                    if (videoId != null) videoPlayerController.play(videoId = videoId)
+                    else videoPlayerController.pauseActiveVideo()
+                },
+            ),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
         verticalItemSpacing = displayState.verticalItemSpacing(presentation),
@@ -181,10 +197,7 @@ internal fun PostDetailScreen(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item),
-                        ),
+                        .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
                     now = now,
@@ -334,23 +347,6 @@ internal fun PostDetailScreen(
             span = StaggeredGridItemSpan.FullLine,
         ) {
             Spacer(Modifier.height(800.dp))
-        }
-    }
-
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && state.preferences.local.autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = items.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
-                ?.takeIf(TimelineItem::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
         }
     }
 }

@@ -111,7 +111,6 @@ import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings
@@ -140,8 +139,6 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
@@ -151,11 +148,11 @@ import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.shareUri
@@ -170,6 +167,7 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -1360,7 +1358,7 @@ private fun ProfileTimeline(
 
     val now = remember(timelineState.timeline.lastRefreshed) { Clock.System.now() }
     val density = LocalDensity.current
-    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
+    val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
@@ -1432,6 +1430,21 @@ private fun ProfileTimeline(
                     ).value,
                 )
                 .fillMaxSize()
+                .onDominantVideoChange(
+                    // No top inset: the grid is laid out beneath the collapsing header, so its own
+                    // bounds already exclude it.
+                    bottomRightInset = {
+                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                    },
+                    isEnabled = {
+                        paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                            autoPlayTimelineVideos
+                    },
+                    onIdChanged = { videoId ->
+                        if (videoId != null) videoPlayerController.play(videoId = videoId)
+                        else videoPlayerController.pauseActiveVideo()
+                    },
+                )
                 .onSizeChanged {
                     val itemWidth = with(density) {
                         displayState.cardSize(presentation).toPx()
@@ -1463,10 +1476,7 @@ private fun ProfileTimeline(
                     TimelineItem(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item),
-                            ),
+                            .animateItem(),
                         paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
@@ -1602,23 +1612,6 @@ private fun ProfileTimeline(
                     )
                 },
             )
-        }
-    }
-
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = items.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
-                ?.takeIf(TimelineItem::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
         }
     }
 

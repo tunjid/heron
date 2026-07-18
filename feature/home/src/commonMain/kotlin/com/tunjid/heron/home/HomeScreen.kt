@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -63,7 +64,6 @@ import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandable
 import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
 import com.tunjid.heron.home.ui.TabsCollapseEffect
 import com.tunjid.heron.home.ui.TabsExpansionEffect
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
@@ -81,17 +81,16 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.contentType
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.bookmarksDestination
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -110,7 +109,6 @@ import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.abs
-import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
@@ -180,7 +178,8 @@ internal fun HomeScreen(
                     autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                     showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                     timelineStateHolder = timelineStateHolder,
-                    tabsOffset = tabsOffsetNestedScrollConnection::offset,
+                    tabsNestedScrollConnection = tabsOffsetNestedScrollConnection,
+                    isActivePage = { pagerState.currentPage == page },
                     actions = actions,
                 )
                 tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
@@ -297,14 +296,15 @@ private fun HomeTimeline(
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
     timelineStateHolder: TimelineStateHolder,
-    tabsOffset: () -> Offset,
+    tabsNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
+    isActivePage: () -> Boolean,
     actions: (Action) -> Unit,
 ) {
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
 
     val now = remember(timelineState.timeline.lastRefreshed) { Clock.System.now() }
     val density = LocalDensity.current
-    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
+    val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -519,6 +519,26 @@ private fun HomeTimeline(
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
                     .fillMaxSize()
+                    .onDominantVideoChange(
+                        topLeftInset = {
+                            IntOffset(
+                                x = 0,
+                                y = gridState.layoutInfo.beforeContentPadding,
+                            ) - tabsNestedScrollConnection.roundedMaxDelta
+                        },
+                        bottomRightInset = {
+                            paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        },
+                        isEnabled = {
+                            paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                                autoPlayTimelineVideos &&
+                                isActivePage()
+                        },
+                        onIdChanged = { videoId ->
+                            if (videoId != null) videoPlayerController.play(videoId = videoId)
+                            else videoPlayerController.pauseActiveVideo()
+                        },
+                    )
                     .gridColumnCount(
                         density = density,
                         maxColumnWidth = displayState.cardSize(presentation),
@@ -551,10 +571,7 @@ private fun HomeTimeline(
                         TimelineItem(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem()
-                                .threadedVideoPosition(
-                                    state = videoStates.getOrCreateStateFor(item),
-                                ),
+                                .animateItem(),
                             paneTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
@@ -567,23 +584,6 @@ private fun HomeTimeline(
                     },
                 )
             }
-        }
-    }
-
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = timelineState.tiledItems.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            timelineState.tiledItems.getOrNull(flooredIndex)
-                ?.takeIf(TimelineItem::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
         }
     }
 
@@ -605,7 +605,7 @@ private fun HomeTimeline(
         onRefresh = {
             animateScrollToItem(
                 index = 0,
-                scrollOffset = abs(tabsOffset().y.roundToInt()),
+                scrollOffset = abs(tabsNestedScrollConnection.offset.y.roundToInt()),
             )
         },
     )
