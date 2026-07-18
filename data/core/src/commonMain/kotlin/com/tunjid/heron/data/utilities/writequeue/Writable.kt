@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.writequeue
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
@@ -64,6 +65,27 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             postRepository.sendInteraction(interaction)
+    }
+
+    @ConsistentCopyVisibility
+    @Serializable
+    data class FeedInteraction internal constructor(
+        val interactions: List<FeedGenerator.Interaction>,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "feed-interaction-" + interactions.joinToString(separator = ",") {
+                "${it.feedUri}|${it.postUri}|${it.event}"
+            }
+
+        override suspend fun WriteQueue.write(): Outcome =
+            timelineRepository.sendFeedInteractions(interactions)
+
+        companion object {
+            operator fun invoke(
+                requests: List<FeedGenerator.Interaction.Request>,
+            ): FeedInteraction = FeedInteraction(interactions = requests)
+        }
     }
 
     @Serializable

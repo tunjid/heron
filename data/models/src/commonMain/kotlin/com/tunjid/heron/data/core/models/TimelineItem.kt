@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Source
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import kotlin.time.Instant
@@ -75,6 +76,8 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
+        val feedContext: String? = null,
+        val reqId: FeedReqId? = null,
     ) : TimelineItem()
 
     data class Repost(
@@ -86,6 +89,8 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
         val by: Profile,
         val at: Instant,
+        val feedContext: String? = null,
+        val reqId: FeedReqId? = null,
     ) : TimelineItem()
 
     sealed class Threaded : TimelineItem() {
@@ -163,6 +168,8 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
+        val feedContext: String? = null,
+        val reqId: FeedReqId? = null,
     ) : TimelineItem()
 
     sealed class Placeholder : TimelineItem() {
@@ -226,3 +233,23 @@ sealed class TimelineItem {
         val EmptyThreadItems = listOf(Empty.Thread)
     }
 }
+
+val TimelineItem.feedContext: String?
+    get() = when (this) {
+        is TimelineItem.Pinned -> feedContext
+        is TimelineItem.Repost -> feedContext
+        is TimelineItem.Single -> feedContext
+        is TimelineItem.Threaded,
+        is TimelineItem.Placeholder,
+        -> null
+    }
+
+val TimelineItem.reqId: FeedReqId?
+    get() = when (this) {
+        is TimelineItem.Pinned -> reqId
+        is TimelineItem.Repost -> reqId
+        is TimelineItem.Single -> reqId
+        is TimelineItem.Threaded,
+        is TimelineItem.Placeholder,
+        -> null
+    }
