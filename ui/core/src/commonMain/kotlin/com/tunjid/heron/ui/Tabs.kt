@@ -257,9 +257,7 @@ private fun BoxScope.Indicator(
                 }
                 // Floored scrolled off the leading edge: grow the indicator out of
                 // ceiling's leading edge as the swipe carries the highlight in from the
-                // left. Both edge cases scale by the swipe fraction, so the indicator stays
-                // collapsed at rest rather than latching full-size onto the wrong tab and
-                // "following" the scroll (issue #1264).
+                // left.
                 ceiling != null -> TabSizeAndPosition(
                     size = (ceiling.size * fraction).roundToInt(),
                     position = ceiling.offset,
@@ -279,15 +277,16 @@ private fun BoxScope.Indicator(
         Modifier
             .align(Alignment.CenterStart)
             .layout { measurable, _ ->
+                val currentPacked = TabSizeAndPosition(packedSizeAndPosition)
                 val placeable = measurable.measure(
                     Constraints.fixed(
-                        width = TabSizeAndPosition(packedSizeAndPosition).size,
+                        width = currentPacked.size,
                         height = 32.dp.roundToPx(),
                     ),
                 )
                 layout(placeable.width, placeable.height) {
                     placeable.place(
-                        x = TabSizeAndPosition(packedSizeAndPosition).position,
+                        x = currentPacked.position,
                         y = 0,
                     )
                 }
