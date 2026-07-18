@@ -109,7 +109,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 46,
+    version = 47,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -252,6 +252,8 @@ import kotlinx.coroutines.IO
         // Add index to ImageEntity and VideoEntity
         AutoMigration(from = 44, to = 45),
         // Migration 45 - 46 is a manual migration
+        // Add feedContext and reqId to timelineItems for feed generator interactions
+        AutoMigration(from = 46, to = 47),
     ],
     exportSchema = true,
 )

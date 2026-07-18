@@ -35,6 +35,7 @@ import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
 import heron.ui.timeline.generated.resources.writable_failed_post_interaction
+import heron.ui.timeline.generated.resources.writable_feed_interaction
 import heron.ui.timeline.generated.resources.writable_follow
 import heron.ui.timeline.generated.resources.writable_like
 import heron.ui.timeline.generated.resources.writable_link_document
@@ -138,6 +139,11 @@ fun Writable.writeStatusMessage(
                     ),
                 )
             }
+
+            is Writable.FeedInteraction -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_feed_interaction),
+            )
 
             is Writable.ProfileUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

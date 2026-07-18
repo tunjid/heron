@@ -19,7 +19,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
@@ -49,4 +51,103 @@ data class FeedGenerator(
 
     override val embeddableRecordUri: EmbeddableRecordUri
         get() = uri
+
+    @Serializable
+    sealed class Interaction {
+        abstract val feedUri: FeedGeneratorUri
+        abstract val postUri: PostUri
+        abstract val event: Event
+        abstract val feedContext: String?
+        abstract val reqId: FeedReqId?
+
+        @Serializable
+        data class Request(
+            override val feedUri: FeedGeneratorUri,
+            override val postUri: PostUri,
+            override val event: Event.Request,
+            override val feedContext: String?,
+            override val reqId: FeedReqId? = null,
+        ) : Interaction()
+
+        @Serializable
+        data class Click(
+            override val feedUri: FeedGeneratorUri,
+            override val postUri: PostUri,
+            override val event: Event.Click,
+            override val feedContext: String?,
+            override val reqId: FeedReqId? = null,
+        ) : Interaction()
+
+        @Serializable
+        data class Engagement(
+            override val feedUri: FeedGeneratorUri,
+            override val postUri: PostUri,
+            override val event: Event.Engagement,
+            override val feedContext: String?,
+            override val reqId: FeedReqId? = null,
+        ) : Interaction()
+
+        /**
+         * Heron mirror of the interaction tokens declared by `app.bsky.feed.defs#interaction`
+         * (generated as `app.bsky.feed.Token`), one nested branch per [Interaction] kind. Kept
+         * free of any lexicon dependency; the mapping to the wire type lives in the data layer.
+         */
+        @Serializable
+        sealed class Event {
+
+            /**
+             * Explicit feedback asking the feed generator to change what it serves. A deliberate
+             * user action, worth persisting and retrying — the only branch enqueueable for now.
+             */
+            @Serializable
+            sealed class Request : Event() {
+
+                @Serializable
+                data object Less : Request()
+
+                @Serializable
+                data object More : Request()
+            }
+
+            /** The user clicked through from the feed item. Fire-and-forget telemetry. */
+            @Serializable
+            sealed class Click : Event() {
+
+                @Serializable
+                data object Item : Click()
+
+                @Serializable
+                data object Author : Click()
+
+                @Serializable
+                data object Reposter : Click()
+
+                @Serializable
+                data object Embed : Click()
+            }
+
+            /** Passive impressions and engagement mirrored back to the feed. Fire-and-forget. */
+            @Serializable
+            sealed class Engagement : Event() {
+
+                @Serializable
+                data object Seen : Engagement()
+
+                @Serializable
+                data object Like : Engagement()
+
+                @Serializable
+                data object Repost : Engagement()
+
+                @Serializable
+                data object Reply : Engagement()
+
+                @Serializable
+                data object Quote : Engagement()
+
+                @Serializable
+                data object Share : Engagement()
+            }
+        }
+    }
 }

@@ -32,12 +32,14 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.feed.SendInteractionsRequest
 import app.bsky.feed.Token
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.feedPreference
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideQuotes
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReplies
@@ -53,6 +55,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -77,6 +80,7 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.models.asNetworkInteraction
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -92,6 +96,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -195,6 +202,10 @@ interface TimelineRepository {
 
     suspend fun updateHomeTimelines(
         update: Timeline.Update,
+    ): Outcome
+
+    suspend fun sendFeedInteractions(
+        interactions: List<FeedGenerator.Interaction>,
     ): Outcome
 }
 
@@ -799,6 +810,34 @@ internal class OfflineTimelineRepository(
             onFailure = Outcome::Failure,
         )
 
+    override suspend fun sendFeedInteractions(
+        interactions: List<FeedGenerator.Interaction>,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        coroutineScope {
+            interactions
+                .groupBy(FeedGenerator.Interaction::feedUri)
+                .map { (feedUri, feedInteractions) ->
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            sendInteractions(
+                                SendInteractionsRequest(
+                                    feed = AtUri(feedUri.uri),
+                                    interactions = feedInteractions.map(
+                                        FeedGenerator.Interaction::asNetworkInteraction,
+                                    ),
+                                ),
+                            )
+                        }.toOutcome()
+                    }
+                }
+        }
+            .awaitAll()
+            .firstOrNull { it is Outcome.Failure }
+            ?: Outcome.Success
+    } ?: expiredSessionOutcome()
+
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
         currentCursor: Cursor,
@@ -1049,6 +1088,8 @@ internal class OfflineTimelineRepository(
                                         threadGate = threadGate(post.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
+                                        feedContext = entity.feedContext,
+                                        reqId = entity.reqId?.let(::FeedReqId),
                                     )
 
                                     entity.isPinned -> TimelineItem.Pinned(
@@ -1058,6 +1099,8 @@ internal class OfflineTimelineRepository(
                                         threadGate = threadGate(post.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
+                                        feedContext = entity.feedContext,
+                                        reqId = entity.reqId?.let(::FeedReqId),
                                     )
 
                                     else -> TimelineItem.Single(
@@ -1067,6 +1110,8 @@ internal class OfflineTimelineRepository(
                                         threadGate = threadGate(post.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
+                                        feedContext = entity.feedContext,
+                                        reqId = entity.reqId?.let(::FeedReqId),
                                     )
                                 },
                             )

@@ -152,6 +152,7 @@
     <string name="writable_unmute">unmute</string>
     <string name="writable_profile_update">profile update</string>
     <string name="writable_timeline_update">timeline update</string>
+    <string name="writable_feed_interaction">feed feedback</string>
     <string name="writable_notification_update">notification update</string>
     <string name="writable_record_deletion">record deletion</string>
     <string name="writable_bookmark">bookmark</string>
@@ -192,6 +193,7 @@
     <string name="writable_description_unmuting_profile">Unmuting a profile</string>
     <string name="writable_description_updating_status">Updating your status</string>
     <string name="writable_description_updating_feed_settings">Updating feed settings</string>
+    <string name="writable_description_sending_feed_feedback">Sending feed feedback</string>
     <string name="writable_description_updating_profile">Updating your profile</string>
     <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
     <string name="writable_description_deleting_record">Deleting a record</string>

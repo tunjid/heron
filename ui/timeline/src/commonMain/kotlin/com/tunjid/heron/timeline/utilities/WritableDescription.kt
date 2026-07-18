@@ -58,6 +58,7 @@ import heron.ui.timeline.generated.resources.writable_description_removing_like
 import heron.ui.timeline.generated.resources.writable_description_removing_reaction
 import heron.ui.timeline.generated.resources.writable_description_removing_repost
 import heron.ui.timeline.generated.resources.writable_description_reposting
+import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication
 import heron.ui.timeline.generated.resources.writable_description_unblocking_profile
@@ -83,6 +84,11 @@ fun Writable.describe(): WritableDescription =
     when (this) {
         is Writable.Create -> request.describe()
         is Writable.Interaction -> interaction.describe()
+        is Writable.FeedInteraction -> WritableDescription(
+            icon = Icons.Rounded.Tune,
+            title = Resource(Res.string.writable_description_sending_feed_feedback),
+            summary = null,
+        )
         is Writable.Send -> WritableDescription(
             icon = Icons.AutoMirrored.Rounded.Send,
             title = Resource(Res.string.writable_description_sending_message),

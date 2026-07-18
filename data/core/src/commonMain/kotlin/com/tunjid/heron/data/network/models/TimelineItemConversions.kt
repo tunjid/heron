@@ -112,7 +112,8 @@ internal fun FeedViewPost.feedItemEntity(
         null,
         -> null
     },
-
+    feedContext = feedContext,
+    reqId = reqId,
 )
 
 internal fun ReplyRefRootUnion.profileEntity() = when (this) {
