@@ -54,7 +54,9 @@ internal class PlcDirectoryPdsResolver(
             val existing = cache.remove(did)
             val deferred = existing ?: scope.async {
                 runCatchingUnlessCancelled {
-                    val responseText = httpClient.get("$PlcDirectoryUrl/${did.did}")
+                    val didDocumentUrl = did.didDocumentUrl()
+                        ?: return@runCatchingUnlessCancelled null
+                    val responseText = httpClient.get(didDocumentUrl)
                         .bodyAsText()
                     BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
                         .service
@@ -110,6 +112,53 @@ internal class PlcDirectoryPdsResolver(
     }.getOrNull()
 }
 
+/**
+ * The URL of the [Did]'s DID document, resolved according to its DID method:
+ *  - `did:plc:*` is fetched from the PLC directory.
+ *  - `did:web:*` is fetched from the host's DID document per the did:web method spec.
+ *
+ * Returns `null` for unsupported DID methods.
+ */
+internal fun Did.didDocumentUrl(): String? = when {
+    did.startsWith(DidPlcPrefix) -> "$PlcDirectoryUrl/$did"
+    did.startsWith(DidWebPrefix) -> webDidDocumentUrl(
+        methodSpecificId = did.removePrefix(DidWebPrefix),
+    )
+    else -> null
+}
+
+private fun webDidDocumentUrl(methodSpecificId: String): String {
+    // The did:web spec percent-encodes a port's colon as %3A but leaves path-delimiter colons
+    // plain, so splitting on ':' cleanly separates the host from any path segments; the host's
+    // own port is then decoded. (atproto only permits a localhost port and no path segments, but
+    // the general form is kept for correctness.)
+    val segments = methodSpecificId.split(':')
+    val host = segments.first().replace(
+        oldValue = EncodedColon,
+        newValue = ":",
+        ignoreCase = true,
+    )
+    val pathSegments = segments.drop(1)
+    return buildString {
+        append(Uri.Host.Https.prefix)
+        append(host)
+        if (pathSegments.isEmpty()) {
+            append(WellKnownDidDocumentPath)
+        } else {
+            pathSegments.forEach { segment ->
+                append('/')
+                append(segment)
+            }
+            append(DidDocumentPath)
+        }
+    }
+}
+
 private const val PublicApiUrl = "https://public.api.bsky.app"
 private const val PlcDirectoryUrl = "https://plc.directory"
+private const val DidPlcPrefix = "did:plc:"
+private const val DidWebPrefix = "did:web:"
+private const val EncodedColon = "%3A"
+private const val WellKnownDidDocumentPath = "/.well-known/did.json"
+private const val DidDocumentPath = "/did.json"
 private const val MaxCacheSize = 20

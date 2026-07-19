@@ -24,20 +24,17 @@
 
 package com.tunjid.heron.data.network.oauth
 
-import io.ktor.http.URLProtocol
-import io.ktor.http.Url
-import io.ktor.http.buildUrl
-import io.ktor.util.decodeBase64String
 import kotlin.time.Duration
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import sh.christian.ozone.api.Did
 
 /**
  * Represents an OAuth token received after a successful authorization or refresh request.
+ *
+ * Per the [atproto OAuth spec](https://atproto.com/specs/oauth) the access token is opaque to the
+ * client, so nothing here is derived by parsing it. The account's PDS is resolved from its DID
+ * document (see [PdsResolver][com.tunjid.heron.data.network.PdsResolver]) rather than from a token
+ * claim.
  *
  * @param accessToken The access token used to authenticate API requests.
  * @param refreshToken The refresh token used to obtain a new access token when the current one expires.
@@ -56,41 +53,4 @@ data class OAuthToken(
     val scopes: List<OAuthScope>,
     val subject: Did,
     val nonce: String,
-) {
-    private val payloadJwt: String by lazy {
-        accessToken.split(".")[1]
-    }
-    private val payloadJson: JsonObject by lazy {
-        Json.decodeFromString(JsonObject.serializer(), payloadJwt.decodeBase64String())
-    }
-
-    /**
-     * The unique identifier for the OAuth client.
-     */
-    val clientId: String by lazy {
-        requirePayload("client_id")
-    }
-
-    /**
-     * The audience of the JWT, typically the DID of the PDS (Personal Data Server) that the token is intended for.
-     */
-    val audience: Did by lazy {
-        Did(requirePayload("aud"))
-    }
-
-    /**
-     * The URL of the PDS (Personal Data Server) associated with the audience.
-     */
-    val pds: Url by lazy {
-        buildUrl {
-            protocol = URLProtocol.HTTPS
-            host = audience.toString().substringAfterLast(":")
-        }
-    }
-
-    private fun requirePayload(key: String): String {
-        return requireNotNull(payloadJson[key]?.let { (it as? JsonPrimitive)?.contentOrNull }) {
-            "JWT payload does not contain '$key' claim"
-        }
-    }
-}
+)
