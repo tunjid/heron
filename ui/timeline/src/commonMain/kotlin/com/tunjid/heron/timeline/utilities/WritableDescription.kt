@@ -46,7 +46,6 @@ import heron.ui.timeline.generated.resources.writable_description_bookmarking_po
 import heron.ui.timeline.generated.resources.writable_description_creating_post
 import heron.ui.timeline.generated.resources.writable_description_deleting_draft
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
-import heron.ui.timeline.generated.resources.writable_description_saving_draft
 import heron.ui.timeline.generated.resources.writable_description_following_profile
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
 import heron.ui.timeline.generated.resources.writable_description_liking_post
@@ -61,6 +60,7 @@ import heron.ui.timeline.generated.resources.writable_description_removing_like
 import heron.ui.timeline.generated.resources.writable_description_removing_reaction
 import heron.ui.timeline.generated.resources.writable_description_removing_repost
 import heron.ui.timeline.generated.resources.writable_description_reposting
+import heron.ui.timeline.generated.resources.writable_description_saving_draft
 import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication

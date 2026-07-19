@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.types
 
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import io.ktor.http.HttpStatusCode
 import kotlinx.io.IOException
 
 sealed interface HeronException
@@ -86,3 +87,19 @@ class AtProtoException(
 class InvalidTokenException :
     Exception("Invalid tokens"),
     HeronException
+
+fun Throwable.isNotFound(): Boolean {
+    if (this !is AtProtoException) return false
+    if (this.statusCode == HttpStatusCode.NotFound.value) return true
+
+    val message = this.message ?: return false
+
+    // At proto is not consistent in its not found messaging
+    return this.statusCode == HttpStatusCode.BadRequest.value &&
+        NotFoundVariants.any { it in message }
+}
+
+private val NotFoundVariants = setOf(
+    "could not find",
+    "not found",
+)

@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.ExpiredSessionException
+import com.tunjid.heron.data.core.types.isNotFound
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.PostDraftDao
 import com.tunjid.heron.data.database.entities.PostDraftEntity
@@ -177,8 +178,13 @@ internal class OfflinePostDraftDataSource(
             deleteDraft(
                 DeleteDraftRequest(id = id.id.let(::Tid)),
             )
-        }.toOutcome {
-            postDraftDao.deletePostDraft(id)
         }
+            .recoverCatching {
+                if (it.isNotFound()) Unit
+                else throw it
+            }
+            .toOutcome {
+                postDraftDao.deletePostDraft(id)
+            }
     } ?: expiredSessionOutcome()
 }

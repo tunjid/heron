@@ -110,7 +110,7 @@ sealed interface Writable {
     }
 
     @Serializable
-    sealed class PostDraft: Writable {
+    sealed class PostDraft : Writable {
         @Serializable
         data class Save(
             val draft: Post.Draft,
