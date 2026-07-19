@@ -383,6 +383,7 @@ private fun Writable.writeTimeout() =
         is Writable.FeedList,
         is Writable.StandardSite,
         is Writable.StatusUpdate,
+        is Writable.PostDraft,
         -> BasicWriteTimeout
     }
 

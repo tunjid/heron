@@ -143,6 +143,8 @@
     <string name="writable_duplicate">Your %1$s is processing.</string>
     <string name="writable_failed">Cannot process %1$s right now.</string>
     <string name="writable_post">post</string>
+    <string name="writable_draft">draft</string>
+    <string name="writable_draft_deletion">draft deletion</string>
     <string name="writable_message">message</string>
     <string name="writable_reaction">reaction</string>
     <string name="writable_reaction_removal">reaction removal</string>
@@ -171,6 +173,8 @@
     <string name="writable_conversation_update">conversation update</string>
 
     <string name="writable_description_creating_post">Creating a post</string>
+    <string name="writable_description_saving_draft">Saving a draft</string>
+    <string name="writable_description_deleting_draft">Deleting a draft</string>
     <string name="writable_description_post_photo">Photo post</string>
     <string name="writable_description_post_video">Video post</string>
     <string name="writable_description_liking_post">Liking a post</string>

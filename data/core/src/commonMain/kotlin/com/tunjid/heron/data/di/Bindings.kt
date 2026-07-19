@@ -31,6 +31,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.PostDraftDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.RockskyDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
@@ -93,6 +94,8 @@ import com.tunjid.heron.data.tasks.TaskStore
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
+import com.tunjid.heron.data.utilities.draft.OfflinePostDraftDataSource
+import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
 import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
@@ -284,6 +287,12 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun providePostDraftDataSource(
+        offlinePostDraftDataSource: OfflinePostDraftDataSource,
+    ): PostDraftDataSource = offlinePostDraftDataSource
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideHttpClient(): HttpClient = HttpClient {
         expectSuccess = false
         install(ContentNegotiation) {
@@ -334,6 +343,12 @@ class DataBindings(
     fun providePostDao(
         database: AppDatabase,
     ): PostDao = database.postDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun providePostDraftDao(
+        database: AppDatabase,
+    ): PostDraftDao = database.postDraftDao()
 
     @SingleIn(AppScope::class)
     @Provides

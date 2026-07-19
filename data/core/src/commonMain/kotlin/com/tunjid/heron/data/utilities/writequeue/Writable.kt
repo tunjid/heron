@@ -28,10 +28,13 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
+import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.utilities.toOutcome
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
 /**
  * Interface definition for data that is written to disk or over the wire.
@@ -91,13 +94,46 @@ sealed interface Writable {
     @Serializable
     data class Create(
         val request: Post.Create.Request,
+        // When set, the draft this post was composed from; deleted once the post is created.
+        @ProtoNumber(2)
+        val sourceDraftId: DraftId? = null,
     ) : Writable {
 
         override val queueId: String
             get() = "create-post-$request"
 
         override suspend fun WriteQueue.write(): Outcome =
-            postRepository.createPost(request)
+            postRepository.createPost(
+                request = request,
+                sourceDraftId = sourceDraftId,
+            )
+    }
+
+    @Serializable
+    sealed class PostDraft: Writable {
+        @Serializable
+        data class Save(
+            val draft: Post.Draft,
+        ) : PostDraft() {
+
+            override val queueId: String
+                get() = "save-draft-${draft.id ?: draft}"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                postRepository.saveDraft(draft).toOutcome()
+        }
+
+        @Serializable
+        data class Delete(
+            val draftId: DraftId,
+        ) : PostDraft() {
+
+            override val queueId: String
+                get() = "delete-draft-$draftId"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                postRepository.deleteDraft(draftId)
+        }
     }
 
     @Serializable
