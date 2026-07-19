@@ -55,17 +55,7 @@ internal class PlcDirectoryPdsResolver(
             val existing = cache.remove(did)
             val deferred = existing ?: scope.async {
                 runCatchingUnlessCancelled {
-                    val didDocumentUrl = did.didDocumentUrl()
-                        ?: return@runCatchingUnlessCancelled null
-                    val responseText = httpClient.get(didDocumentUrl)
-                        .takeIf { it.status.isSuccess() }
-                        ?.bodyAsText()
-                        ?: return@runCatchingUnlessCancelled null
-                    BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
-                        .service
-                        .firstOrNull()
-                        ?.serviceEndpoint
-                        ?.let(::Url)
+                    did.resolvePdsEndpoint()?.let(::Url)
                 }.getOrNull()
             }
             // Place at the end to mark as most recently used
@@ -91,17 +81,8 @@ internal class PlcDirectoryPdsResolver(
             ?.let(BlueskyJson::decodeFromString)
             ?: return@runCatchingUnlessCancelled null
 
-        val didDoc: SavedState.AuthTokens.DidDoc = httpClient.get(
-            urlString = "$PlcDirectoryUrl/${handleResponse.did.did}",
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.bodyAsText()
-            ?.let(BlueskyJson::decodeFromString)
+        val endpoint = handleResponse.did.resolvePdsEndpoint()
             ?: return@runCatchingUnlessCancelled null
-
-        val endpoint = didDoc.service
-            .firstOrNull()
-            ?.serviceEndpoint ?: return null
 
         Server.KnownServers
             .firstOrNull { it.endpoint == endpoint }
@@ -113,6 +94,16 @@ internal class PlcDirectoryPdsResolver(
                     )
                 }
     }.getOrNull()
+
+    private suspend fun Did.resolvePdsEndpoint(): String? {
+        val didDocumentUrl = didDocumentUrl() ?: return null
+        val responseText = httpClient.get(didDocumentUrl)
+            .takeIf { it.status.isSuccess() }
+            ?.bodyAsText()
+            ?: return null
+        return BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
+            .atprotoPdsEndpoint(did = this)
+    }
 }
 
 /**
@@ -157,6 +148,17 @@ private fun webDidDocumentUrl(methodSpecificId: String): String {
     }
 }
 
+/**
+ * The account's PDS endpoint from its DID document: the `serviceEndpoint` of the service entry with
+ * type `AtprotoPersonalDataServer` and id `#atproto_pds` (either the bare fragment or the
+ * DID-qualified form). Returns `null` if no such service is declared.
+ */
+internal fun SavedState.AuthTokens.DidDoc.atprotoPdsEndpoint(did: Did): String? =
+    service.firstOrNull { service ->
+        service.type == AtprotoPdsServiceType &&
+            (service.id == AtprotoPdsServiceId || service.id == "${did.did}$AtprotoPdsServiceId")
+    }?.serviceEndpoint
+
 private const val PublicApiUrl = "https://public.api.bsky.app"
 private const val PlcDirectoryUrl = "https://plc.directory"
 private const val DidPlcPrefix = "did:plc:"
@@ -164,4 +166,6 @@ private const val DidWebPrefix = "did:web:"
 private const val EncodedColon = "%3A"
 private const val WellKnownDidDocumentPath = "/.well-known/did.json"
 private const val DidDocumentPath = "/did.json"
+private const val AtprotoPdsServiceId = "#atproto_pds"
+private const val AtprotoPdsServiceType = "AtprotoPersonalDataServer"
 private const val MaxCacheSize = 20
