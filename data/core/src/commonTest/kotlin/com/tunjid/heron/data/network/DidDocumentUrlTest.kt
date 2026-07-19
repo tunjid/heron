@@ -56,6 +56,14 @@ class DidDocumentUrlTest {
     }
 
     @Test
+    fun didWeb_withPercentEncodedPathSegments_isDecoded() {
+        assertEquals(
+            expected = "https://example.com/user/alice/did.json",
+            actual = Did("did:web:example.com:user:%61lice").didDocumentUrl(),
+        )
+    }
+
+    @Test
     fun unsupportedDidMethod_resolvesToNull() {
         assertNull(
             Did("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK").didDocumentUrl(),

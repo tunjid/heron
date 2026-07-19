@@ -27,6 +27,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Url
+import io.ktor.http.decodeURLPart
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
@@ -57,7 +58,9 @@ internal class PlcDirectoryPdsResolver(
                     val didDocumentUrl = did.didDocumentUrl()
                         ?: return@runCatchingUnlessCancelled null
                     val responseText = httpClient.get(didDocumentUrl)
-                        .bodyAsText()
+                        .takeIf { it.status.isSuccess() }
+                        ?.bodyAsText()
+                        ?: return@runCatchingUnlessCancelled null
                     BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
                         .service
                         .firstOrNull()
@@ -147,7 +150,7 @@ private fun webDidDocumentUrl(methodSpecificId: String): String {
         } else {
             pathSegments.forEach { segment ->
                 append('/')
-                append(segment)
+                append(segment.decodeURLPart())
             }
             append(DidDocumentPath)
         }
