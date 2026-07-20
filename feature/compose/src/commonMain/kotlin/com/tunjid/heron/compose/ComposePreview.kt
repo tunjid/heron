@@ -21,7 +21,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.tunjid.heron.compose.di.Route as ComposeRoute
+import com.tunjid.heron.compose.drafts.DraftsAction
+import com.tunjid.heron.compose.drafts.DraftsState
+import com.tunjid.heron.compose.drafts.DraftsStateHolder
 import com.tunjid.heron.ui.preview.RoutePreview
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.treenav.strings.routeOf
 
@@ -38,6 +42,15 @@ internal fun ComposePreview() {
                 ).asNoOpActionSuspendingStateMutator(),
                 scope = scope,
             )
+        },
+        // The drafts sheet's state holder is DI-provided at runtime; supply a no-op stub so the
+        // preview can host it.
+        additionalSheetStateHolderFactory = { type ->
+            if (type == DraftsStateHolder::class) object :
+                DraftsStateHolder,
+                ActionSuspendingStateMutator<DraftsAction, DraftsState>
+                by DraftsState.Immutable().asNoOpActionSuspendingStateMutator() {}
+            else null
         },
         render = { route, paneScaffoldState ->
             ComposeRoute(

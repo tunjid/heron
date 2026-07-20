@@ -17,16 +17,22 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Link
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
-import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
@@ -43,6 +49,7 @@ import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.navigation.sharedUri
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
@@ -53,6 +60,7 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.saving_draft
 import heron.feature.compose.generated.resources.sending_post
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -141,6 +149,15 @@ class ActualComposeViewModel(
                             state = state,
                         )
                         is Action.CreatePost -> action.flow.launchCreatePostMutations(
+                            state = state,
+                            navActions = navActions,
+                            writeQueue = writeQueue,
+                            fileManager = fileManager,
+                        )
+                        is Action.LoadDraft -> action.flow.launchLoadDraftMutations(
+                            state = state,
+                        )
+                        is Action.SaveDraft -> action.flow.launchSaveDraftMutations(
                             state = state,
                             navActions = navActions,
                             writeQueue = writeQueue,
@@ -312,28 +329,18 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
 ) = launchedCollect { action ->
     val postWrite = withContext(Dispatchers.IO) {
         Writable.Create(
-            request = Post.Create.Request(
+            request = composeRequest(
                 authorId = action.authorId,
                 text = action.text,
                 links = action.links,
-                metadata = Post.Create.Metadata(
-                    reply = action.postType as? Post.Create.Reply,
-                    embeddedRecordReference = action.embeddedRecordReference,
-                    embeddedMedia = action.media.mapNotNull { item ->
-                        when (item) {
-                            is RestrictedFile.Media.Photo ->
-                                if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
-                                else null
-
-                            is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(
-                                item,
-                            )
-                        }
-                    }.filterIsInstance<File.Media>(),
-                    allowed = action.interactionPreference?.threadGateAllowed,
-                    linkPreview = action.linkPreview,
-                ),
+                reply = action.postType as? Post.Create.Reply,
+                media = action.media,
+                embeddedRecordReference = action.embeddedRecordReference,
+                linkPreview = action.linkPreview,
+                allowed = action.interactionPreference?.threadGateAllowed,
+                fileManager = fileManager,
             ),
+            sourceDraftId = action.sourceDraftId,
         )
     }
 
@@ -352,10 +359,111 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
+    state: State.SnapshotMutable,
+    navActions: (NavigationMutation) -> Unit,
+    fileManager: FileManager,
+    writeQueue: WriteQueue,
+) = launchedCollect {
+    val authorId = state.signedInProfile?.did ?: return@launchedCollect
+    val draftWrite = withContext(Dispatchers.IO) {
+        Writable.PostDraft.Save(
+            draft = Post.Draft(
+                id = state.draftId,
+                authorId = authorId,
+                posts = listOf(
+                    composeRequest(
+                        authorId = authorId,
+                        text = state.postText.text,
+                        links = state.postText.annotatedString.links(),
+                        // Drafts have no reply parent, so a draft is always a top-level post.
+                        reply = null,
+                        media = state.video?.let(::listOf) ?: state.photos,
+                        embeddedRecordReference = state.embeddedRecord?.reference,
+                        linkPreview = state.linkPreview,
+                        allowed = state.interactionsPreference?.threadGateAllowed,
+                        fileManager = fileManager,
+                    ),
+                ),
+            ),
+        )
+    }
+
+    val status = writeQueue.enqueue(draftWrite)
+    val memo = draftWrite.writeStatusMessage(status)
+    if (memo != null) state.messages += memo
+
+    if (status !is WriteQueue.Status.Enqueued) return@launchedCollect
+
+    state.messages += Memo.Resource(stringResource = Res.string.saving_draft)
+
+    // Wait for the user to read the message
+    delay(1400.milliseconds)
+
+    navActions(Action.Navigate.Pop.navigationMutation)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.draftId = action.draft.id
+    val firstPost = action.draft.posts.firstOrNull()
+    val text = firstPost?.text.orEmpty()
+    state.photos = emptyList()
+    state.video = null
+    state.embeddedRecord = null
+    state.linkPreview = null
+    state.postText = TextFieldValue(
+        annotatedString = AnnotatedString(text),
+        selection = TextRange(text.length),
+    )
+    // Media and link previews are best-effort: a draft's media carries no dimensions (so it would
+    // be dropped on post) and its link card is not stored, so only text is rehydrated. The link
+    // card re-resolves via URL detection once the text is edited.
+}
+
+/**
+ * Builds the [Post.Create.Request] shared by post creation and draft saving, caching any
+ * [RestrictedFile] media into app storage. Photos without a known size are dropped (the post
+ * embed requires dimensions); videos are always kept.
+ */
+private suspend fun composeRequest(
+    authorId: ProfileId,
+    text: String,
+    links: List<Link>,
+    reply: Post.Create.Reply?,
+    media: List<RestrictedFile.Media>,
+    embeddedRecordReference: Record.Reference?,
+    linkPreview: LinkPreview?,
+    allowed: ThreadGate.Allowed?,
+    fileManager: FileManager,
+): Post.Create.Request = Post.Create.Request(
+    authorId = authorId,
+    text = text,
+    links = links,
+    metadata = Post.Create.Metadata(
+        reply = reply,
+        embeddedRecordReference = embeddedRecordReference,
+        embeddedMedia = media.mapNotNull { item ->
+            when (item) {
+                is RestrictedFile.Media.Photo ->
+                    if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
+                    else null
+
+                is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(item)
+            }
+        },
+        allowed = allowed,
+        linkPreview = linkPreview,
+    ),
+)
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchProfiles>.launchSearchMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = debounce(SEARCH_DEBOUNCE_MILLIS)
+) = debounce(SEARCH_DEBOUNCE)
     .launchedCollectLatest { action ->
         searchRepository.autoCompleteProfileSearch(
             query = SearchQuery.OfProfiles(
@@ -380,5 +488,5 @@ private fun Flow<Action.ClearSuggestions>.launchClearSuggestionsMutations(
     state.suggestedProfiles = emptyList()
 }
 
-private const val SEARCH_DEBOUNCE_MILLIS = 300L
+private val SEARCH_DEBOUNCE = 300.milliseconds
 const val MAX_SUGGESTED_PROFILES = 5

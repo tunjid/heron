@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
@@ -49,6 +50,9 @@ interface State {
     data class Immutable(
         val sharedElementPrefix: String?,
         val postType: Post.Create? = null,
+        // The draft currently being edited, if this post was resumed from one. Non-null means a
+        // successful post deletes that draft, and a save updates it in place.
+        val draftId: DraftId? = null,
         val signedInProfile: Profile? = null,
         val fabExpanded: Boolean = true,
         val embeddedRecord: Record.Embeddable.Native? = null,
@@ -73,33 +77,40 @@ interface State {
     ) : State
 
     companion object {
-        operator fun invoke(route: Route): Immutable = when (val model = route.model<Post.Create>()) {
-            is Post.Create -> Immutable(
-                postText = TextFieldValue(
-                    annotatedString = AnnotatedString(
-                        when (model) {
-                            is Post.Create.Mention -> "@${model.profile.handle.id} "
-                            is Post.Create.Reply,
-                            is Post.Create.Quote,
-                            Post.Create.Timeline,
-                            -> ""
-                        },
+        operator fun invoke(route: Route): Immutable =
+            when (val model = route.model<Post.Create>()) {
+                is Post.Create -> Immutable(
+                    postText = TextFieldValue(
+                        annotatedString = AnnotatedString(
+                            when (model) {
+                                is Post.Create.Mention -> "@${model.profile.handle.id} "
+                                is Post.Create.Reply,
+                                is Post.Create.Quote,
+                                Post.Create.Timeline,
+                                -> ""
+                            },
+                        ),
+                        selection = TextRange(
+                            if (model is Post.Create.Mention) model.profile.handle.id.length + 2
+                            else 0,
+                        ),
                     ),
-                    selection = TextRange(
-                        if (model is Post.Create.Mention) model.profile.handle.id.length + 2
-                        else 0,
-                    ),
-                ),
-                sharedElementPrefix = route.sharedElementPrefix,
-                postType = model,
-            )
+                    sharedElementPrefix = route.sharedElementPrefix,
+                    postType = model,
+                )
 
-            else -> Immutable(
-                sharedElementPrefix = route.sharedElementPrefix,
-            )
-        }
+                else -> Immutable(
+                    sharedElementPrefix = route.sharedElementPrefix,
+                )
+            }
     }
 }
+
+val State.canDraft
+    get() = postType !is Post.Create.Reply && postType !is Post.Create.Quote
+
+val State.hasComposedContent
+    get() = postText.text.isNotBlank() || photos.isNotEmpty() || video != null
 
 val State.hasLongPost
     get() = when (val type = postType) {
@@ -129,7 +140,14 @@ sealed class Action(val key: String) {
         val embeddedRecordReference: Record.Reference?,
         val linkPreview: LinkPreview?,
         val interactionPreference: PostInteractionSettingsPreference?,
+        val sourceDraftId: DraftId? = null,
     ) : Action("CreatePost")
+
+    data class LoadDraft(
+        val draft: Post.Draft,
+    ) : Action("LoadDraft")
+
+    data object SaveDraft : Action("SaveDraft")
 
     data class SetFabExpanded(
         val expanded: Boolean,
