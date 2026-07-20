@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.compose.di
 
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.animation.animateBounds
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,8 +26,10 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Drafts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,17 +39,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.heron.compose.Action
-import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.ComposeStateHolder
 import com.tunjid.heron.compose.ComposeViewModelInitializer
+import com.tunjid.heron.compose.canDraft
+import com.tunjid.heron.compose.drafts.DraftsStateHolder
+import com.tunjid.heron.compose.drafts.DraftsViewModelInitializer
+import com.tunjid.heron.compose.drafts.rememberDraftsSheetState
+import com.tunjid.heron.compose.hasComposedContent
+import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
 import com.tunjid.heron.compose.ui.TopAppBarFab
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.DestructiveDialogButton
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
@@ -56,6 +78,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -71,6 +94,14 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.discard
+import heron.feature.compose.generated.resources.drafts
+import heron.feature.compose.generated.resources.keep_editing
+import heron.feature.compose.generated.resources.save_draft
+import heron.feature.compose.generated.resources.save_draft_dialog_text
+import heron.feature.compose.generated.resources.save_draft_dialog_title
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/compose"
 
@@ -106,6 +137,15 @@ class ComposeBindings(
         initializer: ComposeViewModelInitializer,
     ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
+    // The drafts sheet is compose-only, so its sheet state holder is contributed here rather than
+    // from the shared :ui:sheets SheetBindings. It merges into the same app-graph sheet map.
+    @Provides
+    @IntoMap
+    @ClassKey(DraftsStateHolder::class)
+    fun provideDraftsViewModelInitializer(
+        initializer: DraftsViewModelInitializer,
+    ): SheetStateHolderInitializer = SheetStateHolderInitializer(initializer::invoke)
+
     @Provides
     @IntoMap
     @StringKey(RoutePattern)
@@ -138,6 +178,21 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
+    val draftsSheetState = paneScaffoldState.rememberDraftsSheetState(
+        onDraftSelected = { stateHolder.accept(Action.LoadDraft(it)) },
+    )
+    val discardDialogState = rememberSimpleDialogState()
+
+    // Only interrupt leaving when there is unsaved content on a post that could become a draft.
+    // Replies and quotes can't be drafted, so they pop immediately.
+    val shouldOfferDraft = state.canDraft && state.hasComposedContent
+
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = shouldOfferDraft,
+        onBackCompleted = discardDialogState::show,
+    )
+
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -147,18 +202,38 @@ internal fun Route(
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
         },
-        topBar = {
+        topBar = scope@{
             PoppableDestinationTopAppBar(
                 actions = {
-                    TopAppBarFab(
-                        modifier = Modifier,
-                        state = state,
-                        onCreatePost = stateHolder.accept,
+                    if (state.canDraft) AppBarIconButton(
+                        modifier = Modifier
+                            .animateBounds(
+                                lookaheadScope = this@scope,
+                                boundsTransform = this@scope.childBoundsTransform,
+                            ),
+                        icon = Icons.Rounded.Drafts,
+                        iconDescription = stringResource(Res.string.drafts),
+                        onClick = draftsSheetState::showDrafts,
                     )
-                    Spacer(Modifier.width(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .ifTrue(state.hasLongPost) {
+                                padding(horizontal = 8.dp)
+                            }
+                            .ifTrue(!state.hasLongPost) {
+                                // Always has to be in composition, so make very narrow
+                                requiredWidth(Dp.Hairline)
+                            },
+                    ) {
+                        TopAppBarFab(
+                            state = state,
+                            onCreatePost = stateHolder.accept,
+                        )
+                    }
                 },
                 onBackPressed = {
-                    stateHolder.accept(Action.Navigate.Pop)
+                    if (shouldOfferDraft) discardDialogState.show()
+                    else stateHolder.accept(Action.Navigate.Pop)
                 },
             )
         },
@@ -220,6 +295,40 @@ internal fun Route(
                 state = state,
                 actions = stateHolder.accept,
             )
+        },
+    )
+
+    SimpleDialog(
+        state = discardDialogState,
+        title = {
+            SimpleDialogTitle(text = stringResource(Res.string.save_draft_dialog_title))
+        },
+        text = {
+            SimpleDialogText(text = stringResource(Res.string.save_draft_dialog_text))
+        },
+        confirmButton = {
+            PrimaryDialogButton(
+                text = stringResource(Res.string.save_draft),
+                onClick = {
+                    discardDialogState.hide()
+                    stateHolder.accept(Action.SaveDraft)
+                },
+            )
+        },
+        dismissButton = {
+            Row {
+                DestructiveDialogButton(
+                    text = stringResource(Res.string.discard),
+                    onClick = {
+                        discardDialogState.hide()
+                        stateHolder.accept(Action.Navigate.Pop)
+                    },
+                )
+                NeutralDialogButton(
+                    text = stringResource(Res.string.keep_editing),
+                    onClick = discardDialogState::hide,
+                )
+            }
         },
     )
 }
