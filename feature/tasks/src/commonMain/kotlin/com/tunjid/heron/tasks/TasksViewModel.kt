@@ -301,6 +301,7 @@ private fun Writable.embeddableRecordUri(): EmbeddableRecordUri? =
         is Writable.Connection -> null
         is Writable.ConversationUpdate -> null
         is Writable.Create -> null
+        is Writable.PostDraft -> null
         is Writable.FeedInteraction -> this.interactions.firstOrNull()?.postUri
         is Writable.FeedList.AddMember -> create.listUri
         is Writable.Interaction -> this.interaction.postUri

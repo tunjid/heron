@@ -31,6 +31,8 @@ import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
 import heron.ui.timeline.generated.resources.writable_conversation_update
+import heron.ui.timeline.generated.resources.writable_draft
+import heron.ui.timeline.generated.resources.writable_draft_deletion
 import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
@@ -118,6 +120,16 @@ fun Writable.writeStatusMessage(
             is Writable.Create -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_post),
+            )
+
+            is Writable.PostDraft.Save -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft),
+            )
+
+            is Writable.PostDraft.Delete -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft_deletion),
             )
 
             is Writable.Interaction -> when {

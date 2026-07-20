@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkRemove
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Drafts
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.HeartBroken
@@ -43,6 +44,7 @@ import heron.ui.timeline.generated.resources.writable_description_adding_to_list
 import heron.ui.timeline.generated.resources.writable_description_blocking_profile
 import heron.ui.timeline.generated.resources.writable_description_bookmarking_post
 import heron.ui.timeline.generated.resources.writable_description_creating_post
+import heron.ui.timeline.generated.resources.writable_description_deleting_draft
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
 import heron.ui.timeline.generated.resources.writable_description_following_profile
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
@@ -58,6 +60,7 @@ import heron.ui.timeline.generated.resources.writable_description_removing_like
 import heron.ui.timeline.generated.resources.writable_description_removing_reaction
 import heron.ui.timeline.generated.resources.writable_description_removing_repost
 import heron.ui.timeline.generated.resources.writable_description_reposting
+import heron.ui.timeline.generated.resources.writable_description_saving_draft
 import heron.ui.timeline.generated.resources.writable_description_sending_feed_feedback
 import heron.ui.timeline.generated.resources.writable_description_sending_message
 import heron.ui.timeline.generated.resources.writable_description_subscribing_publication
@@ -83,6 +86,16 @@ data class WritableDescription(
 fun Writable.describe(): WritableDescription =
     when (this) {
         is Writable.Create -> request.describe()
+        is Writable.PostDraft.Save -> WritableDescription(
+            icon = Icons.Rounded.Drafts,
+            title = Resource(Res.string.writable_description_saving_draft),
+            summary = null,
+        )
+        is Writable.PostDraft.Delete -> WritableDescription(
+            icon = Icons.Rounded.Delete,
+            title = Resource(Res.string.writable_description_deleting_draft),
+            summary = null,
+        )
         is Writable.Interaction -> interaction.describe()
         is Writable.FeedInteraction -> WritableDescription(
             icon = Icons.Rounded.Tune,

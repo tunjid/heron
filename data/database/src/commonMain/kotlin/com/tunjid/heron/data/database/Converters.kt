@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database
 
 import androidx.room.TypeConverter
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -176,6 +177,10 @@ internal class IdConverters {
     @TypeConverter
     fun threadGateIdFromString(value: String?): ThreadGateId? =
         value?.let(::ThreadGateId)
+
+    @TypeConverter
+    fun draftIdFromString(value: String?): DraftId? =
+        value?.let(::DraftId)
 
     @TypeConverter
     fun conversationIdFromString(value: String?): ConversationId? =
