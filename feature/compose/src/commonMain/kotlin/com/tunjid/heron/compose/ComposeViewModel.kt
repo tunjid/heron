@@ -412,6 +412,10 @@ private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
     state.draftId = action.draft.id
     val firstPost = action.draft.posts.firstOrNull()
     val text = firstPost?.text.orEmpty()
+    state.photos = emptyList()
+    state.video = null
+    state.embeddedRecord = null
+    state.linkPreview = null
     state.postText = TextFieldValue(
         annotatedString = AnnotatedString(text),
         selection = TextRange(text.length),
