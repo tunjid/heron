@@ -156,7 +156,6 @@ class ActualComposeViewModel(
                         )
                         is Action.LoadDraft -> action.flow.launchLoadDraftMutations(
                             state = state,
-                            fileManager = fileManager,
                         )
                         is Action.SaveDraft -> action.flow.launchSaveDraftMutations(
                             state = state,
@@ -407,7 +406,6 @@ private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
     state: State.SnapshotMutable,
-    fileManager: FileManager,
 ) = launchedCollect { action ->
     state.draftId = action.draft.id
     val firstPost = action.draft.posts.firstOrNull()
