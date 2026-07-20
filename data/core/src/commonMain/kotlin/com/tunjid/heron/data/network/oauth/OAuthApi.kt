@@ -318,18 +318,6 @@ class OAuthApi(
     }
 
     /**
-     * Revoke the provided [oauthToken][OAuthToken] using the OAuth server's revocation endpoint.
-     */
-    suspend fun revokeToken(oauthToken: OAuthToken) {
-        revokeToken(
-            accessToken = oauthToken.accessToken,
-            clientId = oauthToken.clientId,
-            nonce = oauthToken.nonce,
-            keyPair = oauthToken.keyPair,
-        )
-    }
-
-    /**
      * Revoke the provided access token using the OAuth server's revocation endpoint.
      *
      * The nonce should be passed in from the previous [requestToken] request, if available.

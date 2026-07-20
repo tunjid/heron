@@ -22,7 +22,6 @@ import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -66,15 +65,12 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.search.RouteQuery
-import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.State
-import com.tunjid.heron.search.id
 import com.tunjid.heron.search.key
 import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -221,10 +217,7 @@ internal fun GeneralSearchResults(
             },
             pageContent = { page ->
                 val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
-                val searchResultState = searchResultStateHolder.produceStateWithLifecycle()
-                val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
-
-                when (searchResultState) {
+                when (val searchResultState = searchResultStateHolder.produceStateWithLifecycle()) {
                     is SearchState.OfPosts -> {
                         val gridState = rememberLazyStaggeredGridState()
                         PostSearchResults(
@@ -233,8 +226,8 @@ internal fun GeneralSearchResults(
                             modifier = modifier,
                             presentation = state.preferredPresentation,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                            isActivePage = { pagerState.currentPage == page },
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,

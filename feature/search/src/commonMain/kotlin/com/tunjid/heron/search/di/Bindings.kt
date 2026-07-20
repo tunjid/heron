@@ -43,7 +43,6 @@ import com.tunjid.heron.search.profileHandle
 import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.SearchBar
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -61,7 +60,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -201,12 +199,10 @@ internal fun Route(
     }
 
     val topAppBarNestedScrollConnection =
-        topAppBarNestedScrollConnection()
+        paneScaffoldState.topAppBarNestedScrollConnection
 
     val bottomNavigationNestedScrollConnection =
-        bottomNavigationNestedScrollConnection(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        )
+        paneScaffoldState.bottomNavigationNestedScrollConnection
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier

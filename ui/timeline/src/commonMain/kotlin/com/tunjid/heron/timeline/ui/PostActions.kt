@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
@@ -79,6 +80,10 @@ sealed interface PostAction {
 
     data class OfMore(
         val post: Post,
+        // Present when the post was served by a feed; lets the options sheet echo them back to
+        // the feed generator with a "show more/less like this" interaction.
+        val feedContext: String?,
+        val reqId: FeedReqId?,
     ) : Options
 }
 

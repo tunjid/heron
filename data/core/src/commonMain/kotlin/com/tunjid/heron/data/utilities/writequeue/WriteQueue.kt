@@ -373,6 +373,7 @@ private fun Writable.writeTimeout() =
         is Writable.Connection,
         is Writable.ConversationUpdate,
         is Writable.Interaction,
+        is Writable.FeedInteraction,
         is Writable.NotificationUpdate,
         is Writable.Reaction,
         is Writable.Restriction,
@@ -382,6 +383,7 @@ private fun Writable.writeTimeout() =
         is Writable.FeedList,
         is Writable.StandardSite,
         is Writable.StatusUpdate,
+        is Writable.PostDraft,
         -> BasicWriteTimeout
     }
 

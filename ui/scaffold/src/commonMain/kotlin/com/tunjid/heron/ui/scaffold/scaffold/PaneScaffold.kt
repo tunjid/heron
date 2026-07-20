@@ -61,10 +61,13 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
@@ -96,6 +99,8 @@ class PaneScaffoldState(
     internal val appScaffoldState: AppScaffoldState,
     @PublishedApi
     internal val stateHolderInitializer: StateHolderInitializer,
+    val topAppBarNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
+    val bottomNavigationNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : PaneTransitionScope,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
@@ -197,14 +202,23 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
     stateHolderInitializer: StateHolderInitializer = LocalAppScaffoldState.current.staticStates.stateHolderInitializer,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route> = rememberThreePaneMovableElementSharedTransitionScope(),
 ): PaneScaffoldState {
+    val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
+    val bottomNavigationNestedScrollConnection = bottomNavigationNestedScrollConnection(
+        isCompact = appScaffoldState.staticStates.identityState.prefersCompactBottomNav,
+    )
+
     val paneScaffoldState = remember(
         appScaffoldState,
         stateHolderInitializer,
+        topAppBarNestedScrollConnection,
+        bottomNavigationNestedScrollConnection,
         paneMovableElementSharedTransitionScope,
     ) {
         PaneScaffoldState(
             appScaffoldState = appScaffoldState,
             stateHolderInitializer = stateHolderInitializer,
+            topAppBarNestedScrollConnection = topAppBarNestedScrollConnection,
+            bottomNavigationNestedScrollConnection = bottomNavigationNestedScrollConnection,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
     }
@@ -446,6 +460,35 @@ private fun PaneScaffoldState.PersistentSharedElement() {
                 animatedVisibilityScope = this,
             )
             .size(1.dp),
+    )
+}
+
+@Composable
+private fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
+    rememberAccumulatedOffsetNestedScrollConnection(
+        maxOffset = { Offset.Zero },
+        minOffset = {
+            Offset(
+                x = 0f,
+                y = -UiTokens.toolbarHeight.toPx(),
+            )
+        },
+    )
+
+@Composable
+private fun bottomNavigationNestedScrollConnection(
+    isCompact: Boolean,
+): AccumulatedOffsetNestedScrollConnection {
+    val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
+    return rememberAccumulatedOffsetNestedScrollConnection(
+        invert = true,
+        maxOffset = maxOffset@{
+            Offset(
+                x = 0f,
+                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
+            )
+        },
+        minOffset = { Offset.Zero },
     )
 }
 

@@ -85,6 +85,7 @@ import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
+import com.tunjid.heron.data.core.types.isNotFound
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
@@ -660,7 +661,7 @@ internal class OfflineRecordResolver(
         logcat(LogPriority.WARN) {
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
-        if (isNotFound(throwable)) {
+        if (throwable.isNotFound()) {
             deleteLocalRecord(uri)
         }
     }
@@ -846,22 +847,6 @@ internal class OfflineRecordResolver(
         }
     }
 }
-
-private fun isNotFound(throwable: Throwable): Boolean {
-    if (throwable !is AtProtoException) return false
-    if (throwable.statusCode == HttpStatusCode.NotFound.value) return true
-
-    val message = throwable.message ?: return false
-
-    // At proto is not consistent in its not found messaging
-    return throwable.statusCode == HttpStatusCode.BadRequest.value &&
-        NotFoundVariants.any { it in message }
-}
-
-private val NotFoundVariants = setOf(
-    "could not find",
-    "not found",
-)
 
 /**
  * Maps a resolved [PopulatedRecordEntity] to its [Record.Embeddable] model. Nested posts

@@ -20,10 +20,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -47,8 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
@@ -57,7 +54,6 @@ import androidx.compose.ui.util.unpackInt1
 import androidx.compose.ui.util.unpackInt2
 import com.tunjid.heron.ui.TabsState.Companion.TabBackgroundColor
 import kotlin.jvm.JvmInline
-import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -198,7 +194,6 @@ private fun BoxScope.Indicator(
             ).packed,
         )
     }
-    val sizeAndPosition = TabSizeAndPosition(packedSizeAndPosition)
 
     // Keep selected tab on screen
     LaunchedEffect(lazyListState) {
@@ -213,7 +208,7 @@ private fun BoxScope.Indicator(
 
             val item = visibleItemsInfo[visibleIndex]
 
-            val isFullyVisible = item.offset >= 0 &&
+            val isFullyVisible = item.offset >= layoutInfo.viewportStartOffset &&
                 (item.offset + item.size) <= layoutInfo.viewportEndOffset
 
             if (isFullyVisible) null else roundedIndex
@@ -228,54 +223,80 @@ private fun BoxScope.Indicator(
         snapshotFlow {
             val currentIndex = selectedTabIndex()
             val flooredIndex = floor(currentIndex).fastRoundToInt()
-            val roundedIndex = ceil(currentIndex).fastRoundToInt()
             val fraction = currentIndex - flooredIndex
 
             val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
-
             val flooredPosition = visibleItemsInfo.binarySearch {
                 it.index - flooredIndex
             }
-            if (flooredPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
-                .tabSizeAndPosition()
 
-            val roundedPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
-                it.index - roundedIndex
+            // The highlight sits between the floored and ceiling tabs; either may have
+            // scrolled out of frame. Resolve whichever are still laid out. Visible items
+            // are contiguous, so the ceiling is the floored tab's neighbor — or the
+            // leading visible tab when the floored tab itself is off the leading edge.
+            val floored = visibleItemsInfo.getOrNull(flooredPosition)
+            val ceiling = when (floored) {
+                null -> visibleItemsInfo.firstOrNull()
+                else -> visibleItemsInfo.getOrNull(flooredPosition + 1)
+            }?.takeIf { it.index == flooredIndex + 1 }
+
+            when {
+                // Both endpoints on screen: interpolate the indicator between them.
+                floored != null && ceiling != null -> TabSizeAndPosition(
+                    size = lerp(floored.size, ceiling.size, fraction),
+                    position = lerp(floored.offset, ceiling.offset, fraction),
+                )
+                // Ceiling scrolled off the trailing edge: collapse the indicator against
+                // floored's trailing edge as the swipe carries the highlight off the right.
+                floored != null -> {
+                    val size = (floored.size * (1f - fraction)).roundToInt()
+                    TabSizeAndPosition(
+                        size = size,
+                        position = floored.offset + floored.size - size,
+                    )
+                }
+                // Floored scrolled off the leading edge: grow the indicator out of
+                // ceiling's leading edge as the swipe carries the highlight in from the
+                // left.
+                ceiling != null -> TabSizeAndPosition(
+                    size = (ceiling.size * fraction).roundToInt(),
+                    position = ceiling.offset,
+                )
+                // Selection is more than a tab beyond the visible range, or nothing is
+                // visible: hold the last position and let the keep-on-screen effect above
+                // recenter it.
+                else -> null
             }
-            if (roundedPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
-                .tabSizeAndPosition()
-
-            val floored = lazyListState.layoutInfo.visibleItemsInfo[flooredPosition]
-            val rounded = lazyListState.layoutInfo.visibleItemsInfo[roundedPosition]
-
-            TabSizeAndPosition(
-                size = lerp(floored.size, rounded.size, fraction),
-                position = lerp(floored.offset, rounded.offset, fraction),
-            )
         }
-            .collect {
-                packedSizeAndPosition = it.packed
+            .collect { sizeAndPosition ->
+                if (sizeAndPosition != null) packedSizeAndPosition = sizeAndPosition.packed
             }
     }
 
-    val density = LocalDensity.current
     Box(
         Modifier
             .align(Alignment.CenterStart)
-            .offset { IntOffset(x = sizeAndPosition.position, y = 0) }
-            .height(32.dp)
-            .matchParentSize()
-            .width(with(density) { sizeAndPosition.size.toDp() })
+            .layout { measurable, _ ->
+                val currentPacked = TabSizeAndPosition(packedSizeAndPosition)
+                val placeable = measurable.measure(
+                    Constraints.fixed(
+                        width = currentPacked.size,
+                        height = 32.dp.roundToPx(),
+                    ),
+                )
+                layout(placeable.width, placeable.height) {
+                    placeable.place(
+                        x = currentPacked.position,
+                        y = 0,
+                    )
+                }
+            }
             .background(
                 color = TabBackgroundColor,
                 shape = TabShape,
             ),
     )
 }
-
-private fun LazyListItemInfo?.tabSizeAndPosition() =
-    if (this != null) TabSizeAndPosition(size = size, position = offset)
-    else TabSizeAndPosition(0, 0)
 
 @JvmInline
 value class TabSizeAndPosition(

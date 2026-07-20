@@ -74,6 +74,8 @@
     <string name="pin_feed">Pin</string>
     <string name="save_feed">Save</string>
     <string name="expand_options">Expand options</string>
+    <string name="feed_interaction_show_more">Show more like this</string>
+    <string name="feed_interaction_show_less">Show less like this</string>
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
     <string name="muted_meta_format">Muted in %1$s · %2$s</string>
@@ -141,6 +143,8 @@
     <string name="writable_duplicate">Your %1$s is processing.</string>
     <string name="writable_failed">Cannot process %1$s right now.</string>
     <string name="writable_post">post</string>
+    <string name="writable_draft">draft</string>
+    <string name="writable_draft_deletion">draft deletion</string>
     <string name="writable_message">message</string>
     <string name="writable_reaction">reaction</string>
     <string name="writable_reaction_removal">reaction removal</string>
@@ -152,6 +156,7 @@
     <string name="writable_unmute">unmute</string>
     <string name="writable_profile_update">profile update</string>
     <string name="writable_timeline_update">timeline update</string>
+    <string name="writable_feed_interaction">feed feedback</string>
     <string name="writable_notification_update">notification update</string>
     <string name="writable_record_deletion">record deletion</string>
     <string name="writable_bookmark">bookmark</string>
@@ -168,6 +173,8 @@
     <string name="writable_conversation_update">conversation update</string>
 
     <string name="writable_description_creating_post">Creating a post</string>
+    <string name="writable_description_saving_draft">Saving a draft</string>
+    <string name="writable_description_deleting_draft">Deleting a draft</string>
     <string name="writable_description_post_photo">Photo post</string>
     <string name="writable_description_post_video">Video post</string>
     <string name="writable_description_liking_post">Liking a post</string>
@@ -192,6 +199,7 @@
     <string name="writable_description_unmuting_profile">Unmuting a profile</string>
     <string name="writable_description_updating_status">Updating your status</string>
     <string name="writable_description_updating_feed_settings">Updating feed settings</string>
+    <string name="writable_description_sending_feed_feedback">Sending feed feedback</string>
     <string name="writable_description_updating_profile">Updating your profile</string>
     <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
     <string name="writable_description_deleting_record">Deleting a record</string>

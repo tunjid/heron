@@ -31,10 +31,13 @@ import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
 import heron.ui.timeline.generated.resources.writable_conversation_update
+import heron.ui.timeline.generated.resources.writable_draft
+import heron.ui.timeline.generated.resources.writable_draft_deletion
 import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
 import heron.ui.timeline.generated.resources.writable_failed_post_interaction
+import heron.ui.timeline.generated.resources.writable_feed_interaction
 import heron.ui.timeline.generated.resources.writable_follow
 import heron.ui.timeline.generated.resources.writable_like
 import heron.ui.timeline.generated.resources.writable_link_document
@@ -119,6 +122,16 @@ fun Writable.writeStatusMessage(
                 args = listOf(Res.string.writable_post),
             )
 
+            is Writable.PostDraft.Save -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft),
+            )
+
+            is Writable.PostDraft.Delete -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft_deletion),
+            )
+
             is Writable.Interaction -> when {
                 isDropped -> Memo.Resource(
                     stringResource = Res.string.writable_failed_post_interaction,
@@ -138,6 +151,11 @@ fun Writable.writeStatusMessage(
                     ),
                 )
             }
+
+            is Writable.FeedInteraction -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_feed_interaction),
+            )
 
             is Writable.ProfileUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

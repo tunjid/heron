@@ -11,6 +11,8 @@ import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material.icons.rounded.ThumbDown
+import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -21,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.types.PostUri
@@ -42,6 +45,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.compose.produceState
 import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -50,12 +54,13 @@ import heron.ui.core.generated.resources.yes
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.delete_post
 import heron.ui.timeline.generated.resources.delete_post_prompt
+import heron.ui.timeline.generated.resources.feed_interaction_show_less
+import heron.ui.timeline.generated.resources.feed_interaction_show_more
 import heron.ui.timeline.generated.resources.link_document_to_post
 import heron.ui.timeline.generated.resources.link_document_to_post_overwrite_prompt
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import heron.ui.timeline.generated.resources.unlink_document_from_post
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,13 +73,27 @@ class PostOptionsSheetState(
     var currentPost: Post? by mutableStateOf(null)
         internal set
 
+    var interactionContext: FeedGenerator.Interaction.Context? by mutableStateOf(null)
+        internal set
+
+    val messages: List<Memo> get() = stateHolder.state.messages
+
     override fun onHidden() {
         currentPost = null
+        interactionContext = null
     }
 
-    fun showOptions(post: Post) {
+    fun showOptions(
+        post: Post,
+        feedInteraction: FeedGenerator.Interaction.Context? = null,
+    ) {
         currentPost = post
+        this.interactionContext = feedInteraction
         show()
+    }
+
+    fun onSnackbarMessageConsumed(memo: Memo) {
+        stateHolder.accept(PostOptionsAction.SnackbarDismissed(memo))
     }
 
     companion object {
@@ -133,6 +152,14 @@ private fun PostOptionsBottomSheet(
 
                 CopyToClipboardCard(post.uri.shareUri())
 
+                state.interactionContext?.let { feedInteraction ->
+                    FeedInteractionMenuSection(
+                        post = post,
+                        interactionContext = feedInteraction,
+                        state = state,
+                    )
+                }
+
                 if (signedInProfileId != null && !isOwnPost) PostModerationMenuSection(
                     signedInProfileId = signedInProfileId,
                     post = post,
@@ -189,6 +216,63 @@ internal fun PostModerationMenuSection(
             }
         }
     }
+}
+
+@Composable
+private fun FeedInteractionMenuSection(
+    modifier: Modifier = Modifier,
+    post: Post,
+    interactionContext: FeedGenerator.Interaction.Context,
+    state: PostOptionsSheetState,
+) {
+    BottomSheetItemCard(modifier) {
+        BottomSheetItemCardRow(
+            modifier = Modifier
+                .fillMaxWidth(),
+            icon = Icons.Rounded.ThumbUp,
+            text = stringResource(Res.string.feed_interaction_show_more),
+            onClick = {
+                state.sendFeedInteraction(
+                    post = post,
+                    feedInteraction = interactionContext,
+                    event = FeedGenerator.Interaction.Event.Request.More,
+                )
+            },
+        )
+        ItemHorizontalDivider()
+        BottomSheetItemCardRow(
+            modifier = Modifier
+                .fillMaxWidth(),
+            icon = Icons.Rounded.ThumbDown,
+            text = stringResource(Res.string.feed_interaction_show_less),
+            onClick = {
+                state.sendFeedInteraction(
+                    post = post,
+                    feedInteraction = interactionContext,
+                    event = FeedGenerator.Interaction.Event.Request.Less,
+                )
+            },
+        )
+    }
+}
+
+private fun PostOptionsSheetState.sendFeedInteraction(
+    post: Post,
+    feedInteraction: FeedGenerator.Interaction.Context,
+    event: FeedGenerator.Interaction.Event.Request,
+) {
+    stateHolder.accept(
+        PostOptionsAction.SendFeedInteraction(
+            request = FeedGenerator.Interaction.Request(
+                feedUri = feedInteraction.feedUri,
+                postUri = post.uri,
+                event = event,
+                feedContext = feedInteraction.feedContext,
+                reqId = feedInteraction.reqId,
+            ),
+        ),
+    )
+    hide()
 }
 
 @Composable

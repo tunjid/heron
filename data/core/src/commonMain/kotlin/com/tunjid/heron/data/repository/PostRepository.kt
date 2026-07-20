@@ -55,6 +55,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -86,6 +87,7 @@ import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.add
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
+import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -164,12 +166,31 @@ interface PostRepository {
         uri: PostUri,
     ): Flow<Post>
 
+    fun drafts(
+        query: CursorQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<Post.Draft>>
+
     suspend fun sendInteraction(
         interaction: Post.Interaction,
     ): Outcome
 
+    /**
+     * Creates a post from [request]. When [sourceDraftId] is non-null, the originating draft is
+     * best-effort deleted from the stash once the post has been created, so publishing a draft is
+     * just a [createPost] with its [sourceDraftId] set.
+     */
     suspend fun createPost(
         request: Post.Create.Request,
+        sourceDraftId: DraftId? = null,
+    ): Outcome
+
+    suspend fun saveDraft(
+        draft: Post.Draft,
+    ): Result<DraftId>
+
+    suspend fun deleteDraft(
+        id: DraftId,
     ): Outcome
 }
 
@@ -188,6 +209,7 @@ internal class OfflinePostRepository(
     private val savedStateDataSource: SavedStateDataSource,
     private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
+    private val postDraftDataSource: PostDraftDataSource,
 ) : PostRepository {
 
     override fun likedBy(
@@ -444,8 +466,26 @@ internal class OfflinePostRepository(
         }
             .flowOn(ioDispatcher)
 
+    override fun drafts(
+        query: CursorQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<Post.Draft>> =
+        postDraftDataSource.drafts(
+            query = query,
+            cursor = cursor,
+        )
+
+    override suspend fun saveDraft(
+        draft: Post.Draft,
+    ): Result<DraftId> = postDraftDataSource.saveDraft(draft)
+
+    override suspend fun deleteDraft(
+        id: DraftId,
+    ): Outcome = postDraftDataSource.deleteDraft(id)
+
     override suspend fun createPost(
         request: Post.Create.Request,
+        sourceDraftId: DraftId?,
     ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
         if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
 
@@ -521,6 +561,10 @@ internal class OfflinePostRepository(
                 runCatchingUnlessCancelled {
                     fileManager.delete(file)
                 }
+            }
+            // If this post was published from a draft, remove the draft now that it is live.
+            if (sourceDraftId != null) runCatchingUnlessCancelled {
+                postDraftDataSource.deleteDraft(sourceDraftId)
             }
         }
     } ?: expiredSessionOutcome()

@@ -241,7 +241,18 @@ internal class PersistedSessionManager(
                     throw IllegalStateException("Invalid login session")
                 }
 
-                oAuthToken.toAppToken(authEndpoint = request.server.endpoint)
+                // Access tokens are opaque per the atproto OAuth spec, so the PDS is discovered
+                // from the account's DID document instead of being parsed out of the token.
+                val pdsUrl = pdsResolver.resolve(oAuthToken.subject)
+                    ?: throw IllegalStateException(
+                        "Could not resolve a PDS for ${oAuthToken.subject.did}",
+                    )
+
+                oAuthToken.toAppToken(
+                    authEndpoint = request.server.endpoint,
+                    pdsUrl = pdsUrl.toString(),
+                    clientId = oauthRedirect.clientId,
+                )
             }
             is SessionRequest.Guest -> SavedState.AuthTokens.Guest(
                 server = request.server,
@@ -377,7 +388,11 @@ internal class PersistedSessionManager(
                 nonce = tokens.nonce,
                 refreshToken = tokens.refresh,
                 keyPair = tokens.toKeyPair(),
-            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            ).toAppToken(
+                authEndpoint = tokens.issuerEndpoint,
+                pdsUrl = tokens.pdsUrl,
+                clientId = tokens.clientId,
+            )
         }
     }
 }
@@ -601,11 +616,13 @@ private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
 
 private suspend fun OAuthToken.toAppToken(
     authEndpoint: String,
+    pdsUrl: String,
+    clientId: String,
 ) = SavedState.AuthTokens.Authenticated.DPoP(
     authProfileId = subject.did.let(::ProfileId),
     auth = accessToken,
     refresh = refreshToken,
-    pdsUrl = pds.toString(),
+    pdsUrl = pdsUrl,
     keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
         publicKey = keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
         privateKey = keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),

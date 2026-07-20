@@ -29,7 +29,6 @@ import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
 import com.tunjid.heron.profile.avatar.AvatarScreen
 import com.tunjid.heron.profile.avatar.ProfileAvatarViewModelInitializer
 import com.tunjid.heron.profile.avatar.ProfileStateHolder
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -141,9 +140,7 @@ class ProfileAvatarBindings(
             val state = stateHolder.produceStateWithLifecycle()
 
             val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                paneScaffoldState.bottomNavigationNestedScrollConnection
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier

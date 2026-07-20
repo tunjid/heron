@@ -66,6 +66,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.models.isBookmarked
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.IconTransform
@@ -99,6 +100,8 @@ fun PostInteractions(
     presentation: Timeline.Presentation,
     paneTransitionScope: PaneTransitionScope,
     modifier: Modifier = Modifier,
+    feedContext: String? = null,
+    reqId: FeedReqId? = null,
     onInteraction: (PostAction.Options) -> Unit,
 ) {
     Row(
@@ -114,6 +117,8 @@ fun PostInteractions(
             iconSize = animateDpAsState(presentation.actionIconSize).value,
             orientation = Orientation.Horizontal,
             paneTransitionScope = paneTransitionScope,
+            feedContext = feedContext,
+            reqId = reqId,
             onInteraction = onInteraction,
             prefixContent = spacer@{ button ->
                 if (button != PostInteractionButton.MoreOptions) return@spacer
@@ -133,6 +138,8 @@ fun MediaPostInteractions(
     showEngagementMetrics: Boolean,
     paneTransitionScope: PaneTransitionScope,
     modifier: Modifier = Modifier,
+    feedContext: String? = null,
+    reqId: FeedReqId? = null,
     onInteraction: (PostAction.Options) -> Unit,
 ) {
     Column(
@@ -148,6 +155,8 @@ fun MediaPostInteractions(
             iconSize = iconSize,
             orientation = Orientation.Vertical,
             paneTransitionScope = paneTransitionScope,
+            feedContext = feedContext,
+            reqId = reqId,
             onInteraction = onInteraction,
         )
     }
@@ -162,6 +171,8 @@ private inline fun PostInteractionsButtons(
     iconSize: Dp,
     orientation: Orientation,
     paneTransitionScope: PaneTransitionScope,
+    feedContext: String?,
+    reqId: FeedReqId?,
     crossinline onInteraction: (PostAction.Options) -> Unit,
     crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
 ) = with(paneTransitionScope) {
@@ -267,7 +278,11 @@ private inline fun PostInteractionsButtons(
                             )
 
                             PostInteractionButton.MoreOptions -> onInteraction(
-                                PostAction.OfMore(post),
+                                PostAction.OfMore(
+                                    post = post,
+                                    feedContext = feedContext,
+                                    reqId = reqId,
+                                ),
                             )
                         }
                     },

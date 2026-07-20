@@ -32,6 +32,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.PostDraftDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.RockskyDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
@@ -51,6 +52,7 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
+import com.tunjid.heron.data.database.entities.PostDraftEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
@@ -109,9 +111,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 46,
+    version = 48,
     entities = [
         BookmarkEntity::class,
+        PostDraftEntity::class,
         ExternalEmbedEntity::class,
         ImageEntity::class,
         VideoEntity::class,
@@ -252,6 +255,10 @@ import kotlinx.coroutines.IO
         // Add index to ImageEntity and VideoEntity
         AutoMigration(from = 44, to = 45),
         // Migration 45 - 46 is a manual migration
+        // Add feedContext and reqId to timelineItems for feed generator interactions
+        AutoMigration(from = 46, to = 47),
+        // Add PostDraftEntity for cached post drafts
+        AutoMigration(from = 47, to = 48),
     ],
     exportSchema = true,
 )
@@ -265,6 +272,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun listDao(): ListDao
     abstract fun postDao(): PostDao
+    abstract fun postDraftDao(): PostDraftDao
     abstract fun embedDao(): EmbedDao
     abstract fun labelDao(): LabelDao
     abstract fun timelineDao(): TimelineDao

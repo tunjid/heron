@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
-import com.tunjid.heron.compose.ui.ComposeThreadGate
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
@@ -46,7 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaneScaffoldState.TopAppBarFab(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
@@ -139,6 +138,7 @@ private fun State.createPostAction(): Action.CreatePost? {
         embeddedRecordReference = embeddedRecord?.reference,
         linkPreview = linkPreview,
         interactionPreference = interactionsPreference,
+        sourceDraftId = draftId,
     )
 }
 
