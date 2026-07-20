@@ -19,8 +19,6 @@ package com.tunjid.heron.feed
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -29,14 +27,14 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
@@ -74,21 +72,19 @@ interface State {
             timelineStateHolder = route.model<FeedGenerator>()
                 ?.let { model ->
                     val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
-                    noOpActionSuspendingStateMutator(
-                        TimelineState(
-                            timeline = timeline,
-                            hasUpdates = false,
-                            tilingData = TilingState.Data(
-                                currentQuery = TimelineQuery(
-                                    data = CursorQuery.Data(
-                                        page = 0,
-                                        cursorAnchor = Clock.System.now(),
-                                    ),
-                                    source = timeline.source,
+                    TimelineState(
+                        timeline = timeline,
+                        hasUpdates = false,
+                        tilingData = TilingState.Data(
+                            currentQuery = TimelineQuery(
+                                data = CursorQuery.Data(
+                                    page = 0,
+                                    cursorAnchor = Clock.System.now(),
                                 ),
+                                source = timeline.source,
                             ),
                         ),
-                    )
+                    ).asNoOpActionSuspendingStateMutator()
                 },
         )
     }
@@ -113,10 +109,6 @@ sealed class Action(val key: String) {
     data class DeleteRecord(
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

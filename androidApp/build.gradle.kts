@@ -38,6 +38,23 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    splits {
+        // Emit one standalone APK per ABI for GitHub sideloads, instead of a single all-ABI
+        // universal APK. litertlm's native runtime is packaged per architecture, so an arm64-v8a
+        // sideload APK is far smaller than the fused universal (which carries every ABI's copy).
+        // isUniversalApk keeps a universal APK too, for anyone who doesn't know their device's ABI.
+        abi {
+            isEnable = true
+            reset()
+            include(
+                "arm64-v8a",
+                "armeabi-v7a",
+                "x86",
+                "x86_64",
+            )
+            isUniversalApk = true
+        }
+    }
     val releaseSigning = when {
         // Do not sign the build output, it will be signed on CI
         providers.gradleProperty("heron.isRelease").orNull.toBoolean() -> null
@@ -77,7 +94,8 @@ dependencies {
     implementation(project(":data:core"))
     implementation(project(":data:logging"))
     implementation(project(":data:platform"))
-    implementation(project(":scaffold"))
+    implementation(project(":data:tasks"))
+    implementation(project(":ui:scaffold"))
 
     implementation(libs.compose.multiplatform.components.resources)
     implementation(libs.compose.multiplatform.runtime)

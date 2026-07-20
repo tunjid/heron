@@ -28,9 +28,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
@@ -40,7 +43,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
@@ -48,12 +55,12 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.FormField
@@ -112,6 +119,7 @@ internal fun SignInScreen(
                             LoadingIcon(
                                 field = field,
                                 mostRecentSession = state.mostRecentSession,
+                                isResolvingServer = state.isResolvingServer,
                             )
                         },
                         onValueChange = { field, newValue ->
@@ -186,14 +194,18 @@ internal fun SignInScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LoadingIcon(
     modifier: Modifier = Modifier,
     field: FormField,
     mostRecentSession: SessionSummary?,
+    isResolvingServer: Boolean,
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .size(LoadingIconSlotSize),
+        contentAlignment = Alignment.Center,
     ) {
         // Always show the default leading icon
         // in case the avatar does not load
@@ -219,8 +231,27 @@ private fun LoadingIcon(
                 },
             )
         }
+
+        if (field.id == Username && isResolvingServer) {
+            val strokeWidth = with(LocalDensity.current) {
+                2.dp.toPx()
+            }
+            CircularWavyProgressIndicator(
+                modifier = Modifier
+                    .fillMaxSize(),
+                trackColor = Color.Transparent,
+                stroke = remember(strokeWidth) {
+                    Stroke(
+                        width = strokeWidth,
+                        cap = StrokeCap.Round,
+                    )
+                },
+            )
+        }
     }
 }
+
+private val LoadingIconSlotSize = 34.dp
 
 private val EnterTransition = fadeIn() + slideInVertically { -it }
 private val ExitTransition =

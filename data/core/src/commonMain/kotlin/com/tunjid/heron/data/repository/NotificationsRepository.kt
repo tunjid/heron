@@ -137,7 +137,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
 
@@ -341,7 +340,7 @@ internal class OfflineNotificationsRepository(
         networkService.runCatchingWithMonitoredNetworkRetry {
             getServiceAuth(
                 GetServiceAuthQueryParams(
-                    aud = Did(signedProfileId.id),
+                    aud = signedProfileId.id,
                     exp = Clock.System.now().epochSeconds + 5.minutes.inWholeSeconds,
                     lxm = Nsid(PostUri.NAMESPACE),
                 ),
@@ -376,7 +375,7 @@ internal class OfflineNotificationsRepository(
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForNotification()
+            getPreferencesForAppBskyNotification()
         }.mapToResult { response ->
             val updateRequest = updates.fold(
                 initial = PutPreferencesV2Request(

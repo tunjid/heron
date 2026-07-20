@@ -17,6 +17,8 @@
 package com.tunjid.heron.data.utilities.recordResolver
 
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.FeedPreference
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.feedPreference
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -24,7 +26,9 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
@@ -100,6 +104,8 @@ internal class MutableTimelineItemCreationContext(
             valueTransform = PopulatedProfileEntity::asExternalModel,
         )
 
+    private val feedPreferencesBySource = mutableMapOf<String, FeedPreference>()
+
     override fun record(recordUri: EmbeddableRecordUri): Record? =
         recordUrisToRecords[recordUri]
 
@@ -155,6 +161,12 @@ internal class MutableTimelineItemCreationContext(
             }
         }
         return@with false
+    }
+
+    override fun feedPreference(
+        source: Timeline.Source,
+    ): FeedPreference = feedPreferencesBySource.getOrPut(source.id) {
+        preferences.feedPreference(source)
     }
 
     /**

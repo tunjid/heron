@@ -83,7 +83,7 @@ internal class SuspendingVideoUploadService(
                 }
             }
         }
-        install(HttpTimeout) {
+        installOrReplace(HttpTimeout) {
             requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
     }
@@ -158,7 +158,7 @@ internal class SuspendingVideoUploadService(
 }
 
 private fun serviceUrlDid(serviceUrl: String) =
-    Did("did:web:${Url(serviceUrl).host}")
+    "did:web:${Url(serviceUrl).host}"
 
 @Serializable
 private data class VideoUploadResponse(

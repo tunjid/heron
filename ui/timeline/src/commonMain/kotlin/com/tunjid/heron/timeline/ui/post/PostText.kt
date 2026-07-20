@@ -60,9 +60,11 @@ fun PostText(
                 indication = null,
             ) { onClick() },
         sharedContentState = rememberSharedContentState(
-            key = post.textSharedElementKey(
-                prefix = sharedElementPrefix,
-            ),
+            key = remember(sharedElementPrefix, post.cid) {
+                post.rememberTextSharedElementKey(
+                    prefix = sharedElementPrefix,
+                )
+            },
         ),
     ) {
         SelectionContainer {
@@ -80,6 +82,6 @@ fun PostText(
     }
 }
 
-private fun Post.textSharedElementKey(
+private fun Post.rememberTextSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-text"

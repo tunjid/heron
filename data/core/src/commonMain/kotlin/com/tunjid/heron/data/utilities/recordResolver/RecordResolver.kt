@@ -35,11 +35,13 @@ import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Like
+import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -51,6 +53,7 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.types.AlbumUri
@@ -68,6 +71,7 @@ import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.LikeUri
@@ -88,6 +92,7 @@ import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
+import com.tunjid.heron.data.core.types.isNotFound
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
@@ -138,6 +143,7 @@ import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
@@ -189,6 +195,10 @@ internal interface RecordResolver {
         uri: RecordUri,
     ): Result<Record>
 
+    suspend fun resolveExternalLink(
+        url: GenericUri,
+    ): LinkPreview?
+
     suspend fun deleteRecord(
         uri: RecordUri,
     ): Outcome
@@ -213,6 +223,7 @@ internal interface RecordResolver {
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
         fun isMuted(post: Post): Boolean
+        fun feedPreference(source: Timeline.Source): FeedPreference
     }
 }
 
@@ -234,6 +245,7 @@ internal class OfflineRecordResolver(
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
+    private val httpClient: HttpClient,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordResolver {
 
@@ -663,10 +675,14 @@ internal class OfflineRecordResolver(
         logcat(LogPriority.WARN) {
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
-        if (isNotFound(throwable)) {
+        if (throwable.isNotFound()) {
             deleteLocalRecord(uri)
         }
     }
+
+    override suspend fun resolveExternalLink(
+        url: GenericUri,
+    ): LinkPreview? = httpClient.linkPreviewOrNull(url)
 
     override suspend fun deleteRecord(
         uri: RecordUri,
@@ -852,22 +868,6 @@ internal class OfflineRecordResolver(
         }
     }
 }
-
-private fun isNotFound(throwable: Throwable): Boolean {
-    if (throwable !is AtProtoException) return false
-    if (throwable.statusCode == HttpStatusCode.NotFound.value) return true
-
-    val message = throwable.message ?: return false
-
-    // At proto is not consistent in its not found messaging
-    return throwable.statusCode == HttpStatusCode.BadRequest.value &&
-        NotFoundVariants.any { it in message }
-}
-
-private val NotFoundVariants = setOf(
-    "could not find",
-    "not found",
-)
 
 /**
  * Maps a resolved [PopulatedRecordEntity] to its [Record.Embeddable] model. Nested posts

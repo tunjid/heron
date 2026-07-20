@@ -73,6 +73,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
@@ -89,10 +90,8 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.AtmosphereApp
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -112,7 +111,6 @@ import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings
@@ -122,25 +120,13 @@ import com.tunjid.heron.profile.ui.ProfileApps
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
 import com.tunjid.heron.profile.ui.profileActionMenuItems
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.atmosphereAppDestination
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.editProfileDestination
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
-import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
-import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberInferenceSheetState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
@@ -153,28 +139,23 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.record.RecordList
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
+import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
@@ -186,9 +167,28 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.editProfileDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileFollowersDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileFollowsDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.searchProfilePostsDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
+import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.asClipEntry
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -201,8 +201,11 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
+import heron.ui.core.generated.resources.action_search_posts
+import heron.ui.core.generated.resources.action_vibe_check
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -267,6 +270,8 @@ internal fun ProfileScreen(
             )
         },
     )
+
+    val inferenceSheetState = paneScaffoldState.rememberInferenceSheetState()
 
     CollapsingHeaderLayout(
         modifier = modifier
@@ -378,6 +383,7 @@ internal fun ProfileScreen(
                 },
                 onModerationAction = actions,
                 onUpdateProfileLiveStatus = profileUpdateLiveStatusSheetState::show,
+                onVibeClicked = inferenceSheetState::profileVibeCheck,
             )
         },
         body = {
@@ -579,11 +585,9 @@ internal fun ProfileScreen(
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 bottomPadding = collapsedHeight,
-                                signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
-                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                                 showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             )
@@ -663,6 +667,7 @@ private fun ProfileHeader(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onVibeClicked: (ProfileId) -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -734,12 +739,14 @@ private fun ProfileHeader(
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
+                    onVibeClicked = onVibeClicked,
+                    onNavigate = onNavigate,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     followsSignInProfile = viewerState?.followedBy != null,
-                    onNavigateToProfiles = onNavigate,
+                    onNavigate = onNavigate,
                 )
                 ProfileBio(
                     description = profile.description ?: "",
@@ -993,10 +1000,15 @@ private fun ProfileHeadline(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
+    onVibeClicked: (ProfileId) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
     )
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
+    val copyProfileLinkLabel = stringResource(CommonStrings.action_copy_profile_link)
     AttributionLayout(
         modifier = modifier,
         avatar = null,
@@ -1083,12 +1095,29 @@ private fun ProfileHeadline(
                             )
                             if (signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(
-                                        isSignedInProfile = isSignedInProfile,
-                                        isLive = profile.status?.isLive == true,
-                                    ),
+                                    items = remember(
+                                        viewerState,
+                                        isSignedInProfile,
+                                        profile.status?.isLive,
+                                    ) {
+                                        viewerState.profileActionMenuItems(
+                                            isSignedInProfile = isSignedInProfile,
+                                            isLive = profile.status?.isLive == true,
+                                        )
+                                    },
                                     onItemClicked = { item ->
                                         when (item.title) {
+                                            CommonStrings.action_copy_profile_link ->
+                                                clipboardScope.launch {
+                                                    clipboard.setClipEntry(
+                                                        profile.shareUri()
+                                                            .asClipEntry(copyProfileLinkLabel),
+                                                    )
+                                                }
+                                            CommonStrings.action_search_posts ->
+                                                onNavigate(searchProfilePostsDestination(profile))
+                                            CommonStrings.action_vibe_check ->
+                                                onVibeClicked(profile.did)
                                             CommonStrings.action_go_live,
                                             CommonStrings.action_edit_live_status,
                                             -> onUpdateProfileLiveStatus()
@@ -1130,7 +1159,7 @@ private fun ProfileStats(
     modifier: Modifier = Modifier,
     profile: Profile,
     followsSignInProfile: Boolean,
-    onNavigateToProfiles: (NavigationAction.Destination) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -1141,7 +1170,7 @@ private fun ProfileStats(
             value = profile.followersCount ?: 0,
             description = stringResource(CommonStrings.followers),
             onClick = {
-                onNavigateToProfiles(
+                onNavigate(
                     profileFollowersDestination(
                         profileId = profile.did,
                     ),
@@ -1152,7 +1181,7 @@ private fun ProfileStats(
             value = profile.followsCount ?: 0,
             description = stringResource(CommonStrings.following),
             onClick = {
-                onNavigateToProfiles(
+                onNavigate(
                     profileFollowsDestination(
                         profileId = profile.did,
                     ),
@@ -1162,7 +1191,13 @@ private fun ProfileStats(
         Statistic(
             value = profile.postsCount ?: 0,
             description = stringResource(Res.string.posts),
-            onClick = {},
+            onClick = {
+                onNavigate(
+                    searchProfilePostsDestination(
+                        profile = profile,
+                    ),
+                )
+            },
         )
         Box(
             Modifier
@@ -1311,11 +1346,9 @@ private fun ProfileTabs(
 @Composable
 private fun ProfileTimeline(
     bottomPadding: Dp,
-    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
-    mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {
@@ -1323,35 +1356,16 @@ private fun ProfileTimeline(
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
     val items = timelineState.tiledItems
 
-    val now = remember { Clock.System.now() }
+    val now = remember(timelineState.timeline.lastRefreshed) { Clock.System.now() }
     val density = LocalDensity.current
-    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
+    val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
     val displayState = rememberTimelineDisplayState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
@@ -1416,6 +1430,21 @@ private fun ProfileTimeline(
                     ).value,
                 )
                 .fillMaxSize()
+                .onDominantVideoChange(
+                    // No top inset: the grid is laid out beneath the collapsing header, so its own
+                    // bounds already exclude it.
+                    bottomRightInset = {
+                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                    },
+                    isEnabled = {
+                        paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                            autoPlayTimelineVideos
+                    },
+                    onIdChanged = { videoId ->
+                        if (videoId != null) videoPlayerController.play(videoId = videoId)
+                        else videoPlayerController.pauseActiveVideo()
+                    },
+                )
                 .onSizeChanged {
                     val itemWidth = with(density) {
                         displayState.cardSize(presentation).toPx()
@@ -1447,10 +1476,7 @@ private fun ProfileTimeline(
                     TimelineItem(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .animateItem()
-                            .threadedVideoPosition(
-                                state = videoStates.getOrCreateStateFor(item),
-                            ),
+                            .animateItem(),
                         paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
@@ -1586,23 +1612,6 @@ private fun ProfileTimeline(
                     )
                 },
             )
-        }
-    }
-
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = items.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
-                ?.takeIf(TimelineItem::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
         }
     }
 

@@ -77,6 +77,12 @@ data class Preferences(
         val showTrendingTopics: Boolean = true,
         @ProtoNumber(9)
         val allowAllTimelinePresentations: Boolean = false,
+        @ProtoNumber(10)
+        val darkThemeConfigOrdinal: Int = 0,
+        @ProtoNumber(11)
+        val loadDefaultModelOnLaunch: Boolean = false,
+        @ProtoNumber(12)
+        val defaultModelName: String? = null,
     )
 
     companion object {
@@ -212,7 +218,7 @@ data class VerificationPreference(
 data class FeedPreference(
     val feed: String,
     val hideReplies: Boolean? = null,
-    val hideRepliesByUnfollowed: Boolean? = true,
+    val hideRepliesByUnfollowed: Boolean? = false,
     val hideRepliesByLikeCount: Long? = null,
     val hideReposts: Boolean? = null,
     val hideQuotePosts: Boolean? = null,
@@ -222,6 +228,9 @@ data class FeedPreference(
 
         val FeedPreference.shouldHideReplies: Boolean
             get() = hideReplies.isTrue
+
+        val FeedPreference.shouldHideRepliesByUnfollowed: Boolean
+            get() = hideRepliesByUnfollowed.isTrue
 
         val FeedPreference.shouldHideReposts: Boolean
             get() = hideReposts.isTrue
@@ -233,6 +242,16 @@ data class FeedPreference(
             firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
                 feed = HOME_FEED,
             )
+
+        fun Preferences.feedPreference(source: Timeline.Source): FeedPreference =
+            if (source is Timeline.Source.Following) {
+                feedPreferences.homeFeedOrDefault()
+            } else {
+                FeedPreference(
+                    feed = source.id,
+                    hideRepliesByUnfollowed = false,
+                )
+            }
     }
 }
 

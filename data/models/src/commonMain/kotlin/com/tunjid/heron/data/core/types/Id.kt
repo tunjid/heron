@@ -101,6 +101,14 @@ value class ThreadGateId(
 
 @Serializable
 @JvmInline
+value class DraftId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class GenericId(
     override val id: String,
 ) : Id {

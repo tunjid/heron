@@ -27,19 +27,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
-import com.tunjid.heron.scaffold.navigation.moderationDestination
-import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.navigation.standardSubscriptionsDestination
-import com.tunjid.heron.scaffold.navigation.tasksDestination
-import com.tunjid.heron.scaffold.scaffold.NestedNavigation
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.AppearanceSection
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedPreferencesSection
 import com.tunjid.heron.settings.ui.FeedbackItem
+import com.tunjid.heron.settings.ui.InferenceItem
 import com.tunjid.heron.settings.ui.ModerationItem
 import com.tunjid.heron.settings.ui.NotificationSettingsItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
@@ -47,6 +41,14 @@ import com.tunjid.heron.settings.ui.PublicationSubscriptionsItem
 import com.tunjid.heron.settings.ui.SignOutItem
 import com.tunjid.heron.settings.ui.TasksItem
 import com.tunjid.heron.settings.ui.ThreadPreferencesSection
+import com.tunjid.heron.ui.scaffold.navigation.inferenceDestination
+import com.tunjid.heron.ui.scaffold.navigation.moderationDestination
+import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardSubscriptionsDestination
+import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
+import com.tunjid.heron.ui.scaffold.scaffold.NestedNavigation
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 internal fun SettingsScreen(
@@ -96,6 +98,9 @@ internal fun SettingsScreen(
                             signedInProfilePreferences = preferences,
                             setCurrentThemeOrdinal = {
                                 actions(Action.SetCurrentThemeOrdinal(it))
+                            },
+                            setDarkThemeConfigOrdinal = {
+                                actions(Action.SetDarkThemeConfigOrdinal(it))
                             },
                             setCompactNavigation = {
                                 actions(Action.SetCompactNavigation(it))
@@ -185,6 +190,15 @@ private fun MainSection(
                     ),
             ) {
                 actions(Action.Navigate.To(tasksDestination()))
+            }
+            InferenceItem(
+                modifier = Modifier
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
+            ) {
+                actions(Action.Navigate.To(inferenceDestination()))
             }
             PublicationSubscriptionsItem(
                 modifier = Modifier

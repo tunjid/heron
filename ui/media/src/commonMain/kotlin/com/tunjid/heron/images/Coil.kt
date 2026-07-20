@@ -152,7 +152,7 @@ internal class CoilImageLoader private constructor(
                 }
                 FileKit.saveImageToGallery(file)
                 emit(DownloadStatus.Complete)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emit(DownloadStatus.Failed)
             } finally {
                 tempFile?.delete()
@@ -193,5 +193,5 @@ val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
     throw IllegalArgumentException("Image Fetcher has not been provided")
 }
 
-private val MediaDownloadsDir = FileKit.cacheDir / "media-downloads"
+private val MediaDownloadsDir get() = FileKit.cacheDir / "media-downloads"
 private const val DownloadBufferSize = 8192

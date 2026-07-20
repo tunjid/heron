@@ -87,6 +87,12 @@ data class TimelineItemEntity(
     val isPinned: Boolean,
     val itemSort: Long,
     val indexedAt: Instant,
+    // Context supplied by the feed generator on the served item, echoed back verbatim with
+    // `app.bsky.feed.sendInteractions`. Null for items not served by a feed generator.
+    @ColumnInfo(defaultValue = "NULL")
+    val feedContext: String?,
+    @ColumnInfo(defaultValue = "NULL")
+    val reqId: String?,
     // Timeline items are unique to the profile viewing them, and these other fields
     @PrimaryKey
     val id: String = "${viewingProfileId?.id}-$sourceId-${postUri.uri}-${reposter?.id}",
@@ -110,6 +116,10 @@ data class TimelineItemEntity(
         val hasMedia: Boolean,
         val isPinned: Boolean,
         val indexedAt: Instant,
+        @ColumnInfo(defaultValue = "NULL")
+        val feedContext: String?,
+        @ColumnInfo(defaultValue = "NULL")
+        val reqId: String?,
     )
 }
 
@@ -134,6 +144,8 @@ internal fun TimelineItemEntity.withoutSort() = TimelineItemEntity.WithoutSort(
     hasMedia = hasMedia,
     isPinned = isPinned,
     indexedAt = indexedAt,
+    feedContext = feedContext,
+    reqId = reqId,
 )
 
 data class FeedReplyEntity(

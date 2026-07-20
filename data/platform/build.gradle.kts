@@ -23,6 +23,14 @@ kotlin {
     androidLibrary {
         namespace = "com.tunjid.heron.data.platform"
     }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+    }
 }
 
 buildConfig {

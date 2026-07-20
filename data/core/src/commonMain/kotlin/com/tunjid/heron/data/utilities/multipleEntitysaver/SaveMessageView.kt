@@ -21,9 +21,13 @@ import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion as TimelinePost
 import app.bsky.richtext.Facet
+import chat.bsky.actor.ProfileViewBasic
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
+import chat.bsky.convo.SystemMessageReferredUser
+import chat.bsky.convo.SystemMessageView
+import chat.bsky.convo.SystemMessageViewDataUnion
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
@@ -77,7 +81,9 @@ internal fun MultipleEntitySaver.add(
 
     when (val embed = messageView.embed) {
         is MessageViewEmbedUnion.Unknown -> Unit
-        is MessageViewEmbedUnion.View -> when (val record = embed.value.record) {
+        // TODO: Support group conversations. Join-link embeds are a group feature; ignored for now.
+        is MessageViewEmbedUnion.ChatBskyEmbedJoinLinkView -> Unit
+        is MessageViewEmbedUnion.AppBskyEmbedRecordView -> when (val record = embed.value.record) {
             is RecordViewRecordUnion.FeedGeneratorView -> {
                 add(
                     feedGeneratorView = record.value,
@@ -208,7 +214,103 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
+internal fun MultipleEntitySaver.add(
+    viewingProfileId: ProfileId?,
+    conversationId: ConversationId,
+    systemMessageView: SystemMessageView,
+    relatedProfiles: List<ProfileViewBasic>,
+) {
+    viewingProfileId ?: return
+
+    add(
+        MessageEntity(
+            id = systemMessageView.id.let(::MessageId),
+            rev = systemMessageView.rev,
+            text = "",
+            senderId = null,
+            conversationId = conversationId,
+            conversationOwnerId = viewingProfileId,
+            isDeleted = false,
+            sentAt = systemMessageView.sentAt,
+            base64EncodedMetadata = null,
+            base64EncodedSystemContent = systemMessageView
+                .systemContent(relatedProfiles)
+                .toUrlEncodedBase64(),
+        ),
+    )
+}
+
 private fun MessageView.metadata(): Message.Metadata =
     Message.Metadata(
         links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
     )
+
+private fun SystemMessageView.systemContent(
+    relatedProfiles: List<ProfileViewBasic>,
+): Message.SystemContent {
+    val profilesByDid = relatedProfiles.associateBy { it.did.did }
+
+    fun SystemMessageReferredUser.actor(): Message.SystemContent.Actor {
+        val profile = profilesByDid[did.did]
+        return Message.SystemContent.Actor(
+            did = did.did.let(::ProfileId),
+            displayName = profile?.displayName,
+            handle = profile?.handle?.handle,
+        )
+    }
+
+    return when (val data = data) {
+        is SystemMessageViewDataUnion.SystemMessageDataAddMember ->
+            Message.SystemContent.MemberAdded(
+                member = data.value.member.actor(),
+                addedBy = data.value.addedBy.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataRemoveMember ->
+            Message.SystemContent.MemberRemoved(
+                member = data.value.member.actor(),
+                removedBy = data.value.removedBy.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataMemberJoin ->
+            Message.SystemContent.MemberJoined(
+                member = data.value.member.actor(),
+                approvedBy = data.value.approvedBy?.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataMemberLeave ->
+            Message.SystemContent.MemberLeft(
+                member = data.value.member.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataLockConvo ->
+            Message.SystemContent.Locked(
+                by = data.value.lockedBy.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataUnlockConvo ->
+            Message.SystemContent.Unlocked(
+                by = data.value.unlockedBy.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataLockConvoPermanently ->
+            Message.SystemContent.LockedPermanently(
+                by = data.value.lockedBy.actor(),
+            )
+
+        is SystemMessageViewDataUnion.SystemMessageDataEditGroup ->
+            Message.SystemContent.GroupRenamed(
+                oldName = data.value.oldName,
+                newName = data.value.newName,
+            )
+
+        // Join-link administration is deferred; surfaced as a single informational event.
+        is SystemMessageViewDataUnion.SystemMessageDataCreateJoinLink,
+        is SystemMessageViewDataUnion.SystemMessageDataEditJoinLink,
+        is SystemMessageViewDataUnion.SystemMessageDataEnableJoinLink,
+        is SystemMessageViewDataUnion.SystemMessageDataDisableJoinLink,
+        -> Message.SystemContent.JoinLinkChanged
+
+        is SystemMessageViewDataUnion.Unknown -> Message.SystemContent.Unknown
+    }
+}

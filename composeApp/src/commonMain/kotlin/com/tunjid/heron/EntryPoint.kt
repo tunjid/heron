@@ -43,6 +43,8 @@ import com.tunjid.heron.graze.editor.di.GrazeEditorNavigationBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.inference.di.InferenceBindings
+import com.tunjid.heron.inference.di.InferenceNavigationBindings
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -64,14 +66,11 @@ import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profile.di.ProfileNavigationBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
-import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.notifications.Notifier
-import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
 import com.tunjid.heron.settings.di.SettingsBindings
 import com.tunjid.heron.settings.di.SettingsNavigationBindings
+import com.tunjid.heron.sheets.di.SheetBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashBindings
@@ -82,7 +81,10 @@ import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
 import com.tunjid.heron.tasks.di.TasksBindings
 import com.tunjid.heron.tasks.di.TasksNavigationBindings
-import com.tunjid.heron.timeline.di.SheetBindings
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindingArgs
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.notifications.Notifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -116,6 +118,7 @@ fun createAppState(
         galleryNavigationBindings = GalleryNavigationBindings,
         grazeEditorNavigationBindings = GrazeEditorNavigationBindings,
         homeNavigationBindings = HomeNavigationBindings,
+        inferenceNavigationBindings = InferenceNavigationBindings,
         listNavigationBindings = ListNavigationBindings,
         messagesNavigationBindings = MessagesNavigationBindings,
         moderationNavigationBindings = ModerationNavigationBindings,
@@ -188,6 +191,10 @@ fun createAppState(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
+        inferenceBindings = InferenceBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
         listBindings = ListBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
@@ -253,6 +260,7 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         sheetBindings = SheetBindings(
+            scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
     )

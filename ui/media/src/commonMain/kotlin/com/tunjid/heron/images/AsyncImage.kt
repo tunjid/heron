@@ -301,6 +301,7 @@ fun AsyncImage(
 internal fun Image.AnimationEffect() {
     when (this) {
         is CoilImage -> image.AnimationEffect()
+        is StubImage -> Unit
     }
 }
 

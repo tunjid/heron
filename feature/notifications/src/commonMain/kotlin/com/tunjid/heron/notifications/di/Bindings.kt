@@ -23,43 +23,43 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.NotificationsStateHolder
-import com.tunjid.heron.notifications.RouteViewModelInitializer
+import com.tunjid.heron.notifications.NotificationsViewModelInitializer
 import com.tunjid.heron.notifications.ui.RequestNotificationsButton
-import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
-import com.tunjid.heron.scaffold.scaffold.NavigationContentTransformer
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
-import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.fabOffset
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
-import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.AppBarIconButton
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.coroutines.viewModelCoroutineScope
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.notifications.hasNotificationPermissions
+import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
+import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
+import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -71,6 +71,7 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
@@ -110,151 +111,160 @@ class NotificationsBindings(
 
     @Provides
     @IntoMap
+    @ClassKey(NotificationsStateHolder::class)
+    fun provideRouteStateHolderInitializer(
+        initializer: NotificationsViewModelInitializer,
+    ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
         navigationContentTransformer = navigationContentTransformer,
     )
 
     private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
         navigationContentTransformer: NavigationContentTransformer,
     ) = threePaneEntry(
         contentTransform = navigationContentTransformer::contentTransform,
         render = { route ->
-            val stateHolder: NotificationsStateHolder = viewModel<ActualNotificationsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state = stateHolder.produceStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            Route(
+                route = route,
+                paneScaffoldState = rememberPaneScaffoldState(),
+            )
+        },
+    )
+}
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+@Composable
+internal fun Route(
+    route: Route,
+    paneScaffoldState: PaneScaffoldState,
+) {
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<NotificationsStateHolder>(
+        route = route,
+    )
+    val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+    val topAppBarNestedScrollConnection =
+        paneScaffoldState.topAppBarNestedScrollConnection
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    stateHolder.accept(Action.SnackbarDismissed(it))
+    val bottomNavigationNestedScrollConnection =
+        paneScaffoldState.bottomNavigationNestedScrollConnection
+
+    paneScaffoldState.PaneScaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
+            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                nestedScroll(bottomNavigationNestedScrollConnection)
+            },
+        showNavigation = true,
+        snackBarMessages = state.messages,
+        onSnackBarMessageConsumed = {
+            stateHolder.accept(Action.SnackbarDismissed(it))
+        },
+        topBar = {
+            RootDestinationTopAppBar(
+                modifier = Modifier.offset {
+                    topAppBarNestedScrollConnection.offset.round()
                 },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.title),
+                title = {
+                    AppBarTitle(
+                        title = stringResource(Res.string.title),
+                    )
+                },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                onSignedInProfileClicked = { profile, sharedElementKey ->
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                profile = profile,
+                                avatarSharedElementKey = sharedElementKey,
+                            ),
+                        ),
+                    )
+                },
+                actions = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !hasNotificationPermissions(),
+                        ) {
+                            RequestNotificationsButton(
+                                animateIcon = state.canAnimateRequestPermissionsButton,
                             )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        actions = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
-                                    )
-                                }
-                                AppBarIconButton(
-                                    icon = Icons.Rounded.Settings,
-                                    iconDescription = stringResource(CommonStrings.notification_settings),
-                                    onClick = {
-                                        stateHolder.accept(
-                                            Action.Navigate.To(notificationSettingsDestination()),
-                                        )
-                                    },
+                        }
+                        AppBarIconButton(
+                            icon = Icons.Rounded.Settings,
+                            iconDescription = stringResource(CommonStrings.notification_settings),
+                            onClick = {
+                                stateHolder.accept(
+                                    Action.Navigate.To(notificationSettingsDestination()),
                                 )
-                            }
-                        },
-                        onLogoClicked = {
-                            stateHolder.accept(Action.Navigate.Home)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            stateHolder.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
-                                    ),
-                                ),
-                            )
-                        },
+                        )
+                    }
+                },
+                onLogoClicked = {
+                    stateHolder.accept(Action.Navigate.Home)
+                },
+            )
+        },
+        floatingActionButton = {
+            PaneFab(
+                modifier = Modifier
+                    .offset {
+                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                    },
+                text = stringResource(CommonStrings.notifications_create_post),
+                icon = Icons.Rounded.Edit,
+                expanded = isFabExpanded {
+                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                    else topAppBarNestedScrollConnection.offset * -1f
+                },
+                onClick = {
+                    stateHolder.accept(
+                        Action.Navigate.To(
+                            composePostDestination(
+                                type = Post.Create.Timeline,
+                                sharedElementPrefix = null,
+                            ),
+                        ),
                     )
                 },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
+            )
+        },
+        navigationBar = {
+            PaneNavigationBar(
+                modifier = Modifier
+                    .offset {
+                        bottomNavigationNestedScrollConnection.offset.round()
+                    },
+                onNavItemReselected = {
+                    stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
+                    true
                 },
-                navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
+            )
+        },
+        navigationRail = {
+            PaneNavigationRail(
+                onNavItemReselected = {
+                    stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
+                    true
                 },
-                content = {
-                    NotificationsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = stateHolder.accept,
-                    )
-                },
+            )
+        },
+        content = {
+            NotificationsScreen(
+                paneScaffoldState = this,
+                state = state,
+                actions = stateHolder.accept,
             )
         },
     )

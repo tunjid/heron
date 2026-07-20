@@ -53,7 +53,9 @@ internal class ImagePainter(
 
     override fun DrawScope.onDraw() {
         when (val image = currentImage()) {
-            null -> Unit
+            null,
+            is StubImage,
+            -> Unit
             is CoilImage -> {
                 scaleAndAlignTo(
                     srcSize = image.size,
@@ -71,6 +73,8 @@ internal class ImagePainter(
     override val intrinsicSize: Size
         get() = when (val image = currentImage()) {
             is CoilImage -> image.size.toSize()
-            null -> Size.Unspecified
+            null,
+            is StubImage,
+            -> Size.Unspecified
         }
 }

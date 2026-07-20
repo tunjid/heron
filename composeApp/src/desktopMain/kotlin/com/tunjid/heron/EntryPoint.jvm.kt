@@ -24,18 +24,23 @@ import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.aead.PredefinedAeadParameters
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.JvmLogger
+import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.platform.JVMPlatform
 import com.tunjid.heron.data.platform.JvmVariant
 import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
 import com.tunjid.heron.media.video.linux.GStreamerPlayerController
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.NoOpNotifier
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.NoOpNotifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import java.io.File
 import javax.crypto.Cipher
@@ -43,8 +48,8 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
+import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
-import okio.Path
 import okio.Path.Companion.toOkioPath
 
 fun createAppState(): AppState =
@@ -77,10 +82,27 @@ fun createAppState(): AppState =
                 savedStatePath = File(
                     appDataDir,
                     SAVED_STATE_FILE_NAME,
-                ).toOkioPath(),
+                ).toOkioPath().asSystemFile(),
+                modelsDirectory = File(appDataDir, MODELS_DIR_NAME).toOkioPath().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = tinkEncryption(appDataDir),
                 databaseBuilder = getDatabaseBuilder(),
+                inferenceEngine = createInferenceEngine(
+                    ioDispatcher = Dispatchers.IO,
+                ),
+                languageDetector = createLanguageDetector(),
+                memoryMonitor = createMemoryMonitor(
+                    ioDispatcher = Dispatchers.IO,
+                ),
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
+                    createBackgroundTaskScheduler(
+                        scope = appMainScope,
+                        ioDispatcher = Dispatchers.IO,
+                        fileManager = fileManager,
+                        taskStore = taskStore,
+                        httpClient = httpClient,
+                    )
+                },
             )
         },
     )
@@ -221,6 +243,7 @@ private fun decryptWithKek(
 
 private const val APP_NAME = "TunjiHeron"
 private const val SAVED_STATE_FILE_NAME = "heron-saved-state.ser"
+private const val MODELS_DIR_NAME = "models"
 private const val KEYSTORE_FILE_NAME = ".keystore"
 private const val MAC_APP_SUPPORT_PATH = "Library/Application Support"
 private const val LINUX_DEFAULT_DATA_PATH = ".local/share"

@@ -26,7 +26,7 @@ plugins {
 
 dependencies {
     implementation(project(":composeApp"))
-    implementation(project(":scaffold"))
+    implementation(project(":ui:scaffold"))
 
     implementation(compose.desktop.currentOs)
 }
@@ -90,28 +90,26 @@ compose.desktop {
     }
 }
 
-// Copy native libraries into app resources for sandboxed App Store builds.
+// Copy native libraries into app resources for the sandboxed arm64 macOS build.
 // These are picked up by appResourcesRootDir and bundled into the .app package,
 // accessible at runtime via the compose.application.resources.dir system property.
-// The build and extraction tasks live in :ui:media; this module just copies the outputs.
-val copyNativeLibsTasks = listOf(
-    "Arm" to ("aarch64" to "macos-arm64"),
-    "X64" to ("x86-64" to "macos-x86-64"),
-).map { (taskSuffix, archPair) ->
-    val (buildArch, resourceArch) = archPair
-    tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
-        from(project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-$buildArch"))
-        include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
-        into(project.file("resources/$resourceArch"))
-        dependsOn(
-            ":ui:media:buildAVFoundationMac$taskSuffix",
-            ":ui:media:extractJnaNative$taskSuffix",
-        )
-    }
-}
+// The build and extraction tasks live in :ui:media and :data:ml; this module just
+// copies the outputs. macOS ships arm64 only.
+val copyNativeLibsForSandbox = tasks.register<Copy>("copyNativeLibsForSandbox") {
+    into(project.file("resources/macos-arm64"))
 
-val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
-    dependsOn(copyNativeLibsTasks)
+    from(project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-aarch64")) {
+        include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
+    }
+    from(project(":data:ml").layout.buildDirectory.dir("native-libs/darwin-aarch64")) {
+        include("liblitertlm_jni.so")
+    }
+
+    dependsOn(
+        ":ui:media:buildAVFoundationMacArm",
+        ":ui:media:extractJnaNativeArm",
+        ":data:ml:extractLitertlmNativeArm",
+    )
 }
 
 // Sign native libraries with Developer ID so they pass notarization.
@@ -122,7 +120,7 @@ val signNativeLibsForSandbox = tasks.register<SignNativeLibsTask>("signNativeLib
     dependsOn(copyNativeLibsForSandbox)
     libraries.from(
         nativeLibsResourcesDir.asFileTree.matching {
-            include("**/*.dylib", "**/*.jnilib")
+            include("**/*.dylib", "**/*.jnilib", "**/*.so")
         },
     )
     signingIdentity.set(signingIdentityProperty)

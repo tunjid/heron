@@ -24,14 +24,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.timeline.ui.SelectListSheetState.Companion.rememberSelectListSheetState
-import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileHandleState
+import com.tunjid.heron.sheets.rememberProfileSearchSheetState
+import com.tunjid.heron.sheets.rememberSelectListSheetState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.direction
@@ -50,8 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SocialGraphFilter(
     filter: Filter.Social.Graph,
-    results: List<Profile>,
-    onProfileQueryChanged: (String) -> Unit,
+    paneScaffoldState: PaneScaffoldState,
     onUpdate: (Filter.Social.Graph) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
@@ -93,17 +91,13 @@ fun SocialGraphFilter(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val selectTextSheetState = rememberSelectProfileHandleState(
-                    title = stringResource(Res.string.username),
-                    suggestedProfiles = results,
-                    onTextConfirmed = { profileHandle ->
-                        onUpdate(
-                            filter.copy(
-                                username = profileHandle,
-                            ),
-                        )
-                    },
-                )
+                val profileSearchSheetState = paneScaffoldState.rememberProfileSearchSheetState {
+                    onUpdate(
+                        filter.copy(
+                            username = it.handle.id,
+                        ),
+                    )
+                }
                 OutlinedTextField(
                     value = filter.username,
                     onValueChange = {},
@@ -115,10 +109,11 @@ fun SocialGraphFilter(
                         .fillMaxWidth(),
                 )
 
+                val title = stringResource(Res.string.username)
                 FilledTonalButton(
                     onClick = {
-                        selectTextSheetState.show(
-                            currentText = filter.username,
+                        profileSearchSheetState.show(
+                            title = title,
                         )
                     },
                     modifier = Modifier
@@ -131,11 +126,6 @@ fun SocialGraphFilter(
                         ),
                     )
                 }
-
-                LaunchedEffect(Unit) {
-                    snapshotFlow { selectTextSheetState.options.text }
-                        .collect(onProfileQueryChanged)
-                }
             }
         },
     )
@@ -144,8 +134,7 @@ fun SocialGraphFilter(
 @Composable
 fun SocialUserListFilter(
     filter: Filter.Social.UserList,
-    results: List<Profile>,
-    onProfileQueryChanged: (String) -> Unit,
+    paneScaffoldState: PaneScaffoldState,
     onUpdate: (Filter.Social.UserList) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
@@ -172,21 +161,35 @@ fun SocialUserListFilter(
                     filter.copy(dids = it),
                 )
             }
-            val selectTextSheetState = rememberSelectProfileHandleState(
-                title = stringResource(Res.string.username),
-                suggestedProfiles = results,
-                onItemsUpdated = onItemsUpdated,
-                items = filter.dids,
-            )
+            val profileSearchSheetState =
+                paneScaffoldState.rememberProfileSearchSheetState { profile ->
+                    onItemsUpdated((filter.dids + profile.did.id).distinct())
+                }
+            val title = stringResource(Res.string.username)
             FilterTextChips(
-                selectTextSheetState = selectTextSheetState,
                 buttonStringResource = Res.string.add_profile,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
+                itemToString = { it },
+                itemToDisplayText = { did ->
+                    profileSearchSheetState.cachedProfiles
+                        .firstOrNull { it.did.id == did }
+                        ?.handle
+                        ?.id
+                        ?: did
+                },
+                onEditClicked = {
+                    profileSearchSheetState.show(title)
+                },
+                onAddClicked = {
+                    profileSearchSheetState.show(title)
+                },
             )
-            LaunchedEffect(Unit) {
-                snapshotFlow { selectTextSheetState.options.text }
-                    .collect(onProfileQueryChanged)
+
+            LaunchedEffect(filter.dids) {
+                profileSearchSheetState.seedProfiles(
+                    filter.dids.map(::ProfileId),
+                )
             }
         },
     )
@@ -208,22 +211,21 @@ fun SocialStarterPackFilter(
 }
 
 @Composable
-fun SocialListMemberFilter(
+fun PaneScaffoldState.SocialListMemberFilter(
     filter: Filter.Social.ListMember,
-    recentLists: List<FeedList>,
-    onUpdateRecentLists: () -> Unit,
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberSelectListSheetState(
-        lists = recentLists,
         onListSelected = { list ->
-            onUpdate(
-                filter.copy(url = list.uri.uri),
-            )
+            onUpdate(filter.copy(url = list.uri.uri))
         },
     )
+    val displayValue = sheetState.state.lists
+        .find { it.uri.uri == filter.url }
+        ?.name
+        ?: filter.url
     StandardFilter(
         modifier = modifier,
         tint = filter.validationTint(),
@@ -246,7 +248,7 @@ fun SocialListMemberFilter(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
-                    value = recentLists.find { it.uri.uri == filter.url }?.name ?: filter.url,
+                    value = displayValue,
                     onValueChange = {},
                     readOnly = true,
                     label = {
@@ -258,7 +260,6 @@ fun SocialListMemberFilter(
 
                 FilledTonalButton(
                     onClick = {
-                        onUpdateRecentLists()
                         sheetState.show()
                     },
                     modifier = Modifier

@@ -12,7 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,8 +39,11 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
+import heron.ui.core.generated.resources.action_search_posts
+import heron.ui.core.generated.resources.action_vibe_check
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
@@ -148,6 +154,24 @@ internal fun ProfileViewerState?.profileActionMenuItems(
     isSignedInProfile: Boolean,
     isLive: Boolean,
 ) = buildList {
+    add(
+        ProfileActionMenu.Item(
+            title = CommonStrings.action_copy_profile_link,
+            icon = Icons.Rounded.ContentCopy,
+        ),
+    )
+    add(
+        ProfileActionMenu.Item(
+            title = CommonStrings.action_search_posts,
+            icon = Icons.Rounded.Search,
+        ),
+    )
+    add(
+        ProfileActionMenu.Item(
+            title = CommonStrings.action_vibe_check,
+            icon = Icons.Rounded.AutoAwesome,
+        ),
+    )
     when {
         isSignedInProfile -> add(
             when {

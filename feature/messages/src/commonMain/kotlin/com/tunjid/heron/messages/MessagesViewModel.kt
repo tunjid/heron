@@ -28,19 +28,19 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -62,92 +62,102 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withTimeout
 
-internal typealias MessagesStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface MessagesStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface MessagesViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualMessagesViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualMessagesViewModel(
-    authRepository: AuthRepository,
-    messagesRepository: MessageRepository,
-    searchRepository: SearchRepository,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    MessagesStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    MessagesStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        messagesRepository: MessageRepository,
+        searchRepository: SearchRepository,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
+                        is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
+                            state = state,
+                            searchRepository = searchRepository,
+                        )
+                        is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
+                            state = state,
+                            navActions = navActions,
+                            messagesRepository = messagesRepository,
+                        )
+                        is Action.Tile ->
+                            action.flow
+                                .map { it.tilingAction }
+                                .launchTilingMutations(
+                                    state = state,
+                                    updateQueryData = { copy(data = it) },
+                                    refreshQuery = { copy(data = data.reset()) },
+                                    cursorListLoader = messagesRepository::conversations,
+                                    onNewItems = { items ->
+                                        items.distinctBy(Conversation::id)
+                                    },
+                                )
                     }
-                    is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
-                    is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
-                        state = state,
-                        searchRepository = searchRepository,
-                    )
-                    is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
-                        state = state,
-                        navActions = navActions,
-                        messagesRepository = messagesRepository,
-                    )
-                    is Action.Tile ->
-                        action.flow
-                            .map { it.tilingAction }
-                            .launchTilingMutations(
-                                state = state,
-                                updateQueryData = { copy(data = it) },
-                                refreshQuery = { copy(data = data.reset()) },
-                                cursorListLoader = messagesRepository::conversations,
-                                onNewItems = { items ->
-                                    items.distinctBy(Conversation::id)
-                                },
-                            )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetIsSearching>.launchSetIsSearchingMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.isSearching = event.isSearching
 }
 
@@ -156,7 +166,7 @@ private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     try {
         withTimeout(2.seconds) {
             messagesRepository.resolveConversation(
@@ -194,7 +204,7 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
         started = SharingStarted.WhileSubscribed(),
         replay = 1,
     )
-    sharedActions.launchAndCollectLatest {
+    sharedActions.launchedCollectLatest {
         state.searchQuery = it.query
     }
     sharedActions
@@ -212,7 +222,7 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
                 ),
                 cursor = Cursor.Initial,
             )
-        }.launchAndCollect {
+        }.launchedCollect {
             state.autoCompletedProfiles = it.sortedByDescending(
                 ProfileWithViewerState::canBeMessaged,
             )

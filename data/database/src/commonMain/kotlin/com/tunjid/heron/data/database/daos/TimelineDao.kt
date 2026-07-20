@@ -38,10 +38,15 @@ interface TimelineDao {
         """
         DELETE FROM timelineItems
         WHERE sourceId = :sourceId
+        AND (
+            (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+            OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+        )
     """,
     )
     suspend fun deleteAllFeedsFor(
         sourceId: String,
+        viewingProfileId: String?,
     )
 
     @Upsert
@@ -79,19 +84,6 @@ interface TimelineDao {
                 (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
                 OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
             )
-            AND (
-                :hideReplies = FALSE
-                OR parentPostUri IS NULL
-            )
-            AND (
-                :hideReposts = FALSE
-                OR reposter IS NULL
-            )
-            AND (
-                :hideQuotePosts = FALSE
-                OR embeddedRecordUri IS NULL
-                OR embeddedRecordUri NOT LIKE '%app.bsky.feed.post%'
-            )
             ORDER BY itemSort
             DESC
             LIMIT :limit
@@ -104,10 +96,62 @@ interface TimelineDao {
         before: Instant,
         limit: Long,
         offset: Long,
+    ): Flow<List<PopulatedTimelineItemEntity>>
+
+    @Query(
+        """
+            SELECT id FROM timelineItems
+            WHERE sourceId = :sourceId
+            AND indexedAt < :before
+            AND (
+                (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+                OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+            )
+            AND (
+                :hideReplies = FALSE
+                OR parentPostUri IS NULL
+            )
+            AND (
+                -- Keep the cheap constant first: SQLite short-circuits the OR and skips
+                -- the EXISTS entirely when the toggle is off, so this costs unfollowed
+                -- filtering nothing for users who leave it disabled.
+                :hideRepliesByUnfollowed = FALSE
+                OR parentPostUri IS NULL
+                OR EXISTS (
+                    SELECT 1 FROM posts
+                    LEFT JOIN profileViewerStates
+                        ON profileViewerStates.profileId = :viewingProfileId
+                        AND profileViewerStates.otherProfileId = posts.authorId
+                    WHERE posts.uri = timelineItems.parentPostUri
+                    AND (
+                        profileViewerStates.following IS NOT NULL
+                        OR posts.authorId = :viewingProfileId
+                    )
+                )
+            )
+            AND (
+                :hideReposts = FALSE
+                OR reposter IS NULL
+            )
+            AND (
+                :hideQuotePosts = FALSE
+                OR embeddedRecordUri IS NULL
+                OR embeddedRecordUri NOT LIKE '%app.bsky.feed.post%'
+            )
+            ORDER BY itemSort
+            DESC
+            LIMIT 1
+        """,
+    )
+    fun latestVisibleTimelineItemId(
+        viewingProfileId: String?,
+        sourceId: String,
+        before: Instant,
         hideReplies: Boolean,
+        hideRepliesByUnfollowed: Boolean,
         hideReposts: Boolean,
         hideQuotePosts: Boolean,
-    ): Flow<List<PopulatedTimelineItemEntity>>
+    ): Flow<String?>
 
     @Query(
         """

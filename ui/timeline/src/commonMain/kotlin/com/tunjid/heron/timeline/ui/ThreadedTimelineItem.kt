@@ -44,13 +44,13 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.timeline.ui.post.Post
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -109,6 +109,14 @@ internal fun ThreadedPost(
     postActions: PostActions,
 ) {
     val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val density = LocalDensity.current
+    val connectorStroke = remember(density) {
+        Stroke(
+            width = with(density) { ConnectorStrokeWidth.toPx() },
+            cap = StrokeCap.Butt,
+            join = StrokeJoin.Round,
+        )
+    }
 
     val isLinear = item is TimelineItem.Threaded.Linear
     var maxNodes by rememberSaveable(isLinear) {
@@ -125,6 +133,7 @@ internal fun ThreadedPost(
             val index = position[NodeDimension.Index]
             val depth = position[NodeDimension.Depth]
             key(node.post.uri.uri) {
+                val connectorPath = remember { Path() }
                 Post(
                     modifier = Modifier
                         .ifTrue(depth > 0) {
@@ -135,10 +144,11 @@ internal fun ThreadedPost(
                                     indentPerDepthPx = IndentPerDepth.toPx(),
                                     threadLineXOffsetPx = ThreadLineXOffset.toPx(),
                                     curveRadiusPx = CurveRadius.toPx(),
-                                    strokeWidthPx = ConnectorStrokeWidth.toPx(),
                                     avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
                                     rowOverlapPx = RowOverlap.toPx(),
                                     color = connectorColor,
+                                    path = connectorPath,
+                                    stroke = connectorStroke,
                                 )
                             }
                         }
@@ -182,8 +192,7 @@ internal fun ThreadedPost(
                             .animateBounds(
                                 lookaheadScope = presentationLookaheadScope,
                                 boundsTransform = paneTransitionScope.childBoundsTransform,
-                            )
-                            .childThreadNode(videoId = null),
+                            ),
                         onClick = {
                             postActions.onPostAction(
                                 PostAction.OfPost(
@@ -208,8 +217,7 @@ internal fun ThreadedPost(
                             .animateBounds(
                                 lookaheadScope = presentationLookaheadScope,
                                 boundsTransform = paneTransitionScope.childBoundsTransform,
-                            )
-                            .childThreadNode(videoId = null),
+                            ),
                     )
                 }
             }
@@ -217,8 +225,7 @@ internal fun ThreadedPost(
                 key(node.decorationKey(NodeDecoration.ExtraSpacer)) {
                     Spacer(
                         Modifier
-                            .height(2.dp)
-                            .childThreadNode(videoId = null),
+                            .height(2.dp),
                     )
                 }
             }
@@ -344,16 +351,13 @@ private fun DrawScope.drawReplyConnectors(
     indentPerDepthPx: Float,
     threadLineXOffsetPx: Float,
     curveRadiusPx: Float,
-    strokeWidthPx: Float,
     avatarCenterFromTopPx: Float,
     rowOverlapPx: Float,
     color: Color,
+    path: Path,
+    stroke: Stroke,
 ) {
-    val stroke = Stroke(
-        width = strokeWidthPx,
-        cap = StrokeCap.Butt,
-        join = StrokeJoin.Round,
-    )
+    val strokeWidthPx = stroke.width
 
     fun lineX(level: Int) = threadLineXOffsetPx + level * indentPerDepthPx
 
@@ -384,7 +388,8 @@ private fun DrawScope.drawReplyConnectors(
     }
 
     drawPath(
-        path = Path().apply {
+        path = path.apply {
+            rewind()
             moveTo(parentLineX, -rowOverlapPx)
             lineTo(parentLineX, curveTopY)
             quadraticTo(

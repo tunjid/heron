@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.Conversation
@@ -49,17 +50,19 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.messages.ui.ConversationSearchResults
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.profile.ProfileHandle
-import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.displayNameOrBlank
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.summary
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.BoldedText
+import com.tunjid.heron.ui.text.SmallOutlinedText
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.messages.generated.resources.Res
@@ -161,7 +164,7 @@ fun Conversation(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(68.dp)
+            .heightIn(min = 68.dp)
             .shapedClickable {
                 onConversationClicked()
             }
@@ -185,8 +188,20 @@ fun Conversation(
             conversationId = conversation.id,
         )
         ConversationDetails(
-            participants = participants,
-            signedInProfileId = signedInProfileId,
+            title = when (val group = conversation.group) {
+                null ->
+                    conversation.members
+                        .firstOrNull()
+                        .displayNameOrBlank
+                else -> group.name
+            },
+            description = when (conversation.group) {
+                null ->
+                    conversation.members
+                        .firstOrNull()
+                        ?.handle?.id
+                else -> null
+            },
             conversationSummary = conversation.summary(signedInProfileId = signedInProfileId),
         )
     }
@@ -244,24 +259,27 @@ fun ConversationMembers(
 }
 
 @Composable
-private fun ConversationDetails(
-    participants: List<Profile>,
-    signedInProfileId: ProfileId?,
+internal fun ConversationDetails(
+    title: String,
+    description: String?,
     conversationSummary: String,
 ) {
-    val profile = remember(participants, signedInProfileId) {
-        participants.firstOrNull { it.did != signedInProfileId }
-    }
     Column(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        profile?.let {
-            ProfileName(profile = it)
-            ProfileHandle(profile = it)
+        BoldedText(
+            text = title,
+        )
+        description?.let {
+            SmallOutlinedText(
+                text = it,
+            )
         }
         Text(
             text = conversationSummary,
             fontSize = 12.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -272,11 +290,7 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
     val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
 
     return when {
-        lastMessageReactedTo == null -> lastMessage?.let {
-            if (it.sender.did == signedInProfileId) {
-                stringResource(Res.string.you_sent_summary, it.text)
-            } else it.text
-        } ?: ""
+        lastMessageReactedTo == null -> lastMessage?.summaryText(signedInProfileId) ?: ""
 
         lastMessage == null -> ""
 
@@ -302,14 +316,20 @@ private fun Conversation.summary(signedInProfileId: ProfileId?): String {
                         mostRecent.text,
                     )
                 }
-                lastMessage -> {
-                    if (mostRecent.sender.did == signedInProfileId) {
-                        stringResource(Res.string.you_sent_summary, mostRecent.text)
-                    } else mostRecent.text
-                }
+                lastMessage -> mostRecent.summaryText(signedInProfileId)
                 else -> ""
             }
         }
+    }
+}
+
+@Composable
+private fun Message.summaryText(signedInProfileId: ProfileId?): String {
+    val system = system
+    return when {
+        system != null -> system.summary()
+        sender?.did == signedInProfileId -> stringResource(Res.string.you_sent_summary, text)
+        else -> text
     }
 }
 

@@ -76,8 +76,6 @@ class OAuthApi(
     private val clock: Clock = Clock.System,
 ) {
 
-    private var dpopKeyPair: DpopKeyPair? = null
-
     /**
      * Build an authorization request for the given client and scopes. This URL can be used to redirect the user to
      * the OAuth server to log into their account.
@@ -118,22 +116,17 @@ class OAuthApi(
             loginHint = loginHandleHint,
         )
 
-        val callResponse = client.post(Url(oauthServer.pushedAuthorizationRequestEndpoint)) {
-            headers["Content-Type"] = "application/json"
-            setBody(request)
-        }
+        // Per the atproto OAuth spec, the client generates a new DPoP key for the session and
+        // uses it starting with the PAR request, binding the authorization code to the key's
+        // thumbprint. The same key pair must be reused for the subsequent token exchange.
+        val keyPair = DpopKeyPair.generateKeyPair()
 
-        val response: OAuthParResponse = callResponse.decodeResponse(
-            onSuccess = { it },
-            onNewNonce = { error("Should not happen") },
-            onFailure = {
-                val errorMessage =
-                    it?.toString() ?: StatusCode.fromCode(callResponse.status.value).toString()
-                error("Failed to create PAR request: $errorMessage")
-            },
+        val (response, nonce) = pushAuthorizationRequest(
+            endpoint = Url(oauthServer.pushedAuthorizationRequestEndpoint),
+            request = request,
+            keyPair = keyPair,
+            nonce = null,
         )
-
-        val nonce = callResponse.responseDpopNonce
 
         val authorizeRequestUrl = buildUrl {
             takeFrom(oauthServer.authorizationEndpoint)
@@ -147,6 +140,60 @@ class OAuthApi(
             codeVerifier = codeVerifier,
             state = state,
             nonce = nonce,
+            keyPair = keyPair,
+        )
+    }
+
+    /**
+     * Send a Pushed Authorization Request (PAR), signing it with a DPoP proof.
+     *
+     * The atproto OAuth server requires DPoP starting from the PAR request. The first attempt is
+     * made without a nonce and, on the expected `use_dpop_nonce` response, retried with the
+     * server-provided nonce — the canonical two-round-trip flow.
+     *
+     * @return the [OAuthParResponse] together with the DPoP nonce from the successful response,
+     * which is carried forward to the token request.
+     */
+    private suspend fun pushAuthorizationRequest(
+        endpoint: Url,
+        request: OAuthParRequest,
+        keyPair: DpopKeyPair,
+        nonce: String?,
+        retryCount: Int = 0,
+    ): Pair<OAuthParResponse, String> {
+        val dpopHeader = createDpopHeaderValue(
+            keyPair = keyPair,
+            method = "POST",
+            endpoint = endpoint.toString(),
+            nonce = nonce,
+            accessToken = null,
+        )
+
+        val callResponse = client.post(endpoint) {
+            headers["Content-Type"] = "application/json"
+            headers["DPoP"] = dpopHeader
+            setBody(request)
+        }
+
+        return callResponse.mapResponse<OAuthParResponse, Pair<OAuthParResponse, String>>(
+            onSuccess = { it to requireResponseDPoPNonce },
+            onNewNonce = { newNonce ->
+                if (retryCount >= 3) {
+                    error("Failed to create PAR request: too many DPoP nonce retries")
+                }
+                pushAuthorizationRequest(
+                    endpoint = endpoint,
+                    request = request,
+                    keyPair = keyPair,
+                    nonce = newNonce,
+                    retryCount = retryCount + 1,
+                )
+            },
+            onFailure = {
+                val errorMessage =
+                    it?.toString() ?: StatusCode.fromCode(status.value).toString()
+                error("Failed to create PAR request: $errorMessage")
+            },
         )
     }
 
@@ -254,7 +301,7 @@ class OAuthApi(
                     expiresIn = tokenResponse.expiresInSeconds.seconds,
                     scopes = tokenResponse.scopes.split(" ").map { OAuthScope(it) },
                     subject = tokenResponse.subject,
-                    nonce = responseDpopNonce,
+                    nonce = requireResponseDPoPNonce,
                 )
             },
             onNewNonce = { newNonce ->
@@ -267,18 +314,6 @@ class OAuthApi(
                     error = description,
                 )
             },
-        )
-    }
-
-    /**
-     * Revoke the provided [oauthToken][OAuthToken] using the OAuth server's revocation endpoint.
-     */
-    suspend fun revokeToken(oauthToken: OAuthToken) {
-        revokeToken(
-            accessToken = oauthToken.accessToken,
-            clientId = oauthToken.clientId,
-            nonce = oauthToken.nonce,
-            keyPair = oauthToken.keyPair,
         )
     }
 
@@ -406,9 +441,8 @@ class OAuthApi(
     }
 
     private suspend fun resolveDpopKeyPair(providedKeyPair: DpopKeyPair?): DpopKeyPair {
-        // Use a provided DPoP key pair if provided, or the previously-used one if available, or generate a new one.
-        return (providedKeyPair ?: dpopKeyPair ?: DpopKeyPair.generateKeyPair())
-            .also { dpopKeyPair = it }
+        // Use a provided DPoP key pair if provided, or generate a new one.
+        return (providedKeyPair ?: DpopKeyPair.generateKeyPair())
     }
 
     private suspend inline fun <reified T : Any> HttpResponse.decodeResponse(
@@ -429,18 +463,25 @@ class OAuthApi(
             val maybeErrorDescription = runCatching { body<AtpErrorDescription>() }.getOrNull()
             if (maybeErrorDescription?.error == "use_dpop_nonce") {
                 // If the error indicates we need to use a DPoP nonce, we can retry with the new nonce.
-                return onNewNonce(responseDpopNonce)
+                onNewNonce(requireResponseDPoPNonce)
             } else {
                 onFailure(maybeErrorDescription)
             }
         }
     }
 
-    private val HttpResponse.responseDpopNonce: String
-        get() = requireNotNull(headers["DPoP-Nonce"]) { "DPoP-Nonce header not found in response" }
+    private val HttpResponse.maybeResponseDPoPNonce: String?
+        get() = headers[DPoPNonceKey]
+
+    private val HttpResponse.requireResponseDPoPNonce: String
+        get() = requireNotNull(maybeResponseDPoPNonce) {
+            "DPoP-Nonce header not found in response"
+        }
 
     companion object {
         private val CODE_VERIFIER_CHARS: List<Char> =
             ('A'..'Z') + ('a'..'z') + ('0'..'9') + listOf('-', '.', '_', '~')
     }
 }
+
+private const val DPoPNonceKey = "DPoP-Nonce"

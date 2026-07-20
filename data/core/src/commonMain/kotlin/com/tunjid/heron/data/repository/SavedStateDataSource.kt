@@ -27,12 +27,17 @@ import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
+import com.tunjid.heron.data.files.FileManager
+import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.network.SessionContext
+import com.tunjid.heron.data.tasks.FailedTask
+import com.tunjid.heron.data.tasks.Task
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -62,8 +67,6 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
-import okio.FileSystem
-import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
 interface SavedStateEncryption {
@@ -85,6 +88,8 @@ abstract class SavedState {
     abstract val signedInProfileData: ProfileData?
 
     abstract val pastSessions: List<SessionSummary>?
+
+    abstract val tasks: Tasks
 
     abstract fun profileData(
         profileId: ProfileId,
@@ -113,6 +118,11 @@ abstract class SavedState {
                 val nonce: String,
                 val state: String,
                 val expiresAt: Instant,
+                // The DPoP key pair bound to the PAR request, persisted so the token exchange
+                // (which may happen after a process death during the browser hand-off) reuses
+                // the same key. Nullable + defaulted for backward compatibility with pending
+                // states persisted before this field existed.
+                val keyPair: Authenticated.DPoP.DERKeyPair? = null,
             ) : Pending() {
                 override val authProfileId: ProfileId = Constants.pendingProfileId
             }
@@ -209,6 +219,13 @@ abstract class SavedState {
     data class Writes(
         val pendingWrites: List<Writable> = emptyList(),
         val failedWrites: List<FailedWrite> = emptyList(),
+    )
+
+    /** App-global background tasks. Unlike [Writes], these are not scoped to a signed-in profile. */
+    @Serializable
+    data class Tasks(
+        val pending: List<Task> = emptyList(),
+        val failed: List<FailedTask> = emptyList(),
     )
 
     @Serializable
@@ -329,12 +346,16 @@ internal sealed class SavedStateDataSource {
     internal abstract suspend fun updateSignedInProfileData(
         block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
+
+    internal abstract suspend fun updateTasks(
+        block: suspend SavedState.Tasks.() -> SavedState.Tasks,
+    )
 }
 
 @Inject
 internal class DataStoreSavedStateDataSource(
-    path: Path,
-    fileSystem: FileSystem,
+    path: File.System,
+    fileManager: FileManager,
     protoBuf: ProtoBuf,
     encryption: SavedStateEncryption,
     @AppMainScope
@@ -347,12 +368,12 @@ internal class DataStoreSavedStateDataSource(
 
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
-            fileSystem = fileSystem,
+            fileSystem = fileManager.fileSystem,
             serializer = VersionedSavedStateOkioSerializer(
                 protoBuf = protoBuf,
                 encryption = encryption,
             ),
-            producePath = { path },
+            producePath = { path.path },
         ),
         scope = scope,
     )
@@ -458,6 +479,12 @@ internal class DataStoreSavedStateDataSource(
         copy(
             profileData = profileData + update,
         )
+    }
+
+    override suspend fun updateTasks(
+        block: suspend SavedState.Tasks.() -> SavedState.Tasks,
+    ) = updateState {
+        copy(tasks = tasks.block())
     }
 
     private suspend fun updateState(

@@ -28,8 +28,8 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -99,10 +99,6 @@ sealed class Action(val key: String) {
         val sourceId: String,
         val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
-
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

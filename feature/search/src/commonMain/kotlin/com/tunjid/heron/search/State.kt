@@ -18,8 +18,6 @@ package com.tunjid.heron.search
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -33,9 +31,9 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchQuery.OfPosts
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
@@ -47,6 +45,99 @@ enum class ScreenLayout {
     Suggested,
     AutoCompleteProfiles,
     GeneralSearchResults,
+}
+
+@Serializable
+sealed class RouteQuery {
+    data object FullSearch : RouteQuery()
+    data class HashtaggedPostsSearch(
+        val query: String,
+    ) : RouteQuery()
+
+    data class ProfilePostSearch(
+        val query: String,
+    ) : RouteQuery()
+}
+
+val RouteQuery.initialQueryString
+    get() = when (this) {
+        RouteQuery.FullSearch -> ""
+        is RouteQuery.HashtaggedPostsSearch -> query
+        is RouteQuery.ProfilePostSearch -> query
+    }
+
+val RouteQuery.initialSearchBarText
+    get() = when (this) {
+        RouteQuery.FullSearch -> ""
+        is RouteQuery.HashtaggedPostsSearch -> query
+        is RouteQuery.ProfilePostSearch -> ""
+    }
+val RouteQuery.supportsNonPostSearch
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> false
+    }
+
+val RouteQuery.initialLayout
+    get() = when (this) {
+        RouteQuery.FullSearch -> ScreenLayout.Suggested
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> ScreenLayout.GeneralSearchResults
+    }
+
+val RouteQuery.isQueryEditable
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch -> false
+        is RouteQuery.ProfilePostSearch -> true
+    }
+
+val RouteQuery.isRoot
+    get() = when (this) {
+        RouteQuery.FullSearch -> true
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> false
+    }
+
+val RouteQuery.ProfilePostSearch.profileHandle
+    get() = "@${query.removePrefix("from:")}"
+
+fun RouteQuery.queryString(searchBarText: String) = when (this) {
+    RouteQuery.FullSearch -> searchBarText
+    is RouteQuery.HashtaggedPostsSearch -> searchBarText
+    is RouteQuery.ProfilePostSearch -> "$query $searchBarText"
+}
+
+fun RouteQuery.layoutFor(
+    action: Action.Search.OnSearchQueryChanged,
+): ScreenLayout = when {
+    supportsNonPostSearch ->
+        if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
+        else ScreenLayout.Suggested
+    else -> ScreenLayout.GeneralSearchResults
+}
+
+val SearchQuery.Filter?.isMediaSearch: Boolean
+    get() = when (this?.media) {
+        SearchQuery.Filter.Media.WithMedia,
+        SearchQuery.Filter.Media.VideosOnly,
+        -> true
+        SearchQuery.Filter.Media.All,
+        null,
+        -> false
+    }
+
+fun State.presentationOptions(
+    currentPage: Int,
+): List<Timeline.Presentation> {
+    val isMediaSearch = searchStateHolders.getOrNull(currentPage)
+        ?.state is SearchState.OfPosts && appliedFilter.isMediaSearch
+    return if (isMediaSearch) Timeline.Presentation.All
+    else Timeline.Presentation.TextOnly
 }
 
 internal typealias SearchResultStateHolder = ActionSuspendingStateMutator<SearchState.Tile, SearchState>
@@ -68,9 +159,6 @@ sealed interface SearchResult {
 
 val SearchResult.OfPost.id: String
     get() = timelineItem.id
-
-val SearchResult.OfPost.canAutoPlayVideo: Boolean
-    get() = timelineItem.appliedLabels.canAutoPlayVideo
 
 @Stable
 sealed class SearchState {
@@ -114,12 +202,15 @@ interface State {
     @Serializable
     @SnapshotSpec
     data class Immutable(
-        val currentQuery: String = "",
+        val searchBarText: String = "",
+        val query: RouteQuery = RouteQuery.FullSearch,
         val layout: ScreenLayout = ScreenLayout.Suggested,
+        val appliedFilter: SearchQuery.Filter? = null,
+        val draftFilter: SearchQuery.Filter = SearchQuery.Filter(),
+        val preferredPresentation: Timeline.Presentation = Timeline.Presentation.Text.WithEmbed,
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
         val suggestedProfileCategory: String? = null,
-        val isQueryEditable: Boolean = true,
         val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
@@ -150,6 +241,16 @@ sealed class Action(val key: String) {
         ) : Search()
     }
 
+    sealed class Filter : Action(key = "Filter") {
+        data object Begin : Filter()
+
+        data class Edit(
+            val filter: SearchQuery.Filter,
+        ) : Filter()
+
+        data object Apply : Filter()
+    }
+
     data class FetchSuggestedProfiles(
         val category: String? = null,
     ) : Action(key = "FetchSuggestedProfiles")
@@ -168,9 +269,9 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class UpdatePresentation(
+        val presentation: Timeline.Presentation,
+    ) : Action(key = "UpdatePresentation")
 
     data class TogglePublicationSubscription(
         val publication: StandardPublication,

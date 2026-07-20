@@ -15,6 +15,13 @@
   -->
 
 <resources>
+    <string name="inference_sheet_translation_title">Translation</string>
+    <string name="inference_sheet_vibe_title">Profile Vibe Check</string>
+    <string name="inference_error_model_not_loaded">Model not loaded</string>
+    <string name="inference_error_failed">Inference failed</string>
+    <string name="inference_no_model_title">No model downloaded</string>
+    <string name="inference_no_model_description">Tap to download an on-device model for inference.</string>
+    <string name="inference_disclaimer">Content is generated offline, on-device and may be inaccurate.</string>
     <string name="reply">Reply</string>
     <string name="reply_to">Reply to %1$s</string>
     <string name="repost_by">Repost by %1$s</string>
@@ -37,6 +44,9 @@
     <string name="quote_post">quote post</string>
     <string name="delete_post">Delete post</string>
     <string name="delete_post_prompt">Are you sure you want to delete this post?</string>
+    <string name="link_document_to_post">Link document to this post</string>
+    <string name="link_document_to_post_overwrite_prompt">This document already links to another post. Replace it with this one?</string>
+    <string name="unlink_document_from_post">Unlink document from this post</string>
     <string name="videos">videos</string>
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>
@@ -80,6 +90,8 @@
     <string name="pin_feed">Pin</string>
     <string name="save_feed">Save</string>
     <string name="expand_options">Expand options</string>
+    <string name="feed_interaction_show_more">Show more like this</string>
+    <string name="feed_interaction_show_less">Show less like this</string>
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
     <string name="muted_meta_format">Muted in %1$s · %2$s</string>
@@ -147,6 +159,8 @@
     <string name="writable_duplicate">Your %1$s is processing.</string>
     <string name="writable_failed">Cannot process %1$s right now.</string>
     <string name="writable_post">post</string>
+    <string name="writable_draft">draft</string>
+    <string name="writable_draft_deletion">draft deletion</string>
     <string name="writable_message">message</string>
     <string name="writable_reaction">reaction</string>
     <string name="writable_reaction_removal">reaction removal</string>
@@ -158,6 +172,7 @@
     <string name="writable_unmute">unmute</string>
     <string name="writable_profile_update">profile update</string>
     <string name="writable_timeline_update">timeline update</string>
+    <string name="writable_feed_interaction">feed feedback</string>
     <string name="writable_notification_update">notification update</string>
     <string name="writable_record_deletion">record deletion</string>
     <string name="writable_bookmark">bookmark</string>
@@ -168,10 +183,14 @@
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_add_list_member">list member addition</string>
     <string name="writable_subscribe_standard_publication">publication subscription</string>
+    <string name="writable_link_document">document link</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
+    <string name="writable_conversation_update">conversation update</string>
 
     <string name="writable_description_creating_post">Creating a post</string>
+    <string name="writable_description_saving_draft">Saving a draft</string>
+    <string name="writable_description_deleting_draft">Deleting a draft</string>
     <string name="writable_description_post_photo">Photo post</string>
     <string name="writable_description_post_video">Video post</string>
     <string name="writable_description_liking_post">Liking a post</string>
@@ -188,15 +207,22 @@
     <string name="writable_description_unfollowing_profile">Unfollowing a profile</string>
     <string name="writable_description_adding_to_list">Adding to a list</string>
     <string name="writable_description_subscribing_publication">Subscribing to a publication</string>
+    <string name="writable_description_linking_document">Linking document to post</string>
+    <string name="writable_description_unlinking_document">Unlinking document from post</string>
     <string name="writable_description_blocking_profile">Blocking a profile</string>
     <string name="writable_description_unblocking_profile">Unblocking a profile</string>
     <string name="writable_description_muting_profile">Muting a profile</string>
     <string name="writable_description_unmuting_profile">Unmuting a profile</string>
     <string name="writable_description_updating_status">Updating your status</string>
     <string name="writable_description_updating_feed_settings">Updating feed settings</string>
+    <string name="writable_description_sending_feed_feedback">Sending feed feedback</string>
     <string name="writable_description_updating_profile">Updating your profile</string>
     <string name="writable_description_updating_notification_preferences">Updating notification preferences</string>
     <string name="writable_description_deleting_record">Deleting a record</string>
+    <string name="writable_description_accepting_conversation">Accepting a conversation</string>
+    <string name="writable_description_leaving_conversation">Leaving a conversation</string>
+    <string name="writable_description_muting_conversation">Muting a conversation</string>
+    <string name="writable_description_unmuting_conversation">Unmuting a conversation</string>
 
     <string name="empty_timeline_thread">There are no replies to this post.</string>
     <string name="empty_timeline_thread_description">Join the conversation by adding a post of your own.</string>
@@ -249,4 +275,17 @@
     <string name="pckt_server">Pckt.blog</string>
     <string name="custom_server">Custom server</string>
     <string name="at_proto">ATProto</string>
+
+    <!-- Group conversation system messages. %1$s/%2$s are member display names. -->
+    <string name="system_message_unknown_actor">Someone</string>
+    <string name="system_message_member_added">%1$s added %2$s</string>
+    <string name="system_message_member_removed">%1$s removed %2$s</string>
+    <string name="system_message_member_joined">%1$s joined</string>
+    <string name="system_message_member_left">%1$s left</string>
+    <string name="system_message_group_renamed">The group was renamed</string>
+    <string name="system_message_group_renamed_to">The group was renamed to &quot;%1$s&quot;</string>
+    <string name="system_message_locked">%1$s locked the group</string>
+    <string name="system_message_unlocked">%1$s unlocked the group</string>
+    <string name="system_message_locked_permanently">%1$s locked the group permanently</string>
+    <string name="system_message_join_link_updated">The join link was updated</string>
 </resources>

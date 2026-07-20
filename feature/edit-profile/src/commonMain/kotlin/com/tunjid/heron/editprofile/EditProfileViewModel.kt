@@ -30,19 +30,18 @@ import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.profileHandleOrId
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.stringResource
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.timeline.state.recordStateHolder
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatestWithState
-import com.tunjid.heron.ui.coroutines.launchAndCollectWithState
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -58,77 +57,88 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.take
 
-internal typealias EditProfileStateHolder = ActionSuspendingStateMutator<Action, State.SnapshotMutable>
+@Stable
+internal interface EditProfileStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State.SnapshotMutable>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface EditProfileViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualEditProfileViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualEditProfileViewModel(
-    authRepository: AuthRepository,
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    fileManager: FileManager,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State.SnapshotMutable>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    EditProfileStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchPendingUpdateSubmissionMutations(
-                state = state,
-                writeQueue = writeQueue,
-            )
-            launchProfileTabMutations(
-                state = state,
-                route = route,
-                profileRepository = profileRepository,
-            )
-            launchScreenTabMutations(
-                state = state,
-                viewModelScope = scope,
-                authRepository = authRepository,
-                recordRepository = recordRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    EditProfileStateHolder,
+    ActionSuspendingStateMutator<Action, State.SnapshotMutable> by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        fileManager: FileManager,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchPendingUpdateSubmissionMutations(
+                    state = state,
+                    writeQueue = writeQueue,
+                )
+                launchProfileTabMutations(
+                    state = state,
+                    route = route,
+                    profileRepository = profileRepository,
+                )
+                launchScreenTabMutations(
+                    state = state,
+                    viewModelScope = scope,
+                    authRepository = authRepository,
+                    recordRepository = recordRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.AvatarPicked -> action.flow.launchAvatarPickedMutations(state)
+                        is Action.BannerPicked -> action.flow.launchBannerPickedMutations(state)
+                        is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
+                        is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
+                        is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
+                            state = state,
+                            navActions = navActions,
+                            writeQueue = writeQueue,
+                            fileManager = fileManager,
+                        )
                     }
-                    is Action.AvatarPicked -> action.flow.launchAvatarPickedMutations(state)
-                    is Action.BannerPicked -> action.flow.launchBannerPickedMutations(state)
-                    is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
-                    is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
-                    is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
-                        state = state,
-                        navActions = navActions,
-                        writeQueue = writeQueue,
-                        fileManager = fileManager,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
@@ -136,9 +146,9 @@ private fun launchLoadProfileMutations(
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .filterNotNull()
-    .launchAndCollectLatestWithState(state) { signedInProfile ->
-        profile = signedInProfile
-        fields = fields
+    .launchedCollectLatest { signedInProfile ->
+        state.profile = signedInProfile
+        state.fields = state.fields
             .copyWithValidation(
                 id = DisplayName,
                 text = signedInProfile.displayName ?: "",
@@ -157,7 +167,7 @@ context(productionScope: CoroutineScope)
 private fun launchPendingUpdateSubmissionMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = writeQueue.queueChanges.launchAndCollect { writes ->
+) = writeQueue.queueChanges.launchedCollect { writes ->
     state.submitting = writes.any { it is Writable.ProfileUpdate }
 }
 
@@ -168,11 +178,11 @@ private fun launchProfileTabMutations(
     profileRepository: ProfileRepository,
 ) = profileRepository.tabs(route.profileHandleOrId)
     .distinctUntilChanged()
-    .launchAndCollectWithState(state) { tabs ->
+    .launchedCollect { tabs ->
         val tabsSet = tabs.toSet()
         val missingTabs = ProfileTab.Static.minus(tabsSet)
-        currentProfileTabs = tabsSet
-        editableTabs = tabs + missingTabs
+        state.currentProfileTabs = tabsSet
+        state.editableTabs = tabs + missingTabs
     }
 
 context(productionScope: CoroutineScope)
@@ -186,9 +196,9 @@ private fun launchScreenTabMutations(
         authRepository.signedInUser
             .filterNotNull()
             .take(1)
-            .launchAndCollect { profile ->
+            .launchedCollect { profile ->
                 val profileId = profile.did
-                if (state.tabs.any { it is EditProfileScreenTabs.Feeds }) return@launchAndCollect
+                if (state.tabs.any { it is EditProfileScreenTabs.Feeds }) return@launchedCollect
                 state.tabs += EditProfileScreenTabs.Feeds(
                     mutator = viewModelScope.recordStateHolder(
                         profileId = profileId,
@@ -204,28 +214,28 @@ private fun launchScreenTabMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.AvatarPicked>.launchAvatarPickedMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectWithState(state) { action ->
-    updatedAvatar = action.item
+) = launchedCollect { action ->
+    state.updatedAvatar = action.item
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BannerPicked>.launchBannerPickedMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectWithState(state) { action ->
-    updatedBanner = action.item
+) = launchedCollect { action ->
+    state.updatedBanner = action.item
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FieldChanged>.launchFormEditMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectWithState(state) { action ->
-    fields = fields.copyWithValidation(action.id, action.text)
+) = launchedCollect { action ->
+    state.fields = state.fields.copyWithValidation(action.id, action.text)
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -235,8 +245,8 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
-) = launchAndCollectLatestWithState(state) { action ->
-    submitting = true
+) = launchedCollectLatest { action ->
+    state.submitting = true
 
     val updateWrite = Writable.ProfileUpdate(
         update = Profile.Update(
@@ -256,15 +266,15 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
 
     when (writeQueue.enqueue(updateWrite)) {
         WriteQueue.Status.Dropped -> {
-            messages = messages + Memo.Resource(Res.string.failed_profile_update)
-            submitting = false
+            state.messages = state.messages + Memo.Resource(Res.string.failed_profile_update)
+            state.submitting = false
         }
         WriteQueue.Status.Duplicate -> {
-            messages = messages + Memo.Resource(Res.string.duplicate_profile_update)
-            submitting = false
+            state.messages = state.messages + Memo.Resource(Res.string.duplicate_profile_update)
+            state.submitting = false
         }
         WriteQueue.Status.Enqueued -> {
-            messages = messages + Memo.Resource(Res.string.profile_background_update)
+            state.messages = state.messages + Memo.Resource(Res.string.profile_background_update)
             writeQueue.awaitDequeue(updateWrite)
             navActions(Action.Navigate.Pop.navigationMutation)
         }
@@ -274,21 +284,21 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateTabsToSave>.launchPinnedTabMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectWithState(state) { action ->
-    tabsToSave = action.tabs
+) = launchedCollect { action ->
+    state.tabsToSave = action.tabs
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleFeed>.launchToggleFeedMutations(
     state: State.SnapshotMutable,
-) = launchAndCollectWithState(state) { action ->
-    feedUrisToFeeds =
-        if (feedUrisToFeeds.contains(action.feedGenerator.uri)) feedUrisToFeeds - action.feedGenerator.uri
-        else feedUrisToFeeds + (action.feedGenerator.uri to action.feedGenerator)
-    editableTabs = ProfileTab.Bluesky.FeedGenerators.FeedGenerator(action.feedGenerator.uri)
+) = launchedCollect { action ->
+    state.feedUrisToFeeds =
+        if (state.feedUrisToFeeds.contains(action.feedGenerator.uri)) state.feedUrisToFeeds - action.feedGenerator.uri
+        else state.feedUrisToFeeds + (action.feedGenerator.uri to action.feedGenerator)
+    state.editableTabs = ProfileTab.Bluesky.FeedGenerators.FeedGenerator(action.feedGenerator.uri)
         .let {
-            if (it in editableTabs) editableTabs - it
-            else editableTabs + it
+            if (it in state.editableTabs) state.editableTabs - it
+            else state.editableTabs + it
         }
 }
 

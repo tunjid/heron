@@ -23,9 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.scaffold.scaffold.AppLogo
-import com.tunjid.heron.scaffold.scaffold.LogoPresentation
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.AppLogo
+import com.tunjid.heron.ui.scaffold.scaffold.LogoPresentation
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 internal fun SplashScreen(

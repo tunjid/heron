@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
@@ -109,6 +110,8 @@ data class Post(
             val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
             @ProtoNumber(6)
             val allowed: ThreadGate.Allowed? = null,
+            @ProtoNumber(7)
+            val linkPreview: LinkPreview? = null,
         )
 
         @Serializable
@@ -201,6 +204,16 @@ data class Post(
             ) : Upsert()
         }
     }
+
+    @Serializable
+    data class Draft(
+        val id: DraftId?,
+        val authorId: ProfileId,
+        val posts: List<Create.Request>,
+        val langs: List<String> = emptyList(),
+        val createdAt: Instant? = null,
+        val updatedAt: Instant? = null,
+    ) : UrlEncodableModel
 }
 
 /**
@@ -235,6 +248,12 @@ val Post.ViewerStats?.canQuote
 
 val Post.ViewerStats?.isBookmarked
     get() = this?.bookmarked ?: false
+
+val Post?.flattenedText: String?
+    get() = this?.record
+        ?.text
+        ?.replace("\n", " ")
+        ?.trim()
 
 fun Post.appliedLabels(
     adultContentEnabled: Boolean,

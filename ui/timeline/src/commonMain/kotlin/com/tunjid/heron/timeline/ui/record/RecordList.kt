@@ -98,29 +98,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     emptyIcon: ImageVector = T::class.emptyIcon,
     crossinline itemKey: (T) -> Any,
     crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
-) = RecordList(
-    collectionStateHolder = collectionStateHolder,
-    prefersCompactBottomNav = prefersCompactBottomNav,
-    emptyTitleRes = emptyTitleRes,
-    emptyDescriptionRes = emptyDescriptionRes,
-    emptyIcon = emptyIcon,
-    itemContent = {
-        items(
-            items = it,
-            key = { item -> itemKey(item) },
-            itemContent = itemContent,
-        )
-    },
-)
-
-@Composable
-inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordList(
-    collectionStateHolder: ActionSuspendingStateMutator<TilingState.Action, State>,
-    prefersCompactBottomNav: Boolean,
-    emptyTitleRes: StringResource = T::class.emptyTitleRes,
-    emptyDescriptionRes: StringResource = T::class.emptyDescriptionRes,
-    emptyIcon: ImageVector = T::class.emptyIcon,
-    crossinline itemContent: LazyListScope.(List<T>) -> Unit,
+    crossinline additionalContent: LazyListScope.() -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val collectionState = collectionStateHolder.produceStateWithLifecycle()
@@ -139,7 +117,12 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        itemContent(collectionState.tiledItems)
+        items(
+            items = collectionState.tiledItems,
+            key = { item -> itemKey(item) },
+            itemContent = itemContent,
+        )
+        additionalContent()
 
         if (isEmpty) {
             item {

@@ -16,15 +16,12 @@
 
 package com.tunjid.heron.timeline.ui.profile
 
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
-import androidx.compose.ui.text.style.TextOverflow
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.ui.text.BoldedText
+import com.tunjid.heron.ui.text.SmallOutlinedText
 
 @Composable
 fun ProfileName(
@@ -32,13 +29,12 @@ fun ProfileName(
     profile: Profile,
     ellipsize: Boolean = true,
 ) {
-    Text(
+    BoldedText(
         modifier = modifier,
         text = remember(profile.displayName) {
-            profile.displayName ?: ""
+            profile.displayNameOrBlank
         },
-        maxLines = if (ellipsize) 1 else Int.MAX_VALUE,
-        style = LocalTextStyle.current.copy(fontWeight = Bold),
+        ellipsize = ellipsize,
     )
 }
 
@@ -47,17 +43,16 @@ fun ProfileHandle(
     modifier: Modifier = Modifier,
     profile: Profile,
 ) {
-    Text(
+    SmallOutlinedText(
         modifier = modifier,
         text = remember(profile.handle) {
             profile.handle.id
         },
-        overflow = TextOverflow.Ellipsis,
-        maxLines = 1,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.outline,
     )
 }
+
+val Profile?.displayNameOrBlank: String
+    get() = this?.displayName ?: ""
 
 val Profile?.nameOrHandleOrUnknown: String
     get() = this?.displayName ?: this?.handle?.id ?: "-"

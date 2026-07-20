@@ -19,12 +19,17 @@ package com.tunjid.heron
 import android.content.Context
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.AndroidLogger
+import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.language.createLanguageDetector
+import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
-import com.tunjid.heron.scaffold.notifications.AndroidNotifier
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
@@ -53,13 +58,23 @@ fun createAppState(context: Context): AppState =
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = context.savedStatePath(),
+                savedStatePath = context.savedStatePath().asSystemFile(),
+                modelsDirectory = context.modelsDirectory().asSystemFile(),
                 savedStateFileSystem = FileSystem.SYSTEM,
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
+                inferenceEngine = createInferenceEngine(Dispatchers.IO),
+                languageDetector = createLanguageDetector(context, Dispatchers.IO),
+                memoryMonitor = createMemoryMonitor(context),
+                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
+                    createBackgroundTaskScheduler(context, taskStore, httpClient, fileManager)
+                },
             )
         },
     )
 
 private fun Context.savedStatePath(): Path =
     filesDir.resolve("savedState").absolutePath.toPath()
+
+private fun Context.modelsDirectory(): Path =
+    noBackupFilesDir.resolve("models").absolutePath.toPath()

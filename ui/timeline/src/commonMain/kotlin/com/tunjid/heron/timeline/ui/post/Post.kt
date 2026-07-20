@@ -53,6 +53,7 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaList
@@ -63,6 +64,7 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.externalEmbeddedRecord
 import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
+import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
@@ -71,8 +73,6 @@ import com.tunjid.heron.profile.ProfileLiveChip
 import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
-import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.AppliedLabelDialog
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
@@ -83,6 +83,7 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.forEach
 import com.tunjid.heron.timeline.utilities.icon
+import com.tunjid.heron.timeline.utilities.reportVideoVisibility
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -120,11 +121,15 @@ internal fun Post(
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     postActions: PostActions,
+    feedContext: String? = null,
+    reqId: FeedReqId? = null,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
     Box(
         modifier = modifier
-            .childThreadNode(videoId = post.videoId),
+            .reportVideoVisibility(
+                videoId = post.videoId.takeIf { appliedLabels.canAutoPlayVideo },
+            ),
     ) {
         if (presentation == Timeline.Presentation.Text.WithEmbed) Box(
             modifier = Modifier
@@ -132,6 +137,8 @@ internal fun Post(
                 .padding(horizontal = 8.dp),
             content = timeline,
         )
+        val locale = Locale.current
+        val languageTag = remember(locale) { locale.toLanguageTag() }
         val postData = rememberUpdatedPostData(
             postActions = postActions,
             paneTransitionScope = paneTransitionScope,
@@ -147,7 +154,9 @@ internal fun Post(
             avatarShape = avatarShape,
             now = now,
             createdAt = createdAt,
-            languageTag = Locale.current.toLanguageTag(),
+            languageTag = languageTag,
+            feedContext = feedContext,
+            reqId = reqId,
         )
         SensitiveContentBox(
             modifier = Modifier
@@ -217,7 +226,9 @@ private fun AttributionContent(
                                 )
                             },
                         sharedContentState = rememberSharedContentState(
-                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                            key = remember(data.sharedElementPrefix, data.post.cid) {
+                                data.post.avatarSharedElementKey(data.sharedElementPrefix)
+                            },
                         ),
                         state = remember(data.post.author.avatar) {
                             ImageArgs(
@@ -236,8 +247,10 @@ private fun AttributionContent(
                         modifier = Modifier
                             .align(Alignment.BottomCenter),
                         sharedContentState = rememberSharedContentState(
-                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix)
-                                .withProfileAvatarLiveSharedElementPrefix(),
+                            key = remember(data.sharedElementPrefix, data.post.cid) {
+                                data.post.avatarSharedElementKey(data.sharedElementPrefix)
+                                    .withProfileAvatarLiveSharedElementPrefix()
+                            },
                         ),
                     ) {
                         ProfileLiveChip()
@@ -317,7 +330,9 @@ private fun LabelContent(
                     PaneStickySharedElement(
                         modifier = Modifier,
                         sharedContentState = rememberSharedContentState(
-                            data.sharedElementKey(label),
+                            remember(data.sharedElementPrefix, data.post.cid, label) {
+                                data.sharedElementKey(label)
+                            },
                         ),
                     ) {
                         Label(
@@ -524,6 +539,8 @@ private fun ActionsContent(
                     presentation = data.presentation,
                 )
                 .animateContentBounds(data),
+            feedContext = data.feedContext,
+            reqId = data.reqId,
             onInteraction = data.postActions::onPostAction,
         )
 
@@ -709,6 +726,8 @@ private fun rememberUpdatedPostData(
     createdAt: Instant,
     languageTag: String,
     isMainPost: Boolean,
+    feedContext: String?,
+    reqId: FeedReqId?,
 ): PostData = rememberSaveable(
     saver = listSaver(
         save = { data ->
@@ -734,6 +753,8 @@ private fun rememberUpdatedPostData(
                 now = now,
                 created = createdAt,
                 languageTag = languageTag,
+                feedContext = feedContext,
+                reqId = reqId,
                 hasClickedThroughMutedWords = hasClickedThroughMutedWords,
                 hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
             )
@@ -756,6 +777,8 @@ private fun rememberUpdatedPostData(
         now = now,
         created = createdAt,
         languageTag = languageTag,
+        feedContext = feedContext,
+        reqId = reqId,
     )
 }.also {
     if (it.presentation != presentation) it.onPresentationChanged()
@@ -774,6 +797,8 @@ private fun rememberUpdatedPostData(
     it.now = now
     it.createdAt = createdAt
     it.languageTag = languageTag
+    it.feedContext = feedContext
+    it.reqId = reqId
 }
 
 @Stable
@@ -793,6 +818,8 @@ private class PostData(
     now: Instant,
     created: Instant,
     languageTag: String,
+    feedContext: String?,
+    reqId: FeedReqId?,
     hasClickedThroughMutedWords: Boolean = false,
     hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
@@ -813,6 +840,8 @@ private class PostData(
     var now by mutableStateOf(now)
     var createdAt by mutableStateOf(created)
     var languageTag by mutableStateOf(languageTag)
+    var feedContext by mutableStateOf(feedContext)
+    var reqId by mutableStateOf(reqId)
 
     var selectedLabel by mutableStateOf<Label?>(null)
 
@@ -927,3 +956,16 @@ private val MutedWordShape = RoundedCornerShape(8.dp)
 
 private val BoundsTransformDelay = 800.milliseconds
 private val BoundsSnapSpec = SnapSpec<Rect>()
+
+private val Post.videoId
+    get() = when (val embed = embed) {
+        null -> null
+        is ExternalEmbed -> null
+        is ImageList -> null
+        is Video -> embed.playlist.uri
+        is MediaList -> embed.media.firstNotNullOfOrNull {
+            if (it is Video) it.playlist.uri
+            else null
+        }
+        UnknownEmbed -> null
+    }

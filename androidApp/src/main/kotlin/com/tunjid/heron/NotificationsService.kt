@@ -24,10 +24,10 @@ import com.google.firebase.messaging.RemoteMessage
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
-import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
-import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
-import com.tunjid.heron.scaffold.notifications.NotificationAction
-import com.tunjid.heron.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
+import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
+import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking

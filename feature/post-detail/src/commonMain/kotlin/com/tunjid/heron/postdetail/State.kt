@@ -18,10 +18,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -30,9 +27,9 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -49,6 +46,10 @@ interface State {
     data class Immutable(
         val anchorPost: Post?,
         val sharedElementPrefix: String,
+        @Transient
+        val currentLanguageTag: String? = null,
+        @Transient
+        val postLanguageTag: String? = null,
         @Transient
         val order: TimelineItem.Threaded.Order? = null,
         @Transient
@@ -105,6 +106,14 @@ interface State {
     }
 }
 
+val State.canTranslate: Boolean get() {
+    val currentLanguageTag = currentLanguageTag ?: return false
+    val postLanguageTag = postLanguageTag ?: return false
+
+    return !currentLanguageTag.startsWith(postLanguageTag) &&
+        !postLanguageTag.startsWith(currentLanguageTag)
+}
+
 sealed class Action(val key: String) {
 
     sealed class Load : Action(key = "Load") {
@@ -131,13 +140,13 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
     data class TogglePublicationSubscription(
         val publication: StandardPublication,
     ) : Action(key = "TogglePublicationSubscription")
+
+    data class UpdateCurrentLanguageTag(
+        val languageTag: String,
+    ) : Action(key = "UpdateCurrentLanguageTag")
 
     data class SnackbarDismissed(
         val message: Memo,

@@ -35,21 +35,21 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.map
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -66,113 +66,119 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 
-internal typealias GalleryStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface GalleryStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface GalleryViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualGalleryViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualGalleryViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    authRepository: AuthRepository,
-    postRepository: PostRepository,
-    profileRepository: ProfileRepository,
-    userDataRepository: UserDataRepository,
-    timelineRepository: TimelineRepository,
-    writeQueue: WriteQueue,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    GalleryStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLoadSignedInProfileIdMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            launchProfileRelationshipMutations(
-                state = state,
-                profileId = route.profileId,
-                profileRepository = profileRepository,
-            )
-            launchLoadPostMutations(
-                state = state,
-                route = route,
-                postRepository = postRepository,
-                profileRepository = profileRepository,
-            )
-            launchVerticalTimelineMutations(
-                state = state,
-                route = route,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+    GalleryStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        authRepository: AuthRepository,
+        postRepository: PostRepository,
+        profileRepository: ProfileRepository,
+        userDataRepository: UserDataRepository,
+        timelineRepository: TimelineRepository,
+        writeQueue: WriteQueue,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLoadSignedInProfileIdMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchProfileRelationshipMutations(
+                    state = state,
+                    profileId = route.profileId,
+                    profileRepository = profileRepository,
+                )
+                launchLoadPostMutations(
+                    state = state,
+                    route = route,
+                    postRepository = postRepository,
+                    profileRepository = profileRepository,
+                )
+                launchVerticalTimelineMutations(
+                    state = state,
+                    route = route,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
+                        is Action.ToggleViewerState -> action.flow.launchToggleViewerStateMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
 
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.TextChanged -> action.flow.collectLatest { event ->
+                            state.inputText = event.inputText
+                        }
+                        is Action.SendReply -> action.flow.launchSendReplyMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.LoadComments -> action.flow.launchLoadCommentsMutations(
+                            state = state,
+                            timelineRepository = timelineRepository,
+                            userDataRepository = userDataRepository,
+                        )
                     }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.TextChanged -> action.flow.collectLatest { event ->
-                        state.inputText = event.inputText
-                    }
-                    is Action.SendReply -> action.flow.launchSendReplyMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.LoadComments -> action.flow.launchLoadCommentsMutations(
-                        state = state,
-                        timelineRepository = timelineRepository,
-                        userDataRepository = userDataRepository,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private suspend fun launchLoadPostMutations(
@@ -190,7 +196,7 @@ private suspend fun launchLoadPostMutations(
             )
         }
 
-    postRepository.post(postUri).launchAndCollectLatest { post ->
+    postRepository.post(postUri).launchedCollectLatest { post ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
         else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(post = post)
@@ -203,7 +209,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -211,7 +217,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfileId = it?.did
 }
 
@@ -221,7 +227,7 @@ private fun launchProfileRelationshipMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.profileRelationships(setOf(profileId))
-    .launchAndCollectLatest { relationships ->
+    .launchedCollectLatest { relationships ->
         if (state.canScrollVertically) currentCoroutineContext().cancel()
         else state.items = state.items.map { item: GalleryItem ->
             if (item is GalleryItem.Initial) item.copy(
@@ -230,18 +236,6 @@ private fun launchProfileRelationshipMutations(
             else item
         }
     }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
@@ -364,7 +358,7 @@ private fun Flow<Action.SendReply>.launchSendReplyMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -373,7 +367,7 @@ private fun Flow<Action.LoadComments>.launchLoadCommentsMutations(
     state: State.SnapshotMutable,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     val post = action.post
     val order = action.order
         ?: state.order
@@ -446,14 +440,14 @@ private suspend fun launchVerticalTimelineMutations(
     with(productionScope) {
         snapshotFlow { timelineStateHolder.state.tilingData.items }
             .distinctUntilChanged()
-            .launchAndCollect { fetched ->
+            .launchedCollect { fetched ->
                 val initialItem = state.items.firstOrNull()
                     ?.takeIf { it is GalleryItem.Initial }
 
                 val missingInitialItem = initialItem != null &&
                     fetched.none { it.post.uri == initialItem.post.uri }
 
-                if (missingInitialItem) return@launchAndCollect
+                if (missingInitialItem) return@launchedCollect
                 state.canScrollVertically = fetched.isNotEmpty()
                 state.items = when {
                     fetched.isEmpty() -> state.items

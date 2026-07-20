@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import heron.ui.core.generated.resources.Res
 import heron.ui.core.generated.resources.clear_search
@@ -49,6 +50,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SearchBar(
     searchQuery: String,
+    searchHint: String = stringResource(Res.string.search),
     focusRequester: FocusRequester? = null,
     onQueryChanged: (String) -> Unit,
     onQueryConfirmed: () -> Unit,
@@ -105,8 +107,11 @@ fun SearchBar(
             visible = searchQuery.isBlank(),
         ) {
             Text(
-                text = stringResource(Res.string.search),
+                text = searchHint,
+                color = MaterialTheme.colorScheme.outline,
                 style = MaterialTheme.typography.labelLarge,
+                overflow = TextOverflow.MiddleEllipsis,
+                maxLines = 1,
             )
         }
     }

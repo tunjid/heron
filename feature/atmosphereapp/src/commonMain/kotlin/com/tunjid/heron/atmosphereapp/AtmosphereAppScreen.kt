@@ -49,11 +49,6 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaBest
 import com.tunjid.heron.timeline.ui.derakkuma.DerakkumaCircle
@@ -71,6 +66,11 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import kotlin.math.roundToInt
 
@@ -392,20 +392,16 @@ internal fun AtmosphereAppScreen(
                             is AppScreenStateHolders.Derakkuma.Circle -> RecordList(
                                 collectionStateHolder = stateHolder,
                                 prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemContent = { circles ->
+                                itemKey = { it.uri.uri },
+                                itemContent = { circle ->
+                                    DerakkumaCircle(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, circle)
+                                },
+                                additionalContent = {
                                     items(
-                                        items = circles,
+                                        items = circleMembers,
                                         key = { it.uri.uri },
-                                    ) { circle ->
-                                        DerakkumaCircle(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, circle)
-                                    }
-                                    circleMembers.let { members ->
-                                        items(
-                                            items = members,
-                                            key = { it.uri.uri },
-                                        ) { member ->
-                                            DerakkumaCircleMember(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, member)
-                                        }
+                                    ) { member ->
+                                        DerakkumaCircleMember(Modifier.fillMaxWidth().padding(8.dp).animateItem(), paneScaffoldState, AtmosphereScreenSharedElementPrefix, member)
                                     }
                                 },
                             )

@@ -22,6 +22,7 @@
     <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
     <string name="open_source_licenses">Open source licenses</string>
     <string name="settings">Settings</string>
+    <string name="inference">Inference</string>
     <string name="close">Close</string>
     <string name="give_feedback">Give feedback</string>
     <string name="view_website">View website</string>
@@ -46,8 +47,13 @@
     <string name="theme_blue">Blue Heron</string>
     <string name="theme_capped">Capped Heron</string>
     <string name="theme_green">Green Heron</string>
+    <string name="theme_pied">Pied Heron</string>
     <string name="theme_reddish">Reddish Egret</string>
     <string name="theme_tricolored">Tricolored Heron</string>
+    <string name="dark_theme">Dark theme</string>
+    <string name="dark_theme_system">System default</string>
+    <string name="dark_theme_light">Light</string>
+    <string name="dark_theme_dark">Dark</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
     <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>
@@ -57,6 +63,7 @@
     <string name="following_feed_preferences">Following Feed Preferences</string>
     <string name="thread_preferences">Thread Preferences</string>
     <string name="timeline_preferences_replies">Hide replies</string>
+    <string name="timeline_preferences_replies_by_unfollowed">Hide replies to people you don't follow</string>
     <string name="timeline_preferences_reposts">Hide reposts</string>
     <string name="timeline_preferences_quote_reposts">Hide quote posts</string>
 </resources>

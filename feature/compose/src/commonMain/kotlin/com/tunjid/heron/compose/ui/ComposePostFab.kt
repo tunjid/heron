@@ -35,10 +35,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
-import com.tunjid.heron.compose.ui.ComposeThreadGate
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.links
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post
@@ -46,7 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaneScaffoldState.TopAppBarFab(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
@@ -137,7 +136,9 @@ private fun State.createPostAction(): Action.CreatePost? {
         links = postText.annotatedString.links(),
         media = video?.let(::listOf) ?: photos,
         embeddedRecordReference = embeddedRecord?.reference,
+        linkPreview = linkPreview,
         interactionPreference = interactionsPreference,
+        sourceDraftId = draftId,
     )
 }
 

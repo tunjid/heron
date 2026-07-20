@@ -73,45 +73,150 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
     private val resolvedRecordsMutex = Mutex()
     private val resolvedRecords = mutableMapOf<RecordUri, RawDerakkumaRecord>()
 
-    override fun derakkumaProfiles(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaProfileUri.NAMESPACE, ::profile)
-    override fun derakkumaPlays(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaPlayUri.NAMESPACE, ::play)
-    override fun derakkumaBests(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaBestUri.NAMESPACE, ::best)
-    override fun derakkumaFriends(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaFriendUri.NAMESPACE, ::friend)
-    override fun derakkumaFavoriteSongs(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaFavoriteSongUri.NAMESPACE, ::favoriteSong)
-    override fun derakkumaCircle(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaCircleUri.NAMESPACE, ::circle)
-    override fun derakkumaCircleMembers(query: ProfilesQuery, cursor: Cursor) = derakkumaRecords(query, cursor, DerakkumaCircleMemberUri.NAMESPACE, ::circleMember)
+    override fun derakkumaProfiles(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaProfileUri.NAMESPACE,
+        mapper = ::profile,
+    )
 
-    private fun <T : Record> derakkumaRecords(query: ProfilesQuery, cursor: Cursor, collection: String, mapper: suspend (RawDerakkumaRecord) -> T?): Flow<CursorList<T>> = savedStateDataSource.singleSessionFlow {
+    override fun derakkumaPlays(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaPlayUri.NAMESPACE,
+        fetchAllPages = true,
+    ) { play(it, includeCoverArt = true) }
+
+    override fun derakkumaBests(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaBestUri.NAMESPACE,
+    ) { best(it, includeCoverArt = true) }
+
+    override fun derakkumaFriends(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaFriendUri.NAMESPACE,
+        mapper = ::friend,
+    )
+
+    override fun derakkumaFavoriteSongs(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaFavoriteSongUri.NAMESPACE,
+    ) { favoriteSong(it, includeCoverArt = true) }
+
+    override fun derakkumaCircle(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaCircleUri.NAMESPACE,
+        mapper = ::circle,
+    )
+
+    override fun derakkumaCircleMembers(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ) = derakkumaRecords(
+        query = query,
+        cursor = cursor,
+        collection = DerakkumaCircleMemberUri.NAMESPACE,
+        mapper = ::circleMember,
+    )
+
+    private fun <T : Record> derakkumaRecords(
+        query: ProfilesQuery,
+        cursor: Cursor,
+        collection: String,
+        fetchAllPages: Boolean = false,
+        mapper: suspend (RawDerakkumaRecord) -> T?,
+    ): Flow<CursorList<T>> = savedStateDataSource.singleSessionFlow {
         if (cursor is Cursor.Pending || cursor is Cursor.Final) return@singleSessionFlow flowOf(emptyCursorList())
-        val response = networkService.runCatchingWithMonitoredNetworkRetry {
-            listRecords(ListRecordsQueryParams(repo = Did(query.profileId.id), collection = Nsid(collection), limit = query.data.limit.coerceIn(1, 100), cursor = cursor.value, reverse = false))
-        }.getOrElse { return@singleSessionFlow flowOf(emptyCursorList()) }
-
-        flow {
-            val rawRecords = response.records.mapNotNull { record ->
+        val rawRecords = mutableListOf<RawDerakkumaRecord>()
+        val fetchedCursors = mutableSetOf<String?>()
+        var requestCursor = cursor.value
+        do {
+            if (!fetchedCursors.add(requestCursor)) break
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                listRecords(
+                    ListRecordsQueryParams(
+                        repo = Did(query.profileId.id),
+                        collection = Nsid(collection),
+                        limit = if (fetchAllPages) 100 else query.data.limit.coerceIn(1, 100),
+                        cursor = requestCursor,
+                        reverse = false,
+                    ),
+                )
+            }.getOrElse { return@singleSessionFlow flowOf(emptyCursorList()) }
+            rawRecords += response.records.mapNotNull { record ->
                 decodeDerakkumaRecord(
                     collection = collection,
                     uri = record.uri.atUri.asRecordUriOrNull() ?: return@mapNotNull null,
                     cid = DerakkumaRecordId(record.cid.cid),
                     value = record.value,
                 )
-            }.sortDerakkumaRecords(collection)
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
-            val fastItems = rawRecords.mapNotNull { it.fastMapper(collection) as? T }
+            }
+            requestCursor = response.cursor
+        } while (fetchAllPages && requestCursor != null)
+
+        val sortedRecords = rawRecords.sortDerakkumaRecords(collection)
+        val nextCursor = if (fetchAllPages) Cursor.Final else requestCursor?.let(Cursor::Next) ?: Cursor.Final
+
+        flow {
+            val fastItems = sortedRecords.mapNotNull { it.fastMapper(collection) as? T }
             if (fastItems.isNotEmpty()) {
                 emit(CursorList(items = fastItems, nextCursor = nextCursor))
             }
-            val enrichedItems = coroutineScope {
-                rawRecords.map { raw -> async { mapper(raw) } }.awaitAll().filterNotNull()
+            val metadataItems = sortedRecords.mapAsyncNotNull { raw ->
+                raw.metadataMapper(collection) as? T
             }
+            if (metadataItems.isNotEmpty()) {
+                emit(CursorList(items = metadataItems, nextCursor = nextCursor))
+            }
+            val enrichedItems = sortedRecords.mapAsyncNotNull(mapper)
             emit(CursorList(items = enrichedItems, nextCursor = nextCursor))
         }
     }.flowOn(ioDispatcher)
+
+    private suspend fun <T> List<RawDerakkumaRecord>.mapAsyncNotNull(
+        mapper: suspend (RawDerakkumaRecord) -> T?,
+    ): List<T> = chunked(size = 30).flatMap { records ->
+        coroutineScope {
+            records
+                .map { record -> async { mapper(record) } }
+                .awaitAll()
+                .filterNotNull()
+        }
+    }
 
     private suspend fun RawDerakkumaRecord.fastMapper(collection: String): Record? = when (collection) {
         DerakkumaPlayUri.NAMESPACE -> playWithoutRefs(this)
         DerakkumaBestUri.NAMESPACE -> bestWithoutRefs(this)
         DerakkumaFavoriteSongUri.NAMESPACE -> favoriteSongWithoutRefs(this)
+        else -> null
+    }
+
+    private suspend fun RawDerakkumaRecord.metadataMapper(collection: String): Record? = when (collection) {
+        DerakkumaPlayUri.NAMESPACE -> play(this, includeCoverArt = false)
+        DerakkumaBestUri.NAMESPACE -> best(this, includeCoverArt = false)
+        DerakkumaFavoriteSongUri.NAMESPACE -> favoriteSong(this, includeCoverArt = false)
         else -> null
     }
 
@@ -134,7 +239,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         updatedAt = raw.profile?.updatedAt ?: raw.profile?.createdAt.orEmpty(),
     )
 
-    private suspend fun play(raw: RawDerakkumaRecord): DerakkumaPlay? {
+    private suspend fun play(raw: RawDerakkumaRecord, includeCoverArt: Boolean): DerakkumaPlay? {
         val play = raw.play ?: return null
         val chart = raw.resolveRef(play.chart)
         val chartRecord = chart?.chart
@@ -149,7 +254,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             level = chartRecord?.level ?: play.chartString("level"),
             type = chartRecord?.type.orEmpty(),
             artist = songRecord?.artist.orEmpty(),
-            coverArt = song?.blobImage(songRecord?.coverArt),
+            coverArt = if (includeCoverArt) song?.blobImage(songRecord?.coverArt) else null,
             achievement = play.achievement.orEmpty(),
             scoreRank = play.scoreRank.orEmpty(),
             fcStatus = play.fcStatus.orEmpty(),
@@ -190,7 +295,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         )
     }
 
-    private suspend fun best(raw: RawDerakkumaRecord): DerakkumaBest? {
+    private suspend fun best(raw: RawDerakkumaRecord, includeCoverArt: Boolean): DerakkumaBest? {
         val best = raw.best ?: return null
         val chart = raw.resolveRef(best.chart)
         val chartRecord = chart?.chart
@@ -205,7 +310,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             level = chartRecord?.level ?: best.chartString("level"),
             type = chartRecord?.type.orEmpty(),
             artist = songRecord?.artist.orEmpty(),
-            coverArt = song?.blobImage(songRecord?.coverArt),
+            coverArt = if (includeCoverArt) song?.blobImage(songRecord?.coverArt) else null,
             achievement = best.achievement.orEmpty(),
             scoreRank = best.scoreRank.orEmpty(),
             fcStatus = best.fcStatus.orEmpty(),
@@ -261,7 +366,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
         updatedAt = raw.friend?.updatedAt ?: raw.friend?.createdAt.orEmpty(),
     )
 
-    private suspend fun favoriteSong(raw: RawDerakkumaRecord): DerakkumaFavoriteSong? {
+    private suspend fun favoriteSong(raw: RawDerakkumaRecord, includeCoverArt: Boolean): DerakkumaFavoriteSong? {
         val favoriteSong = raw.favoriteSong ?: return null
         val song = raw.resolveRef(favoriteSong.song)
         val songRecord = song?.song
@@ -271,7 +376,7 @@ internal class RemoteDerakkumaRecordOperations @Inject constructor(
             song = favoriteSong.song.recordUriOrNull(),
             songName = songRecord?.title ?: favoriteSong.songName(),
             artist = songRecord?.artist.orEmpty(),
-            coverArt = song?.blobImage(songRecord?.coverArt),
+            coverArt = if (includeCoverArt) song?.blobImage(songRecord?.coverArt) else null,
             orderId = favoriteSong.orderId ?: 0,
             observedAt = favoriteSong.observedAt.orEmpty(),
             createdAt = favoriteSong.createdAt.orEmpty(),

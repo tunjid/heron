@@ -21,21 +21,26 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.ui.coroutines.launchAndCollect
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
+import heron.ui.timeline.generated.resources.writable_conversation_update
+import heron.ui.timeline.generated.resources.writable_draft
+import heron.ui.timeline.generated.resources.writable_draft_deletion
 import heron.ui.timeline.generated.resources.writable_duplicate
 import heron.ui.timeline.generated.resources.writable_duplicate_post_interaction
 import heron.ui.timeline.generated.resources.writable_failed
 import heron.ui.timeline.generated.resources.writable_failed_post_interaction
+import heron.ui.timeline.generated.resources.writable_feed_interaction
 import heron.ui.timeline.generated.resources.writable_follow
 import heron.ui.timeline.generated.resources.writable_like
+import heron.ui.timeline.generated.resources.writable_link_document
 import heron.ui.timeline.generated.resources.writable_message
 import heron.ui.timeline.generated.resources.writable_mute
 import heron.ui.timeline.generated.resources.writable_notification_update
@@ -87,7 +92,7 @@ inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
     crossinline toWritable: (T) -> Writable,
     crossinline postEnqueue: suspend (T, Memo?) -> Unit = { _, _ -> },
 ) {
-    launchAndCollect { action ->
+    launchedCollect { action ->
         val writable = toWritable(action)
         val status = writeQueue.enqueue(writable)
         val memo = writable.writeStatusMessage(status)
@@ -117,6 +122,16 @@ fun Writable.writeStatusMessage(
                 args = listOf(Res.string.writable_post),
             )
 
+            is Writable.PostDraft.Save -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft),
+            )
+
+            is Writable.PostDraft.Delete -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_draft_deletion),
+            )
+
             is Writable.Interaction -> when {
                 isDropped -> Memo.Resource(
                     stringResource = Res.string.writable_failed_post_interaction,
@@ -136,6 +151,11 @@ fun Writable.writeStatusMessage(
                     ),
                 )
             }
+
+            is Writable.FeedInteraction -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_feed_interaction),
+            )
 
             is Writable.ProfileUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
@@ -189,9 +209,17 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_subscribe_standard_publication),
             )
+            is Writable.StandardSite.UpdatePostReference -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_link_document),
+            )
             is Writable.StatusUpdate -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_status_update),
+            )
+            is Writable.ConversationUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_conversation_update),
             )
         }
     }

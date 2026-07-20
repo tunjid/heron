@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.repository
 
+import chat.bsky.actor.ProfileViewBasic
+import chat.bsky.convo.AcceptConvoRequest
 import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
@@ -25,6 +27,7 @@ import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
 import chat.bsky.convo.GetMessagesResponse
 import chat.bsky.convo.GetMessagesResponseMessageUnion
+import chat.bsky.convo.LeaveConvoRequest
 import chat.bsky.convo.ListConvosQueryParams
 import chat.bsky.convo.ListConvosResponse
 import chat.bsky.convo.LogAddReactionMessageUnion
@@ -34,9 +37,14 @@ import chat.bsky.convo.LogRemoveReactionMessageUnion
 import chat.bsky.convo.MessageInput
 import chat.bsky.convo.MessageInputEmbedUnion
 import chat.bsky.convo.MessageView
+import chat.bsky.convo.MuteConvoRequest
+import chat.bsky.convo.MuteConvoResponse
 import chat.bsky.convo.RemoveReactionRequest
 import chat.bsky.convo.RemoveReactionResponse
 import chat.bsky.convo.SendMessageRequest
+import chat.bsky.convo.SystemMessageView
+import chat.bsky.convo.UnmuteConvoRequest
+import chat.bsky.convo.UnmuteConvoResponse
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -111,6 +119,10 @@ interface MessageRepository {
         cursor: Cursor,
     ): Flow<CursorList<Message>>
 
+    fun conversation(
+        conversationId: ConversationId,
+    ): Flow<Conversation?>
+
     suspend fun monitorConversationLogs()
 
     suspend fun resolveConversation(
@@ -123,6 +135,10 @@ interface MessageRepository {
 
     suspend fun updateReaction(
         reaction: Message.UpdateReaction,
+    ): Outcome
+
+    suspend fun updateConversation(
+        update: Conversation.Update,
     ): Outcome
 }
 
@@ -244,6 +260,12 @@ internal class OfflineMessageRepository(
                                     )
 
                                     is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                    is GetMessagesResponseMessageUnion.SystemMessageView -> add(
+                                        viewingProfileId = signedInProfileId,
+                                        conversationId = query.conversationId,
+                                        systemMessageView = it.value,
+                                        relatedProfiles = relatedProfiles.orEmpty(),
+                                    )
                                 }
                             }
                         }
@@ -254,6 +276,18 @@ internal class OfflineMessageRepository(
                 .distinctUntilChanged()
         }
             .filterNotNull()
+            .flowOn(ioDispatcher)
+
+    override fun conversation(
+        conversationId: ConversationId,
+    ): Flow<Conversation?> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            messageDao.conversation(
+                conversationId = conversationId.id,
+                ownerId = signedInProfileId.id,
+            )
+                .map { it?.asExternalModel() }
+        }
             .flowOn(ioDispatcher)
 
     override suspend fun monitorConversationLogs() {
@@ -281,6 +315,9 @@ internal class OfflineMessageRepository(
 
                     val messages = LazyList<Pair<ConversationId, MessageView>>()
                     val deletedMessages = LazyList<Pair<ConversationId, DeletedMessageView>>()
+                    val systemMessages =
+                        LazyList<Triple<ConversationId, SystemMessageView, List<ProfileViewBasic>>>()
+                    val leftConversationIds = mutableSetOf<ConversationId>()
 
                     val currentCursor = logs.fold(latestCursor) { cursor, union ->
                         when (union) {
@@ -297,7 +334,11 @@ internal class OfflineMessageRepository(
                                 messages,
                                 cursor,
                             )
-                            is Log.LeaveConvo -> maxOf(cursor, union.value.rev)
+                            is Log.LeaveConvo -> {
+                                // The viewer left or was removed; drop the convo locally.
+                                leftConversationIds.add(union.value.convoId.let(::ConversationId))
+                                maxOf(cursor, union.value.rev)
+                            }
                             is Log.MuteConvo -> maxOf(cursor, union.value.rev)
                             is Log.ReadMessage -> maxOf(cursor, union.value.rev)
                             is Log.RemoveReaction -> union.maxCursor(
@@ -307,6 +348,78 @@ internal class OfflineMessageRepository(
                             )
                             is Log.Unknown -> cursor
                             is Log.UnmuteConvo -> maxOf(cursor, union.value.rev)
+                            // Group membership / lock / rename events carry a system message that
+                            // is rendered inline in the conversation.
+                            is Log.AddMember -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.RemoveMember -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.MemberJoin -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.MemberLeave -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.LockConvo -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.UnlockConvo -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.LockConvoPermanently -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = union.value.relatedProfiles,
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            is Log.EditGroup -> systemMessages.collect(
+                                convoId = union.value.convoId,
+                                message = union.value.message,
+                                relatedProfiles = emptyList(),
+                                cursor = cursor,
+                                rev = union.value.rev,
+                            )
+                            // TODO: Group administration (join links and join requests) is deferred;
+                            //  these owner-only log events only advance the cursor for now.
+                            is Log.ApproveJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.CreateJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.DisableJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.EditJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.EnableJoinLink -> maxOf(cursor, union.value.rev)
+                            is Log.IncomingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.OutgoingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.ReadConvo -> maxOf(cursor, union.value.rev)
+                            is Log.ReadJoinRequests -> maxOf(cursor, union.value.rev)
+                            is Log.RejectJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.WithdrawIncomingJoinRequest -> maxOf(cursor, union.value.rev)
+                            is Log.WithdrawOutgoingJoinRequest -> maxOf(cursor, union.value.rev)
                         }
                     }
 
@@ -328,6 +441,23 @@ internal class OfflineMessageRepository(
                                 messageView = message,
                             )
                         }
+                        systemMessages.list.forEach { (conversationId, message, relatedProfiles) ->
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                conversationId = conversationId,
+                                systemMessageView = message,
+                                relatedProfiles = relatedProfiles,
+                            )
+                        }
+                    }
+                    // Once the viewer leaves (or is removed), listConvos no longer returns
+                    // the convo and the conversations() flow only upserts, so nothing would
+                    // ever prune it. Delete it here to avoid a permanent, unopenable "ghost".
+                    leftConversationIds.forEach { conversationId ->
+                        messageDao.deleteConversation(
+                            conversationId = conversationId.id,
+                            ownerId = signedInProfileId.id,
+                        )
                     }
                     return@scan currentCursor
                 }
@@ -424,6 +554,65 @@ internal class OfflineMessageRepository(
             }
         }
     } ?: expiredSessionOutcome()
+
+    override suspend fun updateConversation(
+        update: Conversation.Update,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+        when (update) {
+            is Conversation.Update.Accept ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    acceptConvo(AcceptConvoRequest(convoId = update.conversationId.id))
+                }.toOutcome {
+                    // The response only carries a rev, so flip the local status directly.
+                    messageDao.markConversationAccepted(
+                        conversationId = update.conversationId.id,
+                        ownerId = signedInProfileId.id,
+                    )
+                }
+
+            is Conversation.Update.Leave ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    leaveConvo(LeaveConvoRequest(convoId = update.conversationId.id))
+                }.toOutcome {
+                    // Leaving is "remove from my inbox": the server stops serving the convo
+                    // and listConvos won't return it again, so delete it locally. Nothing
+                    // else prunes it, and it can't be reopened, so this avoids a stale ghost.
+                    messageDao.deleteConversation(
+                        conversationId = update.conversationId.id,
+                        ownerId = signedInProfileId.id,
+                    )
+                }
+
+            is Conversation.Update.Mute ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    if (update.muted) muteConvo(
+                        MuteConvoRequest(convoId = update.conversationId.id),
+                    ).map(MuteConvoResponse::convo)
+                    else unmuteConvo(
+                        UnmuteConvoRequest(convoId = update.conversationId.id),
+                    ).map(UnmuteConvoResponse::convo)
+                }.toOutcome { convo ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            convoView = convo,
+                        )
+                    }
+                }
+        }
+    } ?: expiredSessionOutcome()
+}
+
+private fun LazyList<Triple<ConversationId, SystemMessageView, List<ProfileViewBasic>>>.collect(
+    convoId: String,
+    message: SystemMessageView,
+    relatedProfiles: List<ProfileViewBasic>,
+    cursor: String,
+    rev: String,
+): String {
+    add(Triple(convoId.let(::ConversationId), message, relatedProfiles))
+    return maxOf(cursor, rev)
 }
 
 fun MessageRepository.recentConversations(

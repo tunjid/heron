@@ -31,12 +31,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.feedContext
+import com.tunjid.heron.data.core.models.reqId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
@@ -133,6 +136,8 @@ fun TimelineItem(
                         presentation = presentation,
                         appliedLabels = item.appliedLabels,
                         postActions = postActions,
+                        feedContext = item.feedContext,
+                        reqId = item.reqId,
                     )
                 }
             }
@@ -179,15 +184,19 @@ fun TimelineCard(
         modifier = itemModifier,
         content = { content() },
     )
-    else ElevatedCard(
-        modifier = itemModifier,
-        shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
-        colors =
-        if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        else CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(),
-        content = { content() },
-    )
+    else {
+        val animatedCornerRadius = animateDpAsState(cornerRadius).value
+        val shape = remember(animatedCornerRadius) { RoundedCornerShape(animatedCornerRadius) }
+        ElevatedCard(
+            modifier = itemModifier,
+            shape = shape,
+            colors =
+            if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            else CardDefaults.elevatedCardColors(),
+            elevation = CardDefaults.cardElevation(),
+            content = { content() },
+        )
+    }
 }
 
 val ReplyThreadStartImageShape =

@@ -35,6 +35,10 @@ interface UserDataRepository {
         themeOrdinal: Int,
     ): Outcome
 
+    suspend fun setDarkThemeConfigOrdinal(
+        darkThemeConfigOrdinal: Int,
+    ): Outcome
+
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
@@ -57,6 +61,14 @@ interface UserDataRepository {
 
     suspend fun setAllowAllTimelinePresentations(
         allowAllTimelinePresentations: Boolean,
+    ): Outcome
+
+    suspend fun setLoadDefaultModelOnLaunch(
+        loadOnLaunch: Boolean,
+    ): Outcome
+
+    suspend fun setDefaultModelName(
+        modelName: String?,
     ): Outcome
 }
 
@@ -106,6 +118,12 @@ internal class OfflineUserDataRepository(
         copy(local = local.copy(currentThemeOrdinal = themeOrdinal))
     }
 
+    override suspend fun setDarkThemeConfigOrdinal(
+        darkThemeConfigOrdinal: Int,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(darkThemeConfigOrdinal = darkThemeConfigOrdinal))
+    }
+
     override suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome = updatePreferences {
@@ -140,6 +158,18 @@ internal class OfflineUserDataRepository(
         allowAllTimelinePresentations: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(allowAllTimelinePresentations = allowAllTimelinePresentations))
+    }
+
+    override suspend fun setLoadDefaultModelOnLaunch(
+        loadOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(loadDefaultModelOnLaunch = loadOnLaunch))
+    }
+
+    override suspend fun setDefaultModelName(
+        modelName: String?,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(defaultModelName = modelName))
     }
 
     private suspend inline fun updatePreferences(

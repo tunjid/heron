@@ -599,7 +599,9 @@ private fun String.bskyHttpsUrlToAtUri(): String? {
 
     val (handle, type, rkey) = when {
         seg0 == "profile" && seg3 != null -> Triple(seg1, seg2, seg3)
-        seg0 == "starter-pack" -> Triple(seg1, seg0, seg2)
+        // Starter packs are shared both as /starter-pack/{handle}/{rkey} and as the
+        // short /start/{handle}/{rkey} invite links.
+        seg0 == "starter-pack" || seg0 == "start" -> Triple(seg1, "starter-pack", seg2)
         seg0 == "profile" -> Triple(seg1, seg2, "self") // labeler
         else -> return null
     }

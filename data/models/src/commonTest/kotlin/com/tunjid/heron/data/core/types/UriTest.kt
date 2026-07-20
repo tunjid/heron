@@ -230,4 +230,117 @@ class UriTest {
         assertEquals(first, second)
         assertEquals(first?.uri?.startsWith("at://"), true)
     }
+
+    // ----- asEmbeddableRecordUriOrNull: bsky.app https URLs (bskyHttpsUrlToAtUri) -----
+    //
+    // bskyHttpsUrlToAtUri() is file-private and is exercised here through its only public
+    // entry point, asEmbeddableRecordUriOrNull(), which invokes it for https inputs. These
+    // cover every Record.Embeddable.Native type's bsky.app URL form. The handle authority is
+    // preserved at this layer; handle -> DID resolution happens later, at fetch time in
+    // RecordResolver.
+
+    private val handle = "heron.tunji.dev"
+
+    @Test
+    fun bskyHttpsUrl_resolvesPostUri() {
+        val parsed = "https://bsky.app/profile/$handle/post/$rkey"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<PostUri>(parsed)
+        assertEquals("at://$handle/${PostUri.NAMESPACE}/$rkey", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_resolvesFeedGeneratorUri() {
+        val parsed = "https://bsky.app/profile/$handle/feed/herons"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<FeedGeneratorUri>(parsed)
+        assertEquals("at://$handle/${FeedGeneratorUri.NAMESPACE}/herons", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_resolvesListUri() {
+        val parsed = "https://bsky.app/profile/$handle/lists/$rkey"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<ListUri>(parsed)
+        assertEquals("at://$handle/${ListUri.NAMESPACE}/$rkey", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_resolvesStarterPackUri() {
+        val parsed = "https://bsky.app/starter-pack/$handle/$rkey"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<StarterPackUri>(parsed)
+        assertEquals("at://$handle/${StarterPackUri.NAMESPACE}/$rkey", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_resolvesStarterPackUriFromShortStartLink() {
+        val parsed = "https://bsky.app/start/$handle/$rkey"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<StarterPackUri>(parsed)
+        assertEquals("at://$handle/${StarterPackUri.NAMESPACE}/$rkey", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_resolvesLabelerUri() {
+        val parsed = "https://bsky.app/profile/$handle/labeler"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<LabelerUri>(parsed)
+        assertEquals("at://$handle/${LabelerUri.NAMESPACE}/self", parsed.uri)
+    }
+
+    // ----- bsky.app https URLs: format leniency -----
+
+    @Test
+    fun bskyHttpsUrl_skipsWwwPrefix() {
+        val parsed = "https://www.bsky.app/profile/$handle/feed/herons"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<FeedGeneratorUri>(parsed)
+        assertEquals("at://$handle/${FeedGeneratorUri.NAMESPACE}/herons", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_stripsQueryString() {
+        val parsed = "https://bsky.app/profile/$handle/feed/herons?ref=share"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<FeedGeneratorUri>(parsed)
+        assertEquals("at://$handle/${FeedGeneratorUri.NAMESPACE}/herons", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_stripsFragment() {
+        val parsed = "https://bsky.app/profile/$handle/post/$rkey#comments"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<PostUri>(parsed)
+        assertEquals("at://$handle/${PostUri.NAMESPACE}/$rkey", parsed.uri)
+    }
+
+    @Test
+    fun bskyHttpsUrl_preservesDidAuthority() {
+        val parsed = "https://bsky.app/profile/$authority/feed/herons"
+            .asEmbeddableRecordUriOrNull()
+        assertIs<FeedGeneratorUri>(parsed)
+        assertEquals("at://$authority/${FeedGeneratorUri.NAMESPACE}/herons", parsed.uri)
+    }
+
+    // ----- bsky.app https URLs: invalid inputs -----
+
+    @Test
+    fun bskyHttpsUrl_nonBskyHostReturnsNull() {
+        assertNull(
+            "https://example.com/profile/$handle/feed/herons".asEmbeddableRecordUriOrNull(),
+        )
+    }
+
+    @Test
+    fun bskyHttpsUrl_profileOnlyReturnsNull() {
+        assertNull("https://bsky.app/profile/$handle".asEmbeddableRecordUriOrNull())
+    }
+
+    @Test
+    fun bskyHttpsUrl_unknownSegmentReturnsNull() {
+        assertNull(
+            "https://bsky.app/profile/$handle/widget/$rkey".asEmbeddableRecordUriOrNull(),
+        )
+    }
 }

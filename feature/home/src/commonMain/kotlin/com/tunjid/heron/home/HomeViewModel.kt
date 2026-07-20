@@ -24,26 +24,25 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -58,116 +57,121 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.take
 
-internal typealias HomeStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface HomeStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface HomeViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualHomeViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualHomeViewModel(
-    authRepository: AuthRepository,
-    recordRepository: RecordRepository,
-    searchRepository: SearchRepository,
-    timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    HomeStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchTimelineMutations(
-                state = state,
-                viewModelScope = scope,
-                timelineRepository = timelineRepository,
-                userDataRepository = userDataRepository,
-            )
-            launchTrendsMutations(
-                state = state,
-                searchRepository = searchRepository,
-            )
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
+    HomeStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
-                        if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
-                            state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        searchRepository: SearchRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchTimelineMutations(
+                    state = state,
+                    viewModelScope = scope,
+                    timelineRepository = timelineRepository,
+                    userDataRepository = userDataRepository,
+                )
+                launchTrendsMutations(
+                    state = state,
+                    searchRepository = searchRepository,
+                )
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.collect { event ->
+                            if (state.sourceIdsToHasUpdates[event.sourceId] != event.hasUpdates) {
+                                state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
+                            }
                         }
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                        is Action.RefreshCurrentTab -> action.flow.launchTabRefreshMutations(
+                            state = state,
+                        )
+
+                        is Action.UpdateTimeline -> action.flow.launchSaveTimelinePreferencesMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+
+                        is Action.SetCurrentTab -> action.flow.launchSetCurrentTabMutations(
+                            state = state,
+                            userDataRepository = userDataRepository,
+                        )
+                        is Action.SetTabLayout -> action.flow.launchSetTabLayoutMutations(
+                            state = state,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-
-                    is Action.RefreshCurrentTab -> action.flow.launchTabRefreshMutations(
-                        state = state,
-                    )
-
-                    is Action.UpdateTimeline -> action.flow.launchSaveTimelinePreferencesMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-
-                    is Action.SetCurrentTab -> action.flow.launchSetCurrentTabMutations(
-                        state = state,
-                        userDataRepository = userDataRepository,
-                    )
-                    is Action.SetTabLayout -> action.flow.launchSetTabLayoutMutations(
-                        state = state,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
-                    }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
@@ -181,7 +185,7 @@ private fun launchTimelineMutations(
     userDataRepository.preferences.take(1),
     timelineRepository.homeTimelines,
     ::Pair,
-).launchAndCollect { (preferences, homeTimelines) ->
+).launchedCollect { (preferences, homeTimelines) ->
     val tabUri = state.currentTabUri
         ?: preferences
             .local
@@ -216,7 +220,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -224,7 +228,7 @@ context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
     searchRepository: SearchRepository,
-) = searchRepository.trends().launchAndCollect {
+) = searchRepository.trends().launchedCollect {
     state.trends = it
 }
 
@@ -233,7 +237,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     when (action) {
         Action.UpdateTimeline.RequestUpdate -> {
             state.timelinePreferenceSaveRequestId = Uuid.random().toHexString()
@@ -252,18 +256,6 @@ private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
         }
     }
 }
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { Writable.Interaction(it.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
@@ -330,7 +322,7 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -338,7 +330,7 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = launchAndCollectLatest { action ->
+) = launchedCollectLatest { action ->
     // Write to memory in state immediately
     state.currentTabUri = action.currentTabUri
     // Wait until we're sure the user has settled on this tab
@@ -350,14 +342,14 @@ private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetTabLayout>.launchSetTabLayoutMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     state.tabLayout = action.layout
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.RefreshCurrentTab>.launchTabRefreshMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect {
+) = launchedCollect {
     state.timelineStateHolders
         .firstOrNull { it.state.timeline.uri == state.currentTabUri }
         ?.accept

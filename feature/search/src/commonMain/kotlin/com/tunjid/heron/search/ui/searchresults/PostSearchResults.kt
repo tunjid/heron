@@ -18,23 +18,18 @@ package com.tunjid.heron.search.ui.searchresults
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
+import androidx.compose.ui.unit.IntOffset
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -43,53 +38,43 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
-import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
-import com.tunjid.heron.search.canAutoPlayVideo
 import com.tunjid.heron.search.id
 import com.tunjid.heron.search.sharedElementPrefix
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
-import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlin.math.floor
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 @Composable
 internal fun PostSearchResults(
     state: SearchState.OfPosts,
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
-    signedInProfileId: ProfileId?,
-    mutedWordPreferences: List<MutedWordPreference>,
+    presentation: Timeline.Presentation,
     autoPlayTimelineVideos: Boolean,
+    isActivePage: () -> Boolean,
     showEngagementMetrics: Boolean,
-    videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
@@ -99,7 +84,6 @@ internal fun PostSearchResults(
     onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
-    onSendPostInteraction: (Post.Interaction) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -107,26 +91,13 @@ internal fun PostSearchResults(
 ) {
     val now = remember { Clock.System.now() }
     val displayState = rememberTimelineDisplayState()
+    val videoPlayerController = LocalVideoPlayerController.current
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            onNavigate(signInDestination())
-        },
-        onInteractionConfirmed = onSendPostInteraction,
-        onQuotePostClicked = { repost ->
-            onNavigate(
-                composePostDestination(
-                    type = Post.Create.Quote(repost),
-                    sharedElementPrefix = null,
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = null,
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = onSendPostInteraction,
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
@@ -228,55 +199,58 @@ internal fun PostSearchResults(
         }
     }
     LazyVerticalStaggeredGrid(
-        modifier = modifier,
+        modifier = modifier.onDominantVideoChange(
+            topLeftInset = {
+                IntOffset(
+                    x = 0,
+                    y = gridState.layoutInfo.beforeContentPadding,
+                ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+            },
+            bottomRightInset = {
+                paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+            },
+            isEnabled = {
+                paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                    autoPlayTimelineVideos &&
+                    isActivePage()
+            },
+            onIdChanged = { videoId ->
+                if (videoId != null) videoPlayerController.play(videoId = videoId)
+                else videoPlayerController.pauseActiveVideo()
+            },
+        ),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(
-            displayState.cardSize(Timeline.Presentation.Text.WithEmbed),
+            displayState.cardSize(presentation),
         ),
-        verticalItemSpacing = displayState.verticalItemSpacing(Timeline.Presentation.Text.WithEmbed),
+        verticalItemSpacing = displayState.verticalItemSpacing(presentation),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(
-            displayState.horizontalItemSpacing(Timeline.Presentation.Text.WithEmbed),
+            displayState.horizontalItemSpacing(presentation),
         ),
     ) {
         items(
             items = results,
             key = { it.id },
             itemContent = { result ->
-                PostSearchResult(
+                TimelineItem(
                     modifier = Modifier
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(result),
-                        )
+                        .fillMaxWidth()
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
+                    presentationLookaheadScope = paneScaffoldState,
                     now = now,
-                    result = result,
+                    item = result.timelineItem,
                     sharedElementPrefix = state.sharedElementPrefix,
                     showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
                     postActions = postActions,
                 )
             },
         )
-    }
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = results.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            results.getOrNull(flooredIndex)
-                ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
-        }
     }
     gridState.PivotedTilingEffect(
         items = results,
@@ -287,48 +261,6 @@ internal fun PostSearchResults(
                         query ?: state.tilingData.currentQuery,
                     ),
                 ),
-            )
-        },
-    )
-}
-
-@Composable
-private fun PostSearchResult(
-    modifier: Modifier = Modifier,
-    paneTransitionScope: PaneTransitionScope,
-    now: Instant,
-    result: SearchResult.OfPost,
-    sharedElementPrefix: String,
-    showEngagementMetrics: Boolean,
-    postActions: PostActions,
-) {
-    ElevatedCard(
-        modifier = modifier,
-        onClick = {
-            postActions.onPostAction(
-                PostAction.OfPost(
-                    post = result.timelineItem.post,
-                    isMainPost = true,
-                    warnedAppliedLabels = result.timelineItem.appliedLabels.warned(),
-                ),
-            )
-        },
-        content = {
-            TimelineItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = 16.dp,
-                        bottom = 8.dp,
-                    ),
-                paneTransitionScope = paneTransitionScope,
-                presentationLookaheadScope = paneTransitionScope,
-                now = now,
-                item = result.timelineItem,
-                sharedElementPrefix = sharedElementPrefix,
-                showEngagementMetrics = showEngagementMetrics,
-                presentation = Timeline.Presentation.Text.WithEmbed,
-                postActions = postActions,
             )
         },
     )

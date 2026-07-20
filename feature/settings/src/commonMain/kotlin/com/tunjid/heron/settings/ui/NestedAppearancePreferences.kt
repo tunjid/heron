@@ -22,10 +22,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.scaffold.ui.theme.Theme
-import com.tunjid.heron.scaffold.ui.theme.ordinal
+import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
+import com.tunjid.heron.ui.scaffold.ui.theme.Theme
+import com.tunjid.heron.ui.scaffold.ui.theme.ordinal
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.autohide_bottom_navigation
+import heron.feature.settings.generated.resources.dark_theme
+import heron.feature.settings.generated.resources.dark_theme_dark
+import heron.feature.settings.generated.resources.dark_theme_light
+import heron.feature.settings.generated.resources.dark_theme_system
 import heron.feature.settings.generated.resources.theme
 import heron.feature.settings.generated.resources.theme_agami
 import heron.feature.settings.generated.resources.theme_black
@@ -34,6 +39,7 @@ import heron.feature.settings.generated.resources.theme_capped
 import heron.feature.settings.generated.resources.theme_default
 import heron.feature.settings.generated.resources.theme_dynamic
 import heron.feature.settings.generated.resources.theme_green
+import heron.feature.settings.generated.resources.theme_pied
 import heron.feature.settings.generated.resources.theme_reddish
 import heron.feature.settings.generated.resources.theme_tricolored
 import heron.feature.settings.generated.resources.use_compact_navigation
@@ -44,6 +50,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AppearanceSection(
     signedInProfilePreferences: Preferences,
     setCurrentThemeOrdinal: (Int) -> Unit,
+    setDarkThemeConfigOrdinal: (Int) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
     setAutoHideBottomNavigation: (Boolean) -> Unit,
 ) {
@@ -55,6 +62,22 @@ fun AppearanceSection(
             theme != Theme.Dynamic || isDynamicThemingSupported
         }
     }
+
+    SettingsRadioButtons(
+        modifier = Modifier
+            .fillMaxWidth(),
+        title = Res.string.dark_theme,
+        selectedItem = DarkThemeConfig.fromOrdinal(
+            signedInProfilePreferences.local.darkThemeConfigOrdinal,
+        ),
+        items = DarkThemeConfig.entries,
+        itemStringResource = DarkThemeConfig::darkThemeConfigStringResource,
+        onItemClicked = { config -> setDarkThemeConfigOrdinal(config.ordinal) },
+    )
+
+    HorizontalDivider(
+        modifier = Modifier.fillMaxWidth(),
+    )
 
     SettingsRadioButtons(
         modifier = Modifier
@@ -99,6 +122,13 @@ private fun Theme.themeStringResource(): StringResource = when (this) {
     Theme.Herons.Blue -> Res.string.theme_blue
     Theme.Herons.Capped -> Res.string.theme_capped
     Theme.Herons.Green -> Res.string.theme_green
+    Theme.Herons.Pied -> Res.string.theme_pied
     Theme.Herons.Reddish -> Res.string.theme_reddish
     Theme.Herons.Tricolored -> Res.string.theme_tricolored
+}
+
+private fun DarkThemeConfig.darkThemeConfigStringResource(): StringResource = when (this) {
+    DarkThemeConfig.System -> Res.string.dark_theme_system
+    DarkThemeConfig.Light -> Res.string.dark_theme_light
+    DarkThemeConfig.Dark -> Res.string.dark_theme_dark
 }

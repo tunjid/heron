@@ -51,20 +51,15 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.tiling.launchTilingMutations
-import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.mutableTiledListOf
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -91,58 +86,66 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface AtmosphereAppViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualAtmosphereAppViewModel
 }
 
-@AssistedInject
 class ActualAtmosphereAppViewModel(
-    profileRepository: ProfileRepository,
-    recordRepository: RecordRepository,
-    writeQueue: WriteQueue,
-    navActions: (NavigationMutation) -> Unit,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    AtmosphereAppStateHolder by scope.actionSuspendingStateMutator(
-        state = State(route).toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchProfileLoadMutations(
-                profileRepository,
-                route,
-                scope,
-                state,
-                recordRepository,
-            )
+    AtmosphereAppStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
 
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.PageChanged -> action.flow.collect { event ->
-                        state.currentPage = event.page
-                    }
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
-                        state = state,
-                    )
-                    is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.Navigate -> action.flow.collect { navAction ->
-                        navActions(navAction.navigationMutation)
+    @AssistedInject
+    constructor(
+        profileRepository: ProfileRepository,
+        recordRepository: RecordRepository,
+        writeQueue: WriteQueue,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchProfileLoadMutations(
+                    profileRepository,
+                    route,
+                    scope,
+                    state,
+                    recordRepository,
+                )
+
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.PageChanged -> action.flow.collect { event ->
+                            state.currentPage = event.page
+                        }
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state = state,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Navigate -> action.flow.collect { navAction ->
+                            navActions(navAction.navigationMutation)
+                        }
                     }
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchProfileLoadMutations(
@@ -159,14 +162,14 @@ private fun launchProfileLoadMutations(
             replay = 1,
         )
 
-    sharedProfile.launchAndCollect { profile ->
+    sharedProfile.launchedCollect { profile ->
         state.profile = profile
     }
 
     sharedProfile
         .map { it.did }
         .distinctUntilChanged()
-        .launchAndCollectLatest { resolvedProfileId ->
+        .launchedCollectLatest { resolvedProfileId ->
             val keysToHolders = state.stateHolders
                 .associateBy(AppScreenStateHolders::key)
 
@@ -183,7 +186,7 @@ private fun launchProfileLoadMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
@@ -274,67 +277,69 @@ private fun stateHoldersFor(
             ),
     )
     AtmosphereApp.DerakkumaId -> listOf(
-        existingHolders[DerakkumaProfileUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.Profiles(viewModelScope.recordStateHolder(profileId, Res.string.tab_profile, DerakkumaProfile::uri, recordRepository::derakkumaProfiles)),
-        existingHolders[DerakkumaPlayUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.Plays(viewModelScope.derakkumaPlayStateHolder(profileId, recordRepository)),
-        existingHolders[DerakkumaBestUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.Bests(viewModelScope.recordStateHolder(profileId, Res.string.tab_bests, DerakkumaBest::uri, recordRepository::derakkumaBests)),
-        existingHolders[DerakkumaFriendUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.Friends(viewModelScope.recordStateHolder(profileId, Res.string.tab_friends, DerakkumaFriend::uri, recordRepository::derakkumaFriends)),
-        existingHolders[DerakkumaFavoriteSongUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.FavoriteSongs(viewModelScope.recordStateHolder(profileId, Res.string.tab_favorites, DerakkumaFavoriteSong::uri, recordRepository::derakkumaFavoriteSongs)),
-        existingHolders[DerakkumaCircleUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.Circle(viewModelScope.recordStateHolder(profileId, Res.string.tab_circle, DerakkumaCircle::uri, recordRepository::derakkumaCircle)),
-        existingHolders[DerakkumaCircleMemberUri.NAMESPACE] ?: AppScreenStateHolders.Derakkuma.CircleMembers(viewModelScope.recordStateHolder(profileId, Res.string.tab_members, DerakkumaCircleMember::uri, recordRepository::derakkumaCircleMembers)),
+        existingHolders[DerakkumaProfileUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Profiles(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_profile,
+                    itemId = DerakkumaProfile::uri,
+                    cursorListLoader = recordRepository::derakkumaProfiles,
+                ),
+            ),
+        existingHolders[DerakkumaPlayUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Plays(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_plays,
+                    itemId = DerakkumaPlay::uri,
+                    cursorListLoader = recordRepository::derakkumaPlays,
+                ),
+            ),
+        existingHolders[DerakkumaBestUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Bests(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_bests,
+                    itemId = DerakkumaBest::uri,
+                    cursorListLoader = recordRepository::derakkumaBests,
+                ),
+            ),
+        existingHolders[DerakkumaFriendUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Friends(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_friends,
+                    itemId = DerakkumaFriend::uri,
+                    cursorListLoader = recordRepository::derakkumaFriends,
+                ),
+            ),
+        existingHolders[DerakkumaFavoriteSongUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.FavoriteSongs(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_favorites,
+                    itemId = DerakkumaFavoriteSong::uri,
+                    cursorListLoader = recordRepository::derakkumaFavoriteSongs,
+                ),
+            ),
+        existingHolders[DerakkumaCircleUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Circle(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_circle,
+                    itemId = DerakkumaCircle::uri,
+                    cursorListLoader = recordRepository::derakkumaCircle,
+                ),
+            ),
+        existingHolders[DerakkumaCircleMemberUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.CircleMembers(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_members,
+                    itemId = DerakkumaCircleMember::uri,
+                    cursorListLoader = recordRepository::derakkumaCircleMembers,
+                ),
+            ),
     )
     else -> emptyList()
 }
-
-private fun CoroutineScope.derakkumaPlayStateHolder(
-    profileId: ProfileId,
-    recordRepository: RecordRepository,
-) = actionSuspendingStateMutator(
-    state = com.tunjid.heron.timeline.state.RecordState.SnapshotMutable<DerakkumaPlay>(
-        stringResource = Res.string.tab_plays,
-        tilingData = com.tunjid.heron.tiling.TilingState.Data(
-            currentQuery = com.tunjid.heron.data.repository.ProfilesQuery(
-                profileId = profileId,
-                data = com.tunjid.heron.data.core.models.CursorQuery.defaultStartData(),
-            ),
-        ),
-    ),
-    producer = { state, actions ->
-        actions.launchTilingMutations(
-            state = state,
-            updateQueryData = { copy(data = it) },
-            refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = recordRepository::derakkumaPlays,
-            onNewItems = { items ->
-                items
-                    .distinctBy(DerakkumaPlay::uri)
-                    .sortedDerakkumaPlays()
-            },
-        )
-    },
-)
-
-private fun TiledList<com.tunjid.heron.data.repository.ProfilesQuery, DerakkumaPlay>.sortedDerakkumaPlays(): TiledList<com.tunjid.heron.data.repository.ProfilesQuery, DerakkumaPlay> {
-    if (size < 2) return this
-    val comparator = compareByDescending<DerakkumaPlay> { it.playedAt.derakkumaDateSortKey() }
-        .thenByDescending { it.createdAt.derakkumaDateSortKey() }
-        .thenByDescending { it.uri.uri }
-    val sorted = indices
-        .map { index -> queryAt(index) to get(index) }
-        .sortedWith { first, second -> comparator.compare(first.second, second.second) }
-    return mutableTiledListOf<com.tunjid.heron.data.repository.ProfilesQuery, DerakkumaPlay>().also { output ->
-        sorted.forEach { (query, item) -> output.add(query, item) }
-    }
-}
-
-private fun String.derakkumaDateSortKey(): Long = derakkumaDateRegex
-    .find(this)
-    ?.groupValues
-    ?.drop(1)
-    ?.map(String::toLongOrNull)
-    ?.takeIf { parts -> parts.size == 5 && parts.all { it != null } }
-    ?.let { parts ->
-        val (year, month, day, hour, minute) = parts.map { it ?: 0 }
-        year * 100_000_000L + month * 1_000_000L + day * 10_000L + hour * 100L + minute
-    } ?: 0L
-
-private val derakkumaDateRegex = Regex("""(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2})""")

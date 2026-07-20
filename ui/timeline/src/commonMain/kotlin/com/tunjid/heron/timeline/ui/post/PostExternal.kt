@@ -17,6 +17,7 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -49,6 +50,37 @@ import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+/**
+ * Renders an [ExternalEmbed] card (and any backing standard-site [externalRecord]) as a standalone,
+ * non-interactive preview — e.g. in the composer before a post exists. The post identity needed by
+ * [PostExternal] for shared-element keys is stubbed internally; it never matches a real post.
+ */
+@OptIn(ExperimentalUuidApi::class)
+@Composable
+fun ExternalEmbedPreview(
+    embed: ExternalEmbed,
+    externalRecord: Record.Embeddable.External?,
+    paneTransitionScope: PaneTransitionScope,
+    modifier: Modifier = Modifier,
+) {
+    val sharedElementPrefix = remember { Uuid.random().toString() }
+    Box(modifier = modifier) {
+        PostExternal(
+            feature = embed,
+            externalRecord = externalRecord,
+            postUri = PreviewPostUri,
+            sharedElementPrefix = sharedElementPrefix,
+            presentation = Timeline.Presentation.Text.WithEmbed,
+            isBlurred = false,
+            paneTransitionScope = paneTransitionScope,
+            onClick = {},
+            onSubscriptionToggled = {},
+        )
+    }
+}
 
 @Composable
 internal fun PostExternal(
@@ -226,3 +258,9 @@ private fun embedSharedElementKey(
 ): String = "$prefix-${postUri.uri}-$text"
 
 private const val Gif_Format = ".gif"
+
+// Placeholder identity for previews where no post exists yet; only feeds shared-element keys.
+// Uses a structurally valid AT-URI (a real-shaped did:plc authority + TID rkey) so utilities that
+// extract a ProfileId from it never crash on a malformed DID.
+private val PreviewPostUri =
+    PostUri("at://did:plc:heronpreviewplaceholderx/app.bsky.feed.post/apreviewheron")

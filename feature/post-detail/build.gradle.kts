@@ -30,7 +30,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
-                implementation(project(":scaffold"))
+                implementation(project(":data:ml"))
+                implementation(project(":ui:scaffold"))
                 implementation(project(":feature:template"))
 
                 implementation(libs.kotlinx.coroutines.core)

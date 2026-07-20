@@ -49,10 +49,10 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.import_rss_blog

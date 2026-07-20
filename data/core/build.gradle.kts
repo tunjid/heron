@@ -33,11 +33,13 @@ kotlin {
             dependencies {
                 implementation(project(":data:files"))
                 implementation(project(":data:graze"))
+                implementation(project(":data:ml"))
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
                 implementation(project(":data:lexicons"))
                 implementation(project(":data:logging"))
                 implementation(project(":data:platform"))
+                implementation(project(":data:tasks"))
 
                 implementation(libs.crypto.core)
                 implementation(libs.crypto.random)
@@ -94,6 +96,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.burst)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

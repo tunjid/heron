@@ -37,7 +37,20 @@ abstract class SignNativeLibsTask : DefaultTask() {
         val identity = signingIdentity.get()
         val paths = libraries.files.map { it.absolutePath }
         execOps.exec {
-            commandLine("codesign", "--force", "--timestamp", "--sign", identity, *paths.toTypedArray())
+            // --options runtime enables the hardened runtime. Notarization rejects any Mach-O
+            // lacking it, and Compose only signs libs it owns (.dylib/.jnilib in the runtime and
+            // JARs) — the appResources libs here, especially liblitertlm_jni.so, are signed
+            // nowhere else, so the flag has to be set at this step or notarization fails.
+            commandLine(
+                "codesign",
+                "--force",
+                "--timestamp",
+                "--options",
+                "runtime",
+                "--sign",
+                identity,
+                *paths.toTypedArray(),
+            )
         }
     }
 }

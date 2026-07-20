@@ -22,10 +22,12 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideQuotes
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReplies
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepliesByUnfollowed
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.timeline_preferences_quote_reposts
 import heron.feature.settings.generated.resources.timeline_preferences_replies
+import heron.feature.settings.generated.resources.timeline_preferences_replies_by_unfollowed
 import heron.feature.settings.generated.resources.timeline_preferences_reposts
 import org.jetbrains.compose.resources.stringResource
 
@@ -42,6 +44,16 @@ fun FeedPreferencesSection(
         checked = feedPreference.shouldHideReplies,
         onCheckedChange = {
             onFeedPreferenceUpdated(feedPreference.copy(hideReplies = it))
+        },
+    )
+    SettingsToggleItem(
+        modifier = Modifier
+            .fillMaxWidth(),
+        text = stringResource(Res.string.timeline_preferences_replies_by_unfollowed),
+        enabled = true,
+        checked = feedPreference.shouldHideRepliesByUnfollowed,
+        onCheckedChange = {
+            onFeedPreferenceUpdated(feedPreference.copy(hideRepliesByUnfollowed = it))
         },
     )
     SettingsToggleItem(

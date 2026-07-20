@@ -20,8 +20,6 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
-import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -33,26 +31,21 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.TimelineQuery
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.model
-import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.ui.coroutines.noOpActionSuspendingStateMutator
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.model
+import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
-import kotlin.collections.List
-import kotlin.collections.emptyList
 import kotlin.collections.filterIsInstance
 import kotlin.collections.firstOrNull
-import kotlin.collections.listOfNotNull
-import kotlin.collections.map
-import kotlin.collections.take
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -126,7 +119,7 @@ interface State {
                 },
             ).map {
                 ListScreenStateHolders.Timeline(
-                    noOpActionSuspendingStateMutator(it),
+                    it.asNoOpActionSuspendingStateMutator(),
                 )
             }
                 .take(1),
@@ -139,6 +132,10 @@ val State.timelineState
         .filterIsInstance<ListScreenStateHolders.Timeline>()
         .firstOrNull()
         ?.state
+
+val State.listUri
+    get() = timelineState?.timeline
+        ?.withListTimelineOrNull { it.feedList.uri }
 
 @Stable
 sealed class ListScreenStateHolders {
@@ -223,10 +220,6 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
-
     data class TogglePublicationSubscription(
         val publication: StandardPublication,
     ) : Action(key = "TogglePublicationSubscription")
@@ -246,10 +239,6 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
-
-    data class SearchProfiles(
-        val query: String,
-    ) : Action(key = "SearchProfiles")
 
     data class CurrentPageChanged(
         val currentPage: Int,

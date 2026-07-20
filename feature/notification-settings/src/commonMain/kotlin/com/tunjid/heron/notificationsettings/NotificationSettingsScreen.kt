@@ -36,8 +36,8 @@ import com.tunjid.heron.notificationsettings.ui.NotificationSettingsRadioButton
 import com.tunjid.heron.notificationsettings.ui.NotificationStatusText
 import com.tunjid.heron.notificationsettings.ui.SettingsToggleItem
 import com.tunjid.heron.notificationsettings.ui.toNotificationSettingItems
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.notification_settings.generated.resources.Res
 import heron.feature.notification_settings.generated.resources.everyone
 import heron.feature.notification_settings.generated.resources.from

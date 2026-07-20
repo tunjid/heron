@@ -27,4 +27,51 @@ data class Conversation(
     val unreadCount: Long,
     val lastMessage: Message?,
     val lastMessageReactedTo: Message?,
-)
+    val status: Status = Status.Unknown,
+    // Non-null when this is a group conversation; null for 1:1 direct conversations.
+    val group: Group? = null,
+) {
+    enum class Status {
+        Request,
+        Accepted,
+        Unknown,
+    }
+
+    enum class LockStatus {
+        Unlocked,
+        Locked,
+        LockedPermanently,
+        Unknown,
+    }
+
+    @Serializable
+    data class Group(
+        val name: String,
+        val memberCount: Long,
+        val lockStatus: LockStatus,
+    )
+
+    /**
+     * A mutation applied to a conversation, dispatched through the write queue.
+     */
+    @Serializable
+    sealed class Update {
+        abstract val conversationId: ConversationId
+
+        @Serializable
+        data class Accept(
+            override val conversationId: ConversationId,
+        ) : Update()
+
+        @Serializable
+        data class Leave(
+            override val conversationId: ConversationId,
+        ) : Update()
+
+        @Serializable
+        data class Mute(
+            override val conversationId: ConversationId,
+            val muted: Boolean,
+        ) : Update()
+    }
+}

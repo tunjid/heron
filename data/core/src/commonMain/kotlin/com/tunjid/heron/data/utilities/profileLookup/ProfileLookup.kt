@@ -29,7 +29,12 @@ import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.UnresolvableProfileException
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.core.types.recordUriOrNull
+import com.tunjid.heron.data.core.types.requireCollection
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -69,6 +74,20 @@ internal interface ProfileLookup {
     suspend fun lookupProfileDid(
         profileId: Id.Profile,
     ): Did?
+
+    /**
+     * Normalizes [uri]'s authority to a DID.
+     *
+     * bsky.app URLs carry a handle (e.g. `heron.tunji.dev`) in their profile segment, so URIs
+     * parsed from them have a handle authority. AppView endpoints such as
+     * `app.bsky.feed.getFeedGenerator` reject handle based AT URIs (and `getPosts` silently
+     * returns nothing), so the handle must be resolved to a DID before fetching. Returns [uri]
+     * unchanged when the authority is already a DID (the common case, no network) or when the
+     * handle cannot be resolved.
+     */
+    suspend fun <T : RecordUri> withDidAuthority(
+        uri: T,
+    ): T
 
     suspend fun resolveProfileHandleLinks(
         links: List<Link>,
@@ -174,6 +193,21 @@ internal class OfflineProfileLookup(
                     ?.did
             else -> null
         }
+    }
+
+    override suspend fun <T : RecordUri> withDidAuthority(
+        uri: T,
+    ): T {
+        if (uri is com.tunjid.heron.data.core.types.UnknownRecordUri) return uri
+        val profileId = uri.profileId()
+        if (Did.Regex.matches(profileId.id)) return uri
+        val did = lookupProfileDid(profileId) ?: return uri
+        @Suppress("UNCHECKED_CAST")
+        return recordUriOrNull(
+            profileId = ProfileId(did.did),
+            namespace = uri.requireCollection(),
+            recordKey = uri.recordKey,
+        ) as? T ?: uri
     }
 
     override suspend fun resolveProfileHandleLinks(

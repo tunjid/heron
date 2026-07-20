@@ -37,21 +37,21 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.search.ui.searchresults.AutoCompleteProfileSearchResults
 import com.tunjid.heron.search.ui.searchresults.GeneralSearchResults
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.search.ui.suggestions.SuggestedContent
 import com.tunjid.heron.search.ui.suggestions.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 
 @Composable
 internal fun SearchScreen(
@@ -205,12 +205,6 @@ internal fun SearchScreen(
             )
         }
     }
-    val sendPostInteraction = remember {
-        { interaction: Post.Interaction ->
-            actions(Action.SendPostInteraction(interaction))
-        }
-    }
-
     AnimatedContent(
         targetState = state.layout,
     ) { targetLayout ->
@@ -262,7 +256,6 @@ internal fun SearchScreen(
                 onPublicationSubscriptionToggled = { actions(Action.TogglePublicationSubscription(it)) },
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,
-                onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
                 onMuteAccountClicked = { signInProfileId, profileId ->
@@ -282,6 +275,7 @@ internal fun SearchScreen(
                     )
                 },
                 onDeletePostClicked = { actions(Action.DeleteRecord(it)) },
+                onPresentationSelected = { actions(Action.UpdatePresentation(it)) },
             )
         }
     }

@@ -28,55 +28,53 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Post.Create.Reply
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
-import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.galleryDestination
-import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postLikesDestination
-import com.tunjid.heron.scaffold.navigation.postQuotesDestination
-import com.tunjid.heron.scaffold.navigation.postRepostsDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.navigation.recordDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.paneClip
-import com.tunjid.heron.scaffold.scaffold.rememberMutedWordsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberPostOptionsSheetState
-import com.tunjid.heron.scaffold.scaffold.rememberTimelineThreadGateSheetState
+import com.tunjid.heron.sheets.postoptions.PostOption
+import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
+import com.tunjid.heron.sheets.rememberMutedWordsSheetState
+import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
+import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostMetadata
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
-import com.tunjid.heron.timeline.ui.sheets.postoptions.PostOption
-import com.tunjid.heron.timeline.ui.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.contentType
+import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
+import com.tunjid.heron.ui.scaffold.navigation.pathDestination
+import com.tunjid.heron.ui.scaffold.navigation.postLikesDestination
+import com.tunjid.heron.ui.scaffold.navigation.postQuotesDestination
+import com.tunjid.heron.ui.scaffold.navigation.postRepostsDestination
+import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.navigation.recordDestination
+import com.tunjid.heron.ui.scaffold.navigation.signInDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.treenav.compose.threepane.ThreePane
-import kotlin.math.floor
 import kotlin.time.Clock
 
 @Composable
@@ -92,34 +90,16 @@ internal fun PostDetailScreen(
     val now = remember { Clock.System.now() }
     val presentation = Timeline.Presentation.Text.WithEmbed
     val displayState = rememberTimelineDisplayState()
-    val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
+    val videoPlayerController = LocalVideoPlayerController.current
     val navigateTo = remember(actions) {
         { destination: NavigationAction.Destination ->
             actions(Action.Navigate.To(destination))
         }
     }
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            navigateTo(
-                composePostDestination(
-                    type = Post.Create.Quote(repost),
-                    sharedElementPrefix = state.sharedElementPrefix,
-                ),
-            )
-        },
+    val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
+        sharedElementPrefix = state.sharedElementPrefix,
     )
-    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState(
-        onThreadGateUpdated = {
-            actions(Action.SendPostInteraction(it))
-        },
-    )
+    val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
@@ -170,11 +150,35 @@ internal fun PostDetailScreen(
         },
     )
 
+    val currentLanguageTag = Locale.current.toLanguageTag()
+    LaunchedEffect(currentLanguageTag) {
+        actions(Action.UpdateCurrentLanguageTag(currentLanguageTag))
+    }
+
     LazyVerticalStaggeredGrid(
         modifier = modifier
             .padding(horizontal = 8.dp)
             .fillMaxSize()
-            .paneClip(),
+            .paneClip()
+            .onDominantVideoChange(
+                topLeftInset = {
+                    IntOffset(
+                        x = 0,
+                        y = gridState.layoutInfo.beforeContentPadding,
+                    ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                },
+                bottomRightInset = {
+                    paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                },
+                isEnabled = {
+                    paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                        state.preferences.local.autoPlayTimelineVideos
+                },
+                onIdChanged = { videoId ->
+                    if (videoId != null) videoPlayerController.play(videoId = videoId)
+                    else videoPlayerController.pauseActiveVideo()
+                },
+            ),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
         verticalItemSpacing = displayState.verticalItemSpacing(presentation),
@@ -193,10 +197,7 @@ internal fun PostDetailScreen(
                 TimelineItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateItem()
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(item),
-                        ),
+                        .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
                     now = now,
@@ -346,23 +347,6 @@ internal fun PostDetailScreen(
             span = StaggeredGridItemSpan.FullLine,
         ) {
             Spacer(Modifier.height(800.dp))
-        }
-    }
-
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary && state.preferences.local.autoPlayTimelineVideos) {
-        val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = items.size,
-        ) { interpolatedIndex ->
-            val flooredIndex = floor(interpolatedIndex).toInt()
-            val fraction = interpolatedIndex - flooredIndex
-            items.getOrNull(flooredIndex)
-                ?.takeIf(TimelineItem::canAutoPlayVideo)
-                ?.let(videoStates::retrieveStateFor)
-                ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
         }
     }
 }

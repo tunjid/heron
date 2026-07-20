@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -33,18 +34,16 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.graze.editor.di.initialLoad
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -57,69 +56,79 @@ import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 
-internal typealias GrazeEditorStateHolder = ActionStateMutator<Action, StateFlow<State>>
+@Stable
+internal interface GrazeEditorStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface GrazeEditorViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualGrazeEditorViewModel
 }
 
-@AssistedInject
 class ActualGrazeEditorViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    searchRepository: SearchRepository,
-    recordRepository: RecordRepository,
-    authRepository: AuthRepository,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    GrazeEditorStateHolder by scope.actionStateFlowMutator(
-        initialState = State(route),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        actionTransform = transform@{ actions ->
-            actions
-                .withInitialLoad(route)
-                .toMutationStream(
-                    keySelector = Action::key,
-                ) {
-                    when (val action = type()) {
-                        is Action.Navigate -> action.flow.consumeNavigationActions(
-                            navigationMutationConsumer = navActions,
-                        )
-                        is Action.SearchProfiles -> action.flow.searchMutations(
-                            searchRepository = searchRepository,
-                        )
-                        is Action.Update -> action.flow.updateMutations(
-                            recordRepository = recordRepository,
-                            authRepository = authRepository,
-                            navActions = navActions,
-                        )
-                        is Action.EditorNavigation -> action.flow.editorNavigationMutations()
-                        is Action.EditFilter -> action.flow.editFilterFilterMutations()
-                        is Action.Metadata -> action.flow.updateMetadataMutations()
-                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                            recordRepository = recordRepository,
-                        )
+    GrazeEditorStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        searchRepository: SearchRepository,
+        recordRepository: RecordRepository,
+        authRepository: AuthRepository,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                actions
+                    .withInitialLoad(route)
+                    .launchMutationsIn(
+                        productionScope = this,
+                        keySelector = Action::key,
+                    ) {
+                        when (val action = type()) {
+                            is Action.Navigate -> action.flow.collect {
+                                navActions(it.navigationMutation)
+                            }
+                            is Action.Update -> action.flow.launchUpdateMutations(
+                                state = state,
+                                recordRepository = recordRepository,
+                                authRepository = authRepository,
+                                navActions = navActions,
+                            )
+                            is Action.EditorNavigation -> action.flow.launchEditorNavigationMutations(
+                                state = state,
+                            )
+                            is Action.EditFilter -> action.flow.launchEditFilterMutations(
+                                state = state,
+                            )
+                            is Action.Metadata -> action.flow.launchUpdateMetadataMutations(
+                                state = state,
+                            )
+                        }
                     }
-                }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 private fun Flow<Action>.withInitialLoad(
     route: Route,
@@ -127,160 +136,119 @@ private fun Flow<Action>.withInitialLoad(
     route.initialLoad?.let { emit(it) }
 }
 
-private fun Flow<Action.SearchProfiles>.searchMutations(
-    searchRepository: SearchRepository,
-): Flow<Mutation<State>> =
-    debounce(SEARCH_DEBOUNCE_MILLIS)
-        .flatMapLatest { action ->
-            searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
-                    query = action.query,
-                    isLocalOnly = false,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
-                        limit = MAX_SUGGESTED_PROFILES.toLong(),
-                    ),
-                ),
-                cursor = Cursor.Initial,
-            ).mapToMutation { profiles ->
-                copy(
-                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
-                )
-            }
-        }
-
-private fun Flow<Action.Update>.updateMutations(
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Update>.launchUpdateMutations(
+    state: State.SnapshotMutable,
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        emit { copy(isLoading = true) }
-        recordRepository.updateGrazeFeed(
-            action.toGrazeFeedUpdate(),
-        )
-            .onSuccess { grazeFeed ->
-                if (grazeFeed !is GrazeFeed.Editable) {
-                    return@onSuccess emitAll(
-                        flowOf(Action.Navigate.PopFeed(action.associatedRecordKey))
-                            .consumeNavigationActions(navActions),
+) = launchedCollectLatest { action ->
+    state.isLoading = true
+    recordRepository.updateGrazeFeed(
+        action.toGrazeFeedUpdate(),
+    )
+        .onSuccess { grazeFeed ->
+            if (grazeFeed !is GrazeFeed.Editable) {
+                navActions(
+                    Action.Navigate.PopFeed(action.associatedRecordKey).navigationMutation,
+                )
+                return@onSuccess
+            }
+
+            state.grazeFeed = grazeFeed
+            state.isLoading = false
+
+            // Observe the feed
+            authRepository.signedInUser
+                .mapNotNull { it?.did }
+                .distinctUntilChanged()
+                .map {
+                    recordUriOrNull(
+                        profileId = it,
+                        namespace = FeedGeneratorUri.NAMESPACE,
+                        recordKey = grazeFeed.recordKey,
                     )
                 }
+                .filterIsInstance<FeedGeneratorUri>()
+                .flatMapLatest(recordRepository::embeddableRecord)
+                .distinctUntilChanged()
+                .filterIsInstance<FeedGenerator>()
+                .collect { state.feedGenerator = it }
+        }
+        .onFailure { throwable ->
+            state.isLoading = false
+            state.messages += action.toErrorMessage(throwable)
+        }
+}
 
-                emit { copy(grazeFeed = grazeFeed, isLoading = false) }
-
-                // Observe the feed
-                emitAll(
-                    authRepository.signedInUser
-                        .mapNotNull { it?.did }
-                        .distinctUntilChanged()
-                        .map {
-                            recordUriOrNull(
-                                profileId = it,
-                                namespace = FeedGeneratorUri.NAMESPACE,
-                                recordKey = grazeFeed.recordKey,
-                            )
-                        }
-                        .filterIsInstance<FeedGeneratorUri>()
-                        .flatMapLatest(recordRepository::embeddableRecord)
-                        .distinctUntilChanged()
-                        .filterIsInstance<FeedGenerator>()
-                        .mapToMutation { copy(feedGenerator = it) },
-                )
-            }
-            .onFailure { throwable ->
-                emit {
-                    copy(
-                        isLoading = false,
-                        messages = messages + action.toErrorMessage(throwable),
-                    )
-                }
-            }
-    }
-
-private fun Flow<Action.Metadata>.updateMetadataMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            grazeFeed = when (grazeFeed) {
-                is GrazeFeed.Created -> grazeFeed.copy(
-                    displayName = action.displayName,
-                    description = action.description,
-                )
-                is GrazeFeed.Pending -> grazeFeed.copy(
-                    displayName = action.displayName,
-                    description = action.description,
-                )
-            },
+context(productionScope: CoroutineScope)
+private fun Flow<Action.Metadata>.launchUpdateMetadataMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.grazeFeed = when (val grazeFeed = state.grazeFeed) {
+        is GrazeFeed.Created -> grazeFeed.copy(
+            displayName = action.displayName,
+            description = action.description,
+        )
+        is GrazeFeed.Pending -> grazeFeed.copy(
+            displayName = action.displayName,
+            description = action.description,
         )
     }
+}
 
-private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        when (action) {
-            is Action.EditorNavigation.EnterFilter ->
-                copy(
-                    suggestedProfiles = emptyList(),
-                    currentPath = currentPath + action.index,
-                )
-            Action.EditorNavigation.ExitFilter ->
-                if (currentPath.isEmpty()) copy(
-                    suggestedProfiles = emptyList(),
-                )
-                else copy(
-                    suggestedProfiles = emptyList(),
-                    currentPath = currentPath.dropLast(1),
-                )
+context(productionScope: CoroutineScope)
+private fun Flow<Action.EditorNavigation>.launchEditorNavigationMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    when (action) {
+        is Action.EditorNavigation.EnterFilter -> {
+            state.currentPath += action.index
+        }
+        Action.EditorNavigation.ExitFilter -> {
+            if (state.currentPath.isNotEmpty()) {
+                state.currentPath = state.currentPath.dropLast(1)
+            }
         }
     }
+}
 
-private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        val editedFilter = grazeFeed.filter.updateAt(action.path) { target ->
-            if (action is Action.EditFilter.FlipRootFilter) when (target) {
-                is Filter.And -> Filter.Or(
-                    id = target.id,
-                    filters = target.filters,
-                )
-                is Filter.Or -> Filter.And(
-                    id = target.id,
-                    filters = target.filters,
-                )
-            }
-            else target.updateFilters { filters ->
-                when (action) {
-                    is Action.EditFilter.AddFilter -> filters + action.filter
-                    is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
-                        index != action.index
-                    }
-                    is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
-                        if (index == action.index) action.filter
-                        else filter
-                    }
-                    is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
-                        "Flip action should not operate on non root filters",
-                    )
+context(productionScope: CoroutineScope)
+private fun Flow<Action.EditFilter>.launchEditFilterMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    val editedFilter = state.grazeFeed.filter.updateAt(action.path) { target ->
+        if (action is Action.EditFilter.FlipRootFilter) when (target) {
+            is Filter.And -> Filter.Or(
+                id = target.id,
+                filters = target.filters,
+            )
+            is Filter.Or -> Filter.And(
+                id = target.id,
+                filters = target.filters,
+            )
+        }
+        else target.updateFilters { filters ->
+            when (action) {
+                is Action.EditFilter.AddFilter -> filters + action.filter
+                is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
+                    index != action.index
                 }
+                is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
+                    if (index == action.index) action.filter
+                    else filter
+                }
+                is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
+                    "Flip action should not operate on non root filters",
+                )
             }
         }
-        copy(
-            suggestedProfiles = emptyList(),
-            grazeFeed = when (val currentFeed = grazeFeed) {
-                is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
-                is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
-            },
-        )
     }
-
-fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
+    state.grazeFeed = when (val currentFeed = state.grazeFeed) {
+        is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
+        is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
     }
+}
 
 private fun Filter.Root.updateAt(
     path: List<Int>,
@@ -342,6 +310,3 @@ private fun Action.Update.toErrorMessage(throwable: Throwable): Memo.Resource {
     }
     return Memo.Resource(stringResource = stringResource, args = listOf(message))
 }
-
-private const val SEARCH_DEBOUNCE_MILLIS = 300L
-const val MAX_SUGGESTED_PROFILES = 5

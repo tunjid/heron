@@ -44,6 +44,7 @@ dependencies {
             include("**/*.json")
         },
     )
+    lexicons(libs.ozone.bluesky.lexicons)
 }
 
 lexicons {
@@ -51,12 +52,7 @@ lexicons {
     defaults {
         generateUnknownsForSealedTypes.set(true)
         generateUnknownsForEnums.set(true)
-        binaryDataType.set(
-            BinaryDataType.Custom(
-                packageName = "io.ktor.utils.io",
-                simpleNames = listOf("ByteReadChannel"),
-            ),
-        )
+        binaryDataType.set(BinaryDataType.ByteReadChannel)
     }
 
     generateApi("BlueskyApi") {

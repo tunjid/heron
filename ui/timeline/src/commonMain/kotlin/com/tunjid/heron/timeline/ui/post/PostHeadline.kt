@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
@@ -53,7 +54,7 @@ fun PostHeadline(
         Row(horizontalArrangement = spacedBy(4.dp)) {
             PaneStickySharedElement(
                 sharedContentState = rememberSharedContentState(
-                    key = author.textSharedElementKey(
+                    key = author.rememberTextSharedElementKey(
                         prefix = sharedElementPrefix,
                         postId = postId,
                         text = primaryText,
@@ -83,7 +84,7 @@ fun PostHeadline(
                 PaneStickySharedElement(
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
-                        key = author.textSharedElementKey(
+                        key = author.rememberTextSharedElementKey(
                             prefix = sharedElementPrefix,
                             postId = postId,
                             text = secondaryText,
@@ -107,8 +108,19 @@ fun PostHeadline(
     }
 }
 
-private fun Profile.textSharedElementKey(
+@Composable
+private fun Profile.rememberTextSharedElementKey(
     prefix: String,
     postId: PostId,
     text: String,
-): String = "$prefix-${postId.id}-${did.id}-$text"
+): String {
+    val start = remember(prefix, postId.id) {
+        "$prefix-${postId.id}"
+    }
+    val end = remember(did.id, text) {
+        "${did.id}-$text"
+    }
+    return remember(start, end) {
+        "$start-$end"
+    }
+}

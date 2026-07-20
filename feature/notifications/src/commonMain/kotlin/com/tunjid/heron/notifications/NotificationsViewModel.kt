@@ -25,19 +25,18 @@ import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.withRefreshedStatus
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
-import com.tunjid.heron.ui.coroutines.launchAndCollect
-import com.tunjid.heron.ui.coroutines.launchAndCollectLatest
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.tiler.distinctBy
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
@@ -48,92 +47,98 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 
-internal typealias NotificationsStateHolder = ActionSuspendingStateMutator<Action, State>
+@Stable
+internal interface NotificationsStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
 
 @AssistedFactory
-fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
+fun interface NotificationsViewModelInitializer {
+    fun invoke(
         scope: CoroutineScope,
         route: Route,
     ): ActualNotificationsViewModel
 }
 
 @Stable
-@AssistedInject
 class ActualNotificationsViewModel(
-    navActions: (NavigationMutation) -> Unit,
-    writeQueue: WriteQueue,
-    authRepository: AuthRepository,
-    notificationsRepository: NotificationsRepository,
-    userDataRepository: UserDataRepository,
-    @Assisted
+    mutator: ActionSuspendingStateMutator<Action, State>,
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
 ) : ViewModel(viewModelScope = scope),
-    NotificationsStateHolder by scope.actionSuspendingStateMutator(
-        state = State().toSnapshotMutable(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { state, actions ->
-            launchLastRefreshedMutations(
-                state = state,
-                notificationsRepository = notificationsRepository,
-            )
-            launchLoadProfileMutations(
-                state = state,
-                authRepository = authRepository,
-            )
-            launchCanShowRequestPermissionsButtonMutations(
-                state = state,
-                notificationsRepository = notificationsRepository,
-            )
-            launchLoadPreferencesMutations(
-                state = state,
-                userDataRepository = userDataRepository,
-            )
-            actions.launchMutationsIn(
-                productionScope = this,
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Tile -> action.flow.launchNotificationsMutations(
-                        state = state,
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is Action.SendPostInteraction -> action.flow.launchPostInteractionMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
-                    is Action.MarkNotificationsRead -> action.flow.launchMarkNotificationsReadMutations(
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is Action.Navigate -> action.flow.collect {
-                        navActions(it.navigationMutation)
+    NotificationsStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        navActions: (NavigationMutation) -> Unit,
+        writeQueue: WriteQueue,
+        authRepository: AuthRepository,
+        notificationsRepository: NotificationsRepository,
+        userDataRepository: UserDataRepository,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State().toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchLastRefreshedMutations(
+                    state = state,
+                    notificationsRepository = notificationsRepository,
+                )
+                launchLoadProfileMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchCanShowRequestPermissionsButtonMutations(
+                    state = state,
+                    notificationsRepository = notificationsRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                actions.launchMutationsIn(
+                    productionScope = this,
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Tile -> action.flow.launchNotificationsMutations(
+                            state = state,
+                            notificationsRepository = notificationsRepository,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.MarkNotificationsRead -> action.flow.launchMarkNotificationsReadMutations(
+                            notificationsRepository = notificationsRepository,
+                        )
+                        is Action.Navigate -> action.flow.collect {
+                            navActions(it.navigationMutation)
+                        }
+                        is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
                     }
-                    is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
-                    is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
-                        state = state,
-                        writeQueue = writeQueue,
-                    )
                 }
-            }
-        },
+            },
+        ),
+        scope = scope,
     )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
     state: State.SnapshotMutable,
     authRepository: AuthRepository,
-) = authRepository.signedInUser.launchAndCollect {
+) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
 }
 
@@ -141,7 +146,7 @@ context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
     state: State.SnapshotMutable,
     userDataRepository: UserDataRepository,
-) = userDataRepository.preferences.launchAndCollect {
+) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
 }
 
@@ -149,7 +154,7 @@ context(productionScope: CoroutineScope)
 private fun launchLastRefreshedMutations(
     state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
-) = notificationsRepository.lastRefreshed.launchAndCollect { refreshedAt ->
+) = notificationsRepository.lastRefreshed.launchedCollect { refreshedAt ->
     state.lastRefreshed = refreshedAt
     val currentStatus = state.tilingData.status
     if (currentStatus is TilingState.Status.Refreshing &&
@@ -165,7 +170,7 @@ private fun launchCanShowRequestPermissionsButtonMutations(
     state: State.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
 ) = notificationsRepository.hasPreviouslyRequestedNotificationPermissions
-    .launchAndCollect { hasPreviouslyRequestedNotificationPermissions ->
+    .launchedCollect { hasPreviouslyRequestedNotificationPermissions ->
         state.canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions
     }
 
@@ -224,28 +229,16 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 )
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action -> Writable.Interaction(action.interaction) },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state: State.SnapshotMutable,
-) = launchAndCollect { event ->
+) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MarkNotificationsRead>.launchMarkNotificationsReadMutations(
     notificationsRepository: NotificationsRepository,
-) = launchAndCollect { action ->
+) = launchedCollect { action ->
     notificationsRepository.markRead(action.at)
 }
 

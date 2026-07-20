@@ -22,44 +22,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.round
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-
-@Composable
-fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
-    rememberAccumulatedOffsetNestedScrollConnection(
-        maxOffset = { Offset.Zero },
-        minOffset = {
-            Offset(
-                x = 0f,
-                y = -UiTokens.toolbarHeight.toPx(),
-            )
-        },
-    )
-
-@Composable
-fun bottomNavigationNestedScrollConnection(
-    isCompact: Boolean,
-): AccumulatedOffsetNestedScrollConnection {
-    val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
-    return rememberAccumulatedOffsetNestedScrollConnection(
-        invert = true,
-        maxOffset = maxOffset@{
-            Offset(
-                x = 0f,
-                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
-            )
-        },
-        minOffset = { Offset.Zero },
-    )
-}
 
 @Composable
 fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
@@ -94,6 +65,15 @@ fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
             }
     }
 }
+
+/**
+ * The rounded difference between [maxOffset] and the current [offset]. For a bar that rests at
+ * `offset == minOffset` and hides by accumulating toward [maxOffset] (e.g. an auto-hiding bottom
+ * navigation bar), this is its still-on-screen extent: the full bar at rest, [IntOffset.Zero] once
+ * hidden.
+ */
+val AccumulatedOffsetNestedScrollConnection.roundedMaxDelta: IntOffset
+    get() = (maxOffset - offset).round()
 
 fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {
     val minDimension = min(

@@ -19,10 +19,12 @@ package com.tunjid.heron.search.ui.searchresults
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -39,6 +41,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -52,9 +55,7 @@ import androidx.compose.ui.zIndex
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -63,19 +64,20 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.search.SearchResult
+import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.State
-import com.tunjid.heron.search.id
 import com.tunjid.heron.search.key
-import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.search.presentationOptions
+import com.tunjid.heron.search.supportsNonPostSearch
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -104,12 +106,12 @@ internal fun GeneralSearchResults(
     onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
-    onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
+    onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -130,6 +132,7 @@ internal fun GeneralSearchResults(
         )
         Box(
             modifier = Modifier
+                .padding(horizontal = 8.dp)
                 .fillMaxWidth()
                 .zIndex(1f)
                 .offset {
@@ -145,34 +148,58 @@ internal fun GeneralSearchResults(
                     )
                 },
         ) {
-            Tabs(
+            Row(
                 modifier = Modifier
-                    .drawBehind {
-                        val chipHeight = 32.dp.toPx()
-                        drawRoundRect(
-                            color = tabsBackgroundColor,
-                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                            size = size.copy(height = chipHeight),
-                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
-                        )
-                    }
-                    .wrapContentWidth()
-                    .animateContentSize(),
-                tabsState = rememberTabsState(
-                    tabs = searchTabs(
-                        isSignedIn = state.signedInProfile != null,
-                        isQueryEditable = state.isQueryEditable,
-                    ),
-                    isCollapsed = tabsCollapsed,
-                    selectedTabIndex = pagerState::tabIndex,
-                    onTabSelected = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(it)
-                        }
-                    },
-                    onTabReselected = { },
-                ),
-            )
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f),
+                ) {
+                    Tabs(
+                        modifier = Modifier
+                            .drawBehind {
+                                val chipHeight = 32.dp.toPx()
+                                drawRoundRect(
+                                    color = tabsBackgroundColor,
+                                    topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                                    size = size.copy(height = chipHeight),
+                                    cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                                )
+                            }
+                            .animateContentSize(),
+                        tabsState = rememberTabsState(
+                            tabs = searchTabs(
+                                isSignedIn = state.signedInProfile != null,
+                                query = state.query,
+                            ),
+                            isCollapsed = tabsCollapsed,
+                            selectedTabIndex = pagerState::tabIndex,
+                            onTabSelected = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(it)
+                                }
+                            },
+                            onTabReselected = { },
+                        ),
+                    )
+                }
+                val availablePresentations = state.presentationOptions(pagerState.currentPage)
+                val resolvedPresentation = remember(
+                    state.preferredPresentation,
+                    availablePresentations,
+                ) {
+                    if (state.preferredPresentation in availablePresentations) state.preferredPresentation
+                    else Timeline.Presentation.Text.WithEmbed
+                }
+                TimelinePresentationSelector(
+                    selected = resolvedPresentation,
+                    available = availablePresentations,
+                    onPresentationSelected = onPresentationSelected,
+                )
+            }
         }
         HorizontalPager(
             modifier = Modifier
@@ -190,21 +217,17 @@ internal fun GeneralSearchResults(
             },
             pageContent = { page ->
                 val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
-                val searchResultState = searchResultStateHolder.produceStateWithLifecycle()
-                val videoStates = remember { ThreadedVideoPositionStates(SearchResult.OfPost::id) }
-
-                when (val resultState = searchResultState) {
+                when (val searchResultState = searchResultStateHolder.produceStateWithLifecycle()) {
                     is SearchState.OfPosts -> {
                         val gridState = rememberLazyStaggeredGridState()
                         PostSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             gridState = gridState,
                             modifier = modifier,
-                            signedInProfileId = state.signedInProfile?.did,
-                            mutedWordPreferences = state.preferences.mutedWordPreferences,
+                            presentation = state.preferredPresentation,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                            isActivePage = { pagerState.currentPage == page },
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
@@ -214,7 +237,6 @@ internal fun GeneralSearchResults(
                             onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
                             onMediaClicked = onMediaClicked,
                             onNavigate = onNavigate,
-                            onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
@@ -231,7 +253,7 @@ internal fun GeneralSearchResults(
                     is SearchState.OfProfiles -> {
                         val listState = rememberLazyListState()
                         ProfileSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
@@ -252,7 +274,7 @@ internal fun GeneralSearchResults(
                     is SearchState.OfFeedGenerators -> {
                         val listState = rememberLazyListState()
                         FeedSearchResults(
-                            state = resultState,
+                            state = searchResultState,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
@@ -287,11 +309,24 @@ internal fun GeneralSearchResults(
 @Composable
 private fun searchTabs(
     isSignedIn: Boolean,
-    isQueryEditable: Boolean,
-): List<Tab> = buildList {
-    if (isSignedIn) add(stringResource(resource = Res.string.top))
-    if (isSignedIn) add(stringResource(resource = Res.string.latest))
-    if (isQueryEditable) add(stringResource(resource = Res.string.people))
-    if (isQueryEditable) add(stringResource(resource = Res.string.feeds))
+    query: RouteQuery,
+): List<Tab> {
+    val top = stringResource(resource = Res.string.top)
+    val latest = stringResource(resource = Res.string.latest)
+    val people = stringResource(resource = Res.string.people)
+    val feeds = stringResource(resource = Res.string.feeds)
+    val supportsNonPostSearch = query.supportsNonPostSearch
+    // only pass 1 string resource here to prevent allocation on >4 remember args
+    return remember(isSignedIn, supportsNonPostSearch, top) {
+        buildList {
+            if (isSignedIn) {
+                add(top)
+                add(latest)
+            }
+            if (supportsNonPostSearch) {
+                add(people)
+                add(feeds)
+            }
+        }.map { Tab(title = it, hasUpdate = false) }
+    }
 }
-    .map { Tab(title = it, hasUpdate = false) }

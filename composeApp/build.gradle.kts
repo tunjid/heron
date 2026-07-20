@@ -38,7 +38,8 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            export(project(":scaffold"))
+            export(project(":ui:scaffold"))
+            export(project(":data:ml"))
             // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
             // (>100k LOC) codebases during the release link — the memory is
             // consumed by ConstraintGraphBuilder. We also disable the
@@ -64,9 +65,12 @@ kotlin {
             implementation(project(":data:models"))
             implementation(project(":data:database"))
             implementation(project(":data:core"))
+            implementation(project(":data:files"))
             implementation(project(":data:logging"))
+            implementation(project(":data:ml"))
             implementation(project(":data:platform"))
-            implementation(project(":scaffold"))
+            implementation(project(":data:tasks"))
+            implementation(project(":ui:scaffold"))
             implementation(project(":feature:atmosphereapp"))
             implementation(project(":feature:auth"))
             implementation(project(":feature:compose"))
@@ -76,6 +80,7 @@ kotlin {
             implementation(project(":feature:gallery"))
             implementation(project(":feature:graze-editor"))
             implementation(project(":feature:home"))
+            implementation(project(":feature:inference"))
             implementation(project(":feature:list"))
             implementation(project(":feature:messages"))
             implementation(project(":feature:moderation"))
@@ -92,7 +97,9 @@ kotlin {
             implementation(project(":feature:standard-subscription"))
             implementation(project(":feature:tasks"))
             implementation(project(":feature:splash"))
+            implementation(project(":ui:core"))
             implementation(project(":ui:media"))
+            implementation(project(":ui:sheets"))
             implementation(project(":ui:timeline"))
 
             implementation(libs.androidx.room.runtime)
@@ -112,6 +119,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.serialization.json)
 
+            implementation(libs.ktor.core)
+
             implementation(libs.okio)
         }
         desktopMain.dependencies {
@@ -121,7 +130,8 @@ kotlin {
             implementation(libs.tink)
         }
         iosMain.dependencies {
-            api(project(":scaffold"))
+            api(project(":ui:scaffold"))
+            api(project(":data:ml"))
             implementation(libs.connectivity.device)
         }
     }

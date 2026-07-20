@@ -46,12 +46,12 @@ import io.ktor.client.call.body
 import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
@@ -114,7 +114,7 @@ internal class PersistedSessionManager(
             sessionRequestUrl.value?.let(url::takeFrom)
                 ?: url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
         }
-        install(HttpTimeout) {
+        installOrReplace(HttpTimeout) {
             requestTimeoutMillis = 15.seconds.inWholeMilliseconds
         }
         install(Logging) {
@@ -153,6 +153,10 @@ internal class PersistedSessionManager(
                     nonce = it.nonce,
                     state = it.state,
                     expiresAt = Clock.System.now() + it.expiresIn,
+                    keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
+                        publicKey = it.keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
+                        privateKey = it.keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
+                    ),
                 )
             }
     }
@@ -213,6 +217,18 @@ internal class PersistedSessionManager(
                     nonce = pendingRequest.nonce,
                     codeVerifier = pendingRequest.codeVerifier,
                     code = code,
+                    // Reuse the DPoP key bound to the PAR request so the authorization code
+                    // exchange presents a proof for the same key the server bound it to.
+                    keyPair = pendingRequest.keyPair?.let {
+                        DpopKeyPair.fromKeyPair(
+                            publicKey = it.publicKey,
+                            publicKeyFormat = DpopKeyPair.PublicKeyFormat.DER,
+                            privateKey = it.privateKey,
+                            privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
+                        )
+                    } ?: throw IllegalStateException(
+                        "Missing DPoP key pair for pending authorization request. Please restart the sign-in flow.",
+                    ),
                 )
 
                 val callingDid = api.resolveHandle(
@@ -225,7 +241,18 @@ internal class PersistedSessionManager(
                     throw IllegalStateException("Invalid login session")
                 }
 
-                oAuthToken.toAppToken(authEndpoint = request.server.endpoint)
+                // Access tokens are opaque per the atproto OAuth spec, so the PDS is discovered
+                // from the account's DID document instead of being parsed out of the token.
+                val pdsUrl = pdsResolver.resolve(oAuthToken.subject)
+                    ?: throw IllegalStateException(
+                        "Could not resolve a PDS for ${oAuthToken.subject.did}",
+                    )
+
+                oAuthToken.toAppToken(
+                    authEndpoint = request.server.endpoint,
+                    pdsUrl = pdsUrl.toString(),
+                    clientId = oauthRedirect.clientId,
+                )
             }
             is SessionRequest.Guest -> SavedState.AuthTokens.Guest(
                 server = request.server,
@@ -361,7 +388,11 @@ internal class PersistedSessionManager(
                 nonce = tokens.nonce,
                 refreshToken = tokens.refresh,
                 keyPair = tokens.toKeyPair(),
-            ).toAppToken(authEndpoint = tokens.issuerEndpoint)
+            ).toAppToken(
+                authEndpoint = tokens.issuerEndpoint,
+                pdsUrl = tokens.pdsUrl,
+                clientId = tokens.clientId,
+            )
         }
     }
 }
@@ -436,11 +467,8 @@ private fun atProtoAuth(
             }
         }
 
-        context.getCapabilityOrNull(HttpTimeoutCapability)?.let { timeoutConfig ->
-            timeoutConfig.requestTimeoutMillis = when {
-                context.url.encodedPath.endsWith(UploadBlobPath) -> 2.minutes.inWholeMilliseconds
-                else -> timeoutConfig.requestTimeoutMillis
-            }
+        if (context.url.encodedPath.endsWith(UploadBlobPath)) context.timeout {
+            requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
 
         var resolvedOtherProfilePds = false
@@ -588,11 +616,13 @@ private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
 
 private suspend fun OAuthToken.toAppToken(
     authEndpoint: String,
+    pdsUrl: String,
+    clientId: String,
 ) = SavedState.AuthTokens.Authenticated.DPoP(
     authProfileId = subject.did.let(::ProfileId),
     auth = accessToken,
     refresh = refreshToken,
-    pdsUrl = pds.toString(),
+    pdsUrl = pdsUrl,
     keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
         publicKey = keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
         privateKey = keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
@@ -649,6 +679,7 @@ private val HeronProxyPaths = listOf(
     "site.standard.heron.getDocuments",
     "site.standard.heron.getPublications",
     "site.standard.heron.getSubscribedPublications",
+    "dev.tunji.heron.getModelUrl",
     "app.rocksky.actor.getActorAlbums",
     "app.rocksky.actor.getActorSongs",
     "app.rocksky.actor.getActorArtists",
