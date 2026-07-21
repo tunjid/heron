@@ -88,7 +88,8 @@ internal class LiteRtLmInferenceEngine(
             ),
         )
         conversation.sendMessageAsync(
-            text = prompt,
+
+            text = sanitizeEnginePrompt(prompt),
             callback = object : MessageCallback {
                 override fun onMessage(message: Message) {
                     trySend(textOf(message))
