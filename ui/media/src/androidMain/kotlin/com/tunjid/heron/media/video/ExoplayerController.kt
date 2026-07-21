@@ -44,6 +44,7 @@ import dev.andrewbailey.diff.differenceOf
 import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -71,12 +72,6 @@ class ExoplayerController(
     Player.Listener {
 
     /**
-     * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not discard buffered
-     * videos.
-     */
-    private var diffingJob: Job? = null
-
-    /**
      * A channel for passing changes to the items in the [ExoPlayer] playlist so they may be diffed without
      * causing [ExoPlayer] to reload them.
      */
@@ -100,8 +95,12 @@ class ExoplayerController(
 
     private var player: ExoPlayer? by mutableStateOf(null)
 
-    // TODO: Revisit this. The Coroutine should be launched lazily instead of in an init block.
-    init {
+    /**
+     * A [Job] that lazily creates the [ExoPlayer] instance, wires up its listeners, and thereafter
+     * sequentially diffs and applies changes to its playlist. Nothing runs until this job is started
+     * (see [registerVideo]), so no work happens simply from constructing [ExoplayerController].
+     */
+    private val diffingJob: Job = scope.launch(start = CoroutineStart.LAZY) {
         player = exoPlayer(context = context).apply {
             // The first listener should always be the ExoplayerManager
             addListener(this@ExoplayerController)
@@ -110,36 +109,31 @@ class ExoplayerController(
             playWhenReady = states.activeState?.autoplay == true
             if (playWhenReady) {
                 prepare()
-                if (playWhenReady && hasActiveVideo) play(states.activeVideoId)
-            }
-        }
-        diffingJob?.cancel()
-        // Launch a coroutine that lasts from setup -> teardown that sequentially processes each change to media
-        // items in the ExoPlayer one after the other. The changes are diffed such that the ExoPlayer maintains
-        // a single playlist, and changes in the active video does not clear the playlist.
-        diffingJob = scope.launch {
-            // sequentially process each change to media items one after the other
-            mediaItemMutationsChannel.consumeAsFlow().collect { mutation ->
-                // Await player
-                val player = snapshotFlow { player }.filterNotNull().first()
-                val updatedItems = mutation(player.currentMediaItems)
-                player.update(newMediaItems = updatedItems)
-                currentPlaylistIds = updatedItems.map(MediaItem::mediaId).toSet()
+                if (hasActiveVideo) play(states.activeVideoId)
             }
         }
 
-        // TODO this should also be governed by coroutine launch semantics
-        //  as the one used for list diffing
         // Pause playback when nothing is visible to play
         snapshotFlow { states.activeState?.status }
             .map { it == null || it is PlayerStatus.Idle }
             .filter(true::equals)
             .onEach { player?.pause() }
-            .launchIn(scope + Dispatchers.Main)
+            .launchIn(this + Dispatchers.Main)
 
         snapshotFlow { isMuted }
             .onEach { player?.isMuted = it }
-            .launchIn(scope + Dispatchers.Main)
+            .launchIn(this + Dispatchers.Main)
+
+        // Sequentially process each change to media items one after the other. The changes are
+        // diffed such that the ExoPlayer maintains a single playlist, and changes in the active
+        // video does not clear the playlist.
+        mediaItemMutationsChannel.consumeAsFlow().collect { mutation ->
+            // Await player
+            val player = snapshotFlow { player }.filterNotNull().first()
+            val updatedItems = mutation(player.currentMediaItems)
+            player.update(newMediaItems = updatedItems)
+            currentPlaylistIds = updatedItems.map(MediaItem::mediaId).toSet()
+        }
     }
 
     internal fun setAutoplay(
@@ -251,6 +245,7 @@ class ExoplayerController(
         isLooping: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState {
+        diffingJob.start()
         states[videoId]?.let { return it }
 
         val videoPlayerState = states.registerOrGet(videoId = videoId) {
@@ -288,7 +283,7 @@ class ExoplayerController(
     }
 
     internal fun teardown() {
-        diffingJob?.cancel()
+        diffingJob.cancel()
         player?.apply {
             removeListener(this@ExoplayerController)
             states.activeState?.let {
