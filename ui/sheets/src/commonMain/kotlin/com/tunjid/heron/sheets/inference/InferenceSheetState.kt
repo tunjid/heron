@@ -17,6 +17,9 @@
 package com.tunjid.heron.sheets.inference
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.ui.Tab
@@ -69,6 +73,9 @@ import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.inference_disclaimer
 import heron.ui.timeline.generated.resources.inference_no_model_description
 import heron.ui.timeline.generated.resources.inference_no_model_title
+import heron.ui.timeline.generated.resources.inference_phase_generating
+import heron.ui.timeline.generated.resources.inference_phase_loading_model
+import heron.ui.timeline.generated.resources.inference_phase_preparing
 import heron.ui.timeline.generated.resources.posts
 import heron.ui.timeline.generated.resources.replies
 import kotlinx.coroutines.launch
@@ -184,12 +191,14 @@ internal fun InferenceBottomSheet(
             when (targetKind) {
                 InferenceKind.Translation -> InferenceOutcomeContent(
                     outcome = inferenceState.translationOutcome,
+                    engineState = inferenceState.engineState,
                     onNavigateToModels = onNavigateToModels,
                 )
                 InferenceKind.Vibe -> ProfileVibeContent(
                     profileId = inferenceState.vibeProfileId,
                     postsOutcome = inferenceState.postsOutcome,
                     repliesOutcome = inferenceState.repliesOutcome,
+                    engineState = inferenceState.engineState,
                     onSelectLens = { profileId, type ->
                         state.stateHolder(
                             InferenceAction.Vibe(
@@ -215,6 +224,7 @@ private fun ProfileVibeContent(
     profileId: ProfileId?,
     postsOutcome: InferenceOutcome?,
     repliesOutcome: InferenceOutcome?,
+    engineState: EngineState?,
     onSelectLens: (ProfileId, Timeline.Profile.Type) -> Unit,
     onNavigateToModels: () -> Unit,
 ) {
@@ -222,6 +232,7 @@ private fun ProfileVibeContent(
     if (postsOutcome is InferenceOutcome.NoModel) {
         InferenceOutcomeContent(
             outcome = postsOutcome,
+            engineState = engineState,
             onNavigateToModels = onNavigateToModels,
         )
         return
@@ -264,6 +275,7 @@ private fun ProfileVibeContent(
                         VibeTab.Posts -> postsOutcome
                         VibeTab.Replies -> repliesOutcome
                     },
+                    engineState = engineState,
                     onNavigateToModels = onNavigateToModels,
                 )
             }
@@ -289,6 +301,7 @@ private fun ProfileVibeContent(
 @Composable
 private fun InferenceOutcomeContent(
     outcome: InferenceOutcome?,
+    engineState: EngineState?,
     onNavigateToModels: () -> Unit,
 ) {
     when (outcome) {
@@ -296,14 +309,42 @@ private fun InferenceOutcomeContent(
         is InferenceOutcome.Loading,
         is InferenceOutcome.Success,
         -> outcome?.text.orEmpty().let { text ->
-            if (text.isBlank() && outcome is InferenceOutcome.Loading) CircularProgressIndicator(
-                modifier = Modifier.size(16.dp),
-                strokeWidth = 2.dp,
-            )
-            else Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            // Until the first token lands there is nothing to show, so the engine's phase becomes the
+            // exposition beside the spinner: preparing input, warming the model, or generating.
+            val loading = text.isBlank() && outcome is InferenceOutcome.Loading
+
+            // AnimatedContent would need a targetState that doesn't change when the text does
+            // It's easier to just use different AnimatedVisibility
+            AnimatedVisibility(
+                visible = loading,
+                enter = FadeIn,
+                exit = FadeOut,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Text(
+                        text = stringResource(engineState.loadingCaptionRes()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            AnimatedVisibility(
+                visible = !loading,
+                enter = FadeIn,
+                exit = FadeOut,
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
 
         is InferenceOutcome.NoModel -> Box(
@@ -326,6 +367,12 @@ private fun InferenceOutcomeContent(
     }
 }
 
+private fun EngineState?.loadingCaptionRes(): StringResource = when (this) {
+    is EngineState.Loading -> Res.string.inference_phase_loading_model
+    is EngineState.Ready.Streaming -> Res.string.inference_phase_generating
+    else -> Res.string.inference_phase_preparing
+}
+
 private enum class VibeTab(
     val type: Timeline.Profile.Type,
     val titleRes: StringResource,
@@ -339,3 +386,6 @@ private enum class VibeTab(
         titleRes = Res.string.replies,
     ),
 }
+
+private val FadeIn = fadeIn()
+private val FadeOut = fadeOut()
