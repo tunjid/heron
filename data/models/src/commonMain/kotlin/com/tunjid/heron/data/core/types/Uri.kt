@@ -69,6 +69,13 @@ fun RecordUri.requireCollection(): String =
         is TrackUri -> TrackUri.NAMESPACE
         is ArtistUri -> ArtistUri.NAMESPACE
         is ScrobbleUri -> ScrobbleUri.NAMESPACE
+        is DerakkumaProfileUri -> DerakkumaProfileUri.NAMESPACE
+        is DerakkumaPlayUri -> DerakkumaPlayUri.NAMESPACE
+        is DerakkumaBestUri -> DerakkumaBestUri.NAMESPACE
+        is DerakkumaFriendUri -> DerakkumaFriendUri.NAMESPACE
+        is DerakkumaFavoriteSongUri -> DerakkumaFavoriteSongUri.NAMESPACE
+        is DerakkumaCircleUri -> DerakkumaCircleUri.NAMESPACE
+        is DerakkumaCircleMemberUri -> DerakkumaCircleMemberUri.NAMESPACE
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
@@ -318,6 +325,97 @@ value class StandardSubscriptionUri(
 
 @Serializable
 @JvmInline
+value class DerakkumaProfileUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.profile"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaPlayUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.play"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaBestUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.best"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaFriendUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.friend"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaFavoriteSongUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.favoriteSong"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaCircleUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.circle"
+    }
+}
+
+@Serializable
+@JvmInline
+value class DerakkumaCircleMemberUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "com.derakkuma.circleMember"
+    }
+}
+
+@Serializable
+@JvmInline
 value class UnknownRecordUri(
     override val uri: String,
 ) : Uri,
@@ -423,6 +521,13 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         ArtistUri.NAMESPACE -> ArtistUri(normalized)
         TrackUri.NAMESPACE -> TrackUri(normalized)
         ScrobbleUri.NAMESPACE -> ScrobbleUri(normalized)
+        DerakkumaProfileUri.NAMESPACE -> DerakkumaProfileUri(normalized)
+        DerakkumaPlayUri.NAMESPACE -> DerakkumaPlayUri(normalized)
+        DerakkumaBestUri.NAMESPACE -> DerakkumaBestUri(normalized)
+        DerakkumaFriendUri.NAMESPACE -> DerakkumaFriendUri(normalized)
+        DerakkumaFavoriteSongUri.NAMESPACE -> DerakkumaFavoriteSongUri(normalized)
+        DerakkumaCircleUri.NAMESPACE -> DerakkumaCircleUri(normalized)
+        DerakkumaCircleMemberUri.NAMESPACE -> DerakkumaCircleMemberUri(normalized)
         else -> UnknownRecordUri(normalized)
     }
 }

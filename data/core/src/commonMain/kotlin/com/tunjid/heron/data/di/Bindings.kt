@@ -84,9 +84,11 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.DerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstBlueskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperations
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
+import com.tunjid.heron.data.repository.records.RemoteDerakkumaRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
@@ -542,6 +544,12 @@ class DataBindings(
     internal fun provideBlueskyRecordOperations(
         offlineFirstBlueskyRecordOperations: OfflineFirstBlueskyRecordOperations,
     ): BlueskyRecordOperations = offlineFirstBlueskyRecordOperations
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideDerakkumaRecordOperations(
+        remoteDerakkumaRecordOperations: RemoteDerakkumaRecordOperations,
+    ): DerakkumaRecordOperations = remoteDerakkumaRecordOperations
 
     @SingleIn(AppScope::class)
     @Provides

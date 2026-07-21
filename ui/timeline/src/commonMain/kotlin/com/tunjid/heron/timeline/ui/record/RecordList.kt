@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -97,6 +98,7 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     emptyIcon: ImageVector = T::class.emptyIcon,
     crossinline itemKey: (T) -> Any,
     crossinline itemContent: @Composable LazyItemScope.(T) -> Unit,
+    crossinline additionalContent: LazyListScope.() -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val collectionState = collectionStateHolder.produceStateWithLifecycle()
@@ -117,9 +119,10 @@ inline fun <reified T : Record, State : TilingState<out CursorQuery, T>> RecordL
     ) {
         items(
             items = collectionState.tiledItems,
-            key = { itemKey(it) },
+            key = { item -> itemKey(item) },
             itemContent = itemContent,
         )
+        additionalContent()
 
         if (isEmpty) {
             item {
