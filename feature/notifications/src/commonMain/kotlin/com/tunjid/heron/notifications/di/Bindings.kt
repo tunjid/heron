@@ -29,7 +29,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
@@ -39,7 +38,7 @@ import com.tunjid.heron.notifications.ui.RequestNotificationsButton
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
@@ -70,9 +69,10 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -91,6 +91,7 @@ private fun createRoute(
 )
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object NotificationsNavigationBindings {
 
     @Provides
@@ -104,10 +105,8 @@ object NotificationsNavigationBindings {
 }
 
 @BindingContainer
-class NotificationsBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object NotificationsBindings {
 
     @Provides
     @IntoMap

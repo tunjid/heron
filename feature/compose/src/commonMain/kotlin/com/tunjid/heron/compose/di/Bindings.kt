@@ -57,7 +57,6 @@ import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
 import com.tunjid.heron.compose.ui.TopAppBarFab
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
@@ -68,7 +67,7 @@ import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.rememberSimpleDialogState
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
@@ -88,9 +87,10 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -112,6 +112,7 @@ private fun createRoute(
 )
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object ComposeNavigationBindings {
 
     @Provides
@@ -125,10 +126,8 @@ object ComposeNavigationBindings {
 }
 
 @BindingContainer
-class ComposeBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object ComposeBindings {
 
     @Provides
     @IntoMap

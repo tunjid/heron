@@ -114,6 +114,7 @@ import dev.whyoleg.cryptography.CryptographyProviderApi
 import dev.whyoleg.cryptography.CryptographySystem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.Qualifier
 import dev.zacsweers.metro.SingleIn
@@ -162,14 +163,15 @@ class DataBindingArgs(
 )
 
 @BindingContainer
-class DataBindings(
-    private val args: DataBindingArgs,
-) {
+@ContributesTo(AppScope::class)
+object DataBindings {
 
     @AppMainScope
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppScope(): CoroutineScope = args.appMainScope
+    fun provideAppScope(
+        args: DataBindingArgs,
+    ): CoroutineScope = args.appMainScope
 
     @IODispatcher
     @SingleIn(AppScope::class)
@@ -183,35 +185,50 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideConnectivity(): Connectivity = args.connectivity
+    fun provideConnectivity(
+        args: DataBindingArgs,
+    ): Connectivity = args.connectivity
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStatePath(): File.System = args.savedStatePath
+    fun provideSavedStatePath(
+        args: DataBindingArgs,
+    ): File.System = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStateEncryption(): SavedStateEncryption = args.savedStateEncryption
+    fun provideSavedStateEncryption(
+        args: DataBindingArgs,
+    ): SavedStateEncryption = args.savedStateEncryption
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
+    fun provideRoomDatabase(
+        args: DataBindingArgs,
+    ): AppDatabase = args.databaseBuilder.configureAndBuild()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
+    fun provideInferenceEngine(
+        args: DataBindingArgs,
+    ): InferenceEngine = args.inferenceEngine
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideLanguageDetector(): LanguageDetector = args.languageDetector
+    fun provideLanguageDetector(
+        args: DataBindingArgs,
+    ): LanguageDetector = args.languageDetector
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideMemoryMonitor(): MemoryMonitor = args.memoryMonitor
+    fun provideMemoryMonitor(
+        args: DataBindingArgs,
+    ): MemoryMonitor = args.memoryMonitor
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideInferenceModelManager(
+        args: DataBindingArgs,
         fileManager: FileManager,
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         backgroundTaskScheduler: BackgroundTaskScheduler,
@@ -230,7 +247,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideFileManager(): FileManager = createFileManager(
+    internal fun provideFileManager(
+        args: DataBindingArgs,
+    ): FileManager = createFileManager(
         fileSystem = args.savedStateFileSystem,
     )
 
@@ -468,6 +487,7 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideBackgroundTaskScheduler(
+        args: DataBindingArgs,
         taskStore: TaskStore,
         httpClient: HttpClient,
         fileManager: FileManager,
