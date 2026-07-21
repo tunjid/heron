@@ -93,5 +93,9 @@ fun createInferenceEngine(
 internal actual fun backendFor(): InferenceBackend =
     if (isSimulator()) InferenceBackend.Cpu else InferenceBackend.Gpu
 
+// iOS runs inference through its own Swift bridge, not the LiteRT-LM JNI, so there is no
+// modified-UTF-8 boundary to guard; prompts pass through unchanged.
+internal actual fun sanitizeEnginePrompt(prompt: String): String = prompt
+
 private fun isSimulator(): Boolean =
     NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null

@@ -26,6 +26,10 @@ internal actual fun backendFor(): InferenceBackend =
     if (isPixel10() || isEmulator()) InferenceBackend.Cpu
     else InferenceBackend.Gpu
 
+// The Android LiteRT-LM binding handles supplementary characters correctly,
+// so prompts pass through unchanged.
+internal actual fun sanitizeEnginePrompt(prompt: String): String = prompt
+
 private fun isPixel10(): Boolean =
     Build.MODEL.contains("pixel 10", ignoreCase = true)
 

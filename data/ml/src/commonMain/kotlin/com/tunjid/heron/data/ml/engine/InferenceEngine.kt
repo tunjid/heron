@@ -95,3 +95,18 @@ enum class InferenceBackend {
  * or unreliable.
  */
 internal expect fun backendFor(): InferenceBackend
+
+/**
+ * Sanitizes a [prompt] for the current platform's LiteRT-LM binding before it crosses the JNI
+ * boundary.
+ */
+internal expect fun sanitizeEnginePrompt(prompt: String): String
+
+/**
+ * Drops code units that a JVM modified-UTF-8 (CESU-8) JNI conversion would turn into ill-formed
+ * standard UTF-8: surrogates, which cover supplementary characters like emoji as well as any lone
+ * surrogate and NUL. Every remaining BMP scalar encodes identically in modified and standard
+ * UTF-8, so the result is safe to hand to a modified-UTF-8 binding.
+ */
+internal fun stripModifiedUtf8Hazards(text: String): String =
+    text.filterNot { it.isSurrogate() || it.code == 0 }

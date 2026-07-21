@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 
+import org.gradle.api.attributes.Attribute
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -45,6 +46,26 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+
+            // The Compose default jlink image ships only a minimal module set, which omits modules
+            // the app references — notably jdk.management (+ java.management, pulled in transitively),
+            // needed by the inference MemoryMonitor's ManagementFactory / OperatingSystemMXBean and
+            // reached at startup via createAppState(); plus java.sql, jdk.unsupported, etc. Missing
+            // modules only crash the packaged app, never `./gradlew run` (full JDK). Most of this
+            // list is jdeps' output from `./gradlew :desktopApp:suggestModules` — re-run it after
+            // dependency changes. java.net.http is added on top: ktor's Java client engine needs it
+            // but is selected via ServiceLoader (reflection), so jdeps can't see it and omits it.
+            modules(
+                "java.compiler",
+                "java.instrument",
+                "java.net.http",
+                "java.sql",
+                "jdk.jfr",
+                "jdk.management",
+                "jdk.security.auth",
+                "jdk.unsupported",
+                "jdk.unsupported.desktop",
+            )
 
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
@@ -133,4 +154,36 @@ val nativeLibDependentTasks = setOf(
 )
 tasks.matching { it.name in nativeLibDependentTasks }.configureEach {
     dependsOn(signNativeLibsForSandbox)
+}
+
+// Strip the ad-hoc-signed macOS native from the litertlm-jvm JAR before Compose bundles it into the
+// signed .app. Apple's notary service scans inside JARs; that in-JAR copy of liblitertlm_jni.so has
+// no Developer ID / secure timestamp and fails notarization. The app loads a signed copy from
+// resources instead (see main.kt + StripLitertlmMacNativeTransform), so the in-JAR copy is dead
+// weight in the packaged app.
+//
+// Gated to signed DMG/distributable builds: only when a signing identity is configured AND a
+// packaging task was requested. A bare `./gradlew run` requests neither, so local on-device ML
+// keeps the native. The strip must happen on the classpath (before jpackage assembles and signs
+// the app), which is why this is an artifact transform rather than a post-package step.
+val packagingDistributable = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("dmg", ignoreCase = true) ||
+        taskName.contains("distributable", ignoreCase = true)
+}
+if (signingIdentityProperty.isPresent && packagingDistributable) {
+    val litertlmMacNativeStripped =
+        Attribute.of("heron.litertlm.macNativeStripped", Boolean::class.javaObjectType)
+    dependencies {
+        attributesSchema {
+            attribute(litertlmMacNativeStripped)
+        }
+        artifactTypes.getByName("jar").attributes.attribute(litertlmMacNativeStripped, false)
+        registerTransform(StripLitertlmMacNativeTransform::class.java) {
+            from.attribute(litertlmMacNativeStripped, false)
+            to.attribute(litertlmMacNativeStripped, true)
+        }
+    }
+    configurations.named("runtimeClasspath") {
+        attributes.attribute(litertlmMacNativeStripped, true)
+    }
 }
