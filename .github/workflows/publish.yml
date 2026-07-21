@@ -338,12 +338,29 @@ jobs:
           MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
         run: |
+          set -euo pipefail
           DMG_PATH=$(find desktopApp/build/release/main-release/dmg -name "*.dmg" | head -1)
-          xcrun notarytool submit "$DMG_PATH" \
+          if [ -z "$DMG_PATH" ]; then echo "::error::No DMG found to notarize"; exit 1; fi
+
+          # `notarytool submit --wait` exits 0 even when the result is Invalid, so gate on the
+          # status explicitly and dump the notarization log (the per-file reasons) on failure.
+          SUBMIT_JSON=$(xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$MACOS_NOTARIZATION_APPLE_ID" \
             --password "$MACOS_NOTARIZATION_PASSWORD" \
             --team-id "$MACOS_NOTARIZATION_TEAM_ID" \
-            --wait
+            --output-format json --wait)
+          echo "$SUBMIT_JSON"
+          SUBMISSION_ID=$(echo "$SUBMIT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+          STATUS=$(echo "$SUBMIT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["status"])')
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization returned status '$STATUS'. Fetching log for $SUBMISSION_ID:"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$MACOS_NOTARIZATION_APPLE_ID" \
+              --password "$MACOS_NOTARIZATION_PASSWORD" \
+              --team-id "$MACOS_NOTARIZATION_TEAM_ID" || true
+            exit 1
+          fi
           xcrun stapler staple "$DMG_PATH"
 
       - name: Upload to GitHub releases
