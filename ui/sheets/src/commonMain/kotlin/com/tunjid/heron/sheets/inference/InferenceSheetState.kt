@@ -20,6 +20,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -313,34 +314,29 @@ private fun InferenceOutcomeContent(
             // exposition beside the spinner: preparing input, warming the model, or generating.
             val loading = text.isBlank() && outcome is InferenceOutcome.Loading
 
-            // AnimatedContent would need a targetState that doesn't change when the text does
-            // It's easier to just use different AnimatedVisibility
-            AnimatedVisibility(
-                visible = loading,
-                enter = FadeIn,
-                exit = FadeOut,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                    )
-                    Text(
-                        text = stringResource(engineState.loadingCaptionRes()),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            AnimatedVisibility(
-                visible = !loading,
-                enter = FadeIn,
-                exit = FadeOut,
-            ) {
-                Text(
+            AnimatedContent(
+                targetState = loading,
+                label = "InferenceLoadingTransition",
+                transitionSpec = {
+                    FadeInAndOut
+                },
+            ) { currentlyLoading ->
+                if (currentlyLoading)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                        )
+                        Text(
+                            text = stringResource(engineState.loadingCaptionRes()),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                else Text(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -387,5 +383,4 @@ private enum class VibeTab(
     ),
 }
 
-private val FadeIn = fadeIn()
-private val FadeOut = fadeOut()
+private val FadeInAndOut = fadeIn() togetherWith fadeOut()
