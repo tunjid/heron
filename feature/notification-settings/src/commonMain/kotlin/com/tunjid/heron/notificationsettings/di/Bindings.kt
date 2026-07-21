@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.notificationsettings.Action
 import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
 import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
@@ -33,7 +32,7 @@ import com.tunjid.heron.notificationsettings.NotificationSettingsStateHolder
 import com.tunjid.heron.notificationsettings.NotificationSettingsViewModelInitializer
 import com.tunjid.heron.notificationsettings.updates
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
@@ -62,9 +61,10 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -84,6 +84,7 @@ private fun createRoute(
 )
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object NotificationSettingsNavigationBindings {
 
     @Provides
@@ -97,10 +98,8 @@ object NotificationSettingsNavigationBindings {
 }
 
 @BindingContainer
-class NotificationSettingsBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object NotificationSettingsBindings {
 
     @Provides
     @IntoMap

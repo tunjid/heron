@@ -44,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.signin.Action
 import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
@@ -58,7 +57,7 @@ import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.heron.ui.platformStatusBars
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.ui.scaffold.scaffold.AppLogo
 import com.tunjid.heron.ui.scaffold.scaffold.LogoPresentation
@@ -81,9 +80,10 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -109,6 +109,7 @@ private fun createRoute(
 internal val Route.iss by optionalRouteQuery()
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object SignInNavigationBindings {
 
     @Provides
@@ -131,10 +132,8 @@ object SignInNavigationBindings {
 }
 
 @BindingContainer
-class SignInBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object SignInBindings {
 
     @Provides
     @IntoMap

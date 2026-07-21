@@ -33,7 +33,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolder
@@ -43,7 +42,7 @@ import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
 import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -77,9 +76,10 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -111,6 +111,7 @@ internal val Route.profileHandleOrId by mappedRoutePath(
 )
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object PostDetailNavigationBindings {
 
     @Provides
@@ -133,10 +134,8 @@ object PostDetailNavigationBindings {
 }
 
 @BindingContainer
-class PostDetailBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object PostDetailBindings {
 
     @Provides
     @IntoMap
