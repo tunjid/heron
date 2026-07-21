@@ -18,3 +18,8 @@ package com.tunjid.heron.data.ml.engine
 
 // LiteRT-LM ships no GPU delegate for the desktop JVM; always run on CPU.
 internal actual fun backendFor(): InferenceBackend = InferenceBackend.Cpu
+
+// litertlm-jvm's JNI reads the prompt as modified UTF-8, so any emoji / supplementary character
+// becomes ill-formed standard UTF-8 and crashes its native JSON parser. Strip those before sending.
+internal actual fun sanitizeEnginePrompt(prompt: String): String =
+    stripModifiedUtf8Hazards(prompt)
