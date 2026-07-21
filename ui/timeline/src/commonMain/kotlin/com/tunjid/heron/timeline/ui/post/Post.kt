@@ -858,7 +858,7 @@ private class PostData(
         val elapsed = createdTime.elapsedNow()
         val diff = elapsed - changedAt
 
-        if (diff.isPositive() && diff < BoundsTransformDelay) BoundsSnapSpec
+        if (diff.isPositive() && diff > BoundsTransformDelay) BoundsSnapSpec
         else paneTransitionScope.childBoundsTransform.createAnimationSpec(
             initial,
             target,
