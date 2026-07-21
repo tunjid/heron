@@ -41,8 +41,8 @@ import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.network.IdentityResolver
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.oauth.OauthRedirect
@@ -116,7 +116,7 @@ internal class AuthTokenRepository(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val pdsResolver: PdsResolver,
+    private val identityResolver: IdentityResolver,
     private val preferenceUpdater: PreferenceUpdater,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
@@ -412,7 +412,7 @@ internal class AuthTokenRepository(
     override suspend fun resolveServer(
         handle: ProfileHandle,
     ): Result<Server> = runCatchingUnlessCancelled {
-        pdsResolver.resolveServer(Handle(handle.id))
+        identityResolver.resolveServer(Handle(handle.id))
             ?: throw IllegalStateException("Could not resolve server for handle: ${handle.id}")
     }
 }

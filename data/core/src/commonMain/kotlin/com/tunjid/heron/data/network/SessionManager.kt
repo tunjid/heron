@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.AtProtoException
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.InvalidTokenException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
@@ -101,7 +102,7 @@ internal interface SessionManager {
 internal class PersistedSessionManager(
     httpClient: HttpClient,
     private val savedStateDataSource: SavedStateDataSource,
-    private val pdsResolver: PdsResolver,
+    private val identityResolver: IdentityResolver,
     private val oauthRedirect: OauthRedirect,
 ) : SessionManager {
 
@@ -243,7 +244,7 @@ internal class PersistedSessionManager(
 
                 // Access tokens are opaque per the atproto OAuth spec, so the PDS is discovered
                 // from the account's DID document instead of being parsed out of the token.
-                val pdsUrl = pdsResolver.resolve(oAuthToken.subject)
+                val pdsUrl = identityResolver.resolvePds(oAuthToken.subject)
                     ?: throw IllegalStateException(
                         "Could not resolve a PDS for ${oAuthToken.subject.did}",
                     )
@@ -317,7 +318,12 @@ internal class PersistedSessionManager(
                 },
                 authenticate = ::authenticate,
                 refresh = ::refresh,
-                resolvePds = pdsResolver::resolve,
+                resolvePds = identityResolver::resolvePds,
+                resolveFeedServiceDid = { feedUri ->
+                    identityResolver.resolveFeedServiceDid(
+                        feedUri = FeedGeneratorUri(feedUri),
+                    )
+                },
             ),
         )
         install(Logging) {
@@ -406,6 +412,7 @@ private fun atProtoAuth(
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
     resolvePds: suspend (Did) -> Url?,
+    resolveFeedServiceDid: suspend (feedUri: String) -> Did?,
 ) = createClientPlugin("AtProtoAuthPlugin") {
     val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
     val nonceDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated.DPoP?>()
@@ -444,7 +451,10 @@ private fun atProtoAuth(
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
 
-        context.proxyHeader()?.let { headerValue ->
+        // Computed once: the feed-interaction branch resolves a DID and must not run twice.
+        val proxyHeaderValue = context.proxyHeaderValue(resolveFeedServiceDid)
+
+        proxyHeaderValue?.let { headerValue ->
             context.headers.append(
                 name = AtProtoProxyHeader,
                 value = headerValue,
@@ -458,7 +468,7 @@ private fun atProtoAuth(
             context.url.set(
                 host = Url(urlString = SignedOutUrl).host,
             )
-        } else if (authTokens != null && context.proxyHeader() != ChatAtProtoProxyHeaderValue) {
+        } else if (authTokens != null && proxyHeaderValue != ChatAtProtoProxyHeaderValue) {
             val pdsUrl = Url(authTokens.defaultUrl)
             if (context.url.host != pdsUrl.host) {
                 context.url.protocol = pdsUrl.protocol
@@ -574,12 +584,19 @@ private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
     else null
 }
 
-private fun HttpRequestBuilder.proxyHeader(): String? =
-    when {
-        ChatProxyPaths.any(predicate = url.encodedPath::endsWith) -> ChatAtProtoProxyHeaderValue
-        HeronProxyPaths.any(predicate = url.encodedPath::endsWith) -> HeronAtProtoProxyHeaderValue
-        else -> null
-    }
+private suspend fun HttpRequestBuilder.proxyHeaderValue(
+    resolveFeedServiceDid: suspend (feedUri: String) -> Did?,
+): String? = when {
+    ChatProxyPaths.any(predicate = url.encodedPath::endsWith) -> ChatAtProtoProxyHeaderValue
+    HeronProxyPaths.any(predicate = url.encodedPath::endsWith) -> HeronAtProtoProxyHeaderValue
+    // Interactions are proxied to the feed generator's own service, whose DID varies per feed and
+    // is not the AT-URI authority. Resolve it from the request body's `feed`, then target #bsky_fg.
+    url.encodedPath.endsWith(SendInteractionsPath) ->
+        extractFeedUriFromBody()
+            ?.let { feedUri -> resolveFeedServiceDid(feedUri) }
+            ?.let { serviceDid -> "${serviceDid.did}$FeedGeneratorProxyFragment" }
+    else -> null
+}
 
 private fun HttpRequestBuilder.clearAuth() {
     headers.remove(Authorization)
@@ -604,6 +621,15 @@ private fun HttpRequestBuilder.extractDidFromBody(): String? {
     return (jsonObject[DidParam] as? JsonPrimitive)?.content
         ?: (jsonObject[RepoParam] as? JsonPrimitive)?.content
             ?.takeIf { it.startsWith(DidPrefix) }
+}
+
+private fun HttpRequestBuilder.extractFeedUriFromBody(): String? {
+    val textContent = body as? TextContent ?: return null
+    val jsonObject = runCatching {
+        BlueskyJson.parseToJsonElement(textContent.text) as? JsonObject
+    }.getOrNull() ?: return null
+
+    return (jsonObject[FeedParam] as? JsonPrimitive)?.content
 }
 
 private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
@@ -706,7 +732,9 @@ private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
 
 private const val UploadBlobPath = "com.atproto.repo.uploadBlob"
+private const val SendInteractionsPath = "app.bsky.feed.sendInteractions"
 private const val HeronAtProtoProxyHeaderValue = "did:web:heron.tunji.dev#heron_appview"
+private const val FeedGeneratorProxyFragment = "#bsky_fg"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"
@@ -718,4 +746,5 @@ private const val DPoP = "DPoP"
 private const val ComAtProtoPathSegment = "com.atproto"
 private const val DidParam = "did"
 private const val RepoParam = "repo"
+private const val FeedParam = "feed"
 private const val DidPrefix = "did:"

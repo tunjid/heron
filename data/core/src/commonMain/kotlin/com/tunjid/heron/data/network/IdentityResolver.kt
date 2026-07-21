@@ -16,41 +16,63 @@
 
 package com.tunjid.heron.data.network
 
+import app.bsky.feed.GetFeedGeneratorResponse
 import com.atproto.identity.ResolveHandleResponse
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Url
 import io.ktor.http.decodeURLPart
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
 
-internal interface PdsResolver {
-    suspend fun resolve(did: Did): Url?
-    suspend fun resolveServer(handle: Handle): Server?
+/**
+ * Resolves atproto identities and the services that host them: an account's PDS from its DID or
+ * handle, and a feed generator's backing service DID from its AT-URI.
+ */
+internal interface IdentityResolver {
+
+    suspend fun resolvePds(
+        did: Did,
+    ): Url?
+
+    suspend fun resolveServer(
+        handle: Handle,
+    ): Server?
+
+    suspend fun resolveFeedServiceDid(
+        feedUri: FeedGeneratorUri,
+    ): Did?
 }
 
 @Inject
-internal class PlcDirectoryPdsResolver(
+internal class AtProtoIdentityResolver(
     private val httpClient: HttpClient,
     @param:AppMainScope
     private val scope: kotlinx.coroutines.CoroutineScope,
-) : PdsResolver {
+    private val feedGeneratorDao: FeedGeneratorDao,
+) : IdentityResolver {
 
     private val cache = LinkedHashMap<Did, kotlinx.coroutines.Deferred<Url?>>()
     private val cacheMutex = Mutex()
 
-    override suspend fun resolve(did: Did): Url? {
+    override suspend fun resolvePds(
+        did: Did,
+    ): Url? {
         val deferred = cacheMutex.withLock {
             val existing = cache.remove(did)
             val deferred = existing ?: scope.async {
@@ -93,6 +115,37 @@ internal class PlcDirectoryPdsResolver(
                         supportsOauth = true,
                     )
                 }
+    }.getOrNull()
+
+    override suspend fun resolveFeedServiceDid(
+        feedUri: FeedGeneratorUri,
+    ): Did? = cachedFeedServiceDid(feedUri) ?: fetchedFeedServiceDid(feedUri)
+
+    private suspend fun cachedFeedServiceDid(
+        feedUri: FeedGeneratorUri,
+    ): Did? = feedGeneratorDao
+        .feedGenerators(listOf(feedUri))
+        .first()
+        .firstOrNull()
+        ?.entity
+        ?.did
+        ?.id
+        ?.let(::Did)
+
+    private suspend fun fetchedFeedServiceDid(
+        feedUri: FeedGeneratorUri,
+    ): Did? = runCatchingUnlessCancelled {
+        val response: GetFeedGeneratorResponse = httpClient.get(
+            urlString = "$PublicApiUrl/xrpc/app.bsky.feed.getFeedGenerator",
+        ) {
+            parameter("feed", feedUri.uri)
+        }
+            .takeIf { it.status.isSuccess() }
+            ?.bodyAsText()
+            ?.let(BlueskyJson::decodeFromString)
+            ?: return@runCatchingUnlessCancelled null
+
+        response.view.did
     }.getOrNull()
 
     private suspend fun Did.resolvePdsEndpoint(): String? {
