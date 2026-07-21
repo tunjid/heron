@@ -32,9 +32,7 @@ import sh.christian.ozone.api.Did
  * Represents an OAuth token received after a successful authorization or refresh request.
  *
  * Per the [atproto OAuth spec](https://atproto.com/specs/oauth) the access token is opaque to the
- * client, so nothing here is derived by parsing it. The account's PDS is resolved from its DID
- * document (see [PdsResolver][com.tunjid.heron.data.network.PdsResolver]) rather than from a token
- * claim.
+ * client, so nothing here is derived by parsing it.
  *
  * @param accessToken The access token used to authenticate API requests.
  * @param refreshToken The refresh token used to obtain a new access token when the current one expires.
