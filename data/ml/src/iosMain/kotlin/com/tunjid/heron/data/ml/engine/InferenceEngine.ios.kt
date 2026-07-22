@@ -16,86 +16,30 @@
 
 package com.tunjid.heron.data.ml.engine
 
-import com.tunjid.heron.data.ml.model.LoadedModel
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
 import platform.Foundation.NSProcessInfo
 
-/**
- * [InferenceEngine] that adapts the Swift-implemented [IosInferenceBridge] callbacks into
- * the coroutine API. Inference happens in Swift/LiteRTLM; this only marshals. The [state]
- * machine and idempotent [load] live in [BaseInferenceEngine].
- */
-internal class IosInferenceEngine(
-    private val bridge: IosInferenceBridge,
-    private val ioDispatcher: CoroutineDispatcher,
-) : BaseInferenceEngine() {
-
-    override suspend fun onLoad(
-        model: LoadedModel,
-    ) = suspendCancellableCoroutine { continuation ->
-        bridge.load(
-            modelPath = model.file.relativePath,
-            maxTokens = model.model.maxTokens,
-            backend = backendFor(),
-            onReady = { if (continuation.isActive) continuation.resume(Unit) },
-            onError = { message ->
-                if (continuation.isActive) {
-                    continuation.resumeWithException(IllegalStateException(message))
-                }
-            },
-        )
-        continuation.invokeOnCancellation {
-            bridge.reset()
-        }
-    }
-
-    override suspend fun onReset() {
-        bridge.reset()
-    }
-
-    override fun onGenerate(
-        prompt: String,
-        params: GenerationParams,
-    ): Flow<String> = callbackFlow {
-        bridge.generate(
-            prompt = prompt,
-            temperature = params.temperature,
-            topK = params.topK,
-            topP = params.topP,
-            onToken = { chunk -> trySend(chunk) },
-            onComplete = { close() },
-            onError = { message -> close(IllegalStateException(message)) },
-        )
-        awaitClose { bridge.cancel() }
-    }.flowOn(ioDispatcher)
-}
-
-/**
- * Builds the iOS engine from the Swift-provided [bridge]. Call from the app entry
- * point (`createAppState`) with the bridge Swift hands in, then inject the result —
- * no global state. Exposed to Swift as `InferenceEngine_iosKt.createInferenceEngine`.
- */
-fun createInferenceEngine(
-    bridge: IosInferenceBridge,
-    ioDispatcher: CoroutineDispatcher,
-): InferenceEngine = IosInferenceEngine(
-    bridge = bridge,
-    ioDispatcher = ioDispatcher,
-)
-
+// The backend is a LiteRT-LM concept; iOS inference runs on Apple Foundation Models, which manages
+// its own execution. This actual only exists to satisfy the common [backendFor] expectation.
 internal actual fun backendFor(): InferenceBackend =
     if (isSimulator()) InferenceBackend.Cpu else InferenceBackend.Gpu
 
-// iOS runs inference through its own Swift bridge, not the LiteRT-LM JNI, so there is no
-// modified-UTF-8 boundary to guard; prompts pass through unchanged.
+// iOS runs inference through a Swift bridge, not the LiteRT-LM JNI, so there is no modified-UTF-8
+// boundary to guard; prompts pass through unchanged.
 internal actual fun sanitizeEnginePrompt(prompt: String): String = prompt
 
 private fun isSimulator(): Boolean =
     NSProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != null
+
+/**
+ * Foundation Models needs iOS 26+. This is the coarse OS gate; actual device eligibility (Apple
+ * Intelligence hardware + enablement) is resolved at runtime by the iOS inference manager, which
+ * downgrades to [InferenceSource.None] when the model reports the device is ineligible.
+ */
+@OptIn(ExperimentalForeignApi::class)
+actual fun platformInferenceCapability(): InferenceSource =
+    if (NSProcessInfo.processInfo.operatingSystemVersion.useContents { majorVersion >= 26 })
+        InferenceSource.Platform
+    else
+        InferenceSource.None

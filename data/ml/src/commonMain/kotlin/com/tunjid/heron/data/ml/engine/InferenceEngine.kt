@@ -89,6 +89,19 @@ enum class InferenceBackend {
     Gpu,
 }
 
+enum class InferenceSource {
+    None,
+    Platform,
+    External,
+    All,
+}
+
+/** Whether any on-device inference is available; gates the inference UI and features. */
+val InferenceSource.isAvailable: Boolean
+    get() = this != InferenceSource.None
+
+expect fun platformInferenceCapability(): InferenceSource
+
 /**
  * The [InferenceBackend] to run inference on, resolved for the current device and platform.
  * GPU by default; each platform actual falls back to CPU where the GPU delegate is unavailable

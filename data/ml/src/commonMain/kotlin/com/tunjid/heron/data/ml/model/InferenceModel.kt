@@ -26,21 +26,27 @@ import kotlinx.serialization.Serializable
  * otherwise treat it as opaque.
  */
 sealed interface InferenceModel {
-    val maxTokens: Int
-    val sizeInBytes: Long
-    val minDeviceMemoryInGb: Int
     val name: String
-    val fileName: String
-
-    /**
-     * Terms of use the user must accept before downloading, or `null` if the model imposes none.
-     */
-    val termsOfServiceUrl: String?
-    val sha256: String?
+    val maxTokens: Int
     val abilities: List<Ability>
 
+    /** A model fetched as a file and executed by a bundled runtime (LiteRT-LM / Gemma). */
+    sealed interface External : InferenceModel {
+        val sizeInBytes: Long
+        val minDeviceMemoryInGb: Int
+        val fileName: String
+
+        /**
+         * Terms of use the user must accept before downloading, or `null` if the model imposes none.
+         */
+        val termsOfServiceUrl: String?
+        val sha256: String?
+    }
+
+    sealed interface Platform : InferenceModel
+
     companion object {
-        val Gemma31B: InferenceModel = LiteRtLmModel(
+        val Gemma31B: External = LiteRtLmModel(
             name = "Gemma3-1B-IT",
             modelId = "litert-community/Gemma3-1B-IT",
             info = "A variant of [google/Gemma-3-1B-IT](https://huggingface.co/google/Gemma-3-1B-IT) with 4-bit quantization ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/kotlin/README.md).",
@@ -61,7 +67,7 @@ sealed interface InferenceModel {
             ),
         )
 
-        val Gemma4E2B: InferenceModel = LiteRtLmModel(
+        val Gemma4E2B: External = LiteRtLmModel(
             name = "Gemma-4-E2B-it",
             modelId = "litert-community/gemma-4-E2B-it-litert-lm",
             info = "A variant of Gemma 4 E2B ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md). It supports multi-modality input, with up to 32K context length.",
@@ -84,7 +90,7 @@ sealed interface InferenceModel {
             ),
         )
 
-        val Gemma4E4B: InferenceModel = LiteRtLmModel(
+        val Gemma4E4B: External = LiteRtLmModel(
             name = "Gemma-4-E4B-it",
             modelId = "litert-community/gemma-4-E4B-it-litert-lm",
             info = "A variant of Gemma 4 E4B ready for deployment on Android using [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md). It supports multi-modality input, with up to 32K context length.",

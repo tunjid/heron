@@ -7,7 +7,15 @@ import ComposeApp
 class AppDelegate: NSObject, UIApplicationDelegate,
                    MessagingDelegate, UNUserNotificationCenterDelegate {
 
-    let appState = EntryPoint_iosKt.createAppState(inferenceBridge: GemmaBridge())
+    let foundationModelsBridge: AppleFoundationModelsBridge
+    let appState: AppState
+
+    override init() {
+        let bridge = AppleFoundationModelsBridge()
+        foundationModelsBridge = bridge
+        appState = EntryPoint_iosKt.createAppState(inferenceBridge: bridge)
+        super.init()
+    }
 
     func application(
         _ application: UIApplication,
@@ -22,6 +30,8 @@ class AppDelegate: NSObject, UIApplicationDelegate,
 
     // Re-sync notification permission state and FCM token on every foreground
     func applicationDidBecomeActive(_ application: UIApplication) {
+        // Re-check on-device inference availability (e.g. Apple Intelligence was just enabled).
+        foundationModelsBridge.refreshAvailability()
       Messaging.messaging().token { [self] token, _ in
             guard let token = token else { return }
             onNewToken(fcmToken: token)

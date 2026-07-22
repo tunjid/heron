@@ -23,3 +23,6 @@ internal actual fun backendFor(): InferenceBackend = InferenceBackend.Cpu
 // becomes ill-formed standard UTF-8 and crashes its native JSON parser. Strip those before sending.
 internal actual fun sanitizeEnginePrompt(prompt: String): String =
     stripModifiedUtf8Hazards(prompt)
+
+// Desktop runs the downloadable LiteRT-LM catalog.
+actual fun platformInferenceCapability(): InferenceSource = InferenceSource.External

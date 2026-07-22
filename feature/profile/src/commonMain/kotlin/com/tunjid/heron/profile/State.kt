@@ -92,6 +92,8 @@ interface State {
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
+        val canRunInference: Boolean = false,
+        @Transient
         val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
         @Transient
         val stateHolders: List<ProfileScreenStateHolders> = emptyList(),

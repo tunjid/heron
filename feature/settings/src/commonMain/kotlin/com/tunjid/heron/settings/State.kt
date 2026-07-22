@@ -46,6 +46,8 @@ interface State {
         val openSourceLibraries: Libs? = null,
         val pastSessions: List<SessionSummary> = emptyList(),
         @Transient
+        val canRunInference: Boolean = false,
+        @Transient
         val messages: List<Memo> = emptyList(),
     ) : State
 

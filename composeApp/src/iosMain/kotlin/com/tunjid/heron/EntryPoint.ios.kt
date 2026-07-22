@@ -24,12 +24,13 @@ import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
-import com.tunjid.heron.data.ml.engine.IosInferenceBridge
-import com.tunjid.heron.data.ml.engine.createInferenceEngine
+import com.tunjid.heron.data.ml.engine.FoundationModelsBridge
+import com.tunjid.heron.data.ml.engine.createFoundationModelsEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
+import com.tunjid.heron.data.utilities.inference.FoundationModelsManager
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
@@ -41,7 +42,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -55,9 +55,12 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
 fun createAppState(
-    inferenceBridge: IosInferenceBridge,
+    inferenceBridge: FoundationModelsBridge,
 ): AppState {
-    val inferenceEngine = createInferenceEngine(inferenceBridge, Dispatchers.IO)
+    val inferenceEngine = createFoundationModelsEngine(
+        bridge = inferenceBridge,
+        ioDispatcher = Dispatchers.IO,
+    )
     return createAppState(
         imageLoader = ::imageLoader,
         notifier = {
@@ -81,6 +84,9 @@ fun createAppState(
                 savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(),
                 inferenceEngine = inferenceEngine,
+                platformInferenceManager = FoundationModelsManager(
+                    bridge = inferenceBridge,
+                ),
                 languageDetector = createLanguageDetector(Dispatchers.IO),
                 memoryMonitor = createMemoryMonitor(),
                 backgroundTaskScheduler = { taskStore, httpClient, fileManager ->

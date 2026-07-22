@@ -45,6 +45,9 @@ internal class LiteRtLmInferenceEngine(
     override suspend fun onLoad(
         model: LoadedModel,
     ) = withContext(ioDispatcher) {
+        check(model is LoadedModel.FileBacked) {
+            "LiteRtLmInferenceEngine can only load a downloadable model"
+        }
         engine?.close()
         engine = null
         val newEngine = Engine(

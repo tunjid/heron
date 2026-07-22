@@ -38,6 +38,8 @@ import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
+import com.tunjid.heron.data.ml.engine.isAvailable
+import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
@@ -107,6 +109,7 @@ class ActualProfileViewModel(
         profileRepository: ProfileRepository,
         timelineRepository: TimelineRepository,
         userDataRepository: UserDataRepository,
+        inferenceModelManager: InferenceModelManager,
         writeQueue: WriteQueue,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
@@ -142,6 +145,10 @@ class ActualProfileViewModel(
                 launchLoadPreferencesMutations(
                     state = state,
                     userDataRepository = userDataRepository,
+                )
+                launchInferenceCapabilityMutations(
+                    state = state,
+                    inferenceModelManager = inferenceModelManager,
                 )
                 launchLoadProfileMutations(
                     state = state,
@@ -225,6 +232,14 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
+}
+
+context(productionScope: CoroutineScope)
+private fun launchInferenceCapabilityMutations(
+    state: State.SnapshotMutable,
+    inferenceModelManager: InferenceModelManager,
+) = inferenceModelManager.source.launchedCollect { capability ->
+    state.canRunInference = capability.isAvailable
 }
 
 context(productionScope: CoroutineScope)

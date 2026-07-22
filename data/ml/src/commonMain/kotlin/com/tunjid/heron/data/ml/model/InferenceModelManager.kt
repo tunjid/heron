@@ -17,10 +17,13 @@
 package com.tunjid.heron.data.ml.model
 
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.ml.engine.InferenceSource
 import com.tunjid.heron.data.tasks.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
 interface InferenceModelManager {
+
+    val source: Flow<InferenceSource>
 
     val models: List<InferenceModel>
 
@@ -29,24 +32,43 @@ interface InferenceModelManager {
     ): Flow<ModelStatus>
 
     suspend fun enqueueDownload(
-        model: InferenceModel,
+        model: InferenceModel.External,
     ): Outcome
 
     suspend fun cancelDownload(
-        model: InferenceModel,
+        model: InferenceModel.External,
     )
 
     suspend fun delete(
-        model: InferenceModel,
+        model: InferenceModel.External,
     )
 }
 
-sealed class ModelStatus {
-    data class Downloaded(
+sealed interface ModelStatus {
+    /**
+     * A model ready to load: either a downloaded file ([LoadedModel.FileBacked]) or the platform
+     * system model ([LoadedModel.System]).
+     */
+    data class Available(
         val loadedModel: LoadedModel,
-    ) : ModelStatus()
+    ) : ModelStatus
 
+    /** A downloadable model not yet on disk (download not started, running, or failed). */
     data class Pending(
         val taskStatus: TaskStatus,
-    ) : ModelStatus()
+    ) : ModelStatus
+
+    /** A platform system model present on this device but not usable right now. */
+    data class Unavailable(
+        val reason: PlatformUnavailableReason,
+    ) : ModelStatus
+}
+
+/** Why a platform system model is present but not currently usable. */
+enum class PlatformUnavailableReason {
+    /** Apple Intelligence is turned off in Settings. */
+    AppleIntelligenceDisabled,
+
+    /** The system is still downloading/preparing the model. */
+    ModelDownloading,
 }
