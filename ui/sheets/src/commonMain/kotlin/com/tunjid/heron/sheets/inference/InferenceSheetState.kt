@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -55,6 +56,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
+import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.ui.Tab
@@ -76,6 +78,10 @@ import heron.ui.timeline.generated.resources.inference_no_model_title
 import heron.ui.timeline.generated.resources.inference_phase_generating
 import heron.ui.timeline.generated.resources.inference_phase_loading_model
 import heron.ui.timeline.generated.resources.inference_phase_preparing
+import heron.ui.timeline.generated.resources.inference_unavailable_ai_off_description
+import heron.ui.timeline.generated.resources.inference_unavailable_ai_off_title
+import heron.ui.timeline.generated.resources.inference_unavailable_preparing_description
+import heron.ui.timeline.generated.resources.inference_unavailable_preparing_title
 import heron.ui.timeline.generated.resources.posts
 import heron.ui.timeline.generated.resources.replies
 import kotlinx.coroutines.launch
@@ -160,8 +166,9 @@ internal fun InferenceBottomSheet(
             InferenceKind.Vibe -> inferenceState.postsOutcome
             InferenceKind.Translation -> inferenceState.translationOutcome
         }
-        // The no-model prompt carries its own title, so only show the kind header otherwise.
-        if (headerOutcome !is InferenceOutcome.NoModel) {
+        // The no-model / unavailable prompts carry their own title, so only show the kind header
+        // otherwise.
+        if (!headerOutcome.isFullBleedPrompt) {
             Text(
                 text = stringResource(kind.titleRes),
                 style = MaterialTheme.typography.headlineSmall,
@@ -228,8 +235,8 @@ private fun ProfileVibeContent(
     onSelectLens: (ProfileId, Timeline.Profile.Type) -> Unit,
     onNavigateToModels: () -> Unit,
 ) {
-    // With no model loaded, a single prompt reads better than one repeated behind every tab.
-    if (postsOutcome is InferenceOutcome.NoModel) {
+    // With no usable model, a single prompt reads better than one repeated behind every tab.
+    if (postsOutcome.isFullBleedPrompt) {
         InferenceOutcomeContent(
             outcome = postsOutcome,
             engineState = engineState,
@@ -354,6 +361,23 @@ private fun InferenceOutcomeContent(
             )
         }
 
+        is InferenceOutcome.Unavailable -> EmptyContent(
+            modifier = Modifier.fillMaxWidth(),
+            titleRes = when (outcome.reason) {
+                PlatformUnavailableReason.AppleIntelligenceDisabled ->
+                    Res.string.inference_unavailable_ai_off_title
+                PlatformUnavailableReason.ModelDownloading ->
+                    Res.string.inference_unavailable_preparing_title
+            },
+            descriptionRes = when (outcome.reason) {
+                PlatformUnavailableReason.AppleIntelligenceDisabled ->
+                    Res.string.inference_unavailable_ai_off_description
+                PlatformUnavailableReason.ModelDownloading ->
+                    Res.string.inference_unavailable_preparing_description
+            },
+            icon = Icons.Rounded.AutoAwesome,
+        )
+
         is InferenceOutcome.Error -> Text(
             text = outcome.memo.message,
             style = MaterialTheme.typography.bodyLarge,
@@ -361,6 +385,10 @@ private fun InferenceOutcomeContent(
         )
     }
 }
+
+/** Prompts that render their own centered title/description, so the kind header is suppressed. */
+private val InferenceOutcome?.isFullBleedPrompt: Boolean
+    get() = this is InferenceOutcome.NoModel || this is InferenceOutcome.Unavailable
 
 private fun EngineState?.loadingCaptionRes(): StringResource = when (this) {
     is EngineState.Loading -> Res.string.inference_phase_loading_model

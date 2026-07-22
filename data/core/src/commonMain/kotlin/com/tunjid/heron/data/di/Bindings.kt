@@ -41,6 +41,8 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.engine.InferenceSource
+import com.tunjid.heron.data.ml.engine.platformInferenceCapability
 import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.AtProtoIdentityResolver
@@ -96,6 +98,7 @@ import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefr
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.draft.OfflinePostDraftDataSource
 import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
+import com.tunjid.heron.data.utilities.inference.DelegatingInferenceManager
 import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
@@ -147,12 +150,12 @@ class DataBindingArgs(
     val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
     val savedStatePath: File.System,
-    /** Directory for on-device model files; a platform cache/no-backup location. */
     val modelsDirectory: File.System,
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
+    val platformInferenceManager: InferenceModelManager? = null,
     val languageDetector: LanguageDetector,
     val memoryMonitor: MemoryMonitor,
     val backgroundTaskScheduler: (
@@ -233,12 +236,24 @@ object DataBindings {
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         backgroundTaskScheduler: BackgroundTaskScheduler,
         networkService: NetworkService,
-    ): InferenceModelManager = LiteRtLmManager(
-        fileManager = fileManager,
-        modelsDirectory = args.modelsDirectory,
-        ioDispatcher = ioDispatcher,
-        backgroundTaskScheduler = backgroundTaskScheduler,
-        networkService = networkService,
+    ): InferenceModelManager = DelegatingInferenceManager(
+        platformManager = args.platformInferenceManager,
+        // Only build the LiteRT-LM download catalog on platforms that offer downloadable models; a
+        // platform-model-only device (e.g. iOS Foundation Models) has no LiteRT-LM implementation.
+        downloadableManager = when (platformInferenceCapability()) {
+            InferenceSource.External,
+            InferenceSource.All,
+            -> LiteRtLmManager(
+                fileManager = fileManager,
+                modelsDirectory = args.modelsDirectory,
+                ioDispatcher = ioDispatcher,
+                backgroundTaskScheduler = backgroundTaskScheduler,
+                networkService = networkService,
+            )
+            InferenceSource.Platform,
+            InferenceSource.None,
+            -> null
+        },
     )
 
     @SingleIn(AppScope::class)

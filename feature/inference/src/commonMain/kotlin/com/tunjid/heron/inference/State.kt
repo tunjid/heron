@@ -69,7 +69,7 @@ data class ModelItem(
 sealed class Action(val key: String) {
 
     data class Download(
-        val model: InferenceModel,
+        val model: InferenceModel.External,
     ) : Action(key = "Download")
 
     data class Load(
@@ -77,11 +77,11 @@ sealed class Action(val key: String) {
     ) : Action(key = "Load")
 
     data class Cancel(
-        val model: InferenceModel,
+        val model: InferenceModel.External,
     ) : Action(key = "Cancel")
 
     data class Delete(
-        val model: InferenceModel,
+        val model: InferenceModel.External,
     ) : Action(key = "Delete")
 
     data class SetLoadDefaultModelOnLaunch(

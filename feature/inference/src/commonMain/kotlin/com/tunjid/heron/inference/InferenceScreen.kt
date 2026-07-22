@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.inference.ui.ModelCard
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.notifications.hasNotificationPermissions
@@ -62,6 +63,9 @@ internal fun InferenceScreen(
     // Downloads post progress via notifications, so they are gated on the permission.
     // On desktop [hasNotificationPermissions] is always true, so downloads stay enabled there.
     val downloadsEnabled = hasNotificationPermissions()
+    // The permission prompt only matters when there is something to download; a platform system
+    // model (e.g. Apple Intelligence on iOS) has no downloadable entries, so the prompt is hidden.
+    val hasExternalModels = state.models.any { it.model is InferenceModel.External }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -76,7 +80,7 @@ internal fun InferenceScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!downloadsEnabled) item(
+            if (!downloadsEnabled && hasExternalModels) item(
                 key = "enable-notifications",
             ) {
                 EnableNotificationsCard(
@@ -114,13 +118,13 @@ internal fun InferenceScreen(
                             actions(Action.Load(it))
                         },
                         onDownload = {
-                            actions(Action.Download(item.model))
+                            actions(Action.Download(it))
                         },
                         onCancel = {
-                            actions(Action.Cancel(item.model))
+                            actions(Action.Cancel(it))
                         },
                         onDelete = {
-                            actions(Action.Delete(item.model))
+                            actions(Action.Delete(it))
                         },
                     )
                 },

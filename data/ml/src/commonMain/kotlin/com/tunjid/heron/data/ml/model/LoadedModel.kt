@@ -18,8 +18,15 @@ package com.tunjid.heron.data.ml.model
 
 import com.tunjid.heron.data.core.utilities.File
 
-/** An [InferenceModel] whose [file] is present on disk and ready to load. */
-data class LoadedModel(
-    val model: InferenceModel,
-    val file: File.System,
-)
+sealed interface LoadedModel {
+    val model: InferenceModel
+
+    data class FileBacked(
+        override val model: InferenceModel.External,
+        val file: File.System,
+    ) : LoadedModel
+
+    data class System(
+        override val model: InferenceModel.Platform,
+    ) : LoadedModel
+}

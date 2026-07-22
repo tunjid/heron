@@ -42,4 +42,6 @@
     <string name="enable_notifications_title">Notifications required</string>
     <string name="enable_notifications_message">Heron posts model download progress as a notification. Enable notifications to download models.</string>
     <string name="enable_notifications">Enable notifications</string>
+    <string name="apple_intelligence_disabled">Turn on Apple Intelligence in Settings to use on-device AI.</string>
+    <string name="model_preparing">Preparing the on-device model…</string>
 </resources>

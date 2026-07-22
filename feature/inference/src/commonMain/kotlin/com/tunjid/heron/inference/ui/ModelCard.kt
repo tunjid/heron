@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.ModeStandby
 import androidx.compose.material.icons.rounded.Storage
@@ -60,6 +61,7 @@ import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
+import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.data.tasks.TaskStatus
 import com.tunjid.heron.inference.ModelItem
 import com.tunjid.heron.ui.AppBarIconButton
@@ -75,6 +77,7 @@ import com.tunjid.heron.ui.rememberSimpleDialogState
 import heron.feature.inference.generated.resources.Res
 import heron.feature.inference.generated.resources.ability_summary
 import heron.feature.inference.generated.resources.ability_translation
+import heron.feature.inference.generated.resources.apple_intelligence_disabled
 import heron.feature.inference.generated.resources.cancel
 import heron.feature.inference.generated.resources.delete
 import heron.feature.inference.generated.resources.delete_model_message
@@ -86,6 +89,7 @@ import heron.feature.inference.generated.resources.loaded
 import heron.feature.inference.generated.resources.loading
 import heron.feature.inference.generated.resources.memory_warning
 import heron.feature.inference.generated.resources.minimum_memory
+import heron.feature.inference.generated.resources.model_preparing
 import heron.feature.inference.generated.resources.retry
 import heron.feature.inference.generated.resources.terms_of_use_link
 import heron.feature.inference.generated.resources.terms_of_use_message
@@ -101,15 +105,18 @@ internal fun ModelCard(
     item: ModelItem,
     downloadEnabled: Boolean = true,
     onLoad: (LoadedModel) -> Unit,
-    onDownload: () -> Unit,
-    onCancel: () -> Unit,
-    onDelete: () -> Unit,
+    onDownload: (InferenceModel.External) -> Unit,
+    onCancel: (InferenceModel.External) -> Unit,
+    onDelete: (InferenceModel.External) -> Unit,
 ) {
     val termsDialogState = rememberSimpleDialogState()
     val deleteDialogState = rememberSimpleDialogState()
+    // Size / memory / terms apply only to downloadable models; a platform system model has none.
+    val external = item.model as? InferenceModel.External
     // A positive reading below the model's minimum means the device is undersized; 0 is "unknown",
     // so no warning is shown rather than a false alarm.
-    val memoryLow = item.platformMemoryBytes in 1 until item.model.minDeviceMemoryInGb * BYTES_IN_GB
+    val memoryLow = external != null &&
+        item.platformMemoryBytes in 1 until external.minDeviceMemoryInGb * BYTES_IN_GB
     ElevatedCard(
         modifier = modifier,
     ) {
@@ -136,17 +143,19 @@ internal fun ModelCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MetadataChip(
-                    icon = Icons.Rounded.Storage,
-                    text = formatModelSize(item.model.sizeInBytes),
-                )
-                MetadataChip(
-                    icon = Icons.Rounded.Memory,
-                    text = stringResource(
-                        Res.string.minimum_memory,
-                        item.model.minDeviceMemoryInGb,
-                    ),
-                )
+                if (external != null) {
+                    MetadataChip(
+                        icon = Icons.Rounded.Storage,
+                        text = formatModelSize(external.sizeInBytes),
+                    )
+                    MetadataChip(
+                        icon = Icons.Rounded.Memory,
+                        text = stringResource(
+                            Res.string.minimum_memory,
+                            external.minDeviceMemoryInGb,
+                        ),
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 ModelActions(
                     engineState = engineState,
@@ -154,22 +163,29 @@ internal fun ModelCard(
                     downloadEnabled = downloadEnabled,
                     onLoad = onLoad,
                     onDownload = {
-                        if (item.model.termsOfServiceUrl != null) termsDialogState.show()
-                        else onDownload()
+                        if (external?.termsOfServiceUrl != null) termsDialogState.show()
+                        else external?.let(onDownload)
                     },
-                    onCancel = onCancel,
+                    onCancel = { external?.let(onCancel) },
                     onDeleteClick = deleteDialogState::show,
                 )
             }
             if (memoryLow) MemoryWarning(
                 deviceMemoryBytes = item.platformMemoryBytes,
             )
+            // A platform system model can be present but not ready (Apple Intelligence off, or the
+            // model still downloading in the background); surface why instead of a bare card.
+            (item.status as? ModelStatus.Unavailable)?.let { unavailable ->
+                UnavailableStatus(
+                    reason = unavailable.reason,
+                )
+            }
             TermsOfUseDialog(
                 state = termsDialogState,
                 model = item.model,
                 onAccept = {
                     termsDialogState.hide()
-                    onDownload()
+                    external?.let(onDownload)
                 },
             )
             DeleteModelDialog(
@@ -177,7 +193,7 @@ internal fun ModelCard(
                 model = item.model,
                 onConfirm = {
                     deleteDialogState.hide()
-                    onDelete()
+                    external?.let(onDelete)
                 },
             )
         }
@@ -190,7 +206,7 @@ private fun TermsOfUseDialog(
     model: InferenceModel,
     onAccept: () -> Unit,
 ) {
-    val termsUrl = model.termsOfServiceUrl ?: return
+    val termsUrl = (model as? InferenceModel.External)?.termsOfServiceUrl ?: return
     val uriHandler = LocalUriHandler.current
     SimpleDialog(
         state = state,
@@ -285,8 +301,9 @@ private fun ModelActions(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when (status) {
-            is ModelStatus.Downloaded -> {
-                ModelActionButton(
+            is ModelStatus.Available -> {
+                // A downloaded file can be deleted; the platform system model cannot.
+                if (status.loadedModel is LoadedModel.FileBacked) ModelActionButton(
                     icon = Icons.Rounded.Delete,
                     contentDescription = stringResource(Res.string.delete),
                     tint = MaterialTheme.colorScheme.error,
@@ -334,6 +351,7 @@ private fun ModelActions(
                     onClick = onDownload,
                 )
             }
+            is ModelStatus.Unavailable -> Unit
         }
     }
 }
@@ -498,6 +516,34 @@ private fun MemoryWarning(
             ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
+        )
+    }
+}
+
+@Composable
+private fun UnavailableStatus(
+    reason: PlatformUnavailableReason,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            modifier = Modifier.size(16.dp),
+            imageVector = Icons.Rounded.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = when (reason) {
+                PlatformUnavailableReason.AppleIntelligenceDisabled ->
+                    stringResource(Res.string.apple_intelligence_disabled)
+                PlatformUnavailableReason.ModelDownloading ->
+                    stringResource(Res.string.model_preparing)
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
