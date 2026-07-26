@@ -19,6 +19,8 @@ package com.tunjid.heron.data.utilities.writequeue
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
@@ -261,6 +263,10 @@ internal class PersistedWriteQueue(
             is TimeoutCancellationException,
             -> true
             else -> false
+        }
+
+        if (failure != null) logcat {
+            "Write failure for ${writable.queueId}. shouldTryAgain: $shouldTryAgain. Error: ${failure.loggableText()}"
         }
 
         if (shouldTryAgain) {
