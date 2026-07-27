@@ -91,6 +91,7 @@ import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.client.call.NoTransformationFoundException
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -820,6 +821,13 @@ internal class OfflineTimelineRepository(
                 .groupBy(FeedGenerator.Interaction::feedUri)
                 .map { (feedUri, feedInteractions) ->
                     async {
+                        feedInteractions.firstOrNull {
+                            it is FeedGenerator.Interaction.Request &&
+                                it.event is FeedGenerator.Interaction.Event.Request.Less
+                        }
+                            ?.postUri
+                            ?.let { postDao.deletePost(it) }
+
                         networkService.runCatchingWithMonitoredNetworkRetry {
                             sendInteractions(
                                 SendInteractionsRequest(
@@ -829,7 +837,15 @@ internal class OfflineTimelineRepository(
                                     ),
                                 ),
                             )
-                        }.toOutcome()
+                        }
+                            .recoverCatching {
+                                // Some feed generators return empty responses for success.
+                                // Ideally we check status code here, but it's not available,
+                                // so assume success
+                                if (it is NoTransformationFoundException) Unit
+                                else throw it
+                            }
+                            .toOutcome()
                     }
                 }
                 .awaitAll()
