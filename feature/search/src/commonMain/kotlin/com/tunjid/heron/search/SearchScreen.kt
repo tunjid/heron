@@ -69,7 +69,10 @@ internal fun SearchScreen(
         navigateTo(signInDestination())
     }
 
-    val pagerState = rememberPagerState { state.searchStateHolders.size }
+    val pagerState = rememberPagerState {
+        if (state.appliedFilter == null) state.searchStateHolders.size
+        else state.searchStateHolders.count { it.state is SearchState.OfPosts }
+    }
     val onProfileClicked: (Profile, String) -> Unit = remember(navigateTo) {
         { profile, sharedElementPrefix ->
             navigateTo(

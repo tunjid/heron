@@ -46,6 +46,7 @@ fun PaneScaffoldState.rememberUpdatedSearchFilterSheetState(
     filter: SearchQuery.Filter,
     onQueryTextChanged: (String) -> Unit,
     onFilterChanged: (SearchQuery.Filter) -> Unit,
+    onClear: () -> Unit,
     onApply: () -> Unit,
 ): SearchFilterSheetState {
     val state = rememberBottomSheetState(
@@ -61,6 +62,10 @@ fun PaneScaffoldState.rememberUpdatedSearchFilterSheetState(
             onQueryTextChanged = onQueryTextChanged,
             onFilterChanged = onFilterChanged,
             onCancel = state::hide,
+            onClear = {
+                onClear()
+                state.hide()
+            },
             onApply = {
                 onApply()
                 state.hide()

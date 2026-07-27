@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -70,6 +71,7 @@ import heron.feature.search.generated.resources.filter_add_people
 import heron.feature.search.generated.resources.filter_add_people_filter
 import heron.feature.search.generated.resources.filter_all_words
 import heron.feature.search.generated.resources.filter_cancel
+import heron.feature.search.generated.resources.filter_clear
 import heron.feature.search.generated.resources.filter_clear_date
 import heron.feature.search.generated.resources.filter_date_prompt
 import heron.feature.search.generated.resources.filter_exact_phrase
@@ -117,6 +119,7 @@ internal fun SearchFilterForm(
     onQueryTextChanged: (String) -> Unit,
     onFilterChanged: (SearchQuery.Filter) -> Unit,
     onCancel: () -> Unit,
+    onClear: () -> Unit,
     onApply: () -> Unit,
 ) {
     // A single, shared profile picker services every person group; the group being
@@ -331,6 +334,21 @@ internal fun SearchFilterForm(
                     shape = MaterialTheme.shapes.large,
                 ) {
                     Text(text = stringResource(Res.string.filter_add_people_filter))
+                }
+            }
+            item(key = ClearFilterKey) {
+                FilledTonalButton(
+                    onClick = onClear,
+                    modifier = Modifier
+                        .animateItem()
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                ) {
+                    Text(text = stringResource(Res.string.filter_clear))
                 }
             }
             item(key = BottomSpacerKey) {
@@ -724,4 +742,5 @@ private const val DateRangeKey = "com.tunjid.heron.search.filter.date_range"
 private const val LanguageMediaKey = "com.tunjid.heron.search.filter.language_media"
 private const val IncludeFromKey = "com.tunjid.heron.search.filter.include_from"
 private const val AddPeopleFilterKey = "com.tunjid.heron.search.filter.add_people_filter"
+private const val ClearFilterKey = "com.tunjid.heron.search.filter.clear"
 private const val BottomSpacerKey = "com.tunjid.heron.search.filter.bottom_spacer"

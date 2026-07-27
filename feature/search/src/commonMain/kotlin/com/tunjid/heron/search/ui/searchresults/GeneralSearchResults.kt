@@ -173,6 +173,7 @@ internal fun GeneralSearchResults(
                         tabsState = rememberTabsState(
                             tabs = searchTabs(
                                 isSignedIn = state.signedInProfile != null,
+                                hasAdvancedSearchFilters = state.appliedFilter != null,
                                 query = state.query,
                             ),
                             isCollapsed = tabsCollapsed,
@@ -310,20 +311,27 @@ internal fun GeneralSearchResults(
 private fun searchTabs(
     isSignedIn: Boolean,
     query: RouteQuery,
+    hasAdvancedSearchFilters: Boolean,
 ): List<Tab> {
     val top = stringResource(resource = Res.string.top)
     val latest = stringResource(resource = Res.string.latest)
     val people = stringResource(resource = Res.string.people)
     val feeds = stringResource(resource = Res.string.feeds)
     val supportsNonPostSearch = query.supportsNonPostSearch
-    // only pass 1 string resource here to prevent allocation on >4 remember args
-    return remember(isSignedIn, supportsNonPostSearch, top) {
+    // top proxies latest/people/feeds as a remember key since they all change
+    // together on locale; keying on just one avoids the >4 arg vararg allocation.
+    return remember(
+        isSignedIn,
+        supportsNonPostSearch,
+        hasAdvancedSearchFilters,
+        top,
+    ) {
         buildList {
             if (isSignedIn) {
                 add(top)
                 add(latest)
             }
-            if (supportsNonPostSearch) {
+            if (supportsNonPostSearch && !hasAdvancedSearchFilters) {
                 add(people)
                 add(feeds)
             }
