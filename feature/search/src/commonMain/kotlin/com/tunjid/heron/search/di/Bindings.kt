@@ -186,6 +186,9 @@ internal fun Route(
         onFilterChanged = { filter ->
             stateHolder.accept(Action.Filter.Edit(filter))
         },
+        onClear = {
+            stateHolder.accept(Action.Filter.Clear)
+        },
         onApply = {
             stateHolder.accept(Action.Filter.Apply)
         },
@@ -194,7 +197,7 @@ internal fun Route(
     val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        searchFocusRequester.requestFocus()
+        if (state.searchBarText.isBlank()) searchFocusRequester.requestFocus()
     }
 
     val topAppBarNestedScrollConnection =
@@ -249,7 +252,7 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    SearchFilterAction(
+                    if (state.signedInProfile != null) SearchFilterAction(
                         isActive = state.appliedFilter != null,
                         onClick = {
                             stateHolder.accept(Action.Filter.Begin)
@@ -296,7 +299,7 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    SearchFilterAction(
+                    if (state.signedInProfile != null) SearchFilterAction(
                         isActive = state.appliedFilter != null,
                         onClick = {
                             stateHolder.accept(Action.Filter.Begin)

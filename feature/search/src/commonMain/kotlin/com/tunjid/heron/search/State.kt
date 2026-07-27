@@ -249,6 +249,8 @@ sealed class Action(val key: String) {
         ) : Filter()
 
         data object Apply : Filter()
+
+        data object Clear : Filter()
     }
 
     data class FetchSuggestedProfiles(

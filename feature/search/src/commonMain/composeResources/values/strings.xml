@@ -33,6 +33,7 @@
     <string name="filters_title">Filters</string>
     <string name="filters_content_description">Search filters</string>
     <string name="filter_cancel">Cancel</string>
+    <string name="filter_clear">Clear filter</string>
     <string name="filter_search">Search</string>
     <string name="filter_all_words">All of these words</string>
     <string name="filter_none_words">None of these words</string>
