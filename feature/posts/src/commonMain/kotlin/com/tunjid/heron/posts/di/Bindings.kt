@@ -24,14 +24,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.posts.Action
 import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
 import com.tunjid.heron.posts.PostsStateHolder
 import com.tunjid.heron.posts.PostsViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
@@ -59,9 +58,10 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -118,6 +118,7 @@ internal val Route.postsRequest: PostsRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object PostsNavigationBindings {
 
     @Provides
@@ -132,10 +133,8 @@ object PostsNavigationBindings {
 }
 
 @BindingContainer
-class PostsBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object PostsBindings {
 
     @Provides
     @IntoMap

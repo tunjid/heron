@@ -41,6 +41,8 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.ml.engine.InferenceEngine
+import com.tunjid.heron.data.ml.engine.InferenceSource
+import com.tunjid.heron.data.ml.engine.platformInferenceCapability
 import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.AtProtoIdentityResolver
@@ -96,6 +98,7 @@ import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefr
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.InMemoryCursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.draft.OfflinePostDraftDataSource
 import com.tunjid.heron.data.utilities.draft.PostDraftDataSource
+import com.tunjid.heron.data.utilities.inference.DelegatingInferenceManager
 import com.tunjid.heron.data.utilities.inference.LiteRtLmManager
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
@@ -114,6 +117,7 @@ import dev.whyoleg.cryptography.CryptographyProviderApi
 import dev.whyoleg.cryptography.CryptographySystem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.Qualifier
 import dev.zacsweers.metro.SingleIn
@@ -146,12 +150,12 @@ class DataBindingArgs(
     val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
     val savedStatePath: File.System,
-    /** Directory for on-device model files; a platform cache/no-backup location. */
     val modelsDirectory: File.System,
     val savedStateFileSystem: FileSystem,
     val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
     val inferenceEngine: InferenceEngine,
+    val platformInferenceManager: InferenceModelManager? = null,
     val languageDetector: LanguageDetector,
     val memoryMonitor: MemoryMonitor,
     val backgroundTaskScheduler: (
@@ -162,14 +166,15 @@ class DataBindingArgs(
 )
 
 @BindingContainer
-class DataBindings(
-    private val args: DataBindingArgs,
-) {
+@ContributesTo(AppScope::class)
+object DataBindings {
 
     @AppMainScope
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppScope(): CoroutineScope = args.appMainScope
+    fun provideAppScope(
+        args: DataBindingArgs,
+    ): CoroutineScope = args.appMainScope
 
     @IODispatcher
     @SingleIn(AppScope::class)
@@ -183,45 +188,72 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideConnectivity(): Connectivity = args.connectivity
+    fun provideConnectivity(
+        args: DataBindingArgs,
+    ): Connectivity = args.connectivity
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStatePath(): File.System = args.savedStatePath
+    fun provideSavedStatePath(
+        args: DataBindingArgs,
+    ): File.System = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideSavedStateEncryption(): SavedStateEncryption = args.savedStateEncryption
+    fun provideSavedStateEncryption(
+        args: DataBindingArgs,
+    ): SavedStateEncryption = args.savedStateEncryption
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideRoomDatabase(): AppDatabase = args.databaseBuilder.configureAndBuild()
+    fun provideRoomDatabase(
+        args: DataBindingArgs,
+    ): AppDatabase = args.databaseBuilder.configureAndBuild()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideInferenceEngine(): InferenceEngine = args.inferenceEngine
+    fun provideInferenceEngine(
+        args: DataBindingArgs,
+    ): InferenceEngine = args.inferenceEngine
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideLanguageDetector(): LanguageDetector = args.languageDetector
+    fun provideLanguageDetector(
+        args: DataBindingArgs,
+    ): LanguageDetector = args.languageDetector
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideMemoryMonitor(): MemoryMonitor = args.memoryMonitor
+    fun provideMemoryMonitor(
+        args: DataBindingArgs,
+    ): MemoryMonitor = args.memoryMonitor
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideInferenceModelManager(
+        args: DataBindingArgs,
         fileManager: FileManager,
         @IODispatcher ioDispatcher: CoroutineDispatcher,
         backgroundTaskScheduler: BackgroundTaskScheduler,
         networkService: NetworkService,
-    ): InferenceModelManager = LiteRtLmManager(
-        fileManager = fileManager,
-        modelsDirectory = args.modelsDirectory,
-        ioDispatcher = ioDispatcher,
-        backgroundTaskScheduler = backgroundTaskScheduler,
-        networkService = networkService,
+    ): InferenceModelManager = DelegatingInferenceManager(
+        platformManager = args.platformInferenceManager,
+        // Only build the LiteRT-LM download catalog on platforms that offer downloadable models; a
+        // platform-model-only device (e.g. iOS Foundation Models) has no LiteRT-LM implementation.
+        downloadableManager = when (platformInferenceCapability()) {
+            InferenceSource.External,
+            InferenceSource.All,
+            -> LiteRtLmManager(
+                fileManager = fileManager,
+                modelsDirectory = args.modelsDirectory,
+                ioDispatcher = ioDispatcher,
+                backgroundTaskScheduler = backgroundTaskScheduler,
+                networkService = networkService,
+            )
+            InferenceSource.Platform,
+            InferenceSource.None,
+            -> null
+        },
     )
 
     @SingleIn(AppScope::class)
@@ -230,7 +262,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideFileManager(): FileManager = createFileManager(
+    internal fun provideFileManager(
+        args: DataBindingArgs,
+    ): FileManager = createFileManager(
         fileSystem = args.savedStateFileSystem,
     )
 
@@ -468,6 +502,7 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideBackgroundTaskScheduler(
+        args: DataBindingArgs,
         taskStore: TaskStore,
         httpClient: HttpClient,
         fileManager: FileManager,

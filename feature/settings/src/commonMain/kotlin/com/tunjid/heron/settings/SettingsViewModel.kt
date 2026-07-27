@@ -22,6 +22,8 @@ import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.ml.engine.isAvailable
+import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -79,6 +81,7 @@ class ActualSettingsViewModel(
     constructor(
         authRepository: AuthRepository,
         userDataRepository: UserDataRepository,
+        inferenceModelManager: InferenceModelManager,
         writeQueue: WriteQueue,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
@@ -102,6 +105,10 @@ class ActualSettingsViewModel(
                 launchObserveActiveProfileMutations(
                     state = state,
                     authRepository = authRepository,
+                )
+                launchInferenceCapabilityMutations(
+                    state = state,
+                    inferenceModelManager = inferenceModelManager,
                 )
                 actions.launchMutationsIn(
                     productionScope = this,
@@ -304,6 +311,14 @@ private fun launchObserveActiveProfileMutations(
     .launchedCollect { profileId ->
         state.activeProfileId = profileId
     }
+
+context(productionScope: CoroutineScope)
+private fun launchInferenceCapabilityMutations(
+    state: State.SnapshotMutable,
+    inferenceModelManager: InferenceModelManager,
+) = inferenceModelManager.source.launchedCollect { capability ->
+    state.canRunInference = capability.isAvailable
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.launchHomeTimelineRefreshOnLaunchMutations(

@@ -36,7 +36,7 @@ internal data class LiteRtLmModel(
     val defaultConfig: GenerationParams = GenerationParams(),
     val inputModes: Set<InputMode>,
     override val abilities: List<InferenceModel.Ability>,
-) : InferenceModel {
+) : InferenceModel.External {
     override val maxTokens: Int
         get() = defaultConfig.maxTokens
 }

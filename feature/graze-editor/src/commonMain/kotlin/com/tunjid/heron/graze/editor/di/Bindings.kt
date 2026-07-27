@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
@@ -35,7 +34,7 @@ import com.tunjid.heron.graze.editor.ui.Title
 import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
@@ -59,9 +58,10 @@ import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -98,6 +98,7 @@ internal val Route.initialLoad: Action.Update?
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object GrazeEditorNavigationBindings {
 
     @Provides
@@ -120,10 +121,8 @@ object GrazeEditorNavigationBindings {
 }
 
 @BindingContainer
-class GrazeEditorBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object GrazeEditorBindings {
 
     @Provides
     @IntoMap

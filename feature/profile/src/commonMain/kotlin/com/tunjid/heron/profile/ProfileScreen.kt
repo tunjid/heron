@@ -312,6 +312,7 @@ internal fun ProfileScreen(
                 isRefreshing = isRefreshing,
                 supportedApps = state.supportedApps,
                 isSignedInProfile = state.isSignedInProfile,
+                canRunInference = state.canRunInference,
                 signedInProfileId = state.signedInProfileId,
                 isSubscribedToLabeler = remember(
                     state.profile.isLabeler,
@@ -653,6 +654,7 @@ private fun ProfileHeader(
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     isSubscribedToLabeler: Boolean,
+    canRunInference: Boolean,
     signedInProfileId: ProfileId?,
     viewerState: ProfileViewerState?,
     supportedApps: List<AtmosphereApp>,
@@ -741,6 +743,7 @@ private fun ProfileHeader(
                     onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
                     onVibeClicked = onVibeClicked,
                     onNavigate = onNavigate,
+                    canRunInference = canRunInference,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -1002,6 +1005,7 @@ private fun ProfileHeadline(
     onUpdateProfileLiveStatus: () -> Unit,
     onVibeClicked: (ProfileId) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
+    canRunInference: Boolean,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -1099,10 +1103,12 @@ private fun ProfileHeadline(
                                         viewerState,
                                         isSignedInProfile,
                                         profile.status?.isLive,
+                                        canRunInference,
                                     ) {
                                         viewerState.profileActionMenuItems(
                                             isSignedInProfile = isSignedInProfile,
                                             isLive = profile.status?.isLive == true,
+                                            inferenceAvailable = canRunInference,
                                         )
                                     },
                                     onItemClicked = { item ->

@@ -29,9 +29,11 @@ import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.GenerationParams
 import com.tunjid.heron.data.ml.engine.InferenceEngine
 import com.tunjid.heron.data.ml.language.englishDisplayName
+import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.ModelStatus
+import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -236,17 +238,25 @@ private fun InferenceEngine.outcomes(
 ): Flow<InferenceOutcome> = flow {
     emit(InferenceOutcome.Loading())
     if (state.first() !is EngineState.Ready) {
-        // Opportunistically load the selected default model; prompt the user when there is none.
-        val loadedModel = resolveDefaultModel(
-            inferenceModelManager = inferenceModelManager,
-            userDataRepository = userDataRepository,
-        )
-        if (loadedModel == null) {
-            emit(InferenceOutcome.NoModel)
-            return@flow
+        // Opportunistically load the selected default model; prompt the user when there is none, or
+        // explain why a present-but-not-ready platform model can't run yet.
+        when (
+            val resolution = resolveDefaultModel(
+                inferenceModelManager = inferenceModelManager,
+                userDataRepository = userDataRepository,
+            )
+        ) {
+            // Loading an already loaded model is idempotent across engine implementations.
+            is DefaultModelResolution.Loadable -> load(resolution.model)
+            is DefaultModelResolution.Unavailable -> {
+                emit(InferenceOutcome.Unavailable(resolution.reason))
+                return@flow
+            }
+            DefaultModelResolution.None -> {
+                emit(InferenceOutcome.NoModel)
+                return@flow
+            }
         }
-        // Loading an already loaded model is idempotent across engine implementations.
-        load(loadedModel)
     }
     if (state.first() !is EngineState.Ready) {
         emit(
@@ -281,16 +291,42 @@ private fun InferenceEngine.outcomes(
     )
 }
 
+/** The outcome of resolving which model (if any) a one-shot inference should load. */
+private sealed interface DefaultModelResolution {
+    data class Loadable(
+        val model: LoadedModel,
+    ) : DefaultModelResolution
+
+    data class Unavailable(
+        val reason: PlatformUnavailableReason,
+    ) : DefaultModelResolution
+
+    data object None : DefaultModelResolution
+}
+
 private suspend fun resolveDefaultModel(
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
-): LoadedModel? {
+): DefaultModelResolution {
+    // A platform system model needs no download or default-name selection; use it when available,
+    // and otherwise surface why it isn't (rather than treating it as "no model").
+    inferenceModelManager.models
+        .firstOrNull { it is InferenceModel.Platform }
+        ?.let { platformModel ->
+            return when (val status = inferenceModelManager.status(platformModel).first()) {
+                is ModelStatus.Available -> DefaultModelResolution.Loadable(status.loadedModel)
+                is ModelStatus.Unavailable -> DefaultModelResolution.Unavailable(status.reason)
+                else -> DefaultModelResolution.None
+            }
+        }
     val defaultModelName = userDataRepository.preferences.first().local.defaultModelName
-        ?: return null
+        ?: return DefaultModelResolution.None
     val model = inferenceModelManager.models.firstOrNull { it.name == defaultModelName }
-        ?: return null
-    return (inferenceModelManager.status(model).first() as? ModelStatus.Downloaded)
-        ?.loadedModel
+        ?: return DefaultModelResolution.None
+    return when (val status = inferenceModelManager.status(model).first()) {
+        is ModelStatus.Available -> DefaultModelResolution.Loadable(status.loadedModel)
+        else -> DefaultModelResolution.None
+    }
 }
 
 private suspend fun TimelineRepository.recentTimelineItems(

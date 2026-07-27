@@ -45,7 +45,15 @@ internal fun MultipleEntitySaver.add(
         add(
             feedView.feedItemEntity(
                 sourceId = source.id,
-                itemSort = query.itemSortKey(index),
+                itemSort = when (source) {
+                    // The following feed should be strictly sorted chronologically
+                    Timeline.Source.Following,
+                    -> feedView.post.indexedAt.toEpochMilliseconds()
+                    is Timeline.Source.Profile,
+                    is Timeline.Source.Record.Feed,
+                    is Timeline.Source.Record.List,
+                    -> query.feedGeneratorOrder(index)
+                },
                 viewingProfileId = viewingProfileId,
             ),
         )
@@ -101,7 +109,7 @@ internal fun MultipleEntitySaver.add(
  * Allows up to [ITEM_SORT_BUFFER] items (333 pages, 30 items per page) before sorting logic breaks.
  * Safe from Long overflow for ~29,000 years.
  */
-private fun CursorQuery.itemSortKey(
+private fun CursorQuery.feedGeneratorOrder(
     index: Int,
 ) = (data.cursorAnchor.toEpochMilliseconds() * ITEM_SORT_BUFFER) - (data.offset + index)
 

@@ -32,11 +32,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 
-private val ModelA = LoadedModel(
+private val ModelA = LoadedModel.FileBacked(
     model = InferenceModel.Gemma31B,
     file = File.System("model-a"),
 )
-private val ModelB = LoadedModel(
+private val ModelB = LoadedModel.FileBacked(
     model = InferenceModel.Gemma4E2B,
     file = File.System("model-b"),
 )

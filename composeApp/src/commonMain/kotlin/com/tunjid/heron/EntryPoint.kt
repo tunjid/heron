@@ -18,71 +18,16 @@ package com.tunjid.heron
 
 import androidx.compose.runtime.Composer
 import androidx.compose.runtime.tooling.ComposeStackTraceMode
-import com.tunjid.heron.atmosphereapp.di.AtmosphereAppBindings
-import com.tunjid.heron.atmosphereapp.di.AtmosphereAppNavigationBindings
-import com.tunjid.heron.compose.di.ComposeBindings
-import com.tunjid.heron.compose.di.ComposeNavigationBindings
-import com.tunjid.heron.conversation.di.ConversationBindings
-import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.data.di.DataBindingArgs
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.logging.Logger
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
-import com.tunjid.heron.editprofile.di.EditProfileBindings
-import com.tunjid.heron.editprofile.di.EditProfileNavigationBindings
-import com.tunjid.heron.feed.di.FeedBindings
-import com.tunjid.heron.feed.di.FeedNavigationBindings
-import com.tunjid.heron.gallery.di.GalleryBindings
-import com.tunjid.heron.gallery.di.GalleryNavigationBindings
-import com.tunjid.heron.graze.editor.di.GrazeEditorBindings
-import com.tunjid.heron.graze.editor.di.GrazeEditorNavigationBindings
-import com.tunjid.heron.home.di.HomeBindings
-import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.images.ImageLoader
-import com.tunjid.heron.inference.di.InferenceBindings
-import com.tunjid.heron.inference.di.InferenceNavigationBindings
-import com.tunjid.heron.list.di.ListBindings
-import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.messages.di.MessagesBindings
-import com.tunjid.heron.messages.di.MessagesNavigationBindings
-import com.tunjid.heron.moderation.di.ModerationBindings
-import com.tunjid.heron.moderation.di.ModerationNavigationBindings
-import com.tunjid.heron.notifications.di.NotificationsBindings
-import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
-import com.tunjid.heron.notificationsettings.di.NotificationSettingsBindings
-import com.tunjid.heron.notificationsettings.di.NotificationSettingsNavigationBindings
-import com.tunjid.heron.postdetail.di.PostDetailBindings
-import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
-import com.tunjid.heron.posts.di.PostsBindings
-import com.tunjid.heron.posts.di.PostsNavigationBindings
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
-import com.tunjid.heron.profile.di.ProfileBindings
-import com.tunjid.heron.profile.di.ProfileNavigationBindings
-import com.tunjid.heron.profiles.di.ProfilesBindings
-import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
-import com.tunjid.heron.search.di.SearchBindings
-import com.tunjid.heron.search.di.SearchNavigationBindings
-import com.tunjid.heron.settings.di.SettingsBindings
-import com.tunjid.heron.settings.di.SettingsNavigationBindings
-import com.tunjid.heron.sheets.di.SheetBindings
-import com.tunjid.heron.signin.di.SignInBindings
-import com.tunjid.heron.signin.di.SignInNavigationBindings
-import com.tunjid.heron.splash.di.SplashBindings
-import com.tunjid.heron.splash.di.SplashNavigationBindings
-import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
-import com.tunjid.heron.standard.publication.di.StandardPublicationNavigationBindings
-import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
-import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
-import com.tunjid.heron.tasks.di.TasksBindings
-import com.tunjid.heron.tasks.di.TasksNavigationBindings
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindingArgs
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.notifications.Notifier
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.zacsweers.metro.createGraphFactory
@@ -108,160 +53,15 @@ fun createAppState(
 
     val appMainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
-        signInNavigationBindings = SignInNavigationBindings,
-        atmosphereAppNavigationBindings = AtmosphereAppNavigationBindings,
-        composeNavigationBindings = ComposeNavigationBindings,
-        conversationNavigationBindings = ConversationNavigationBindings,
-        feedNavigationBindings = FeedNavigationBindings,
-        editProfileNavigationBindings = EditProfileNavigationBindings,
-        galleryNavigationBindings = GalleryNavigationBindings,
-        grazeEditorNavigationBindings = GrazeEditorNavigationBindings,
-        homeNavigationBindings = HomeNavigationBindings,
-        inferenceNavigationBindings = InferenceNavigationBindings,
-        listNavigationBindings = ListNavigationBindings,
-        messagesNavigationBindings = MessagesNavigationBindings,
-        moderationNavigationBindings = ModerationNavigationBindings,
-        notificationsNavigationBindings = NotificationsNavigationBindings,
-        notificationSettingsNavigationBindings = NotificationSettingsNavigationBindings,
-        postDetailNavigationBindings = PostDetailNavigationBindings,
-        postsNavigationBindings = PostsNavigationBindings,
-        profileNavigationBindings = ProfileNavigationBindings,
-        profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
-        profilesNavigationBindings = ProfilesNavigationBindings,
-        searchNavigationBindings = SearchNavigationBindings,
-        splashNavigationBindings = SplashNavigationBindings,
-        standardPublicationNavigationBindings = StandardPublicationNavigationBindings,
-        standardSubscriptionNavigationBindings = StandardSubscriptionNavigationBindings,
-        settingsNavigationBindings = SettingsNavigationBindings,
-        tasksNavigationBindings = TasksNavigationBindings,
-    )
+    val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create()
 
-    val dataBindings = DataBindings(
-        args = args(appMainScope),
-    )
-
-    val scaffoldBindings = ScaffoldBindings(
-        args = ScaffoldBindingArgs(
+    val appGraph = createGraphFactory<AppGraph.Factory>().create(
+        dataBindingArgs = args(appMainScope),
+        scaffoldBindingArgs = ScaffoldBindingArgs(
             imageLoader = imageLoader(),
             notifier = notifier(appMainScope),
             videoPlayerController = videoPlayerController(appMainScope),
             routeMatchers = navigationComponent.allRouteMatchers,
-        ),
-        dataBindings = dataBindings,
-    )
-
-    val appGraph = createGraphFactory<AppGraph.Factory>().create(
-        dataBindings = dataBindings,
-        scaffoldBindings = scaffoldBindings,
-        signInBindings = SignInBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        atmosphereAppBindings = AtmosphereAppBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        composeBindings = ComposeBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        conversationBindings = ConversationBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        editProfileBindings = EditProfileBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-
-        ),
-        feedBindings = FeedBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        galleryBindings = GalleryBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        grazeEditorBindings = GrazeEditorBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        homeBindings = HomeBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        inferenceBindings = InferenceBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        listBindings = ListBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        messagesBindings = MessagesBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        moderationBindings = ModerationBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        notificationsBindings = NotificationsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        notificationSettingsBindings = NotificationSettingsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        postDetailBindings = PostDetailBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        postsBindings = PostsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profileBindings = ProfileBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profileAvatarBindings = ProfileAvatarBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profilesBindings = ProfilesBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        searchBindings = SearchBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        splashBindings = SplashBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        standardPublicationBindings = StandardPublicationBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        standardSubscriptionBindings = StandardSubscriptionBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        settingsBindings = SettingsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        tasksBindings = TasksBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        sheetBindings = SheetBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
         ),
     )
     return appGraph.appState

@@ -25,7 +25,9 @@ import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.flattenedText
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.ml.engine.isAvailable
 import com.tunjid.heron.data.ml.language.LanguageDetector
+import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
@@ -50,7 +52,6 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -89,6 +90,7 @@ class ActualPostDetailViewModel(
         userDataRepository: UserDataRepository,
         writeQueue: WriteQueue,
         languageDetector: LanguageDetector,
+        inferenceModelManager: InferenceModelManager,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
@@ -104,6 +106,10 @@ class ActualPostDetailViewModel(
                 launchLoadPreferencesMutations(
                     state = state,
                     userDataRepository = userDataRepository,
+                )
+                launchInferenceCapabilityMutations(
+                    state = state,
+                    inferenceModelManager = inferenceModelManager,
                 )
                 actions
                     .onStart {
@@ -241,6 +247,14 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
+}
+
+context(productionScope: CoroutineScope)
+private fun launchInferenceCapabilityMutations(
+    state: State.SnapshotMutable,
+    inferenceModelManager: InferenceModelManager,
+) = inferenceModelManager.source.launchedCollect { capability ->
+    state.canRunInference = capability.isAvailable
 }
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(

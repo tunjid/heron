@@ -30,6 +30,9 @@ internal actual fun backendFor(): InferenceBackend =
 // so prompts pass through unchanged.
 internal actual fun sanitizeEnginePrompt(prompt: String): String = prompt
 
+// Android runs the downloadable LiteRT-LM catalog.
+actual fun platformInferenceCapability(): InferenceSource = InferenceSource.External
+
 private fun isPixel10(): Boolean =
     Build.MODEL.contains("pixel 10", ignoreCase = true)
 

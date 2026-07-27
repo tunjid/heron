@@ -5,6 +5,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.files.path
+import com.tunjid.heron.data.ml.engine.InferenceSource
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
@@ -33,6 +35,9 @@ internal class LiteRtLmManager(
     private val networkService: NetworkService,
 ) : InferenceModelManager {
 
+    override val source: Flow<InferenceSource> =
+        flowOf(InferenceSource.External)
+
     override val models: List<InferenceModel> =
         listOf(
             InferenceModel.Gemma31B,
@@ -42,61 +47,67 @@ internal class LiteRtLmManager(
 
     override fun status(
         model: InferenceModel,
-    ): Flow<ModelStatus> = combine(
-        backgroundTaskScheduler.status(downloadTaskId(model)),
-        // A deletion (or a completed download's move) changes no task state, so react to the file
-        // mutation directly; [onStart] seeds [combine]'s first emission.
-        fileManager.fileMutations
-            .filter { it == modelFile(model) }
-            .onStart { emit(modelFile(model)) },
-    ) { taskStatus, _ ->
-        if (fileManager.exists(modelFile(model))) ModelStatus.Downloaded(
-            LoadedModel(
-                model = model,
-                file = modelFile(model),
-            ),
-        )
-        else ModelStatus.Pending(
-            taskStatus = taskStatus,
-        )
+    ): Flow<ModelStatus> {
+        val downloadable = model.downloadable()
+        return combine(
+            backgroundTaskScheduler.status(downloadTaskId(downloadable)),
+            // A deletion (or a completed download's move) changes no task state, so react to the file
+            // mutation directly; [onStart] seeds [combine]'s first emission.
+            fileManager.fileMutations
+                .filter { it == modelFile(downloadable) }
+                .onStart { emit(modelFile(downloadable)) },
+        ) { taskStatus, _ ->
+            if (fileManager.exists(modelFile(downloadable))) ModelStatus.Available(
+                LoadedModel.FileBacked(
+                    model = downloadable,
+                    file = modelFile(downloadable),
+                ),
+            )
+            else ModelStatus.Pending(
+                taskStatus = taskStatus,
+            )
+        }
+            .distinctUntilChanged()
+            .flowOn(ioDispatcher)
     }
-        .distinctUntilChanged()
-        .flowOn(ioDispatcher)
 
     override suspend fun enqueueDownload(
-        model: InferenceModel,
-    ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
-        getModelUrl(
-            GetModelUrlQueryParams(
-                path = model.fileName,
-            ),
-        )
-    }
-        .mapCatchingUnlessCancelled {
-            backgroundTaskScheduler.enqueue(
-                Task.Download(
-                    sourceUrl = it.url.uri,
-                    destination = modelFile(model),
-                    sizeInBytes = model.sizeInBytes,
-                    sha256 = model.sha256,
+        model: InferenceModel.External,
+    ): Outcome {
+        val downloadable = model.downloadable()
+        return networkService.runCatchingWithMonitoredNetworkRetry {
+            getModelUrl(
+                GetModelUrlQueryParams(
+                    path = downloadable.fileName,
                 ),
             )
         }
-        .toOutcome()
+            .mapCatchingUnlessCancelled {
+                backgroundTaskScheduler.enqueue(
+                    Task.Download(
+                        sourceUrl = it.url.uri,
+                        destination = modelFile(downloadable),
+                        sizeInBytes = downloadable.sizeInBytes,
+                        sha256 = downloadable.sha256,
+                    ),
+                )
+            }
+            .toOutcome()
+    }
 
     override suspend fun cancelDownload(
-        model: InferenceModel,
-    ) = backgroundTaskScheduler.cancel(downloadTaskId(model))
+        model: InferenceModel.External,
+    ) = backgroundTaskScheduler.cancel(downloadTaskId(model.downloadable()))
 
     override suspend fun delete(
-        model: InferenceModel,
+        model: InferenceModel.External,
     ): Unit = withContext(ioDispatcher) {
         cancelDownload(model)
-        fileManager.delete(modelFile(model))
+        fileManager.delete(modelFile(model.downloadable()))
     }
 
     private fun downloadTaskId(
-        model: InferenceModel,
+        model: InferenceModel.External,
     ): TaskId = Task.Download(
         sourceUrl = "",
         destination = modelFile(model),
@@ -104,6 +115,11 @@ internal class LiteRtLmManager(
         sha256 = model.sha256,
     ).id
 
-    private fun modelFile(model: InferenceModel): File.System =
+    private fun modelFile(model: InferenceModel.External): File.System =
         (modelsDirectory.path / model.fileName).asSystemFile()
+
+    // This manager only serves downloadable models (the Gemma catalog above).
+    private fun InferenceModel.downloadable(): InferenceModel.External =
+        this as? InferenceModel.External
+            ?: error("LiteRtLmManager only handles downloadable models, got $this")
 }

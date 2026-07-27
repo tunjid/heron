@@ -51,6 +51,8 @@ interface State {
         @Transient
         val postLanguageTag: String? = null,
         @Transient
+        val canRunInference: Boolean = false,
+        @Transient
         val order: TimelineItem.Threaded.Order? = null,
         @Transient
         val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
@@ -107,6 +109,7 @@ interface State {
 }
 
 val State.canTranslate: Boolean get() {
+    if (!canRunInference) return false
     val currentLanguageTag = currentLanguageTag ?: return false
     val postLanguageTag = postLanguageTag ?: return false
 

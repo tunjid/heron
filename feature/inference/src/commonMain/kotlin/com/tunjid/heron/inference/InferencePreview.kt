@@ -66,8 +66,8 @@ internal fun InferencePreview() {
                         ),
                         ModelItem(
                             model = InferenceModel.Gemma4E4B,
-                            status = ModelStatus.Downloaded(
-                                LoadedModel(
+                            status = ModelStatus.Available(
+                                LoadedModel.FileBacked(
                                     model = InferenceModel.Gemma4E4B,
                                     file = File.System(
                                         relativePath = InferenceModel.Gemma4E4B.fileName,

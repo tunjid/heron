@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.ui.scaffold.di
 
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.AppIdentityStateHolder
@@ -35,7 +34,7 @@ import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.StateFlow
@@ -48,29 +47,35 @@ class ScaffoldBindingArgs(
 )
 
 @BindingContainer
-class ScaffoldBindings(
-    val args: ScaffoldBindingArgs,
-    @Includes val dataBindings: DataBindings,
-) {
+@ContributesTo(AppScope::class)
+object ScaffoldBindings {
 
     @SingleIn(AppScope::class)
     @Provides
-    fun routeParser(): RouteParser =
+    fun routeParser(
+        args: ScaffoldBindingArgs,
+    ): RouteParser =
         routeParserFrom(*(args.routeMatchers).toTypedArray())
 
     @SingleIn(AppScope::class)
     @Provides
-    fun imageLoader(): ImageLoader =
+    fun imageLoader(
+        args: ScaffoldBindingArgs,
+    ): ImageLoader =
         args.imageLoader
 
     @SingleIn(AppScope::class)
     @Provides
-    fun notifier(): Notifier =
+    fun notifier(
+        args: ScaffoldBindingArgs,
+    ): Notifier =
         args.notifier
 
     @SingleIn(AppScope::class)
     @Provides
-    fun videoPlayerController(): VideoPlayerController =
+    fun videoPlayerController(
+        args: ScaffoldBindingArgs,
+    ): VideoPlayerController =
         args.videoPlayerController
 
     @Provides

@@ -20,6 +20,7 @@ import com.tunjid.heron.atmosphereapp.di.AtmosphereAppBindings
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.utilities.DatabaseCleanup
@@ -50,6 +51,7 @@ import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
 import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.heron.tasks.di.TasksBindings
+import com.tunjid.heron.ui.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
@@ -76,35 +78,8 @@ interface AppGraph {
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
-            @Includes dataBindings: DataBindings,
-            @Includes scaffoldBindings: ScaffoldBindings,
-            @Includes signInBindings: SignInBindings,
-            @Includes atmosphereAppBindings: AtmosphereAppBindings,
-            @Includes composeBindings: ComposeBindings,
-            @Includes conversationBindings: ConversationBindings,
-            @Includes editProfileBindings: EditProfileBindings,
-            @Includes feedBindings: FeedBindings,
-            @Includes galleryBindings: GalleryBindings,
-            @Includes grazeEditorBindings: GrazeEditorBindings,
-            @Includes homeBindings: HomeBindings,
-            @Includes inferenceBindings: InferenceBindings,
-            @Includes listBindings: ListBindings,
-            @Includes messagesBindings: MessagesBindings,
-            @Includes moderationBindings: ModerationBindings,
-            @Includes notificationsBindings: NotificationsBindings,
-            @Includes notificationSettingsBindings: NotificationSettingsBindings,
-            @Includes postDetailBindings: PostDetailBindings,
-            @Includes postsBindings: PostsBindings,
-            @Includes profileBindings: ProfileBindings,
-            @Includes profileAvatarBindings: ProfileAvatarBindings,
-            @Includes profilesBindings: ProfilesBindings,
-            @Includes searchBindings: SearchBindings,
-            @Includes splashBindings: SplashBindings,
-            @Includes standardPublicationBindings: StandardPublicationBindings,
-            @Includes standardSubscriptionBindings: StandardSubscriptionBindings,
-            @Includes settingsBindings: SettingsBindings,
-            @Includes tasksBindings: TasksBindings,
-            @Includes sheetBindings: SheetBindings,
+            @Provides dataBindingArgs: DataBindingArgs,
+            @Provides scaffoldBindingArgs: ScaffoldBindingArgs,
         ): AppGraph
     }
 

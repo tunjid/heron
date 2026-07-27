@@ -21,14 +21,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.standard.subscription.Action
 import com.tunjid.heron.standard.subscription.ActualStandardSubscriptionViewModel
 import com.tunjid.heron.standard.subscription.StandardSubscriptionScreen
 import com.tunjid.heron.standard.subscription.StandardSubscriptionStateHolder
 import com.tunjid.heron.standard.subscription.StandardSubscriptionViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
@@ -53,9 +52,10 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -75,6 +75,7 @@ private fun createRoute(
 )
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object StandardSubscriptionNavigationBindings {
 
     @Provides
@@ -88,10 +89,8 @@ object StandardSubscriptionNavigationBindings {
 }
 
 @BindingContainer
-class StandardSubscriptionBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object StandardSubscriptionBindings {
 
     @Provides
     @IntoMap

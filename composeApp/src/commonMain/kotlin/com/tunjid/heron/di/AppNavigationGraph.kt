@@ -16,72 +16,18 @@
 
 package com.tunjid.heron.di
 
-import com.tunjid.heron.atmosphereapp.di.AtmosphereAppNavigationBindings
-import com.tunjid.heron.compose.di.ComposeNavigationBindings
-import com.tunjid.heron.conversation.di.ConversationNavigationBindings
-import com.tunjid.heron.editprofile.di.EditProfileNavigationBindings
-import com.tunjid.heron.feed.di.FeedNavigationBindings
-import com.tunjid.heron.gallery.di.GalleryNavigationBindings
-import com.tunjid.heron.graze.editor.di.GrazeEditorNavigationBindings
-import com.tunjid.heron.home.di.HomeNavigationBindings
-import com.tunjid.heron.inference.di.InferenceNavigationBindings
-import com.tunjid.heron.list.di.ListNavigationBindings
-import com.tunjid.heron.messages.di.MessagesNavigationBindings
-import com.tunjid.heron.moderation.di.ModerationNavigationBindings
-import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
-import com.tunjid.heron.notificationsettings.di.NotificationSettingsNavigationBindings
-import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
-import com.tunjid.heron.posts.di.PostsNavigationBindings
-import com.tunjid.heron.profile.avatar.di.ProfileAvatarNavigationBindings
-import com.tunjid.heron.profile.di.ProfileNavigationBindings
-import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
-import com.tunjid.heron.search.di.SearchNavigationBindings
-import com.tunjid.heron.settings.di.SettingsNavigationBindings
-import com.tunjid.heron.signin.di.SignInNavigationBindings
-import com.tunjid.heron.splash.di.SplashNavigationBindings
-import com.tunjid.heron.standard.publication.di.StandardPublicationNavigationBindings
-import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
-import com.tunjid.heron.tasks.di.TasksNavigationBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.treenav.strings.RouteMatcher
-import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Includes
 
 @DependencyGraph(
-    scope = AppScope::class,
+    scope = NavigationScope::class,
 )
 interface AppNavigationGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
-        fun create(
-            @Includes signInNavigationBindings: SignInNavigationBindings,
-            @Includes atmosphereAppNavigationBindings: AtmosphereAppNavigationBindings,
-            @Includes composeNavigationBindings: ComposeNavigationBindings,
-            @Includes conversationNavigationBindings: ConversationNavigationBindings,
-            @Includes editProfileNavigationBindings: EditProfileNavigationBindings,
-            @Includes feedNavigationBindings: FeedNavigationBindings,
-            @Includes galleryNavigationBindings: GalleryNavigationBindings,
-            @Includes grazeEditorNavigationBindings: GrazeEditorNavigationBindings,
-            @Includes homeNavigationBindings: HomeNavigationBindings,
-            @Includes inferenceNavigationBindings: InferenceNavigationBindings,
-            @Includes listNavigationBindings: ListNavigationBindings,
-            @Includes messagesNavigationBindings: MessagesNavigationBindings,
-            @Includes moderationNavigationBindings: ModerationNavigationBindings,
-            @Includes notificationsNavigationBindings: NotificationsNavigationBindings,
-            @Includes notificationSettingsNavigationBindings: NotificationSettingsNavigationBindings,
-            @Includes postDetailNavigationBindings: PostDetailNavigationBindings,
-            @Includes postsNavigationBindings: PostsNavigationBindings,
-            @Includes profileNavigationBindings: ProfileNavigationBindings,
-            @Includes profileAvatarNavigationBindings: ProfileAvatarNavigationBindings,
-            @Includes profilesNavigationBindings: ProfilesNavigationBindings,
-            @Includes searchNavigationBindings: SearchNavigationBindings,
-            @Includes splashNavigationBindings: SplashNavigationBindings,
-            @Includes standardPublicationNavigationBindings: StandardPublicationNavigationBindings,
-            @Includes standardSubscriptionNavigationBindings: StandardSubscriptionNavigationBindings,
-            @Includes settingsNavigationBindings: SettingsNavigationBindings,
-            @Includes tasksNavigationBindings: TasksNavigationBindings,
-        ): AppNavigationGraph
+        fun create(): AppNavigationGraph
     }
 
     val routeMatcherMap: Map<String, RouteMatcher>

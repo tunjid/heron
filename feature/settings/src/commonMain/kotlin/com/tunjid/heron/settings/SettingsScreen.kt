@@ -191,7 +191,7 @@ private fun MainSection(
             ) {
                 actions(Action.Navigate.To(tasksDestination()))
             }
-            InferenceItem(
+            if (state.canRunInference) InferenceItem(
                 modifier = Modifier
                     .animateBounds(
                         lookaheadScope = paneScaffoldState,

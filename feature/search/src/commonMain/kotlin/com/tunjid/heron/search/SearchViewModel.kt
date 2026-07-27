@@ -676,27 +676,42 @@ private fun Flow<Action.Filter>.launchFilterMutations(
         is Action.Filter.Edit ->
             state.draftFilter = action.filter
 
+        is Action.Filter.Clear -> {
+            state.appliedFilter = null
+            state.draftFilter = SearchQuery.Filter()
+            state.reloadPostSearches()
+        }
+
         Action.Filter.Apply -> {
             state.appliedFilter = state.draftFilter
-            val query = state.query.queryString(
-                searchBarText = state.searchBarText,
-            )
-            state.searchStateHolders.forEach { holder ->
-                val searchState = holder.state
-                if (searchState is SearchState.OfPosts) holder.accept(
-                    SearchState.Tile(
-                        tilingAction = TilingState.Action.LoadAround(
-                            searchState.confirmedPostsQuery(
-                                query = query,
-                                filter = state.appliedFilter,
-                            ),
-                        ),
-                    ),
-                )
-            }
-            state.layout = ScreenLayout.GeneralSearchResults
+            state.reloadPostSearches()
         }
     }
+}
+
+/**
+ * Re-runs the post searches with the currently [State.appliedFilter], and shows the
+ * results. Shared by [Action.Filter.Apply] and [Action.Filter.Clear] so both keep the
+ * displayed posts in sync with the applied filter instead of leaving stale results.
+ */
+private fun State.SnapshotMutable.reloadPostSearches() {
+    val queryString = query.queryString(
+        searchBarText = searchBarText,
+    )
+    searchStateHolders.forEach { holder ->
+        val searchState = holder.state
+        if (searchState is SearchState.OfPosts) holder.accept(
+            SearchState.Tile(
+                tilingAction = TilingState.Action.LoadAround(
+                    searchState.confirmedPostsQuery(
+                        query = queryString,
+                        filter = appliedFilter,
+                    ),
+                ),
+            ),
+        )
+    }
+    layout = ScreenLayout.GeneralSearchResults
 }
 
 private fun SearchState.OfPosts.confirmedPostsQuery(

@@ -5,6 +5,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
+import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
@@ -104,6 +105,12 @@ sealed interface InferenceOutcome {
 
     /** No on-device model is available; the UI should prompt the user to download one. */
     data object NoModel : InferenceOutcome {
+        override val text: String = ""
+    }
+
+    data class Unavailable(
+        val reason: PlatformUnavailableReason,
+    ) : InferenceOutcome {
         override val text: String = ""
     }
 }

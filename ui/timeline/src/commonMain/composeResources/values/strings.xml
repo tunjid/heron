@@ -21,6 +21,10 @@
     <string name="inference_error_failed">Inference failed</string>
     <string name="inference_no_model_title">No model downloaded</string>
     <string name="inference_no_model_description">Tap to download an on-device model for inference.</string>
+    <string name="inference_unavailable_ai_off_title">Apple Intelligence is off</string>
+    <string name="inference_unavailable_ai_off_description">Turn on Apple Intelligence in Settings to use on-device AI.</string>
+    <string name="inference_unavailable_preparing_title">Preparing on-device AI</string>
+    <string name="inference_unavailable_preparing_description">The system model is still getting ready. Try again in a moment.</string>
     <string name="inference_disclaimer">Content is generated offline, on-device and may be inaccurate.</string>
     <string name="inference_phase_preparing">Preparing…</string>
     <string name="inference_phase_loading_model">Warming up the model…</string>

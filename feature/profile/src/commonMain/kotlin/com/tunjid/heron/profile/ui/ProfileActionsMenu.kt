@@ -153,6 +153,7 @@ internal sealed class ProfileActionMenu {
 internal fun ProfileViewerState?.profileActionMenuItems(
     isSignedInProfile: Boolean,
     isLive: Boolean,
+    inferenceAvailable: Boolean,
 ) = buildList {
     add(
         ProfileActionMenu.Item(
@@ -166,7 +167,7 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             icon = Icons.Rounded.Search,
         ),
     )
-    add(
+    if (inferenceAvailable) add(
         ProfileActionMenu.Item(
             title = CommonStrings.action_vibe_check,
             icon = Icons.Rounded.AutoAwesome,

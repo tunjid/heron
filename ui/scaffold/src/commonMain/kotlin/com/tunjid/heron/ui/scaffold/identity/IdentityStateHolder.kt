@@ -186,11 +186,13 @@ private fun launchDefaultModelMutations(
             .firstOrNull { it.name == modelName }
             ?: return@launch
         when (val status = inferenceModelManager.status(model).first()) {
-            is ModelStatus.Downloaded ->
+            is ModelStatus.Available ->
                 if (inferenceEngine.state.first() is EngineState.Uninitialized) {
                     inferenceEngine.load(status.loadedModel)
                 }
-            is ModelStatus.Pending -> Unit
+            is ModelStatus.Pending,
+            is ModelStatus.Unavailable,
+            -> Unit
         }
     }
 }

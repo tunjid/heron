@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchScreen
@@ -44,7 +43,7 @@ import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
@@ -71,9 +70,10 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
@@ -101,6 +101,7 @@ internal val Route.query by mappedRoutePath(default = RouteQuery.FullSearch) { q
 }
 
 @BindingContainer
+@ContributesTo(NavigationScope::class)
 object SearchNavigationBindings {
 
     @Provides
@@ -123,10 +124,8 @@ object SearchNavigationBindings {
 }
 
 @BindingContainer
-class SearchBindings(
-    @Includes dataBindings: DataBindings,
-    @Includes scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object SearchBindings {
 
     @Provides
     @IntoMap
@@ -187,6 +186,9 @@ internal fun Route(
         onFilterChanged = { filter ->
             stateHolder.accept(Action.Filter.Edit(filter))
         },
+        onClear = {
+            stateHolder.accept(Action.Filter.Clear)
+        },
         onApply = {
             stateHolder.accept(Action.Filter.Apply)
         },
@@ -195,7 +197,7 @@ internal fun Route(
     val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        searchFocusRequester.requestFocus()
+        if (state.searchBarText.isBlank()) searchFocusRequester.requestFocus()
     }
 
     val topAppBarNestedScrollConnection =
@@ -250,7 +252,7 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    SearchFilterAction(
+                    if (state.signedInProfile != null) SearchFilterAction(
                         isActive = state.appliedFilter != null,
                         onClick = {
                             stateHolder.accept(Action.Filter.Begin)
@@ -297,7 +299,7 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    SearchFilterAction(
+                    if (state.signedInProfile != null) SearchFilterAction(
                         isActive = state.appliedFilter != null,
                         onClick = {
                             stateHolder.accept(Action.Filter.Begin)

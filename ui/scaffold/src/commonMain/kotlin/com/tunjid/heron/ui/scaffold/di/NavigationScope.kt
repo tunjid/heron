@@ -14,19 +14,16 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.ml.model
+package com.tunjid.heron.ui.scaffold.di
 
-import com.tunjid.heron.data.core.utilities.File
-
-sealed interface LoadedModel {
-    val model: InferenceModel
-
-    data class FileBacked(
-        override val model: InferenceModel.External,
-        val file: File.System,
-    ) : LoadedModel
-
-    data class System(
-        override val model: InferenceModel.Platform,
-    ) : LoadedModel
-}
+/**
+ * Dependency-graph scope for the app's navigation graph.
+ *
+ * Kept distinct from AppScope so that the route-matcher binding
+ * containers contributed via `@ContributesTo(NavigationScope::class)` are aggregated only
+ * into the lightweight navigation graph, while the full application bindings contributed via
+ * `@ContributesTo(AppScope::class)` are aggregated only into the main app graph. This lets the
+ * navigation graph be built first (to collect route matchers) without pulling in the entire
+ * application object graph.
+ */
+abstract class NavigationScope private constructor()

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.sheets.di
 
-import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsStateHolder
 import com.tunjid.heron.sheets.embedrecordoptions.EmbeddableRecordOptionsViewModelInitializer
 import com.tunjid.heron.sheets.inference.InferenceStateHolder
@@ -33,11 +32,11 @@ import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.sheets.threadgate.ThreadGateStateHolder
 import com.tunjid.heron.sheets.threadgate.ThreadGateViewModelInitializer
-import com.tunjid.heron.ui.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 
@@ -49,10 +48,8 @@ import dev.zacsweers.metro.Provides
  * module.
  */
 @BindingContainer
-class SheetBindings(
-    @Includes val dataBindings: DataBindings,
-    @Includes val scaffoldBindings: ScaffoldBindings,
-) {
+@ContributesTo(AppScope::class)
+object SheetBindings {
     @Provides
     @IntoMap
     @ClassKey(MutedWordsStateHolder::class)
