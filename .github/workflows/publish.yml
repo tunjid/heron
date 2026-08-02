@@ -41,11 +41,11 @@ jobs:
           GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
           # Create the directory structure
-          mkdir -p "androidApp/src/release/"
+          mkdir -p "apps/androidApp/src/release/"
 
           # Decode the env variable into the file
           echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
-            -out "androidApp/src/release/google-services.json"
+            -out "apps/androidApp/src/release/google-services.json"
 
       - name: Build Unsigned AAB
         env:
@@ -61,7 +61,7 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: androidApp/build/outputs/bundle/release
+          releaseDirectory: apps/androidApp/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE_64 }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -82,8 +82,8 @@ jobs:
           packageName: com.tunjid.heron
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
-          mappingFile: androidApp/build/outputs/mapping/release/mapping.txt
-          debugSymbols: androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
+          mappingFile: apps/androidApp/build/outputs/mapping/release/mapping.txt
+          debugSymbols: apps/androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
 
 
       - name: Build and sign per-ABI sideload APKs
@@ -106,9 +106,9 @@ jobs:
 
           echo "$SIGNING_KEY_BASE_64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
           BUILD_TOOLS="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)"
-          OUT=androidApp/build/outputs/apk/release/signed
+          OUT=apps/androidApp/build/outputs/apk/release/signed
           mkdir -p "$OUT"
-          for apk in androidApp/build/outputs/apk/release/*-release-unsigned.apk; do
+          for apk in apps/androidApp/build/outputs/apk/release/*-release-unsigned.apk; do
             name="$(basename "$apk")"
             base="${name%-unsigned.apk}"
             "${BUILD_TOOLS}/zipalign" -f -p 4 "$apk" "${RUNNER_TEMP}/${base}-aligned.apk"
@@ -127,7 +127,7 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: androidApp/build/outputs/apk/release/signed/*.apk
+          files: apps/androidApp/build/outputs/apk/release/signed/*.apk
           draft: true
           allow_updates: true
 
@@ -166,7 +166,7 @@ jobs:
           FIREBASE_IOS_PLIST: ${{ secrets.FIREBASE_IOS_PLIST }}
         run: |
           echo "$FIREBASE_IOS_PLIST" | base64 -d \
-            > iosApp/iosApp/GoogleService-Info.plist
+            > apps/iosApp/iosApp/GoogleService-Info.plist
 
       - name: Import signing certificate
         uses: apple-actions/import-codesign-certs@v2
@@ -196,15 +196,15 @@ jobs:
           fi
           echo "Extracted version: $VERSION"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" \
-            iosApp/iosApp/Info.plist
+            apps/iosApp/iosApp/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" \
-            iosApp/iosApp/Info.plist
+            apps/iosApp/iosApp/Info.plist
 
       - name: Patch project for manual signing
         env:
           PROFILE_NAME: ${{ secrets.IOS_DIST_PROVISIONING_PROFILE_NAME }}
         run: |
-          PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
+          PBXPROJ=apps/iosApp/iosApp.xcodeproj/project.pbxproj
           # Scope manual signing to the iosApp target only (SPM deps keep their
           # automatic/no-profile defaults). Escape the profile name for sed.
           ESCAPED_PROFILE=$(printf '%s\n' "$PROFILE_NAME" | sed 's|[&/\]|\\&|g')
@@ -220,7 +220,7 @@ jobs:
           # hits the sandbox APNs gateway. TestFlight / App Store builds need
           # production APNs, so we flip the entitlement at CI time only.
           /usr/libexec/PlistBuddy -c "Set :aps-environment production" \
-            iosApp/iosApp/iosApp.entitlements
+            apps/iosApp/iosApp/iosApp.entitlements
 
       - name: Build archive
         env:
@@ -228,7 +228,7 @@ jobs:
           ORG_GRADLE_PROJECT_heron.isRelease: "true"
           ORG_GRADLE_PROJECT_heron.versionCode: ${{ github.run_number }}
         run: |
-          cd iosApp
+          cd apps/iosApp
 
           xcrun xcodebuild \
             -scheme "iosApp" \
@@ -339,7 +339,7 @@ jobs:
           MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
         run: |
           set -euo pipefail
-          DMG_PATH=$(find desktopApp/build/release/main-release/dmg -name "*.dmg" | head -1)
+          DMG_PATH=$(find apps/desktopApp/build/release/main-release/dmg -name "*.dmg" | head -1)
           if [ -z "$DMG_PATH" ]; then echo "::error::No DMG found to notarize"; exit 1; fi
 
           # `notarytool submit --wait` exits 0 even when the result is Invalid, so gate on the
@@ -368,6 +368,6 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: desktopApp/build/release/main-release/dmg/*.dmg
+          files: apps/desktopApp/build/release/main-release/dmg/*.dmg
           draft: true
           allow_updates: true
