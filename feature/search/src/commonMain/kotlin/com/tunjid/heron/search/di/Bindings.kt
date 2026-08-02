@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteQuery
@@ -177,6 +178,8 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
+    val focusManager = LocalFocusManager.current
+
     val searchFilterSheetState = paneScaffoldState.rememberUpdatedSearchFilterSheetState(
         queryText = state.searchBarText,
         filter = state.draftFilter,
@@ -190,6 +193,7 @@ internal fun Route(
             stateHolder.accept(Action.Filter.Clear)
         },
         onApply = {
+            focusManager.clearFocus()
             stateHolder.accept(Action.Filter.Apply)
         },
     )
@@ -245,6 +249,7 @@ internal fun Route(
                             )
                         },
                         onQueryConfirmed = {
+                            focusManager.clearFocus()
                             stateHolder.accept(
                                 Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                             )
