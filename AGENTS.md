@@ -74,11 +74,11 @@ error with a clear message — *building the feature is the test*. The four plac
 2. **Register the module** in [`settings.gradle.kts`](settings.gradle.kts) — add `":feature:<name>"`
    to the `include(...)` block (alongside `":feature:feed"`).
 3. **Add the bindings to the graph**: `@Includes <name>Bindings` in
-   [`AppGraph`](composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppGraph.kt) and
+   [`AppGraph`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppGraph.kt) and
    `@Includes <name>NavigationBindings` in
-   [`AppNavigationGraph`](composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppNavigationGraph.kt).
+   [`AppNavigationGraph`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/di/AppNavigationGraph.kt).
 4. **Instantiate both** in the graph-factory call in
-   [`EntryPoint.kt`](composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt) (the
+   [`EntryPoint.kt`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt) (the
    `<name>Bindings = <Name>Bindings(...)` list).
 
 ## Build, test & format

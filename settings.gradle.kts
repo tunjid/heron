@@ -101,3 +101,10 @@ include(
     ":ui:tiling",
     ":ui:timeline",
 )
+
+// The app modules physically live under apps/ but keep their original logical project
+// paths (:androidApp, :composeApp, :desktopApp) so task paths and project(...) references
+// stay unchanged — only the projectDir is relocated.
+project(":androidApp").projectDir = file("apps/androidApp")
+project(":composeApp").projectDir = file("apps/composeApp")
+project(":desktopApp").projectDir = file("apps/desktopApp")
