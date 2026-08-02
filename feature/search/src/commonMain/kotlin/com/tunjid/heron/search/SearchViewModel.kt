@@ -277,7 +277,7 @@ private fun launchSuggestedStarterPackMutations(
                         limit = 10,
                     ),
                 ),
-                cursor = Cursor.Initial,
+                cursor = Cursor.Initial(),
             )
         }
 
@@ -405,7 +405,7 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
                     isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
-                cursor = Cursor.Initial,
+                cursor = Cursor.Initial(),
             )
         }
         .launchedCollect { profileWithViewerStates ->

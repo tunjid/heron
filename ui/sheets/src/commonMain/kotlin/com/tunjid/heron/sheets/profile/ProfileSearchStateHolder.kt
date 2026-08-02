@@ -131,7 +131,7 @@ private fun Flow<ProfileSearchAction.Query>.launchSearchMutations(
                         limit = MAX_SUGGESTED_PROFILES.toLong(),
                     ),
                 ),
-                cursor = Cursor.Initial,
+                cursor = Cursor.Initial(),
             ).collect { profiles ->
                 state.searchResults = profiles.map(ProfileWithViewerState::profile)
             }
