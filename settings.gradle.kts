@@ -23,12 +23,13 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     includeBuild("build-logic")
     repositories {
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
+        // google().mavenContent { … } (not google { … }) so Dependabot's repository parser,
+        // which matches only the `google(` call form, detects Google Maven and can resolve the
+        // androidx / com.android / com.google artifacts. Resolution behavior is unchanged.
+        google().mavenContent {
+            includeGroupAndSubgroups("androidx")
+            includeGroupAndSubgroups("com.android")
+            includeGroupAndSubgroups("com.google")
         }
         mavenCentral()
         gradlePluginPortal()
@@ -37,12 +38,13 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
+        // google().mavenContent { … } (not google { … }) so Dependabot's repository parser,
+        // which matches only the `google(` call form, detects Google Maven and can resolve the
+        // androidx / com.android / com.google artifacts. Resolution behavior is unchanged.
+        google().mavenContent {
+            includeGroupAndSubgroups("androidx")
+            includeGroupAndSubgroups("com.android")
+            includeGroupAndSubgroups("com.google")
         }
         mavenCentral()
     }
