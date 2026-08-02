@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
@@ -41,10 +42,12 @@ inline fun <T, R> CursorList<T>.mapCursorList(
 @Serializable
 sealed class Cursor {
     /**
-     * Initial cursor, always has a null value
+     * Initial cursor, may have a null value
      */
     @Serializable
-    data object Initial : Cursor()
+    data class Initial(
+        val cursor: String? = null,
+    ) : Cursor()
 
     /**
      * Pending cursor. Used when paging from the local database with a network refresh.
@@ -76,7 +79,7 @@ val Cursor.canRequestData: Boolean
 
 val Cursor.value
     get() = when (this) {
-        Cursor.Initial -> null
+        is Cursor.Initial -> cursor
         Cursor.Pending -> throw IllegalArgumentException(
             "Pending cursors cannot be used to fetch data",
         )
@@ -87,6 +90,9 @@ val Cursor.value
             "Final cursors cannot be used to fetch data; there is nothing more to fetch",
         )
     }
+
+fun Instant.asInitialCursor(): Cursor.Initial =
+    Cursor.Initial(toString())
 
 private val EmptyCursorList = CursorList<Nothing>(
     items = emptyList(),

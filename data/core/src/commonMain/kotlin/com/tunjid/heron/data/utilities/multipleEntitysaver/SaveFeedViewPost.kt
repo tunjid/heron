@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.FeedViewPost
+import app.bsky.feed.FeedViewPostReasonUnion
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.id
@@ -48,8 +49,23 @@ internal fun MultipleEntitySaver.add(
                 itemSort = when (source) {
                     // The following feed should be strictly sorted chronologically
                     Timeline.Source.Following,
-                    -> feedView.post.indexedAt.toEpochMilliseconds()
+                    -> when (val reason = feedView.reason) {
+                        is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt.toEpochMilliseconds()
+                        is FeedViewPostReasonUnion.ReasonPin,
+                        is FeedViewPostReasonUnion.Unknown,
+                        null,
+                        -> feedView.post.indexedAt.toEpochMilliseconds()
+                    }
                     is Timeline.Source.Profile,
+                    -> when (val reason = feedView.reason) {
+                        is FeedViewPostReasonUnion.ReasonPin,
+                        -> Long.MIN_VALUE
+                        is FeedViewPostReasonUnion.ReasonRepost,
+                        -> reason.value.indexedAt.toEpochMilliseconds()
+                        is FeedViewPostReasonUnion.Unknown,
+                        null,
+                        -> feedView.post.indexedAt.toEpochMilliseconds()
+                    }
                     is Timeline.Source.Record.Feed,
                     is Timeline.Source.Record.List,
                     -> query.feedGeneratorOrder(index)

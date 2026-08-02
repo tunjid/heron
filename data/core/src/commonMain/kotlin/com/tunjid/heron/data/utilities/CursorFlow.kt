@@ -23,11 +23,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import sh.christian.ozone.api.response.AtpResponse
 
-internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
+internal inline fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
+    maxRetries: Int = 3,
     currentCursor: Cursor,
-    currentRequestWithNextCursor: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
-    nextCursor: NetworkResponse.() -> String?,
-    onResponse: suspend NetworkResponse.() -> Unit,
+    crossinline currentRequestWithNextCursor: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
+    crossinline nextCursor: NetworkResponse.() -> String?,
+    crossinline onResponse: suspend NetworkResponse.() -> Unit,
 ): Flow<Cursor> = flow {
     // Do nothing, there's nothing to load
     if (currentCursor == Cursor.Final) return@flow
@@ -38,7 +39,9 @@ internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
     // Do nothing, can't tell what the next items are
     if (currentCursor == Cursor.Pending) return@flow
 
-    runCatchingWithMonitoredNetworkRetry {
+    runCatchingWithMonitoredNetworkRetry(
+        times = maxRetries,
+    ) {
         currentRequestWithNextCursor()
     }
         .getOrNull()

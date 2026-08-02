@@ -342,7 +342,7 @@ private suspend fun TimelineRepository.recentTimelineItems(
                     type = type,
                 ),
             ),
-            cursor = Cursor.Initial,
+            cursor = Cursor.Initial(),
         )
             .mapNotNull { cursorList ->
                 cursorList.items.takeIf(List<TimelineItem>::isNotEmpty)

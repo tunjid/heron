@@ -863,6 +863,7 @@ internal class OfflineTimelineRepository(
     ): Flow<Cursor> = savedStateDataSource
         .singleSessionFlow { signedInProfileId ->
             nextCursorFlow(
+                maxRetries = 6,
                 currentCursor = currentCursor,
                 currentRequestWithNextCursor = currentRequestWithNextCursor,
                 nextCursor = nextCursor,

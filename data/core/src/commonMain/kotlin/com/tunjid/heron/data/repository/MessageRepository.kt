@@ -627,7 +627,7 @@ fun MessageRepository.recentConversations(
                 limit = RecentConversationLimit,
             ),
         ),
-        cursor = Cursor.Initial,
+        cursor = Cursor.Initial(),
     )
         .filter<List<Conversation>>(List<Conversation>::isNotEmpty)
         .take(emissions)
