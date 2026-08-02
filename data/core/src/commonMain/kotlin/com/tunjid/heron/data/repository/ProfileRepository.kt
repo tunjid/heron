@@ -692,7 +692,7 @@ private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
         value = TabsProfileTab(kind = TabsProfileTabKind.Posts),
     )
     ProfileTab.Bluesky.Posts.Replies -> PutTabsRequestItemUnion.ProfileTab(
-        value = TabsProfileTab(kind = TabsProfileTabKind.Replies),
+        value = TabsProfileTab(kind = TabsProfileTabKind.PostsAndReplies),
     )
     ProfileTab.Bluesky.Posts.Likes -> PutTabsRequestItemUnion.ProfileTab(
         value = TabsProfileTab(kind = TabsProfileTabKind.Likes),
