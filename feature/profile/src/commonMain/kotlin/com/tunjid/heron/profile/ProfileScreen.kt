@@ -192,6 +192,7 @@ import com.tunjid.heron.ui.text.asClipEntry
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
+import com.tunjid.mutator.invoke
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -298,10 +299,6 @@ internal fun ProfileScreen(
                 pullToRefreshState = pullToRefreshState,
                 headerState = headerState,
                 pagerState = pagerState,
-                timelineTabs = timelineTabs(
-                    stateHolders = state.stateHolders,
-                    sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
-                ),
                 modifier = Modifier
                     .fillMaxWidth(),
                 profile = state.profile,
@@ -321,9 +318,8 @@ internal fun ProfileScreen(
                     state.isSubscribedToLabeler
                 },
                 viewerState = state.viewerState,
-                timelineStateHolders = remember(state.stateHolders) {
-                    state.stateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
-                },
+                sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+                profileScreenStateHolders = state.stateHolders,
                 avatarSharedElementKey = state.avatarSharedElementKey,
                 onRefreshTabClicked = { index ->
                     state.stateHolders.getOrNull(index = index)
@@ -644,7 +640,6 @@ private fun ProfileHeader(
     pullToRefreshState: PullToRefreshState,
     headerState: HeaderState,
     pagerState: PagerState,
-    timelineTabs: List<Tab>,
     modifier: Modifier = Modifier,
     profile: Profile,
     commonFollowerCount: Long?,
@@ -658,7 +653,8 @@ private fun ProfileHeader(
     signedInProfileId: ProfileId?,
     viewerState: ProfileViewerState?,
     supportedApps: List<AtmosphereApp>,
-    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
+    sourceIdsToHasUpdates: Map<String, Boolean>,
+    profileScreenStateHolders: List<ProfileScreenStateHolders>,
     avatarSharedElementKey: String,
     onRefreshTabClicked: (Int) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
@@ -809,8 +805,8 @@ private fun ProfileHeader(
                         horizontal = headerState.tabsHorizontalPadding,
                     ),
                 pagerState = pagerState,
-                tabs = timelineTabs,
-                timelineStateHolders = timelineStateHolders,
+                sourceIdsToHasUpdates = sourceIdsToHasUpdates,
+                profileScreenStateHolders = profileScreenStateHolders,
                 onRefreshTabClicked = onRefreshTabClicked,
             )
             Spacer(Modifier.height(8.dp))
@@ -1315,8 +1311,8 @@ private fun CommonFollowers(
 private fun ProfileTabs(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
-    tabs: List<Tab>,
-    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
+    sourceIdsToHasUpdates: Map<String, Boolean>,
+    profileScreenStateHolders: List<ProfileScreenStateHolders>,
     onRefreshTabClicked: (Int) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -1332,7 +1328,10 @@ private fun ProfileTabs(
                 .weight(1f)
                 .clip(CircleShape),
             tabsState = rememberTabsState(
-                tabs = tabs,
+                tabs = timelineTabs(
+                    stateHolders = profileScreenStateHolders,
+                    sourceIdsToHasUpdates = sourceIdsToHasUpdates,
+                ),
                 selectedTabIndex = pagerState::tabIndex,
                 onTabSelected = {
                     scope.launch {
@@ -1344,7 +1343,7 @@ private fun ProfileTabs(
         )
         TimelinePresentationSelector(
             page = pagerState.currentPage,
-            timelineStateHolders = timelineStateHolders,
+            profileScreenStateHolders = profileScreenStateHolders,
         )
     }
 }
@@ -1644,11 +1643,13 @@ private fun ProfileTimeline(
 private fun TimelinePresentationSelector(
     modifier: Modifier = Modifier,
     page: Int,
-    timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
+    profileScreenStateHolders: List<ProfileScreenStateHolders>,
 ) {
-    val timeline by remember(page, timelineStateHolders) {
+    val timeline by remember(page, profileScreenStateHolders) {
         derivedStateOf {
-            timelineStateHolders.getOrNull(page)?.state?.timeline
+            val holder = profileScreenStateHolders.getOrNull(page)
+            if (holder is ProfileScreenStateHolders.Timeline) holder.state.timeline
+            else null
         }
     }
 
@@ -1657,15 +1658,15 @@ private fun TimelinePresentationSelector(
             modifier = modifier,
             selected = currentTimeline.presentation,
             available = currentTimeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                timelineStateHolders.getOrNull(page)
-                    ?.accept
-                    ?.invoke(
-                        TimelineState.Action.UpdatePreferredPresentation(
-                            timeline = currentTimeline,
-                            presentation = presentation,
-                        ),
-                    )
+            onPresentationSelected = selected@{ presentation ->
+                val holder = profileScreenStateHolders.getOrNull(page)
+                if (holder !is ProfileScreenStateHolders.Timeline) return@selected
+                holder(
+                    TimelineState.Action.UpdatePreferredPresentation(
+                        timeline = currentTimeline,
+                        presentation = presentation,
+                    ),
+                )
             },
         )
     }
