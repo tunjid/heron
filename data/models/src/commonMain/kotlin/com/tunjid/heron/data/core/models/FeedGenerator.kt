@@ -156,4 +156,16 @@ data class FeedGenerator(
             }
         }
     }
+    companion object {
+        val MediaContentModes = setOf(
+            "app.bsky.feed.defs#contentModeVideo",
+            "app.bsky.feed.defs#contentModePhoto",
+            "app.bsky.feed.defs#contentModeImage",
+            "app.bsky.feed.defs#contentModeMedia",
+            "com.tunjid.heron.defs#contentModeImage",
+            "com.tunjid.heron.defs#contentModeMedia",
+            "dev.tunji.heron.defs#contentModeImage",
+            "dev.tunji.heron.defs#contentModeMedia",
+        )
+    }
 }

@@ -381,6 +381,26 @@ sealed interface Timeline {
     }
 }
 
+val Timeline.isStrictlyMedia: Boolean
+    get() = when (this) {
+        is Timeline.Home.Feed,
+        -> feedGenerator.contentMode in FeedGenerator.MediaContentModes
+        is Timeline.Home.Following,
+        is Timeline.Home.List,
+        -> false
+        is Timeline.Profile -> when (type) {
+            Timeline.Profile.Type.Posts,
+            Timeline.Profile.Type.Replies,
+            Timeline.Profile.Type.Likes,
+            -> false
+            Timeline.Profile.Type.Media,
+            Timeline.Profile.Type.Videos,
+            -> true
+        }
+        is Timeline.StarterPack,
+        -> false
+    }
+
 private val TextOnlyPresentations: List<Timeline.Presentation> = listOf(
     Text.WithEmbed,
 )
