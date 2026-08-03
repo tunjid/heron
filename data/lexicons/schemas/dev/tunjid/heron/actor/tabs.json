@@ -32,7 +32,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "knownValues": ["posts", "replies", "likes", "media", "videos"]
+          "knownValues": ["posts", "posts-and-replies", "likes", "media", "videos"]
         }
       }
     },

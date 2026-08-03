@@ -33,7 +33,6 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.SendInteractionsRequest
-import app.bsky.feed.Token
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -863,6 +862,7 @@ internal class OfflineTimelineRepository(
     ): Flow<Cursor> = savedStateDataSource
         .singleSessionFlow { signedInProfileId ->
             nextCursorFlow(
+                maxRetries = 6,
                 currentCursor = currentCursor,
                 currentRequestWithNextCursor = currentRequestWithNextCursor,
                 nextCursor = nextCursor,
@@ -1479,18 +1479,7 @@ private data class TimelineState(
 )
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
-    contentMode in MEDIA_CONTENT_MODES
+    contentMode in FeedGenerator.MediaContentModes
 
-private val MEDIA_CONTENT_MODES = setOf(
-    Token.ContentModeVideo.value,
-    "app.bsky.feed.defs#contentModeVideo",
-    "app.bsky.feed.defs#contentModePhoto",
-    "app.bsky.feed.defs#contentModeImage",
-    "app.bsky.feed.defs#contentModeMedia",
-    "com.tunjid.heron.defs#contentModeImage",
-    "com.tunjid.heron.defs#contentModeMedia",
-    "dev.tunji.heron.defs#contentModeImage",
-    "dev.tunji.heron.defs#contentModeMedia",
-)
 private const val MAX_REPLY_DEPTH = 3
 private const val MAX_SIBLINGS_PER_NODE = 3

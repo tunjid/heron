@@ -266,15 +266,15 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
 
     when (writeQueue.enqueue(updateWrite)) {
         WriteQueue.Status.Dropped -> {
-            state.messages = state.messages + Memo.Resource(Res.string.failed_profile_update)
+            state.messages += Memo.Resource(Res.string.failed_profile_update)
             state.submitting = false
         }
         WriteQueue.Status.Duplicate -> {
-            state.messages = state.messages + Memo.Resource(Res.string.duplicate_profile_update)
+            state.messages += Memo.Resource(Res.string.duplicate_profile_update)
             state.submitting = false
         }
         WriteQueue.Status.Enqueued -> {
-            state.messages = state.messages + Memo.Resource(Res.string.profile_background_update)
+            state.messages += Memo.Resource(Res.string.profile_background_update)
             writeQueue.awaitDequeue(updateWrite)
             navActions(Action.Navigate.Pop.navigationMutation)
         }

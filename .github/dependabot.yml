@@ -1,0 +1,128 @@
+version: 2
+
+updates:
+  # Gradle. Every version lives in the root gradle/libs.versions.toml, and build-logic is an
+  # included build that reads the same catalog, so "/" covers all 50 modules.
+  # NOTE: Google-Maven-only artifacts (androidx.*, com.android.*, com.google.*) only resolve
+  # because settings.gradle.kts uses the `google()` call form — see the comment there.
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 15
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      include: scope
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+    # Groups are first-match-wins, so order matters: specific domains first, catch-alls last.
+    # Minor and patch bumps are grouped per domain; majors always get their own pull request.
+    # Patterns omit the ":" because catalog [plugins] entries surface as
+    # <plugin-id>:<plugin-id>.gradle.plugin, and a trailing "*" catches both forms.
+    groups:
+      kotlin-and-compose:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.compose*"
+          - "org.jetbrains.androidx*"
+        update-types:
+          - minor
+          - patch
+      # KSP is kept out of the kotlin group on purpose: this repo deliberately decoupled its
+      # KSP version from Kotlin, so it should bump on its own.
+      ksp:
+        patterns:
+          - "com.google.devtools.ksp*"
+        update-types:
+          - minor
+          - patch
+      androidx:
+        patterns:
+          - "androidx.*"
+          - "com.google.android.material*"
+        update-types:
+          - minor
+          - patch
+      firebase:
+        patterns:
+          - "com.google.firebase*"
+          - "com.google.gms*"
+        update-types:
+          - minor
+          - patch
+      ktor:
+        patterns:
+          - "io.ktor*"
+        update-types:
+          - minor
+          - patch
+      coil:
+        patterns:
+          - "io.coil-kt*"
+        update-types:
+          - minor
+          - patch
+      javafx:
+        patterns:
+          - "org.openjfx*"
+        update-types:
+          - minor
+          - patch
+      metro:
+        patterns:
+          - "dev.zacsweers.metro*"
+        update-types:
+          - minor
+          - patch
+      tunjid-libraries:
+        patterns:
+          - "com.tunjid*"
+        update-types:
+          - minor
+          - patch
+      build-tooling:
+        patterns:
+          - "com.android*"
+          - "com.vanniktech*"
+          - "com.diffplug*"
+          - "com.pinterest*"
+          - "com.gradleup*"
+          - "com.github.gmazzo*"
+          - "pl.allegro.tech.build*"
+        update-types:
+          - minor
+          - patch
+      other-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+      major-updates:
+        patterns:
+          - "*"
+        update-types:
+          - major
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "06:00"
+      timezone: America/New_York
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"

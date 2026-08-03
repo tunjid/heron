@@ -155,25 +155,25 @@ the same two steps: build an `AppState` once, then hand it to the single shared 
 
 The wiring lives in the `EntryPoint*.kt` files in `composeApp`:
 
-* **Common** — [`EntryPoint.kt`](composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt)
+* **Common** — [`EntryPoint.kt`](apps/composeApp/src/commonMain/kotlin/com/tunjid/heron/EntryPoint.kt)
   exposes `createAppState(...)`. It creates the app-wide `CoroutineScope`, builds the `AppNavigationGraph`
   and `AppGraph` from every module's bindings via Metro's `createGraphFactory`, and returns
   `appGraph.appState`. It is platform-agnostic: the platform-specific pieces — `imageLoader`, `notifier`,
   `logger`, `videoPlayerController` and the data layer `args` (`DataBindingArgs`) — are passed in as
   factory lambdas.
-* **Android** — [`EntryPoint.android.kt`](composeApp/src/androidMain/kotlin/com/tunjid/heron/EntryPoint.android.kt)
+* **Android** — [`EntryPoint.android.kt`](apps/composeApp/src/androidMain/kotlin/com/tunjid/heron/EntryPoint.android.kt)
   adds a `createAppState(context)` overload that supplies the Android implementations of those factories
   (e.g. the saved-state path under app storage) and delegates to the common builder. The OS launcher is
   the separate `androidApp` module: `HeronApplication` calls `createAppState(this)` on startup and holds
   the `AppState`, and `MainActivity` reads it and calls `setContent { App(appState, …) }`, also wiring the
   splash screen, FCM token registration and deep links.
-* **Desktop (JVM)** — [`EntryPoint.jvm.kt`](composeApp/src/desktopMain/kotlin/com/tunjid/heron/EntryPoint.jvm.kt)
+* **Desktop (JVM)** — [`EntryPoint.jvm.kt`](apps/composeApp/src/desktopMain/kotlin/com/tunjid/heron/EntryPoint.jvm.kt)
   provides a no-arg `createAppState()` that resolves the per-OS app data directory and encrypts saved
-  state with Tink. The launcher is [`main.kt`](composeApp/src/desktopMain/kotlin/com/tunjid/heron/main.kt):
+  state with Tink. The launcher is [`main.kt`](apps/composeApp/src/desktopMain/kotlin/com/tunjid/heron/main.kt):
   a `fun main()` that opens a Compose `Window { App(appState = remember { createAppState() }, …) }`.
-* **iOS** — [`EntryPoint.ios.kt`](composeApp/src/iosMain/kotlin/com/tunjid/heron/EntryPoint.ios.kt) provides
+* **iOS** — [`EntryPoint.ios.kt`](apps/composeApp/src/iosMain/kotlin/com/tunjid/heron/EntryPoint.ios.kt) provides
   the iOS `createAppState()` plus bridge functions for FCM tokens and push notifications, and
-  [`MainViewController.kt`](composeApp/src/iosMain/kotlin/com/tunjid/heron/MainViewController.kt) wraps the
+  [`MainViewController.kt`](apps/composeApp/src/iosMain/kotlin/com/tunjid/heron/MainViewController.kt) wraps the
   root composable in a `ComposeUIViewController`. The OS launcher is the `iosApp` Xcode/SwiftUI project:
   `iOSApp.swift`'s `AppDelegate` calls `EntryPoint_iosKt.createAppState()` and holds the `AppState`, and
   `ContentView.swift` embeds `MainViewController(appState:)` in a SwiftUI `UIViewControllerRepresentable`.
@@ -222,14 +222,14 @@ persisted across app restarts.
 iOS push notifications are powered by Firebase Cloud Messaging (FCM) via Apple Push Notification
 service (APNs). The following setup is required:
 
-1. **Firebase iOS SDK** - Added via Swift Package Manager in `iosApp/iosApp.xcodeproj`.
+1. **Firebase iOS SDK** - Added via Swift Package Manager in `apps/iosApp/iosApp.xcodeproj`.
    The `FirebaseMessaging` package is required.
 
 2. **`GoogleService-Info.plist`** - Download from Firebase Console > Project Settings > your iOS app
-   and place at `iosApp/iosApp/GoogleService-Info.plist`. This file is `.gitignore`d; in CI, decode
+   and place at `apps/iosApp/iosApp/GoogleService-Info.plist`. This file is `.gitignore`d; in CI, decode
    it from the `FIREBASE_IOS_PLIST` base64 secret:
    ```bash
-   echo "$FIREBASE_IOS_PLIST" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+   echo "$FIREBASE_IOS_PLIST" | base64 -d > apps/iosApp/iosApp/GoogleService-Info.plist
    ```
 
 3. **Push Notifications capability** - Enabled in Xcode under Signing & Capabilities. This adds
@@ -327,7 +327,7 @@ The following repository secrets are required for CI publishing:
 ### iOS publishing notes
 
 Getting a Kotlin Multiplatform iOS build onto TestFlight via GitHub Actions has several
-non-obvious failure modes. The fixes are already in the workflow and `composeApp/build.gradle.kts`,
+non-obvious failure modes. The fixes are already in the workflow and `apps/composeApp/build.gradle.kts`,
 but the reasoning is worth preserving.
 
 **Signing must be patched into `project.pbxproj`, not passed via `xcodebuild` overrides.**
@@ -344,7 +344,7 @@ untouched. This only affects CI's checked-out copy of the project file.
 
 **Kotlin/Native devirtualization is disabled for release iOS framework builds.**
 See the `freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"` block
-in `composeApp/build.gradle.kts`. At ~115k LOC, the K/N linker's `DevirtualizationAnalysis` phase
+in `apps/composeApp/build.gradle.kts`. At ~115k LOC, the K/N linker's `DevirtualizationAnalysis` phase
 OOMs on GitHub's `macos-latest` runner (14 GB RAM) regardless of how high `org.gradle.jvmargs` is
 set — the memory consumed by `ConstraintGraphBuilder` scales past the runner's physical RAM
 ceiling. Two gotchas to know if you ever need to touch this:
@@ -364,7 +364,7 @@ ceiling. Two gotchas to know if you ever need to touch this:
 (`grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?'`) before writing it to `CFBundleShortVersionString`.
 Apple rejects the upload with `-19239` if the value isn't one to three period-separated integers.
 
-**APNs environment is flipped for CI builds.** `iosApp/iosApp/iosApp.entitlements` has
+**APNs environment is flipped for CI builds.** `apps/iosApp/iosApp/iosApp.entitlements` has
 `aps-environment = development` so local Xcode builds against a connected iPhone use the
 sandbox APNs gateway (which is what development provisioning profiles require). TestFlight
 and App Store builds need `production`, so CI runs `PlistBuddy` on the entitlements file
@@ -374,7 +374,7 @@ arrive on TestFlight devices — iOS rejects the registration token mismatch sil
 
 **Apple-side prerequisites** (one-time setup, not done by CI):
 1. Register an App ID for `com.tunjid.heron` at developer.apple.com with the capabilities
-   listed in `iosApp/iosApp/iosApp.entitlements` (currently Push Notifications, Associated Domains).
+   listed in `apps/iosApp/iosApp/iosApp.entitlements` (currently Push Notifications, Associated Domains).
 2. Create an **Apple Distribution** certificate, export the cert + private key from Keychain
    as a `.p12` file, and base64-encode it for `IOS_CERTIFICATES_P12`.
 3. Create an **App Store Connect**-type provisioning profile tied to the App ID and that cert.

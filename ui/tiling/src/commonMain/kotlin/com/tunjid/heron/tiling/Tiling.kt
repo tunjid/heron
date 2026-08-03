@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.asInitialCursor
 import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.ui.stateproduction.requireStateProducingBackgroundDispatcher
 import com.tunjid.mutator.coroutines.launchedCollect
@@ -395,7 +396,7 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
         seedQueryTokenMap = mapOf(
-            startingQuery to Cursor.Initial,
+            startingQuery to startingQuery.data.cursorAnchor.asInitialCursor(),
         ),
         fetcher = { query, cursor ->
             cursorListLoader(query, cursor)

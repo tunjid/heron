@@ -1,0 +1,28 @@
+name: Update Gradle Wrapper
+
+# Dependabot cannot update gradle/wrapper/gradle-wrapper.properties, so the wrapper is
+# bumped by this action instead. Note that pull requests opened with GITHUB_TOKEN do not
+# trigger other workflows, so Build will not run on these pull requests. Close and reopen
+# the pull request to kick CI, or swap repo-token for a PAT with `repo` scope.
+
+on:
+  schedule:
+    - cron: "0 6 6 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-gradle-wrapper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Update Gradle wrapper
+        uses: gradle-update/update-gradle-wrapper-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: dependencies

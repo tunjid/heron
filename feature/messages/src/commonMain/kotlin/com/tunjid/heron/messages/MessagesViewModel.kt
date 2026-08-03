@@ -220,7 +220,7 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
                     isLocalOnly = false,
                     data = chatSearchData(),
                 ),
-                cursor = Cursor.Initial,
+                cursor = Cursor.Initial(),
             )
         }.launchedCollect {
             state.autoCompletedProfiles = it.sortedByDescending(

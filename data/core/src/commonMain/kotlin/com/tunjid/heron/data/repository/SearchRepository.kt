@@ -409,7 +409,7 @@ internal class OfflineSearchRepository(
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
-                cursor = Cursor.Initial,
+                cursor = Cursor.Initial(),
                 responseFetcher = {
                     getSuggestedUsersUnspecced(
                         GetSuggestedUsersQueryParams(

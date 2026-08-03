@@ -475,7 +475,7 @@ private fun Flow<Action.SearchProfiles>.launchSearchMutations(
                     limit = MAX_SUGGESTED_PROFILES.toLong(),
                 ),
             ),
-            cursor = Cursor.Initial,
+            cursor = Cursor.Initial(),
         ).collect { profiles ->
             state.suggestedProfiles = profiles.map(ProfileWithViewerState::profile)
         }
