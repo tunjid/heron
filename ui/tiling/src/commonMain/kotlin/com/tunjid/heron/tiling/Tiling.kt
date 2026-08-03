@@ -396,7 +396,7 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
         seedQueryTokenMap = mapOf(
-            startingQuery to startingQuery.data.cursorAnchor.asInitialCursor(),
+            startingQuery to startingQuery.initialCursor,
         ),
         fetcher = { query, cursor ->
             cursorListLoader(query, cursor)

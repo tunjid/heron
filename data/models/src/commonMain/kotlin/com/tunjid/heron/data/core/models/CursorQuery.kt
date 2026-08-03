@@ -26,6 +26,10 @@ import kotlinx.serialization.Serializable
 interface CursorQuery {
     val data: Data
 
+    val initialCursor: Cursor.Initial get() = Cursor.Initial(
+        cursor = null,
+    )
+
     @Serializable
     data class Data(
         val page: Int,

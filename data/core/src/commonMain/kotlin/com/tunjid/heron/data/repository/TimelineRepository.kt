@@ -49,6 +49,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.asInitialCursor
 import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.uri
@@ -168,7 +169,16 @@ sealed interface TimelineRequest {
 data class TimelineQuery(
     override val data: CursorQuery.Data,
     val source: Timeline.Source,
-) : CursorQuery
+) : CursorQuery {
+    override val initialCursor: Cursor.Initial
+        get() = when (source) {
+            Timeline.Source.Following,
+            is Timeline.Source.Record.List,
+            is Timeline.Source.Profile,
+            -> data.cursorAnchor.asInitialCursor()
+            is Timeline.Source.Record.Feed -> super.initialCursor
+        }
+}
 
 interface TimelineRepository {
 
