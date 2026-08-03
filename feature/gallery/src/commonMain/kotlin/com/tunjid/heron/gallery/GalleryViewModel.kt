@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.isStrictlyMedia
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
@@ -407,7 +408,6 @@ private suspend fun launchVerticalTimelineMutations(
     timelineRepository: TimelineRepository,
 ) {
     state.cursorData ?: return
-    delay(VerticalItemDelay)
 
     val timelineStateHolder = when (
         val existing = state.timelineStateHolder
@@ -493,11 +493,7 @@ private suspend fun feedGalleryTimeline(
         TimelineRequest.OfFeed.WithUri(source.uri),
     )
         .first()
-        .takeIf { timeline ->
-            timeline.supportedPresentations.any { presentation ->
-                presentation is Timeline.Presentation.Media
-            }
-        }
+        .takeIf(Timeline::isStrictlyMedia)
 
 private fun CoroutineScope.galleryTimelineStateHolder(
     timeline: Timeline,
@@ -508,5 +504,3 @@ private fun CoroutineScope.galleryTimelineStateHolder(
     startNumColumns = 1,
     timelineRepository = timelineRepository,
 )
-
-private val VerticalItemDelay = 1.4.seconds
