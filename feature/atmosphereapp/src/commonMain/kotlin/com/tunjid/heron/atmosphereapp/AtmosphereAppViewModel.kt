@@ -19,6 +19,13 @@ package com.tunjid.heron.atmosphereapp
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.atmosphereapp.di.profileHandleOrId
 import com.tunjid.heron.data.core.models.AtmosphereApp
+import com.tunjid.heron.data.core.models.DerakkumaBest
+import com.tunjid.heron.data.core.models.DerakkumaCircle
+import com.tunjid.heron.data.core.models.DerakkumaCircleMember
+import com.tunjid.heron.data.core.models.DerakkumaFavoriteSong
+import com.tunjid.heron.data.core.models.DerakkumaFriend
+import com.tunjid.heron.data.core.models.DerakkumaPlay
+import com.tunjid.heron.data.core.models.DerakkumaProfile
 import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.models.RockskyArtist
 import com.tunjid.heron.data.core.models.RockskyScrobble
@@ -28,6 +35,13 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.DerakkumaBestUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleMemberUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleUri
+import com.tunjid.heron.data.core.types.DerakkumaFavoriteSongUri
+import com.tunjid.heron.data.core.types.DerakkumaFriendUri
+import com.tunjid.heron.data.core.types.DerakkumaPlayUri
+import com.tunjid.heron.data.core.types.DerakkumaProfileUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentUri
@@ -53,7 +67,14 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.atmosphereapp.generated.resources.Res
 import heron.feature.atmosphereapp.generated.resources.tab_albums
 import heron.feature.atmosphereapp.generated.resources.tab_artists
+import heron.feature.atmosphereapp.generated.resources.tab_bests
+import heron.feature.atmosphereapp.generated.resources.tab_circle
 import heron.feature.atmosphereapp.generated.resources.tab_documents
+import heron.feature.atmosphereapp.generated.resources.tab_favorites
+import heron.feature.atmosphereapp.generated.resources.tab_friends
+import heron.feature.atmosphereapp.generated.resources.tab_members
+import heron.feature.atmosphereapp.generated.resources.tab_plays
+import heron.feature.atmosphereapp.generated.resources.tab_profile
 import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
@@ -252,6 +273,71 @@ private fun stateHoldersFor(
                     stringResource = Res.string.tab_albums,
                     itemId = RockskyAlbum::uri,
                     cursorListLoader = recordRepository::albums,
+                ),
+            ),
+    )
+    AtmosphereApp.DerakkumaId -> listOf(
+        existingHolders[DerakkumaProfileUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Profiles(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_profile,
+                    itemId = DerakkumaProfile::uri,
+                    cursorListLoader = recordRepository::derakkumaProfiles,
+                ),
+            ),
+        existingHolders[DerakkumaPlayUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Plays(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_plays,
+                    itemId = DerakkumaPlay::uri,
+                    cursorListLoader = recordRepository::derakkumaPlays,
+                ),
+            ),
+        existingHolders[DerakkumaBestUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Bests(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_bests,
+                    itemId = DerakkumaBest::uri,
+                    cursorListLoader = recordRepository::derakkumaBests,
+                ),
+            ),
+        existingHolders[DerakkumaFriendUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Friends(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_friends,
+                    itemId = DerakkumaFriend::uri,
+                    cursorListLoader = recordRepository::derakkumaFriends,
+                ),
+            ),
+        existingHolders[DerakkumaFavoriteSongUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.FavoriteSongs(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_favorites,
+                    itemId = DerakkumaFavoriteSong::uri,
+                    cursorListLoader = recordRepository::derakkumaFavoriteSongs,
+                ),
+            ),
+        existingHolders[DerakkumaCircleUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.Circle(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_circle,
+                    itemId = DerakkumaCircle::uri,
+                    cursorListLoader = recordRepository::derakkumaCircle,
+                ),
+            ),
+        existingHolders[DerakkumaCircleMemberUri.NAMESPACE]
+            ?: AppScreenStateHolders.Derakkuma.CircleMembers(
+                mutator = viewModelScope.recordStateHolder(
+                    profileId = profileId,
+                    stringResource = Res.string.tab_members,
+                    itemId = DerakkumaCircleMember::uri,
+                    cursorListLoader = recordRepository::derakkumaCircleMembers,
                 ),
             ),
     )

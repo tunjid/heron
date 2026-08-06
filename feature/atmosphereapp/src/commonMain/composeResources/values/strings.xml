@@ -21,5 +21,12 @@
     <string name="tab_tracks">Tracks</string>
     <string name="tab_artists">Artists</string>
     <string name="tab_scrobbles">Scrobbles</string>
+    <string name="tab_profile">Profile</string>
+    <string name="tab_plays">Plays</string>
+    <string name="tab_bests">Bests</string>
+    <string name="tab_friends">Friends</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_circle">Circle</string>
+    <string name="tab_members">Members</string>
     <string name="profiles_apps">%1$s's %2$s</string>
 </resources>
