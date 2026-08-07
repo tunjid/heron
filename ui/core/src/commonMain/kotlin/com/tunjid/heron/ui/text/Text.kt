@@ -4,7 +4,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
@@ -13,12 +12,14 @@ import androidx.compose.ui.text.style.TextOverflow
 fun EmphasizedSingleLineOutlinedText(
     modifier: Modifier = Modifier,
     text: String,
+    ellipsize: Boolean = true,
 ) {
     Text(
         modifier = modifier,
         text = text,
         color = MaterialTheme.colorScheme.outline,
         style = MaterialTheme.typography.bodyMediumEmphasized,
+        overflow = if (ellipsize) TextOverflow.Ellipsis else TextOverflow.Clip,
         maxLines = 1,
     )
 }
@@ -33,6 +34,7 @@ fun BoldedText(
         modifier = modifier,
         text = text,
         maxLines = if (ellipsize) 1 else Int.MAX_VALUE,
+        overflow = if (ellipsize) TextOverflow.Ellipsis else TextOverflow.Clip,
         style = LocalTextStyle.current.copy(fontWeight = Bold),
     )
 }

@@ -51,6 +51,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextOverflow.Companion
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -303,11 +305,16 @@ internal fun Trend(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .weight(1f),
+        ) {
             Text(
                 text = trendTitle(index, trend),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
             )
             Spacer(
                 modifier = Modifier
@@ -330,10 +337,6 @@ internal fun Trend(
                 )
             }
         }
-        Spacer(
-            modifier = Modifier
-                .weight(1f),
-        )
         FilterChip(
             selected = false,
             shape = CircleShape,
