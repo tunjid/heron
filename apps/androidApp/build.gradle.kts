@@ -112,4 +112,5 @@ dependencies {
 
     debugImplementation(libs.compose.multiplatform.ui.tooling.preview)
     debugImplementation(libs.leak.canary)
+    "stagingImplementation"(libs.leak.canary)
 }
