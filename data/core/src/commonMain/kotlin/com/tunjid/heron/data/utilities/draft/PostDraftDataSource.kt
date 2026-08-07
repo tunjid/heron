@@ -143,7 +143,7 @@ internal class OfflinePostDraftDataSource(
                     request = CreateDraftRequest(draft = networkDraft),
                 )
             }.map { response ->
-                response.id.let(::DraftId)
+                response.id.tid.let(::DraftId)
             }
 
             else -> networkService.runCatchingWithMonitoredNetworkRetry {
