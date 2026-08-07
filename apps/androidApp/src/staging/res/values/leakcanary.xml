@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Staging is a non-debuggable QA build. LeakCanary hard-errors on non-debuggable APKs by
+      default; this override (staging source set only) opts staging in, per
+      https://square.github.io/leakcanary/recipes/#leakcanary-in-non-debuggable-builds
+      Full automatic LeakCanary (retained-object watching, heap dump, Leaks notification/UI)
+      then runs on staging without making it debuggable. Not present in release/debug source sets.
+    -->
+    <bool name="leak_canary_allow_in_non_debuggable_build">true</bool>
+</resources>
