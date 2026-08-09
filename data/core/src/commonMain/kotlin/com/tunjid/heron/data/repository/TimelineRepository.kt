@@ -615,31 +615,19 @@ internal class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         val postEntities = mutableListOf<PostEntity>()
 
-        var head = postDao.cachedPostEntity(
+        var head = cachedOrResolvedPostEntity(
             signedInProfileId = signedInProfileId,
             postUri = postUri,
-        )
-            ?.also(postEntities::add)
+        )?.also(postEntities::add)
 
         while (head != null && head.quotedPostUri != null) {
-            val quotedPostUri = requireNotNull(head.quotedPostUri)
-            head = withTimeoutOrNull(3.seconds) {
-                // Resolve post in case it's not cached
-                val resolutionJob = launch {
-                    recordResolver.resolve(quotedPostUri)
-                }
-                postDao.cachedPostEntity(
-                    signedInProfileId = signedInProfileId,
-                    postUri = quotedPostUri,
-                )?.also {
-                    postEntities.add(it)
-                    // resolution completed and data was cached,
-                    // or it was already cached, and we don't need resolution to complete
-                    // Either way, cancel as resolution waits to be offline, and can impede
-                    resolutionJob.cancel()
-                }
-            }
+            head = cachedOrResolvedPostEntity(
+                signedInProfileId = signedInProfileId,
+                postUri = requireNotNull(head.quotedPostUri),
+            )?.also(postEntities::add)
         }
+
+        if (postEntities.isEmpty()) return@singleSessionFlow flowOf(emptyList())
 
         recordResolver.timelineItems(
             items = postEntities,
@@ -931,6 +919,30 @@ internal class OfflineTimelineRepository(
             .firstOrNull { it is Outcome.Failure }
             ?: Outcome.Success
     } ?: expiredSessionOutcome()
+
+    private suspend fun cachedOrResolvedPostEntity(
+        signedInProfileId: ProfileId?,
+        postUri: PostUri,
+        timeout: Duration = 3.seconds,
+    ): PostEntity? = withTimeoutOrNull(timeout) {
+        // Resolve post in case it's not cached
+        val resolutionJob = launch {
+            recordResolver.resolve(postUri)
+        }
+        postDao.posts(
+            viewingProfileId = signedInProfileId?.id,
+            postUris = listOf(postUri),
+        )
+            .firstOrNull(List<PopulatedPostEntity>::isNotEmpty)
+            ?.first()
+            ?.entity
+            ?.also {
+                // resolution completed and data was cached,
+                // or it was already cached, and we don't need resolution to complete
+                // Either way, cancel as resolution waits to be offline, and can impede
+                resolutionJob.cancel()
+            }
+    }
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -1510,20 +1522,6 @@ internal class OfflineTimelineRepository(
 
 private val PostEntity.quotedPostUri: PostUri?
     get() = record?.embeddedRecordUri as? PostUri
-
-private suspend fun PostDao.cachedPostEntity(
-    signedInProfileId: ProfileId?,
-    postUri: PostUri,
-    timeout: Duration = 3.seconds,
-): PostEntity? = withTimeoutOrNull(timeout) {
-    posts(
-        viewingProfileId = signedInProfileId?.id,
-        postUris = listOf(postUri),
-    )
-        .firstOrNull(List<PopulatedPostEntity>::isNotEmpty)
-        ?.first()
-        ?.entity
-}
 
 private fun SavedState.timelineInfo(): Pair<List<TimelinePreference>, Boolean> {
     val preferences = signedProfilePreferencesOrDefault()
