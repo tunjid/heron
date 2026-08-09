@@ -14,40 +14,30 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.postdetail.di
+package com.tunjid.heron.quotethread.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.automirrored.rounded.Reply
-import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.postdetail.Action
-import com.tunjid.heron.postdetail.PostDetailScreen
-import com.tunjid.heron.postdetail.PostDetailStateHolder
-import com.tunjid.heron.postdetail.PostDetailViewModelInitializer
-import com.tunjid.heron.postdetail.canTranslate
-import com.tunjid.heron.postdetail.hasQuotePost
-import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
-import com.tunjid.heron.sheets.rememberInferenceSheetState
-import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.quotethread.Action
+import com.tunjid.heron.quotethread.QuoteThreadScreen
+import com.tunjid.heron.quotethread.QuoteThreadStateHolder
+import com.tunjid.heron.quotethread.QuoteThreadViewModelInitializer
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
-import com.tunjid.heron.ui.scaffold.navigation.quoteThreadDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
@@ -85,16 +75,13 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.post_detail.generated.resources.Res
-import heron.feature.post_detail.generated.resources.reply
-import heron.feature.post_detail.generated.resources.title
-import heron.feature.post_detail.generated.resources.translate_post_text
-import heron.feature.post_detail.generated.resources.unroll_post_quotes
+import heron.feature.quote_thread.generated.resources.Res
+import heron.feature.quote_thread.generated.resources.reply
+import heron.feature.quote_thread.generated.resources.title
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}"
-private const val RouteUriPattern = "/{profileHandleOrId}/app.bsky.feed.post/{postRecordKey}"
+private const val RoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quote-thread"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -115,7 +102,7 @@ internal val Route.profileHandleOrId by mappedRoutePath(
 
 @BindingContainer
 @ContributesTo(NavigationScope::class)
-object PostDetailNavigationBindings {
+object QuoteThreadNavigationBindings {
 
     @Provides
     @IntoMap
@@ -125,26 +112,17 @@ object PostDetailNavigationBindings {
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )
-
-    @Provides
-    @IntoMap
-    @StringKey(RouteUriPattern)
-    fun provideRouteUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RouteUriPattern,
-            routeMapper = ::createRoute,
-        )
 }
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-object PostDetailBindings {
+object QuoteThreadBindings {
 
     @Provides
     @IntoMap
-    @ClassKey(PostDetailStateHolder::class)
+    @ClassKey(QuoteThreadStateHolder::class)
     fun provideRouteStateHolderInitializer(
-        initializer: PostDetailViewModelInitializer,
+        initializer: QuoteThreadViewModelInitializer,
     ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
     @Provides
@@ -157,18 +135,6 @@ object PostDetailBindings {
         routeParser = routeParser,
         navigationContentTransformer = navigationContentTransformer,
     )
-
-    @Provides
-    @IntoMap
-    @StringKey(RouteUriPattern)
-    fun provideUriPaneEntry(
-        routeParser: RouteParser,
-        navigationContentTransformer: NavigationContentTransformer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        navigationContentTransformer = navigationContentTransformer,
-    )
-
     private fun routePaneEntry(
         routeParser: RouteParser,
         navigationContentTransformer: NavigationContentTransformer,
@@ -194,7 +160,7 @@ internal fun Route(
     route: Route,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    val stateHolder = paneScaffoldState.retainRouteStateHolder<PostDetailStateHolder>(
+    val stateHolder = paneScaffoldState.retainRouteStateHolder<QuoteThreadStateHolder>(
         route = route,
     )
     val state = stateHolder.produceStateWithLifecycle()
@@ -227,51 +193,6 @@ internal fun Route(
                     )
                 },
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
-                actions = {
-                    val inferenceSheetState = rememberInferenceSheetState()
-                    if (state.canTranslate) AppBarIconButton(
-                        icon = Icons.Rounded.Translate,
-                        iconDescription = stringResource(Res.string.translate_post_text),
-                        onClick = click@{
-                            val post = state.anchorPost ?: return@click
-                            val postLanguageTag = state.postLanguageTag ?: return@click
-                            val currentLanguageTag = state.currentLanguageTag ?: return@click
-                            inferenceSheetState.translate(
-                                post = post,
-                                sourceLanguage = postLanguageTag,
-                                targetLanguage = currentLanguageTag,
-                            )
-                        },
-                    )
-                    if (state.hasQuotePost) AppBarIconButton(
-                        icon = Icons.AutoMirrored.Rounded.ReceiptLong,
-                        iconDescription = stringResource(Res.string.unroll_post_quotes),
-                        onClick = click@{
-                            state.anchorPost?.let { post ->
-                                stateHolder.accept(
-                                    Action.Navigate.To(
-                                        quoteThreadDestination(
-                                            post = post,
-                                            sharedElementPrefix = state.sharedElementPrefix,
-                                        ),
-                                    ),
-                                )
-                            }
-                        },
-                    )
-                    ThreadDisplayOptions(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp),
-                        order = state.order,
-                        viewMode = state.viewMode,
-                        onOrderChanged = {
-                            stateHolder.accept(Action.Load.Order(it))
-                        },
-                        onViewModeChanged = {
-                            stateHolder.accept(Action.Load.ViewMode(it))
-                        },
-                    )
-                },
             )
         },
         snackBarHost = {
@@ -331,7 +252,7 @@ internal fun Route(
             PaneNavigationRail()
         },
         content = {
-            PostDetailScreen(
+            QuoteThreadScreen(
                 paneScaffoldState = this,
                 state = state,
                 actions = stateHolder.accept,
