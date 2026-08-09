@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,18 +32,32 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AppBarIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: CardColors = CardDefaults.elevatedCardColors(),
+    interactionSource: MutableInteractionSource? = null,
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -53,6 +69,7 @@ fun AppBarIconButton(
         IconButton(
             enabled = enabled,
             onClick = onClick,
+            interactionSource = interactionSource,
             modifier = Modifier
                 .size(UiTokens.appBarButtonSize),
         ) {
@@ -71,19 +88,49 @@ fun AppBarIconButton(
     colors: CardColors = CardDefaults.elevatedCardColors(),
     onClick: () -> Unit,
 ) {
-    AppBarIconButton(
+    val toolTipState = rememberTooltipState()
+    val interactionSource = remember { MutableInteractionSource() }
+    TooltipBox(
         modifier = modifier,
-        enabled = enabled,
-        colors = colors,
-        onClick = onClick,
-        content = {
-            Icon(
-                imageVector = icon,
-                contentDescription = iconDescription,
-                tint = tint,
-            )
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            positioning = TooltipAnchorPosition.Below,
+            spacingBetweenTooltipAndAnchor = 4.dp,
+        ),
+        tooltip = {
+            PlainTooltip {
+                Text(iconDescription)
+            }
         },
-    )
+        state = toolTipState,
+    ) {
+        AppBarIconButton(
+            enabled = enabled,
+            colors = colors,
+            onClick = onClick,
+            content = {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = iconDescription,
+                    tint = tint,
+                )
+            },
+        )
+    }
+
+    val pressedState = interactionSource.collectIsPressedAsState()
+    val longPressTimeoutMillis = LocalViewConfiguration.current.longPressTimeoutMillis
+    LaunchedEffect(
+        pressedState,
+        longPressTimeoutMillis,
+    ) {
+        snapshotFlow(pressedState::value)
+            .collectLatest { pressed ->
+                if (!pressed) return@collectLatest toolTipState.dismiss()
+
+                delay(longPressTimeoutMillis.milliseconds)
+                toolTipState.show()
+            }
+    }
 }
 
 @Composable
