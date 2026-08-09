@@ -97,6 +97,7 @@ kotlin {
             implementation(project(":feature:standard-subscription"))
             implementation(project(":feature:tasks"))
             implementation(project(":feature:splash"))
+            implementation(project(":feature:quote-thread"))
             implementation(project(":ui:core"))
             implementation(project(":ui:media"))
             implementation(project(":ui:sheets"))

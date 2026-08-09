@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.postdetail
+package com.tunjid.heron.quotethread
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
@@ -25,7 +25,6 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -54,10 +53,6 @@ interface State {
         @Transient
         val canRunInference: Boolean = false,
         @Transient
-        val order: TimelineItem.Threaded.Order? = null,
-        @Transient
-        val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
-        @Transient
         val source: Timeline.Source? = null,
         @Transient
         val timelinePosition: CursorQuery.Data? = null,
@@ -82,25 +77,20 @@ interface State {
                 items = when (anchorPost) {
                     null -> TimelineItem.LoadingItems
                     else -> listOf(
-                        TimelineItem.Threaded.Linear(
+                        TimelineItem.Single(
                             id = anchorPost.uri.uri,
-                            anchorPostIndex = 0,
-                            nodes = listOf(
-                                TimelineItem.Threaded.Node(
-                                    post = anchorPost,
-                                    threadGate = null,
-                                    appliedLabels = route.model<AppliedLabels>()
-                                        ?: anchorPost.appliedLabels(
-                                            adultContentEnabled = false,
-                                            labelers = emptyList(),
-                                            labelPreferences = emptyList(),
-                                        ),
-                                    isMuted = false,
-                                ),
-                            ),
-                            generation = 0,
-                            hasBreak = false,
                             signedInProfileId = null,
+                            post = anchorPost,
+                            isMuted = false,
+                            threadGate = null,
+                            appliedLabels = route.model<AppliedLabels>()
+                                ?: anchorPost.appliedLabels(
+                                    adultContentEnabled = false,
+                                    labelers = emptyList(),
+                                    labelPreferences = emptyList(),
+                                ),
+                            feedContext = null,
+                            reqId = null,
                         ),
                     )
                 },
@@ -118,20 +108,7 @@ val State.canTranslate: Boolean get() {
         !postLanguageTag.startsWith(currentLanguageTag)
 }
 
-val State.hasQuotePost: Boolean
-    get() = anchorPost?.embeddableRecordUri is PostUri
-
 sealed class Action(val key: String) {
-
-    sealed class Load : Action(key = "Load") {
-        data object Initial : Load()
-        data class Order(
-            val order: TimelineItem.Threaded.Order,
-        ) : Load()
-        data class ViewMode(
-            val viewMode: TimelineItem.Threaded.ViewMode,
-        ) : Load()
-    }
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,

@@ -85,6 +85,7 @@ include(
     ":feature:profile",
     ":feature:profile-avatar",
     ":feature:profiles",
+    ":feature:quote-thread",
     ":feature:search",
     ":feature:splash",
     ":feature:settings",

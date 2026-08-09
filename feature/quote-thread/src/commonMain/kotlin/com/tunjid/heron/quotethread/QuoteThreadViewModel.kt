@@ -1,0 +1,303 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.quotethread
+
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.flattenedText
+import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.ml.engine.isAvailable
+import com.tunjid.heron.data.ml.language.LanguageDetector
+import com.tunjid.heron.data.ml.model.InferenceModelManager
+import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
+import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.quotethread.di.postRecordKey
+import com.tunjid.heron.quotethread.di.profileHandleOrId
+import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
+import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.launchMutationsIn
+import com.tunjid.mutator.coroutines.launchedCollect
+import com.tunjid.mutator.coroutines.launchedCollectLatest
+import com.tunjid.treenav.strings.Route
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+
+@Stable
+internal interface QuoteThreadStateHolder :
+    RouteStateHolder,
+    ActionSuspendingStateMutator<Action, State>
+
+@AssistedFactory
+fun interface QuoteThreadViewModelInitializer {
+    fun invoke(
+        scope: CoroutineScope,
+        route: Route,
+    ): ActualQuoteThreadViewModel
+}
+
+@Stable
+class ActualQuoteThreadViewModel(
+    mutator: ActionSuspendingStateMutator<Action, State>,
+    scope: CoroutineScope,
+) : ViewModel(viewModelScope = scope),
+    QuoteThreadStateHolder,
+    ActionSuspendingStateMutator<Action, State> by mutator {
+
+    @AssistedInject
+    constructor(
+        authRepository: AuthRepository,
+        profileRepository: ProfileRepository,
+        timelineRepository: TimelineRepository,
+        userDataRepository: UserDataRepository,
+        writeQueue: WriteQueue,
+        languageDetector: LanguageDetector,
+        inferenceModelManager: InferenceModelManager,
+        navActions: (NavigationMutation) -> Unit,
+        @Assisted scope: CoroutineScope,
+        @Assisted route: Route,
+    ) : this(
+        mutator = scope.actionSuspendingStateMutator(
+            state = State(route).toSnapshotMutable(),
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            producer = { state, actions ->
+                launchSignedInProfileIdMutations(
+                    state = state,
+                    authRepository = authRepository,
+                )
+                launchLoadPreferencesMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchInferenceCapabilityMutations(
+                    state = state,
+                    inferenceModelManager = inferenceModelManager,
+                )
+                launchPostQuoteThreadsMutations(
+                    state = state,
+                    route = route,
+                    languageDetector = languageDetector,
+                    profileRepository = profileRepository,
+                    timelineRepository = timelineRepository,
+                )
+
+                actions
+                    .launchMutationsIn(
+                        productionScope = this,
+                        keySelector = Action::key,
+                    ) {
+                        when (val action = type()) {
+                            is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                                state = state,
+                                writeQueue = writeQueue,
+                            )
+                            is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+
+                            is Action.Navigate -> action.flow.collect { navAction ->
+                                navActions(navAction.navigationMutation)
+                            }
+                            is Action.BlockAccount -> action.flow.launchBlockAccountMutations(
+                                state = state,
+                                writeQueue = writeQueue,
+                            )
+                            is Action.MuteAccount -> action.flow.launchMuteAccountMutations(
+                                state = state,
+                                writeQueue = writeQueue,
+                            )
+                            is Action.DeleteRecord -> action.flow.launchDeleteRecordMutations(
+                                state = state,
+                                writeQueue = writeQueue,
+                            )
+                            is Action.UpdateCurrentLanguageTag -> action.flow.launchUpdateCurrentLanguageTagMutations(
+                                state = state,
+                            )
+                        }
+                    }
+            },
+        ),
+        scope = scope,
+    )
+}
+
+context(productionScope: CoroutineScope)
+private fun launchPostQuoteThreadsMutations(
+    state: State.SnapshotMutable,
+    route: Route,
+    languageDetector: LanguageDetector,
+    profileRepository: ProfileRepository,
+    timelineRepository: TimelineRepository,
+) = productionScope.launch {
+    val postUri = profileRepository.profile(route.profileHandleOrId)
+        .first()
+        .let {
+            PostUri(
+                profileId = it.did,
+                postRecordKey = route.postRecordKey,
+            )
+        }
+
+    supervisorScope {
+        timelineRepository.postQuoteThread(
+            postUri = postUri,
+        ).launchedCollect { timelineItems ->
+            if (timelineItems.isEmpty()) return@launchedCollect
+            state.items = timelineItems
+            state.anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
+                when (item) {
+                    is TimelineItem.Single -> item.post.takeIf {
+                        it.uri.recordKey == route.postRecordKey
+                    }
+                    is TimelineItem.Pinned,
+                    is TimelineItem.Repost,
+                    is TimelineItem.Single,
+                    is TimelineItem.Threaded.Tree,
+                    is TimelineItem.Threaded.Linear,
+                    is TimelineItem.Placeholder,
+                    -> state.anchorPost
+                }
+            }
+        }
+        snapshotFlow { state.anchorPost }
+            .map { it?.flattenedText }
+            .distinctUntilChanged()
+            .launchedCollectLatest { flattenedText ->
+                state.postLanguageTag = flattenedText
+                    .takeUnless(String?::isNullOrBlank)
+                    ?.let { languageDetector.detectLanguageTag(it) }
+            }
+    }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchSignedInProfileIdMutations(
+    state: State.SnapshotMutable,
+    authRepository: AuthRepository,
+) = authRepository.signedInUser.launchedCollect { signedInProfile ->
+    state.signedInProfileId = signedInProfile?.did
+}
+
+context(productionScope: CoroutineScope)
+private fun launchLoadPreferencesMutations(
+    state: State.SnapshotMutable,
+    userDataRepository: UserDataRepository,
+) = userDataRepository.preferences.launchedCollect {
+    state.preferences = it
+}
+
+context(productionScope: CoroutineScope)
+private fun launchInferenceCapabilityMutations(
+    state: State.SnapshotMutable,
+    inferenceModelManager: InferenceModelManager,
+) = inferenceModelManager.source.launchedCollect { capability ->
+    state.canRunInference = capability.isAvailable
+}
+context(productionScope: CoroutineScope)
+private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { it.publication.toSubscriptionWritable() },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateCurrentLanguageTag>.launchUpdateCurrentLanguageTagMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.currentLanguageTag = action.languageTag
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.messages -= action.message
+}
