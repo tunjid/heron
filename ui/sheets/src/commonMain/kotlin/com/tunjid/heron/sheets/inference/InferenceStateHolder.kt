@@ -19,16 +19,13 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.flattenedText
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.engine.GenerationParams
 import com.tunjid.heron.data.ml.engine.InferenceEngine
-import com.tunjid.heron.data.ml.language.englishDisplayName
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.ml.model.LoadedModel
@@ -118,6 +115,13 @@ class InferenceViewModel(
                             inferenceModelManager = inferenceModelManager,
                             userDataRepository = userDataRepository,
                             profileRepository = profileRepository,
+                            timelineRepository = timelineRepository,
+                        )
+                        is InferenceAction.Tea -> action.flow.launchTeaMutations(
+                            state = state,
+                            inferenceEngine = inferenceEngine,
+                            inferenceModelManager = inferenceModelManager,
+                            userDataRepository = userDataRepository,
                             timelineRepository = timelineRepository,
                         )
                         is InferenceAction.Navigate.To -> action.flow.collect { navAction ->
@@ -223,6 +227,47 @@ private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
         }
     }
 
+context(productionScope: CoroutineScope)
+private fun Flow<InferenceAction.Tea>.launchTeaMutations(
+    state: InferenceState.SnapshotMutable,
+    inferenceEngine: InferenceEngine,
+    inferenceModelManager: InferenceModelManager,
+    userDataRepository: UserDataRepository,
+    timelineRepository: TimelineRepository,
+) = distinctUntilChanged()
+    .launchedCollectLatest { action ->
+        state.kind = InferenceKind.Tea
+        val anchorPostUri = action.post.uri
+        // A new thread invalidates the tea cached for the previous one.
+        if (state.teaPostUri != anchorPostUri) {
+            state.teaPostUri = anchorPostUri
+            state.teaOutcome = null
+        }
+        // A thread whose tea already succeeded never needs regenerating.
+        if (state.teaOutcome is InferenceOutcome.Success) {
+            return@launchedCollectLatest
+        }
+        state.teaOutcome = InferenceOutcome.Loading()
+
+        val items = timelineRepository.quoteThreadItems(
+            postUri = anchorPostUri,
+        )
+        if (items.isEmpty()) {
+            state.teaOutcome = InferenceOutcome.Error(
+                memo = Memo.Resource(Res.string.inference_error_failed),
+            )
+            return@launchedCollectLatest
+        }
+        inferenceEngine.outcomes(
+            inferenceModelManager = inferenceModelManager,
+            userDataRepository = userDataRepository,
+            prompt = teaPrompt(items = items),
+            transform = String::trim,
+        ).collect { outcome ->
+            state.teaOutcome = outcome
+        }
+    }
+
 /**
  * Streams [InferenceOutcome]s for a single [prompt]: an initial [InferenceOutcome.Loading] whose
  * [text][InferenceOutcome.text] grows with each streamed token (post-processed by [transform]),
@@ -291,7 +336,6 @@ private fun InferenceEngine.outcomes(
     )
 }
 
-/** The outcome of resolving which model (if any) a one-shot inference should load. */
 private sealed interface DefaultModelResolution {
     data class Loadable(
         val model: LoadedModel,
@@ -351,144 +395,17 @@ private suspend fun TimelineRepository.recentTimelineItems(
     }
         .orEmpty()
 
-private fun translationPrompt(
-    text: String,
-    sourceLanguageTag: String,
-    targetLanguageTag: String,
-): String {
-    val sourceLanguage = englishDisplayName(sourceLanguageTag)
-    val targetLanguage = englishDisplayName(targetLanguageTag)
-    return """
-        Translate the text between <text> tags from $sourceLanguage to $targetLanguage.
-        Reply with only the $targetLanguage translation: no quotes, no notes, no explanation.
-
-        <text>
-        $text
-        </text>
-
-        translation in $targetLanguage:
-    """.trimIndent()
-}
-
-private fun vibePrompt(
-    items: List<TimelineItem>,
-    profile: Profile,
-    type: Timeline.Profile.Type,
-): String = buildString {
-    // The two lenses read a profile differently: their posts show the voice they broadcast in,
-    // their replies show how they behave in conversation. Frame the ask and the samples to match.
-    val basis: String
-    val samplesHeader: String
-    when (type) {
-        Timeline.Profile.Type.Replies -> {
-            basis = "how they show up in replies to other people — their conversational tone, " +
-                "their wit, and how they treat the people they talk to"
-            samplesHeader = "Recent replies, shown within the conversations they belong to " +
-                "(the author's own lines are marked):"
-        }
-        else -> {
-            basis = "their recent posts — the topics they gravitate to and the voice they post in"
-            samplesHeader = "Recent posts:"
-        }
+private suspend fun TimelineRepository.quoteThreadItems(
+    postUri: PostUri,
+): List<TimelineItem> =
+    withTimeoutOrNull(TeaFetchTimeout) {
+        postQuoteThread(postUri = postUri)
+            .mapNotNull { items ->
+                items.takeIf(List<TimelineItem>::isNotEmpty)
+            }
+            .first()
     }
-    appendLine("Describe the \"vibe\" of a social media profile in two or three short sentences.")
-    appendLine("Base it on the author's bio and $basis, including any content labels.")
-    appendLine("Reply with only the description — no preamble, no headings, no quotes.")
-    appendLine()
-    appendLine("Profile:")
-    appendLine("- handle: @${profile.handle.id}")
-    profile.displayName?.let { appendLine("- name: $it") }
-    profile.description?.let { appendLine("- bio: $it") }
-    profile.labels.takeIf { it.isNotEmpty() }?.let { labels ->
-        appendLine("- labels: ${labels.joinToString { it.value.value }}")
-    }
-    appendLine()
-    appendLine(samplesHeader)
-    items.forEach { item ->
-        appendVibeSample(
-            item = item,
-            authorId = profile.did,
-        )
-    }
-}
-
-/**
- * Appends one recent [item] as a vibe sample. Standalone posts render as a single line; reply and
- * quote threads render as an indented conversation so the model sees the context [authorId] is
- * responding to, with the author's own lines marked.
- */
-private fun StringBuilder.appendVibeSample(
-    item: TimelineItem,
-    authorId: ProfileId,
-) {
-    when (item) {
-        is TimelineItem.Single,
-        is TimelineItem.Pinned,
-        -> appendVibePost(
-            prefix = "- ",
-            post = item.post,
-            authorId = authorId,
-            withHandle = false,
-        )
-
-        is TimelineItem.Repost -> appendVibePost(
-            prefix = "- reposted ",
-            post = item.post,
-            authorId = authorId,
-            withHandle = true,
-        )
-
-        is TimelineItem.Threaded.Linear -> appendVibeConversation(
-            posts = item.nodes.map { it.post },
-            authorId = authorId,
-        )
-
-        is TimelineItem.Threaded.Tree -> appendVibeConversation(
-            posts = listOf(item.anchor.post) + item.replies.map { it.post },
-            authorId = authorId,
-        )
-
-        is TimelineItem.Placeholder -> Unit
-    }
-}
-
-private fun StringBuilder.appendVibeConversation(
-    posts: List<Post>,
-    authorId: ProfileId,
-) {
-    if (posts.none { it.hasVibeContent }) return
-    appendLine("- conversation:")
-    posts.forEach { post ->
-        appendVibePost(
-            prefix = "    ",
-            post = post,
-            authorId = authorId,
-            withHandle = true,
-        )
-    }
-}
-
-private fun StringBuilder.appendVibePost(
-    prefix: String,
-    post: Post,
-    authorId: ProfileId,
-    withHandle: Boolean,
-) {
-    if (!post.hasVibeContent) return
-    append(prefix)
-    if (withHandle) {
-        append("@${post.author.handle.id}")
-        if (post.author.did == authorId) append(" (the author)")
-        append(": ")
-    }
-    append("\"${post.flattenedText.orEmpty()}\"")
-    val labels = post.labels.joinToString { it.value.value }
-    if (labels.isNotEmpty()) append(" [labels: $labels]")
-    appendLine()
-}
-
-private val Post.hasVibeContent: Boolean
-    get() = !flattenedText.isNullOrEmpty() || labels.isNotEmpty()
+        .orEmpty()
 
 private inline fun StringBuilder.transformedOrPlain(
     transform: (String) -> String,
@@ -498,8 +415,8 @@ private inline fun StringBuilder.transformedOrPlain(
 }
 
 /**
- * Strips wrappers a model may add around a translation despite instructions — surrounding code
- * fences or quotes — so the sheet always renders plain text. Only removes a wrapper present on
+ * Strips wrappers a model may add around a translation despite instructions, surrounding code
+ * fences or quotes, so the sheet always renders plain text. Only removes a wrapper present on
  * both ends, leaving quotes that belong to the text itself untouched.
  */
 private fun String.unwrapTranslation(): String =
@@ -511,3 +428,4 @@ private fun String.unwrapTranslation(): String =
 
 private const val VibeSampleLimit = 15L
 private val VibeFetchTimeout = 20.seconds
+private val TeaFetchTimeout = 20.seconds

@@ -123,6 +123,17 @@ class InferenceSheetState internal constructor(
         show()
     }
 
+    fun spillTea(
+        post: Post,
+    ) {
+        stateHolder(
+            InferenceAction.Tea(
+                post = post,
+            ),
+        )
+        show()
+    }
+
     override fun onHidden() = Unit
 
     companion object {
@@ -167,6 +178,7 @@ internal fun InferenceBottomSheet(
         val headerOutcome = when (kind) {
             InferenceKind.Vibe -> inferenceState.postsOutcome
             InferenceKind.Translation -> inferenceState.translationOutcome
+            InferenceKind.Tea -> inferenceState.teaOutcome
         }
         // The no-model / unavailable prompts carry their own title, so only show the kind header
         // otherwise.
@@ -200,6 +212,11 @@ internal fun InferenceBottomSheet(
             when (targetKind) {
                 InferenceKind.Translation -> InferenceOutcomeContent(
                     outcome = inferenceState.translationOutcome,
+                    engineState = inferenceState.engineState,
+                    onNavigateToModels = onNavigateToModels,
+                )
+                InferenceKind.Tea -> InferenceOutcomeContent(
+                    outcome = inferenceState.teaOutcome,
                     engineState = inferenceState.engineState,
                     onNavigateToModels = onNavigateToModels,
                 )

@@ -3,6 +3,7 @@ package com.tunjid.heron.sheets.inference
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
@@ -11,6 +12,7 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.inference_sheet_tea_title
 import heron.ui.timeline.generated.resources.inference_sheet_translation_title
 import heron.ui.timeline.generated.resources.inference_sheet_vibe_title
 import kotlinx.serialization.Serializable
@@ -40,6 +42,12 @@ interface InferenceState {
         val postsOutcome: InferenceOutcome? = null,
         @Transient
         val repliesOutcome: InferenceOutcome? = null,
+        // The quote thread the tea outcome describes; a change clears it so a new thread's tea is
+        // generated afresh rather than showing another thread's cached gist.
+        @Transient
+        val teaPostUri: PostUri? = null,
+        @Transient
+        val teaOutcome: InferenceOutcome? = null,
     ) : InferenceState
 }
 
@@ -73,6 +81,10 @@ sealed class InferenceAction(
         val profileId: ProfileId,
         val type: Timeline.Profile.Type,
     ) : InferenceAction(key = "Vibe")
+
+    data class Tea(
+        val post: Post,
+    ) : InferenceAction(key = "Tea")
 
     sealed class Navigate :
         InferenceAction(key = "Navigate"),
@@ -121,4 +133,5 @@ enum class InferenceKind(
 ) {
     Translation(titleRes = Res.string.inference_sheet_translation_title),
     Vibe(titleRes = Res.string.inference_sheet_vibe_title),
+    Tea(titleRes = Res.string.inference_sheet_tea_title),
 }
