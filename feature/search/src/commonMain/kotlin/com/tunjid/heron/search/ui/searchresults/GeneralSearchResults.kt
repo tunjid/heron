@@ -37,7 +37,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -65,9 +64,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.search.RouteQuery
-import com.tunjid.heron.search.SearchState
+import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.State
-import com.tunjid.heron.search.key
 import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
@@ -80,7 +78,6 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
-import com.tunjid.mutator.compose.produceStateWithLifecycle
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.feeds
 import heron.feature.search.generated.resources.latest
@@ -116,9 +113,6 @@ internal fun GeneralSearchResults(
     Box(
         modifier = modifier,
     ) {
-        val updatedSearchStateHolders by rememberUpdatedState(
-            state.searchStateHolders,
-        )
         val scope = rememberCoroutineScope()
         val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
         var tabsCollapsed by rememberSaveable {
@@ -207,22 +201,24 @@ internal fun GeneralSearchResults(
                 .zIndex(0f)
                 .nestedScroll(tabsOffsetNestedScrollConnection)
                 .clip(
-                    RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp,
-                    ),
+                    remember {
+                        RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                        )
+                    },
                 ),
             state = pagerState,
+            beyondViewportPageCount = 1,
             key = { page ->
-                updatedSearchStateHolders[page].state.key
+                state.searchStateHolders[page].key
             },
             pageContent = { page ->
-                val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
-                when (val searchResultState = searchResultStateHolder.produceStateWithLifecycle()) {
-                    is SearchState.OfPosts -> {
+                when (val searchResultStateHolder = state.searchStateHolders[page]) {
+                    is SearchScreenStateHolders.Posts -> {
                         val gridState = rememberLazyStaggeredGridState()
                         PostSearchResults(
-                            state = searchResultState,
+                            timelineStateHolder = searchResultStateHolder,
                             gridState = gridState,
                             modifier = modifier,
                             presentation = state.preferredPresentation,
@@ -238,7 +234,6 @@ internal fun GeneralSearchResults(
                             onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
                             onMediaClicked = onMediaClicked,
                             onNavigate = onNavigate,
-                            searchResultActions = searchResultStateHolder.accept,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
                             onDeletePostClicked = onDeletePostClicked,
@@ -251,10 +246,10 @@ internal fun GeneralSearchResults(
                         )
                     }
 
-                    is SearchState.OfProfiles -> {
+                    is SearchScreenStateHolders.Profiles -> {
                         val listState = rememberLazyListState()
                         ProfileSearchResults(
-                            state = searchResultState,
+                            stateHolder = searchResultStateHolder,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
@@ -262,7 +257,6 @@ internal fun GeneralSearchResults(
                             onViewerStateClicked = {
                                 onViewerStateClicked(it.profileWithViewerState)
                             },
-                            searchResultActions = searchResultStateHolder.accept,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,
@@ -272,17 +266,16 @@ internal fun GeneralSearchResults(
                         )
                     }
 
-                    is SearchState.OfFeedGenerators -> {
+                    is SearchScreenStateHolders.Feeds -> {
                         val listState = rememberLazyListState()
                         FeedSearchResults(
-                            state = searchResultState,
+                            stateHolder = searchResultStateHolder,
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
                             timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                             onTimelineUpdateClicked = onTimelineUpdateClicked,
-                            searchResultActions = searchResultStateHolder.accept,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,

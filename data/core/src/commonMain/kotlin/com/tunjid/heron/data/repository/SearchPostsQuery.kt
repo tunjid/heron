@@ -27,8 +27,8 @@ import sh.christian.ozone.api.Language
 
 /**
  * Builds the `app.bsky.feed.searchPostsV2` query params from a raw [query] string and an optional
- * [filter]. Shared by `SearchQuery.OfPosts` (the search screen) and [Timeline.Source.Search]
- * (the media gallery) so both compose queries identically.
+ * [filter]. Used by the post-search timeline path ([Timeline.Source.Search]) — surfaced on the
+ * search screen and the media gallery — so all post searches compose queries identically.
  */
 internal fun searchPostsV2QueryParams(
     query: String,
