@@ -107,7 +107,9 @@ fun CoroutineScope.timelineStateHolder(
                         .takeUnless { refreshOnStart }
                         ?: Clock.System.now()
 
-                is Timeline.Profile -> Clock.System.now()
+                is Timeline.Profile,
+                is Timeline.Search,
+                -> Clock.System.now()
             },
         ),
     )
@@ -220,6 +222,7 @@ private fun Timeline.toTimelineRequest(): TimelineRequest = when (this) {
         profileHandleOrDid = profileId,
         type = type,
     )
+    is Timeline.Search -> TimelineRequest.OfSearch(source = search)
     is Timeline.StarterPack -> TimelineRequest.OfStarterPack.WithUri(uri = starterPack.uri)
 }
 

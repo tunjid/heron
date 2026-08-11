@@ -66,8 +66,11 @@ internal fun MultipleEntitySaver.add(
                         null,
                         -> feedView.post.indexedAt.toEpochMilliseconds()
                     }
+                    // Search results are observed by uri, never saved through this path, but the
+                    // branch is required for exhaustiveness.
                     is Timeline.Source.Record.Feed,
                     is Timeline.Source.Record.List,
+                    is Timeline.Source.Search,
                     -> query.feedGeneratorOrder(index)
                 },
                 viewingProfileId = viewingProfileId,

@@ -71,6 +71,7 @@ private fun TimelineItem.Empty.emptyTextRes(): StringResource = when (this) {
     is TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread
     is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
         is Timeline.Home.Following -> Res.string.empty_timeline_generic
+        is Timeline.Search -> Res.string.empty_timeline_generic
         is Timeline.Home.Feed -> Res.string.empty_timeline_feed
         is Timeline.Home.List -> Res.string.empty_timeline_list
         is Timeline.StarterPack -> Res.string.empty_timeline_list
@@ -88,6 +89,7 @@ private fun TimelineItem.Empty.emptyDescriptionRes(): StringResource = when (thi
     TimelineItem.Empty.Thread -> Res.string.empty_timeline_thread_description
     is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
         is Timeline.Home.Following -> Res.string.empty_timeline_generic_description
+        is Timeline.Search -> Res.string.empty_timeline_generic_description
         is Timeline.Home.Feed -> Res.string.empty_timeline_feed_description
         is Timeline.Home.List -> Res.string.empty_timeline_list_description
         is Timeline.StarterPack -> Res.string.empty_timeline_list_description
@@ -105,6 +107,7 @@ private fun TimelineItem.Empty.emptyIcon(): ImageVector = when (this) {
     TimelineItem.Empty.Thread -> Icons.Rounded.ModeComment
     is TimelineItem.Empty.Timeline -> when (val timeline = timeline) {
         is Timeline.Home.Following -> Icons.Rounded.Dashboard
+        is Timeline.Search -> Icons.Rounded.Dashboard
         is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
         is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
         is Timeline.StarterPack -> Icons.Rounded.Group

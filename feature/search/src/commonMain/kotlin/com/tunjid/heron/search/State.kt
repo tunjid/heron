@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -121,12 +122,12 @@ fun RouteQuery.layoutFor(
     else -> ScreenLayout.GeneralSearchResults
 }
 
-val SearchQuery.Filter?.isMediaSearch: Boolean
+val SearchFilter?.isMediaSearch: Boolean
     get() = when (this?.media) {
-        SearchQuery.Filter.Media.WithMedia,
-        SearchQuery.Filter.Media.VideosOnly,
+        SearchFilter.Media.WithMedia,
+        SearchFilter.Media.VideosOnly,
         -> true
-        SearchQuery.Filter.Media.All,
+        SearchFilter.Media.All,
         null,
         -> false
     }
@@ -205,8 +206,8 @@ interface State {
         val searchBarText: String = "",
         val query: RouteQuery = RouteQuery.FullSearch,
         val layout: ScreenLayout = ScreenLayout.Suggested,
-        val appliedFilter: SearchQuery.Filter? = null,
-        val draftFilter: SearchQuery.Filter = SearchQuery.Filter(),
+        val appliedFilter: SearchFilter? = null,
+        val draftFilter: SearchFilter = SearchFilter(),
         val preferredPresentation: Timeline.Presentation = Timeline.Presentation.Text.WithEmbed,
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
@@ -245,7 +246,7 @@ sealed class Action(val key: String) {
         data object Begin : Filter()
 
         data class Edit(
-            val filter: SearchQuery.Filter,
+            val filter: SearchFilter,
         ) : Filter()
 
         data object Apply : Filter()

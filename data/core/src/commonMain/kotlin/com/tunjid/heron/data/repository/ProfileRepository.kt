@@ -17,6 +17,10 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Profile as BskyProfile
+import app.bsky.actor.ProfileView
+import app.bsky.actor.SearchActorsQueryParams
+import app.bsky.actor.SearchActorsResponse
+import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.actor.Status
 import app.bsky.actor.StatusEmbedUnion
 import app.bsky.embed.External
@@ -31,6 +35,8 @@ import app.bsky.graph.GetMutesQueryParams
 import app.bsky.graph.GetMutesResponse
 import app.bsky.graph.MuteActorRequest
 import app.bsky.graph.UnmuteActorRequest
+import app.bsky.unspecced.GetSuggestedUsersQueryParams
+import app.bsky.unspecced.GetSuggestedUsersResponse
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
@@ -118,6 +124,12 @@ data class ListMemberQuery(
     override val data: CursorQuery.Data,
 ) : CursorQuery
 
+@Serializable
+data class ProfileSearchQuery(
+    val query: String,
+    override val data: CursorQuery.Data,
+) : CursorQuery
+
 interface ProfileRepository {
 
     fun profile(profileId: Id.Profile): Flow<Profile>
@@ -149,6 +161,20 @@ interface ProfileRepository {
         query: DataQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
+
+    fun profileSearch(
+        query: ProfileSearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>>
+
+    fun autoCompleteProfileSearch(
+        query: ProfileSearchQuery,
+        cursor: Cursor,
+    ): Flow<List<ProfileWithViewerState>>
+
+    fun suggestedProfiles(
+        category: String? = null,
+    ): Flow<List<ProfileWithViewerState>>
 
     suspend fun sendConnection(
         connection: Profile.Connection,
@@ -396,6 +422,92 @@ internal class OfflineProfileRepository(
                 },
                 responseProfileViews = GetMutesResponse::mutes,
                 responseCursor = GetMutesResponse::cursor,
+            )
+        }
+            .filterNotNull()
+            .flowOn(ioDispatcher)
+
+    override fun profileSearch(
+        query: ProfileSearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        if (query.query.isBlank()) emptyFlow()
+        else savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                cursor = cursor,
+                responseFetcher = {
+                    searchActors(
+                        params = SearchActorsQueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        ),
+                    )
+                },
+                responseProfileViews = SearchActorsResponse::actors,
+                responseCursor = SearchActorsResponse::cursor,
+            )
+        }
+            .flowOn(ioDispatcher)
+
+    override fun autoCompleteProfileSearch(
+        query: ProfileSearchQuery,
+        cursor: Cursor,
+    ): Flow<List<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                cursor = cursor,
+                responseFetcher = {
+                    searchActorsTypeahead(
+                        params = SearchActorsTypeaheadQueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                        ),
+                    )
+                },
+                responseProfileViews = {
+                    actors.map { basicProfileView ->
+                        ProfileView(
+                            did = basicProfileView.did,
+                            handle = basicProfileView.handle,
+                            displayName = basicProfileView.displayName,
+                            pronouns = basicProfileView.pronouns,
+                            description = null,
+                            avatar = basicProfileView.avatar,
+                            associated = basicProfileView.associated,
+                            indexedAt = null,
+                            createdAt = basicProfileView.createdAt,
+                            viewer = basicProfileView.viewer,
+                            labels = basicProfileView.labels,
+                            verification = basicProfileView.verification,
+                            status = basicProfileView.status,
+                            debug = basicProfileView.debug,
+                        )
+                    }
+                },
+                responseCursor = { null },
+            )
+        }
+            .flowOn(ioDispatcher)
+
+    override fun suggestedProfiles(
+        category: String?,
+    ): Flow<List<ProfileWithViewerState>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                cursor = Cursor.Initial(),
+                responseFetcher = {
+                    getSuggestedUsersUnspecced(
+                        GetSuggestedUsersQueryParams(
+                            category = category,
+                        ),
+                    )
+                },
+                responseProfileViews = GetSuggestedUsersResponse::actors,
+                responseCursor = { null },
             )
         }
             .filterNotNull()

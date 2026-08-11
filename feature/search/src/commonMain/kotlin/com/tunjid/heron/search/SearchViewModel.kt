@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
@@ -671,14 +672,14 @@ private fun Flow<Action.Filter>.launchFilterMutations(
 ) = launchedCollect { action ->
     when (action) {
         Action.Filter.Begin ->
-            state.draftFilter = state.appliedFilter ?: SearchQuery.Filter()
+            state.draftFilter = state.appliedFilter ?: SearchFilter()
 
         is Action.Filter.Edit ->
             state.draftFilter = action.filter
 
         is Action.Filter.Clear -> {
             state.appliedFilter = null
-            state.draftFilter = SearchQuery.Filter()
+            state.draftFilter = SearchFilter()
             state.reloadPostSearches()
         }
 
@@ -716,7 +717,7 @@ private fun State.SnapshotMutable.reloadPostSearches() {
 
 private fun SearchState.OfPosts.confirmedPostsQuery(
     query: String,
-    filter: SearchQuery.Filter?,
+    filter: SearchFilter?,
 ): SearchQuery.OfPosts = when (tilingData.currentQuery) {
     is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
         query = query,

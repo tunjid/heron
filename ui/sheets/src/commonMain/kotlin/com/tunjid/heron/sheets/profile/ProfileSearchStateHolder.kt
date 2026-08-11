@@ -8,8 +8,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.sheets.utilities.SheetWhileSubscribed
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -60,7 +59,6 @@ internal class ProfileSearchViewModel(
     ActionSuspendingStateMutator<ProfileSearchAction, ProfileSearchState> by mutator {
     @AssistedInject
     constructor(
-        searchRepository: SearchRepository,
         profileRepository: ProfileRepository,
         @Assisted scope: CoroutineScope,
     ) : this(
@@ -78,7 +76,7 @@ internal class ProfileSearchViewModel(
                         )
                         is ProfileSearchAction.Query -> action.flow.launchSearchMutations(
                             state = state,
-                            searchRepository = searchRepository,
+                            profileRepository = profileRepository,
                         )
                         is ProfileSearchAction.Seed -> action.flow.launchSeedMutations(
                             state = state,
@@ -102,7 +100,7 @@ private fun Flow<ProfileSearchAction.UpdateTitle>.launchUpdateTitleMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<ProfileSearchAction.Query>.launchSearchMutations(
     state: ProfileSearchState.SnapshotMutable,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
 ) {
     val shared = shareIn(
         scope = productionScope,
@@ -121,10 +119,9 @@ private fun Flow<ProfileSearchAction.Query>.launchSearchMutations(
     shared.filterIsInstance<ProfileSearchAction.Query.Search>()
         .debounce(SEARCH_DEBOUNCE)
         .launchedCollectLatest { action ->
-            searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
+            profileRepository.autoCompleteProfileSearch(
+                query = ProfileSearchQuery(
                     query = action.query,
-                    isLocalOnly = false,
                     data = CursorQuery.Data(
                         page = 0,
                         cursorAnchor = Clock.System.now(),

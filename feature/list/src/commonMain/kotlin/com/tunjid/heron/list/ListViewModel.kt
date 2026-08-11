@@ -463,6 +463,7 @@ private fun launchTimelineCreatorMutations(
     when (timeline) {
         is Timeline.Home.Feed,
         is Timeline.Home.Following,
+        is Timeline.Search,
         is Timeline.Profile,
         -> return
 

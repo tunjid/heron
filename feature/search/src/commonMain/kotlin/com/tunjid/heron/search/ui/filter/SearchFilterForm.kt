@@ -61,8 +61,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.CommonStrings
@@ -115,9 +115,9 @@ import org.jetbrains.compose.resources.stringResource
 internal fun SearchFilterForm(
     paneScaffoldState: PaneScaffoldState,
     queryText: String,
-    filter: SearchQuery.Filter,
+    filter: SearchFilter,
     onQueryTextChanged: (String) -> Unit,
-    onFilterChanged: (SearchQuery.Filter) -> Unit,
+    onFilterChanged: (SearchFilter) -> Unit,
     onCancel: () -> Unit,
     onClear: () -> Unit,
     onApply: () -> Unit,
@@ -140,7 +140,7 @@ internal fun SearchFilterForm(
     LaunchedEffect(filter.people) {
         profilePicker.seedProfiles(
             filter.people
-                .flatMap(SearchQuery.Filter.PersonGroup::profileIds),
+                .flatMap(SearchFilter.PersonGroup::profileIds),
         )
     }
     val peopleTitle = stringResource(Res.string.filter_select_people)
@@ -240,7 +240,7 @@ internal fun SearchFilterForm(
                         modifier = Modifier
                             .weight(1f),
                         label = stringResource(Res.string.filter_media),
-                        options = SearchQuery.Filter.Media.entries,
+                        options = SearchFilter.Media.entries,
                         selected = filter.media,
                         optionLabel = { stringResource(it.labelRes) },
                         onSelected = { onFilterChanged(filter.copy(media = it)) },
@@ -258,7 +258,7 @@ internal fun SearchFilterForm(
                         modifier = Modifier
                             .weight(1f),
                         label = stringResource(Res.string.filter_include),
-                        options = SearchQuery.Filter.Replies.entries,
+                        options = SearchFilter.Replies.entries,
                         selected = filter.replies,
                         optionLabel = { stringResource(it.labelRes) },
                         onSelected = { onFilterChanged(filter.copy(replies = it)) },
@@ -267,7 +267,7 @@ internal fun SearchFilterForm(
                         modifier = Modifier
                             .weight(1f),
                         label = stringResource(Res.string.filter_from),
-                        options = SearchQuery.Filter.From.entries,
+                        options = SearchFilter.From.entries,
                         selected = filter.from,
                         optionLabel = { stringResource(it.labelRes) },
                         onSelected = { onFilterChanged(filter.copy(from = it)) },
@@ -325,7 +325,7 @@ internal fun SearchFilterForm(
                 FilledTonalButton(
                     onClick = {
                         onFilterChanged(
-                            filter.copy(people = filter.people + SearchQuery.Filter.PersonGroup()),
+                            filter.copy(people = filter.people + SearchFilter.PersonGroup()),
                         )
                     },
                     modifier = Modifier
@@ -494,10 +494,10 @@ private fun DateField(
 @Composable
 private fun PersonGroupCard(
     modifier: Modifier = Modifier,
-    group: SearchQuery.Filter.PersonGroup,
+    group: SearchFilter.PersonGroup,
     resolveHandle: (ProfileId) -> String,
-    onModeChanged: (SearchQuery.Filter.PersonGroup.Mode) -> Unit,
-    onKindChanged: (SearchQuery.Filter.PersonGroup.Kind) -> Unit,
+    onModeChanged: (SearchFilter.PersonGroup.Mode) -> Unit,
+    onKindChanged: (SearchFilter.PersonGroup.Kind) -> Unit,
     onAddPeople: () -> Unit,
     onRemovePerson: (ProfileId) -> Unit,
     onRemoveGroup: () -> Unit,
@@ -520,7 +520,7 @@ private fun PersonGroupCard(
                 EnumDropdown(
                     modifier = Modifier.weight(1f),
                     label = stringResource(Res.string.filter_include),
-                    options = SearchQuery.Filter.PersonGroup.Mode.entries,
+                    options = SearchFilter.PersonGroup.Mode.entries,
                     selected = group.mode,
                     optionLabel = { stringResource(it.labelRes) },
                     onSelected = onModeChanged,
@@ -528,7 +528,7 @@ private fun PersonGroupCard(
                 EnumDropdown(
                     modifier = Modifier.weight(1f),
                     label = stringResource(Res.string.filter_from),
-                    options = SearchQuery.Filter.PersonGroup.Kind.entries,
+                    options = SearchFilter.PersonGroup.Kind.entries,
                     selected = group.kind,
                     optionLabel = { stringResource(it.labelRes) },
                     onSelected = onKindChanged,
@@ -681,36 +681,36 @@ private fun Long.toUtcLocalDate(): LocalDate =
         .toLocalDateTime(TimeZone.UTC)
         .date
 
-private val SearchQuery.Filter.Media.labelRes: StringResource
+private val SearchFilter.Media.labelRes: StringResource
     get() = when (this) {
-        SearchQuery.Filter.Media.All -> Res.string.filter_media_all
-        SearchQuery.Filter.Media.WithMedia -> Res.string.filter_media_with_media
-        SearchQuery.Filter.Media.VideosOnly -> Res.string.filter_media_videos
+        SearchFilter.Media.All -> Res.string.filter_media_all
+        SearchFilter.Media.WithMedia -> Res.string.filter_media_with_media
+        SearchFilter.Media.VideosOnly -> Res.string.filter_media_videos
     }
 
-private val SearchQuery.Filter.Replies.labelRes: StringResource
+private val SearchFilter.Replies.labelRes: StringResource
     get() = when (this) {
-        SearchQuery.Filter.Replies.PostsAndReplies -> Res.string.filter_include_all
-        SearchQuery.Filter.Replies.PostsOnly -> Res.string.filter_include_posts
-        SearchQuery.Filter.Replies.RepliesOnly -> Res.string.filter_include_replies
+        SearchFilter.Replies.PostsAndReplies -> Res.string.filter_include_all
+        SearchFilter.Replies.PostsOnly -> Res.string.filter_include_posts
+        SearchFilter.Replies.RepliesOnly -> Res.string.filter_include_replies
     }
 
-private val SearchQuery.Filter.From.labelRes: StringResource
+private val SearchFilter.From.labelRes: StringResource
     get() = when (this) {
-        SearchQuery.Filter.From.Anyone -> Res.string.filter_from_anyone
-        SearchQuery.Filter.From.Following -> Res.string.filter_from_following
+        SearchFilter.From.Anyone -> Res.string.filter_from_anyone
+        SearchFilter.From.Following -> Res.string.filter_from_following
     }
 
-private val SearchQuery.Filter.PersonGroup.Mode.labelRes: StringResource
+private val SearchFilter.PersonGroup.Mode.labelRes: StringResource
     get() = when (this) {
-        SearchQuery.Filter.PersonGroup.Mode.Include -> Res.string.filter_mode_include
-        SearchQuery.Filter.PersonGroup.Mode.Exclude -> Res.string.filter_mode_exclude
+        SearchFilter.PersonGroup.Mode.Include -> Res.string.filter_mode_include
+        SearchFilter.PersonGroup.Mode.Exclude -> Res.string.filter_mode_exclude
     }
 
-private val SearchQuery.Filter.PersonGroup.Kind.labelRes: StringResource
+private val SearchFilter.PersonGroup.Kind.labelRes: StringResource
     get() = when (this) {
-        SearchQuery.Filter.PersonGroup.Kind.Authors -> Res.string.filter_people_authors
-        SearchQuery.Filter.PersonGroup.Kind.Mentions -> Res.string.filter_people_mentions
+        SearchFilter.PersonGroup.Kind.Authors -> Res.string.filter_people_authors
+        SearchFilter.PersonGroup.Kind.Mentions -> Res.string.filter_people_mentions
     }
 
 private data class SearchLanguage(
