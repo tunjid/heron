@@ -189,9 +189,9 @@ data class TimelineQuery(
             Timeline.Source.Following,
             is Timeline.Source.Record.List,
             is Timeline.Source.Profile,
-            is Timeline.Source.Search,
             -> data.cursorAnchor.asInitialCursor()
             // Search, like a feed, paginates with opaque server cursor tokens.
+            is Timeline.Source.Search,
             is Timeline.Source.Record.Feed,
             -> super.initialCursor
         }
