@@ -23,7 +23,6 @@ import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
-import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
