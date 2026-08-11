@@ -296,6 +296,8 @@ private fun profileViewerStateEntity(
     followedBy = viewer.followedBy?.atUri?.let(::FollowUri),
     blocking = viewer.blocking?.atUri?.let(::BlockUri),
     commonFollowersCount = viewer.knownFollowers?.count,
+    mutedOnlyReposts = viewer.mutedOnlyReposts,
+    mutedOnlyQuotePosts = viewer.mutedOnlyQuoteposts,
 )
 
 // TODO: Use this when known follower profiles are also saved
