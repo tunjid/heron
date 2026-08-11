@@ -19,4 +19,5 @@
     <string name="reply">Reply</string>
     <string name="title">Post</string>
     <string name="translate_post_text">Translate post text</string>
+    <string name="unroll_post_quotes">Unroll post quotes</string>
 </resources>

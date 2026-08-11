@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
-import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -455,12 +454,6 @@ object DataBindings {
     fun provideRockskyDao(
         database: AppDatabase,
     ): RockskyDao = database.rockskyDao()
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideDatabaseCleanupDao(
-        database: AppDatabase,
-    ): DatabaseCleanupDao = database.databaseCleanupDao()
 
     @SingleIn(AppScope::class)
     @Provides

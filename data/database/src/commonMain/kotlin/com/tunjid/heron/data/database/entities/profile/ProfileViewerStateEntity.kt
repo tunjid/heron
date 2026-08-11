@@ -59,6 +59,9 @@ data class ProfileViewerStateEntity(
     val following: FollowUri?,
     val followedBy: FollowUri?,
     val commonFollowersCount: Long?,
+    // Newly added fields should have defaults for serialization
+    val mutedOnlyReposts: Boolean? = null,
+    val mutedOnlyQuotePosts: Boolean? = null,
 ) {
     data class Partial(
         val profileId: ProfileId,
@@ -71,6 +74,8 @@ data class ProfileViewerStateEntity(
         val profileId: ProfileId,
         val otherProfileId: ProfileId,
         val muted: Boolean,
+        val mutedOnlyReposts: Boolean,
+        val mutedOnlyQuotePosts: Boolean,
     )
 
     data class BlockPartial(
@@ -98,4 +103,6 @@ fun ProfileViewerStateEntity.asExternalModel() =
         following = following,
         followedBy = followedBy,
         commonFollowersCount = commonFollowersCount,
+        mutedOnlyReposts = mutedOnlyReposts,
+        mutedOnlyQuotePosts = this@asExternalModel.mutedOnlyQuotePosts,
     )

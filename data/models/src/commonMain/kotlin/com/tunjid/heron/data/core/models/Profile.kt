@@ -98,6 +98,10 @@ data class Profile(
             data class Add(
                 override val signedInProfileId: ProfileId,
                 override val profileId: ProfileId,
+                // Scope the mute to a specific kind of content instead of the whole
+                // account. Newly added fields should have defaults for serialization.
+                val onlyReposts: Boolean = false,
+                val onlyQuoteposts: Boolean = false,
             ) : Mute()
 
             @Serializable

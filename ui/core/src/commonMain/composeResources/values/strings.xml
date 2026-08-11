@@ -70,6 +70,8 @@
     <string name="viewer_state_follows_you">Follows you</string>
     <string name="viewer_state_mute_account">Mute account</string>
     <string name="viewer_state_unmute_account">Unmute account</string>
+    <string name="viewer_state_mute_reposts">Hide reposts in feeds</string>
+    <string name="viewer_state_unmute_reposts">Show reposts in feeds</string>
     <string name="viewer_state_muted">Muted</string>
     <string name="block_account_dialog_title">Block Account?</string>
     <string name="block_account_dialog_description">Are you sure you want to block this account?</string>

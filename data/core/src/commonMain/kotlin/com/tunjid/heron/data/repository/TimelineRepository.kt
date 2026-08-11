@@ -71,7 +71,9 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -111,6 +113,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -119,6 +122,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.response.AtpResponse
@@ -203,6 +208,10 @@ interface TimelineRepository {
         postUri: PostUri,
         order: TimelineItem.Threaded.Order,
         viewMode: TimelineItem.Threaded.ViewMode,
+    ): Flow<List<TimelineItem>>
+
+    fun postQuoteThread(
+        postUri: PostUri,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -601,6 +610,54 @@ internal class OfflineTimelineRepository(
     }
         .flowOn(ioDispatcher)
 
+    override fun postQuoteThread(
+        postUri: PostUri,
+    ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
+        val postEntities = mutableListOf<PostEntity>()
+
+        var head = cachedOrResolvedPostEntity(
+            signedInProfileId = signedInProfileId,
+            postUri = postUri,
+        )?.also(postEntities::add)
+
+        while (head != null && head.quotedPostUri != null) {
+            head = cachedOrResolvedPostEntity(
+                signedInProfileId = signedInProfileId,
+                postUri = requireNotNull(head.quotedPostUri),
+            )?.also(postEntities::add)
+        }
+
+        if (postEntities.isEmpty()) return@singleSessionFlow flowOf(emptyList())
+
+        recordResolver.timelineItems(
+            items = postEntities,
+            signedInProfileId = signedInProfileId,
+            postUri = {
+                it.uri
+            },
+            associatedRecordUris = {
+                listOfNotNull(it.record?.embeddedRecordUri)
+            },
+            associatedProfileIds = {
+                emptyList()
+            },
+            block = { entity ->
+                push(
+                    TimelineItem.Single(
+                        id = entity.uri.uri,
+                        signedInProfileId = signedInProfileId,
+                        isMuted = false,
+                        post = post,
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        feedContext = null,
+                        reqId = null,
+                    ),
+                )
+            },
+        )
+    }
+
     override val homeTimelines: Flow<List<Timeline.Home>>
         get() = savedStateDataSource.singleSessionFlow { signedInProfileId ->
             savedStateDataSource.savedState
@@ -862,6 +919,30 @@ internal class OfflineTimelineRepository(
             .firstOrNull { it is Outcome.Failure }
             ?: Outcome.Success
     } ?: expiredSessionOutcome()
+
+    private suspend fun cachedOrResolvedPostEntity(
+        signedInProfileId: ProfileId?,
+        postUri: PostUri,
+        timeout: Duration = 3.seconds,
+    ): PostEntity? = withTimeoutOrNull(timeout) {
+        // Resolve post in case it's not cached
+        val resolutionJob = launch {
+            recordResolver.resolve(postUri)
+        }
+        postDao.posts(
+            viewingProfileId = signedInProfileId?.id,
+            postUris = listOf(postUri),
+        )
+            .firstOrNull(List<PopulatedPostEntity>::isNotEmpty)
+            ?.first()
+            ?.entity
+            ?.also {
+                // resolution completed and data was cached,
+                // or it was already cached, and we don't need resolution to complete
+                // Either way, cancel as resolution waits to be offline, and can impede
+                resolutionJob.cancel()
+            }
+    }
 
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
@@ -1438,6 +1519,9 @@ internal class OfflineTimelineRepository(
         }
     }
 }
+
+private val PostEntity.quotedPostUri: PostUri?
+    get() = record?.embeddedRecordUri as? PostUri
 
 private fun SavedState.timelineInfo(): Pair<List<TimelinePreference>, Boolean> {
     val preferences = signedProfilePreferencesOrDefault()

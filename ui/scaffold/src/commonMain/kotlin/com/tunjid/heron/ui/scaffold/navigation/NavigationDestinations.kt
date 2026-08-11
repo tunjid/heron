@@ -100,6 +100,18 @@ fun galleryDestination(
     ),
 )
 
+fun quoteThreadDestination(
+    post: Post,
+    sharedElementPrefix: String,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${post.author.did.id}/post/${post.uri.recordKey.value}/quote-thread",
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+    models = listOf(
+        post,
+    ),
+)
+
 fun postLikesDestination(
     profileId: ProfileId,
     postRecordKey: RecordKey,

@@ -23,8 +23,8 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.tunjid.heron.data.database.callbacks.DatabaseCleanupCallback
 import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
-import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -111,7 +111,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 48,
+    version = 49,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -259,6 +259,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 46, to = 47),
         // Add PostDraftEntity for cached post drafts
         AutoMigration(from = 47, to = 48),
+        // Add mutedOnlyReposts and mutedOnlyQuoteposts to ProfileViewerStateEntity
+        AutoMigration(from = 48, to = 49),
     ],
     exportSchema = true,
 )
@@ -283,7 +285,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
     abstract fun rockskyDao(): RockskyDao
-    abstract fun databaseCleanupDao(): DatabaseCleanupDao
 }
 
 // The Room compiler generates the `actual` implementations.
@@ -318,6 +319,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration45To46GroupConversations,
         )
         .addCallback(UnknownProfileInsertionCallback)
+        .addCallback(DatabaseCleanupCallback)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

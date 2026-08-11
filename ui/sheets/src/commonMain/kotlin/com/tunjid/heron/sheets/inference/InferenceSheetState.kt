@@ -37,7 +37,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,6 +58,9 @@ import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
+import com.tunjid.heron.ui.LoaderCurve
+import com.tunjid.heron.ui.MorphingLoader
+import com.tunjid.heron.ui.MorphingLoaderState.Companion.rememberMorphingLoaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -121,6 +123,17 @@ class InferenceSheetState internal constructor(
         show()
     }
 
+    fun spillTea(
+        post: Post,
+    ) {
+        stateHolder(
+            InferenceAction.Tea(
+                post = post,
+            ),
+        )
+        show()
+    }
+
     override fun onHidden() = Unit
 
     companion object {
@@ -165,6 +178,7 @@ internal fun InferenceBottomSheet(
         val headerOutcome = when (kind) {
             InferenceKind.Vibe -> inferenceState.postsOutcome
             InferenceKind.Translation -> inferenceState.translationOutcome
+            InferenceKind.Tea -> inferenceState.teaOutcome
         }
         // The no-model / unavailable prompts carry their own title, so only show the kind header
         // otherwise.
@@ -198,6 +212,11 @@ internal fun InferenceBottomSheet(
             when (targetKind) {
                 InferenceKind.Translation -> InferenceOutcomeContent(
                     outcome = inferenceState.translationOutcome,
+                    engineState = inferenceState.engineState,
+                    onNavigateToModels = onNavigateToModels,
+                )
+                InferenceKind.Tea -> InferenceOutcomeContent(
+                    outcome = inferenceState.teaOutcome,
                     engineState = inferenceState.engineState,
                     onNavigateToModels = onNavigateToModels,
                 )
@@ -332,9 +351,15 @@ private fun InferenceOutcomeContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
+                        MorphingLoader(
+                            state = rememberMorphingLoaderState(
+                                curve = LoaderCurve.Rose,
+                                energy = engineState.loaderEnergy,
+                                cometLength = 0.012f,
+                                cometDurationMillis = 8000,
+                            ),
+                            modifier = Modifier
+                                .size(28.dp),
                         )
                         Text(
                             text = stringResource(engineState.loadingCaptionRes()),
@@ -395,6 +420,13 @@ private fun EngineState?.loadingCaptionRes(): StringResource = when (this) {
     is EngineState.Ready.Streaming -> Res.string.inference_phase_generating
     else -> Res.string.inference_phase_preparing
 }
+
+private val EngineState?.loaderEnergy: Float
+    get() = when (this) {
+        is EngineState.Ready.Streaming -> 0.3f
+        is EngineState.Loading -> 0.1f
+        else -> 0f
+    }
 
 private enum class VibeTab(
     val type: Timeline.Profile.Type,

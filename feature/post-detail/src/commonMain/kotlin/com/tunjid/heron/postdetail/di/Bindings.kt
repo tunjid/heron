@@ -21,12 +21,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
@@ -38,6 +38,7 @@ import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailViewModelInitializer
 import com.tunjid.heron.postdetail.canTranslate
+import com.tunjid.heron.postdetail.hasQuotePost
 import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
 import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.ui.AppBarIconButton
@@ -46,6 +47,7 @@ import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
+import com.tunjid.heron.ui.scaffold.navigation.quoteThreadDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
@@ -87,6 +89,7 @@ import heron.feature.post_detail.generated.resources.Res
 import heron.feature.post_detail.generated.resources.reply
 import heron.feature.post_detail.generated.resources.title
 import heron.feature.post_detail.generated.resources.translate_post_text
+import heron.feature.post_detail.generated.resources.unroll_post_quotes
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
@@ -238,6 +241,22 @@ internal fun Route(
                                 sourceLanguage = postLanguageTag,
                                 targetLanguage = currentLanguageTag,
                             )
+                        },
+                    )
+                    if (state.hasQuotePost) AppBarIconButton(
+                        icon = Icons.AutoMirrored.Rounded.ReceiptLong,
+                        iconDescription = stringResource(Res.string.unroll_post_quotes),
+                        onClick = click@{
+                            state.anchorPost?.let { post ->
+                                stateHolder.accept(
+                                    Action.Navigate.To(
+                                        quoteThreadDestination(
+                                            post = post,
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        ),
+                                    ),
+                                )
+                            }
                         },
                     )
                     ThreadDisplayOptions(

@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
+import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -34,6 +35,7 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
+import kotlin.text.startsWith
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -116,6 +118,9 @@ val State.canTranslate: Boolean get() {
     return !currentLanguageTag.startsWith(postLanguageTag) &&
         !postLanguageTag.startsWith(currentLanguageTag)
 }
+
+val State.hasQuotePost: Boolean
+    get() = anchorPost?.nativeEmbeddedRecord is Post
 
 sealed class Action(val key: String) {
 

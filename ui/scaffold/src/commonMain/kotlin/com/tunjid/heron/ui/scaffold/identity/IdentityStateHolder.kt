@@ -13,7 +13,6 @@ import com.tunjid.heron.data.platform.MemoryMonitor
 import com.tunjid.heron.data.platform.MemoryPressure
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.media.video.PlayerStatus
@@ -55,7 +54,6 @@ class AppIdentityStateHolder(
     userDataRepository: UserDataRepository,
     networkMonitor: NetworkMonitor,
     writeQueue: WriteQueue,
-    databaseCleanup: DatabaseCleanup,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     memoryMonitor: MemoryMonitor,
@@ -87,9 +85,6 @@ class AppIdentityStateHolder(
 
             launch {
                 writeQueue.drain()
-            }
-            launch {
-                databaseCleanup.cleanup()
             }
             launchDefaultModelMutations(
                 userDataRepository = userDataRepository,

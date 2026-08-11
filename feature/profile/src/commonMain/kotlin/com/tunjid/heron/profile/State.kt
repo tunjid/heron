@@ -291,6 +291,8 @@ sealed class Action(val key: String) {
         data class Add(
             val signedInProfileId: ProfileId,
             val profileId: ProfileId,
+            // Scope the mute to the account's reposts instead of the whole account.
+            val onlyReposts: Boolean,
         ) : Mute()
 
         data class Remove(
