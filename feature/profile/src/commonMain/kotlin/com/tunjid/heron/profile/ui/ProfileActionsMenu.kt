@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.DropdownMenu
@@ -38,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
+import com.tunjid.heron.data.core.models.isMutingReposts
+import com.tunjid.heron.profile.ui.icons.RepeatOff
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
@@ -47,7 +50,9 @@ import heron.ui.core.generated.resources.action_vibe_check
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
+import heron.ui.core.generated.resources.viewer_state_mute_reposts
 import heron.ui.core.generated.resources.viewer_state_unmute_account
+import heron.ui.core.generated.resources.viewer_state_unmute_reposts
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -202,6 +207,18 @@ internal fun ProfileViewerState?.profileActionMenuItems(
                 else ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_mute_account,
                     icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                ),
+            )
+            // Reposts can be muted on their own, but only while the account isn't
+            // already fully muted (a full mute hides its reposts too).
+            if (!isMuted) add(
+                if (isMutingReposts) ProfileActionMenu.Item(
+                    title = CommonStrings.viewer_state_unmute_reposts,
+                    icon = Icons.Rounded.Repeat,
+                )
+                else ProfileActionMenu.Item(
+                    title = CommonStrings.viewer_state_mute_reposts,
+                    icon = RepeatOff,
                 ),
             )
         }
