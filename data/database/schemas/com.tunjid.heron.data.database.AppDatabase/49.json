@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 49,
-    "identityHash": "355bd7568f1e54fe574a4d3b9e59b7fb",
+    "identityHash": "29c653210d19e52f0fce99deb46d3dec",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -1247,7 +1247,7 @@
       },
       {
         "tableName": "profileViewerStates",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileId` TEXT NOT NULL, `otherProfileId` TEXT NOT NULL, `muted` INTEGER, `mutedByList` TEXT, `blockedBy` INTEGER, `blocking` TEXT, `blockingByList` TEXT, `following` TEXT, `followedBy` TEXT, `commonFollowersCount` INTEGER, `mutedOnlyReposts` INTEGER, `mutedOnlyQuoteposts` INTEGER, PRIMARY KEY(`profileId`, `otherProfileId`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`otherProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileId` TEXT NOT NULL, `otherProfileId` TEXT NOT NULL, `muted` INTEGER, `mutedByList` TEXT, `blockedBy` INTEGER, `blocking` TEXT, `blockingByList` TEXT, `following` TEXT, `followedBy` TEXT, `commonFollowersCount` INTEGER, `mutedOnlyReposts` INTEGER, `mutedOnlyQuotePosts` INTEGER, PRIMARY KEY(`profileId`, `otherProfileId`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`otherProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -1307,8 +1307,8 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "mutedOnlyQuoteposts",
-            "columnName": "mutedOnlyQuoteposts",
+            "fieldPath": "mutedOnlyQuotePosts",
+            "columnName": "mutedOnlyQuotePosts",
             "affinity": "INTEGER"
           }
         ],
@@ -4763,7 +4763,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '355bd7568f1e54fe574a4d3b9e59b7fb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '29c653210d19e52f0fce99deb46d3dec')"
     ]
   }
 }
