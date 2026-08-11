@@ -111,7 +111,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 48,
+    version = 49,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -259,6 +259,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 46, to = 47),
         // Add PostDraftEntity for cached post drafts
         AutoMigration(from = 47, to = 48),
+        // Add mutedOnlyReposts and mutedOnlyQuoteposts to ProfileViewerStateEntity
+        AutoMigration(from = 48, to = 49),
     ],
     exportSchema = true,
 )

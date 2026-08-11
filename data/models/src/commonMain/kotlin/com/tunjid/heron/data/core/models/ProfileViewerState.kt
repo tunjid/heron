@@ -31,6 +31,9 @@ data class ProfileViewerState(
     val following: FollowUri?,
     val followedBy: FollowUri?,
     val commonFollowersCount: Long?,
+    // Newly added fields should have defaults for serialization
+    val mutedOnlyReposts: Boolean? = null,
+    val mutedOnlyQuotePosts: Boolean? = null,
 )
 
 val ProfileViewerState?.isFollowing: Boolean get() = this?.following != null
@@ -38,6 +41,8 @@ val ProfileViewerState?.followsYou: Boolean get() = this?.followedBy != null
 val ProfileViewerState?.isBlockedBy: Boolean get() = this?.blockedBy == true
 val ProfileViewerState?.isBlocked: Boolean get() = this?.blocking != null
 val ProfileViewerState?.isMuted: Boolean get() = this?.muted == true
+val ProfileViewerState?.isMutingReposts: Boolean get() = this?.mutedOnlyReposts == true
+val ProfileViewerState?.isMutingQuoteposts: Boolean get() = this?.mutedOnlyQuotePosts == true
 
 val ProfileViewerState?.isRestricted
     get() = isMuted || isBlocked || this?.blockingByList != null

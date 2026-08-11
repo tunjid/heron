@@ -507,18 +507,26 @@ internal class OfflineProfileRepository(
         is Profile.Restriction.Mute -> networkService.runCatchingWithMonitoredNetworkRetry {
             when (restriction) {
                 is Profile.Restriction.Mute.Add -> muteActor(
-                    MuteActorRequest(restriction.profileId.id.let(::Did)),
+                    MuteActorRequest(
+                        actor = restriction.profileId.id.let(::Did),
+                        onlyReposts = restriction.onlyReposts.takeIf { it },
+                        onlyQuoteposts = restriction.onlyQuoteposts.takeIf { it },
+                    ),
                 )
                 is Profile.Restriction.Mute.Remove -> unmuteActor(
                     UnmuteActorRequest(restriction.profileId.id.let(::Did)),
                 )
             }
         }.toOutcome {
+            val add = restriction as? Profile.Restriction.Mute.Add
             profileDao.updatePartialProfileViewer(
                 ProfileViewerStateEntity.MutedPartial(
                     profileId = restriction.signedInProfileId,
                     otherProfileId = restriction.profileId,
-                    muted = restriction is Profile.Restriction.Mute.Add,
+                    // Scoped mutes are exclusive with a full mute, mirroring the lexicon.
+                    muted = add != null && !add.onlyReposts && !add.onlyQuoteposts,
+                    mutedOnlyReposts = add?.onlyReposts == true,
+                    mutedOnlyQuotePosts = add?.onlyQuoteposts == true,
                 ),
             )
         }
