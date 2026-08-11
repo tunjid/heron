@@ -78,6 +78,7 @@ fun Timeline.displayName() = when (this) {
     is Timeline.Home.Feed -> name
     is Timeline.Home.Following -> name
     is Timeline.Home.List -> name
+    is Timeline.Search -> search.query
     is Timeline.StarterPack -> starterPack.name
     is Timeline.Profile -> when (type) {
         Timeline.Profile.Type.Media -> stringResource(Res.string.media)
@@ -206,6 +207,7 @@ val Timeline.description: String
         is Timeline.StarterPack -> starterPack.description
 
         is Timeline.Home.Following,
+        is Timeline.Search,
         is Timeline.Profile,
         -> null
     } ?: ""
@@ -228,6 +230,7 @@ private fun Timeline.creator(): String = when (this) {
     )
 
     is Timeline.Home.Following,
+    is Timeline.Search,
     is Timeline.Profile,
     -> null
 } ?: ""
@@ -276,6 +279,7 @@ private val Timeline.avatar: ImageUri
         is Timeline.Home.List -> feedList.avatar
         is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
+        is Timeline.Search,
         is Timeline.Profile,
         -> BlueskyClouds
     } ?: BlueskyClouds
@@ -287,6 +291,7 @@ private fun Timeline.avatarSharedElementKey(
     is Timeline.Home.List -> feedList.avatarSharedElementKey(sharedElementPrefix)
     is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
     is Timeline.Home.Following -> "$sharedElementPrefix-following"
+    is Timeline.Search -> "$sharedElementPrefix-search"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
 }
 
@@ -309,6 +314,7 @@ private fun Timeline.titleSharedElementKey(
     )
 
     is Timeline.Home.Following -> "$sharedElementPrefix-following-title"
+    is Timeline.Search -> "$sharedElementPrefix-search-title"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-title"
 }
 
@@ -331,6 +337,7 @@ private fun Timeline.subtitleSharedElementKey(
     )
 
     is Timeline.Home.Following -> "$sharedElementPrefix-following-subtitle"
+    is Timeline.Search -> "$sharedElementPrefix-search-subtitle"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
 }
 
@@ -340,6 +347,7 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.Home.List -> ListCollectionShape
         is Timeline.StarterPack -> StarterPackCollectionShape
         is Timeline.Home.Following,
+        is Timeline.Search,
         is Timeline.Profile,
         -> RoundedPolygonShape.Circle
     }

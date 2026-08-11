@@ -420,6 +420,8 @@ private suspend fun launchVerticalTimelineMutations(
                 timelineRepository = timelineRepository,
                 source = source,
             )
+            // TODO: media search in the gallery is a later phase.
+            is Timeline.Source.Search,
             is Timeline.Source.Following,
             is Timeline.Source.Record.List,
             null,

@@ -212,6 +212,7 @@ sealed class ProfileScreenStateHolders {
                 is com.tunjid.heron.data.core.models.Timeline.Home.Following,
                 is com.tunjid.heron.data.core.models.Timeline.Home.List,
                 is com.tunjid.heron.data.core.models.Timeline.StarterPack,
+                is com.tunjid.heron.data.core.models.Timeline.Search,
                 -> null
             }
             is LabelerSettings -> null

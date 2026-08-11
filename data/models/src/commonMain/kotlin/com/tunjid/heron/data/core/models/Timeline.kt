@@ -64,6 +64,36 @@ sealed interface Timeline {
             val profileId: ProfileId,
             val type: Timeline.Profile.Type,
         ) : Source
+
+        /**
+         * A timeline backed by `app.bsky.feed.searchPostsV2`. The search parameters
+         * ([query], [filter], [sort]) form the identity of the timeline.
+         *
+         * Sealed with a single implementation ([OneOff]) on purpose: [Source] is serialized
+         * polymorphically into routes and saved state, so the concrete leaf's serial name has to
+         * be fixed now. A future persisted/pinnable variant can then be added without breaking the
+         * decoding of already-encoded values.
+         */
+        @Serializable
+        sealed interface Search : Source {
+            val query: String
+            val filter: SearchFilter
+            val sort: Sort
+
+            @Serializable
+            enum class Sort { Top, Latest }
+
+            /**
+             * A transient, one-off search. It paginates with the opaque cursor tokens returned by
+             * the search endpoint and is not persisted anywhere.
+             */
+            @Serializable
+            data class OneOff(
+                override val query: String,
+                override val filter: SearchFilter,
+                override val sort: Sort,
+            ) : Search
+        }
     }
 
     @Serializable
@@ -196,6 +226,44 @@ sealed interface Timeline {
             ;
 
             fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
+        }
+    }
+
+    /**
+     * A timeline of posts matching a [Source.Search]. It is deliberately NOT a [Home] timeline:
+     * a search is transient and not pinnable. A pinnable, persisted search would be a separate
+     * [Home] timeline backed by a record, added when that lexicon exists.
+     */
+    @Serializable
+    data class Search(
+        val search: Source.Search,
+        override val lastRefreshed: Instant?,
+        override val itemsAvailable: Long,
+        override val presentation: Presentation,
+    ) : Timeline {
+
+        override val source: Source
+            get() = search
+
+        override val supportedPresentations: List<Presentation>
+            get() = when (search.filter.media) {
+                SearchFilter.Media.All,
+                -> TextOnlyPresentations
+                SearchFilter.Media.WithMedia,
+                SearchFilter.Media.VideosOnly,
+                -> AllPresentations
+            }
+
+        companion object {
+            fun stub(
+                search: Source.Search,
+                presentation: Presentation = Text.WithEmbed,
+            ) = Search(
+                search = search,
+                lastRefreshed = null,
+                itemsAvailable = 0,
+                presentation = presentation,
+            )
         }
     }
 
@@ -388,6 +456,8 @@ val Timeline.isStrictlyMedia: Boolean
         is Timeline.Home.Following,
         is Timeline.Home.List,
         -> false
+        is Timeline.Search,
+        -> search.filter.media != SearchFilter.Media.All
         is Timeline.Profile -> when (type) {
             Timeline.Profile.Type.Posts,
             Timeline.Profile.Type.Replies,

@@ -36,9 +36,9 @@ import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -99,7 +99,7 @@ class ActualComposeViewModel(
     constructor(
         navActions: (NavigationMutation) -> Unit,
         authRepository: AuthRepository,
-        searchRepository: SearchRepository,
+        profileRepository: ProfileRepository,
         userDataRepository: UserDataRepository,
         recordRepository: RecordRepository,
         fileManager: FileManager,
@@ -165,7 +165,7 @@ class ActualComposeViewModel(
                         )
                         is Action.SearchProfiles -> action.flow.launchSearchMutations(
                             state = state,
-                            searchRepository = searchRepository,
+                            profileRepository = profileRepository,
                         )
                         is Action.ClearSuggestions -> action.flow.launchClearSuggestionsMutations(
                             state = state,
@@ -462,13 +462,12 @@ private suspend fun composeRequest(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchProfiles>.launchSearchMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
 ) = debounce(SEARCH_DEBOUNCE)
     .launchedCollectLatest { action ->
-        searchRepository.autoCompleteProfileSearch(
-            query = SearchQuery.OfProfiles(
+        profileRepository.autoCompleteProfileSearch(
+            query = ProfileSearchQuery(
                 query = action.query,
-                isLocalOnly = false,
                 data = CursorQuery.Data(
                     page = 0,
                     cursorAnchor = Clock.System.now(),

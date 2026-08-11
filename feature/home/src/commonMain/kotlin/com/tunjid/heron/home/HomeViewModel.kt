@@ -24,7 +24,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -81,7 +81,7 @@ class ActualHomeViewModel(
     @AssistedInject
     constructor(
         authRepository: AuthRepository,
-        searchRepository: SearchRepository,
+        recordRepository: RecordRepository,
         timelineRepository: TimelineRepository,
         userDataRepository: UserDataRepository,
         writeQueue: WriteQueue,
@@ -101,7 +101,7 @@ class ActualHomeViewModel(
                 )
                 launchTrendsMutations(
                     state = state,
-                    searchRepository = searchRepository,
+                    recordRepository = recordRepository,
                 )
                 launchLoadProfileMutations(
                     state = state,
@@ -227,8 +227,8 @@ private fun launchLoadPreferencesMutations(
 context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
-) = searchRepository.trends().launchedCollect {
+    recordRepository: RecordRepository,
+) = recordRepository.trends().launchedCollect {
     state.trends = it
 }
 
