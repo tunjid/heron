@@ -24,14 +24,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
@@ -40,20 +39,20 @@ import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
 internal fun FeedSearchResults(
-    state: SearchState.OfFeedGenerators,
+    stateHolder: SearchScreenStateHolders.Feeds,
     listState: LazyListState,
     modifier: Modifier,
     paneScaffoldState: PaneScaffoldState,
     timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean>,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
-    searchResultActions: (SearchState.Tile) -> Unit,
 ) {
-    val results by rememberUpdatedState(state.tiledItems)
+    val state = stateHolder.produceStateWithLifecycle() as SearchState.OfFeedGenerators
     LazyColumn(
         modifier = modifier,
         state = listState,
@@ -64,7 +63,7 @@ internal fun FeedSearchResults(
         ),
     ) {
         items(
-            items = results,
+            items = state.tiledItems,
             key = { it.feedGenerator.cid.id },
             itemContent = { result ->
                 FeedGenerator(
@@ -92,9 +91,9 @@ internal fun FeedSearchResults(
         )
     }
     listState.PivotedTilingEffect(
-        items = results,
+        items = state.tiledItems,
         onQueryChanged = { query ->
-            searchResultActions(
+            stateHolder.accept(
                 SearchState.Tile(
                     tilingAction = TilingState.Action.LoadAround(
                         query ?: state.tilingData.currentQuery,

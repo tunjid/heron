@@ -73,7 +73,6 @@ import com.tunjid.heron.data.repository.OfflineMessageRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
-import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.OfflineUserDataRepository
 import com.tunjid.heron.data.repository.PostRepository
@@ -81,7 +80,6 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SavedStateEncryption
-import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
@@ -534,12 +532,6 @@ object DataBindings {
     internal fun provideOfflineNotificationsRepository(
         offlineNotificationsRepository: OfflineNotificationsRepository,
     ): NotificationsRepository = offlineNotificationsRepository
-
-    @SingleIn(AppScope::class)
-    @Provides
-    internal fun provideOfflineSearchRepository(
-        offlineSearchRepository: OfflineSearchRepository,
-    ): SearchRepository = offlineSearchRepository
 
     @SingleIn(AppScope::class)
     @Provides

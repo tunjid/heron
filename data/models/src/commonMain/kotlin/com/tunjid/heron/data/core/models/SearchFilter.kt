@@ -26,7 +26,7 @@ import kotlinx.serialization.Serializable
  * Advanced filters for post searches, mapped onto `app.bsky.feed.searchPostsV2`
  * query parameters. All members are optional; an empty [SearchFilter] adds no constraints.
  *
- * Used both by `SearchQuery.OfPosts` and by [Timeline.Source.Search].
+ * Carried by [Timeline.Source.Search] to constrain a post search.
  */
 @Serializable
 data class SearchFilter(

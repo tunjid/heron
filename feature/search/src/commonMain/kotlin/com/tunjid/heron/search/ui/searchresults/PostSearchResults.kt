@@ -23,9 +23,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import com.tunjid.heron.data.core.models.Embed
@@ -39,9 +37,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.search.SearchState
-import com.tunjid.heron.search.id
-import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
@@ -50,25 +45,30 @@ import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.mutator.compose.produceStateWithLifecycle
+import com.tunjid.mutator.invoke
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.time.Clock
 
 @Composable
 internal fun PostSearchResults(
-    state: SearchState.OfPosts,
+    timelineStateHolder: TimelineStateHolder,
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
     presentation: Timeline.Presentation,
@@ -84,16 +84,15 @@ internal fun PostSearchResults(
     onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
-    searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onDeletePostClicked: (RecordUri) -> Unit,
 ) {
+    val timelineState = timelineStateHolder.produceStateWithLifecycle()
     val now = remember { Clock.System.now() }
     val displayState = rememberTimelineDisplayState()
     val videoPlayerController = LocalVideoPlayerController.current
-    val results by rememberUpdatedState(state.tiledItems)
-    val sharedElementPrefix = state.sharedElementPrefix
+    val sharedElementPrefix = timelineState.timeline.sharedElementPrefix
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = null,
     )
@@ -132,8 +131,7 @@ internal fun PostSearchResults(
                     )
 
                 is PostOption.ThreadGate ->
-                    results.firstOrNull { it.timelineItem.post.uri == option.postUri }
-                        ?.timelineItem
+                    timelineState.tiledItems.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockAccount ->
@@ -233,7 +231,7 @@ internal fun PostSearchResults(
         ),
     ) {
         items(
-            items = results,
+            items = timelineState.tiledItems,
             key = { it.id },
             itemContent = { result ->
                 TimelineItem(
@@ -243,8 +241,8 @@ internal fun PostSearchResults(
                     paneTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
                     now = now,
-                    item = result.timelineItem,
-                    sharedElementPrefix = state.sharedElementPrefix,
+                    item = result,
+                    sharedElementPrefix = sharedElementPrefix,
                     showEngagementMetrics = showEngagementMetrics,
                     presentation = presentation,
                     postActions = postActions,
@@ -253,12 +251,12 @@ internal fun PostSearchResults(
         )
     }
     gridState.PivotedTilingEffect(
-        items = results,
+        items = timelineState.tiledItems,
         onQueryChanged = { query ->
-            searchResultActions(
-                SearchState.Tile(
+            timelineStateHolder(
+                TimelineState.Action.Tile(
                     tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
+                        query ?: timelineState.tilingData.currentQuery,
                     ),
                 ),
             )

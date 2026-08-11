@@ -32,8 +32,6 @@ import com.tunjid.heron.data.graze.GrazeFeed.Update.Edit
 import com.tunjid.heron.data.graze.GrazeFeed.Update.Get
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.graze.editor.di.initialLoad
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -87,7 +85,6 @@ class ActualGrazeEditorViewModel(
     @AssistedInject
     constructor(
         navActions: (NavigationMutation) -> Unit,
-        searchRepository: SearchRepository,
         recordRepository: RecordRepository,
         authRepository: AuthRepository,
         @Assisted scope: CoroutineScope,
