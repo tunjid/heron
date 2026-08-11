@@ -211,8 +211,10 @@ import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
+import heron.ui.core.generated.resources.viewer_state_mute_reposts
 import heron.ui.core.generated.resources.viewer_state_unblock_account
 import heron.ui.core.generated.resources.viewer_state_unmute_account
+import heron.ui.core.generated.resources.viewer_state_unmute_reposts
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1135,10 +1137,28 @@ private fun ProfileHeadline(
                                                     Action.Mute.Add(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
+                                                        onlyReposts = false,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_unmute_account ->
                                                 profileRestrictionsDialogState.show(
+                                                    Action.Mute.Remove(
+                                                        signedInProfileId = signedInProfileId,
+                                                        profileId = profile.did,
+                                                    ),
+                                                )
+                                            // Muting reposts is a mild, reversible toggle,
+                                            // so it skips the confirmation dialog.
+                                            CommonStrings.viewer_state_mute_reposts ->
+                                                onModerationAction(
+                                                    Action.Mute.Add(
+                                                        signedInProfileId = signedInProfileId,
+                                                        profileId = profile.did,
+                                                        onlyReposts = true,
+                                                    ),
+                                                )
+                                            CommonStrings.viewer_state_unmute_reposts ->
+                                                onModerationAction(
                                                     Action.Mute.Remove(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
@@ -1389,6 +1409,7 @@ private fun ProfileTimeline(
                         Action.Mute.Add(
                             signedInProfileId = profileRestriction.signedInProfileId,
                             profileId = profileRestriction.post.author.did,
+                            onlyReposts = false,
                         ),
                     )
             }

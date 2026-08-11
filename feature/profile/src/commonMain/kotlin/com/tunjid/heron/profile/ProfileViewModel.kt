@@ -423,6 +423,7 @@ private fun Action.Mute.toMuteWritable(): Writable.Restriction =
             is Action.Mute.Add -> Profile.Restriction.Mute.Add(
                 signedInProfileId = signedInProfileId,
                 profileId = profileId,
+                onlyReposts = onlyReposts,
             )
             is Action.Mute.Remove -> Profile.Restriction.Mute.Remove(
                 signedInProfileId = signedInProfileId,
