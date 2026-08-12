@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.core.models
 
-import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 /**
@@ -90,9 +89,6 @@ val Cursor.value
             "Final cursors cannot be used to fetch data; there is nothing more to fetch",
         )
     }
-
-fun Instant.asInitialCursor(): Cursor.Initial =
-    Cursor.Initial(toString())
 
 private val EmptyCursorList = CursorList<Nothing>(
     items = emptyList(),

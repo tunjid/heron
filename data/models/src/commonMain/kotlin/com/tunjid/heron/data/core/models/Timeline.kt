@@ -34,6 +34,8 @@ sealed interface Timeline {
 
     val itemsAvailable: Long
 
+    val resumeCursor: Cursor.Initial? get() = null
+
     val presentation: Presentation
 
     val supportedPresentations: List<Presentation>
@@ -65,15 +67,6 @@ sealed interface Timeline {
             val type: Timeline.Profile.Type,
         ) : Source
 
-        /**
-         * A timeline backed by `app.bsky.feed.searchPostsV2`. The search parameters
-         * ([query], [filter], [sort]) form the identity of the timeline.
-         *
-         * Sealed with a single implementation ([OneOff]) on purpose: [Source] is serialized
-         * polymorphically into routes and saved state, so the concrete leaf's serial name has to
-         * be fixed now. A future persisted/pinnable variant can then be added without breaking the
-         * decoding of already-encoded values.
-         */
         @Serializable
         sealed interface Search : Source {
             val query: String
@@ -83,10 +76,6 @@ sealed interface Timeline {
             @Serializable
             enum class Sort { Top, Latest }
 
-            /**
-             * A transient, one-off search. It paginates with the opaque cursor tokens returned by
-             * the search endpoint and is not persisted anywhere.
-             */
             @Serializable
             data class OneOff(
                 override val query: String,
@@ -113,6 +102,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val isPinned: Boolean,
         ) : Home(
@@ -126,6 +116,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val isPinned: Boolean,
             val feedList: FeedList,
@@ -162,6 +153,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val supportedPresentations: kotlin.collections.List<Presentation>,
             override val isPinned: Boolean,
