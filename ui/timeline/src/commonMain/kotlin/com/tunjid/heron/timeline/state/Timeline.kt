@@ -241,7 +241,7 @@ private fun Timeline.toTimelineRequest(): TimelineRequest = when (this) {
 private fun Timeline.isEmpty(): Boolean =
     itemsAvailable == 0L && lastRefreshed != null
 
-private fun TimelineQuery.updateData(
+fun TimelineQuery.updateData(
     data: CursorQuery.Data,
 ): TimelineQuery = TimelineQuery(
     source = source,

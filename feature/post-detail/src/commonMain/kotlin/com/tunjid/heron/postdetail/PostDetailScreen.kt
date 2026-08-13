@@ -227,7 +227,7 @@ internal fun PostDetailScreen(
                                                 action.warnedAppliedLabels?.let(::add)
                                                 if (action.isMainPost && action.post.uri == state.anchorPost?.uri) {
                                                     state.source?.let(::add)
-                                                    state.timelinePosition?.let(::add)
+                                                    state.referringTimelineCursors?.let(::add)
                                                 }
                                             },
                                             record = action.post,
@@ -275,7 +275,7 @@ internal fun PostDetailScreen(
                                             otherModels = when {
                                                 action.isMainPost && action.post.uri == state.anchorPost?.uri -> buildList {
                                                     state.source?.let(::add)
-                                                    state.timelinePosition?.let(::add)
+                                                    state.referringTimelineCursors?.let(::add)
                                                 }
                                                 else -> emptyList()
                                             },
