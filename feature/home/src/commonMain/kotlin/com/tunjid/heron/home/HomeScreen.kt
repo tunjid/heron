@@ -74,6 +74,7 @@ import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.tiling.toCursors
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
@@ -392,7 +393,7 @@ private fun HomeTimeline(
                                     action.warnedAppliedLabels?.let(::add)
                                     if (action.isMainPost) {
                                         add(timelineState.timeline.source)
-                                        add(timelineState.tilingData.currentQuery.data)
+                                        timelineState.toCursors()?.let(::add)
                                     }
                                 },
                                 record = action.post,
@@ -443,9 +444,9 @@ private fun HomeTimeline(
                                     quotingPostUri = action.quotingPostUri,
                                 ),
                                 otherModels = when {
-                                    action.isMainPost -> listOf(
+                                    action.isMainPost -> listOfNotNull(
                                         timelineState.timeline.source,
-                                        timelineState.tilingData.currentQuery.data,
+                                        timelineState.toCursors(),
                                     )
                                     else -> emptyList()
                                 },

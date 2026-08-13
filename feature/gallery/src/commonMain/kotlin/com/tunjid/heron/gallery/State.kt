@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -71,7 +72,6 @@ interface State {
         val viewedProfileId: ProfileId,
         val signedInProfileId: ProfileId? = null,
         val canScrollVertically: Boolean = false,
-        val cursorData: CursorQuery.Data?,
         val commentsPost: Post? = null,
         @Serializable(with = TextFieldValueSerializer::class)
         val inputText: TextFieldValue = TextFieldValue(),
@@ -95,10 +95,11 @@ interface State {
         ): Immutable = Immutable(
             viewedProfileId = route.profileId,
             sharedElementPrefix = route.sharedElementPrefix,
-            cursorData = route.model<CursorQuery.Data>(),
             items = tiledListOf(
                 DataQuery(
-                    data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
+                    data = route.model<Cursors>()
+                        ?.anchorData
+                        ?: CursorQuery.defaultStartData(),
                 ) to GalleryItem.Initial(
                     sharedElementPrefix = route.sharedElementPrefix,
                     startIndex = route.startIndex,

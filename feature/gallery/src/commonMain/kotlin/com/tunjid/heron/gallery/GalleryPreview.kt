@@ -37,7 +37,6 @@ internal fun GalleryPreview() {
                 mutator = State.Immutable(
                     sharedElementPrefix = "preview",
                     viewedProfileId = ProfileId("did:example:123"),
-                    cursorData = null,
                 ).asNoOpActionSuspendingStateMutator(),
                 scope = scope,
             )

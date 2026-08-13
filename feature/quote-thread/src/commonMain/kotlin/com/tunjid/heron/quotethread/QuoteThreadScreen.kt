@@ -243,7 +243,7 @@ internal fun QuoteThreadScreen(
                                                         action.warnedAppliedLabels?.let(::add)
                                                         if (action.isMainPost && action.post.uri == state.anchorPost?.uri) {
                                                             state.source?.let(::add)
-                                                            state.timelinePosition?.let(::add)
+                                                            state.referringTimelineCursors?.let(::add)
                                                         }
                                                     },
                                                     record = action.post,
@@ -291,7 +291,7 @@ internal fun QuoteThreadScreen(
                                                     otherModels = when {
                                                         action.isMainPost && action.post.uri == state.anchorPost?.uri -> buildList {
                                                             state.source?.let(::add)
-                                                            state.timelinePosition?.let(::add)
+                                                            state.referringTimelineCursors?.let(::add)
                                                         }
                                                         else -> emptyList()
                                                     },

@@ -18,7 +18,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.AppliedLabels
-import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -61,7 +61,7 @@ interface State {
         @Transient
         val source: Timeline.Source? = null,
         @Transient
-        val timelinePosition: CursorQuery.Data? = null,
+        val referringTimelineCursors: Cursors? = null,
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient
@@ -79,7 +79,7 @@ interface State {
                 anchorPost = anchorPost,
                 sharedElementPrefix = route.sharedElementPrefix,
                 source = route.model(),
-                timelinePosition = route.model(),
+                referringTimelineCursors = route.model(),
                 items = when (anchorPost) {
                     null -> TimelineItem.LoadingItems
                     else -> listOf(
