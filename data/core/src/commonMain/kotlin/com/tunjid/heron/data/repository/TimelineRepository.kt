@@ -51,7 +51,6 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
-import com.tunjid.heron.data.core.models.asInitialCursor
 import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
@@ -180,21 +179,34 @@ sealed interface TimelineRequest {
     ) : TimelineRequest
 }
 
-data class TimelineQuery(
+// Deliberately not a data class: [equals] and [hashCode] are handwritten because the tiling
+// pipeline keys on them, so they must reflect only the fields that define a page's identity
+// ([data] and the source's stable id) and nothing else.
+class TimelineQuery(
     override val data: CursorQuery.Data,
     val source: Timeline.Source,
+    val resumeCursor: Cursor.Initial? = null,
 ) : CursorQuery {
     override val initialCursor: Cursor.Initial
-        get() = when (source) {
-            Timeline.Source.Following,
-            is Timeline.Source.Record.List,
-            is Timeline.Source.Profile,
-            -> data.cursorAnchor.asInitialCursor()
-            // Search, like a feed, paginates with opaque server cursor tokens.
-            is Timeline.Source.Search,
-            is Timeline.Source.Record.Feed,
-            -> super.initialCursor
-        }
+        get() = resumeCursor ?: super.initialCursor
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as TimelineQuery
+
+        if (data != other.data) return false
+        if (source.id != other.source.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = data.hashCode()
+        result = 31 * result + source.id.hashCode()
+        return result
+    }
 }
 
 interface TimelineRepository {
@@ -998,6 +1010,10 @@ internal class OfflineTimelineRepository(
                                         sourceId = query.source.id,
                                         lastFetchedAt = query.data.cursorAnchor,
                                         preferredPresentation = null,
+                                        // Persist the head cursor of this generation so the timeline
+                                        // can resume paging from here instead of the live head when
+                                        // it is reopened without refreshing.
+                                        resumeCursor = nextCursor(),
                                     ),
                                 ),
                             )
@@ -1360,6 +1376,8 @@ internal class OfflineTimelineRepository(
                 name = name,
                 position = position,
                 lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                resumeCursor = timelinePreferenceEntity?.resumeCursor
+                    ?.let(Cursor::Initial),
                 itemsAvailable = count,
                 presentation = timelinePreferenceEntity.preferredPresentation(),
                 isPinned = isPinned,
@@ -1411,6 +1429,8 @@ internal class OfflineTimelineRepository(
                         position = position,
                         feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        resumeCursor = timelinePreferenceEntity?.resumeCursor
+                            ?.let(Cursor::Initial),
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = when {
@@ -1449,6 +1469,8 @@ internal class OfflineTimelineRepository(
                         position = position,
                         feedList = feedList,
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        resumeCursor = timelinePreferenceEntity?.resumeCursor
+                            ?.let(Cursor::Initial),
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         isPinned = isPinned,

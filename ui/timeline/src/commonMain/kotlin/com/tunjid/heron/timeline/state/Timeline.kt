@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -95,23 +96,33 @@ fun CoroutineScope.timelineStateHolder(
     initialItems: List<TimelineItem> = emptyList(),
     timelineRepository: TimelineRepository,
 ): TimelineStateHolder {
+    // Resume a cached timeline where the user left off by keeping the previous refresh anchor and
+    // replaying the persisted head cursor, so network paging continues in lock step with the
+    // offline cache instead of jumping to the newest content. Profile and search always start fresh.
+    val resumeAnchor = when (timeline) {
+        is Timeline.Home,
+        is Timeline.StarterPack,
+        -> timeline.lastRefreshed
+            .takeUnless { refreshOnStart }
+
+        is Timeline.Profile,
+        is Timeline.Search,
+        -> null
+    }
     val initialQuery = TimelineQuery(
         source = timeline.source,
         data = CursorQuery.Data(
             page = 0,
-            cursorAnchor = when (timeline) {
-                is Timeline.Home,
-                is Timeline.StarterPack,
-                ->
-                    timeline.lastRefreshed
-                        .takeUnless { refreshOnStart }
-                        ?: Clock.System.now()
-
-                is Timeline.Profile,
-                is Timeline.Search,
-                -> Clock.System.now()
-            },
+            cursorAnchor = resumeAnchor ?: Clock.System.now(),
         ),
+        // Only the following feed sorts its items by their own timestamp, so only it can resume from
+        // a persisted head cursor without misordering: re-fetched items keep their sort and genuinely
+        // new items fall into place by time. Feed-generator and list timelines sort by server
+        // position, so a mid-stream resume would misplace items; they page from the live head.
+        resumeCursor = when {
+            timeline is Timeline.Home.Following && resumeAnchor != null -> timeline.resumeCursor
+            else -> null
+        },
     )
     return actionSuspendingStateMutator(
         state = TimelineState.SnapshotMutable(
@@ -146,6 +157,7 @@ fun CoroutineScope.timelineStateHolder(
                                 state = state,
                                 updateQueryData = TimelineQuery::updateData,
                                 refreshQuery = TimelineQuery::refresh,
+                                queryRefreshBy = TimelineQuery::refreshBy,
                                 cursorListLoader = timelineRepository::timelineItems,
                                 onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
                             )
@@ -231,13 +243,29 @@ private fun Timeline.isEmpty(): Boolean =
 
 private fun TimelineQuery.updateData(
     data: CursorQuery.Data,
-): TimelineQuery = copy(
+): TimelineQuery = TimelineQuery(
+    source = source,
     data = data,
+    resumeCursor = resumeCursor,
 )
 
-private fun TimelineQuery.refresh(): TimelineQuery = copy(
+private fun TimelineQuery.refresh(): TimelineQuery = TimelineQuery(
+    source = source,
     data = data.reset(),
+    // resumeCursor is intentionally omitted: a manual refresh starts a new generation from the
+    // live head.
 )
+
+private fun TimelineQuery.refreshBy(): String =
+    when (val source = source) {
+        is Timeline.Source.Profile,
+        Timeline.Source.Following,
+        is Timeline.Source.Record.Feed,
+        is Timeline.Source.Record.List,
+        -> data.cursorAnchor.toString()
+        is Timeline.Source.Search.OneOff,
+        -> "${source.id}-${data.cursorAnchor}"
+    }
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
     val threadRootIds = mutableSetOf<PostUri>()

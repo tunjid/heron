@@ -36,6 +36,11 @@ data class TimelinePreferencesEntity(
     val viewingProfileId: ProfileId?,
     val lastFetchedAt: Instant,
     val preferredPresentation: String?,
+    /**
+     * The opaque server cursor from the first page of the generation identified by [lastFetchedAt].
+     * Replayed to resume network pagination when a cached timeline is reopened without refreshing.
+     */
+    val resumeCursor: String? = null,
     // Timeline items are unique to the profile viewing them
     @PrimaryKey
     val id: String = timelinePreferenceId(
@@ -51,6 +56,7 @@ data class TimelinePreferencesEntity(
             override val id: String,
             override val sourceId: String,
             val lastFetchedAt: Instant,
+            val resumeCursor: String?,
         ) : Partial()
 
         data class PreferredPresentation(
@@ -78,6 +84,7 @@ fun TimelinePreferencesEntity.fetchedAtPartial() = FetchedAt(
     id = id,
     sourceId = sourceId,
     lastFetchedAt = lastFetchedAt,
+    resumeCursor = resumeCursor,
 )
 
 private fun timelinePreferenceId(
