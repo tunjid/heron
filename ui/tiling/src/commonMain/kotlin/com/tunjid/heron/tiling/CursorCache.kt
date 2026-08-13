@@ -50,10 +50,17 @@ class CursorCache<Query : CursorQuery> {
         queriesToCursors.value
             .takeUnless(Map<Query, Cursor>::isEmpty)
 
-    internal fun toCursors() = queriesToCursors.value
+    internal fun toCursors(
+        anchorData: CursorQuery.Data,
+    ) = queriesToCursors.value
         .mapKeys { it.key.data }
         .takeUnless(Map<CursorQuery.Data, Cursor>::isEmpty)
-        ?.let(::Cursors)
+        ?.let { pages ->
+            Cursors(
+                anchorData = anchorData,
+                pages = pages,
+            )
+        }
 
     internal operator fun get(
         query: Query,

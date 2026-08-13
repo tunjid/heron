@@ -141,20 +141,28 @@ val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
 fun <Query : CursorQuery> TilingState<Query, *>.toCursors(): Cursors? =
-    tilingData.cursorCache.toCursors()
+    tilingData.cursorCache.toCursors(
+        anchorData = tilingData.currentQuery.data,
+    )
 
 fun <Query : CursorQuery> TilingState<Query, *>.seed(
     cursors: Cursors? = null,
     updateQueryData: Query.(CursorQuery.Data) -> Query,
 ) {
-    cursors
-        ?.pages
-        ?.forEach { (data, cursor) ->
-            tilingData.cursorCache.record(
-                query = tilingData.currentQuery.updateQueryData(data),
-                cursor = cursor,
-            )
-        }
+    cursors ?: return
+    val tilingData = tilingData
+    check(tilingData is TilingState.Data.SnapshotMutable) {
+        "Tiling state must be snapshot mutable"
+    }
+    // Resume from the origin timeline's anchor so the seeded page cursors line up with the
+    // queries this pipeline will issue (same cursorAnchor across the generation).
+    tilingData.currentQuery = tilingData.currentQuery.updateQueryData(cursors.anchorData)
+    cursors.pages.forEach { (data, cursor) ->
+        tilingData.cursorCache.record(
+            query = tilingData.currentQuery.updateQueryData(data),
+            cursor = cursor,
+        )
+    }
 }
 
 inline fun <reified Query : CursorQuery, reified Item> TilingState.Data<Query, Item>.withRefreshedStatus(): TilingState.Data<Query, Item> {

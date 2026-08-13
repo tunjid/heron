@@ -60,6 +60,7 @@ interface CursorQuery {
 
 @Serializable
 data class Cursors(
+    val anchorData: CursorQuery.Data,
     val pages: Map<CursorQuery.Data, Cursor>,
 ) : UrlEncodableModel
 
