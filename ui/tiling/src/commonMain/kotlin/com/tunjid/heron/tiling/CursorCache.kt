@@ -24,6 +24,10 @@ import com.tunjid.heron.data.core.models.canRequestData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * Externally opaque cache of cursors to allow for tiling resumption across navigation
+ * destinations.
+ */
 @Stable
 class CursorCache<Query : CursorQuery> {
 
@@ -46,9 +50,17 @@ class CursorCache<Query : CursorQuery> {
         queriesToCursors.value = emptyMap()
     }
 
-    internal fun seedQueryTokenMap(): Map<Query, Cursor>? =
+    internal fun seedQueryTokenMap(
+        startingQuery: Query,
+    ): Map<Query, Cursor> =
         queriesToCursors.value
-            .takeUnless(Map<Query, Cursor>::isEmpty)
+            .takeIf { map ->
+                map.keys.any { it.data == startingQuery.data }
+            }
+            ?.takeUnless(Map<Query, Cursor>::isEmpty)
+            ?: mapOf(
+                startingQuery to startingQuery.initialCursor,
+            )
 
     internal fun toCursors(
         anchorData: CursorQuery.Data,

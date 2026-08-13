@@ -440,8 +440,8 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         // in memory
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
-        seedQueryTokenMap = cursorCache.seedQueryTokenMap() ?: mapOf(
-            startingQuery to startingQuery.initialCursor,
+        seedQueryTokenMap = cursorCache.seedQueryTokenMap(
+            startingQuery = startingQuery,
         ),
         fetcher = { query, cursor ->
             // Remember the real cursor that backed this page. Used below so a re-subscribed page's
