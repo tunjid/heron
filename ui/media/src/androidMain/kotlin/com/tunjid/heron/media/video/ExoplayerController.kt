@@ -82,7 +82,9 @@ class ExoplayerController(
      */
     private val mediaItemMutationsChannel = Channel<(List<MediaItem>) -> List<MediaItem>>()
 
-    private val states = VideoPlayerStates<ExoPlayerState>()
+    private val states = VideoPlayerStates(
+        onEvicted = ::onStateEvicted,
+    )
 
     override var isMuted: Boolean by states::isMuted
 
@@ -114,9 +116,9 @@ class ExoplayerController(
             }
         }
         diffingJob?.cancel()
-        // Launch a coroutine that lasts from setup -> teardown that sequentially processes each change to media
-        // items in the ExoPlayer one after the other. The changes are diffed such that the ExoPlayer maintains
-        // a single playlist, and changes in the active video does not clear the playlist.
+        // Launch a coroutine that lasts for the controller's lifetime and sequentially processes each change to
+        // media items in the ExoPlayer one after the other. The changes are diffed such that the ExoPlayer
+        // maintains a single playlist, and changes in the active video does not clear the playlist.
         diffingJob = scope.launch {
             // sequentially process each change to media items one after the other
             mediaItemMutationsChannel.consumeAsFlow().collect { mutation ->
@@ -287,17 +289,13 @@ class ExoplayerController(
         return videoPlayerState
     }
 
-    internal fun teardown() {
-        diffingJob?.cancel()
-        player?.apply {
-            removeListener(this@ExoplayerController)
-            states.activeState?.let {
-                removeListener(it.playerListener)
-                it.updateFromPlayer()
+    private fun onStateEvicted(state: ExoPlayerState) {
+        player?.removeListener(state.playerListener)
+        scope.launch {
+            mediaItemMutationsChannel.send { existingItems ->
+                existingItems.filterNot { it.mediaId == state.videoId }
             }
         }
-        player?.release()
-        player = null
     }
 
     override fun onPlayerError(error: PlaybackException) {
