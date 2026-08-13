@@ -20,6 +20,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.mapCursorList
 import com.tunjid.heron.ui.stateproduction.requireStateProducingBackgroundDispatcher
 import com.tunjid.mutator.coroutines.launchedCollect
@@ -54,8 +55,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
@@ -83,6 +86,8 @@ interface TilingState<Query : CursorQuery, Item> {
             val status: Status = Status.Initial,
             @Transient
             val items: TiledList<Query, Item> = emptyTiledList(),
+            @Transient
+            val cursorCache: CursorCache<Query> = CursorCache(),
         ) : Data<Query, Item>
 
         companion object {
@@ -91,11 +96,13 @@ interface TilingState<Query : CursorQuery, Item> {
                 numColumns: Int = 1,
                 status: Status = Status.Initial,
                 items: TiledList<Query, Item> = emptyTiledList(),
+                cursorCache: CursorCache<Query> = CursorCache(),
             ): Data<Query, Item> = SnapshotMutable(
                 currentQuery = currentQuery,
                 numColumns = numColumns,
                 status = status,
                 items = items,
+                cursorCache = cursorCache,
             ) as Data<Query, Item>
         }
     }
@@ -132,6 +139,23 @@ val TilingState<*, *>.isRefreshing
 @Stable
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
+
+fun <Query : CursorQuery> TilingState<Query, *>.toCursors(): Cursors? =
+    tilingData.cursorCache.toCursors()
+
+fun <Query : CursorQuery> TilingState<Query, *>.seed(
+    cursors: Cursors? = null,
+    updateQueryData: Query.(CursorQuery.Data) -> Query,
+) {
+    cursors
+        ?.pages
+        ?.forEach { (data, cursor) ->
+            tilingData.cursorCache.record(
+                query = tilingData.currentQuery.updateQueryData(data),
+                cursor = cursor,
+            )
+        }
+}
 
 inline fun <reified Query : CursorQuery, reified Item> TilingState.Data<Query, Item>.withRefreshedStatus(): TilingState.Data<Query, Item> {
     check(this is TilingState.Data.SnapshotMutable<Query, Item>)
@@ -193,6 +217,9 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
         check(startingState is TilingState.Data.SnapshotMutable) {
             "Tiling state must be snapshot mutable"
         }
+        // The registry lives on the tiling state, so every feature gets no-downgrade paging and
+        // resume handoff without per-caller wiring.
+        val cursorCache = startingState.cursorCache
 
         scan(
             initial = Pair(
@@ -254,20 +281,28 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                     numColumns.launchedCollect {
                         startingState.update(numColumns = it)
                     }
-                    refreshes.flatMapLatest { refreshedQuery ->
-                        cursorTileInputs<Query, Item>(
-                            numColumns = numColumns,
-                            queries = queries,
-                            updatePage = updateQueryData,
-                        )
-                            .toTiledList(
-                                cursorListTiler(
-                                    startingQuery = refreshedQuery,
-                                    cursorListLoader = cursorListLoader,
-                                    updatePage = updateQueryData,
-                                ),
+                    refreshes
+                        .withIndex()
+                        .onEach { (index) ->
+                            // A refresh starts a fresh generation whose cursors are unrelated to the
+                            // previous one; drop the old backing cursors so they can't leak across.
+                            if (index != 0) cursorCache.reset()
+                        }
+                        .flatMapLatest { (_, refreshedQuery) ->
+                            cursorTileInputs<Query, Item>(
+                                numColumns = numColumns,
+                                queries = queries,
+                                updatePage = updateQueryData,
                             )
-                    }
+                                .toTiledList(
+                                    cursorListTiler(
+                                        startingQuery = refreshedQuery,
+                                        cursorCache = cursorCache,
+                                        cursorListLoader = cursorListLoader,
+                                        updatePage = updateQueryData,
+                                    ),
+                                )
+                        }
                         .debounce { items ->
                             if (items.isEmpty()) 800.milliseconds
                             else 200.milliseconds
@@ -366,6 +401,7 @@ inline fun <Query : CursorQuery, Item> cursorTileInputs(
 
 fun <Query : CursorQuery, Item> cursorListTiler(
     startingQuery: Query,
+    cursorCache: CursorCache<Query>,
     updatePage: Query.(CursorQuery.Data) -> Query,
     cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
 ): ListTiler<Query, Item> = listTiler(
@@ -375,6 +411,7 @@ fun <Query : CursorQuery, Item> cursorListTiler(
     ),
     fetcher = cursorListQueryFetcher(
         startingQuery = startingQuery,
+        cursorCache = cursorCache,
         nextPage = updatePage,
         cursorListLoader = cursorListLoader,
     ),
@@ -386,6 +423,7 @@ fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query ->
 
 private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
     startingQuery: Query,
+    cursorCache: CursorCache<Query>,
     crossinline nextPage: Query.(CursorQuery.Data) -> Query,
     crossinline cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
 ): QueryFetcher<Query, Item> =
@@ -394,19 +432,26 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         // in memory
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
-        seedQueryTokenMap = mapOf(
+        seedQueryTokenMap = cursorCache.seedQueryTokenMap() ?: mapOf(
             startingQuery to startingQuery.initialCursor,
         ),
         fetcher = { query, cursor ->
+            // Remember the real cursor that backed this page. Used below so a re-subscribed page's
+            // transient Pending can't downgrade a neighbor's known cursor, and for resume handoff.
+            cursorCache.record(query, cursor)
             cursorListLoader(query, cursor)
                 .map { networkCursorList ->
+                    val nextPageQuery = query.nextPage(query.data.copy(page = query.data.page + 1))
                     NeighboredFetchResult(
                         // Set the cursor for the next page and any other page with data available.
                         mapOf(
-                            Pair(
-                                first = query.nextPage(query.data.copy(page = query.data.page + 1)),
-                                second = networkCursorList.nextCursor,
-                            ),
+                            // A pending cursor must not overwrite a resolved cursor already recorded
+                            // for the next page. A genuinely fresh next page has no record yet and keeps
+                            // Pending, which still lets it page from the local DB.
+                            nextPageQuery to when (networkCursorList.nextCursor) {
+                                Cursor.Pending -> cursorCache[nextPageQuery] ?: Cursor.Pending
+                                else -> networkCursorList.nextCursor
+                            },
                         ),
                         items = networkCursorList,
                     )

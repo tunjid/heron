@@ -58,6 +58,11 @@ interface CursorQuery {
     }
 }
 
+@Serializable
+data class Cursors(
+    val pages: Map<CursorQuery.Data, Cursor>,
+) : UrlEncodableModel
+
 data class DataQuery(
     override val data: CursorQuery.Data,
 ) : CursorQuery
