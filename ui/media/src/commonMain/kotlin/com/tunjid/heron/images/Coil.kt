@@ -172,6 +172,14 @@ internal class CoilImageLoader private constructor(
                         addPlatformDecoders()
                         add(KtorNetworkFetcherFactory(httpClient))
                     }
+                    // Make the in-memory bitmap budget explicit and tunable rather than relying on
+                    // Coil's implicit default; this is the ceiling a media-heavy timeline scrolls
+                    // against.
+                    .memoryCache {
+                        MemoryCache.Builder()
+                            .maxSizePercent(context, ImageMemoryCachePercent)
+                            .build()
+                    }
                     .build()
             }
             return CoilImageLoader(
@@ -195,3 +203,8 @@ val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
 
 private val MediaDownloadsDir get() = FileKit.cacheDir / "media-downloads"
 private const val DownloadBufferSize = 8192
+
+// Fraction of the app memory budget the image memory cache may use. Matches Coil's implicit Android
+// default, but pinned explicitly so the budget is intentional and consistent across platforms. Tuning
+// knob for the trade-off between scroll-back hit rate and overall memory pressure.
+private const val ImageMemoryCachePercent = 0.20
