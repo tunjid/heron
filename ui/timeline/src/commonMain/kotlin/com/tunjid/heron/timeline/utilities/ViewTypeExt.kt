@@ -33,7 +33,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AspectRatio
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.MediaList
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.UnknownEmbed
+import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
@@ -45,11 +50,19 @@ val TimelineItem.contentType: String
         is TimelineItem.Pinned,
         is TimelineItem.Repost,
         is TimelineItem.Single,
-        -> "post"
+        -> post.embed.postContentType
 
         is TimelineItem.Threaded -> "threaded"
         is TimelineItem.Loading -> "loading"
         is TimelineItem.Empty -> "empty"
+    }
+
+private val Embed?.postContentType: String
+    get() = when (this) {
+        is Video -> "post-video"
+        is MediaList -> "post-media"
+        is ExternalEmbed -> "post-link"
+        null, UnknownEmbed -> "post"
     }
 
 internal fun Modifier.sensitiveContentBlur(
