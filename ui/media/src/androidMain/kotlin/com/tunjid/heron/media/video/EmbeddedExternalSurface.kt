@@ -123,7 +123,10 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
     }
 
     override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
-        surfaceTextureSurface?.let(::dispatchSurfaceDestroyed)
+        surfaceTextureSurface?.let { surface ->
+            dispatchSurfaceDestroyed(surface)
+            surface.release()
+        }
         surfaceTextureSurface = null
         return true
     }
@@ -135,7 +138,7 @@ private class EmbeddedExternalSurfaceState(scope: CoroutineScope) :
 }
 
 private abstract class BaseAndroidExternalSurfaceState(val scope: CoroutineScope) :
-    androidx.compose.foundation.AndroidExternalSurfaceScope,
+    AndroidExternalSurfaceScope,
     SurfaceScope {
 
     private var onSurface:

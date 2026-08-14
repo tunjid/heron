@@ -59,6 +59,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
@@ -227,6 +228,7 @@ internal fun PostsScreen(
                 items(
                     items = state.tiledItems,
                     key = TimelineItem::id,
+                    contentType = TimelineItem::contentType,
                     itemContent = { item ->
                         TimelineItem(
                             modifier = Modifier

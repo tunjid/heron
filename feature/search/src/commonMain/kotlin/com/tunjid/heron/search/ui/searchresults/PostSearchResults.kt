@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
@@ -51,6 +52,7 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
@@ -233,6 +235,7 @@ internal fun PostSearchResults(
         items(
             items = timelineState.tiledItems,
             key = { it.id },
+            contentType = TimelineItem::contentType,
             itemContent = { result ->
                 TimelineItem(
                     modifier = Modifier
