@@ -82,6 +82,15 @@ internal class CoilImageLoader private constructor(
                 }
                 is ImageRequest.Network -> {
                     data(request.url)
+                    // Cache under a stable, size-agnostic key (the URL) so that when this image is
+                    // later referenced as another request's thumbnail — e.g. the timeline thumbnail
+                    // reused as the full-screen viewer's placeholder below — the lookup can find it.
+                    // Without this, Coil's auto key folds in the request size, so Key(thumbnailUrl)
+                    // never matches and the placeholder is dead. Coil still size-validates cache hits,
+                    // so a too-small entry is re-decoded rather than served upscaled.
+                    request.url
+                        ?.let(MemoryCache::Key)
+                        ?.let { memoryCacheKey(it) }
                     request.thumbnailUrl
                         ?.let(MemoryCache::Key)
                         ?.let { cacheKey ->
