@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.composables.ui.animate
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
@@ -69,9 +70,11 @@ actual fun VideoPlayer(
             state = state,
         )
 
-        // Capture a still frame from the video to use as a stand in when buffering playback
+        // Capture a still frame to stand in for the surface once this tile stops being the active
+        // one.
         LaunchedEffect(state.status) {
             if (state.status is PlayerStatus.Pause &&
+                state.player != null &&
                 state.hasRenderedFirstFrame &&
                 graphicsLayer.size.height != 0 &&
                 graphicsLayer.size.width != 0
@@ -87,7 +90,7 @@ actual fun VideoPlayer(
             .collectLatest { (player, status) ->
                 if (status is PlayerStatus.Play) while (true) {
                     state.lastPositionMs = player.currentPosition
-                    delay(100)
+                    delay(100.milliseconds)
                 }
             }
     }
@@ -101,7 +104,7 @@ actual fun VideoPlayer(
 }
 
 private val ExoPlayerState.canShowVideo
-    get() = when (status) {
+    get() = player != null && when (status) {
         is PlayerStatus.Idle.Initial -> true
         is PlayerStatus.Play -> true
         is PlayerStatus.Pause -> true
@@ -109,7 +112,8 @@ private val ExoPlayerState.canShowVideo
     }
 
 private val ExoPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
+    get() = player == null ||
+        videoSize == IntSize.Zero ||
         !hasRenderedFirstFrame ||
         when (status) {
             is PlayerStatus.Idle -> true
