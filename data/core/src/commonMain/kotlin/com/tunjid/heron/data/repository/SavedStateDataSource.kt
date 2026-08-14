@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -308,6 +309,7 @@ private val SavedState.signedInProfileId: ProfileId?
 
 private val SavedStateDataSource.observedSignedInProfileId
     get() = savedState
+        .filter { it != InitialSavedState }
         .map { it.auth.ifSignedIn()?.authProfileId }
         .distinctUntilChanged()
 
