@@ -28,7 +28,7 @@ android {
     defaultConfig {
         // The app uses Modifier.blur which is Android 12 and up
         minSdk = 31
-        targetSdk = 35
+        targetSdk = 36
     }
 
     compileOptions {
