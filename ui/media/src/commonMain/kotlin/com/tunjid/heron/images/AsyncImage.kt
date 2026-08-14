@@ -152,17 +152,14 @@ class ImageState internal constructor(
     internal suspend fun loadImagesForLayoutSize() {
         combine(
             requests(),
-            layoutSizes(),
+            fetchSizes(),
             ::Pair,
         )
             .distinctUntilChanged()
             .collectLatest { (request, size) ->
                 imageLoader.fetchImage(
                     request = request,
-                    size = IntSize(
-                        width = min(size.width, windowSize().width),
-                        height = min(size.height, windowSize().height),
-                    ),
+                    size = size,
                 )
                     ?.let(::image::set)
             }
@@ -171,7 +168,7 @@ class ImageState internal constructor(
     private fun requests(): Flow<ImageRequest> =
         snapshotFlow { args.request }
 
-    private fun layoutSizes(): Flow<IntSize> =
+    private fun fetchSizes(): Flow<IntSize> =
         snapshotFlow { layoutSize }
             .filter { it.isUsable }
             .withIndex()
@@ -179,7 +176,7 @@ class ImageState internal constructor(
                 if (index == 0) 0.milliseconds
                 else ImageLayoutSizeRefetchDebounce.milliseconds
             }
-            .map { it.value }
+            .map { (_, size) -> size.bucketedFetchSize(windowSize()) }
 }
 
 @Composable
@@ -310,6 +307,46 @@ private val IntSize.isUsable: Boolean
         width < Int.MAX_VALUE &&
         height > IntSize.Zero.height &&
         height < Int.MAX_VALUE
+
+private fun IntSize.bucketedFetchSize(
+    windowSize: IntSize,
+): IntSize {
+    val maxWidth = windowSize.width.takeIf { it > 0 } ?: width
+    val maxHeight = windowSize.height.takeIf { it > 0 } ?: height
+    return IntSize(
+        width = min(width, maxWidth)
+            .roundedUpToDecodeBucket()
+            .coerceAtMost(maxWidth),
+        height = min(height, maxHeight)
+            .roundedUpToDecodeBucket()
+            .coerceAtMost(maxHeight),
+    )
+}
+
+private fun Int.roundedUpToDecodeBucket(): Int {
+    DecodeBucketsPx
+    // Smallest bucket >= this, via a lower-bound binary search over the ascending buckets. If this is
+    // larger than every bucket, keep the requested size (never upscale); the window cap still applies.
+    var low = 0
+    var high = DecodeBucketsPx.size - 1
+    var ceiling = this
+    while (low <= high) {
+        val mid = (low + high) ushr 1
+        val bucket = DecodeBucketsPx[mid]
+        if (bucket >= this) {
+            ceiling = bucket
+            high = mid - 1
+        } else {
+            low = mid + 1
+        }
+    }
+    return ceiling
+}
+
+private val DecodeBucketsPx = intArrayOf(
+    64, 96, 128, 256, 384, 640, 750,
+    828, 1080, 1200, 1920, 2048, 3840,
+)
 
 private val ImageInterpolationSpec = spring<Float>(
     stiffness = Spring.StiffnessLow,

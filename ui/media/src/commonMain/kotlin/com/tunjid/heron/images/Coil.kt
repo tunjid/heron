@@ -172,6 +172,11 @@ internal class CoilImageLoader private constructor(
                         addPlatformDecoders()
                         add(KtorNetworkFetcherFactory(httpClient))
                     }
+                    .memoryCache {
+                        MemoryCache.Builder()
+                            .maxSizePercent(context, ImageMemoryCachePercent)
+                            .build()
+                    }
                     .build()
             }
             return CoilImageLoader(
@@ -195,3 +200,5 @@ val LocalImageLoader = staticCompositionLocalOf<ImageLoader> {
 
 private val MediaDownloadsDir get() = FileKit.cacheDir / "media-downloads"
 private const val DownloadBufferSize = 8192
+
+private const val ImageMemoryCachePercent = 0.20
