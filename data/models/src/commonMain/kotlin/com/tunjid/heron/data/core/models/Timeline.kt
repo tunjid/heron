@@ -34,6 +34,8 @@ sealed interface Timeline {
 
     val itemsAvailable: Long
 
+    val resumeCursor: Cursor.Initial? get() = null
+
     val presentation: Presentation
 
     val supportedPresentations: List<Presentation>
@@ -64,6 +66,23 @@ sealed interface Timeline {
             val profileId: ProfileId,
             val type: Timeline.Profile.Type,
         ) : Source
+
+        @Serializable
+        sealed interface Search : Source {
+            val query: String
+            val filter: SearchFilter
+            val sort: Sort
+
+            @Serializable
+            enum class Sort { Top, Latest }
+
+            @Serializable
+            data class OneOff(
+                override val query: String,
+                override val filter: SearchFilter,
+                override val sort: Sort,
+            ) : Search
+        }
     }
 
     @Serializable
@@ -83,6 +102,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val isPinned: Boolean,
         ) : Home(
@@ -96,6 +116,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val isPinned: Boolean,
             val feedList: FeedList,
@@ -132,6 +153,7 @@ sealed interface Timeline {
             override val position: Int,
             override val lastRefreshed: Instant?,
             override val itemsAvailable: Long,
+            override val resumeCursor: Cursor.Initial? = null,
             override val presentation: Presentation,
             override val supportedPresentations: kotlin.collections.List<Presentation>,
             override val isPinned: Boolean,
@@ -196,6 +218,44 @@ sealed interface Timeline {
             ;
 
             fun sourceId(profileId: ProfileId) = "${profileId.id}-$suffix"
+        }
+    }
+
+    /**
+     * A timeline of posts matching a [Source.Search]. It is deliberately NOT a [Home] timeline:
+     * a search is transient and not pinnable. A pinnable, persisted search would be a separate
+     * [Home] timeline backed by a record, added when that lexicon exists.
+     */
+    @Serializable
+    data class Search(
+        val search: Source.Search,
+        override val lastRefreshed: Instant?,
+        override val itemsAvailable: Long,
+        override val presentation: Presentation,
+    ) : Timeline {
+
+        override val source: Source
+            get() = search
+
+        override val supportedPresentations: List<Presentation>
+            get() = when (search.filter.media) {
+                SearchFilter.Media.All,
+                -> TextOnlyPresentations
+                SearchFilter.Media.WithMedia,
+                SearchFilter.Media.VideosOnly,
+                -> AllPresentations
+            }
+
+        companion object {
+            fun stub(
+                search: Source.Search,
+                presentation: Presentation = Text.WithEmbed,
+            ) = Search(
+                search = search,
+                lastRefreshed = null,
+                itemsAvailable = 0,
+                presentation = presentation,
+            )
         }
     }
 
@@ -388,6 +448,8 @@ val Timeline.isStrictlyMedia: Boolean
         is Timeline.Home.Following,
         is Timeline.Home.List,
         -> false
+        is Timeline.Search,
+        -> search.filter.media != SearchFilter.Media.All
         is Timeline.Profile -> when (type) {
             Timeline.Profile.Type.Posts,
             Timeline.Profile.Type.Replies,

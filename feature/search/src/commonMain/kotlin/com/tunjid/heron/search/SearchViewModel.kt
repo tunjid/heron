@@ -21,15 +21,19 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.SearchFilter
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.repository.records.FeedGeneratorSearchQuery
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -40,6 +44,8 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
+import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -93,8 +99,8 @@ class SearchViewModel(
     constructor(
         navActions: (NavigationMutation) -> Unit,
         authRepository: AuthRepository,
+        profileRepository: ProfileRepository,
         recordRepository: RecordRepository,
-        searchRepository: SearchRepository,
         timelineRepository: TimelineRepository,
         userDataRepository: UserDataRepository,
         writeQueue: WriteQueue,
@@ -106,10 +112,14 @@ class SearchViewModel(
                 searchBarText = route.query.initialSearchBarText,
                 query = route.query,
                 layout = route.query.initialLayout,
-                searchStateHolders = route.searchStates()
-                    .mapNotNull { searchState ->
-                        scope.searchStateHolder(searchState, searchRepository)
-                    },
+                searchStateHolders = scope.searchScreenStateHolders(
+                    query = route.query,
+                    isSignedIn = true,
+                    existing = emptyList(),
+                    profileRepository = profileRepository,
+                    recordRepository = recordRepository,
+                    timelineRepository = timelineRepository,
+                ),
             ).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
@@ -120,22 +130,23 @@ class SearchViewModel(
                 launchSearchStateHolderMutations(
                     state = state,
                     routeScope = scope,
-                    availableSearchStates = route.searchStates(),
+                    query = route.query,
                     authRepository = authRepository,
-                    searchRepository = searchRepository,
+                    profileRepository = profileRepository,
+                    recordRepository = recordRepository,
+                    timelineRepository = timelineRepository,
                 )
                 launchTrendsMutations(
                     state = state,
-                    searchRepository = searchRepository,
+                    recordRepository = recordRepository,
                 )
                 launchSuggestedStarterPackMutations(
                     state = state,
-                    searchRepository = searchRepository,
                     recordRepository = recordRepository,
                 )
                 launchSuggestedFeedGeneratorMutations(
                     state = state,
-                    searchRepository = searchRepository,
+                    recordRepository = recordRepository,
                 )
                 launchFeedGeneratorUrisToStatusMutations(
                     state = state,
@@ -152,14 +163,14 @@ class SearchViewModel(
                     when (val action = type()) {
                         is Action.Search -> action.flow.launchSearchQueryMutations(
                             state = state,
-                            searchRepository = searchRepository,
+                            profileRepository = profileRepository,
                         )
                         is Action.Filter -> action.flow.launchFilterMutations(
                             state = state,
                         )
                         is Action.FetchSuggestedProfiles -> action.flow.launchSuggestedProfilesMutations(
                             state = state,
-                            searchRepository = searchRepository,
+                            profileRepository = profileRepository,
                         )
                         is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                             state = state,
@@ -211,36 +222,24 @@ private fun launchLoadProfileMutations(
 context(productionScope: CoroutineScope)
 private fun launchSearchStateHolderMutations(
     state: State.SnapshotMutable,
-    availableSearchStates: List<SearchState>,
+    query: RouteQuery,
     routeScope: CoroutineScope,
     authRepository: AuthRepository,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
+    timelineRepository: TimelineRepository,
 ) = authRepository.signedInUser
     .map { it != null }
     .distinctUntilChanged()
     .launchedCollect { isSignedIn ->
-        val existingHolders = state.searchStateHolders
-            .associateBy { it.state.key }
-
-        state.searchStateHolders = availableSearchStates.mapNotNull { searchState ->
-            when (searchState) {
-                is SearchState.OfPosts -> when {
-                    isSignedIn -> existingHolders[searchState.key]
-                        ?: routeScope.searchStateHolder(
-                            searchState = searchState,
-                            searchRepository = searchRepository,
-                        )
-                    else -> null
-                }
-                is SearchState.OfFeedGenerators,
-                is SearchState.OfProfiles,
-                -> existingHolders[searchState.key]
-                    ?: routeScope.searchStateHolder(
-                        searchState = searchState,
-                        searchRepository = searchRepository,
-                    )
-            }
-        }
+        state.searchStateHolders = routeScope.searchScreenStateHolders(
+            query = query,
+            isSignedIn = isSignedIn,
+            existing = state.searchStateHolders,
+            profileRepository = profileRepository,
+            recordRepository = recordRepository,
+            timelineRepository = timelineRepository,
+        )
     }
 
 context(productionScope: CoroutineScope)
@@ -254,17 +253,16 @@ private fun launchLoadPreferencesMutations(
 context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
-) = searchRepository.trends().launchedCollect {
+    recordRepository: RecordRepository,
+) = recordRepository.trends().launchedCollect {
     state.trends = it
 }
 
 context(productionScope: CoroutineScope)
 private fun launchSuggestedStarterPackMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
     recordRepository: RecordRepository,
-) = searchRepository.suggestedStarterPacks()
+) = recordRepository.suggestedStarterPacks()
     .flatMapLatest { starterPacks ->
         val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
         val listMembersFlow = starterPackListUris.map { listUri ->
@@ -307,8 +305,8 @@ private fun launchSuggestedStarterPackMutations(
 context(productionScope: CoroutineScope)
 private fun launchSuggestedFeedGeneratorMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
-) = searchRepository.suggestedFeeds().launchedCollect {
+    recordRepository: RecordRepository,
+) = recordRepository.suggestedFeeds().launchedCollect {
     state.feedGenerators = it
 }
 
@@ -329,9 +327,9 @@ private fun launchFeedGeneratorUrisToStatusMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
 ) = launchedCollectLatest { action ->
-    searchRepository.suggestedProfiles(
+    profileRepository.suggestedProfiles(
         category = action.category,
     ).collect { suggestedProfiles ->
         state.categoriesToSuggestedProfiles += (action.category to suggestedProfiles)
@@ -341,7 +339,7 @@ private fun Flow<Action.FetchSuggestedProfiles>.launchSuggestedProfilesMutations
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Search>.launchSearchQueryMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
 ) {
     val shared = shareIn(
         scope = productionScope,
@@ -355,42 +353,13 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
                 state.layout = state.query.layoutFor(action)
             }
             is Action.Search.OnSearchQueryConfirmed -> {
-                state.searchStateHolders.forEach {
-                    val currentQuery = state.query.queryString(
-                        searchBarText = state.searchBarText,
-                    )
-                    val confirmedQuery = when (val searchState = it.state) {
-                        is SearchState.OfPosts -> when (searchState.tilingData.currentQuery) {
-                            is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
-                                query = currentQuery,
-                                isLocalOnly = action.isLocalOnly,
-                                data = defaultSearchQueryData(),
-                                filter = state.appliedFilter,
-                            )
-                            is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
-                                query = currentQuery,
-                                isLocalOnly = action.isLocalOnly,
-                                data = defaultSearchQueryData(),
-                                filter = state.appliedFilter,
-                            )
-                        }
-                        is SearchState.OfProfiles -> SearchQuery.OfProfiles(
-                            query = currentQuery,
-                            isLocalOnly = action.isLocalOnly,
-                            data = defaultSearchQueryData(),
-                        )
-                        is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
-                            query = currentQuery,
-                            isLocalOnly = action.isLocalOnly,
-                            data = defaultSearchQueryData(),
-                        )
-                    }
-                    it.accept(
-                        SearchState.Tile(
-                            tilingAction = TilingState.Action.LoadAround(confirmedQuery),
-                        ),
-                    )
-                }
+                val currentQuery = state.query.queryString(
+                    searchBarText = state.searchBarText,
+                )
+                state.searchStateHolders.loadAround(
+                    query = currentQuery,
+                    filter = state.appliedFilter ?: SearchFilter(),
+                )
                 state.layout = ScreenLayout.GeneralSearchResults
             }
         }
@@ -399,10 +368,9 @@ private fun Flow<Action.Search>.launchSearchQueryMutations(
         .filterIsInstance<Action.Search.OnSearchQueryChanged>()
         .debounce(300.milliseconds)
         .flatMapLatest {
-            searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
+            profileRepository.autoCompleteProfileSearch(
+                query = ProfileSearchQuery(
                     query = it.query,
-                    isLocalOnly = false,
                     data = defaultSearchQueryData(),
                 ),
                 cursor = Cursor.Initial(),
@@ -533,47 +501,171 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMuta
     },
 )
 
-private fun Route.searchStates(): List<SearchState> = buildList {
-    add(
-        SearchState.OfPosts(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfPosts.Top(
-                    query = query.initialQueryString,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
+private fun CoroutineScope.searchScreenStateHolders(
+    query: RouteQuery,
+    isSignedIn: Boolean,
+    existing: List<SearchScreenStateHolders>,
+    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
+    timelineRepository: TimelineRepository,
+): List<SearchScreenStateHolders> {
+    val existingByKey = existing.associateBy(SearchScreenStateHolders::key)
+    return buildList {
+        if (isSignedIn) listOf(
+            Timeline.Source.Search.Sort.Top,
+            Timeline.Source.Search.Sort.Latest,
+        ).forEach { sort ->
+            add(
+                existingByKey[sort.postTabKey]
+                    ?: SearchScreenStateHolders.Posts(
+                        sort = sort,
+                        mutator = timelineStateHolder(
+                            refreshOnStart = false,
+                            timeline = Timeline.Search.stub(
+                                search = Timeline.Source.Search.OneOff(
+                                    query = query.initialQueryString,
+                                    filter = SearchFilter(),
+                                    sort = sort,
+                                ),
+                            ),
+                            startNumColumns = 1,
+                            timelineRepository = timelineRepository,
+                        ),
+                    ),
+            )
+        }
+        if (query.supportsNonPostSearch) {
+            add(
+                existingByKey["profiles"]
+                    ?: SearchScreenStateHolders.Profiles(
+                        mutator = profileSearchStateHolder(
+                            query = query,
+                            profileRepository = profileRepository,
+                        ),
+                    ),
+            )
+            add(
+                existingByKey["feed-generators"]
+                    ?: SearchScreenStateHolders.Feeds(
+                        mutator = feedGeneratorSearchStateHolder(
+                            query = query,
+                            recordRepository = recordRepository,
+                        ),
+                    ),
+            )
+        }
+    }
+}
+
+private val Timeline.Source.Search.Sort.postTabKey: String
+    get() = when (this) {
+        Timeline.Source.Search.Sort.Top -> "top-posts"
+        Timeline.Source.Search.Sort.Latest -> "latest-posts"
+    }
+
+private fun CoroutineScope.profileSearchStateHolder(
+    query: RouteQuery,
+    profileRepository: ProfileRepository,
+): SearchResultStateHolder = actionSuspendingStateMutator(
+    state = SearchState.OfProfiles(
+        tilingData = TilingState.Data(
+            currentQuery = ProfileSearchQuery(
+                query = query.initialQueryString,
+                data = defaultSearchQueryData(),
             ),
         ),
-    )
-    add(
-        SearchState.OfPosts(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfPosts.Latest(
-                    query = query.initialQueryString,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
+    ),
+    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+    producer = { holderState, actions ->
+        actions.map { it.tilingAction }
+            .launchTilingMutations(
+                state = holderState,
+                updateQueryData = { copy(data = it) },
+                refreshQuery = { copy(data = data.reset()) },
+                cursorListLoader = profileRepository::profileSearch
+                    .mapCursorList(SearchResult::OfProfile),
+                onNewItems = { items ->
+                    items.distinctBy { it.profileWithViewerState.profile.did }
+                },
+                queryRefreshBy = {
+                    it.query to it.data.cursorAnchor
+                },
+            )
+    },
+)
+
+private fun CoroutineScope.feedGeneratorSearchStateHolder(
+    query: RouteQuery,
+    recordRepository: RecordRepository,
+): SearchResultStateHolder = actionSuspendingStateMutator(
+    state = SearchState.OfFeedGenerators(
+        tilingData = TilingState.Data(
+            currentQuery = FeedGeneratorSearchQuery(
+                query = query.initialQueryString,
+                data = defaultSearchQueryData(),
             ),
         ),
-    )
-    if (query.supportsNonPostSearch) {
-        add(
-            SearchState.OfProfiles(
-                tilingData = TilingState.Data(
-                    currentQuery = SearchQuery.OfProfiles(
-                        query = query.initialQueryString,
-                        isLocalOnly = false,
+    ),
+    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+    producer = { holderState, actions ->
+        actions.map { it.tilingAction }
+            .launchTilingMutations(
+                state = holderState,
+                updateQueryData = { copy(data = it) },
+                refreshQuery = { copy(data = data.reset()) },
+                cursorListLoader = recordRepository::feedGeneratorSearch
+                    .mapCursorList(SearchResult::OfFeedGenerator),
+                onNewItems = { items ->
+                    items.distinctBy { it.feedGenerator.cid }
+                },
+                queryRefreshBy = {
+                    it.query to it.data.cursorAnchor
+                },
+            )
+    },
+)
+
+/**
+ * Dispatches a fresh [TilingState.Action.LoadAround] into each tab holder. The post tabs re-tile
+ * against a new [Timeline.Source.Search] carried by the [TimelineQuery]; because the cursor anchor
+ * is newer the tiler tears down and re-fetches from the new source, so no holder is rebuilt.
+ */
+private fun List<SearchScreenStateHolders>.loadAround(
+    query: String,
+    filter: SearchFilter,
+) = forEach { holder ->
+    when (holder) {
+        is SearchScreenStateHolders.Posts -> holder.accept(
+            TimelineState.Action.Tile(
+                tilingAction = TilingState.Action.LoadAround(
+                    TimelineQuery(
+                        data = defaultSearchQueryData(),
+                        source = Timeline.Source.Search.OneOff(
+                            query = query,
+                            filter = filter,
+                            sort = holder.sort,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        is SearchScreenStateHolders.Profiles -> holder.accept(
+            SearchState.Tile(
+                tilingAction = TilingState.Action.LoadAround(
+                    ProfileSearchQuery(
+                        query = query,
                         data = defaultSearchQueryData(),
                     ),
                 ),
             ),
         )
-        add(
-            SearchState.OfFeedGenerators(
-                tilingData = TilingState.Data(
-                    currentQuery = SearchQuery.OfFeedGenerators(
-                        query = query.initialQueryString,
-                        isLocalOnly = false,
+
+        is SearchScreenStateHolders.Feeds -> holder.accept(
+            SearchState.Tile(
+                tilingAction = TilingState.Action.LoadAround(
+                    FeedGeneratorSearchQuery(
+                        query = query,
                         data = defaultSearchQueryData(),
                     ),
                 ),
@@ -582,103 +674,20 @@ private fun Route.searchStates(): List<SearchState> = buildList {
     }
 }
 
-private fun CoroutineScope.searchStateHolder(
-    searchState: SearchState,
-    searchRepository: SearchRepository,
-): SearchResultStateHolder? = when (searchState) {
-    is SearchState.OfPosts -> actionSuspendingStateMutator(
-        state = searchState,
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { holderState, actions ->
-            actions.map { it.tilingAction }
-                .launchTilingMutations(
-                    state = holderState,
-                    updateQueryData = {
-                        when (this) {
-                            is SearchQuery.OfPosts.Latest -> copy(data = it)
-                            is SearchQuery.OfPosts.Top -> copy(data = it)
-                        }
-                    },
-                    refreshQuery = {
-                        when (this) {
-                            is SearchQuery.OfPosts.Latest -> copy(data = data.reset())
-                            is SearchQuery.OfPosts.Top -> copy(data = data.reset())
-                        }
-                    },
-                    cursorListLoader = { query, cursor ->
-                        searchRepository::postSearch.mapCursorList { post ->
-                            SearchResult.OfPost(
-                                timelineItem = post,
-                            )
-                        }.invoke(query, cursor)
-                    },
-                    onNewItems = { items ->
-                        items.distinctBy { it.timelineItem.id }
-                    },
-                    queryRefreshBy = {
-                        it.query to it.data.cursorAnchor
-                    },
-                )
-        },
-    )
-
-    is SearchState.OfProfiles -> actionSuspendingStateMutator(
-        state = searchState,
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { holderState, actions ->
-            actions.map { it.tilingAction }
-                .launchTilingMutations(
-                    state = holderState,
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = searchRepository::profileSearch
-                        .mapCursorList(SearchResult::OfProfile),
-                    onNewItems = { items ->
-                        items.distinctBy { it.profileWithViewerState.profile.did }
-                    },
-                    queryRefreshBy = {
-                        it.query to it.data.cursorAnchor
-                    },
-                )
-        },
-    )
-
-    is SearchState.OfFeedGenerators -> actionSuspendingStateMutator(
-        state = searchState,
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        producer = { holderState, actions ->
-            actions.map { it.tilingAction }
-                .launchTilingMutations(
-                    state = holderState,
-                    updateQueryData = { copy(data = it) },
-                    refreshQuery = { copy(data = data.reset()) },
-                    cursorListLoader = searchRepository::feedGeneratorSearch
-                        .mapCursorList(SearchResult::OfFeedGenerator),
-                    onNewItems = { items ->
-                        items.distinctBy { it.feedGenerator.cid }
-                    },
-                    queryRefreshBy = {
-                        it.query to it.data.cursorAnchor
-                    },
-                )
-        },
-    )
-}
-
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Filter>.launchFilterMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { action ->
     when (action) {
         Action.Filter.Begin ->
-            state.draftFilter = state.appliedFilter ?: SearchQuery.Filter()
+            state.draftFilter = state.appliedFilter ?: SearchFilter()
 
         is Action.Filter.Edit ->
             state.draftFilter = action.filter
 
         is Action.Filter.Clear -> {
             state.appliedFilter = null
-            state.draftFilter = SearchQuery.Filter()
+            state.draftFilter = SearchFilter()
             state.reloadPostSearches()
         }
 
@@ -695,41 +704,11 @@ private fun Flow<Action.Filter>.launchFilterMutations(
  * displayed posts in sync with the applied filter instead of leaving stale results.
  */
 private fun State.SnapshotMutable.reloadPostSearches() {
-    val queryString = query.queryString(
-        searchBarText = searchBarText,
+    searchStateHolders.loadAround(
+        query = query.queryString(searchBarText = searchBarText),
+        filter = appliedFilter ?: SearchFilter(),
     )
-    searchStateHolders.forEach { holder ->
-        val searchState = holder.state
-        if (searchState is SearchState.OfPosts) holder.accept(
-            SearchState.Tile(
-                tilingAction = TilingState.Action.LoadAround(
-                    searchState.confirmedPostsQuery(
-                        query = queryString,
-                        filter = appliedFilter,
-                    ),
-                ),
-            ),
-        )
-    }
     layout = ScreenLayout.GeneralSearchResults
-}
-
-private fun SearchState.OfPosts.confirmedPostsQuery(
-    query: String,
-    filter: SearchQuery.Filter?,
-): SearchQuery.OfPosts = when (tilingData.currentQuery) {
-    is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
-        query = query,
-        isLocalOnly = false,
-        data = defaultSearchQueryData(),
-        filter = filter,
-    )
-    is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
-        query = query,
-        isLocalOnly = false,
-        data = defaultSearchQueryData(),
-        filter = filter,
-    )
 }
 
 private fun defaultSearchQueryData() = CursorQuery.Data(

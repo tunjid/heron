@@ -42,7 +42,9 @@ import com.tunjid.heron.search.ui.searchresults.GeneralSearchResults
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.search.ui.suggestions.SuggestedContent
 import com.tunjid.heron.search.ui.suggestions.avatarSharedElementKey
+import com.tunjid.heron.tiling.toCursors
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
@@ -71,7 +73,7 @@ internal fun SearchScreen(
 
     val pagerState = rememberPagerState {
         if (state.appliedFilter == null) state.searchStateHolders.size
-        else state.searchStateHolders.count { it.state is SearchState.OfPosts }
+        else state.searchStateHolders.count { it is SearchScreenStateHolders.Posts }
     }
     val onProfileClicked: (Profile, String) -> Unit = remember(navigateTo) {
         { profile, sharedElementPrefix ->
@@ -204,6 +206,26 @@ internal fun SearchScreen(
                     media = media,
                     startIndex = index,
                     sharedElementPrefix = sharedElementPrefix,
+                    otherModels = state.searchStateHolders
+                        .filterIsInstance<SearchScreenStateHolders.Posts>()
+                        .firstOrNull {
+                            it.state.timeline.sharedElementPrefix == sharedElementPrefix
+                        }
+                        ?.state
+                        ?.let { timelineState ->
+                            listOfNotNull(
+                                when (val source = timelineState.timeline.source) {
+                                    // One off searches need to be updated manually
+                                    is Timeline.Source.Search.OneOff -> source.copy(
+                                        query = state.searchBarText,
+                                        filter = state.appliedFilter ?: source.filter,
+                                    )
+                                    else -> source
+                                },
+                                timelineState.toCursors(),
+                            )
+                        }
+                        ?: emptyList(),
                 ),
             )
         }

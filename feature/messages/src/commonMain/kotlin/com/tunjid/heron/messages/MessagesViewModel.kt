@@ -26,8 +26,8 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
@@ -87,7 +87,7 @@ class ActualMessagesViewModel(
     constructor(
         authRepository: AuthRepository,
         messagesRepository: MessageRepository,
-        searchRepository: SearchRepository,
+        profileRepository: ProfileRepository,
         navActions: (NavigationMutation) -> Unit,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
@@ -112,7 +112,7 @@ class ActualMessagesViewModel(
                         is Action.SetIsSearching -> action.flow.launchSetIsSearchingMutations(state)
                         is Action.SearchQueryChanged -> action.flow.launchSearchQueryChangeMutations(
                             state = state,
-                            searchRepository = searchRepository,
+                            profileRepository = profileRepository,
                         )
                         is Action.ResolveConversation -> action.flow.launchResolveConversationMutations(
                             state = state,
@@ -197,7 +197,7 @@ private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
     state: State.SnapshotMutable,
-    searchRepository: SearchRepository,
+    profileRepository: ProfileRepository,
 ) {
     val sharedActions = shareIn(
         scope = productionScope,
@@ -214,10 +214,9 @@ private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
         }
         .flatMapLatest { action ->
             if (action.query.isBlank()) flowOf(emptyList())
-            else searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
+            else profileRepository.autoCompleteProfileSearch(
+                query = ProfileSearchQuery(
                     query = action.query,
-                    isLocalOnly = false,
                     data = chatSearchData(),
                 ),
                 cursor = Cursor.Initial(),

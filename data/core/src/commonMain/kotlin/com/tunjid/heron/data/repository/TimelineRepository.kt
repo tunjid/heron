@@ -32,6 +32,7 @@ import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
+import app.bsky.feed.SearchPostsV2Sort
 import app.bsky.feed.SendInteractionsRequest
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
@@ -46,10 +47,11 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepl
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
-import com.tunjid.heron.data.core.models.asInitialCursor
+import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.uri
@@ -83,6 +85,8 @@ import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asNetworkInteraction
+import com.tunjid.heron.data.network.models.blueskyEmbeddedRecords
+import com.tunjid.heron.data.network.models.externalEmbeddedRecordUris
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -169,20 +173,40 @@ sealed interface TimelineRequest {
             val starterPackUriSuffix: String,
         ) : OfStarterPack
     }
+
+    data class OfSearch(
+        val source: Timeline.Source.Search,
+    ) : TimelineRequest
 }
 
-data class TimelineQuery(
+// Deliberately not a data class: [equals] and [hashCode] are handwritten because the tiling
+// pipeline keys on them, so they must reflect only the fields that define a page's identity
+// ([data] and the source's stable id) and nothing else.
+class TimelineQuery(
     override val data: CursorQuery.Data,
     val source: Timeline.Source,
+    val resumeCursor: Cursor.Initial? = null,
 ) : CursorQuery {
     override val initialCursor: Cursor.Initial
-        get() = when (source) {
-            Timeline.Source.Following,
-            is Timeline.Source.Record.List,
-            is Timeline.Source.Profile,
-            -> data.cursorAnchor.asInitialCursor()
-            is Timeline.Source.Record.Feed -> super.initialCursor
-        }
+        get() = resumeCursor ?: super.initialCursor
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as TimelineQuery
+
+        if (data != other.data) return false
+        if (source.id != other.source.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = data.hashCode()
+        result = 31 * result + source.id.hashCode()
+        return result
+    }
 }
 
 interface TimelineRepository {
@@ -309,6 +333,12 @@ internal class OfflineTimelineRepository(
                 nextCursor = GetListFeedResponse::cursor,
                 networkFeed = GetListFeedResponse::feed,
             ),
+        )
+
+        is Timeline.Source.Search -> searchTimelineItems(
+            query = query,
+            cursor = cursor,
+            source = source,
         )
 
         is Timeline.Source.Profile -> when (source.type) {
@@ -541,6 +571,9 @@ internal class OfflineTimelineRepository(
                 networkResponseToFeedViews = GetAuthorFeedResponse::feed,
             )
         }
+
+        // Search results are fetched fresh on each query; there is no background polling yet.
+        is Timeline.Search -> flowOf(false)
 
         is Timeline.StarterPack -> hasUpdates(
             timeline = timeline.listTimeline,
@@ -821,6 +854,12 @@ internal class OfflineTimelineRepository(
                             ),
                         )
 
+                        is TimelineRequest.OfSearch -> emitAll(
+                            searchTimeline(
+                                source = request.source,
+                            ),
+                        )
+
                         TimelineRequest.Following -> emitAll(
                             followingTimeline(
                                 // TODO: Get a string resource for this
@@ -971,6 +1010,10 @@ internal class OfflineTimelineRepository(
                                         sourceId = query.source.id,
                                         lastFetchedAt = query.data.cursorAnchor,
                                         preferredPresentation = null,
+                                        // Persist the head cursor of this generation so the timeline
+                                        // can resume paging from here instead of the live head when
+                                        // it is reopened without refreshing.
+                                        resumeCursor = nextCursor(),
                                     ),
                                 ),
                             )
@@ -1229,6 +1272,96 @@ internal class OfflineTimelineRepository(
                 }
         }
 
+    /**
+     * Fetches posts for a [Timeline.Source.Search] via `searchPostsV2`, caches them, then observes
+     * the returned post uris to emit [TimelineItem.Single]s reflecting local interaction state.
+     * Search results are not persisted to the timeline table; the network response is the source of
+     * truth and the db is only consulted for interaction/mute state.
+     */
+    private fun searchTimelineItems(
+        query: TimelineQuery,
+        cursor: Cursor,
+        source: Timeline.Source.Search,
+    ): Flow<CursorList<TimelineItem>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            if (!searchQueryHasCriteria(source.query, source.filter)) {
+                return@singleSessionFlow emptyFlow()
+            }
+            if (!cursor.canRequestData) return@singleSessionFlow emptyFlow()
+
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                searchPostsV2(
+                    params = searchPostsV2QueryParams(
+                        query = source.query,
+                        filter = source.filter,
+                        sort = when (source.sort) {
+                            Timeline.Source.Search.Sort.Top -> SearchPostsV2Sort.Top
+                            Timeline.Source.Search.Sort.Latest -> SearchPostsV2Sort.Recent
+                        },
+                        limit = query.data.limit,
+                        cursor = cursor,
+                    ),
+                )
+            }
+                .getOrNull()
+                ?: return@singleSessionFlow emptyFlow()
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.posts.forEach { postView ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        postView = postView,
+                    )
+                }
+            }
+
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
+
+            recordResolver.timelineItems(
+                items = response.posts,
+                signedInProfileId = signedInProfileId,
+                postUri = { PostUri(it.uri.atUri) },
+                associatedRecordUris = { postView ->
+                    postView.blueskyEmbeddedRecords(
+                        viewingProfileId = signedInProfileId,
+                    )
+                        .map(Record.Embeddable::embeddableRecordUri)
+                        .plus(postView.externalEmbeddedRecordUris())
+                },
+                associatedProfileIds = {
+                    emptyList()
+                },
+                block = block@{ item ->
+                    // Muted items should not show up in search
+                    if (isMuted(post)) return@block
+                    push(
+                        TimelineItem.Single(
+                            id = item.uri.atUri,
+                            post = post,
+                            isMuted = false,
+                            threadGate = threadGate(PostUri(item.uri.atUri)),
+                            appliedLabels = appliedLabels,
+                            signedInProfileId = signedInProfileId,
+                        ),
+                    )
+                },
+            ).map {
+                CursorList(
+                    items = it,
+                    nextCursor = nextCursor,
+                )
+            }
+        }
+            .flowOn(ioDispatcher)
+
+    private fun searchTimeline(
+        source: Timeline.Source.Search,
+    ): Flow<Timeline.Search> = flowOf(
+        Timeline.Search.stub(
+            search = source,
+        ),
+    )
+
     private fun followingTimeline(
         signedInProfileId: ProfileId?,
         name: String,
@@ -1243,6 +1376,8 @@ internal class OfflineTimelineRepository(
                 name = name,
                 position = position,
                 lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                resumeCursor = timelinePreferenceEntity?.resumeCursor
+                    ?.let(Cursor::Initial),
                 itemsAvailable = count,
                 presentation = timelinePreferenceEntity.preferredPresentation(),
                 isPinned = isPinned,
@@ -1294,6 +1429,8 @@ internal class OfflineTimelineRepository(
                         position = position,
                         feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        resumeCursor = timelinePreferenceEntity?.resumeCursor
+                            ?.let(Cursor::Initial),
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = when {
@@ -1332,6 +1469,8 @@ internal class OfflineTimelineRepository(
                         position = position,
                         feedList = feedList,
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        resumeCursor = timelinePreferenceEntity?.resumeCursor
+                            ?.let(Cursor::Initial),
                         itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         isPinned = isPinned,

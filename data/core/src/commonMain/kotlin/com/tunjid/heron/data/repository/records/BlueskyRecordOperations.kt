@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.data.repository.records
 
+import app.bsky.actor.ProfileViewBasic
 import app.bsky.feed.Generator
 import app.bsky.feed.GetActorFeedsQueryParams
 import app.bsky.feed.GetActorFeedsResponse
+import app.bsky.feed.GetSuggestedFeedsQueryParams
+import app.bsky.feed.GetSuggestedFeedsResponse
 import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetBlocksQueryParams
@@ -28,12 +31,19 @@ import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import app.bsky.graph.Listitem
+import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
+import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
+import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
+import app.bsky.unspecced.GetTrendsQueryParams
+import app.bsky.unspecced.TrendView
+import app.bsky.unspecced.TrendViewStatus
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -41,6 +51,8 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -48,6 +60,7 @@ import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
@@ -69,6 +82,7 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
@@ -90,6 +104,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -100,15 +115,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+
+@Serializable
+data class FeedGeneratorSearchQuery(
+    val query: String,
+    override val data: CursorQuery.Data,
+) : CursorQuery
 
 interface BlueskyRecordOperations {
 
@@ -140,6 +164,17 @@ interface BlueskyRecordOperations {
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
+
+    fun feedGeneratorSearch(
+        query: FeedGeneratorSearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedGenerator>>
+
+    fun suggestedFeeds(): Flow<List<FeedGenerator>>
+
+    fun suggestedStarterPacks(): Flow<List<StarterPack>>
+
+    fun trends(): Flow<List<Trend>>
 
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
@@ -431,6 +466,139 @@ internal class OfflineFirstBlueskyRecordOperations(
         }
             .flowOn(ioDispatcher)
 
+    override fun feedGeneratorSearch(
+        query: FeedGeneratorSearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<FeedGenerator>> =
+        if (query.query.isBlank()) emptyFlow()
+        else if (!cursor.canRequestData) emptyFlow()
+        else flow {
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                getPopularFeedGeneratorsUnspecced(
+                    params = GetPopularFeedGeneratorsQueryParams(
+                        query = query.query,
+                        limit = query.data.limit,
+                        cursor = cursor.value,
+                    ),
+                )
+            }
+                .getOrNull()
+                ?: return@flow
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.feeds
+                    .forEach { generatorView ->
+                        add(feedGeneratorView = generatorView)
+                    }
+            }
+
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
+            val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
+
+            emitAll(
+                feedGeneratorDao.feedGenerators(
+                    feedUris = feedUris,
+                )
+                    .distinctUntilChangedMap { populatedFeedGeneratorEntities ->
+                        CursorList(
+                            items = populatedFeedGeneratorEntities
+                                .map(PopulatedFeedGeneratorEntity::asExternalModel)
+                                .sortedWithNetworkList(
+                                    networkList = feedUris,
+                                    databaseId = { it.uri.uri },
+                                    networkId = { it.uri },
+                                ),
+                            nextCursor = nextCursor,
+                        )
+                    },
+            )
+        }
+            .flowOn(ioDispatcher)
+
+    override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                if (signedInProfileId == null) getPopularFeedGeneratorsUnspecced(
+                    params = GetPopularFeedGeneratorsQueryParams(),
+                ).map(GetPopularFeedGeneratorsResponse::feeds)
+                else getSuggestedFeeds(
+                    params = GetSuggestedFeedsQueryParams(),
+                ).map(GetSuggestedFeedsResponse::feeds)
+            }
+                .getOrNull()
+                ?: return@singleSessionFlow emptyFlow()
+
+            multipleEntitySaverProvider.saveInTransaction {
+                generatorViews.forEach { generatorView ->
+                    add(feedGeneratorView = generatorView)
+                }
+            }
+
+            feedGeneratorDao.feedGenerators(
+                generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) },
+            )
+                .map { populatedFeedGeneratorEntities ->
+                    populatedFeedGeneratorEntities
+                        .sortedWithNetworkList(
+                            networkList = generatorViews,
+                            databaseId = { it.entity.uri.uri },
+                            networkId = { it.uri.atUri },
+                        )
+                        .map(PopulatedFeedGeneratorEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        }
+            .flowOn(ioDispatcher)
+
+    override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
+        savedStateDataSource.singleAuthorizedSessionFlow {
+            val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                getSuggestedStarterPacksUnspecced(
+                    GetSuggestedStarterPacksQueryParams(),
+                )
+            }
+                .getOrNull()
+                ?.starterPacks
+                ?: return@singleAuthorizedSessionFlow emptyFlow()
+
+            multipleEntitySaverProvider.saveInTransaction {
+                starterPackViews.forEach { starterPack ->
+                    add(starterPack = starterPack)
+                }
+            }
+
+            starterPackDao.starterPacks(
+                starterPackViews.mapTo(mutableSetOf()) { it.uri.atUri.let(::StarterPackUri) },
+            )
+                .map { populatedStarterPackEntities ->
+                    populatedStarterPackEntities
+                        .sortedWithNetworkList(
+                            networkList = starterPackViews,
+                            databaseId = { it.entity.uri.uri },
+                            networkId = { it.uri.atUri },
+                        )
+                        .map(PopulatedStarterPackEntity::asExternalModel)
+                }
+                .distinctUntilChanged()
+        }
+            .filterNotNull()
+            .flowOn(ioDispatcher)
+
+    override fun trends(): Flow<List<Trend>> = flow {
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getTrendsUnspecced(
+                GetTrendsQueryParams(),
+            )
+        }
+            .getOrNull()
+            ?.trends
+            ?.map(TrendView::trend)
+            ?.let {
+                emit(it)
+            }
+    }
+        .flowOn(ioDispatcher)
+
     override suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed> = savedStateDataSource.inCurrentProfileSession { profileId ->
@@ -595,3 +763,19 @@ private suspend fun NetworkService.updateFeedRecord(
         }
     }
 }
+
+private fun TrendView.trend() = Trend(
+    topic = topic,
+    status = when (status) {
+        TrendViewStatus.Hot -> Trend.Status.Hot
+        is TrendViewStatus.Unknown,
+        null,
+        -> null
+    },
+    displayName = displayName,
+    link = link,
+    startedAt = startedAt,
+    postCount = postCount,
+    category = category,
+    actors = actors.map(ProfileViewBasic::profile),
+)

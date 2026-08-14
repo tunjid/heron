@@ -28,7 +28,6 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -91,7 +90,6 @@ class ActualListViewModel(
         timelineRepository: TimelineRepository,
         profileRepository: ProfileRepository,
         recordRepository: RecordRepository,
-        searchRepository: SearchRepository,
         authRepository: AuthRepository,
         userDataRepository: UserDataRepository,
         @Assisted scope: CoroutineScope,
@@ -463,6 +461,7 @@ private fun launchTimelineCreatorMutations(
     when (timeline) {
         is Timeline.Home.Feed,
         is Timeline.Home.Following,
+        is Timeline.Search,
         is Timeline.Profile,
         -> return
 

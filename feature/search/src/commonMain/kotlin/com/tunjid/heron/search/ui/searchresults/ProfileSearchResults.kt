@@ -25,9 +25,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -37,6 +35,7 @@ import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.search.SearchResult
+import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
@@ -51,6 +50,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
@@ -89,15 +89,14 @@ internal fun AutoCompleteProfileSearchResults(
 
 @Composable
 internal fun ProfileSearchResults(
-    state: SearchState.OfProfiles,
+    stateHolder: SearchScreenStateHolders.Profiles,
     listState: LazyListState,
     modifier: Modifier,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
-    searchResultActions: (SearchState.Tile) -> Unit,
 ) {
-    val results by rememberUpdatedState(state.tiledItems)
+    val state = stateHolder.produceStateWithLifecycle() as SearchState.OfProfiles
     LazyColumn(
         modifier = modifier,
         state = listState,
@@ -108,7 +107,7 @@ internal fun ProfileSearchResults(
         ),
     ) {
         items(
-            items = results,
+            items = state.tiledItems,
             key = { it.profileWithViewerState.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
@@ -122,9 +121,9 @@ internal fun ProfileSearchResults(
         )
     }
     listState.PivotedTilingEffect(
-        items = results,
+        items = state.tiledItems,
         onQueryChanged = { query ->
-            searchResultActions(
+            stateHolder.accept(
                 SearchState.Tile(
                     tilingAction = TilingState.Action.LoadAround(
                         query ?: state.tilingData.currentQuery,

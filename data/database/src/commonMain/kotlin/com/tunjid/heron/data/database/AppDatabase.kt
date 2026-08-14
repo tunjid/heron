@@ -111,7 +111,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 49,
+    version = 50,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -261,6 +261,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 47, to = 48),
         // Add mutedOnlyReposts and mutedOnlyQuoteposts to ProfileViewerStateEntity
         AutoMigration(from = 48, to = 49),
+        // Add resumeCursor to timelinePreferences for offline-first pagination resume
+        AutoMigration(from = 49, to = 50),
     ],
     exportSchema = true,
 )

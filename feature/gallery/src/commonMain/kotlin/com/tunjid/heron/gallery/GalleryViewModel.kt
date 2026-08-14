@@ -19,6 +19,8 @@ package com.tunjid.heron.gallery
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
@@ -30,6 +32,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -39,8 +42,10 @@ import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
+import com.tunjid.heron.tiling.seed
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.state.updateData
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
@@ -144,7 +149,9 @@ class ActualGalleryViewModel(
                             writeQueue = writeQueue,
                         )
 
-                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state,
+                        )
 
                         is Action.Navigate -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
@@ -407,7 +414,7 @@ private suspend fun launchVerticalTimelineMutations(
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
 ) {
-    state.cursorData ?: return
+    val cursors = route.model<Cursors>() ?: return
 
     val timelineStateHolder = when (
         val existing = state.timelineStateHolder
@@ -420,6 +427,10 @@ private suspend fun launchVerticalTimelineMutations(
                 timelineRepository = timelineRepository,
                 source = source,
             )
+            is Timeline.Source.Search -> searchGalleryTimeline(
+                timelineRepository = timelineRepository,
+                source = source,
+            )
             is Timeline.Source.Following,
             is Timeline.Source.Record.List,
             null,
@@ -427,6 +438,7 @@ private suspend fun launchVerticalTimelineMutations(
         }?.let {
             viewModelScope.galleryTimelineStateHolder(
                 timeline = it,
+                cursors = cursors,
                 timelineRepository = timelineRepository,
             )
         }
@@ -495,12 +507,28 @@ private suspend fun feedGalleryTimeline(
         .first()
         .takeIf(Timeline::isStrictlyMedia)
 
+private suspend fun searchGalleryTimeline(
+    timelineRepository: TimelineRepository,
+    source: Timeline.Source.Search,
+): Timeline? =
+    timelineRepository.timeline(
+        TimelineRequest.OfSearch(source),
+    )
+        .first()
+        .takeIf(Timeline::isStrictlyMedia)
+
 private fun CoroutineScope.galleryTimelineStateHolder(
     timeline: Timeline,
+    cursors: Cursors,
     timelineRepository: TimelineRepository,
 ): TimelineStateHolder = timelineStateHolder(
     refreshOnStart = false,
     timeline = timeline,
     startNumColumns = 1,
     timelineRepository = timelineRepository,
-)
+).apply {
+    state.seed(
+        cursors = cursors,
+        updateQueryData = TimelineQuery::updateData,
+    )
+}

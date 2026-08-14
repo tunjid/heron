@@ -18,26 +18,33 @@ package com.tunjid.heron.search
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.repository.SearchQuery
-import com.tunjid.heron.data.repository.SearchQuery.OfPosts
+import com.tunjid.heron.data.repository.ProfileSearchQuery
+import com.tunjid.heron.data.repository.records.FeedGeneratorSearchQuery
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.getOrNull
+import kotlin.text.isNotBlank
+import kotlin.text.removePrefix
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -121,12 +128,12 @@ fun RouteQuery.layoutFor(
     else -> ScreenLayout.GeneralSearchResults
 }
 
-val SearchQuery.Filter?.isMediaSearch: Boolean
+val SearchFilter?.isMediaSearch: Boolean
     get() = when (this?.media) {
-        SearchQuery.Filter.Media.WithMedia,
-        SearchQuery.Filter.Media.VideosOnly,
+        SearchFilter.Media.WithMedia,
+        SearchFilter.Media.VideosOnly,
         -> true
-        SearchQuery.Filter.Media.All,
+        SearchFilter.Media.All,
         null,
         -> false
     }
@@ -134,16 +141,57 @@ val SearchQuery.Filter?.isMediaSearch: Boolean
 fun State.presentationOptions(
     currentPage: Int,
 ): List<Timeline.Presentation> {
-    val isMediaSearch = searchStateHolders.getOrNull(currentPage)
-        ?.state is SearchState.OfPosts && appliedFilter.isMediaSearch
+    val isMediaSearch =
+        searchStateHolders.getOrNull(currentPage) is SearchScreenStateHolders.Posts &&
+            appliedFilter.isMediaSearch
     return if (isMediaSearch) Timeline.Presentation.All
     else Timeline.Presentation.TextOnly
 }
 
 internal typealias SearchResultStateHolder = ActionSuspendingStateMutator<SearchState.Tile, SearchState>
 
-sealed interface SearchResult {
+/**
+ * Heterogeneous per-tab state holders for the search screen. Post search is a [Timeline.Search],
+ * so the post tabs are full [TimelineStateHolder]s; the profile and feed tabs remain bespoke
+ * tiling holders over [SearchState]. Mirrors `ProfileScreenStateHolders`.
+ */
+@Stable
+sealed interface SearchScreenStateHolders {
+    val key: String
 
+    @Stable
+    class Posts(
+        val sort: Timeline.Source.Search.Sort,
+        val mutator: TimelineStateHolder,
+    ) : SearchScreenStateHolders,
+        TimelineStateHolder by mutator {
+        override val key: String
+            get() = when (sort) {
+                Timeline.Source.Search.Sort.Top -> "top-posts"
+                Timeline.Source.Search.Sort.Latest -> "latest-posts"
+            }
+    }
+
+    @Stable
+    class Profiles(
+        val mutator: SearchResultStateHolder,
+    ) : SearchScreenStateHolders,
+        SearchResultStateHolder by mutator {
+        override val key: String
+            get() = mutator.state.key
+    }
+
+    @Stable
+    class Feeds(
+        val mutator: SearchResultStateHolder,
+    ) : SearchScreenStateHolders,
+        SearchResultStateHolder by mutator {
+        override val key: String
+            get() = mutator.state.key
+    }
+}
+
+sealed interface SearchResult {
     data class OfProfile(
         val profileWithViewerState: ProfileWithViewerState,
     ) : SearchResult
@@ -151,31 +199,19 @@ sealed interface SearchResult {
     data class OfFeedGenerator(
         val feedGenerator: FeedGenerator,
     ) : SearchResult
-
-    data class OfPost(
-        val timelineItem: TimelineItem,
-    ) : SearchResult
 }
-
-val SearchResult.OfPost.id: String
-    get() = timelineItem.id
 
 @Stable
 sealed class SearchState {
-    data class OfPosts(
-        override val tilingData: TilingState.Data<SearchQuery.OfPosts, SearchResult.OfPost>,
-    ) : SearchState(),
-        TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
-
     data class OfProfiles(
-        override val tilingData: TilingState.Data<SearchQuery.OfProfiles, SearchResult.OfProfile>,
+        override val tilingData: TilingState.Data<ProfileSearchQuery, SearchResult.OfProfile>,
     ) : SearchState(),
-        TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
+        TilingState<ProfileSearchQuery, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
-        override val tilingData: TilingState.Data<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>,
+        override val tilingData: TilingState.Data<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>,
     ) : SearchState(),
-        TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
+        TilingState<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>
 
     data class Tile(
         val tilingAction: TilingState.Action,
@@ -185,10 +221,6 @@ sealed class SearchState {
 val SearchState.key
     get() = when (this) {
         is SearchState.OfFeedGenerators -> "feed-generators"
-        is SearchState.OfPosts -> when (tilingData.currentQuery) {
-            is OfPosts.Latest -> "latest-posts"
-            is OfPosts.Top -> "top-posts"
-        }
         is SearchState.OfProfiles -> "profiles"
     }
 
@@ -205,8 +237,8 @@ interface State {
         val searchBarText: String = "",
         val query: RouteQuery = RouteQuery.FullSearch,
         val layout: ScreenLayout = ScreenLayout.Suggested,
-        val appliedFilter: SearchQuery.Filter? = null,
-        val draftFilter: SearchQuery.Filter = SearchQuery.Filter(),
+        val appliedFilter: SearchFilter? = null,
+        val draftFilter: SearchFilter = SearchFilter(),
         val preferredPresentation: Timeline.Presentation = Timeline.Presentation.Text.WithEmbed,
         val signedInProfile: Profile? = null,
         val trends: List<Trend> = emptyList(),
@@ -221,7 +253,7 @@ interface State {
         @Transient
         val feedGenerators: List<FeedGenerator> = emptyList(),
         @Transient
-        val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
+        val searchStateHolders: List<SearchScreenStateHolders> = emptyList(),
         @Transient
         val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
         @Transient
@@ -245,7 +277,7 @@ sealed class Action(val key: String) {
         data object Begin : Filter()
 
         data class Edit(
-            val filter: SearchQuery.Filter,
+            val filter: SearchFilter,
         ) : Filter()
 
         data object Apply : Filter()

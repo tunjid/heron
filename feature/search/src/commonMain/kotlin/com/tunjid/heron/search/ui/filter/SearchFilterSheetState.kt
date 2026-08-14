@@ -18,7 +18,7 @@ package com.tunjid.heron.search.ui.filter
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -27,7 +27,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetState
 
 /**
  * Advanced-search-filter bottom sheet for post searches. It is a holder-less
- * [BottomSheetState] whose editable draft [SearchQuery.Filter] lives in the owning
+ * [BottomSheetState] whose editable draft [SearchFilter] lives in the owning
  * screen's state holder; the sheet reads [filter] and emits edits through
  * [rememberUpdatedSearchFilterSheetState]'s callbacks. Profile pickers reuse the
  * app-level `ProfileSearchSheet`.
@@ -43,9 +43,9 @@ class SearchFilterSheetState internal constructor(
 @Composable
 fun PaneScaffoldState.rememberUpdatedSearchFilterSheetState(
     queryText: String,
-    filter: SearchQuery.Filter,
+    filter: SearchFilter,
     onQueryTextChanged: (String) -> Unit,
-    onFilterChanged: (SearchQuery.Filter) -> Unit,
+    onFilterChanged: (SearchFilter) -> Unit,
     onClear: () -> Unit,
     onApply: () -> Unit,
 ): SearchFilterSheetState {
