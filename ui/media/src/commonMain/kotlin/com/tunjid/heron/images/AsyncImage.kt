@@ -254,8 +254,12 @@ fun AsyncImage(
     }
 
     val contentDescription = state.args.contentDescription
-    val contentScale = state.args.contentScale.animate(ImageInterpolationSpec)
-    val alignment = state.args.alignment.animate(ImageInterpolationSpec)
+    val contentScaleState = rememberUpdatedState(
+        state.args.contentScale.animate(ImageInterpolationSpec),
+    )
+    val alignmentState = rememberUpdatedState(
+        state.args.alignment.animate(ImageInterpolationSpec),
+    )
     val shape = state.args.shape.animate(ImageInterpolationSpec)
 
     Box(
@@ -266,8 +270,8 @@ fun AsyncImage(
         val painter = remember {
             ImagePainter(
                 currentImage = state::image,
-                contentScale = { contentScale },
-                alignment = { alignment },
+                contentScale = contentScaleState::value,
+                alignment = alignmentState::value,
             )
         }
 
@@ -276,8 +280,8 @@ fun AsyncImage(
                 .fillMaxSize(),
             painter = painter,
             contentDescription = contentDescription,
-            alignment = alignment,
-            contentScale = contentScale,
+            alignment = alignmentState.value,
+            contentScale = contentScaleState.value,
         )
 
         state.image?.AnimationEffect()
