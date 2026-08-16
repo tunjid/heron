@@ -24,7 +24,7 @@ class AppUiStateHolder(
         started = SharingStarted.Eagerly,
         producer = { state, actions ->
             actions.launchMutationsIn(
-                productionScope = appMainScope,
+                productionScope = this,
                 keySelector = UiAction::key,
             ) {
                 when (val action = type()) {
