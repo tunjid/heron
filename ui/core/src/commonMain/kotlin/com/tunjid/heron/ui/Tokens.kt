@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
@@ -81,7 +79,7 @@ object UiTokens {
         @Composable get() = WindowInsets.platformStatusBars.asPaddingValues().height()
 
     val navigationBarHeight: Dp
-        @Composable get() = WindowInsets.navigationBars.asPaddingValues().height()
+        @Composable get() = WindowInsets.platformNavigationBars.asPaddingValues().height()
 
     fun bottomNavHeight(
         isCompact: Boolean,
@@ -117,9 +115,38 @@ fun Modifier.fillMaxRestrictedWidth() =
 private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottomPadding()
 
 val WindowInsets.Companion.platformStatusBars
-    @Composable get() = WindowInsets.statusBars.union(WindowInsets.platformExtraStatusBars)
+    @Composable get() = WindowInsets.stableStatusBars.union(WindowInsets.platformExtraStatusBars)
+
+val WindowInsets.Companion.platformNavigationBars
+    @Composable get() = WindowInsets.stableNavigationBars
+
+val WindowInsets.Companion.platformSystemBars
+    @Composable get() = WindowInsets.stableSystemBars
 
 internal expect val WindowInsets.Companion.platformExtraStatusBars: WindowInsets
+    @Composable get
+
+/**
+ * The system bar insets, reported as though the bars were visible.
+ *
+ * Immersive routes hide the system bars, and on Android hidden bars report zero insets.
+ * Reading visibility agnostic insets keeps content in place when immersion is toggled, so
+ * entering immersion only changes what the system draws, never what space the app is laid
+ * out in. Platforms without visibility driven insets return the ordinary insets.
+ */
+internal expect val WindowInsets.Companion.stableStatusBars: WindowInsets
+    @Composable get
+
+/**
+ * @see stableStatusBars
+ */
+internal expect val WindowInsets.Companion.stableNavigationBars: WindowInsets
+    @Composable get
+
+/**
+ * @see stableStatusBars
+ */
+internal expect val WindowInsets.Companion.stableSystemBars: WindowInsets
     @Composable get
 
 internal val EmptyWindowInsets = WindowInsets()

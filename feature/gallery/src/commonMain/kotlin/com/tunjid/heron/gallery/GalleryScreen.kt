@@ -31,8 +31,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -97,6 +95,7 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -448,7 +447,7 @@ private fun HorizontalItems(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 36.dp)
-                .navigationBarsPadding(),
+                .windowInsetsPadding(WindowInsets.platformNavigationBars),
             enter = IndicatorEnterAnimation,
             exit = IndicatorExitAnimation,
             visible = !isDraggingToPop(),
@@ -471,7 +470,7 @@ private fun HorizontalItems(
                         horizontal = 8.dp,
                         vertical = 16.dp,
                     )
-                    .windowInsetsPadding(insets = WindowInsets.navigationBars),
+                    .windowInsetsPadding(insets = WindowInsets.platformNavigationBars),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
