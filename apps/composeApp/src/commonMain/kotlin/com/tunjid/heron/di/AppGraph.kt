@@ -56,6 +56,7 @@ import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.treenav.compose.PaneEntry
@@ -92,6 +93,7 @@ interface AppGraph {
         identityStateHolder: IdentityStateHolder,
         navigationStateHolder: NavigationStateHolder,
         notificationStateHolder: NotificationStateHolder,
+        uiStateHolder: UiStateHolder,
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
         sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
@@ -102,6 +104,7 @@ interface AppGraph {
         identityStateHolder = identityStateHolder,
         navigationStateHolder = navigationStateHolder,
         notificationStateHolder = notificationStateHolder,
+        uiStateHolder = uiStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         sheetStateHolderInitializers = sheetStateHolderInitializers,
