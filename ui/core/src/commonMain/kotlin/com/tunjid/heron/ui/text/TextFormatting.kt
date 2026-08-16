@@ -92,7 +92,7 @@ fun formatTextPost(
 
     val byteOffsets = text.byteOffsets()
     textLinks.forEach { link ->
-        if (link.start < byteOffsets.size && link.end < byteOffsets.size) {
+        if (link.start < byteOffsets.size && link.end < byteOffsets.size && link.start < link.end) {
             val start = byteOffsets[link.start]
             val end = byteOffsets[link.end]
 
