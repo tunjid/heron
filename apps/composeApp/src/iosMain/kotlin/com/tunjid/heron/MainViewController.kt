@@ -17,16 +17,35 @@
 package com.tunjid.heron
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isImmersive
 
 @Suppress("FunctionName")
 fun MainViewController(
     appState: AppState,
+    immersionController: ImmersionController,
 ) = ComposeUIViewController {
     com.tunjid.heron.ui.scaffold.scaffold.App(
         appState = appState,
         modifier = Modifier.fillMaxSize(),
     )
+    val immersiveState = rememberUpdatedState(appState.isImmersive)
+
+    DisposableEffect(immersionController) {
+        onDispose {
+            immersionController.setImmersive(isImmersive = false)
+        }
+    }
+    LaunchedEffect(immersionController) {
+        snapshotFlow(immersiveState::value)
+            .collect { isImmersive ->
+                immersionController.setImmersive(isImmersive = isImmersive)
+            }
+    }
 }

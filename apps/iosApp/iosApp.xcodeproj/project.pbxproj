@@ -13,6 +13,7 @@
 		5EEA12A15BFC840232205CFB /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B2570F39DA4C0FB21972006C /* GoogleService-Info.plist */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		D1051C102E0001A000000005 /* FoundationModelsBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1051C0F2E0001A000000004 /* FoundationModelsBridge.swift */; };
+		D1051C122E0001A000000007 /* ImmersionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1051C112E0001A000000006 /* ImmersionModel.swift */; };
 		C37C0FD32F9118BE00548CE2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C37C0FD22F9118BE00548CE2 /* AppIcon.icon */; };
 		C38E1B2D2F8DCC2E00D56F4B /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = C38E1B2C2F8DCC2E00D56F4B /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
@@ -24,6 +25,7 @@
 		7555FF7B242A565900829871 /* heron.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = heron.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D1051C0F2E0001A000000004 /* FoundationModelsBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsBridge.swift; sourceTree = "<group>"; };
+		D1051C112E0001A000000006 /* ImmersionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersionModel.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		B2570F39DA4C0FB21972006C /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 				D1051C0C2E0001A000000001 /* iosApp.entitlements */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				D1051C0F2E0001A000000004 /* FoundationModelsBridge.swift */,
+				D1051C112E0001A000000006 /* ImmersionModel.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 				B2570F39DA4C0FB21972006C /* GoogleService-Info.plist */,
 				C37C0FD22F9118BE00548CE2 /* AppIcon.icon */,
@@ -204,6 +207,7 @@
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				D1051C102E0001A000000005 /* FoundationModelsBridge.swift in Sources */,
+				D1051C122E0001A000000007 /* ImmersionModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -119,6 +119,16 @@ class AppScaffoldState internal constructor(
         )
     }
 
+    internal fun onRouteImmersionChanged(
+        route: Route,
+        isImmersive: Boolean,
+    ) {
+        staticStates.onUiAction(
+            if (isImmersive) UiAction.UpdateRouteImmersion.Immersive(route)
+            else UiAction.UpdateRouteImmersion.Standard(route),
+        )
+    }
+
     internal fun pop() =
         staticStates.onNavigationAction {
             navState.pop()

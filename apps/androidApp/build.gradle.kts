@@ -107,6 +107,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
 
+    implementation(libs.lifecycle.multiplatform.runtime.compose)
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 

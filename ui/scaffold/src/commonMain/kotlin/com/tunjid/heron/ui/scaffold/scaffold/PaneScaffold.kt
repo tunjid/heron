@@ -38,6 +38,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -397,6 +398,30 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
                 onConsumedState.value(incoming)
             }
     }
+}
+
+@Composable
+fun PaneScaffoldState.RouteImmersionEffect() {
+    paneState
+        // Only the primary pane can set immersivity
+        .takeIf { it.pane == ThreePane.Primary }
+        ?.currentDestination
+        // Only immersive if it has no children in other panes
+        ?.takeIf { it.children.isEmpty() }
+        ?.let { route ->
+            DisposableEffect(this, route) {
+                appScaffoldState.onRouteImmersionChanged(
+                    route = route,
+                    isImmersive = true,
+                )
+                onDispose {
+                    appScaffoldState.onRouteImmersionChanged(
+                        route = route,
+                        isImmersive = false,
+                    )
+                }
+            }
+        }
 }
 
 @Composable
