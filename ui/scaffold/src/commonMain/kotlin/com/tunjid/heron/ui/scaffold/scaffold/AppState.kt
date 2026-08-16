@@ -35,6 +35,7 @@ import com.tunjid.heron.ui.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
+import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.ViewModelBackedStateHolderInitializer
@@ -58,6 +59,7 @@ class AppState(
     private val identityStateHolder: IdentityStateHolder,
     private val navigationStateHolder: NavigationStateHolder,
     private val notificationStateHolder: NotificationStateHolder,
+    private val uiStateHolder: UiStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     internal val sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
@@ -122,6 +124,7 @@ class AppState(
             identityStateHolder = identityStateHolder,
             navigationStateHolder = navigationStateHolder,
             notificationStateHolder = notificationStateHolder,
+            uiStateHolder = uiStateHolder,
             imageLoader = imageLoader,
             videoPlayerController = videoPlayerController,
             stateHolderInitializer = stateHolderInitializer,

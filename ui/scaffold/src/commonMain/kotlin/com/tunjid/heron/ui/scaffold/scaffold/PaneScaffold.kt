@@ -77,6 +77,7 @@ import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -107,7 +108,7 @@ class PaneScaffoldState(
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
         BoundsTransformSpring.skipIf {
-            appScaffoldState.staticStates.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
+            appScaffoldState.staticStates.uiState.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
                 appScaffoldState.paneAnchorState.hasInteractions
         }
     }
@@ -120,7 +121,7 @@ class PaneScaffoldState(
         get() = appScaffoldState.isMediumScreenWidthOrWider
 
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
-        get() = appScaffoldState.staticStates.dismissBehavior
+        get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
     val isSignedOut
         get() = !appScaffoldState.staticStates.identityState.isSignedIn
@@ -351,7 +352,7 @@ fun PaneScaffoldState.PaneScaffold(
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
-            appScaffoldState.staticStates.showNavigation = showNavigation
+            appScaffoldState.staticStates.onUiAction(UiAction.UpdateShowNavigation(showNavigation))
         }
     }
 }

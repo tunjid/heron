@@ -33,6 +33,8 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.navigation.tasksDestination
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
+import com.tunjid.heron.ui.scaffold.ui.UiAction
+import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
 import com.tunjid.mutator.compose.produceState
 import com.tunjid.mutator.invoke
@@ -66,7 +68,7 @@ class AppScaffoldState internal constructor(
 
     internal val paneAnchorState = PaneAnchorState(
         initialMaxWidth = with(density) { windowWidth.value.roundToPx() },
-        initialAnchor = staticStates.currentPaneAnchor,
+        initialAnchor = staticStates.uiState.currentPaneAnchor,
     )
 
     internal val filteredPaneOrder by derivedStateOf {
@@ -144,16 +146,11 @@ class AppScaffoldState internal constructor(
         private val identityStateHolder: IdentityStateHolder,
         private val navigationStateHolder: NavigationStateHolder,
         private val notificationStateHolder: NotificationStateHolder,
+        private val uiStateHolder: UiStateHolder,
         internal val imageLoader: ImageLoader,
         internal val videoPlayerController: VideoPlayerController,
         internal val stateHolderInitializer: StateHolderInitializer,
     ) {
-        internal var showNavigation by mutableStateOf(false)
-        internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
-
-        internal var currentPaneAnchor by mutableStateOf(PaneAnchor.Half)
-            private set
-
         internal val identityState
             get() = identityStateHolder.state
 
@@ -162,6 +159,9 @@ class AppScaffoldState internal constructor(
 
         internal val notificationState
             get() = notificationStateHolder.state
+
+        internal val uiState
+            get() = uiStateHolder.state
 
         internal val movableNavigationBar =
             movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
@@ -192,7 +192,7 @@ class AppScaffoldState internal constructor(
             destinationId: String,
         ) {
             if (destinationId != navigationState.multiStackNav.current?.id || anchor == PaneAnchor.Full) return
-            currentPaneAnchor = anchor
+            onUiAction(UiAction.UpdatePaneAnchor(anchor))
         }
 
         fun onIdentityAction(
@@ -206,6 +206,10 @@ class AppScaffoldState internal constructor(
         fun onNotificationAction(
             action: NotificationAction,
         ) = notificationStateHolder(action)
+
+        fun onUiAction(
+            action: UiAction,
+        ) = uiStateHolder(action)
 
         private fun currentNavItems(): List<NavItem> {
             return navigationState.multiStackNav

@@ -47,6 +47,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState.StaticStates.Companion.rememberMultiPaneDisplayState
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.staticStates
 import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.heron.ui.scaffold.ui.theme.AppTheme
 import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
 import com.tunjid.heron.ui.scaffold.ui.theme.Theme
@@ -231,7 +232,7 @@ fun AppScaffold(
                             }
                         }
                             .collectLatest {
-                                appScaffoldState.staticStates.dismissBehavior = it
+                                appScaffoldState.staticStates.onUiAction(UiAction.UpdateDismissBehavior(it))
                             }
                     }
                 }
