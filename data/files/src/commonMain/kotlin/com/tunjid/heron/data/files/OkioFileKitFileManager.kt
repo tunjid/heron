@@ -125,34 +125,28 @@ internal class OkioFileKitFileManager(
     override suspend fun withDimensionsOrSelf(
         media: File.Media,
     ): File.Media = withContext(Dispatchers.IO) {
-        when (media) {
-            is File.Media.Photo ->
-                if (media.width != 0 && media.height != 0) media
-                else media.toPlatformFile()
-                    .imageDimensionsOrNull()
-                    ?.let { dimensions ->
-                        File.Media.Photo(
-                            uri = media.uri,
-                            width = dimensions.width,
-                            height = dimensions.height,
-                            altText = media.altText,
-                        )
-                    }
+        if (media.hasDimensions) return@withContext media
 
-            is File.Media.Video ->
-                if (media.width != 0 && media.height != 0) media
-                else media.toPlatformFile()
-                    .videoDimensionsOrNull()
-                    ?.let { dimensions ->
-                        File.Media.Video(
-                            uri = media.uri,
-                            width = dimensions.width,
-                            height = dimensions.height,
-                            altText = media.altText,
-                        )
-                    }
+        val dimensions = when (media) {
+            is File.Media.Photo -> media.toPlatformFile().imageDimensionsOrNull()
+            is File.Media.Video -> media.toPlatformFile().videoDimensionsOrNull()
         }
-            ?: media
+            ?: return@withContext media
+
+        when (media) {
+            is File.Media.Photo -> File.Media.Photo(
+                uri = media.uri,
+                width = dimensions.width,
+                height = dimensions.height,
+                altText = media.altText,
+            )
+            is File.Media.Video -> File.Media.Video(
+                uri = media.uri,
+                width = dimensions.width,
+                height = dimensions.height,
+                altText = media.altText,
+            )
+        }
     }
 
     override suspend fun isUploadable(
@@ -225,6 +219,12 @@ internal class OkioFileKitFileManager(
         mutations.emit(target)
     }
 }
+
+private val File.Media.hasDimensions: Boolean
+    get() = when (this) {
+        is File.Media.Photo -> width != 0 && height != 0
+        is File.Media.Video -> width != 0 && height != 0
+    }
 
 /**
  * Returns JPEG bytes for an oversized photo shrunk to fit within [MAX_IMAGE_SIZE], or null

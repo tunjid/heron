@@ -112,11 +112,6 @@ class ImageState internal constructor(
     private val windowSize: () -> IntSize,
 ) {
     var args by mutableStateOf(args)
-    val imageSize
-        get() = when (val currentImage = image) {
-            null -> IntSize.Zero
-            else -> currentImage.size
-        }
 
     internal var image by mutableStateOf<Image?>(null)
     private var layoutSize by mutableStateOf(IntSize.Zero)

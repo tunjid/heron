@@ -343,10 +343,34 @@ class MetadataTest {
     }
 
     @Test
+    fun recognisesAMovLeadingWithFillerBoxes() {
+        // QuickTime .mov files often place wide/free/skip/pnot ahead of the ftyp or moov.
+        assertTrue(
+            bytes(
+                listOf(
+                    box(type = "wide", payload = ByteArray(size = 0)),
+                    box(type = "free", payload = ByteArray(size = 8)),
+                    box(type = "ftyp", payload = "qt  ".encodeToByteArray()),
+                ),
+            )
+                .isIsoBaseMedia(),
+        )
+    }
+
+    @Test
     fun rejectsAContainerThatIsNotIsoBaseMedia() {
         // A Matroska header, which is what a WebM pick would lead with.
         assertFalse(
             byteArrayOf(0x1A, 0x45.toByte(), 0xDF.toByte(), 0xA3.toByte(), 0x01, 0x00, 0x00, 0x00)
+                .isIsoBaseMedia(),
+        )
+    }
+
+    @Test
+    fun rejectsMediaDataBeforeAnyMarker() {
+        // The huge mdat is never stepped over, so a file hiding its moov behind it is rejected.
+        assertFalse(
+            bytes(listOf(box(type = "mdat", payload = ByteArray(size = 64))))
                 .isIsoBaseMedia(),
         )
     }

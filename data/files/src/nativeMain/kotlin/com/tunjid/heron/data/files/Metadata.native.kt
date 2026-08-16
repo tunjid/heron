@@ -49,19 +49,22 @@ internal actual fun PlatformFile.imageDimensionsOrNull(): Dimensions? {
         CGImageSourceCopyPropertiesAtIndex(it, PrimaryImageIndex, null)
     }
 
-    try {
-        if (properties == null) return null
-        val width = properties.intValue(kCGImagePropertyPixelWidth) ?: return null
-        val height = properties.intValue(kCGImagePropertyPixelHeight) ?: return null
-
-        // ImageIO reports the dimensions the pixels are stored at alongside the orientation
-        // they should be displayed with, applying neither. This also covers HEIC, which is
-        // what the photo library hands back on an iPhone.
-        return Dimensions(
-            width = width,
-            height = height,
-        )
-            .orientedBy(properties.intValue(kCGImagePropertyOrientation))
+    return try {
+        properties?.let { props ->
+            val width = props.intValue(kCGImagePropertyPixelWidth)
+            val height = props.intValue(kCGImagePropertyPixelHeight)
+            if (width == null || height == null) null
+            // ImageIO reports the dimensions the pixels are stored at alongside the orientation
+            // they should be displayed with, applying neither. This also covers HEIC, which is
+            // what the photo library hands back on an iPhone.
+            else Dimensions(
+                width = width,
+                height = height,
+            )
+                .orientedBy(props.intValue(kCGImagePropertyOrientation))
+        }
+    } catch (_: Exception) {
+        null
     } finally {
         properties?.let(::CFRelease)
         imageSource?.let(::CFRelease)

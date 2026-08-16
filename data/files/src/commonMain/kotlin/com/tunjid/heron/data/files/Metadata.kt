@@ -18,6 +18,7 @@ package com.tunjid.heron.data.files
 
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.source
+import kotlinx.io.EOFException
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.readByteArray
@@ -107,21 +108,38 @@ private fun ByteArray.exifOrientationOrNull(): Int? {
         TiffBigEndianMark -> false
         else -> return null
     }
-    if (uShortAt(tiff + TiffMagicOffset, littleEndian) != TiffMagic) return null
+    val magic = uShortAt(
+        index = tiff + TiffMagicOffset,
+        littleEndian = littleEndian,
+    )
+    if (magic != TiffMagic) return null
 
-    val directoryOffset = uIntAt(tiff + TiffDirectoryOffset, littleEndian)
+    val directoryOffset = uIntAt(
+        index = tiff + TiffDirectoryOffset,
+        littleEndian = littleEndian,
+    )
         ?.takeIf { it <= size }
         ?.toInt()
         ?: return null
     val directory = tiff + directoryOffset
-    val entryCount = uShortAt(directory, littleEndian) ?: return null
+    val entryCount = uShortAt(
+        index = directory,
+        littleEndian = littleEndian,
+    ) ?: return null
     val firstEntry = directory + Short.SIZE_BYTES
 
     for (entry in 0 until entryCount) {
         val offset = firstEntry + (entry * TiffEntrySize)
-        if (uShortAt(offset, littleEndian) != TiffOrientationTag) continue
+        val tag = uShortAt(
+            index = offset,
+            littleEndian = littleEndian,
+        )
+        if (tag != TiffOrientationTag) continue
         // Orientation is a lone SHORT, small enough to be inlined in the entry's value field.
-        return uShortAt(offset + TiffEntryValueOffset, littleEndian)
+        return uShortAt(
+            index = offset + TiffEntryValueOffset,
+            littleEndian = littleEndian,
+        )
     }
     return null
 }
@@ -134,9 +152,22 @@ private fun ByteArray.startsWithExifIdentifier(): Boolean =
 // region ISO base media
 
 internal fun Source.isIsoBaseMedia(): Boolean {
-    val header = readBoxHeaderOrNull() ?: return false
-    // MP4 always leads with a file type box. Older QuickTime files may lead with the movie itself.
-    return header.type == FileTypeBox || header.type == MovieBox
+    // A conformant MP4 leads with a file type box, but QuickTime .mov files often place small
+    // filler boxes (free/skip/wide/pnot) ahead of the ftyp or moov. Step over those to reach the
+    // marker, stopping at the media data or any other box so the whole file is never read.
+    repeat(MaxLeadingBoxesInspected) {
+        val header = readBoxHeaderOrNull() ?: return false
+        when (header.type) {
+            FileTypeBox, MovieBox -> return true
+            in LeadingFillerBoxes -> {
+                val payloadSize = header.payloadSize ?: return false
+                if (payloadSize > MaxLeadingFillerBoxSize) return false
+                skipOrNull(payloadSize) ?: return false
+            }
+            else -> return false
+        }
+    }
+    return false
 }
 
 internal fun Source.videoDimensionsOrNull(): Dimensions? {
@@ -196,9 +227,17 @@ private class BoxPayload(
 )
 
 private fun ByteArray.videoTrackDimensionsOrNull(): Dimensions? =
-    boxPayloads(type = TrackBox, start = 0, end = size)
+    boxPayloads(
+        type = TrackBox,
+        start = 0,
+        end = size,
+    )
         .firstNotNullOfOrNull { track ->
-            boxPayloads(type = TrackHeaderBox, start = track.start, end = track.end)
+            boxPayloads(
+                type = TrackHeaderBox,
+                start = track.start,
+                end = track.end,
+            )
                 .firstNotNullOfOrNull(::trackHeaderDimensionsOrNull)
         }
 
@@ -249,7 +288,10 @@ private fun ByteArray.boxPayloads(
 
     while (offset + BoxHeaderSize <= end) {
         val declaredSize = uIntAt(offset) ?: break
-        val boxType = stringAt(offset + Int.SIZE_BYTES, BoxTypeSize) ?: break
+        val boxType = stringAt(
+            index = offset + Int.SIZE_BYTES,
+            length = BoxTypeSize,
+        ) ?: break
 
         val headerSize = if (declaredSize == BoxSizeIsLarge) LargeBoxHeaderSize else BoxHeaderSize
         val boxSize = when (declaredSize) {
@@ -315,8 +357,14 @@ private fun Source.readByteArrayOrNull(
 private fun Source.skipOrNull(
     byteCount: Long,
 ): Unit? =
-    if (byteCount >= 0 && request(byteCount)) skip(byteCount)
-    else null
+    if (byteCount < 0) null
+    // skip discards in bounded segments; request(byteCount) would first buffer the whole span
+    // into memory, which OOMs when skipping a large box such as an mdat ahead of the moov.
+    else try {
+        skip(byteCount)
+    } catch (_: EOFException) {
+        null
+    }
 
 private fun ByteArray.uShortAt(
     index: Int,
@@ -334,8 +382,14 @@ private fun ByteArray.uIntAt(
     littleEndian: Boolean = false,
 ): Long? {
     if (index < 0 || index + Int.SIZE_BYTES > size) return null
-    val first = uShortAt(index, littleEndian) ?: return null
-    val second = uShortAt(index + Short.SIZE_BYTES, littleEndian) ?: return null
+    val first = uShortAt(
+        index = index,
+        littleEndian = littleEndian,
+    ) ?: return null
+    val second = uShortAt(
+        index = index + Short.SIZE_BYTES,
+        littleEndian = littleEndian,
+    ) ?: return null
     return if (littleEndian) (second.toLong() shl 16) or first.toLong()
     else (first.toLong() shl 16) or second.toLong()
 }
@@ -374,6 +428,12 @@ private const val FileTypeBox = "ftyp"
 private const val MovieBox = "moov"
 private const val TrackBox = "trak"
 private const val TrackHeaderBox = "tkhd"
+
+private val LeadingFillerBoxes = setOf("free", "skip", "wide", "pnot")
+
+private const val MaxLeadingBoxesInspected = 8
+
+private const val MaxLeadingFillerBoxSize = 1L * 1024 * 1024
 
 private const val BoxTypeSize = 4
 private const val BoxHeaderSize = 8
