@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.asPainter
 import coil3.memory.MemoryCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
@@ -76,6 +77,12 @@ internal class CoilImageLoader private constructor(
     ): Image? {
         val coilImageLoader = SingletonImageLoader.get(platformContext)
         val coilRequest = CoilImageRequest.Builder(platformContext).apply {
+            size(
+                CoilSize(
+                    width = size.width,
+                    height = size.height,
+                ),
+            )
             when (request) {
                 is ImageRequest.Local -> {
                     data(request.file)
@@ -101,14 +108,6 @@ internal class CoilImageLoader private constructor(
                                     ?.image
                             }
                         }
-                    // TODO: This is only done for network images for now. This is because
-                    // Local images need to be loaded as is to obtain the proper dimensions
-                    size(
-                        CoilSize(
-                            width = size.width,
-                            height = size.height,
-                        ),
-                    )
                 }
             }
         }
@@ -170,6 +169,7 @@ internal class CoilImageLoader private constructor(
     }
 
     companion object {
+        @OptIn(ExperimentalCoilApi::class)
         internal fun create(
             context: PlatformContext,
         ): ImageLoader {

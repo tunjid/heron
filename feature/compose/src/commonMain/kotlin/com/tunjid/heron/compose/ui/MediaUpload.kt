@@ -55,7 +55,6 @@ import com.tunjid.heron.compose.ui.MediaAltTextSheetState.Companion.rememberMedi
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.rememberUpdatedImageState
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
@@ -86,7 +85,6 @@ internal fun MediaUploadItems(
             video = video,
             removeMediaItem = removeMediaItem,
             onAltClicked = { altTextSheetState.editAltText(video) },
-            onMediaItemUpdated = onMediaItemUpdated,
         )
         else FlowRow(
             modifier = Modifier
@@ -109,7 +107,6 @@ internal fun MediaUploadItems(
                         photo = it,
                         removeMediaItem = removeMediaItem,
                         onAltClicked = { altTextSheetState.editAltText(it) },
-                        onMediaItemUpdated = onMediaItemUpdated,
                     )
                 }
             }
@@ -134,7 +131,6 @@ private fun ImageUpload(
     photo: RestrictedFile.Media.Photo,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onAltClicked: () -> Unit,
-    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     MediaUpload(
         modifier = modifier,
@@ -142,7 +138,9 @@ private fun ImageUpload(
         removeMediaItem = removeMediaItem,
         onAltClicked = onAltClicked,
         content = {
-            val state = rememberUpdatedImageState(
+            AsyncImage(
+                modifier = Modifier
+                    .matchParentSize(),
                 args = ImageArgs(
                     item = photo,
                     contentDescription = null,
@@ -150,22 +148,6 @@ private fun ImageUpload(
                     shape = MediaUploadItemShape,
                 ),
             )
-            AsyncImage(
-                modifier = Modifier
-                    .matchParentSize(),
-                state = state,
-            )
-            LaunchedEffect(state) {
-                snapshotFlow { state.imageSize }
-                    .collect { size ->
-                        onMediaItemUpdated(
-                            photo.withSize(
-                                width = size.width,
-                                height = size.height,
-                            ),
-                        )
-                    }
-            }
         },
     )
 }
@@ -176,7 +158,6 @@ private fun VideoUpload(
     video: RestrictedFile.Media.Video,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onAltClicked: () -> Unit,
-    onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     MediaUpload(
         modifier = modifier,
@@ -202,16 +183,6 @@ private fun VideoUpload(
                     snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
                         .first(true::equals)
                     videoPlayerController.pauseActiveVideo()
-
-                    snapshotFlow { videoPlayerState.videoSize }
-                        .collect { size ->
-                            onMediaItemUpdated(
-                                video.withSize(
-                                    width = size.width,
-                                    height = size.height,
-                                ),
-                            )
-                        }
                 }
             }
         },

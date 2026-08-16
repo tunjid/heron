@@ -147,8 +147,8 @@ private fun DraftPost.toRequest(
     // Facets are not stored on a draft; they are re-resolved from the text at publish time.
     links = emptyList(),
     metadata = Post.Create.Metadata(
-        // Media dimensions are not stored on a draft (only the local path + alt), so they must be
-        // re-probed from the file before the composer uses them.
+        // Media dimensions are not stored on a draft (only the local path + alt). They are read
+        // back off the cached file at upload time, so zeroes here are expected.
         embeddedMedia = buildList {
             embedImages?.forEach { image ->
                 add(
