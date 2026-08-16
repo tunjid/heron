@@ -19,7 +19,7 @@ class AppUiStateHolder(
     @AppMainScope
     appMainScope: CoroutineScope,
 ) : UiStateHolder,
-    ActionSuspendingStateMutator<UiAction, UiState> by appMainScope.actionSuspendingStateMutator<UiAction, UiState.SnapshotMutable>(
+    ActionSuspendingStateMutator<UiAction, UiState> by appMainScope.actionSuspendingStateMutator(
         state = UiState.Immutable().toSnapshotMutable(),
         started = SharingStarted.Eagerly,
         producer = { state, actions ->
@@ -35,6 +35,9 @@ class AppUiStateHolder(
                         state = state,
                     )
                     is UiAction.UpdateShowNavigation -> action.flow.launchShowNavigationMutations(
+                        state = state,
+                    )
+                    is UiAction.UpdateRouteImmersion -> action.flow.launchRouteImmersionMutations(
                         state = state,
                     )
                 }
@@ -61,4 +64,14 @@ private fun Flow<UiAction.UpdatePaneAnchor>.launchPaneAnchorMutations(
     state: UiState.SnapshotMutable,
 ) = launchedCollectLatest {
     state.currentPaneAnchor = it.paneAnchor
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<UiAction.UpdateRouteImmersion>.launchRouteImmersionMutations(
+    state: UiState.SnapshotMutable,
+) = launchedCollectLatest {
+    when (it) {
+        is UiAction.UpdateRouteImmersion.Immersive -> state.immersiveRouteIds += it.route.id
+        is UiAction.UpdateRouteImmersion.Standard -> state.immersiveRouteIds -= it.route.id
+    }
 }

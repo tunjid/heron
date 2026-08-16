@@ -36,6 +36,7 @@ import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
+import com.tunjid.heron.ui.scaffold.ui.isImmersive
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
 import com.tunjid.heron.ui.stateproduction.ViewModelBackedStateHolderInitializer
@@ -119,6 +120,9 @@ class AppState(
 
         val AppState.isShowingSplashScreen: Boolean
             get() = navigationStateHolder.state.multiStackNav.isShowingSplashScreen
+
+        val AppState.isImmersive: Boolean
+            get() = uiStateHolder.state.isImmersive
 
         fun AppState.staticStates() = AppScaffoldState.StaticStates(
             identityStateHolder = identityStateHolder,
