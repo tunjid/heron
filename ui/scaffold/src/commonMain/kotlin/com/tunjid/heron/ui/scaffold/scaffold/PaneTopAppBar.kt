@@ -106,6 +106,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.components.ClickPassThroughToolbar
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
+import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.scaffold.generated.resources.Res
 import heron.ui.scaffold.generated.resources.close
@@ -280,7 +281,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                 renderInOverlay = {
                     paneState.pane == ThreePane.Primary &&
                         isTransitionActive &&
-                        isActive
+                        isActive &&
+                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
                 },
             )
             .rootAppBarBackground(
