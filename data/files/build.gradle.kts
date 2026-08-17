@@ -31,5 +31,10 @@ kotlin {
                 implementation(libs.okio)
             }
         }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }

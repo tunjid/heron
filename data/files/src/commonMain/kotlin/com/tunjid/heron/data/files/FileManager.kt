@@ -31,6 +31,14 @@ interface FileManager {
         restrictedFile: RestrictedFile,
     ): File.Media?
 
+    suspend fun withDimensionsOrSelf(
+        media: File.Media,
+    ): File.Media
+
+    suspend fun isUploadable(
+        video: RestrictedFile.Media.Video,
+    ): Boolean
+
     suspend fun source(
         file: File,
     ): Source

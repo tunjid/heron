@@ -870,8 +870,12 @@ internal class OfflinePostRepository(
     private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
         runCatchingUnlessCancelled {
             val blobs = coroutineScope {
-                metadata.embeddedMedia.map { file ->
+                metadata.embeddedMedia.map { media ->
                     async {
+                        // Media rehydrated from a draft arrives without dimensions, as a draft
+                        // stores only a path and its alt text. Read them back off the file so
+                        // the embed still declares an aspect ratio.
+                        val file = fileManager.withDimensionsOrSelf(media)
                         when (file) {
                             is File.Media.Photo -> with(fileManager) {
                                 networkService.uploadFileBlob(file = file)
