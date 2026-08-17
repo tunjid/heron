@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -66,6 +65,7 @@ import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
@@ -246,7 +246,7 @@ internal fun Route(
         navigationBar = {
             val borderColor = MaterialTheme.colorScheme.outline
             val imePadding = WindowInsets.ime.asPaddingValues()
-            val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+            val navBarPadding = WindowInsets.platformNavigationBars.asPaddingValues()
             val imeShowing by remember {
                 derivedStateOf {
                     imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
@@ -267,7 +267,7 @@ internal fun Route(
                     }
                     .padding(horizontal = 8.dp)
                     .imePadding()
-                    .windowInsetsPadding(WindowInsets.navigationBars),
+                    .windowInsetsPadding(WindowInsets.platformNavigationBars),
                 postText = state.postText,
                 photos = state.photos,
                 onMediaEdited = stateHolder.accept,

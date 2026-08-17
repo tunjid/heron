@@ -19,7 +19,6 @@ package com.tunjid.heron.conversation.di
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
@@ -41,6 +40,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -213,7 +213,7 @@ internal fun Route(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .imePadding()
-                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .windowInsetsPadding(WindowInsets.platformNavigationBars)
                     .bottomNavigationSharedBounds(this),
                 inputText = state.inputText,
                 pendingRecord = state.sharedRecord.pendingRecord,

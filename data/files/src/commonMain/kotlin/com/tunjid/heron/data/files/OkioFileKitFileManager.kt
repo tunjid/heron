@@ -38,10 +38,13 @@ import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.source
 import io.github.vinceglb.filekit.write
 import kotlin.time.Clock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.RawSource
 import kotlinx.io.Source
@@ -98,23 +101,58 @@ internal class OkioFileKitFileManager(
             cachedFile = null
         }
 
-        return cachedFile?.let {
-            val uri = FileUri(it.path)
+        return cachedFile?.let { file ->
+            // Dimensions are read off the cached copy rather than the pick, since compression
+            // above may have resized it and these are the bytes that get uploaded.
             when (restrictedFile) {
                 is RestrictedFile.Media.Photo -> File.Media.Photo(
-                    uri = uri,
-                    width = restrictedFile.width,
-                    height = restrictedFile.height,
+                    uri = FileUri(file.path),
+                    width = 0,
+                    height = 0,
                     altText = restrictedFile.altText,
                 )
                 is RestrictedFile.Media.Video -> File.Media.Video(
-                    uri = uri,
-                    width = restrictedFile.width,
-                    height = restrictedFile.height,
+                    uri = FileUri(file.path),
+                    width = 0,
+                    height = 0,
                     altText = restrictedFile.altText,
                 )
             }
+                .let { media -> withDimensionsOrSelf(media) }
         }
+    }
+
+    override suspend fun withDimensionsOrSelf(
+        media: File.Media,
+    ): File.Media = withContext(Dispatchers.IO) {
+        if (media.hasDimensions) return@withContext media
+
+        val dimensions = when (media) {
+            is File.Media.Photo -> media.toPlatformFile().imageDimensionsOrNull()
+            is File.Media.Video -> media.toPlatformFile().videoDimensionsOrNull()
+        }
+            ?: return@withContext media
+
+        when (media) {
+            is File.Media.Photo -> File.Media.Photo(
+                uri = media.uri,
+                width = dimensions.width,
+                height = dimensions.height,
+                altText = media.altText,
+            )
+            is File.Media.Video -> File.Media.Video(
+                uri = media.uri,
+                width = dimensions.width,
+                height = dimensions.height,
+                altText = media.altText,
+            )
+        }
+    }
+
+    override suspend fun isUploadable(
+        video: RestrictedFile.Media.Video,
+    ): Boolean = withContext(Dispatchers.IO) {
+        video.file.isIsoBaseMedia()
     }
 
     override suspend fun source(
@@ -181,6 +219,12 @@ internal class OkioFileKitFileManager(
         mutations.emit(target)
     }
 }
+
+private val File.Media.hasDimensions: Boolean
+    get() = when (this) {
+        is File.Media.Photo -> width != 0 && height != 0
+        is File.Media.Video -> width != 0 && height != 0
+    }
 
 /**
  * Returns JPEG bytes for an oversized photo shrunk to fit within [MAX_IMAGE_SIZE], or null

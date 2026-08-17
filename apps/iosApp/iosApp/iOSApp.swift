@@ -8,6 +8,7 @@ class AppDelegate: NSObject, UIApplicationDelegate,
                    MessagingDelegate, UNUserNotificationCenterDelegate {
 
     let foundationModelsBridge: AppleFoundationModelsBridge
+    let immersion = ImmersionModel()
     let appState: AppState
 
     override init() {
@@ -121,7 +122,10 @@ struct iOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(appState: delegate.appState)
+            ContentView(
+                appState: delegate.appState,
+                immersion: delegate.immersion
+            )
         }
     }
 }

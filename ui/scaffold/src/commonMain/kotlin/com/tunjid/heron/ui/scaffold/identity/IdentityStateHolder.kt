@@ -98,6 +98,7 @@ class AppIdentityStateHolder(
             )
             actions.launchMutationsIn(
                 productionScope = this,
+                keySelector = IdentityAction::key,
             ) {
                 when (val action = type()) {
                     is IdentityAction.Switch -> action.flow.launchSwitchSessionMutations(

@@ -28,6 +28,8 @@ import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.Notifier
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PredictiveBackContentTransformer
+import com.tunjid.heron.ui.scaffold.ui.AppUiStateHolder
+import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
@@ -105,4 +107,10 @@ object ScaffoldBindings {
     fun provideIdentityStateHolder(
         appIdentityStateHolder: AppIdentityStateHolder,
     ): IdentityStateHolder = appIdentityStateHolder
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideUiStateHolder(
+        appUiStateHolder: AppUiStateHolder,
+    ): UiStateHolder = appUiStateHolder
 }

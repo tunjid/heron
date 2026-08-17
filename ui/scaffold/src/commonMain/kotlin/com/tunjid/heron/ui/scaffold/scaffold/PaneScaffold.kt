@@ -38,6 +38,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -77,6 +78,7 @@ import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -107,7 +109,7 @@ class PaneScaffoldState(
 
     override val childBoundsTransform: BoundsTransform = { _, _ ->
         BoundsTransformSpring.skipIf {
-            appScaffoldState.staticStates.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
+            appScaffoldState.staticStates.uiState.dismissBehavior is AppScaffoldState.DismissBehavior.Gesture.DragToPop ||
                 appScaffoldState.paneAnchorState.hasInteractions
         }
     }
@@ -120,7 +122,7 @@ class PaneScaffoldState(
         get() = appScaffoldState.isMediumScreenWidthOrWider
 
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
-        get() = appScaffoldState.staticStates.dismissBehavior
+        get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
     val isSignedOut
         get() = !appScaffoldState.staticStates.identityState.isSignedIn
@@ -351,7 +353,7 @@ fun PaneScaffoldState.PaneScaffold(
 
     if (paneState.pane == ThreePane.Primary) {
         LaunchedEffect(showNavigation) {
-            appScaffoldState.staticStates.showNavigation = showNavigation
+            appScaffoldState.staticStates.onUiAction(UiAction.UpdateShowNavigation(showNavigation))
         }
     }
 }
@@ -396,6 +398,30 @@ fun PaneScaffoldState.SnackbarDisplayEffect(
                 onConsumedState.value(incoming)
             }
     }
+}
+
+@Composable
+fun PaneScaffoldState.RouteImmersionEffect() {
+    paneState
+        // Only the primary pane can set immersivity
+        .takeIf { it.pane == ThreePane.Primary }
+        ?.currentDestination
+        // Only immersive if it has no children in other panes
+        ?.takeIf { it.children.isEmpty() }
+        ?.let { route ->
+            DisposableEffect(this, route) {
+                appScaffoldState.onRouteImmersionChanged(
+                    route = route,
+                    isImmersive = true,
+                )
+                onDispose {
+                    appScaffoldState.onRouteImmersionChanged(
+                        route = route,
+                        isImmersive = false,
+                    )
+                }
+            }
+        }
 }
 
 @Composable

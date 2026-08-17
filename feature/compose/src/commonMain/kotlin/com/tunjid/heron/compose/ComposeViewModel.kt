@@ -62,6 +62,7 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.saving_draft
 import heron.feature.compose.generated.resources.sending_post
+import heron.feature.compose.generated.resources.unsupported_video
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
@@ -147,6 +148,7 @@ class ActualComposeViewModel(
                         )
                         is Action.EditMedia -> action.flow.launchEditMediaMutations(
                             state = state,
+                            fileManager = fileManager,
                         )
                         is Action.CreatePost -> action.flow.launchCreatePostMutations(
                             state = state,
@@ -282,12 +284,15 @@ private fun Flow<Action.UpdateInteractionSettings>.launchUpdateInteractionSettin
 context(productionScope: CoroutineScope)
 private fun Flow<Action.EditMedia>.launchEditMediaMutations(
     state: State.SnapshotMutable,
+    fileManager: FileManager,
 ) = launchedCollect { action ->
     // Invoke in IO context as creating media items may perform IO
     val media = withContext(Dispatchers.IO) {
         when (action) {
             is Action.EditMedia.AddPhotos -> action.photos
+
             is Action.EditMedia.AddVideo -> listOfNotNull(action.video)
+                .filter { fileManager.isUploadable(it) }
             is Action.EditMedia.RemoveMedia -> emptyList()
             is Action.EditMedia.UpdateMedia -> listOfNotNull(action.media)
         }
@@ -298,9 +303,14 @@ private fun Flow<Action.EditMedia>.launchEditMediaMutations(
             state.video = null
         }
 
-        is Action.EditMedia.AddVideo -> {
-            state.photos = emptyList()
-            state.video = media.filterIsInstance<RestrictedFile.Media.Video>().firstOrNull()
+        is Action.EditMedia.AddVideo -> when {
+            action.video != null && media.isEmpty() ->
+                state.messages += Memo.Resource(stringResource = Res.string.unsupported_video)
+
+            else -> {
+                state.photos = emptyList()
+                state.video = media.filterIsInstance<RestrictedFile.Media.Video>().firstOrNull()
+            }
         }
 
         is Action.EditMedia.RemoveMedia -> {
@@ -418,16 +428,11 @@ private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
         annotatedString = AnnotatedString(text),
         selection = TextRange(text.length),
     )
-    // Media and link previews are best-effort: a draft's media carries no dimensions (so it would
-    // be dropped on post) and its link card is not stored, so only text is rehydrated. The link
-    // card re-resolves via URL detection once the text is edited.
+    // Media and link previews are best-effort: a draft's media is cached but has no path back to
+    // the [RestrictedFile] it came from, and its link card is not stored, so only text is
+    // rehydrated. The link card re-resolves via URL detection once the text is edited.
 }
 
-/**
- * Builds the [Post.Create.Request] shared by post creation and draft saving, caching any
- * [RestrictedFile] media into app storage. Photos without a known size are dropped (the post
- * embed requires dimensions); videos are always kept.
- */
 private suspend fun composeRequest(
     authorId: ProfileId,
     text: String,
@@ -446,13 +451,7 @@ private suspend fun composeRequest(
         reply = reply,
         embeddedRecordReference = embeddedRecordReference,
         embeddedMedia = media.mapNotNull { item ->
-            when (item) {
-                is RestrictedFile.Media.Photo ->
-                    if (item.hasSize) fileManager.cacheWithoutRestrictions(item)
-                    else null
-
-                is RestrictedFile.Media.Video -> fileManager.cacheWithoutRestrictions(item)
-            }
+            fileManager.cacheWithoutRestrictions(item)
         },
         allowed = allowed,
         linkPreview = linkPreview,

@@ -102,6 +102,9 @@ internal fun MultipleEntitySaver.add(
                 messageView = lastReaction.value.message,
             )
             add(
+                entity = stubProfileEntity(lastReaction.value.reaction.sender.did),
+            )
+            add(
                 MessageReactionEntity(
                     value = lastReaction.value.reaction.value,
                     messageId = lastReaction.value.message.id.let(::MessageId),

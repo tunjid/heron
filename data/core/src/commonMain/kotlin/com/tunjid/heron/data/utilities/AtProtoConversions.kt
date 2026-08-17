@@ -197,9 +197,9 @@ private fun List<MediaBlob>.video(): BskyVideo? =
                 is MediaBlob.Video.Local -> BskyVideo(
                     video = videoFile.blob,
                     alt = videoFile.file.altText,
-                    aspectRatio = AspectRatio(
-                        videoFile.file.width.toLong(),
-                        videoFile.file.height.toLong(),
+                    aspectRatio = aspectRatioOrNull(
+                        width = videoFile.file.width,
+                        height = videoFile.file.height,
                     ),
                 )
             }
@@ -212,15 +212,25 @@ private fun List<MediaBlob>.images(): BskyImages? =
                 is MediaBlob.Image.Local -> ImagesImage(
                     image = photoFile.blob,
                     alt = photoFile.file.altText ?: "",
-                    aspectRatio = AspectRatio(
-                        photoFile.file.width.toLong(),
-                        photoFile.file.height.toLong(),
+                    aspectRatio = aspectRatioOrNull(
+                        width = photoFile.file.width,
+                        height = photoFile.file.height,
                     ),
                 )
             }
         }
         .takeUnless(List<ImagesImage>::isEmpty)
         ?.let(::BskyImages)
+
+private fun aspectRatioOrNull(
+    width: Int,
+    height: Int,
+): AspectRatio? =
+    if (width >= 1 && height >= 1) AspectRatio(
+        width = width.toLong(),
+        height = height.toLong(),
+    )
+    else null
 
 private fun ImagesImage.galleryItemImage(): GalleryItemUnion.Image? =
     aspectRatio?.let { aspectRatio ->

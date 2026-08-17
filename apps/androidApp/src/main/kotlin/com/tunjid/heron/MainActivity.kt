@@ -32,14 +32,20 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.scaffold.App
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isImmersive
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isShowingSplashScreen
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -76,6 +82,24 @@ class MainActivity : ComponentActivity() {
                     .first { !it }
                 delay(STATUS_BAR_ICON_DELAY)
                 windowInsetsController.isAppearanceLightStatusBars = !isSystemInDarkTheme
+            }
+
+            // Resume scoped because the system restores the system bars when the window
+            // loses focus. snapshotFlow replays the current value to each new collector,
+            // so immersion is reasserted every time the app comes back to the foreground.
+            LifecycleResumeEffect(Unit) {
+                val job = lifecycleScope.launch {
+                    snapshotFlow { appState.isImmersive }
+                        .collect { isImmersive ->
+                            if (isImmersive) windowInsetsController.apply {
+                                hide(WindowInsetsCompat.Type.systemBars())
+                                systemBarsBehavior =
+                                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                            }
+                            else windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+                        }
+                }
+                onPauseOrDispose { job.cancel() }
             }
         }
 

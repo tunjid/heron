@@ -31,8 +31,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -49,7 +47,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -87,7 +84,6 @@ import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.sheets.postinteractions.PostInteractionsSheetState
 import com.tunjid.heron.sheets.postoptions.PostOption
 import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState
-import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
@@ -96,13 +92,14 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.ui.Indicator
-import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.RouteImmersionEffect
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -176,6 +173,10 @@ internal fun GalleryScreen(
             }
         },
     )
+    val videoPlayerController = LocalVideoPlayerController.current
+    val playerControlsUiState = remember(videoPlayerController) {
+        PlayerControlsUiState(videoPlayerController)
+    }
     val pagerState = rememberPagerState(pageCount = { state.items.size })
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
     val commentsState = rememberCommentsState()
@@ -261,6 +262,7 @@ internal fun GalleryScreen(
                     actions = actions,
                     postInteractionSheetState = postInteractionSheetState,
                     postOptionsSheetState = postOptionsSheetState,
+                    playerControlsUiState = playerControlsUiState,
                 )
             },
         )
@@ -316,6 +318,9 @@ internal fun GalleryScreen(
                 if (isScrolling) commentsState.collapse()
             }
     }
+    if (!playerControlsUiState.playerControlsVisible) {
+        paneScaffoldState.RouteImmersionEffect()
+    }
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
         isBackEnabled = commentsState.isNotCollapsed,
@@ -337,12 +342,10 @@ private fun HorizontalItems(
     actions: (Action) -> Unit,
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
+    playerControlsUiState: PlayerControlsUiState,
 ) {
-    val videoPlayerController = LocalVideoPlayerController.current
+    val videoPlayerController = playerControlsUiState.videoPlayerController
     val imageDownloadState = remember(::ImageDownloadState)
-    val playerControlsUiState = remember(videoPlayerController) {
-        PlayerControlsUiState(videoPlayerController)
-    }
 
     Box(
         modifier = modifier
@@ -359,9 +362,6 @@ private fun HorizontalItems(
             }
         }
 
-        val statusBarHeight = with(LocalDensity.current) {
-            UiTokens.statusBarHeight.toPx()
-        }
         HorizontalPager(
             modifier = Modifier
                 .zIndex(MediaZIndex)
@@ -388,9 +388,7 @@ private fun HorizontalItems(
                     val itemModifier = Modifier
                         .align { size, space, _ ->
                             val heightDifference = space.height - size.height
-                            val verticalOffset =
-                                if (heightDifference < statusBarHeight) statusBarHeight.fastRoundToInt()
-                                else heightDifference / 2
+                            val verticalOffset = heightDifference / 2
                             IntOffset(x = 0, y = verticalOffset)
                         }
                     when (val media = item.media[page]) {
@@ -448,7 +446,7 @@ private fun HorizontalItems(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 36.dp)
-                .navigationBarsPadding(),
+                .windowInsetsPadding(WindowInsets.platformNavigationBars),
             enter = IndicatorEnterAnimation,
             exit = IndicatorExitAnimation,
             visible = !isDraggingToPop(),
@@ -471,7 +469,7 @@ private fun HorizontalItems(
                         horizontal = 8.dp,
                         vertical = 16.dp,
                     )
-                    .windowInsetsPadding(insets = WindowInsets.navigationBars),
+                    .windowInsetsPadding(insets = WindowInsets.platformNavigationBars),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(

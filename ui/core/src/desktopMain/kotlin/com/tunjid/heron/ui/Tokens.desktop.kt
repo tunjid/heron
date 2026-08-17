@@ -17,6 +17,9 @@
 package com.tunjid.heron.ui
 
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.platform.JVMPlatform
@@ -29,6 +32,16 @@ internal actual val WindowInsets.Companion.platformExtraStatusBars: WindowInsets
         JvmVariant.Mac -> MacWindowInsets
         else -> EmptyWindowInsets
     }
+
+// Desktop has no system bars whose visibility can change out from under the app.
+internal actual val WindowInsets.Companion.stableStatusBars: WindowInsets
+    @Composable get() = statusBars
+
+internal actual val WindowInsets.Companion.stableNavigationBars: WindowInsets
+    @Composable get() = navigationBars
+
+internal actual val WindowInsets.Companion.stableSystemBars: WindowInsets
+    @Composable get() = systemBars
 
 private val MacWindowInsets = WindowInsets(
     top = 30.dp,

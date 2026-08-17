@@ -29,57 +29,25 @@ sealed class RestrictedFile {
 
     sealed class Media : RestrictedFile() {
 
-        abstract val width: Int
-        abstract val height: Int
+        abstract val altText: String?
 
         override val path: String?
             get() = file.path
 
-        val hasSize
-            get() = when (this) {
-                is Photo -> width != 0 && height != 0
-                is Video -> width != 0 && height != 0
-            }
-
         sealed class Photo : Media() {
-            abstract val altText: String?
 
             internal data class File(
                 override val file: PlatformFile,
-                override val width: Int = 0,
-                override val height: Int = 0,
                 override val altText: String? = null,
             ) : Photo()
         }
 
         sealed class Video : Media() {
-            abstract val altText: String?
 
             internal data class File(
                 override val file: PlatformFile,
-                override val width: Int = 0,
-                override val height: Int = 0,
                 override val altText: String? = null,
             ) : Video()
-        }
-
-        fun withSize(
-            width: Int,
-            height: Int,
-        ) = when (this) {
-            is Photo.File -> Photo.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
-
-            is Video.File -> Video.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
         }
 
         fun withAltText(
@@ -87,15 +55,11 @@ sealed class RestrictedFile {
         ) = when (this) {
             is Photo.File -> Photo.File(
                 file = file,
-                width = width,
-                height = height,
                 altText = altText,
             )
 
             is Video.File -> Video.File(
                 file = file,
-                width = width,
-                height = height,
                 altText = altText,
             )
         }

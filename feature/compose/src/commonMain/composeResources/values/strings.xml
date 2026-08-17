@@ -35,6 +35,7 @@
     <string name="draft_untitled">Empty draft</string>
     <string name="draft_media_count">%1$d media</string>
     <string name="remove_media">Remove media.</string>
+    <string name="unsupported_video">That video is in a format that cannot be posted. Try an MP4 or MOV.</string>
     <string name="alt_text_add">Add alt text</string>
     <string name="alt_text_descriptive">Descriptive Alt text</string>
     <string name="alt_text">Alt text</string>

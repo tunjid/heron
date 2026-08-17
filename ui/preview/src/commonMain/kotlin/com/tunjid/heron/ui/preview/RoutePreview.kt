@@ -41,6 +41,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.AppScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
+import com.tunjid.heron.ui.scaffold.ui.UiAction
+import com.tunjid.heron.ui.scaffold.ui.UiState
+import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -78,6 +81,7 @@ fun RoutePreview(
                 route = route,
             ),
             notificationStateHolder = stubNotificationStateHolder(),
+            uiStateHolder = stubUiStateHolder(),
             imageLoader = StubImageLoader,
             videoPlayerController = StubVideoPlayerController,
             stateHolderInitializer = object : StateHolderInitializer {
@@ -144,4 +148,9 @@ private fun stubNavigationStateHolder(
 private fun stubNotificationStateHolder(): NotificationStateHolder = object :
     NotificationStateHolder,
     ActionSuspendingStateMutator<NotificationAction, NotificationState> by NotificationState.Immutable()
+        .asNoOpActionSuspendingStateMutator() {}
+
+private fun stubUiStateHolder(): UiStateHolder = object :
+    UiStateHolder,
+    ActionSuspendingStateMutator<UiAction, UiState> by UiState.Immutable()
         .asNoOpActionSuspendingStateMutator() {}

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsEndWidth
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import com.tunjid.heron.ui.platformStatusBars
+import com.tunjid.heron.ui.platformSystemBars
 import kotlin.jvm.JvmInline
 import kotlin.math.max
 
@@ -327,7 +327,7 @@ value class FabPosition internal constructor(@Suppress("unused") private val val
 private class FabPlacement(val left: Int, val width: Int, val height: Int)
 
 private val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
-    @Composable get() = systemBars
+    @Composable get() = platformSystemBars
         .union(displayCutout)
         .union(WindowInsets.platformStatusBars)
 
