@@ -99,7 +99,11 @@ fun SocialGraphFilter(
                     )
                 }
                 OutlinedTextField(
-                    value = filter.username,
+                    value = profileSearchSheetState.cachedProfiles
+                        .firstOrNull { it.handle.id == filter.username || it.did.id == filter.username }
+                        ?.handle
+                        ?.id
+                        ?: filter.username,
                     onValueChange = {},
                     readOnly = true,
                     label = {
@@ -108,6 +112,12 @@ fun SocialGraphFilter(
                     modifier = Modifier
                         .fillMaxWidth(),
                 )
+
+                LaunchedEffect(filter.username) {
+                    if (filter.username.isNotBlank()) profileSearchSheetState.seedProfiles(
+                        listOf(ProfileId(filter.username)),
+                    )
+                }
 
                 val title = stringResource(Res.string.username)
                 FilledTonalButton(
