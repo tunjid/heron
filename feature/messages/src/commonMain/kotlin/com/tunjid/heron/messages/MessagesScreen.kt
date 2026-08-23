@@ -17,6 +17,7 @@
 package com.tunjid.heron.messages
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -188,6 +190,12 @@ fun Conversation(
             conversationId = conversation.id,
         )
         ConversationDetails(
+            modifier = Modifier
+                .animateBounds(
+                    lookaheadScope = paneScaffoldState,
+                    boundsTransform = paneScaffoldState.childBoundsTransform,
+                )
+                .weight(1f),
             title = when (val group = conversation.group) {
                 null ->
                     conversation.members
@@ -204,6 +212,17 @@ fun Conversation(
             },
             conversationSummary = conversation.summary(signedInProfileId = signedInProfileId),
         )
+        if (conversation.unreadCount > 0L) {
+            Badge {
+                Text(
+                    text = when {
+                        conversation.unreadCount > MaxUnreadBadgeCount ->
+                            "$MaxUnreadBadgeCount+"
+                        else -> conversation.unreadCount.toString()
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -263,8 +282,10 @@ internal fun ConversationDetails(
     title: String,
     description: String?,
     conversationSummary: String,
+    modifier: Modifier = Modifier,
 ) {
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         BoldedText(
@@ -338,3 +359,5 @@ private fun conversationListSharedElementPrefix(
 ) = "$ConversationListSharedElementPrefix-${conversationId.id}"
 
 private const val ConversationListSharedElementPrefix = "conversation-list"
+
+private const val MaxUnreadBadgeCount = 99L

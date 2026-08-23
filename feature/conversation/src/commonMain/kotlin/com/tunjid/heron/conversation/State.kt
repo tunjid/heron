@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.tiling.TilingState
@@ -223,6 +224,10 @@ sealed class Action(val key: String) {
     data class ToggleMute(
         val muted: Boolean,
     ) : Action(key = "ToggleMute")
+
+    data class MarkConversationRead(
+        val messageId: MessageId,
+    ) : Action(key = "MarkConversationRead")
 
     sealed class SharedRecord : Action(key = "SharedRecord") {
         data class Add(

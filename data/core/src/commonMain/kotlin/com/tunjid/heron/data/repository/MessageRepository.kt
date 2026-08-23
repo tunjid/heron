@@ -27,6 +27,7 @@ import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
 import chat.bsky.convo.GetMessagesResponse
 import chat.bsky.convo.GetMessagesResponseMessageUnion
+import chat.bsky.convo.GetUnreadCountsQueryParams
 import chat.bsky.convo.LeaveConvoRequest
 import chat.bsky.convo.ListConvosQueryParams
 import chat.bsky.convo.ListConvosResponse
@@ -46,6 +47,8 @@ import chat.bsky.convo.SendMessageRequest
 import chat.bsky.convo.SystemMessageView
 import chat.bsky.convo.UnmuteConvoRequest
 import chat.bsky.convo.UnmuteConvoResponse
+import chat.bsky.convo.UpdateReadRequest
+import chat.bsky.convo.UpdateReadResponse
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -55,12 +58,14 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
@@ -78,9 +83,12 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
@@ -91,9 +99,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.timeout
+import kotlinx.coroutines.plus
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.Did
 
@@ -109,6 +121,8 @@ data class MessageQuery(
 ) : CursorQuery
 
 interface MessageRepository {
+
+    val unreadCount: Flow<Long>
 
     fun conversations(
         query: ConversationQuery,
@@ -141,10 +155,17 @@ interface MessageRepository {
     suspend fun updateConversation(
         update: Conversation.Update,
     ): Outcome
+
+    suspend fun markConversationRead(
+        conversationId: ConversationId,
+        messageId: MessageId?,
+    ): Outcome
 }
 
 @Inject
 internal class OfflineMessageRepository(
+    @AppMainScope
+    appMainScope: CoroutineScope,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val messageDao: MessageDao,
@@ -154,6 +175,42 @@ internal class OfflineMessageRepository(
     private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
 ) : MessageRepository {
+
+    private val unreadCountRefreshSignal = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+    )
+
+    override val unreadCount: Flow<Long> =
+        savedStateDataSource.singleAuthorizedSessionFlow {
+            merge(
+                flow {
+                    while (true) {
+                        emit(Unit)
+                        delay(15.seconds)
+                    }
+                },
+                unreadCountRefreshSignal,
+            )
+                .mapLatest {
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getUnreadCounts(
+                            params = GetUnreadCountsQueryParams(
+                                includeGroupChats = true,
+                            ),
+                        )
+                    }
+                        .getOrNull()
+                        ?.unreadAcceptedConvos
+                        ?: 0
+                }
+        }
+            // Reset to zero when there is no signed-in user.
+            .map { it ?: 0 }
+            .stateIn(
+                scope = appMainScope + ioDispatcher,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = 0,
+            )
 
     override fun conversations(
         query: ConversationQuery,
@@ -602,6 +659,32 @@ internal class OfflineMessageRepository(
                         )
                     }
                 }
+        }
+    } ?: expiredSessionOutcome()
+
+    override suspend fun markConversationRead(
+        conversationId: ConversationId,
+        messageId: MessageId?,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            updateRead(
+                UpdateReadRequest(
+                    convoId = conversationId.id,
+                    messageId = messageId?.id,
+                ),
+            ).map(UpdateReadResponse::convo)
+        }.toOutcome { convo ->
+            // The response carries the convo with unreadCount reset, so saving it clears the
+            // per-conversation unread state locally (e.g. the conversations list row).
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    viewingProfileId = signedInProfileId,
+                    convoView = convo,
+                )
+            }
+            // Re-poll the app wide unread badge now instead of waiting for the 30s tick.
+            unreadCountRefreshSignal.emit(Unit)
         }
     } ?: expiredSessionOutcome()
 }

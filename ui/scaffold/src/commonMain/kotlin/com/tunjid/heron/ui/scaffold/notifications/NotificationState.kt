@@ -13,6 +13,7 @@ interface NotificationState {
     @SnapshotSpec
     data class Immutable(
         val unreadCount: Long = 0L,
+        val messagesUnreadCount: Long = 0L,
         val hasNotificationPermissions: Boolean = false,
         val notificationToken: String? = null,
         val processedNotificationRecordUris: Set<RecordUri> = emptySet(),
