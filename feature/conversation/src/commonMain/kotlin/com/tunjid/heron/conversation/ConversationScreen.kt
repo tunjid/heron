@@ -95,7 +95,9 @@ import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -215,6 +217,27 @@ internal fun ConversationScreen(
                 if (listState.firstVisibleItemIndex !in 0..4) return@collect
                 // Scroll to bottom
                 listState.animateScrollToItem(0)
+            }
+    }
+
+    LaunchedEffect(listState) {
+        // Reverse layout: the newest message sits at index 0. Only mark the conversation read
+        // when that newest message is actually visible, so a message that arrives while the user
+        // is scrolled up in history stays unread until they scroll back down to it.
+        snapshotFlow {
+            if (listState.firstVisibleItemIndex !in 0..4) return@snapshotFlow null
+            (state.tiledItems.firstOrNull { it is MessageItem.Sent } as? MessageItem.Sent)
+                ?.message
+                ?.id
+        }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .collect { messageId ->
+                actions(
+                    Action.MarkConversationRead(
+                        messageId = messageId,
+                    ),
+                )
             }
     }
 }

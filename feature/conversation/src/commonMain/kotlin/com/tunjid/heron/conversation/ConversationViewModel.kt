@@ -177,6 +177,10 @@ class ActualConversationViewModel(
                             state = state,
                             messagesRepository = messagesRepository,
                         )
+                        is Action.MarkConversationRead -> action.flow.launchMarkConversationReadMutations(
+                            state = state,
+                            messagesRepository = messagesRepository,
+                        )
                     }
                 }
             },
@@ -229,6 +233,17 @@ private fun Flow<Action>.launchConversationUpdateMutations(
         if (action is Action.LeaveConversation) navActions(Action.Navigate.Pop.navigationMutation)
     },
 )
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.MarkConversationRead>.launchMarkConversationReadMutations(
+    state: State.SnapshotMutable,
+    messagesRepository: MessageRepository,
+) = launchedCollectLatest { action ->
+    messagesRepository.markConversationRead(
+        conversationId = state.id,
+        messageId = action.messageId,
+    )
+}
 
 context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(
