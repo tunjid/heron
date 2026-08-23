@@ -30,6 +30,7 @@ import chat.bsky.convo.GetMessagesResponseMessageUnion
 import chat.bsky.convo.LeaveConvoRequest
 import chat.bsky.convo.ListConvosQueryParams
 import chat.bsky.convo.ListConvosResponse
+import chat.bsky.convo.ListConvosStatus
 import chat.bsky.convo.LogAddReactionMessageUnion
 import chat.bsky.convo.LogCreateMessageMessageUnion
 import chat.bsky.convo.LogDeleteMessageMessageUnion
@@ -175,6 +176,7 @@ internal class OfflineMessageRepository(
                             params = ListConvosQueryParams(
                                 limit = query.data.limit,
                                 cursor = cursor.value,
+                                status = ListConvosStatus.Accepted,
                             ),
                         )
                     },

@@ -698,6 +698,10 @@ private val ChatProxyPaths = listOf(
     "chat.bsky.convo.sendMessage",
     "chat.bsky.convo.addReaction",
     "chat.bsky.convo.removeReaction",
+    "chat.bsky.convo.acceptConvo",
+    "chat.bsky.convo.leaveConvo",
+    "chat.bsky.convo.muteConvo",
+    "chat.bsky.convo.unmuteConvo",
 )
 
 private val HeronProxyPaths = listOf(
