@@ -706,6 +706,10 @@ internal class OfflinePostRepository(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
+                            postDao.deleteBookmark(
+                                postUri = interaction.postUri,
+                                viewingProfileId = signedInProfileId,
+                            )
                         }
                     }
                 }
