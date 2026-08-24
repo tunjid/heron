@@ -25,6 +25,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
@@ -499,6 +500,18 @@ interface PostDao {
     )
     suspend fun deletePost(
         postUri: PostUri,
+    )
+
+    @Query(
+        """
+            DELETE FROM bookmarks
+            WHERE bookmarkedUri = :postUri
+            AND viewingProfileId = :viewingProfileId
+        """,
+    )
+    suspend fun deleteBookmark(
+        postUri: PostUri,
+        viewingProfileId: ProfileId,
     )
 
     @Query(
