@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
@@ -31,6 +32,7 @@ import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.mutator.coroutines.launchedCollectLatest
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.buffer
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 @Stable
@@ -49,6 +52,7 @@ class AppNotificationStateHolder(
     appMainScope: CoroutineScope,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
+    messageRepository: MessageRepository,
 ) : NotificationStateHolder,
     ActionSuspendingStateMutator<NotificationAction, NotificationState> by appMainScope.actionSuspendingStateMutator(
         state = NotificationState.Immutable().toSnapshotMutable(),
@@ -83,6 +87,7 @@ class AppNotificationStateHolder(
                     is NotificationAction.ToggleUnreadNotificationsMonitor -> action.flow.launchMonitorUnreadCountMutations(
                         state = state,
                         notificationsRepository = notificationsRepository,
+                        messageRepository = messageRepository,
                     )
                 }
             }
@@ -93,10 +98,21 @@ context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.launchMonitorUnreadCountMutations(
     state: NotificationState.SnapshotMutable,
     notificationsRepository: NotificationsRepository,
+    messageRepository: MessageRepository,
 ) = distinctUntilChanged()
     .launchedCollectLatest { action ->
-        if (action.monitor) notificationsRepository.unreadCount
-            .collect { state.unreadCount = it }
+        if (action.monitor) coroutineScope {
+            launch {
+                notificationsRepository.unreadCount.collect {
+                    state.unreadCount = it
+                }
+            }
+            launch {
+                messageRepository.unreadCount.collect {
+                    state.messagesUnreadCount = it
+                }
+            }
+        }
     }
 
 context(productionScope: CoroutineScope)

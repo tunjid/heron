@@ -98,6 +98,6 @@ internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (r
     ListNotificationsNotificationReason.Verified -> null
     ListNotificationsNotificationReason.LikeViaRepost -> record.safeDecodeAs<Like>()?.subject?.uri
     ListNotificationsNotificationReason.RepostViaRepost -> record.safeDecodeAs<Repost>()?.subject?.uri
-    ListNotificationsNotificationReason.SubscribedPost -> reasonSubject
+    ListNotificationsNotificationReason.SubscribedPost -> uri
     ListNotificationsNotificationReason.ContactMatch -> null
 }

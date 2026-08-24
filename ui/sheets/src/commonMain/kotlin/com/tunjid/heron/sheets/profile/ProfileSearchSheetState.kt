@@ -76,6 +76,11 @@ class ProfileSearchSheetState internal constructor(
                 )
             }
 
+            // Keep the holder subscribed for as long as the picker is composed so
+            // seedProfiles(...) actually runs and fills cachedProfiles.
+            LaunchedEffect(stateHolder) {
+                stateHolder.collect()
+            }
             return state
         }
     }

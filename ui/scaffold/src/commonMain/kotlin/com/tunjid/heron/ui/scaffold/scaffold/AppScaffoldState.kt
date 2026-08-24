@@ -241,7 +241,11 @@ class AppScaffoldState internal constructor(
                         stack = stack,
                         index = index,
                         selected = navigationState.multiStackNav.currentIndex == index,
-                        badgeCount = if (stack == AppStack.Notifications) notificationState.unreadCount else 0L,
+                        badgeCount = when (stack) {
+                            AppStack.Notifications -> notificationState.unreadCount
+                            AppStack.Messages -> notificationState.messagesUnreadCount
+                            else -> 0L
+                        },
                     )
                 }
         }
