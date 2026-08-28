@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,6 +69,7 @@ import heron.feature.graze_editor.generated.resources.comparator_less_than
 import heron.feature.graze_editor.generated.resources.comparator_less_than_or_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
+import heron.feature.graze_editor.generated.resources.edit_item
 import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.feature.graze_editor.generated.resources.threshold_percent
 import heron.feature.graze_editor.generated.resources.unsupported_filter
@@ -245,6 +247,47 @@ fun UnsupportedFilter(
         Text(
             text = stringResource(Res.string.unsupported_filter),
         )
+    }
+}
+
+@Composable
+fun LabeledTextEntry(
+    label: String,
+    value: String,
+    onValueChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val selectTextSheetState = rememberSelectTextState(
+        title = label,
+        onTextConfirmed = { onValueChanged(it) },
+    )
+    Column(
+        modifier = modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(text = label) },
+            modifier = Modifier
+                .fillMaxWidth(),
+        )
+        FilledTonalButton(
+            onClick = {
+                selectTextSheetState.show(currentText = value)
+            },
+            modifier = Modifier
+                .fillMaxWidth(),
+        ) {
+            Text(
+                text = stringResource(
+                    if (value.isBlank()) Res.string.add_item
+                    else Res.string.edit_item,
+                ),
+            )
+        }
     }
 }
 
