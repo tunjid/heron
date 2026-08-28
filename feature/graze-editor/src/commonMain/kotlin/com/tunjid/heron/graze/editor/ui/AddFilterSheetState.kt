@@ -31,10 +31,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.CallSplit
 import androidx.compose.material.icons.automirrored.rounded.CompareArrows
 import androidx.compose.material.icons.automirrored.rounded.ManageSearch
+import androidx.compose.material.icons.automirrored.rounded.Rule
 import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.AttachMoney
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Backpack
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Diversity3
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -52,6 +56,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Tag
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.Topic
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -96,19 +101,28 @@ import heron.feature.graze_editor.generated.resources.filter_group_attribute
 import heron.feature.graze_editor.generated.resources.filter_group_entity
 import heron.feature.graze_editor.generated.resources.filter_group_logic
 import heron.feature.graze_editor.generated.resources.filter_group_ml
+import heron.feature.graze_editor.generated.resources.filter_group_regex
 import heron.feature.graze_editor.generated.resources.filter_group_social
 import heron.feature.graze_editor.generated.resources.financial_sentiment
+import heron.feature.graze_editor.generated.resources.image_arbitrary
 import heron.feature.graze_editor.generated.resources.image_nsfw
 import heron.feature.graze_editor.generated.resources.images_and_videos_only
 import heron.feature.graze_editor.generated.resources.images_only
 import heron.feature.graze_editor.generated.resources.language_analysis
 import heron.feature.graze_editor.generated.resources.posts_from_profiles
 import heron.feature.graze_editor.generated.resources.posts_with_hashtags
+import heron.feature.graze_editor.generated.resources.regex_any
+import heron.feature.graze_editor.generated.resources.regex_matches
+import heron.feature.graze_editor.generated.resources.regex_negation
+import heron.feature.graze_editor.generated.resources.regex_none
 import heron.feature.graze_editor.generated.resources.sentiment_analysis
 import heron.feature.graze_editor.generated.resources.simple_filters
 import heron.feature.graze_editor.generated.resources.social_graph
 import heron.feature.graze_editor.generated.resources.social_list_member
+import heron.feature.graze_editor.generated.resources.social_magic_audience
+import heron.feature.graze_editor.generated.resources.social_starter_pack
 import heron.feature.graze_editor.generated.resources.social_user_list
+import heron.feature.graze_editor.generated.resources.text_arbitrary
 import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
 import kotlinx.coroutines.launch
@@ -448,29 +462,32 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
             ),
         ),
     ),
-    // No regular expression support for now
-//    FilterGroup(
-//        nameRes = Res.string.filter_group_regex,
-//        icon = Icons.Rounded.RegularExpression,
-//        options = listOf(
-//            FilterOption(
-//                titleRes = Res.string.regex_matches,
-//                factory = Filter.Regex.Matches::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_negation,
-//                factory = Filter.Regex.Negation::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_any,
-//                factory = Filter.Regex.Any::empty,
-//            ),
-//            FilterOption(
-//                titleRes = Res.string.regex_none,
-//                factory = Filter.Regex.None::empty,
-//            ),
-//        ),
-//    ),
+    FilterGroup(
+        nameRes = Res.string.filter_group_regex,
+        icon = Icons.Rounded.Code,
+        options = listOf(
+            FilterOption(
+                titleRes = Res.string.regex_matches,
+                icon = Icons.AutoMirrored.Rounded.Rule,
+                factory = Filter.Regex.Matches::empty,
+            ),
+            FilterOption(
+                titleRes = Res.string.regex_negation,
+                icon = Icons.Rounded.Block,
+                factory = Filter.Regex.Negation::empty,
+            ),
+            FilterOption(
+                titleRes = Res.string.regex_any,
+                icon = Icons.AutoMirrored.Rounded.Rule,
+                factory = Filter.Regex.Any::empty,
+            ),
+            FilterOption(
+                titleRes = Res.string.regex_none,
+                icon = Icons.Rounded.Block,
+                factory = Filter.Regex.None::empty,
+            ),
+        ),
+    ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
         icon = Icons.Rounded.Diversity3,
@@ -485,19 +502,21 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 icon = Icons.Rounded.Group,
                 factory = Filter.Social.UserList::empty,
             ),
-//            FilterOption(
-//                titleRes = Res.string.social_starter_pack,
-//                factory = Filter.Social.StarterPack::empty,
-//            ),
+            FilterOption(
+                titleRes = Res.string.social_starter_pack,
+                icon = Icons.Rounded.Backpack,
+                factory = Filter.Social.StarterPack::empty,
+            ),
             FilterOption(
                 titleRes = Res.string.social_list_member,
                 icon = Icons.Rounded.Groups,
                 factory = Filter.Social.ListMember::empty,
             ),
-//            FilterOption(
-//                titleRes = Res.string.social_magic_audience,
-//                factory = Filter.Social.MagicAudience::empty,
-//            ),
+            FilterOption(
+                titleRes = Res.string.social_magic_audience,
+                icon = Icons.Rounded.AutoAwesome,
+                factory = Filter.Social.MagicAudience::empty,
+            ),
         ),
     ),
     FilterGroup(
@@ -554,21 +573,21 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 icon = Icons.Rounded.Topic,
                 factory = Filter.Analysis.Topic::empty,
             ),
-            // Unsupported for now
-//            FilterOption(
-//                titleRes = Res.string.text_arbitrary,
-//                factory = Filter.Analysis.TextArbitrary::empty,
-//            ),
+            FilterOption(
+                titleRes = Res.string.text_arbitrary,
+                icon = Icons.Rounded.TextFields,
+                factory = Filter.Analysis.TextArbitrary::empty,
+            ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
                 icon = Icons.Rounded.VisibilityOff,
                 factory = Filter.Analysis.ImageNsfw::empty,
             ),
-            // Unsupported for now
-//            FilterOption(
-//                titleRes = Res.string.image_arbitrary,
-//                factory = Filter.Analysis.ImageArbitrary::empty,
-//            ),
+            FilterOption(
+                titleRes = Res.string.image_arbitrary,
+                icon = Icons.Rounded.Image,
+                factory = Filter.Analysis.ImageArbitrary::empty,
+            ),
         ),
     ),
 )

@@ -33,6 +33,7 @@ import com.tunjid.heron.sheets.rememberSelectListSheetState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
+import heron.feature.graze_editor.generated.resources.audience_id
 import heron.feature.graze_editor.generated.resources.direction
 import heron.feature.graze_editor.generated.resources.edit_profile
 import heron.feature.graze_editor.generated.resources.social_graph
@@ -43,6 +44,7 @@ import heron.feature.graze_editor.generated.resources.social_list_member
 import heron.feature.graze_editor.generated.resources.social_magic_audience
 import heron.feature.graze_editor.generated.resources.social_starter_pack
 import heron.feature.graze_editor.generated.resources.social_user_list
+import heron.feature.graze_editor.generated.resources.url
 import heron.feature.graze_editor.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
@@ -206,17 +208,33 @@ fun SocialUserListFilter(
 }
 
 @Composable
-@Suppress("unused")
 fun SocialStarterPackFilter(
     filter: Filter.Social.StarterPack,
     onUpdate: (Filter.Social.StarterPack) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    UnsupportedFilter(
+    StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.social_starter_pack),
         onRemove = onRemove,
+        rowContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Set.entries,
+                onSelect = { onUpdate(filter.copy(operator = it)) },
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+        },
+        additionalContent = {
+            LabeledTextEntry(
+                label = stringResource(Res.string.url),
+                value = filter.url,
+                onValueChanged = { onUpdate(filter.copy(url = it)) },
+            )
+        },
     )
 }
 
@@ -288,17 +306,34 @@ fun PaneScaffoldState.SocialListMemberFilter(
 }
 
 @Composable
-@Suppress("unused")
 fun SocialMagicAudienceFilter(
     filter: Filter.Social.MagicAudience,
     onUpdate: (Filter.Social.MagicAudience) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    UnsupportedFilter(
+    StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.social_magic_audience),
         onRemove = onRemove,
+        rowContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Set.entries,
+                onSelect = { onUpdate(filter.copy(operator = it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        },
+        additionalContent = {
+            LabeledTextEntry(
+                label = stringResource(Res.string.audience_id),
+                value = filter.audienceId,
+                onValueChanged = { onUpdate(filter.copy(audienceId = it)) },
+            )
+        },
     )
 }
 

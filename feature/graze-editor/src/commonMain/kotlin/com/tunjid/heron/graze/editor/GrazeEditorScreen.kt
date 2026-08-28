@@ -471,6 +471,7 @@ fun FilterLeaf(
             RegexFilter(
                 modifier = modifier,
                 filter = filter,
+                onUpdate = onUpdate,
                 onRemove = onRemove,
             )
 
