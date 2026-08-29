@@ -56,14 +56,28 @@ suspend fun SearchFilter?.toFeedFilter(
     val leaves = mutableListOf<Filter>()
     val notes = mutableSetOf<MappingNote>()
 
-    query.toTermList().takeIf(List<String>::isNotEmpty)?.let { terms ->
+    // A #hashtag term is an exact Graze hashtag entity match; plain words fall back to a text regex.
+    val (hashtagTerms, wordTerms) = query.toTermList().partition { it.startsWith("#") }
+
+    wordTerms.takeIf(List<String>::isNotEmpty)?.let { words ->
         leaves += Filter.Regex.Any(
             variable = TextVariable,
-            terms = terms,
+            terms = words,
             isCaseInsensitive = true,
         )
         notes += MappingNote.FreeTextApproximated
     }
+
+    hashtagTerms
+        .map { it.removePrefix("#") }
+        .filter(String::isNotBlank)
+        .takeIf(List<String>::isNotEmpty)
+        ?.let { tags ->
+            leaves += Filter.Entity.Matches(
+                entityType = Filter.Entity.Type.Hashtags,
+                values = tags,
+            )
+        }
 
     this?.exactPhrase.nonBlankTrimmed()?.let { phrase ->
         leaves += Filter.Regex.Matches(
@@ -223,6 +237,7 @@ suspend fun Filter.Root.toSearchApproximation(
 
             is Filter.Entity.Matches -> when (leaf.entityType) {
                 Filter.Entity.Type.Languages -> language = language ?: leaf.values.firstOrNull()
+                Filter.Entity.Type.Hashtags -> queryTerms += leaf.values.map { "#$it" }
                 Filter.Entity.Type.Mentions ->
                     mentionsInclude += leaf.values.awaitMapNotNull { resolveDid(ProfileHandle(it)) }
                 else -> dropped += leaf

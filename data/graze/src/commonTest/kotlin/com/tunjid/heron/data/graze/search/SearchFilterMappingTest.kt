@@ -65,6 +65,53 @@ class SearchFilterMappingTest {
     }
 
     @Test
+    fun hashtagQuery_becomesHashtagEntityNotRegex() = runTest {
+        val result = SearchFilter().toFeedFilter(
+            query = "#birds",
+            resolveHandle = NoHandles,
+        )
+
+        val entity = assertIs<Filter.Entity.Matches>(
+            value = result.filter.filters.single(),
+        )
+        assertEquals(
+            expected = Filter.Entity.Type.Hashtags,
+            actual = entity.entityType,
+        )
+        assertContentEquals(
+            expected = listOf("birds"),
+            actual = entity.values,
+        )
+        // Hashtag matching is exact, not an approximation.
+        assertFalse(
+            actual = MappingNote.FreeTextApproximated in result.notes,
+        )
+    }
+
+    @Test
+    fun mixedQuery_splitsHashtagsFromWords() = runTest {
+        val result = SearchFilter().toFeedFilter(
+            query = "birds #nature",
+            resolveHandle = NoHandles,
+        )
+
+        val regex = result.filter.filters.filterIsInstance<Filter.Regex.Any>().single()
+        val hashtags = result.filter.filters.filterIsInstance<Filter.Entity.Matches>().single()
+        assertContentEquals(
+            expected = listOf("birds"),
+            actual = regex.terms,
+        )
+        assertEquals(
+            expected = Filter.Entity.Type.Hashtags,
+            actual = hashtags.entityType,
+        )
+        assertContentEquals(
+            expected = listOf("nature"),
+            actual = hashtags.values,
+        )
+    }
+
+    @Test
     fun exactPhrase_becomesRegexMatchesWithMetacharactersEscaped() = runTest {
         val result = filterOf(exactPhrase = "c++ (beta)").toFeedFilter(
             query = "",
@@ -539,6 +586,28 @@ class SearchFilterMappingTest {
         assertContentEquals(
             expected = listOf(ProfileId("did:plc:a")),
             actual = mentions.profileIds,
+        )
+    }
+
+    @Test
+    fun hashtagEntity_becomesHashtagQueryTerms() = runTest {
+        val root = Filter.And(
+            filters = listOf(
+                Filter.Entity.Matches(
+                    entityType = Filter.Entity.Type.Hashtags,
+                    values = listOf("birds", "nature"),
+                ),
+            ),
+        )
+
+        val result = root.toSearchApproximation()
+
+        assertEquals(
+            expected = "#birds #nature",
+            actual = result.query,
+        )
+        assertTrue(
+            actual = result.droppedLeaves.isEmpty(),
         )
     }
 
