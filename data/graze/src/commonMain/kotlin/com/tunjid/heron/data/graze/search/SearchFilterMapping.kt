@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.graze.search
 
 import com.tunjid.heron.data.core.models.SearchFilter
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.isValid
@@ -44,19 +45,9 @@ object Graze {
     )
 }
 
-/**
- * Compiles this [SearchFilter] plus its free-text [query] into a Graze [Filter.And]. Only valid
- * leaves survive (see [isValid]), so an empty search yields an empty — and therefore invalid,
- * un-saveable — root. [viewerHandle] is the signed-in user's handle, used to turn
- * [SearchFilter.From.Following] into a concrete `social_graph` on the viewer's follows.
- *
- * [resolveHandle] maps a mention's [ProfileId] (a DID) to the handle Graze matches on, or `null` if
- * unknown; unresolvable mentions are dropped. Authors go through `social_list` (DIDs) and never call
- * it. Supplied by the caller from already-resolved profiles.
- */
 suspend inline fun SearchFilter.toFeedFilter(
     query: String,
-    viewerHandle: String? = null,
+    viewerHandle: ProfileHandle? = null,
     resolveHandle: (ProfileId) -> String?,
 ): FeedFromSearch {
     val leaves = mutableListOf<Filter>()
@@ -169,7 +160,7 @@ suspend inline fun SearchFilter.toFeedFilter(
         }
 
     if (from == SearchFilter.From.Following) {
-        viewerHandle.nonBlankTrimmed()?.let { handle ->
+        viewerHandle?.id.nonBlankTrimmed()?.let { handle ->
             leaves += Filter.Social.Graph(
                 username = handle,
                 operator = Filter.Comparator.Set.In,
@@ -186,14 +177,8 @@ suspend inline fun SearchFilter.toFeedFilter(
     )
 }
 
-/**
- * Best-effort inverse: flattens the tree (any nested `or` is treated as `and`, broadening the
- * result) and translates the leaves that have a search equivalent. Everything else lands in
- * [SearchFromFeed.droppedLeaves]. [resolveDid] turns Graze mention handles back into DIDs (the
- * identifiers searchPostsV2 expects); unresolved handles are dropped.
- */
 suspend inline fun Filter.Root.toSearchApproximation(
-    resolveDid: (handle: String) -> ProfileId? = { null },
+    resolveDid: (handle: ProfileHandle) -> ProfileId? = { null },
 ): SearchFromFeed {
     val dropped = mutableListOf<Filter.Leaf>()
     val queryTerms = mutableListOf<String>()
@@ -226,12 +211,18 @@ suspend inline fun Filter.Root.toSearchApproximation(
 
             is Filter.Entity.Matches -> when (leaf.entityType) {
                 Filter.Entity.Type.Languages -> language = language ?: leaf.values.firstOrNull()
-                Filter.Entity.Type.Mentions -> mentionsInclude += leaf.values.mapNotNull(resolveDid)
+                Filter.Entity.Type.Mentions ->
+                    mentionsInclude += leaf.values
+                        .map(::ProfileHandle)
+                        .mapNotNull(resolveDid)
                 else -> dropped += leaf
             }
 
             is Filter.Entity.Excludes -> when (leaf.entityType) {
-                Filter.Entity.Type.Mentions -> mentionsExclude += leaf.values.mapNotNull(resolveDid)
+                Filter.Entity.Type.Mentions ->
+                    mentionsExclude += leaf.values
+                        .map(::ProfileHandle)
+                        .mapNotNull(resolveDid)
                 else -> dropped += leaf
             }
 
