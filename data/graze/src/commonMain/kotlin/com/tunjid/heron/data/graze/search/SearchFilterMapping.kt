@@ -1,0 +1,417 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.data.graze.search
+
+import com.tunjid.heron.data.core.models.SearchFilter
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.graze.isValid
+import com.tunjid.heron.data.graze.search.Graze.FeedFromSearch
+import com.tunjid.heron.data.graze.search.Graze.FeedFromSearch.MappingNote
+import com.tunjid.heron.data.graze.search.Graze.SearchFromFeed
+
+object Graze {
+
+    data class FeedFromSearch(
+        val filter: Filter.Root,
+        val notes: List<MappingNote>,
+    ) {
+        enum class MappingNote {
+            FreeTextApproximated,
+            MediaApproximated,
+            RepliesApproximated,
+        }
+    }
+
+    data class SearchFromFeed(
+        val query: String,
+        val filter: SearchFilter,
+        val droppedLeaves: List<Filter.Leaf>,
+    )
+}
+
+/**
+ * Compiles this [SearchFilter] plus its free-text [query] into a Graze [Filter.And]. Only valid
+ * leaves survive (see [isValid]), so an empty search yields an empty — and therefore invalid,
+ * un-saveable — root. [viewerHandle] is the signed-in user's handle, used to turn
+ * [SearchFilter.From.Following] into a concrete `social_graph` on the viewer's follows.
+ *
+ * [resolveHandle] maps a mention's [ProfileId] (a DID) to the handle Graze matches on, or `null` if
+ * unknown; unresolvable mentions are dropped. Authors go through `social_list` (DIDs) and never call
+ * it. Supplied by the caller from already-resolved profiles.
+ */
+suspend inline fun SearchFilter.toFeedFilter(
+    query: String,
+    viewerHandle: String? = null,
+    resolveHandle: (ProfileId) -> String?,
+): FeedFromSearch {
+    val leaves = mutableListOf<Filter>()
+    val notes = mutableSetOf<MappingNote>()
+
+    query.toTermList().takeIf(List<String>::isNotEmpty)?.let { terms ->
+        leaves += Filter.Regex.Any(
+            variable = TextVariable,
+            terms = terms,
+            isCaseInsensitive = true,
+        )
+        notes += MappingNote.FreeTextApproximated
+    }
+
+    exactPhrase.nonBlankTrimmed()?.let { phrase ->
+        leaves += Filter.Regex.Matches(
+            variable = TextVariable,
+            pattern = phrase.escapeForRegex(),
+            isCaseInsensitive = true,
+        )
+        notes += MappingNote.FreeTextApproximated
+    }
+
+    noneOfWords.toTermList().takeIf(List<String>::isNotEmpty)?.let { terms ->
+        leaves += Filter.Regex.None(
+            variable = TextVariable,
+            terms = terms,
+            isCaseInsensitive = true,
+        )
+    }
+
+    language.nonBlankTrimmed()?.let { code ->
+        leaves += Filter.Entity.Matches(
+            entityType = Filter.Entity.Type.Languages,
+            values = listOf(code),
+        )
+    }
+
+    when (media) {
+        SearchFilter.Media.All -> Unit
+        SearchFilter.Media.VideosOnly -> leaves += Filter.Attribute.Embed(
+            operator = Filter.Comparator.Equality.Equal,
+            embedType = Filter.Attribute.Embed.Kind.Video,
+        )
+        SearchFilter.Media.WithMedia -> {
+            leaves += Filter.Or(
+                filters = MediaEmbedKinds.map { kind ->
+                    Filter.Attribute.Embed(
+                        operator = Filter.Comparator.Equality.Equal,
+                        embedType = kind,
+                    )
+                },
+            )
+            notes += MappingNote.MediaApproximated
+        }
+    }
+
+    when (replies) {
+        SearchFilter.Replies.PostsAndReplies -> Unit
+        SearchFilter.Replies.PostsOnly -> {
+            leaves += replyCompare(isReply = false)
+            notes += MappingNote.RepliesApproximated
+        }
+        SearchFilter.Replies.RepliesOnly -> {
+            leaves += replyCompare(isReply = true)
+            notes += MappingNote.RepliesApproximated
+        }
+    }
+
+    // Authors match by DID via social_list; aggregate across groups the way searchPostsV2 does.
+    people.didsFor(
+        mode = SearchFilter.PersonGroup.Mode.Include,
+        kind = SearchFilter.PersonGroup.Kind.Authors,
+    ).takeIf(List<String>::isNotEmpty)?.let { dids ->
+        leaves += Filter.Social.UserList(
+            dids = dids,
+            operator = Filter.Comparator.Set.In,
+        )
+    }
+    people.didsFor(
+        mode = SearchFilter.PersonGroup.Mode.Exclude,
+        kind = SearchFilter.PersonGroup.Kind.Authors,
+    ).takeIf(List<String>::isNotEmpty)?.let { dids ->
+        leaves += Filter.Social.UserList(
+            dids = dids,
+            operator = Filter.Comparator.Set.NotIn,
+        )
+    }
+
+    // Mentions match by handle; resolve inline (may suspend) and drop DIDs with no known handle.
+    people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Include)
+        .mapNotNull { resolveHandle(it) }
+        .distinct()
+        .takeIf(List<String>::isNotEmpty)
+        ?.let { handles ->
+            leaves += Filter.Entity.Matches(
+                entityType = Filter.Entity.Type.Mentions,
+                values = handles,
+            )
+        }
+    people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Exclude)
+        .mapNotNull { resolveHandle(it) }
+        .distinct()
+        .takeIf(List<String>::isNotEmpty)
+        ?.let { handles ->
+            leaves += Filter.Entity.Excludes(
+                entityType = Filter.Entity.Type.Mentions,
+                values = handles,
+            )
+        }
+
+    if (from == SearchFilter.From.Following) {
+        viewerHandle.nonBlankTrimmed()?.let { handle ->
+            leaves += Filter.Social.Graph(
+                username = handle,
+                operator = Filter.Comparator.Set.In,
+                direction = Filter.Social.Graph.Direction.Following,
+            )
+        }
+    }
+
+    // SearchFilter.since / .until are intentionally not mapped: Graze has no creation-date operator.
+
+    return FeedFromSearch(
+        filter = Filter.And(filters = leaves.filter { it.isValid }),
+        notes = notes.toList(),
+    )
+}
+
+/**
+ * Best-effort inverse: flattens the tree (any nested `or` is treated as `and`, broadening the
+ * result) and translates the leaves that have a search equivalent. Everything else lands in
+ * [SearchFromFeed.droppedLeaves]. [resolveDid] turns Graze mention handles back into DIDs (the
+ * identifiers searchPostsV2 expects); unresolved handles are dropped.
+ */
+suspend inline fun Filter.Root.toSearchApproximation(
+    resolveDid: (handle: String) -> ProfileId? = { null },
+): SearchFromFeed {
+    val dropped = mutableListOf<Filter.Leaf>()
+    val queryTerms = mutableListOf<String>()
+    val noneWords = mutableListOf<String>()
+    val mediaEmbedKinds = mutableSetOf<Filter.Attribute.Embed.Kind>()
+    val authorsInclude = mutableListOf<ProfileId>()
+    val authorsExclude = mutableListOf<ProfileId>()
+    val mentionsInclude = mutableListOf<ProfileId>()
+    val mentionsExclude = mutableListOf<ProfileId>()
+    var exactPhrase: String? = null
+    var language: String? = null
+    var replies = SearchFilter.Replies.PostsAndReplies
+    var from = SearchFilter.From.Anyone
+
+    for (leaf in flattenLeaves()) {
+        when (leaf) {
+            is Filter.Social.UserList -> when (leaf.operator) {
+                Filter.Comparator.Set.In -> authorsInclude += leaf.dids.map(::ProfileId)
+                Filter.Comparator.Set.NotIn -> authorsExclude += leaf.dids.map(::ProfileId)
+            }
+
+            is Filter.Social.Graph ->
+                if (leaf.operator == Filter.Comparator.Set.In &&
+                    leaf.direction == Filter.Social.Graph.Direction.Following
+                ) {
+                    from = SearchFilter.From.Following
+                } else {
+                    dropped += leaf
+                }
+
+            is Filter.Entity.Matches -> when (leaf.entityType) {
+                Filter.Entity.Type.Languages -> language = language ?: leaf.values.firstOrNull()
+                Filter.Entity.Type.Mentions -> mentionsInclude += leaf.values.mapNotNull(resolveDid)
+                else -> dropped += leaf
+            }
+
+            is Filter.Entity.Excludes -> when (leaf.entityType) {
+                Filter.Entity.Type.Mentions -> mentionsExclude += leaf.values.mapNotNull(resolveDid)
+                else -> dropped += leaf
+            }
+
+            is Filter.Regex.Any ->
+                if (leaf.variable == TextVariable) queryTerms += leaf.terms else dropped += leaf
+
+            is Filter.Regex.None ->
+                if (leaf.variable == TextVariable) noneWords += leaf.terms else dropped += leaf
+
+            is Filter.Regex.Matches ->
+                if (leaf.variable == TextVariable) {
+                    exactPhrase = exactPhrase ?: leaf.pattern.unescapeRegex()
+                } else {
+                    dropped += leaf
+                }
+
+            is Filter.Attribute.Embed ->
+                if (leaf.operator == Filter.Comparator.Equality.Equal && leaf.embedType in MediaEmbedKinds) {
+                    mediaEmbedKinds += leaf.embedType
+                } else {
+                    dropped += leaf
+                }
+
+            is Filter.Attribute.Compare ->
+                if (leaf.selector == Filter.Attribute.Compare.Selector.Reply) {
+                    when (leaf.targetValue.lowercase()) {
+                        "true" -> replies = SearchFilter.Replies.RepliesOnly
+                        "false" -> replies = SearchFilter.Replies.PostsOnly
+                        else -> dropped += leaf
+                    }
+                } else {
+                    dropped += leaf
+                }
+
+            // No search equivalent: text regex negation, ML, analysis, other social filters.
+            else -> dropped += leaf
+        }
+    }
+
+    val people = listOfNotNull(
+        authorsInclude.toPersonGroup(
+            mode = SearchFilter.PersonGroup.Mode.Include,
+            kind = SearchFilter.PersonGroup.Kind.Authors,
+        ),
+        authorsExclude.toPersonGroup(
+            mode = SearchFilter.PersonGroup.Mode.Exclude,
+            kind = SearchFilter.PersonGroup.Kind.Authors,
+        ),
+        mentionsInclude.toPersonGroup(
+            mode = SearchFilter.PersonGroup.Mode.Include,
+            kind = SearchFilter.PersonGroup.Kind.Mentions,
+        ),
+        mentionsExclude.toPersonGroup(
+            mode = SearchFilter.PersonGroup.Mode.Exclude,
+            kind = SearchFilter.PersonGroup.Kind.Mentions,
+        ),
+    )
+
+    val searchFilter = SearchFilter(
+        exactPhrase = exactPhrase,
+        noneOfWords = noneWords.takeIf(List<String>::isNotEmpty)?.joinToString(separator = " "),
+        since = null,
+        until = null,
+        language = language,
+        media = when {
+            mediaEmbedKinds.isEmpty() -> SearchFilter.Media.All
+            mediaEmbedKinds == setOf(Filter.Attribute.Embed.Kind.Video) -> SearchFilter.Media.VideosOnly
+            else -> SearchFilter.Media.WithMedia
+        },
+        replies = replies,
+        from = from,
+        people = people,
+    )
+
+    return SearchFromFeed(
+        query = queryTerms.joinToString(separator = " "),
+        filter = searchFilter,
+        droppedLeaves = dropped,
+    )
+}
+
+@PublishedApi
+internal val MediaEmbedKinds: List<Filter.Attribute.Embed.Kind> = listOf(
+    Filter.Attribute.Embed.Kind.Image,
+    Filter.Attribute.Embed.Kind.Video,
+    Filter.Attribute.Embed.Kind.Gif,
+    Filter.Attribute.Embed.Kind.ImageGroup,
+)
+
+private val WhitespaceRegex = "\\s+".toRegex()
+
+private val RegexMetaChars = setOf('.', '^', '$', '*', '+', '?', '(', ')', '[', ']', '{', '}', '|', '\\')
+
+@PublishedApi
+internal fun replyCompare(
+    isReply: Boolean,
+): Filter.Attribute.Compare = Filter.Attribute.Compare(
+    selector = Filter.Attribute.Compare.Selector.Reply,
+    operator = Filter.Comparator.Equality.Equal,
+    targetValue = isReply.toString(),
+)
+
+@PublishedApi
+internal fun Filter.flattenLeaves(): List<Filter.Leaf> = when (this) {
+    is Filter.Root -> filters.flatMap(Filter::flattenLeaves)
+    is Filter.Leaf -> listOf(this)
+}
+
+@PublishedApi
+internal fun List<ProfileId>.toPersonGroup(
+    mode: SearchFilter.PersonGroup.Mode,
+    kind: SearchFilter.PersonGroup.Kind,
+): SearchFilter.PersonGroup? = distinct()
+    .takeIf(List<ProfileId>::isNotEmpty)
+    ?.let { ids ->
+        SearchFilter.PersonGroup(
+            mode = mode,
+            kind = kind,
+            profileIds = ids,
+        )
+    }
+
+@PublishedApi
+internal fun List<SearchFilter.PersonGroup>.didsFor(
+    mode: SearchFilter.PersonGroup.Mode,
+    kind: SearchFilter.PersonGroup.Kind,
+): List<String> = asSequence()
+    .filter { it.mode == mode && it.kind == kind }
+    .flatMap { it.profileIds }
+    .map(ProfileId::id)
+    .distinct()
+    .toList()
+
+@PublishedApi
+internal fun List<SearchFilter.PersonGroup>.mentionDids(
+    mode: SearchFilter.PersonGroup.Mode,
+): List<ProfileId> = asSequence()
+    .filter { it.mode == mode && it.kind == SearchFilter.PersonGroup.Kind.Mentions }
+    .flatMap { it.profileIds }
+    .distinct()
+    .toList()
+
+@PublishedApi
+internal fun String?.toTermList(): List<String> = this
+    ?.trim()
+    ?.split(WhitespaceRegex)
+    ?.filter(String::isNotBlank)
+    ?: emptyList()
+
+@PublishedApi
+internal fun String?.nonBlankTrimmed(): String? = this
+    ?.trim()
+    ?.takeIf(String::isNotEmpty)
+
+@PublishedApi
+internal fun String.escapeForRegex(): String = buildString {
+    for (character in this@escapeForRegex) {
+        if (character in RegexMetaChars) append('\\')
+        append(character)
+    }
+}
+
+@PublishedApi
+internal fun String.unescapeRegex(): String {
+    val source = this
+    return buildString {
+        var index = 0
+        while (index < source.length) {
+            val character = source[index]
+            val next = source.getOrNull(index + 1)
+            if (character == '\\' && next != null && next in RegexMetaChars) {
+                append(next)
+                index += 2
+            } else {
+                append(character)
+                index += 1
+            }
+        }
+    }
+}
+
+@PublishedApi
+internal val TextVariable: String = Filter.Attribute.Compare.Selector.Text.value

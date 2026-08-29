@@ -45,6 +45,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.burst)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

@@ -39,7 +39,7 @@ data class SearchFilter(
     val replies: Replies = Replies.PostsAndReplies,
     val from: From = From.Anyone,
     val people: List<PersonGroup> = emptyList(),
-) {
+) : UrlEncodableModel {
     @Serializable
     enum class Media { All, WithMedia, VideosOnly }
 
