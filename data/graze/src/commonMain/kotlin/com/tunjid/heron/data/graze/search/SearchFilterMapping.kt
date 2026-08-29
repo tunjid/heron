@@ -48,7 +48,7 @@ object Graze {
     )
 }
 
-suspend fun SearchFilter.toFeedFilter(
+suspend fun SearchFilter?.toFeedFilter(
     query: String,
     viewerHandle: ProfileHandle? = null,
     resolveHandle: suspend (ProfileId) -> ProfileHandle?,
@@ -65,7 +65,7 @@ suspend fun SearchFilter.toFeedFilter(
         notes += MappingNote.FreeTextApproximated
     }
 
-    exactPhrase.nonBlankTrimmed()?.let { phrase ->
+    this?.exactPhrase.nonBlankTrimmed()?.let { phrase ->
         leaves += Filter.Regex.Matches(
             variable = TextVariable,
             pattern = phrase.escapeForRegex(),
@@ -74,7 +74,7 @@ suspend fun SearchFilter.toFeedFilter(
         notes += MappingNote.FreeTextApproximated
     }
 
-    noneOfWords.toTermList().takeIf(List<String>::isNotEmpty)?.let { terms ->
+    this?.noneOfWords.toTermList().takeIf(List<String>::isNotEmpty)?.let { terms ->
         leaves += Filter.Regex.None(
             variable = TextVariable,
             terms = terms,
@@ -82,14 +82,15 @@ suspend fun SearchFilter.toFeedFilter(
         )
     }
 
-    language.nonBlankTrimmed()?.let { code ->
+    this?.language.nonBlankTrimmed()?.let { code ->
         leaves += Filter.Entity.Matches(
             entityType = Filter.Entity.Type.Languages,
             values = listOf(code),
         )
     }
 
-    when (media) {
+    when (this?.media) {
+        null -> Unit
         SearchFilter.Media.All -> Unit
         SearchFilter.Media.VideosOnly -> leaves += Filter.Attribute.Embed(
             operator = Filter.Comparator.Equality.Equal,
@@ -108,7 +109,8 @@ suspend fun SearchFilter.toFeedFilter(
         }
     }
 
-    when (replies) {
+    when (this?.replies) {
+        null -> Unit
         SearchFilter.Replies.PostsAndReplies -> Unit
         SearchFilter.Replies.PostsOnly -> {
             leaves += replyCompare(isReply = false)
@@ -121,42 +123,47 @@ suspend fun SearchFilter.toFeedFilter(
     }
 
     // Authors match by DID via social_list; aggregate across groups the way searchPostsV2 does.
-    people.didsFor(
-        mode = SearchFilter.PersonGroup.Mode.Include,
-        kind = SearchFilter.PersonGroup.Kind.Authors,
-    ).takeIf(List<String>::isNotEmpty)?.let { dids ->
-        leaves += Filter.Social.UserList(
-            dids = dids,
-            operator = Filter.Comparator.Set.In,
+    this?.people
+        ?.didsFor(
+            mode = SearchFilter.PersonGroup.Mode.Include,
+            kind = SearchFilter.PersonGroup.Kind.Authors,
         )
-    }
-    people.didsFor(
-        mode = SearchFilter.PersonGroup.Mode.Exclude,
-        kind = SearchFilter.PersonGroup.Kind.Authors,
-    ).takeIf(List<String>::isNotEmpty)?.let { dids ->
-        leaves += Filter.Social.UserList(
-            dids = dids,
-            operator = Filter.Comparator.Set.NotIn,
+        ?.takeIf(List<String>::isNotEmpty)?.let { dids ->
+            leaves += Filter.Social.UserList(
+                dids = dids,
+                operator = Filter.Comparator.Set.In,
+            )
+        }
+    this?.people
+        ?.didsFor(
+            mode = SearchFilter.PersonGroup.Mode.Exclude,
+            kind = SearchFilter.PersonGroup.Kind.Authors,
         )
-    }
+        ?.takeIf(List<String>::isNotEmpty)?.let { dids ->
+            leaves += Filter.Social.UserList(
+                dids = dids,
+                operator = Filter.Comparator.Set.NotIn,
+            )
+        }
 
     // Mentions match by handle; resolve concurrently and drop DIDs with no known handle.
-    people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Include)
-        .awaitMapNotNull { resolveHandle(it) }
-        .map(ProfileHandle::id)
-        .distinct()
-        .takeIf(List<String>::isNotEmpty)
+    this?.people?.mentionDids(mode = SearchFilter.PersonGroup.Mode.Include)
+        ?.awaitMapNotNull { resolveHandle(it) }
+        ?.map(ProfileHandle::id)
+        ?.distinct()
+        ?.takeIf(List<String>::isNotEmpty)
         ?.let { handles ->
             leaves += Filter.Entity.Matches(
                 entityType = Filter.Entity.Type.Mentions,
                 values = handles,
             )
         }
-    people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Exclude)
-        .awaitMapNotNull { resolveHandle(it) }
-        .map(ProfileHandle::id)
-        .distinct()
-        .takeIf(List<String>::isNotEmpty)
+    this?.people
+        ?.mentionDids(mode = SearchFilter.PersonGroup.Mode.Exclude)
+        ?.awaitMapNotNull { resolveHandle(it) }
+        ?.map(ProfileHandle::id)
+        ?.distinct()
+        ?.takeIf(List<String>::isNotEmpty)
         ?.let { handles ->
             leaves += Filter.Entity.Excludes(
                 entityType = Filter.Entity.Type.Mentions,
@@ -164,7 +171,7 @@ suspend fun SearchFilter.toFeedFilter(
             )
         }
 
-    if (from == SearchFilter.From.Following) {
+    if (this?.from == SearchFilter.From.Following) {
         viewerHandle?.id.nonBlankTrimmed()?.let { handle ->
             leaves += Filter.Social.Graph(
                 username = handle,

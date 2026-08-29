@@ -403,6 +403,69 @@ class SearchFilterMappingTest {
     }
 
     @Test
+    fun nullFilterWithQuery_mapsOnlyTheQuery() = runTest {
+        val result = NullFilter.toFeedFilter(
+            query = "birds",
+            resolveHandle = NoHandles,
+        )
+
+        val any = assertIs<Filter.Regex.Any>(
+            value = result.filter.filters.single(),
+        )
+        assertContentEquals(
+            expected = listOf("birds"),
+            actual = any.terms,
+        )
+    }
+
+    @Test
+    fun nullFilterWithBlankQuery_producesEmptyInvalidRoot() = runTest {
+        val result = NullFilter.toFeedFilter(
+            query = "  ",
+            resolveHandle = NoHandles,
+        )
+
+        assertTrue(
+            actual = result.filter.filters.isEmpty(),
+        )
+        assertFalse(
+            actual = result.filter.isValid,
+        )
+    }
+
+    @Test
+    fun nullFilterWithMultiWordQuery_splitsIntoRegexTerms() = runTest {
+        val result = NullFilter.toFeedFilter(
+            query = "birds nature vibes",
+            resolveHandle = NoHandles,
+        )
+
+        val any = assertIs<Filter.Regex.Any>(
+            value = result.filter.filters.single(),
+        )
+        assertContentEquals(
+            expected = listOf("birds", "nature", "vibes"),
+            actual = any.terms,
+        )
+        assertTrue(
+            actual = MappingNote.FreeTextApproximated in result.notes,
+        )
+    }
+
+    @Test
+    fun nullFilterWithViewerHandle_doesNotAddFollowingGraph() = runTest {
+        val result = NullFilter.toFeedFilter(
+            query = "birds",
+            viewerHandle = ProfileHandle("me.test"),
+            resolveHandle = NoHandles,
+        )
+
+        assertTrue(
+            actual = result.filter.filters.none { it is Filter.Social.Graph },
+        )
+    }
+
+    @Test
     fun overlappingApproximations_deduplicateNotes() = runTest {
         val result = SearchFilter(exactPhrase = "hello world").toFeedFilter(
             query = "birds",
@@ -690,6 +753,8 @@ class SearchFilterMappingTest {
     // endregion
 
     // region helpers
+
+    private val NullFilter: SearchFilter? = null
 
     private val NoHandles: suspend (ProfileId) -> ProfileHandle? = { null }
 
