@@ -124,6 +124,14 @@ internal fun GeneralSearchResults(
             maxOffset = { Offset.Zero },
             minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
         )
+        val availablePresentations = state.presentationOptions(pagerState.currentPage)
+        val resolvedPresentation = remember(
+            state.preferredPresentation,
+            availablePresentations,
+        ) {
+            if (state.preferredPresentation in availablePresentations) state.preferredPresentation
+            else Timeline.Presentation.Text.WithEmbed
+        }
         Box(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
@@ -181,14 +189,6 @@ internal fun GeneralSearchResults(
                         ),
                     )
                 }
-                val availablePresentations = state.presentationOptions(pagerState.currentPage)
-                val resolvedPresentation = remember(
-                    state.preferredPresentation,
-                    availablePresentations,
-                ) {
-                    if (state.preferredPresentation in availablePresentations) state.preferredPresentation
-                    else Timeline.Presentation.Text.WithEmbed
-                }
                 TimelinePresentationSelector(
                     selected = resolvedPresentation,
                     available = availablePresentations,
@@ -221,7 +221,7 @@ internal fun GeneralSearchResults(
                             timelineStateHolder = searchResultStateHolder,
                             gridState = gridState,
                             modifier = modifier,
-                            presentation = state.preferredPresentation,
+                            presentation = resolvedPresentation,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             isActivePage = { pagerState.currentPage == page },
                             showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
