@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.graze.search
 
 import com.tunjid.heron.data.core.models.SearchFilter
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.isValid
@@ -39,7 +40,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun freeTextQuery_becomesCaseInsensitiveRegexAnyOnText() = runTest {
-        val result = SearchFilter().toFeedFilter(query = "birds nature", resolveHandle = NoHandles)
+        val result = SearchFilter().toFeedFilter(
+            query = "birds nature",
+            resolveHandle = NoHandles,
+        )
 
         val any = assertIs<Filter.Regex.Any>(
             value = result.filter.filters.single(),
@@ -62,7 +66,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun exactPhrase_becomesRegexMatchesWithMetacharactersEscaped() = runTest {
-        val result = filterOf(exactPhrase = "c++ (beta)").toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(exactPhrase = "c++ (beta)").toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val matches = assertIs<Filter.Regex.Matches>(
             value = result.filter.filters.single(),
@@ -82,7 +89,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun noneOfWords_becomeRegexNoneTerms() = runTest {
-        val result = filterOf(noneOfWords = "spam  ads").toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(noneOfWords = "spam  ads").toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val none = assertIs<Filter.Regex.None>(
             value = result.filter.filters.single(),
@@ -99,7 +109,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun language_becomesEntityLangsMatch() = runTest {
-        val result = filterOf(language = "en").toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(language = "en").toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val entity = assertIs<Filter.Entity.Matches>(
             value = result.filter.filters.single(),
@@ -116,7 +129,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun videosOnly_becomesSingleVideoEmbed() = runTest {
-        val result = filterOf(media = SearchFilter.Media.VideosOnly).toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(media = SearchFilter.Media.VideosOnly).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val embed = assertIs<Filter.Attribute.Embed>(
             value = result.filter.filters.single(),
@@ -136,7 +152,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun withMedia_becomesOrOfMediaEmbeds() = runTest {
-        val result = filterOf(media = SearchFilter.Media.WithMedia).toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(media = SearchFilter.Media.WithMedia).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val or = assertIs<Filter.Or>(
             value = result.filter.filters.single(),
@@ -162,7 +181,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun postsOnly_becomesReplyCompareFalse() = runTest {
-        val result = filterOf(replies = SearchFilter.Replies.PostsOnly).toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(replies = SearchFilter.Replies.PostsOnly).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val compare = assertIs<Filter.Attribute.Compare>(
             value = result.filter.filters.single(),
@@ -182,7 +204,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun repliesOnly_becomesReplyCompareTrue() = runTest {
-        val result = filterOf(replies = SearchFilter.Replies.RepliesOnly).toFeedFilter(query = "", resolveHandle = NoHandles)
+        val result = filterOf(replies = SearchFilter.Replies.RepliesOnly).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val compare = assertIs<Filter.Attribute.Compare>(
             value = result.filter.filters.single(),
@@ -197,11 +222,26 @@ class SearchFilterMappingTest {
     fun authors_aggregateAcrossGroupsIntoSocialListByDid() = runTest {
         val result = filterOf(
             people = listOf(
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Authors, "did:plc:a"),
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Authors, "did:plc:b"),
-                personGroup(SearchFilter.PersonGroup.Mode.Exclude, SearchFilter.PersonGroup.Kind.Authors, "did:plc:c"),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Authors,
+                    "did:plc:a",
+                ),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Authors,
+                    "did:plc:b",
+                ),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Exclude,
+                    SearchFilter.PersonGroup.Kind.Authors,
+                    "did:plc:c",
+                ),
             ),
-        ).toFeedFilter(query = "", resolveHandle = NoHandles)
+        ).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         val lists = result.filter.filters.map {
             assertIs<Filter.Social.UserList>(
@@ -224,10 +264,24 @@ class SearchFilterMappingTest {
     fun mentions_resolveDidsToHandlesForEntityFilters() = runTest {
         val result = filterOf(
             people = listOf(
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Mentions, "did:plc:a"),
-                personGroup(SearchFilter.PersonGroup.Mode.Exclude, SearchFilter.PersonGroup.Kind.Mentions, "did:plc:b"),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Mentions,
+                    "did:plc:a",
+                ),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Exclude,
+                    SearchFilter.PersonGroup.Kind.Mentions,
+                    "did:plc:b",
+                ),
             ),
-        ).toFeedFilter(query = "", resolveHandle = handles("did:plc:a" to "alice.test", "did:plc:b" to "bob.test"))
+        ).toFeedFilter(
+            query = "",
+            resolveHandle = handles(
+                "did:plc:a" to "alice.test",
+                "did:plc:b" to "bob.test",
+            ),
+        )
 
         val matches = result.filter.filters.filterIsInstance<Filter.Entity.Matches>().single()
         val excludes = result.filter.filters.filterIsInstance<Filter.Entity.Excludes>().single()
@@ -249,9 +303,16 @@ class SearchFilterMappingTest {
     fun mentions_withUnresolvableDid_produceNoLeaf() = runTest {
         val result = filterOf(
             people = listOf(
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Mentions, "did:plc:ghost"),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Mentions,
+                    "did:plc:ghost",
+                ),
             ),
-        ).toFeedFilter(query = "", resolveHandle = NoHandles)
+        ).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         assertTrue(
             actual = result.filter.filters.isEmpty(),
@@ -260,8 +321,11 @@ class SearchFilterMappingTest {
 
     @Test
     fun fromFollowing_withViewerHandle_becomesSocialGraphOnViewerFollows() = runTest {
-        val result = SearchFilter(from = SearchFilter.From.Following)
-            .toFeedFilter(query = "", viewerHandle = "me.test", resolveHandle = NoHandles)
+        val result = SearchFilter(from = SearchFilter.From.Following).toFeedFilter(
+            query = "",
+            viewerHandle = ProfileHandle("me.test"),
+            resolveHandle = NoHandles,
+        )
 
         val graph = assertIs<Filter.Social.Graph>(
             value = result.filter.filters.single(),
@@ -282,8 +346,11 @@ class SearchFilterMappingTest {
 
     @Test
     fun fromFollowing_withoutViewerHandle_producesNoLeaf() = runTest {
-        val result = SearchFilter(from = SearchFilter.From.Following)
-            .toFeedFilter(query = "", viewerHandle = null, resolveHandle = NoHandles)
+        val result = SearchFilter(from = SearchFilter.From.Following).toFeedFilter(
+            query = "",
+            viewerHandle = null,
+            resolveHandle = NoHandles,
+        )
 
         assertTrue(
             actual = result.filter.filters.isEmpty(),
@@ -295,7 +362,10 @@ class SearchFilterMappingTest {
         val result = filterOf(
             since = LocalDateStub,
             until = LocalDateStub,
-        ).toFeedFilter(query = "", resolveHandle = NoHandles)
+        ).toFeedFilter(
+            query = "",
+            resolveHandle = NoHandles,
+        )
 
         assertTrue(
             actual = result.filter.filters.isEmpty(),
@@ -307,7 +377,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun emptySearch_producesEmptyInvalidRoot() = runTest {
-        val result = SearchFilter().toFeedFilter(query = "  ", resolveHandle = NoHandles)
+        val result = SearchFilter().toFeedFilter(
+            query = "  ",
+            resolveHandle = NoHandles,
+        )
 
         assertTrue(
             actual = result.filter.filters.isEmpty(),
@@ -319,7 +392,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun anyNonEmptyCriterion_producesValidRoot() = runTest {
-        val result = SearchFilter().toFeedFilter(query = "birds", resolveHandle = NoHandles)
+        val result = SearchFilter().toFeedFilter(
+            query = "birds",
+            resolveHandle = NoHandles,
+        )
 
         assertTrue(
             actual = result.filter.isValid,
@@ -328,8 +404,10 @@ class SearchFilterMappingTest {
 
     @Test
     fun overlappingApproximations_deduplicateNotes() = runTest {
-        val result = SearchFilter(exactPhrase = "hello world")
-            .toFeedFilter(query = "birds", resolveHandle = NoHandles)
+        val result = SearchFilter(exactPhrase = "hello world").toFeedFilter(
+            query = "birds",
+            resolveHandle = NoHandles,
+        )
 
         assertEquals(
             expected = listOf(MappingNote.FreeTextApproximated),
@@ -345,8 +423,14 @@ class SearchFilterMappingTest {
     fun socialList_becomesAuthorPeopleGroups() = runTest {
         val root = Filter.And(
             filters = listOf(
-                Filter.Social.UserList(dids = listOf("did:plc:a"), operator = Filter.Comparator.Set.In),
-                Filter.Social.UserList(dids = listOf("did:plc:b"), operator = Filter.Comparator.Set.NotIn),
+                Filter.Social.UserList(
+                    dids = listOf("did:plc:a"),
+                    operator = Filter.Comparator.Set.In,
+                ),
+                Filter.Social.UserList(
+                    dids = listOf("did:plc:b"),
+                    operator = Filter.Comparator.Set.NotIn,
+                ),
             ),
         )
 
@@ -399,9 +483,21 @@ class SearchFilterMappingTest {
     fun textRegex_becomeQueryPhraseAndExcludes() = runTest {
         val root = Filter.And(
             filters = listOf(
-                Filter.Regex.Any(variable = TextVariable, terms = listOf("birds"), isCaseInsensitive = true),
-                Filter.Regex.Matches(variable = TextVariable, pattern = """good\+vibes""", isCaseInsensitive = true),
-                Filter.Regex.None(variable = TextVariable, terms = listOf("spam"), isCaseInsensitive = true),
+                Filter.Regex.Any(
+                    variable = TextVariable,
+                    terms = listOf("birds"),
+                    isCaseInsensitive = true,
+                ),
+                Filter.Regex.Matches(
+                    variable = TextVariable,
+                    pattern = """good\+vibes""",
+                    isCaseInsensitive = true,
+                ),
+                Filter.Regex.None(
+                    variable = TextVariable,
+                    terms = listOf("spam"),
+                    isCaseInsensitive = true,
+                ),
             ),
         )
 
@@ -485,7 +581,11 @@ class SearchFilterMappingTest {
                 Filter.ML.Moderation.empty(),
                 Filter.Analysis.Sentiment.empty(),
                 Filter.Social.StarterPack.empty(),
-                Filter.Regex.Any(variable = "embed", terms = listOf("x"), isCaseInsensitive = false),
+                Filter.Regex.Any(
+                    variable = "embed",
+                    terms = listOf("x"),
+                    isCaseInsensitive = false,
+                ),
             ),
         )
 
@@ -513,11 +613,22 @@ class SearchFilterMappingTest {
             noneOfWords = "spam",
             language = "en",
             people = listOf(
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Authors, "did:plc:a"),
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Mentions, "did:plc:b"),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Authors,
+                    "did:plc:a",
+                ),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Mentions,
+                    "did:plc:b",
+                ),
             ),
         )
-        val forward = original.toFeedFilter(query = "", resolveHandle = handles("did:plc:b" to "bob.test"))
+        val forward = original.toFeedFilter(
+            query = "",
+            resolveHandle = handles("did:plc:b" to "bob.test"),
+        )
 
         val back = forward.filter.toSearchApproximation(dids("bob.test" to "did:plc:b")).filter
 
@@ -546,12 +657,26 @@ class SearchFilterMappingTest {
             language = "en",
             media = SearchFilter.Media.WithMedia,
             people = listOf(
-                personGroup(SearchFilter.PersonGroup.Mode.Include, SearchFilter.PersonGroup.Kind.Authors, "did:plc:a"),
+                personGroup(
+                    SearchFilter.PersonGroup.Mode.Include,
+                    SearchFilter.PersonGroup.Kind.Authors,
+                    "did:plc:a",
+                ),
             ),
-        ).toFeedFilter(query = "birds", viewerHandle = "me.test", resolveHandle = NoHandles)
+        ).toFeedFilter(
+            query = "birds",
+            viewerHandle = ProfileHandle("me.test"),
+            resolveHandle = NoHandles,
+        )
 
-        val encoded = Json.encodeToString(RootFilterSerializer, feed.filter)
-        val decoded = Json.decodeFromString(RootFilterSerializer, encoded)
+        val encoded = Json.encodeToString(
+            RootFilterSerializer,
+            feed.filter,
+        )
+        val decoded = Json.decodeFromString(
+            RootFilterSerializer,
+            encoded,
+        )
 
         assertEquals(
             expected = feed.filter.filters.size,
@@ -566,16 +691,16 @@ class SearchFilterMappingTest {
 
     // region helpers
 
-    private val NoHandles: (ProfileId) -> String? = { null }
+    private val NoHandles: suspend (ProfileId) -> ProfileHandle? = { null }
 
-    private fun handles(vararg pairs: Pair<String, String>): (ProfileId) -> String? {
+    private fun handles(vararg pairs: Pair<String, String>): suspend (ProfileId) -> ProfileHandle? {
         val byDid = pairs.toMap()
-        return { did -> byDid[did.id] }
+        return { did -> byDid[did.id]?.let(::ProfileHandle) }
     }
 
-    private fun dids(vararg pairs: Pair<String, String>): (String) -> ProfileId? {
+    private fun dids(vararg pairs: Pair<String, String>): suspend (ProfileHandle) -> ProfileId? {
         val byHandle = pairs.toMap()
-        return { handle -> byHandle[handle]?.let(::ProfileId) }
+        return { handle -> byHandle[handle.id]?.let(::ProfileId) }
     }
 
     private fun filterOf(
