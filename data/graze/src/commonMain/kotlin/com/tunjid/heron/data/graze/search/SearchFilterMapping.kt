@@ -24,6 +24,9 @@ import com.tunjid.heron.data.graze.isValid
 import com.tunjid.heron.data.graze.search.Graze.FeedFromSearch
 import com.tunjid.heron.data.graze.search.Graze.FeedFromSearch.MappingNote
 import com.tunjid.heron.data.graze.search.Graze.SearchFromFeed
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 object Graze {
 
@@ -45,10 +48,10 @@ object Graze {
     )
 }
 
-suspend inline fun SearchFilter.toFeedFilter(
+suspend fun SearchFilter.toFeedFilter(
     query: String,
     viewerHandle: ProfileHandle? = null,
-    resolveHandle: (ProfileId) -> String?,
+    resolveHandle: suspend (ProfileId) -> ProfileHandle?,
 ): FeedFromSearch {
     val leaves = mutableListOf<Filter>()
     val notes = mutableSetOf<MappingNote>()
@@ -137,9 +140,10 @@ suspend inline fun SearchFilter.toFeedFilter(
         )
     }
 
-    // Mentions match by handle; resolve inline (may suspend) and drop DIDs with no known handle.
+    // Mentions match by handle; resolve concurrently and drop DIDs with no known handle.
     people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Include)
-        .mapNotNull { resolveHandle(it) }
+        .awaitMapNotNull { resolveHandle(it) }
+        .map(ProfileHandle::id)
         .distinct()
         .takeIf(List<String>::isNotEmpty)
         ?.let { handles ->
@@ -149,7 +153,8 @@ suspend inline fun SearchFilter.toFeedFilter(
             )
         }
     people.mentionDids(mode = SearchFilter.PersonGroup.Mode.Exclude)
-        .mapNotNull { resolveHandle(it) }
+        .awaitMapNotNull { resolveHandle(it) }
+        .map(ProfileHandle::id)
         .distinct()
         .takeIf(List<String>::isNotEmpty)
         ?.let { handles ->
@@ -177,8 +182,8 @@ suspend inline fun SearchFilter.toFeedFilter(
     )
 }
 
-suspend inline fun Filter.Root.toSearchApproximation(
-    resolveDid: (handle: ProfileHandle) -> ProfileId? = { null },
+suspend fun Filter.Root.toSearchApproximation(
+    resolveDid: suspend (handle: ProfileHandle) -> ProfileId? = { null },
 ): SearchFromFeed {
     val dropped = mutableListOf<Filter.Leaf>()
     val queryTerms = mutableListOf<String>()
@@ -212,17 +217,13 @@ suspend inline fun Filter.Root.toSearchApproximation(
             is Filter.Entity.Matches -> when (leaf.entityType) {
                 Filter.Entity.Type.Languages -> language = language ?: leaf.values.firstOrNull()
                 Filter.Entity.Type.Mentions ->
-                    mentionsInclude += leaf.values
-                        .map(::ProfileHandle)
-                        .mapNotNull(resolveDid)
+                    mentionsInclude += leaf.values.awaitMapNotNull { resolveDid(ProfileHandle(it)) }
                 else -> dropped += leaf
             }
 
             is Filter.Entity.Excludes -> when (leaf.entityType) {
                 Filter.Entity.Type.Mentions ->
-                    mentionsExclude += leaf.values
-                        .map(::ProfileHandle)
-                        .mapNotNull(resolveDid)
+                    mentionsExclude += leaf.values.awaitMapNotNull { resolveDid(ProfileHandle(it)) }
                 else -> dropped += leaf
             }
 
@@ -304,8 +305,19 @@ suspend inline fun Filter.Root.toSearchApproximation(
     )
 }
 
-@PublishedApi
-internal val MediaEmbedKinds: List<Filter.Attribute.Embed.Kind> = listOf(
+/**
+ * Maps each element through [transform] concurrently, dropping nulls while preserving order. Used to
+ * resolve profile handles/DIDs, which typically each hit the network.
+ */
+private suspend fun <T, R : Any> List<T>.awaitMapNotNull(
+    transform: suspend (T) -> R?,
+): List<R> = coroutineScope {
+    map { item -> async { transform(item) } }
+        .awaitAll()
+        .filterNotNull()
+}
+
+private val MediaEmbedKinds: List<Filter.Attribute.Embed.Kind> = listOf(
     Filter.Attribute.Embed.Kind.Image,
     Filter.Attribute.Embed.Kind.Video,
     Filter.Attribute.Embed.Kind.Gif,
@@ -316,8 +328,9 @@ private val WhitespaceRegex = "\\s+".toRegex()
 
 private val RegexMetaChars = setOf('.', '^', '$', '*', '+', '?', '(', ')', '[', ']', '{', '}', '|', '\\')
 
-@PublishedApi
-internal fun replyCompare(
+internal val TextVariable: String = Filter.Attribute.Compare.Selector.Text.value
+
+private fun replyCompare(
     isReply: Boolean,
 ): Filter.Attribute.Compare = Filter.Attribute.Compare(
     selector = Filter.Attribute.Compare.Selector.Reply,
@@ -325,14 +338,12 @@ internal fun replyCompare(
     targetValue = isReply.toString(),
 )
 
-@PublishedApi
-internal fun Filter.flattenLeaves(): List<Filter.Leaf> = when (this) {
+private fun Filter.flattenLeaves(): List<Filter.Leaf> = when (this) {
     is Filter.Root -> filters.flatMap(Filter::flattenLeaves)
     is Filter.Leaf -> listOf(this)
 }
 
-@PublishedApi
-internal fun List<ProfileId>.toPersonGroup(
+private fun List<ProfileId>.toPersonGroup(
     mode: SearchFilter.PersonGroup.Mode,
     kind: SearchFilter.PersonGroup.Kind,
 ): SearchFilter.PersonGroup? = distinct()
@@ -345,8 +356,7 @@ internal fun List<ProfileId>.toPersonGroup(
         )
     }
 
-@PublishedApi
-internal fun List<SearchFilter.PersonGroup>.didsFor(
+private fun List<SearchFilter.PersonGroup>.didsFor(
     mode: SearchFilter.PersonGroup.Mode,
     kind: SearchFilter.PersonGroup.Kind,
 ): List<String> = asSequence()
@@ -356,8 +366,7 @@ internal fun List<SearchFilter.PersonGroup>.didsFor(
     .distinct()
     .toList()
 
-@PublishedApi
-internal fun List<SearchFilter.PersonGroup>.mentionDids(
+private fun List<SearchFilter.PersonGroup>.mentionDids(
     mode: SearchFilter.PersonGroup.Mode,
 ): List<ProfileId> = asSequence()
     .filter { it.mode == mode && it.kind == SearchFilter.PersonGroup.Kind.Mentions }
@@ -365,28 +374,24 @@ internal fun List<SearchFilter.PersonGroup>.mentionDids(
     .distinct()
     .toList()
 
-@PublishedApi
-internal fun String?.toTermList(): List<String> = this
+private fun String?.toTermList(): List<String> = this
     ?.trim()
     ?.split(WhitespaceRegex)
     ?.filter(String::isNotBlank)
     ?: emptyList()
 
-@PublishedApi
-internal fun String?.nonBlankTrimmed(): String? = this
+private fun String?.nonBlankTrimmed(): String? = this
     ?.trim()
     ?.takeIf(String::isNotEmpty)
 
-@PublishedApi
-internal fun String.escapeForRegex(): String = buildString {
+private fun String.escapeForRegex(): String = buildString {
     for (character in this@escapeForRegex) {
         if (character in RegexMetaChars) append('\\')
         append(character)
     }
 }
 
-@PublishedApi
-internal fun String.unescapeRegex(): String {
+private fun String.unescapeRegex(): String {
     val source = this
     return buildString {
         var index = 0
@@ -403,6 +408,3 @@ internal fun String.unescapeRegex(): String {
         }
     }
 }
-
-@PublishedApi
-internal val TextVariable: String = Filter.Attribute.Compare.Selector.Text.value
