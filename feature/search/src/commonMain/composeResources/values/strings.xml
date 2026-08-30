@@ -29,6 +29,8 @@
     <string name="feeds">Feeds</string>
     <string name="hint_general_search">Search for posts, users or feeds</string>
     <string name="hint_profile_post_search">Search %1$s's posts</string>
+    <string name="hint_graze_feed_preview">Graze feed preview</string>
+    <string name="adapt_to_feed">Adapt to feed</string>
 
     <string name="filters_title">Filters</string>
     <string name="filters_content_description">Search filters</string>

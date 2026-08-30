@@ -85,11 +85,17 @@
     <string name="error_fetching_graze_feed">Error fetching Graze feed:\n %1$s</string>
     <string name="error_saving_graze_feed">Error saving Graze feed:\n %1$s</string>
     <string name="error_deleting_graze_feed">Error deleting Graze feed:\n %1$s</string>
+    <string name="search_to_feed_approximation">This feed approximates your search and some filters may match differently. Review them before saving.</string>
+    <string name="dropped_filters_title">Some filters can\'t be previewed</string>
+    <string name="dropped_filters_message">This feed uses filters that search can\'t reproduce. They\'ll be left out, so the preview may show more posts than the feed.</string>
+    <string name="preview_anyway">Preview anyway</string>
+    <string name="cancel">Cancel</string>
     <string name="edit_feed_name">Feed Name</string>
     <string name="edit_feed_description">Feed Description</string>
     <string name="delete_feed">Delete Feed</string>
     <string name="edit_feed">Edit Feed</string>
     <string name="edit_record_key">Edit Record Key</string>
+    <string name="preview_feed">Preview Feed</string>
 
     <string name="simple_filters">Simple Filters</string>
     <string name="advanced_filters">Advanced Filters</string>

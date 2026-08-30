@@ -18,10 +18,8 @@ package com.tunjid.heron.graze.editor
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.graze.Filter
@@ -30,11 +28,19 @@ import com.tunjid.heron.data.graze.GrazeFeed.Update.Create
 import com.tunjid.heron.data.graze.GrazeFeed.Update.Delete
 import com.tunjid.heron.data.graze.GrazeFeed.Update.Edit
 import com.tunjid.heron.data.graze.GrazeFeed.Update.Get
+import com.tunjid.heron.data.graze.search.Graze.SearchFromFeed
+import com.tunjid.heron.data.graze.search.toFeedFilter
+import com.tunjid.heron.data.graze.search.toSearchApproximation
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.graze.editor.di.initialLoad
+import com.tunjid.heron.graze.editor.di.isCreatePath
+import com.tunjid.heron.graze.editor.di.query
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.grazeFeedPreviewDestination
+import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -50,17 +56,18 @@ import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.error_deleting_graze_feed
 import heron.feature.graze_editor.generated.resources.error_fetching_graze_feed
 import heron.feature.graze_editor.generated.resources.error_saving_graze_feed
-import kotlin.time.Clock
+import heron.feature.graze_editor.generated.resources.search_to_feed_approximation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
 
 @Stable
 internal interface GrazeEditorStateHolder :
@@ -85,6 +92,7 @@ class ActualGrazeEditorViewModel(
     @AssistedInject
     constructor(
         navActions: (NavigationMutation) -> Unit,
+        profileRepository: ProfileRepository,
         recordRepository: RecordRepository,
         authRepository: AuthRepository,
         @Assisted scope: CoroutineScope,
@@ -94,6 +102,12 @@ class ActualGrazeEditorViewModel(
             state = State(route).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
+                launchSeedFeedFromSearchFilterMutations(
+                    state = state,
+                    route = route,
+                    authRepository = authRepository,
+                    profileRepository = profileRepository,
+                )
                 actions
                     .withInitialLoad(route)
                     .launchMutationsIn(
@@ -118,6 +132,11 @@ class ActualGrazeEditorViewModel(
                             )
                             is Action.Metadata -> action.flow.launchUpdateMetadataMutations(
                                 state = state,
+                            )
+                            is Action.PreviewFeed -> action.flow.launchFeedPreviewMutations(
+                                state = state,
+                                navActions = navActions,
+                                profileRepository = profileRepository,
                             )
                         }
                     }
@@ -175,6 +194,47 @@ private fun Flow<Action.Update>.launchUpdateMutations(
         .onFailure { throwable ->
             state.isLoading = false
             state.messages += action.toErrorMessage(throwable)
+        }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchSeedFeedFromSearchFilterMutations(
+    state: State.SnapshotMutable,
+    route: Route,
+    authRepository: AuthRepository,
+    profileRepository: ProfileRepository,
+) {
+    if (!route.isCreatePath) return
+
+    val pendingFeed = state.grazeFeed
+    if (pendingFeed !is GrazeFeed.Pending) return
+    if (pendingFeed.filter.filters.isNotEmpty()) return
+    if (state.currentPath.isNotEmpty()) return
+
+    val query = route.query ?: return
+    val searchFilter = route.model<SearchFilter>()
+
+    authRepository.signedInUser
+        .mapNotNull { it?.handle }
+        .take(1)
+        .launchedCollect { signedInProfileHandle ->
+            val approximation = searchFilter.toFeedFilter(
+                query = query,
+                viewerHandle = signedInProfileHandle,
+                resolveHandle = { profileId ->
+                    profileRepository.profile(profileId)
+                        .firstOrNull()
+                        ?.handle
+                },
+            )
+            if (approximation.notes.isNotEmpty()) {
+                state.messages += Memo.Resource(
+                    stringResource = Res.string.search_to_feed_approximation,
+                )
+            }
+            state.grazeFeed = pendingFeed.copy(
+                filter = approximation.filter,
+            )
         }
 }
 
@@ -247,6 +307,42 @@ private fun Flow<Action.EditFilter>.launchEditFilterMutations(
     }
 }
 
+context(productionScope: CoroutineScope)
+private fun Flow<Action.PreviewFeed>.launchFeedPreviewMutations(
+    state: State.SnapshotMutable,
+    navActions: (NavigationMutation) -> Unit,
+    profileRepository: ProfileRepository,
+) = launchedCollectLatest { action ->
+    when (action) {
+        is Action.PreviewFeed.Generate -> {
+            val approximation = action.filter.toSearchApproximation {
+                profileRepository.profile(it)
+                    .firstOrNull()
+                    ?.did
+            }
+            if (approximation.droppedLeaves.isEmpty()) {
+                navActions(approximation.toPreviewNavigationMutation())
+            } else {
+                state.droppedFilterPreview = approximation
+            }
+        }
+        Action.PreviewFeed.Proceed -> {
+            val approximation = state.droppedFilterPreview ?: return@launchedCollectLatest
+            state.droppedFilterPreview = null
+            navActions(approximation.toPreviewNavigationMutation())
+        }
+        Action.PreviewFeed.Cancel -> {
+            state.droppedFilterPreview = null
+        }
+    }
+}
+
+private fun SearchFromFeed.toPreviewNavigationMutation(): NavigationMutation =
+    grazeFeedPreviewDestination(
+        query = query,
+        searchFilter = filter,
+    ).navigationMutation
+
 private fun Filter.Root.updateAt(
     path: List<Int>,
     update: (Filter.Root) -> Filter.Root,
@@ -282,6 +378,7 @@ private val Action.Update.associatedRecordKey
         is Action.Update.InitialLoad -> recordKey
         is Action.Update.Save -> feed.recordKey
     }
+
 private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
     is Action.Update.InitialLoad -> Get(recordKey = recordKey)
     is Action.Update.Save -> when (val feed = feed) {

@@ -64,6 +64,10 @@ sealed class RouteQuery {
     data class ProfilePostSearch(
         val query: String,
     ) : RouteQuery()
+
+    data class GrazeFeedPreview(
+        val query: String,
+    ) : RouteQuery()
 }
 
 val RouteQuery.initialQueryString
@@ -71,6 +75,7 @@ val RouteQuery.initialQueryString
         RouteQuery.FullSearch -> ""
         is RouteQuery.HashtaggedPostsSearch -> query
         is RouteQuery.ProfilePostSearch -> query
+        is RouteQuery.GrazeFeedPreview -> query.removePrefix(GrazeFeedPreviewPrefix)
     }
 
 val RouteQuery.initialSearchBarText
@@ -78,12 +83,14 @@ val RouteQuery.initialSearchBarText
         RouteQuery.FullSearch -> ""
         is RouteQuery.HashtaggedPostsSearch -> query
         is RouteQuery.ProfilePostSearch -> ""
+        is RouteQuery.GrazeFeedPreview -> ""
     }
 val RouteQuery.supportsNonPostSearch
     get() = when (this) {
         RouteQuery.FullSearch -> true
         is RouteQuery.HashtaggedPostsSearch,
         is RouteQuery.ProfilePostSearch,
+        is RouteQuery.GrazeFeedPreview,
         -> false
     }
 
@@ -92,14 +99,28 @@ val RouteQuery.initialLayout
         RouteQuery.FullSearch -> ScreenLayout.Suggested
         is RouteQuery.HashtaggedPostsSearch,
         is RouteQuery.ProfilePostSearch,
+        is RouteQuery.GrazeFeedPreview,
         -> ScreenLayout.GeneralSearchResults
     }
 
 val RouteQuery.isQueryEditable
     get() = when (this) {
-        RouteQuery.FullSearch -> true
-        is RouteQuery.HashtaggedPostsSearch -> false
-        is RouteQuery.ProfilePostSearch -> true
+        RouteQuery.FullSearch,
+        is RouteQuery.ProfilePostSearch,
+        -> true
+        is RouteQuery.HashtaggedPostsSearch,
+        is RouteQuery.GrazeFeedPreview,
+        -> false
+    }
+
+val RouteQuery.supportsGrazeFeedCreation
+    get() = when (this) {
+        RouteQuery.FullSearch,
+        is RouteQuery.HashtaggedPostsSearch,
+        -> true
+        is RouteQuery.ProfilePostSearch,
+        is RouteQuery.GrazeFeedPreview,
+        -> false
     }
 
 val RouteQuery.isRoot
@@ -107,16 +128,20 @@ val RouteQuery.isRoot
         RouteQuery.FullSearch -> true
         is RouteQuery.HashtaggedPostsSearch,
         is RouteQuery.ProfilePostSearch,
+        is RouteQuery.GrazeFeedPreview,
         -> false
     }
 
 val RouteQuery.ProfilePostSearch.profileHandle
-    get() = "@${query.removePrefix("from:")}"
+    get() = "@${query.removePrefix(ProfilePostSearchPrefix)}"
 
-fun RouteQuery.queryString(searchBarText: String) = when (this) {
+fun RouteQuery.queryString(
+    searchBarText: String,
+) = when (this) {
     RouteQuery.FullSearch -> searchBarText
     is RouteQuery.HashtaggedPostsSearch -> searchBarText
     is RouteQuery.ProfilePostSearch -> "$query $searchBarText"
+    is RouteQuery.GrazeFeedPreview -> query.removePrefix(GrazeFeedPreviewPrefix)
 }
 
 fun RouteQuery.layoutFor(
@@ -137,6 +162,9 @@ val SearchFilter?.isMediaSearch: Boolean
         null,
         -> false
     }
+
+val State.canShowFab
+    get() = layout == ScreenLayout.GeneralSearchResults && query.supportsGrazeFeedCreation
 
 fun State.presentationOptions(
     currentPage: Int,
@@ -340,3 +368,6 @@ sealed class Action(val key: String) {
             NavigationAction by delegate
     }
 }
+
+internal const val ProfilePostSearchPrefix = "from:"
+internal const val GrazeFeedPreviewPrefix = "graze-preview:"

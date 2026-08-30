@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.types.ConversationId
@@ -161,6 +162,17 @@ fun searchProfilePostsDestination(
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
+fun grazeFeedPreviewDestination(
+    query: String,
+    searchFilter: SearchFilter?,
+): NavigationAction.Destination = pathDestination(
+    path = "/search/graze-preview:$query",
+    models = listOfNotNull(
+        searchFilter,
+    ),
+    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+)
+
 fun signInDestination(): NavigationAction.Destination = pathDestination(
     path = "/auth",
 )
@@ -208,6 +220,8 @@ fun mutesDestination(): NavigationAction.Destination = pathDestination(
 fun grazeEditorDestination(
     feedGenerator: FeedGenerator? = null,
     sharedElementPrefix: String? = null,
+    searchQuery: String? = null,
+    searchFilter: SearchFilter? = null,
 ): NavigationAction.Destination = pathDestination(
     path = when (feedGenerator) {
         null -> "/graze/create"
@@ -215,7 +229,13 @@ fun grazeEditorDestination(
     },
     models = listOfNotNull(
         feedGenerator,
+        searchFilter,
     ),
+    miscQueryParams = searchQuery?.let {
+        mapOf(
+            "query" to listOf(it),
+        )
+    } ?: emptyMap(),
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )

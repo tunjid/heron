@@ -17,8 +17,10 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Preview
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,6 +39,7 @@ import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.delete_feed
 import heron.feature.graze_editor.generated.resources.edit_feed
+import heron.feature.graze_editor.generated.resources.preview_feed
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
@@ -46,9 +49,16 @@ fun TopBarActions(
     grazeFeed: GrazeFeed.Editable,
     enabled: Boolean,
     onEditClicked: () -> Unit,
+    onPreviewClicked: () -> Unit,
     onSaveClicked: () -> Unit,
     onDeleteClicked: () -> Unit,
 ) {
+    AppBarIconButton(
+        icon = Icons.Rounded.Preview,
+        enabled = enabled && grazeFeed.filter.isValid,
+        iconDescription = stringResource(Res.string.preview_feed),
+        onClick = onPreviewClicked,
+    )
     AppBarIconButton(
         icon = Icons.Rounded.Save,
         enabled = enabled && grazeFeed.filter.isValid,
