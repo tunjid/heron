@@ -67,19 +67,22 @@ import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.timeout
 
 @Stable
 internal interface ProfileStateHolder :
@@ -567,7 +570,7 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
                     type = tab.profileTimelineType,
                 ),
             )
-                .first(),
+                .resolveWithTimeoutOrNull() ?: return null,
             startNumColumns = 1,
             timelineRepository = timelineRepository,
         ),
@@ -581,7 +584,7 @@ private suspend fun CoroutineScope.profileScreenStateHolder(
                     uri = tab.uri,
                 ),
             )
-                .first(),
+                .resolveWithTimeoutOrNull() ?: return null,
             startNumColumns = 1,
             timelineRepository = timelineRepository,
         ),
@@ -720,3 +723,8 @@ private fun ProfileTab.shouldShow(
     ProfileTab.StandardSite.Publications,
     -> !isLabeler
 }
+
+private suspend fun <T : Timeline> Flow<T?>.resolveWithTimeoutOrNull(): T? =
+    timeout(3.seconds)
+        .catch { emit(null) }
+        .firstOrNull()
