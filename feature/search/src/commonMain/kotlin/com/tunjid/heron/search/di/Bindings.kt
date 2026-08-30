@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.search.di
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -32,11 +34,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.search.Action
+import com.tunjid.heron.search.GrazeFeedPreviewPrefix
+import com.tunjid.heron.search.ProfilePostSearchPrefix
 import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolder
-import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.search.SearchViewModelInitializer
+import com.tunjid.heron.search.canShowFab
 import com.tunjid.heron.search.isQueryEditable
 import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.profileHandle
@@ -46,8 +50,10 @@ import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
@@ -56,10 +62,12 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
+import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -79,9 +87,12 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.search.generated.resources.Res
+import heron.feature.search.generated.resources.adapt_to_feed
 import heron.feature.search.generated.resources.filters_content_description
 import heron.feature.search.generated.resources.hint_general_search
+import heron.feature.search.generated.resources.hint_graze_feed_preview
 import heron.feature.search.generated.resources.hint_profile_post_search
+import heron.ui.core.generated.resources.feed_generator_create
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
@@ -93,10 +104,13 @@ private fun createRoute(
     params = routeParams,
 )
 
-internal val Route.query by mappedRoutePath(default = RouteQuery.FullSearch) { query ->
+internal val Route.query by mappedRoutePath(
+    default = RouteQuery.FullSearch,
+) { query ->
     when {
         query.isBlank() -> RouteQuery.FullSearch
-        query.startsWith("from:") -> RouteQuery.ProfilePostSearch(query)
+        query.startsWith(ProfilePostSearchPrefix) -> RouteQuery.ProfilePostSearch(query)
+        query.startsWith(GrazeFeedPreviewPrefix) -> RouteQuery.GrazeFeedPreview(query)
         else -> RouteQuery.HashtaggedPostsSearch(query)
     }
 }
@@ -233,6 +247,9 @@ internal fun Route(
                     Res.string.hint_general_search,
                 )
                 is RouteQuery.HashtaggedPostsSearch -> state.searchBarText
+                is RouteQuery.GrazeFeedPreview -> stringResource(
+                    Res.string.hint_graze_feed_preview,
+                )
             }
             if (state.query.isRoot) RootDestinationTopAppBar(
                 modifier = Modifier.offset {
@@ -325,6 +342,34 @@ internal fun Route(
                         fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
             )
+        },
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = state.canShowFab,
+            ) {
+                PaneFab(
+                    modifier = Modifier
+                        .offset {
+                            fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        },
+                    text = stringResource(Res.string.adapt_to_feed),
+                    icon = Icons.Rounded.SwapHoriz,
+                    expanded = isFabExpanded {
+                        if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                        else topAppBarNestedScrollConnection.offset * -1f
+                    },
+                    onClick = {
+                        stateHolder.accept(
+                            Action.Navigate.To(
+                                grazeEditorDestination(
+                                    searchQuery = state.searchBarText,
+                                    searchFilter = state.appliedFilter,
+                                ),
+                            ),
+                        )
+                    },
+                )
+            }
         },
         navigationBar = {
             PaneNavigationBar(

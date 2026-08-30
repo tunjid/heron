@@ -48,6 +48,7 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
+import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
@@ -112,6 +113,7 @@ class SearchViewModel(
                 searchBarText = route.query.initialSearchBarText,
                 query = route.query,
                 layout = route.query.initialLayout,
+                appliedFilter = route.model(),
                 searchStateHolders = scope.searchScreenStateHolders(
                     query = route.query,
                     isSignedIn = true,
