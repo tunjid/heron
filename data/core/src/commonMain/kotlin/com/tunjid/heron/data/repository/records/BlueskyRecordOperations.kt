@@ -39,8 +39,6 @@ import app.bsky.unspecced.TrendView
 import app.bsky.unspecced.TrendViewStatus
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
-import com.atproto.repo.GetRecordQueryParams
-import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -189,7 +187,7 @@ interface BlueskyRecordOperations {
 internal class OfflineFirstBlueskyRecordOperations(
     @AppMainScope
     appMainScope: CoroutineScope,
-    recordResolver: RecordResolver,
+    private val recordResolver: RecordResolver,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val listDao: ListDao,
@@ -608,7 +606,7 @@ internal class OfflineFirstBlueskyRecordOperations(
             update = update,
         ).mapCatchingUnlessCancelled { response ->
             val put = update as? GrazeFeed.Update.Put
-            networkService.updateFeedRecord(
+            updateFeedRecord(
                 response = response,
                 profileId = profileId,
                 editableFeed = put?.feed,
@@ -627,6 +625,8 @@ internal class OfflineFirstBlueskyRecordOperations(
                     GrazeFeed.Created(
                         recordKey = update.recordKey,
                         filter = update.feed.filter,
+                        displayName = update.feed.displayName,
+                        description = update.feed.description,
                     )
                 }
                 is GrazeResponse.Deleted -> {
@@ -695,16 +695,14 @@ internal class OfflineFirstBlueskyRecordOperations(
         }
             .toOutcome()
     } ?: expiredSessionOutcome()
-}
 
-private suspend fun NetworkService.updateFeedRecord(
-    editableFeed: GrazeFeed.Editable?,
-    response: GrazeResponse,
-    profileId: ProfileId,
-) {
-    runCatchingWithMonitoredNetworkRetry {
-        when (response) {
-            is GrazeResponse.Created -> createRecord(
+    private suspend fun updateFeedRecord(
+        editableFeed: GrazeFeed.Editable?,
+        response: GrazeResponse,
+        profileId: ProfileId,
+    ) {
+        if (response is GrazeResponse.Created) networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
                 CreateRecordRequest(
                     repo = Did(profileId.id),
                     collection = Nsid(FeedGeneratorUri.NAMESPACE),
@@ -719,39 +717,16 @@ private suspend fun NetworkService.updateFeedRecord(
                     ).asJsonContent(Generator.serializer()),
                 ),
             )
-            is GrazeResponse.Edited,
-            is GrazeResponse.Read,
-            -> {
-                val currentRecordResponse = getRecord(
-                    GetRecordQueryParams(
-                        repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                        rkey = RKey(response.rkey.value),
-                    ),
-                ).requireResponse()
+        }
 
-                val currentRecord = currentRecordResponse
-                    .value
-                    .decodeAs<Generator>()
+        val feedGeneratorUri = recordUriOrNull(
+            profileId = profileId,
+            namespace = FeedGeneratorUri.NAMESPACE,
+            recordKey = response.rkey,
+        ) ?: return
 
-                putRecord(
-                    PutRecordRequest(
-                        repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
-                        rkey = RKey(response.rkey.value),
-                        record = currentRecord.copy(
-                            displayName = editableFeed?.displayName ?: currentRecord.displayName,
-                            description = editableFeed?.description ?: currentRecord.description,
-                            contentMode = when (response) {
-                                is GrazeResponse.Read -> response.contentMode
-                                is GrazeResponse.Edited -> response.contentMode
-                            },
-                        ).asJsonContent(Generator.serializer()),
-                        swapRecord = currentRecordResponse.cid,
-                    ),
-                )
-            }
-            is GrazeResponse.Deleted -> {
+        if (response is GrazeResponse.Deleted) {
+            networkService.runCatchingWithMonitoredNetworkRetry {
                 deleteRecord(
                     DeleteRecordRequest(
                         repo = Did(profileId.id),
@@ -760,6 +735,9 @@ private suspend fun NetworkService.updateFeedRecord(
                     ),
                 )
             }
+            recordResolver.deleteRecord(feedGeneratorUri)
+        } else {
+            recordResolver.resolve(feedGeneratorUri)
         }
     }
 }
