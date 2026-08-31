@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.graze_editor.generated.resources.Res
@@ -57,6 +58,7 @@ sealed class Title {
     data class Created(
         override val path: List<Int>,
         val sharedElementPrefix: String,
+        val feed: GrazeFeed.Editable,
         val feedGenerator: FeedGenerator,
     ) : Title()
 }
@@ -89,8 +91,19 @@ fun Title(
             is Title.Created -> TimelineTitle(
                 modifier = Modifier,
                 paneTransitionScope = paneScaffoldState,
-                timeline = remember(currentTitle.feedGenerator) {
-                    Timeline.Home.Feed.stub(currentTitle.feedGenerator)
+                timeline = remember(
+                    currentTitle.feedGenerator,
+                    currentTitle.feed.displayName,
+                    currentTitle.feed.description,
+                ) {
+                    val feed = currentTitle.feed
+                    val feedGenerator = currentTitle.feedGenerator
+                    Timeline.Home.Feed.stub(
+                        currentTitle.feedGenerator.copy(
+                            displayName = feed.displayName ?: feedGenerator.displayName,
+                            description = feed.description ?: feedGenerator.description,
+                        ),
+                    )
                 },
                 sharedElementPrefix = currentTitle.sharedElementPrefix,
                 hasUpdates = false,
@@ -121,7 +134,7 @@ fun Title(
 }
 
 private fun Title.transitionKey(): String = when (this) {
-    is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}"
+    is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}-${feed.displayName}-${feed.description}"
     is Title.Pending -> "${recordKey.value}-${path.joinToString("pending")}"
 }
 
