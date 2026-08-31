@@ -625,6 +625,8 @@ internal class OfflineFirstBlueskyRecordOperations(
                     GrazeFeed.Created(
                         recordKey = update.recordKey,
                         filter = update.feed.filter,
+                        displayName = update.feed.displayName,
+                        description = update.feed.description,
                     )
                 }
                 is GrazeResponse.Deleted -> {
