@@ -18,13 +18,18 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -40,6 +45,7 @@ import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.timeline.utilities.MediaOverlayText
 import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -74,62 +80,79 @@ internal fun PostMedia(
         if (imagesSize > 1 && Platform.current.isNativeCompose) TrackingOverlayClip() else null
     }
 
-    LazyRow(
+    Box(
         modifier = modifier
             .ifNotNull(
                 item = overlayClip,
                 block = Modifier::trackOverlayClipBounds,
             ),
-        horizontalArrangement = spacedBy(8.dp),
     ) {
-        val tallestMedia = feature.media.minBy { it.aspectRatioOrSquare }
+        val listState = rememberLazyListState()
+        LazyRow(
+            state = listState,
+            horizontalArrangement = spacedBy(8.dp),
+        ) {
+            val tallestMedia = feature.media.minBy { it.aspectRatioOrSquare }
 
-        itemsIndexed(
-            items = feature.media,
-            key = { _, item ->
-                when (item) {
-                    is Image -> item.thumb.uri
-                    is Video -> item.playlist.uri
-                }
-            },
-            itemContent = { index, item ->
-                val itemModifier = baseModifier
-                    .mediaPlacement(
-                        presentation = presentation,
-                        feature = feature,
-                        matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-                        mediaItem = item,
-                        tallestMediaItem = tallestMedia,
-                    )
-                when (item) {
-                    is Image -> PostImage(
-                        paneTransitionScope = paneTransitionScope,
-                        modifier = itemModifier
-                            .shapedClickable(shape) { onMediaClicked(index) },
-                        overlayClip = overlayClip,
-                        image = item,
-                        sharedElementPrefix = sharedElementPrefix,
-                        postUri = postUri,
-                        presentation = presentation,
-                    )
-                    is Video -> with(LocalVideoPlayerController.current) {
-                        PostVideo(
-                            modifier = itemModifier
-                                .clickable {
-                                    play(videoId = item.playlist.uri)
-                                    onMediaClicked(index)
-                                },
-                            video = item,
+            itemsIndexed(
+                items = feature.media,
+                key = { _, item ->
+                    when (item) {
+                        is Image -> item.thumb.uri
+                        is Video -> item.playlist.uri
+                    }
+                },
+                itemContent = { index, item ->
+                    val itemModifier = baseModifier
+                        .mediaPlacement(
                             presentation = presentation,
-                            isBlurred = isBlurred,
+                            feature = feature,
+                            matchHeightConstraintsFirst = matchHeightConstraintsFirst,
+                            mediaItem = item,
+                            tallestMediaItem = tallestMedia,
+                        )
+                    when (item) {
+                        is Image -> PostImage(
                             paneTransitionScope = paneTransitionScope,
+                            modifier = itemModifier
+                                .shapedClickable(shape) { onMediaClicked(index) },
+                            overlayClip = overlayClip,
+                            image = item,
                             sharedElementPrefix = sharedElementPrefix,
                             postUri = postUri,
+                            presentation = presentation,
                         )
+                        is Video -> with(LocalVideoPlayerController.current) {
+                            PostVideo(
+                                modifier = itemModifier
+                                    .clickable {
+                                        play(videoId = item.playlist.uri)
+                                        onMediaClicked(index)
+                                    },
+                                video = item,
+                                presentation = presentation,
+                                isBlurred = isBlurred,
+                                paneTransitionScope = paneTransitionScope,
+                                sharedElementPrefix = sharedElementPrefix,
+                                postUri = postUri,
+                            )
+                        }
                     }
+                },
+            )
+        }
+        if (feature.media.size > 1) {
+            val approximateIndex by remember {
+                derivedStateOf {
+                    listState.firstVisibleItemIndex + 1
                 }
-            },
-        )
+            }
+            MediaOverlayText(
+                modifier = Modifier
+                    .align(Alignment.TopStart),
+                text = "$approximateIndex/${feature.media.size}",
+            )
+        }
     }
 }
 
