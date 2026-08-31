@@ -52,6 +52,8 @@ interface State {
         val feedGenerator: FeedGenerator? = null,
         val sharedElementPrefix: String,
         val isLoading: Boolean = false,
+        val editedDisplayName: String? = null,
+        val editedDescription: String? = null,
         @Transient
         val messages: List<Memo> = emptyList(),
         // The pending preview whose search approximation dropped filters; drives a confirm dialog.
@@ -134,6 +136,10 @@ sealed class Action(val key: String) {
         data object Proceed : PreviewFeed()
         data object Cancel : PreviewFeed()
     }
+
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
 
     sealed class Navigate :
         Action(key = "Navigate"),

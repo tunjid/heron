@@ -185,6 +185,7 @@ object GrazeEditorBindings {
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     val editFeedInfoSheetState =
@@ -213,6 +214,7 @@ object GrazeEditorBindings {
                                         )
                                         else -> Title.Created(
                                             path = state.currentPath,
+                                            feed = state.grazeFeed,
                                             feedGenerator = feedGenerator,
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         )

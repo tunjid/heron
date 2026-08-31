@@ -138,6 +138,9 @@ class ActualGrazeEditorViewModel(
                                 navActions = navActions,
                                 profileRepository = profileRepository,
                             )
+                            is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                                state = state,
+                            )
                         }
                     }
             },
@@ -335,6 +338,13 @@ private fun Flow<Action.PreviewFeed>.launchFeedPreviewMutations(
             state.droppedFilterPreview = null
         }
     }
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { event ->
+    state.messages -= event.message
 }
 
 private fun SearchFromFeed.toPreviewNavigationMutation(): NavigationMutation =
