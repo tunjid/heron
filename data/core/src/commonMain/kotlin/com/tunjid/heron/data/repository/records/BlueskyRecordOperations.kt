@@ -751,6 +751,7 @@ private fun TrendView.trend() = Trend(
         -> null
     },
     displayName = displayName,
+    description = description,
     link = link,
     startedAt = startedAt,
     postCount = postCount,
