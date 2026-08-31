@@ -62,6 +62,11 @@ import com.tunjid.heron.graze.editor.ui.filter.SocialUserListFilter
 import com.tunjid.heron.graze.editor.ui.filter.UnsupportedFilter
 import com.tunjid.heron.graze.editor.ui.filter.validationTint
 import com.tunjid.heron.ui.Indicator
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -71,8 +76,12 @@ import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
+import heron.feature.graze_editor.generated.resources.cancel
+import heron.feature.graze_editor.generated.resources.dropped_filters_message
+import heron.feature.graze_editor.generated.resources.dropped_filters_title
 import heron.feature.graze_editor.generated.resources.items_count
 import heron.feature.graze_editor.generated.resources.model_probability
+import heron.feature.graze_editor.generated.resources.preview_anyway
 import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.unknown_filter
@@ -216,6 +225,40 @@ fun GrazeEditorScreen(
                 )
             }
         }
+    }
+    // Previewing an approximation that had to drop filters: confirm before an over-broad preview.
+    state.droppedFilterPreview?.let {
+        SimpleDialog(
+            onDismissRequest = {
+                actions(Action.PreviewFeed.Cancel)
+            },
+            title = {
+                SimpleDialogTitle(
+                    text = stringResource(Res.string.dropped_filters_title),
+                )
+            },
+            text = {
+                SimpleDialogText(
+                    text = stringResource(Res.string.dropped_filters_message),
+                )
+            },
+            confirmButton = {
+                PrimaryDialogButton(
+                    text = stringResource(Res.string.preview_anyway),
+                    onClick = {
+                        actions(Action.PreviewFeed.Proceed)
+                    },
+                )
+            },
+            dismissButton = {
+                NeutralDialogButton(
+                    text = stringResource(Res.string.cancel),
+                    onClick = {
+                        actions(Action.PreviewFeed.Cancel)
+                    },
+                )
+            },
+        )
     }
 }
 
@@ -471,6 +514,7 @@ fun FilterLeaf(
             RegexFilter(
                 modifier = modifier,
                 filter = filter,
+                onUpdate = onUpdate,
                 onRemove = onRemove,
             )
 

@@ -21,7 +21,6 @@
     <string name="trending_title">Trending</string>
     <string name="suggested_accounts">Suggested Accounts</string>
     <string name="post_count">%1$s posts</string>
-    <string name="trend_started">%1$s ago</string>
     <string name="by_creator">by %1$s</string>
     <string name="starter_packs">Starter Packs</string>
     <string name="hot">Hot</string>
@@ -29,6 +28,8 @@
     <string name="feeds">Feeds</string>
     <string name="hint_general_search">Search for posts, users or feeds</string>
     <string name="hint_profile_post_search">Search %1$s's posts</string>
+    <string name="hint_graze_feed_preview">Graze feed preview</string>
+    <string name="adapt_to_feed">Adapt to feed</string>
 
     <string name="filters_title">Filters</string>
     <string name="filters_content_description">Search filters</string>

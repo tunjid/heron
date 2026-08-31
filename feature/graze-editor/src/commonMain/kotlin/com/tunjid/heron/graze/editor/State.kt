@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.graze.search.Graze.SearchFromFeed
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.scaffold.navigation.model
@@ -51,8 +52,13 @@ interface State {
         val feedGenerator: FeedGenerator? = null,
         val sharedElementPrefix: String,
         val isLoading: Boolean = false,
+        val editedDisplayName: String? = null,
+        val editedDescription: String? = null,
         @Transient
         val messages: List<Memo> = emptyList(),
+        // The pending preview whose search approximation dropped filters; drives a confirm dialog.
+        @Transient
+        val droppedFilterPreview: SearchFromFeed? = null,
     ) : State
 
     companion object {
@@ -122,6 +128,18 @@ sealed class Action(val key: String) {
         val displayName: String,
         val description: String?,
     ) : Action("Metadata")
+
+    sealed class PreviewFeed : Action("GeneratePreview") {
+        data class Generate(
+            val filter: Filter.Root,
+        ) : PreviewFeed()
+        data object Proceed : PreviewFeed()
+        data object Cancel : PreviewFeed()
+    }
+
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
 
     sealed class Navigate :
         Action(key = "Navigate"),

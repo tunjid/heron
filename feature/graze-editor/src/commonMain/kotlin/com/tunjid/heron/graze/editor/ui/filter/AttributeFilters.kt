@@ -146,7 +146,7 @@ private fun Filter.Attribute.Embed.Kind.stringRes() = when (this) {
     Filter.Attribute.Embed.Kind.Gif -> Res.string.embed_kind_gif
 }
 
-private fun Filter.Attribute.Compare.Selector.stringRes(): StringResource = when (this) {
+internal fun Filter.Attribute.Compare.Selector.stringRes(): StringResource = when (this) {
     Filter.Attribute.Compare.Selector.Text -> Res.string.selector_text
     Filter.Attribute.Compare.Selector.Reply -> Res.string.selector_reply
     Filter.Attribute.Compare.Selector.Embed -> Res.string.selector_embed

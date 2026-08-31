@@ -19,6 +19,7 @@ package com.tunjid.heron.search.ui.suggestions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -52,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextOverflow.Companion
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -81,7 +81,6 @@ import heron.feature.search.generated.resources.hot
 import heron.feature.search.generated.resources.post_count
 import heron.feature.search.generated.resources.starter_packs
 import heron.feature.search.generated.resources.suggested_accounts
-import heron.feature.search.generated.resources.trend_started
 import heron.feature.search.generated.resources.trending_title
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -307,26 +306,35 @@ internal fun Trend(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        Text(
+            text = trendIndex(index),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+        )
         Column(
             modifier = Modifier
                 .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = trendTitle(index, trend),
+                text = trend.displayName ?: "",
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
             )
+            trend.description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
             Spacer(
                 modifier = Modifier
-                    .height(8.dp),
+                    .height(4.dp),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Spacer(
-                    modifier = Modifier
-                        .width(8.dp),
-                )
                 TrendAvatars(
                     trend = trend,
                 )
@@ -340,6 +348,7 @@ internal fun Trend(
         FilterChip(
             selected = false,
             shape = CircleShape,
+            contentPadding = TrendAgePadding,
             onClick = { onTrendClicked(trend) },
             leadingIcon = {
                 when (trend.status) {
@@ -356,13 +365,10 @@ internal fun Trend(
                 Text(
                     text = when (trend.status) {
                         Trend.Status.Hot -> stringResource(Res.string.hot)
-                        null -> stringResource(
-                            Res.string.trend_started,
-                            remember(
-                                now,
-                                trend.startedAt,
-                            ) { now - trend.startedAt }.roundComponent(),
-                        )
+                        null -> remember(
+                            now,
+                            trend.startedAt,
+                        ) { now - trend.startedAt }.roundComponent()
                     },
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -392,8 +398,8 @@ private fun TrendAvatars(trend: Trend) {
         }
 }
 
-private fun trendTitle(index: Int, trend: Trend) =
-    "${index + 1}. ${trend.displayName ?: ""}"
+private fun trendIndex(index: Int) =
+    "${index + 1}."
 
 @Composable
 private fun trendDetails(trend: Trend): String {
@@ -412,6 +418,8 @@ private val SuggestedContentPadding =
         horizontal = 8.dp,
         vertical = 8.dp,
     )
+
+private val TrendAgePadding = PaddingValues(4.dp)
 
 private const val SuggestedProfilesSharedElementPrefix = "suggested-profile"
 private const val SuggestedFeedsSharedElementPrefix = "suggested-feeds"

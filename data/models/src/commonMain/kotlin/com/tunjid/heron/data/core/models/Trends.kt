@@ -24,6 +24,7 @@ data class Trend(
     val topic: String,
     val status: Status?,
     val displayName: String?,
+    val description: String?,
     val link: String,
     val startedAt: Instant,
     val postCount: Long,

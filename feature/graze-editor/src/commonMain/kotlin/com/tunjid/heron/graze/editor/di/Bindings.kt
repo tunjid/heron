@@ -24,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.graze.editor.Action
-import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.GrazeEditorStateHolder
 import com.tunjid.heron.graze.editor.GrazeEditorViewModelInitializer
@@ -55,6 +54,7 @@ import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
+import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.trieOf
 import com.tunjid.treenav.strings.urlRouteMatcher
@@ -84,6 +84,10 @@ private fun createRoute(
 private val Route.feedGeneratorRecordKey by mappedRoutePath(
     mapper = ::RecordKey,
 )
+
+internal val Route.query by optionalRouteQuery()
+
+internal val Route.isCreatePath get() = id == RoutePattern
 
 private val RequestTrie = trieOf(
     RoutePattern to {
@@ -181,6 +185,7 @@ object GrazeEditorBindings {
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
                     val editFeedInfoSheetState =
@@ -209,6 +214,7 @@ object GrazeEditorBindings {
                                         )
                                         else -> Title.Created(
                                             path = state.currentPath,
+                                            feed = state.grazeFeed,
                                             feedGenerator = feedGenerator,
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         )
@@ -226,6 +232,11 @@ object GrazeEditorBindings {
                                 enabled = !state.isLoading,
                                 onEditClicked = {
                                     editFeedInfoSheetState.editFeed(state)
+                                },
+                                onPreviewClicked = {
+                                    stateHolder.accept(
+                                        Action.PreviewFeed.Generate(state.grazeFeed.filter),
+                                    )
                                 },
                                 onSaveClicked = {
                                     stateHolder.accept(

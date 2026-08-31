@@ -140,9 +140,10 @@ fun AnalysisFilter(
     }
 
     if (filter is Filter.Analysis.TextArbitrary || filter is Filter.Analysis.ImageArbitrary) {
-        return UnsupportedFilter(
+        return AnalysisArbitraryFilter(
             modifier = modifier,
-            title = title,
+            filter = filter,
+            onUpdate = onUpdate,
             onRemove = onRemove,
         )
     }
@@ -411,4 +412,78 @@ fun Filter.Analysis.ImageNsfw.Category.stringRes(): StringResource = when (this)
 fun Filter.Analysis.ImageArbitrary.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.ImageArbitrary.Category.Default -> Res.string.analysis_arbitrary_default
     else -> Res.string.moderation_category_unknown
+}
+
+@Composable
+private fun AnalysisArbitraryFilter(
+    filter: Filter.Analysis,
+    onUpdate: (Filter.Analysis) -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    StandardFilter(
+        modifier = modifier,
+        tint = filter.validationTint(),
+        title = stringResource(
+            when (filter) {
+                is Filter.Analysis.ImageArbitrary -> Res.string.image_arbitrary
+                else -> Res.string.text_arbitrary
+            },
+        ),
+        onRemove = onRemove,
+        rowContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Range.entries,
+                onSelect = { onUpdate(filter.withArbitraryOperator(it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        },
+        additionalContent = {
+            LabeledTextEntry(
+                label = stringResource(Res.string.tag),
+                value = filter.arbitraryTag,
+                onValueChanged = { onUpdate(filter.withArbitraryTag(it)) },
+            )
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { onUpdate(filter.withArbitraryThreshold(it)) },
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+        },
+    )
+}
+
+private val Filter.Analysis.arbitraryTag: String
+    get() = when (this) {
+        is Filter.Analysis.TextArbitrary -> category.value
+        is Filter.Analysis.ImageArbitrary -> category.value
+        else -> ""
+    }
+
+private fun Filter.Analysis.withArbitraryTag(
+    tag: String,
+): Filter.Analysis = when (this) {
+    is Filter.Analysis.TextArbitrary -> copy(category = Filter.Analysis.TextArbitrary.Category(tag))
+    is Filter.Analysis.ImageArbitrary -> copy(category = Filter.Analysis.ImageArbitrary.Category(tag))
+    else -> this
+}
+
+private fun Filter.Analysis.withArbitraryOperator(
+    operator: Filter.Comparator.Range,
+): Filter.Analysis = when (this) {
+    is Filter.Analysis.TextArbitrary -> copy(operator = operator)
+    is Filter.Analysis.ImageArbitrary -> copy(operator = operator)
+    else -> this
+}
+
+private fun Filter.Analysis.withArbitraryThreshold(
+    threshold: Double,
+): Filter.Analysis = when (this) {
+    is Filter.Analysis.TextArbitrary -> copy(threshold = threshold)
+    is Filter.Analysis.ImageArbitrary -> copy(threshold = threshold)
+    else -> this
 }

@@ -34,6 +34,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:models"))
 
+                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.cbor)
@@ -45,6 +46,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.burst)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

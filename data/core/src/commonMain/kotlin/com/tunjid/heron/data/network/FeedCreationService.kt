@@ -51,7 +51,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 
 internal interface FeedCreationService {
