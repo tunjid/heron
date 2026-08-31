@@ -61,6 +61,8 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.timeline.utilities.MediaOverlayBackground
+import com.tunjid.heron.timeline.utilities.MediaOverlayText
 import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -212,7 +214,7 @@ private fun PlayerInfo(
         visible = videoPlayerState.status is PlayerStatus.Play.Confirmed,
     ) {
         Row {
-            PlayerControlBackground(
+            MediaOverlayBackground(
                 onClicked = {
                     videoPlayerController.pauseActiveVideo()
                 },
@@ -225,21 +227,11 @@ private fun PlayerInfo(
                     )
                 },
             )
-            PlayerControlBackground {
-                BasicText(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp),
-                    text = videoPlayerState.lastPositionMs.formatVideoDuration(),
-                    style = MaterialTheme.typography.bodySmall,
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 8.sp,
-                        maxFontSize = 10.sp,
-                    ),
-                    color = Color.Companion::White,
-                )
-            }
+            MediaOverlayText(
+                text = videoPlayerState.lastPositionMs.formatVideoDuration(),
+            )
             Spacer(Modifier.weight(1f))
-            PlayerControlBackground(
+            MediaOverlayBackground(
                 onClicked = {
                     videoPlayerController.isMuted = !videoPlayerController.isMuted
                 },
@@ -288,34 +280,6 @@ private fun PlayButton(
                     .size(presentation.playButtonIconSize),
                 contentDescription = stringResource(Res.string.play_video),
                 imageVector = presentation.playButtonIcon,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlayerControlBackground(
-    onClicked: () -> Unit = {},
-    content: @Composable () -> Unit,
-) {
-    val color = Color.Black.copy(alpha = 0.6f)
-    ScrimmedContent {
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable {
-                    onClicked()
-                }
-                .padding(all = 8.dp)
-                .background(
-                    color = color,
-                    shape = CircleShape,
-                )
-                .height(24.dp),
-        ) {
-            Box(
-                modifier = Modifier.align(Alignment.Center),
-                content = { content() },
             )
         }
     }

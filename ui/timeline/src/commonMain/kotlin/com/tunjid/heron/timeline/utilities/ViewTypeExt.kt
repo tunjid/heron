@@ -16,15 +16,24 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -32,6 +41,7 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -40,6 +50,8 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
+import com.tunjid.heron.media.video.formatVideoDuration
+import com.tunjid.heron.ui.ScrimmedContent
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -129,6 +141,57 @@ internal fun SensitiveContentBox(
             }
         },
     )
+}
+
+@Composable
+internal fun MediaOverlayBackground(
+    modifier: Modifier = Modifier,
+    onClicked: () -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    val color = Color.Black.copy(alpha = 0.6f)
+    ScrimmedContent {
+        Box(
+            modifier = modifier
+                .clip(CircleShape)
+                .clickable {
+                    onClicked()
+                }
+                .padding(all = 8.dp)
+                .background(
+                    color = color,
+                    shape = CircleShape,
+                )
+                .height(24.dp),
+        ) {
+            Box(
+                modifier = Modifier.align(Alignment.Center),
+                content = { content() },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun MediaOverlayText(
+    modifier: Modifier = Modifier,
+    text: String,
+) {
+    MediaOverlayBackground(
+        modifier = modifier,
+    ) {
+        BasicText(
+            modifier = modifier
+                .padding(horizontal = 8.dp),
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 8.sp,
+                maxFontSize = 10.sp,
+            ),
+            color = Color.Companion::White,
+        )
+    }
 }
 
 @Composable
