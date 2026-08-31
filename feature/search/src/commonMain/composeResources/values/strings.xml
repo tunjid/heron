@@ -21,7 +21,6 @@
     <string name="trending_title">Trending</string>
     <string name="suggested_accounts">Suggested Accounts</string>
     <string name="post_count">%1$s posts</string>
-    <string name="trend_started">%1$s ago</string>
     <string name="by_creator">by %1$s</string>
     <string name="starter_packs">Starter Packs</string>
     <string name="hot">Hot</string>
