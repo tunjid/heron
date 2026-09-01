@@ -128,6 +128,7 @@ import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Language
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.Blob
@@ -863,6 +864,12 @@ internal class OfflinePostRepository(
                 externalThumbBlob = externalThumbBlob,
             ),
             facets = resolvedLinks.facet(),
+            // The lexicon caps a post at three languages; clamp so the record's own
+            // `require` never trips on publish, and omit the field entirely when unset.
+            langs = metadata.langs
+                .take(3)
+                .map(::Language)
+                .takeIf(List<Language>::isNotEmpty),
             createdAt = createdAt,
         )
             .asJsonContent(BskyPost.serializer())

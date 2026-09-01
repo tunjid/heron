@@ -1,7 +1,9 @@
 package com.tunjid.heron.data.repository
 
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.data.core.models.PostLanguageSelection
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.withMostRecentPostLanguage
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -69,6 +71,10 @@ interface UserDataRepository {
 
     suspend fun setDefaultModelName(
         modelName: String?,
+    ): Outcome
+
+    suspend fun addRecentPostLanguage(
+        selection: PostLanguageSelection,
     ): Outcome
 }
 
@@ -170,6 +176,17 @@ internal class OfflineUserDataRepository(
         modelName: String?,
     ): Outcome = updatePreferences {
         copy(local = local.copy(defaultModelName = modelName))
+    }
+
+    override suspend fun addRecentPostLanguage(
+        selection: PostLanguageSelection,
+    ): Outcome = updatePreferences {
+        copy(
+            local = local.copy(
+                recentPostLanguages = local.recentPostLanguages
+                    .withMostRecentPostLanguage(selection = selection),
+            ),
+        )
     }
 
     private suspend inline fun updatePreferences(

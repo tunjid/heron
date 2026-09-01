@@ -83,6 +83,8 @@ data class Preferences(
         val loadDefaultModelOnLaunch: Boolean = false,
         @ProtoNumber(12)
         val defaultModelName: String? = null,
+        @ProtoNumber(13)
+        val recentPostLanguages: List<PostLanguageSelection> = emptyList(),
     )
 
     companion object {
@@ -128,6 +130,11 @@ data class Preferences(
         )
     }
 }
+
+@Serializable
+data class PostLanguageSelection(
+    val tags: List<String>,
+)
 
 @Serializable
 data class TimelinePreference(
@@ -255,4 +262,13 @@ data class FeedPreference(
     }
 }
 
+fun List<PostLanguageSelection>.withMostRecentPostLanguage(
+    selection: PostLanguageSelection,
+    max: Int = MaxRecentPostLanguages,
+): List<PostLanguageSelection> =
+    if (selection.tags.isEmpty()) this
+    else (listOf(selection) + filterNot { it.tags == selection.tags }).take(max)
+
 private val Boolean?.isTrue get() = this == true
+
+private const val MaxRecentPostLanguages: Int = 6

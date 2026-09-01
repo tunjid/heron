@@ -34,3 +34,5 @@ internal object NoOpLanguageDetector : LanguageDetector {
  * [languageTag] verbatim when the platform cannot resolve a name.
  */
 expect fun englishDisplayName(languageTag: String): String
+
+expect fun isoLanguageTags(): List<String>

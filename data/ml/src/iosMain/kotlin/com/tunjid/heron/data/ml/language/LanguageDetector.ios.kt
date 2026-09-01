@@ -18,6 +18,7 @@ package com.tunjid.heron.data.ml.language
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import platform.Foundation.ISOLanguageCodes
 import platform.Foundation.NSLocale
 import platform.Foundation.localizedStringForLanguageCode
 import platform.NaturalLanguage.NLLanguageRecognizer
@@ -60,3 +61,6 @@ actual fun englishDisplayName(languageTag: String): String {
         .localizedStringForLanguageCode(languageCode)
         ?: languageTag
 }
+
+actual fun isoLanguageTags(): List<String> =
+    NSLocale.ISOLanguageCodes.filterIsInstance<String>()
