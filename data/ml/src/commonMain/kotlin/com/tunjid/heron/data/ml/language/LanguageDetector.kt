@@ -29,10 +29,35 @@ internal object NoOpLanguageDetector : LanguageDetector {
 }
 
 /**
- * The English display name of the language identified by [languageTag] (a BCP-47 tag such as
- * `"de"`, `"en-US"`, or `"zh-Hant"`) — e.g. `"German"`, `"English"`, `"Chinese"`. Falls back to
- * [languageTag] verbatim when the platform cannot resolve a name.
+ * The display name of the language identified by [languageTag] (a BCP-47 tag such as `"de"`,
+ * `"en-US"`, or `"zh-Hant"`) rendered in the locale identified by [inLocaleTag] — e.g. tag `"de"`
+ * in locale `"fr"` yields `"allemand"`. Falls back to [languageTag] when the platform cannot
+ * resolve a name.
  */
-expect fun englishDisplayName(languageTag: String): String
+expect fun languageDisplayName(
+    languageTag: String,
+    inLocaleTag: String,
+): String
+
+/**
+ * The English display name of [languageTag] — e.g. `"German"`, `"English"`, `"Chinese"`. Used where
+ * the name feeds an English-language model prompt rather than the UI, which should localise names
+ * to the reader via [languageDisplayName].
+ */
+fun englishDisplayName(
+    languageTag: String,
+): String = languageDisplayName(
+    languageTag = languageTag,
+    inLocaleTag = "en",
+)
 
 expect fun isoLanguageTags(): List<String>
+
+/**
+ * A [Comparator] that orders strings by the collation rules of [inLocaleTag], so localised names
+ * sort the way a reader of that language expects — accents and locale-specific letter order handled
+ * — rather than by raw code point.
+ */
+expect fun localeCollator(
+    inLocaleTag: String,
+): Comparator<String>

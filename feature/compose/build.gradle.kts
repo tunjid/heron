@@ -31,6 +31,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:core"))
                 implementation(project(":data:files"))
+                implementation(project(":data:ml"))
                 implementation(project(":ui:scaffold"))
                 implementation(project(":feature:template"))
 
