@@ -20,6 +20,7 @@ import android.content.Context
 import android.view.textclassifier.TextClassificationManager
 import android.view.textclassifier.TextClassifier
 import android.view.textclassifier.TextLanguage
+import java.text.Collator
 import java.util.Locale
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -58,10 +59,20 @@ fun createLanguageDetector(
     ioDispatcher = ioDispatcher,
 )
 
-actual fun englishDisplayName(languageTag: String): String =
+actual fun languageDisplayName(
+    languageTag: String,
+    inLocaleTag: String,
+): String =
     Locale.forLanguageTag(languageTag)
-        .getDisplayLanguage(Locale.ENGLISH)
+        .getDisplayLanguage(Locale.forLanguageTag(inLocaleTag))
         .ifBlank { languageTag }
 
 actual fun isoLanguageTags(): List<String> =
     Locale.getISOLanguages().toList()
+
+actual fun localeCollator(inLocaleTag: String): Comparator<String> {
+    val collator = Collator.getInstance(Locale.forLanguageTag(inLocaleTag))
+    return Comparator { first, second ->
+        collator.compare(first, second)
+    }
+}

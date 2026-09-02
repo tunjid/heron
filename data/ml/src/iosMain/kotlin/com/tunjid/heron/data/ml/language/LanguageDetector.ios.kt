@@ -16,10 +16,14 @@
 
 package com.tunjid.heron.data.ml.language
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import platform.Foundation.ISOLanguageCodes
 import platform.Foundation.NSLocale
+import platform.Foundation.NSString
+import platform.Foundation.create
+import platform.Foundation.localizedCompare
 import platform.Foundation.localizedStringForLanguageCode
 import platform.NaturalLanguage.NLLanguageRecognizer
 
@@ -50,17 +54,28 @@ fun createLanguageDetector(
     ioDispatcher = ioDispatcher,
 )
 
-/**
- * `localizedStringForLanguageCode` expects a bare language code, so drop any region/script subtags
- * from the BCP-47 [languageTag] first. An `"en"` locale forces the name into English regardless of
- * the device locale, keeping it consistent with the English-language prompt.
- */
-actual fun englishDisplayName(languageTag: String): String {
+actual fun languageDisplayName(
+    languageTag: String,
+    inLocaleTag: String,
+): String {
     val languageCode = languageTag.substringBefore('-')
-    return NSLocale(localeIdentifier = "en")
+    return NSLocale(localeIdentifier = inLocaleTag)
         .localizedStringForLanguageCode(languageCode)
         ?: languageTag
 }
 
 actual fun isoLanguageTags(): List<String> =
     NSLocale.ISOLanguageCodes.filterIsInstance<String>()
+
+// NSComparisonResult is NSOrderedAscending(-1)/Same(0)/Descending(1) — already the Comparator
+// contract. Ordering follows the reader's current locale, which matches the rendered names;
+// [inLocaleTag] is honoured precisely on the JVM.
+@OptIn(BetaInteropApi::class)
+actual fun localeCollator(
+    inLocaleTag: String,
+): Comparator<String> =
+    Comparator { first, second ->
+        NSString.create(string = first)
+            .localizedCompare(second)
+            .toInt()
+    }

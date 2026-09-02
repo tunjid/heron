@@ -16,14 +16,25 @@
 
 package com.tunjid.heron.data.ml.language
 
+import java.text.Collator
 import java.util.Locale
 
 fun createLanguageDetector(): LanguageDetector = NoOpLanguageDetector
 
-actual fun englishDisplayName(languageTag: String): String =
+actual fun languageDisplayName(
+    languageTag: String,
+    inLocaleTag: String,
+): String =
     Locale.forLanguageTag(languageTag)
-        .getDisplayLanguage(Locale.ENGLISH)
+        .getDisplayLanguage(Locale.forLanguageTag(inLocaleTag))
         .ifBlank { languageTag }
 
 actual fun isoLanguageTags(): List<String> =
     Locale.getISOLanguages().toList()
+
+actual fun localeCollator(inLocaleTag: String): Comparator<String> {
+    val collator = Collator.getInstance(Locale.forLanguageTag(inLocaleTag))
+    return Comparator { first, second ->
+        collator.compare(first, second)
+    }
+}
