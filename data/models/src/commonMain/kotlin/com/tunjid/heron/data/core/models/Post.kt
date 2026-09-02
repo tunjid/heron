@@ -112,6 +112,8 @@ data class Post(
             val allowed: ThreadGate.Allowed? = null,
             @ProtoNumber(7)
             val linkPreview: LinkPreview? = null,
+            @ProtoNumber(8)
+            val langs: List<String> = emptyList(),
         )
 
         @Serializable

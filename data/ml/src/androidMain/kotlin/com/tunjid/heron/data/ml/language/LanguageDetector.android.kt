@@ -62,3 +62,6 @@ actual fun englishDisplayName(languageTag: String): String =
     Locale.forLanguageTag(languageTag)
         .getDisplayLanguage(Locale.ENGLISH)
         .ifBlank { languageTag }
+
+actual fun isoLanguageTags(): List<String> =
+    Locale.getISOLanguages().toList()

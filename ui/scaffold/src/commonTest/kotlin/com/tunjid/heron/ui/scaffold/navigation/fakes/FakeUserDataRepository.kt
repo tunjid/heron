@@ -1,6 +1,7 @@
 package com.tunjid.heron.ui.scaffold.navigation.fakes
 
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.data.core.models.PostLanguageSelection
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -56,5 +57,8 @@ class FakeUserDataRepository : UserDataRepository {
         Outcome.Success
 
     override suspend fun setDefaultModelName(modelName: String?): Outcome =
+        Outcome.Success
+
+    override suspend fun addRecentPostLanguage(selection: PostLanguageSelection): Outcome =
         Outcome.Success
 }
