@@ -34,6 +34,8 @@ import com.tunjid.heron.data.repository.expiredSessionOutcome
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
+import com.tunjid.heron.data.tasks.TaskId
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -108,6 +110,7 @@ internal class PersistedWriteQueue(
     private val savedStateDataSource: SavedStateDataSource,
     override val notificationRepository: NotificationsRepository,
     override val recordRepository: RecordRepository,
+    private val backgroundTaskScheduler: BackgroundTaskScheduler,
 ) : WriteQueue() {
 
     private val processingWriteIds = mutableSetOf<String>()
@@ -240,8 +243,10 @@ internal class PersistedWriteQueue(
         emit(
             Pair(
                 first = writable,
-                second = with(writable) {
-                    withTimeout(writable.writeTimeout()) { write() }
+                second = writable.keepingUploadAlive {
+                    with(writable) {
+                        withTimeout(writable.writeTimeout()) { write() }
+                    }
                 },
             ),
         )
@@ -249,6 +254,21 @@ internal class PersistedWriteQueue(
         .catch {
             emit(writable to Outcome.Failure(it))
         }
+
+    /**
+     * A media upload has to outlive the foreground; a backgrounded process is frozen by the OS and
+     * the request stalls until it times out. The write runs here either way, so this only asks
+     * the platform to keep the process running while the bytes are in flight.
+     */
+    private suspend fun Writable.keepingUploadAlive(
+        write: suspend () -> Outcome,
+    ): Outcome {
+        if (!carriesMedia()) return write()
+        return backgroundTaskScheduler.keepingProcessAlive(
+            id = TaskId("$UploadTaskPrefix$queueId"),
+            block = write,
+        )
+    }
 
     private suspend fun onWriteOutcome(
         outcome: Outcome,
@@ -361,6 +381,27 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     }
 }
 
+private fun Writable.carriesMedia(): Boolean =
+    when (this) {
+        is Writable.Create -> request.metadata.embeddedMedia.isNotEmpty()
+        is Writable.ProfileUpdate -> update.avatarFile != null || update.bannerFile != null
+        is Writable.Connection,
+        is Writable.ConversationUpdate,
+        is Writable.Interaction,
+        is Writable.FeedInteraction,
+        is Writable.NotificationUpdate,
+        is Writable.Reaction,
+        is Writable.Restriction,
+        is Writable.Send,
+        is Writable.TimelineUpdate,
+        is Writable.RecordDeletion,
+        is Writable.FeedList,
+        is Writable.StandardSite,
+        is Writable.StatusUpdate,
+        is Writable.PostDraft,
+        -> false
+    }
+
 private fun Writable.writeTimeout() =
     when (this) {
         is Writable.Create ->
@@ -392,6 +433,8 @@ private fun Writable.writeTimeout() =
         is Writable.PostDraft,
         -> BasicWriteTimeout
     }
+
+private const val UploadTaskPrefix = "upload:"
 
 private val VideoWriteTimeout = 8.minutes
 

@@ -24,9 +24,14 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import kotlin.time.Duration.Companion.hours
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 
 /**
  * The single app-facing entry point for background work. It persists the tasks that have been asked
@@ -51,6 +56,8 @@ abstract class BackgroundTaskScheduler(
             requestTimeoutMillis = 2.hours.inWholeMilliseconds
         }
     }
+
+    private val processHolds = MutableStateFlow(emptySet<TaskId>())
 
     val tasks: Flow<List<Task>>
         get() = taskStore.pending
@@ -91,6 +98,28 @@ abstract class BackgroundTaskScheduler(
         cancelScheduled(id)
         taskStore.remove(id)
     }
+
+    open suspend fun <T> keepingProcessAlive(
+        id: TaskId,
+        block: suspend () -> T,
+    ): T {
+        processHolds.update { it + id }
+        return try {
+            block()
+        } finally {
+            withContext(NonCancellable) {
+                processHolds.update { it - id }
+            }
+        }
+    }
+
+    /** Whether this process is currently holding itself open for [id]. */
+    internal fun isHoldingProcess(
+        id: TaskId,
+    ): Flow<Boolean> =
+        processHolds
+            .map { holds -> id in holds }
+            .distinctUntilChanged()
 
     /** Hand [task] to the OS for out-of-band execution. */
     protected abstract suspend fun schedule(

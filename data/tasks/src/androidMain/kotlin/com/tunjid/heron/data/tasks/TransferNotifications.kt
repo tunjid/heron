@@ -26,29 +26,29 @@ import androidx.core.app.NotificationCompat
 /** The progress notification shown while a transfer runs (a FGS notification, or a UIDT job notification). */
 internal object TransferNotifications {
 
-    const val ChannelId = "heron.transfers"
-
-    fun Context.ensureChannel() {
+    fun Context.ensureChannels() {
         val manager = getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(ChannelId) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(
-                    ChannelId,
-                    "Downloads",
-                    NotificationManager.IMPORTANCE_LOW,
-                ),
-            )
+        Task.Kind.entries.forEach { kind ->
+            if (manager.getNotificationChannel(kind.channelId) == null) {
+                manager.createNotificationChannel(
+                    NotificationChannel(
+                        kind.channelId,
+                        kind.channelName,
+                        NotificationManager.IMPORTANCE_LOW,
+                    ),
+                )
+            }
         }
     }
 
     fun Context.progressNotification(
-        title: String,
-        progress: Progress?,
+        notice: TransferNotice,
     ): Notification {
-        this.ensureChannel()
-        return NotificationCompat.Builder(this, ChannelId)
-            .setContentTitle(title)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+        this.ensureChannels()
+        val progress = notice.progress
+        return NotificationCompat.Builder(this, notice.channelId)
+            .setContentTitle(notice.title)
+            .setSmallIcon(notice.smallIcon)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .apply {
@@ -91,3 +91,15 @@ internal object TransferNotifications {
         )
     }
 }
+
+internal val Task.Kind.channelId: String
+    get() = when (this) {
+        Task.Kind.Transfer -> "heron.transfers"
+        Task.Kind.Upload -> "heron.uploads"
+    }
+
+private val Task.Kind.channelName: String
+    get() = when (this) {
+        Task.Kind.Transfer -> "Downloads"
+        Task.Kind.Upload -> "Uploads"
+    }
