@@ -68,7 +68,7 @@ import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun QuotedPost(
+internal fun QuotedPost(
     modifier: Modifier = Modifier,
     now: Instant,
     quotedPost: Post,
