@@ -27,8 +27,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.tunjid.heron.data.core.models.RockskyAlbum
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.LabelIconSize
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.ui.timeline.generated.resources.Res

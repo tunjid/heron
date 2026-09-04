@@ -73,8 +73,8 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction

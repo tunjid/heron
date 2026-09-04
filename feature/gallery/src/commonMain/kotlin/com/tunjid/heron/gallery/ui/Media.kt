@@ -60,8 +60,8 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.gallery.Action
 import com.tunjid.heron.gallery.GalleryItem
 import com.tunjid.heron.gallery.posterSharedElementPrefix
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoPlayerController

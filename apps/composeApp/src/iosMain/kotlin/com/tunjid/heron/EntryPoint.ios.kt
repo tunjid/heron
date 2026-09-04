@@ -31,7 +31,7 @@ import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
 import com.tunjid.heron.data.utilities.inference.FoundationModelsManager
-import com.tunjid.heron.images.imageLoader
+import com.tunjid.heron.media.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction

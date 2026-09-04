@@ -35,7 +35,7 @@ import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
-import com.tunjid.heron.images.imageLoader
+import com.tunjid.heron.media.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
 import com.tunjid.heron.media.video.linux.GStreamerPlayerController
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerController

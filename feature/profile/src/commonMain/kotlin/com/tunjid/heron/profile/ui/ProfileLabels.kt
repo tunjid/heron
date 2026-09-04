@@ -41,8 +41,8 @@ import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.AppliedLabelDialog
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow

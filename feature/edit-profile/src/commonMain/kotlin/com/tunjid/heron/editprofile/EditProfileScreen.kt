@@ -70,8 +70,8 @@ import com.tunjid.heron.editprofile.ui.EditButton
 import com.tunjid.heron.editprofile.ui.EditProfileTabs
 import com.tunjid.heron.editprofile.ui.TabEditor
 import com.tunjid.heron.editprofile.ui.rememberEditProfileTabs
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.profile.AvatarHaloZIndex

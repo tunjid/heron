@@ -109,8 +109,8 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings

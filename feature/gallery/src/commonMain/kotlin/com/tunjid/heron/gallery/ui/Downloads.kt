@@ -35,9 +35,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.gallery.GalleryItem
-import com.tunjid.heron.images.DownloadStatus
-import com.tunjid.heron.images.ImageRequest
-import com.tunjid.heron.images.LocalImageLoader
+import com.tunjid.heron.media.images.DownloadStatus
+import com.tunjid.heron.media.images.ImageRequest
+import com.tunjid.heron.media.images.LocalImageLoader
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.download
 import heron.feature.gallery.generated.resources.download_complete

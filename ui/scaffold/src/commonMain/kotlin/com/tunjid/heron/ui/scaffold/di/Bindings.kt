@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.ui.scaffold.di
 
-import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.AppIdentityStateHolder
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
@@ -30,7 +30,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PredictiveBackContentTransformer
 import com.tunjid.heron.ui.scaffold.ui.AppUiStateHolder
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
-import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
@@ -39,7 +38,6 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
-import kotlinx.coroutines.flow.StateFlow
 
 class ScaffoldBindingArgs(
     val imageLoader: ImageLoader,
