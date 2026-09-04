@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
@@ -56,6 +58,8 @@ fun LikeRow(
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
+    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit,
+    onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
 ) {
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
@@ -67,6 +71,8 @@ fun LikeRow(
         notification = notification,
         profiles = aggregatedProfiles,
         onProfileClicked = onProfileClicked,
+        onPostMediaClicked = onPostMediaClicked,
+        onLinkTargetClicked = onLinkTargetClicked,
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
@@ -106,7 +112,7 @@ fun LikeRow(
                 Text(
                     text = notification.associatedPost.record?.text ?: "",
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
+                    maxLines = 2,
                     style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.outline),
                 )
             }
