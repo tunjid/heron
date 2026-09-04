@@ -34,6 +34,13 @@ import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DerakkumaBest
+import com.tunjid.heron.data.core.models.DerakkumaCircle
+import com.tunjid.heron.data.core.models.DerakkumaCircleMember
+import com.tunjid.heron.data.core.models.DerakkumaFavoriteSong
+import com.tunjid.heron.data.core.models.DerakkumaFriend
+import com.tunjid.heron.data.core.models.DerakkumaPlay
+import com.tunjid.heron.data.core.models.DerakkumaProfile
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Follow
@@ -488,6 +495,13 @@ internal class OfflineNotificationsRepository(
                         is RockskyArtist,
                         is RockskyScrobble,
                         is RockskyTrack,
+                        is DerakkumaBest,
+                        is DerakkumaCircle,
+                        is DerakkumaCircleMember,
+                        is DerakkumaFavoriteSong,
+                        is DerakkumaFriend,
+                        is DerakkumaPlay,
+                        is DerakkumaProfile,
                         -> throw UnknownNotificationException(query.recordUri)
 
                         is StandardDocument -> Notification.DocumentPublished(
