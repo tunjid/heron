@@ -273,35 +273,23 @@ internal class OfflinePostRepository(
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
-                combine(
-                    postDao.repostedBy(
-                        postUri = postUri.uri,
-                        viewingProfileId = signedInProfileId?.id,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
-                        .distinctUntilChanged()
-                        .map(List<PopulatedProfileEntity>::asExternalModels),
-
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getRepostedBy(
-                                GetRepostedByQueryParams(
-                                    uri = postUri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
-                            )
-                        },
-                        nextCursor = GetRepostedByResponse::cursor,
-                        onResponse = {
-                            // TODO: Figure out how to get indexedAt for reposts
-                        },
-                    ),
-                    ::CursorList,
+                // indexedAt and other metadata is not provided by the response;
+                // nothing is persistedand this request does not work offline.
+                profileLookup.profilesWithViewerState(
+                    signedInProfileId = signedInProfileId,
+                    cursor = cursor,
+                    responseFetcher = {
+                        getRepostedBy(
+                            GetRepostedByQueryParams(
+                                uri = postUri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    responseProfileViews = GetRepostedByResponse::repostedBy,
+                    responseCursor = GetRepostedByResponse::cursor,
                 )
-                    .distinctUntilChanged()
             }
         }
             .flowOn(ioDispatcher)
