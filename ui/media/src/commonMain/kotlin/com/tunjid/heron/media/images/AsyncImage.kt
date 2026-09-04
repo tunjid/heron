@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,6 +68,7 @@ sealed interface Image {
     val painter: Painter
 }
 
+@Stable
 interface ImageLoader {
     suspend fun fetchImage(
         request: ImageRequest,
@@ -98,6 +100,7 @@ sealed class DownloadStatus {
     ) : DownloadStatus()
 }
 
+@Immutable
 data class ImageArgs(
     val request: ImageRequest,
     val contentDescription: String? = null,
@@ -178,12 +181,16 @@ fun rememberUpdatedImageState(
     args: ImageArgs,
 ): ImageState {
     val updatedArgs = rememberUpdatedState(args)
-    val imageLoader = rememberUpdatedState(LocalImageLoader.current)
-    val mediaConfig = rememberUpdatedState(LocalMediaConfig.current)
-    return remember {
+    val updatedImageLoader = rememberUpdatedState(LocalImageLoader.current)
+    val updatedMediaConfig = rememberUpdatedState(LocalMediaConfig.current)
+    return remember(
+        updatedArgs,
+        updatedImageLoader,
+        updatedMediaConfig,
+    ) {
         ImageState(
-            mediaConfig = mediaConfig::value,
-            imageLoader = imageLoader::value,
+            mediaConfig = updatedMediaConfig::value,
+            imageLoader = updatedImageLoader::value,
             args = updatedArgs::value,
         )
     }

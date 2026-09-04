@@ -175,17 +175,11 @@ fun AppScaffold(
                             density = density,
                         )
                     }
-                    val localMediaConfig = remember {
-                        MediaConfig(
-                            windowSize = windowSizeState::value,
-                            autoPlayGifs = {
-                                // Make sure the static object is captured and read in the lambda
-                                staticStates.identityState
-                                    .preferences
-                                    ?.local
-                                    ?.autoPlayTimelineGifs ?: true
-                            },
-                        )
+                    val localMediaConfig = remember(
+                        staticStates,
+                        windowSizeState,
+                    ) {
+                        staticStates.mediaConfig(windowSizeState)
                     }
                     CompositionLocalProvider(
                         LocalAppScaffoldState provides appScaffoldState,
@@ -255,6 +249,18 @@ fun AppScaffold(
         }
     }
 }
+
+private fun AppScaffoldState.StaticStates.mediaConfig(
+    windowSizeState: State<IntSize>,
+): MediaConfig = MediaConfig(
+    windowSize = windowSizeState::value,
+    autoPlayGifs = {
+        identityState
+            .preferences
+            ?.local
+            ?.autoPlayTimelineGifs ?: true
+    },
+)
 
 @Composable
 private fun windowSizeAsState(): State<IntSize> =
