@@ -151,6 +151,9 @@ private fun MainSection(
                 setAutoplayTimelineVideos = {
                     actions(Action.SetAutoPlayTimelineVideos(it))
                 },
+                setAutoplayTimelineGifs = {
+                    actions(Action.SetAutoPlayTimelineGifs(it))
+                },
                 onSectionSelected = {
                     actions(Action.UpdateSection(it))
                 },
