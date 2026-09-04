@@ -65,7 +65,6 @@ import com.tunjid.heron.data.core.types.NotificationFilteredOutException
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.RestrictedProfileException
 import com.tunjid.heron.data.core.types.UnknownNotificationException
 import com.tunjid.heron.data.core.types.profileId
@@ -555,8 +554,8 @@ internal class OfflineNotificationsRepository(
                         // Like or Like via repost
                         is Like -> when (resolvedRecord.post.viewerStats?.threadMuted) {
                             true -> throw MutedThreadException(resolvedRecord.post.uri)
-                            else -> when (resolvedRecord.via) {
-                                is RepostUri ->
+                            else -> when (query.reason) {
+                                Notification.Reason.LikeViaRepost ->
                                     Notification.Liked.Repost(
                                         uri = resolvedRecord.uri.asGenericUri(),
                                         cid = resolvedRecord.cid.asGenericId(),
@@ -568,7 +567,7 @@ internal class OfflineNotificationsRepository(
                                         viewerState = viewerState,
                                     )
 
-                                null ->
+                                Notification.Reason.Like ->
                                     Notification.Liked.Post(
                                         uri = resolvedRecord.uri.asGenericUri(),
                                         cid = resolvedRecord.cid.asGenericId(),
@@ -586,8 +585,8 @@ internal class OfflineNotificationsRepository(
 
                         is Repost -> when (resolvedRecord.post.viewerStats?.threadMuted) {
                             true -> throw MutedThreadException(resolvedRecord.post.uri)
-                            else -> when (resolvedRecord.via) {
-                                is RepostUri ->
+                            else -> when (query.reason) {
+                                Notification.Reason.RepostViaRepost ->
                                     Notification.Reposted.Repost(
                                         uri = resolvedRecord.uri.asGenericUri(),
                                         cid = resolvedRecord.cid.asGenericId(),
@@ -599,7 +598,7 @@ internal class OfflineNotificationsRepository(
                                         viewerState = viewerState,
                                     )
 
-                                null ->
+                                Notification.Reason.Repost ->
                                     Notification.Reposted.Post(
                                         uri = resolvedRecord.uri.asGenericUri(),
                                         cid = resolvedRecord.cid.asGenericId(),
