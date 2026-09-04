@@ -85,6 +85,8 @@ data class Preferences(
         val defaultModelName: String? = null,
         @ProtoNumber(13)
         val recentPostLanguages: List<PostLanguageSelection> = emptyList(),
+        @ProtoNumber(14)
+        val autoPlayTimelineGifs: Boolean = true,
     )
 
     companion object {

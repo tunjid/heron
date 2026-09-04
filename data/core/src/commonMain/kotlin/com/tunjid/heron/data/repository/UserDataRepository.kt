@@ -53,6 +53,10 @@ interface UserDataRepository {
         autoPlayTimelineVideos: Boolean,
     ): Outcome
 
+    suspend fun setAutoPlayTimelineGifs(
+        autoPlayTimelineGifs: Boolean,
+    ): Outcome
+
     suspend fun setShowPostEngagementMetrics(
         showEngagementMetrics: Boolean,
     ): Outcome
@@ -146,6 +150,12 @@ internal class OfflineUserDataRepository(
         autoPlayTimelineVideos: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
+    }
+
+    override suspend fun setAutoPlayTimelineGifs(
+        autoPlayTimelineGifs: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(autoPlayTimelineGifs = autoPlayTimelineGifs))
     }
 
     override suspend fun setShowPostEngagementMetrics(
