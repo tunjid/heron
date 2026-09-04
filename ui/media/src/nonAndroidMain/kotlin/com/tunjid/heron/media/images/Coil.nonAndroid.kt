@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,10 +27,11 @@ import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.graphics.skiaCanvas
 import coil3.BitmapImage
 import coil3.ComponentRegistry
+import coil3.Image
 import coil3.PlatformContext
 import kotlinx.coroutines.launch
 
-internal actual fun coil3.Image.renderInto(
+internal actual fun Image.renderInto(
     canvas: Canvas,
 ) {
     when (this) {
@@ -54,7 +55,7 @@ internal actual fun ComponentRegistry.Builder.addPlatformDecoders() {
 }
 
 @Composable
-internal actual fun coil3.Image.AnimationEffect() {
+internal actual fun Image.AnimationEffect() {
     val image = this as? AnimatedSkiaImage ?: return
     if (image.frameCount <= 1) return
 

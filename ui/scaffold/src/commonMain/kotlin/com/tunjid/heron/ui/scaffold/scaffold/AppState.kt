@@ -27,7 +27,7 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
-import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder

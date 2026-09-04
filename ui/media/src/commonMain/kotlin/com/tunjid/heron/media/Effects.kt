@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.media
 
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.lazy.LazyListState

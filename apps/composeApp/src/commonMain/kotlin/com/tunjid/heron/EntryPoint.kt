@@ -25,7 +25,7 @@ import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
-import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.ui.scaffold.notifications.Notifier

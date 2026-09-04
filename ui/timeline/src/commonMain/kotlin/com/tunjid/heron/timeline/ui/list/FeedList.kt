@@ -27,8 +27,8 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.ListUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape

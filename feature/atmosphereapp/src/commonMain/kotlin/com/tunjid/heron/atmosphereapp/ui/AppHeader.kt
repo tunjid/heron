@@ -31,8 +31,8 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.AppScreenStateHolders
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.profile.AppLogoZIndex
 import com.tunjid.heron.timeline.ui.profile.nameOrHandleOrUnknown
 import com.tunjid.heron.timeline.utilities.displayName

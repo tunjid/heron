@@ -38,8 +38,8 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostInteractions

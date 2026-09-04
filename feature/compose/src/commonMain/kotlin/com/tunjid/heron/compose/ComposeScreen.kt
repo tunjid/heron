@@ -69,8 +69,8 @@ import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.core.models.primaryRecord
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.files.RestrictedFile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.post.ExternalEmbedPreview
 import com.tunjid.heron.timeline.ui.profile.ProfileName

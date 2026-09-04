@@ -56,8 +56,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res

@@ -1,4 +1,4 @@
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter

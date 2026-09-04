@@ -49,8 +49,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.externalEmbeddedRecord
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostExternal
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostMedia

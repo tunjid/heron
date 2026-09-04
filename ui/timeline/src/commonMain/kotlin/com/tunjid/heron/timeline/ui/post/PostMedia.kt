@@ -42,8 +42,8 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.timeline.utilities.MediaOverlayText
 import com.tunjid.heron.timeline.utilities.bucketedRatio

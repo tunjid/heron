@@ -59,8 +59,8 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable

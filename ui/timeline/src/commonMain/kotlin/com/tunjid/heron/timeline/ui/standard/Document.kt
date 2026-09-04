@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.DocumentCollectionShape
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow

@@ -56,8 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope

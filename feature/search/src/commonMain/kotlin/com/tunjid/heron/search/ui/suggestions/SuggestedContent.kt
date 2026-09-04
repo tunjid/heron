@@ -63,8 +63,8 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState

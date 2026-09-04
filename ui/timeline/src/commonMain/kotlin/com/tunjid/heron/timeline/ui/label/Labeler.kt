@@ -20,11 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.LabelerCollectionShape
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.orDefault
@@ -67,7 +67,7 @@ fun Labeler(
                     args = remember(avatar) {
                         ImageArgs(
                             url = avatar.uri,
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            contentScale = ContentScale.Crop,
                             contentDescription = null,
                             shape = LabelerCollectionShape,
                         )

@@ -41,7 +41,7 @@ import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayout
-import com.tunjid.heron.images.LocalImageLoader
+import com.tunjid.heron.media.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState.StaticStates.Companion.rememberMultiPaneDisplayState

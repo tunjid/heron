@@ -42,8 +42,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.domain
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix

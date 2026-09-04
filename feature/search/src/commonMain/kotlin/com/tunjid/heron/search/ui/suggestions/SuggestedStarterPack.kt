@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.StarterPack
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow

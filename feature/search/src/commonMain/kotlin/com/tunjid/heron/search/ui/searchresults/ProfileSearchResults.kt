@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.contentDescription
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.SearchState

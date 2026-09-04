@@ -48,8 +48,8 @@ import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.ItemSelection

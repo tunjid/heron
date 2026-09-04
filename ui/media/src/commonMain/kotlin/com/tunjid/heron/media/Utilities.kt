@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.media
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
