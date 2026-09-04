@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -41,6 +44,8 @@ import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayout
+import com.tunjid.heron.media.LocalMediaConfig
+import com.tunjid.heron.media.MediaConfig
 import com.tunjid.heron.media.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.ui.UiTokens
@@ -109,11 +114,8 @@ fun AppScaffold(
                         sharedTransitionScope = this,
                     )
                 }
-                val windowWidth = rememberUpdatedState(
-                    with(density) {
-                        LocalWindowInfo.current.containerSize.width.toDp()
-                    },
-                )
+                val windowSizeState = windowSizeAsState()
+                val windowWidthDpState = windowWidthDpAsState(windowSizeState)
                 if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
                 val saveableStateHolderNavEntryDecorator =
@@ -133,7 +135,7 @@ fun AppScaffold(
                                 tertiaryPaneBreakPoint = mutableStateOf(
                                     UiTokens.TertiaryPaneMinWidthBreakpoint,
                                 ),
-                                windowWidthState = windowWidth,
+                                windowWidthState = windowWidthDpState,
                             ),
                             threePaneMovableSharedElementDecorator(
                                 movableSharedElementHostState,
@@ -165,7 +167,7 @@ fun AppScaffold(
                         AppScaffoldState(
                             paneNavigationState = { displayScope.paneNavigationState },
                             density = density,
-                            windowWidth = windowWidth,
+                            windowWidth = windowWidthDpState,
                             staticStates = staticStates,
                         )
                     }.also {
@@ -173,8 +175,21 @@ fun AppScaffold(
                             density = density,
                         )
                     }
+                    val localMediaConfig = remember {
+                        MediaConfig(
+                            windowSize = windowSizeState::value,
+                            autoPlayGifs = {
+                                // Make sure the static object is captured and read in the lambda
+                                staticStates.identityState
+                                    .preferences
+                                    ?.local
+                                    ?.autoPlayTimelineGifs ?: true
+                            },
+                        )
+                    }
                     CompositionLocalProvider(
                         LocalAppScaffoldState provides appScaffoldState,
+                        LocalMediaConfig provides localMediaConfig,
                         LocalImageLoader provides staticStates.imageLoader,
                         LocalVideoPlayerController provides staticStates.videoPlayerController,
                     ) {
@@ -239,6 +254,24 @@ fun AppScaffold(
             }
         }
     }
+}
+
+@Composable
+private fun windowSizeAsState(): State<IntSize> =
+    rememberUpdatedState(
+        LocalWindowInfo.current.containerSize,
+    )
+
+@Composable
+private fun windowWidthDpAsState(
+    sizeState: State<IntSize>,
+): State<Dp> {
+    val density = LocalDensity.current
+    return rememberUpdatedState(
+        with(density) {
+            sizeState.value.width.toDp()
+        },
+    )
 }
 
 @Composable
