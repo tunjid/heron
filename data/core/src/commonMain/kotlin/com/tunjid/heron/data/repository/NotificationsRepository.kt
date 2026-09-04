@@ -679,8 +679,12 @@ internal class OfflineNotificationsRepository(
     ) = postDao.posts(
         viewingProfileId = signedInProfileId.id,
         postUris = populatedNotificationEntities
-            .mapNotNull { it.entity.associatedPostUri }
-            .toSet(),
+            .flatMapTo(mutableSetOf()) {
+                listOfNotNull(
+                    it.entity.associatedPostUri,
+                    it.postPostEntity?.embeddedPostUri,
+                )
+            },
     ).distinctUntilChangedMap { posts ->
         val urisToPosts = posts.associateBy { it.entity.uri }
         populatedNotificationEntities.map {
@@ -688,7 +692,12 @@ internal class OfflineNotificationsRepository(
                 associatedPost = it.entity.associatedPostUri
                     ?.let(urisToPosts::get)
                     ?.asExternalModel(
-                        embeddedRecords = emptyList(),
+                        embeddedRecords = listOfNotNull(
+                            it.postPostEntity
+                                ?.embeddedPostUri
+                                ?.let(urisToPosts::get)
+                                ?.asExternalModel(emptyList()),
+                        ),
                     ),
             )
         }

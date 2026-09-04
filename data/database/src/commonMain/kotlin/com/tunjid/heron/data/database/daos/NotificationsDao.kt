@@ -33,6 +33,8 @@ interface NotificationsDao {
             LEFT JOIN profileViewerStates
             ON notifications.authorId = profileViewerStates.otherProfileId
             AND ownerId = profileViewerStates.profileId
+            LEFT JOIN postPosts
+            ON notifications.associatedPostUri = postPosts.postUri
             WHERE ownerId = :ownerId
             AND indexedAt < :before
             ORDER BY indexedAt DESC
