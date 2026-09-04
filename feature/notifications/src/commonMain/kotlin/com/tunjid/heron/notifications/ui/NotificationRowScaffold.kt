@@ -167,6 +167,7 @@ fun NotificationAggregateScaffold(
                     lookaheadScope = paneTransitionScope,
                     boundsTransform = paneTransitionScope.childBoundsTransform,
                 ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 content()
                 if (notification is Notification.PostAssociated) {
