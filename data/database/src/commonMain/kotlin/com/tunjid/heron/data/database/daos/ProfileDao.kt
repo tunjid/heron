@@ -275,12 +275,15 @@ interface ProfileDao {
     @Transaction
     @Query(
         """
-            SELECT * FROM profileVerifications
-            WHERE verifiedProfileId = :verifiedProfileId
-            ORDER BY createdAt DESC
+            SELECT profileVerifications.* FROM profileVerifications
+            INNER JOIN profiles
+                ON profiles.did = profileVerifications.verifiedProfileId
+            WHERE profiles.did = :profileIdOrHandle
+            OR profiles.handle = :profileIdOrHandle
+            ORDER BY profileVerifications.createdAt DESC
         """,
     )
     fun verifications(
-        verifiedProfileId: String,
+        profileIdOrHandle: String,
     ): Flow<List<PopulatedProfileVerificationEntity>>
 }
