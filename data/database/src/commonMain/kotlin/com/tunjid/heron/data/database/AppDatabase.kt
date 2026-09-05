@@ -87,6 +87,7 @@ import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCreatedAt
 import com.tunjid.heron.data.database.migrations.Migration17To18TimelineViewer
@@ -111,7 +112,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 50,
+    version = 51,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -132,6 +133,7 @@ import kotlinx.coroutines.IO
         ProfileAtmosphereAppEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
+        ProfileVerificationEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
@@ -263,6 +265,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 48, to = 49),
         // Add resumeCursor to timelinePreferences for offline-first pagination resume
         AutoMigration(from = 49, to = 50),
+        // Add ProfileVerificationEntity and verification_* embedded columns on profiles
+        AutoMigration(from = 50, to = 51),
     ],
     exportSchema = true,
 )

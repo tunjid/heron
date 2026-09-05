@@ -172,6 +172,7 @@ private fun MultipleEntitySaver.add(
             ),
             status = null,
             pronouns = null,
+            verification = null,
         ),
     )
 }

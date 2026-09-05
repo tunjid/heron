@@ -29,5 +29,9 @@ fun sampleProfile(): Profile {
         ),
         labels = emptyList(),
         isLabeler = false,
+        verification = Profile.VerificationStatus(
+            verifiedStatus = Profile.VerificationStatus.Status.Valid,
+            trustedVerifierStatus = Profile.VerificationStatus.Status.None,
+        ),
     )
 }

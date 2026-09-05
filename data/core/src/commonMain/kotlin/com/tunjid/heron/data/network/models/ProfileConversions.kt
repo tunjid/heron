@@ -62,6 +62,7 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
         ),
         status = status?.statusEntity(),
         pronouns = pronouns,
+        verification = verification?.verificationStatusEntity(),
     )
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
@@ -87,6 +88,7 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
         ),
         status = status?.statusEntity(),
         pronouns = pronouns,
+        verification = verification?.verificationStatusEntity(),
     )
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
@@ -112,6 +114,7 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
         ),
         status = status?.statusEntity(),
         pronouns = pronouns,
+        verification = verification?.verificationStatusEntity(),
     )
 
 internal fun BlockedAuthor.profileEntity(): ProfileEntity =
@@ -135,6 +138,7 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
         ),
         status = null,
         pronouns = null,
+        verification = null,
     )
 
 internal fun stubProfileEntity(
@@ -159,6 +163,7 @@ internal fun stubProfileEntity(
     ),
     status = null,
     pronouns = null,
+    verification = null,
 )
 
 internal fun ProfileViewBasic.profileViewerStateEntity(
@@ -222,6 +227,7 @@ internal fun ProfileViewBasic.profile() = Profile(
     isLabeler = associated?.labeler ?: false,
     status = status.asExternalModel(),
     pronouns = pronouns,
+    verification = verification?.verificationStatus(),
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -249,6 +255,7 @@ internal fun ProfileView.profile() = Profile(
     isLabeler = associated?.labeler ?: false,
     status = status.asExternalModel(),
     pronouns = pronouns,
+    verification = verification?.verificationStatus(),
 )
 
 private fun StatusView?.asExternalModel(): Profile.ProfileStatus? {

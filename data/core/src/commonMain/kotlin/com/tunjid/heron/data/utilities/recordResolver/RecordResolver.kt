@@ -72,6 +72,7 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
@@ -653,6 +654,8 @@ internal class OfflineRecordResolver(
             is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is TrackUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
+            // Verification records are only persisted alongside their profile, not resolved on their own.
+            is ProfileVerificationUri -> Result.failure(UnresolvableRecordException(uri))
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
     }.onFailure { throwable ->
@@ -705,6 +708,7 @@ internal class OfflineRecordResolver(
             is ArtistUri -> Unit // TODO
             is ScrobbleUri -> Unit // TODO
             is TrackUri -> Unit // TODO
+            is ProfileVerificationUri -> Unit // TODO
             is UnknownRecordUri -> Unit
         }
     }

@@ -50,6 +50,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
+import com.tunjid.heron.data.core.models.ProfileVerification
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.value
@@ -64,6 +65,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.PopulatedProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -146,6 +148,10 @@ interface ProfileRepository {
         otherProfileId: Id.Profile,
         limit: Long,
     ): Flow<List<Profile>>
+
+    fun verifications(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileVerification>>
 
     fun followers(
         query: ProfilesQuery,
@@ -348,6 +354,23 @@ internal class OfflineProfileRepository(
                 }
         }
             .filterNotNull()
+            .flowOn(ioDispatcher)
+
+    override fun verifications(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileVerification>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileDao.verifications(profileIdOrHandle = profileId.id)
+                .distinctUntilChangedMap { entities ->
+                    entities.map(PopulatedProfileVerificationEntity::asExternalModel)
+                }
+                .withRefresh {
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
+                        profileId = profileId,
+                    )
+                }
+        }
             .flowOn(ioDispatcher)
 
     override fun followers(
