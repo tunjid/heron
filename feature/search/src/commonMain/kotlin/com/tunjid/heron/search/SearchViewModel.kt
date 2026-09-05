@@ -33,7 +33,7 @@ import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.records.FeedGeneratorSearchQuery
+import com.tunjid.heron.data.repository.records.SearchQuery
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
@@ -602,7 +602,7 @@ private fun CoroutineScope.feedGeneratorSearchStateHolder(
 ): SearchResultStateHolder = actionSuspendingStateMutator(
     state = SearchState.OfFeedGenerators(
         tilingData = TilingState.Data(
-            currentQuery = FeedGeneratorSearchQuery(
+            currentQuery = SearchQuery(
                 query = query.initialQueryString,
                 data = defaultSearchQueryData(),
             ),
@@ -666,7 +666,7 @@ private fun List<SearchScreenStateHolders>.loadAround(
         is SearchScreenStateHolders.Feeds -> holder.accept(
             SearchState.Tile(
                 tilingAction = TilingState.Action.LoadAround(
-                    FeedGeneratorSearchQuery(
+                    SearchQuery(
                         query = query,
                         data = defaultSearchQueryData(),
                     ),
