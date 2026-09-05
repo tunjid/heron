@@ -65,7 +65,10 @@ fun NotificationEmbed(
         onEmbeddedRecordClicked = {},
         onQuotedProfileClicked = { _, _ -> },
         onPublicationSubscriptionToggled = { },
-        presentation = Timeline.Presentation.Media.Condensed,
+        presentation = when (post.nativeEmbeddedRecord) {
+            is Post -> Timeline.Presentation.Text.WithEmbed
+            else -> Timeline.Presentation.Media.Condensed
+        },
     )
 }
 
