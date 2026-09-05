@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
@@ -26,6 +29,10 @@ import io.ktor.client.HttpClient
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
@@ -43,6 +50,50 @@ internal interface NetworkService {
         block: suspend BlueskyApi.() -> AtpResponse<T>,
     ): Result<T>
 }
+
+internal inline fun <NetworkResponse : Any, Item> NetworkService.observedItems(
+    cursor: Cursor,
+    crossinline responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
+    crossinline responseSaver: suspend (NetworkResponse) -> Unit,
+    crossinline responseCursor: (NetworkResponse) -> Cursor.Next?,
+    crossinline networkItems: (NetworkResponse, Cursor) -> List<Item>?,
+    crossinline observedItems: (NetworkResponse, Cursor) -> Flow<CursorList<Item>>,
+): Flow<CursorList<Item>> =
+    // Final or pending cursor, nothing to fetch
+    if (!cursor.canRequestData) emptyFlow()
+    else flow<CursorList<Item>> {
+        val response = runCatchingWithMonitoredNetworkRetry(
+            block = {
+                responseFetcher()
+            },
+        ).getOrNull()
+            ?: return@flow
+
+        val nextCursor = responseCursor(response)
+            ?: Cursor.Final
+
+        // Emit network results immediately for minimal latency
+        networkItems(
+            response,
+            nextCursor,
+        )?.let {
+            emit(
+                CursorList(
+                    items = it,
+                    nextCursor = nextCursor,
+                ),
+            )
+        }
+
+        responseSaver(response)
+
+        emitAll(
+            observedItems(
+                response,
+                nextCursor,
+            ),
+        )
+    }
 
 @Inject
 internal class KtorNetworkService(
