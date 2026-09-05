@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
@@ -151,6 +152,18 @@ internal fun SearchScreen(
                 pathDestination(
                     path = feedGenerator.uri.path,
                     models = listOf(feedGenerator),
+                    sharedElementPrefix = sharedElementPrefix,
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                ),
+            )
+        }
+    }
+    val onStarterPackClicked = remember(navigateTo) {
+        { starterPack: StarterPack, sharedElementPrefix: String ->
+            navigateTo(
+                pathDestination(
+                    path = starterPack.uri.path,
+                    models = listOf(starterPack),
                     sharedElementPrefix = sharedElementPrefix,
                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
@@ -282,6 +295,7 @@ internal fun SearchScreen(
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
+                onStarterPackClicked = onStarterPackClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
                 onMuteAccountClicked = { signInProfileId, profileId ->
                     actions(

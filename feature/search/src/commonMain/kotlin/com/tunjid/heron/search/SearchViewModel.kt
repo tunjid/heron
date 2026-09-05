@@ -555,6 +555,15 @@ private fun CoroutineScope.searchScreenStateHolders(
                         ),
                     ),
             )
+            add(
+                existingByKey["starter-packs"]
+                    ?: SearchScreenStateHolders.StarterPacks(
+                        mutator = starterPackSearchStateHolder(
+                            query = query,
+                            recordRepository = recordRepository,
+                        ),
+                    ),
+            )
         }
     }
 }
@@ -627,6 +636,37 @@ private fun CoroutineScope.feedGeneratorSearchStateHolder(
     },
 )
 
+private fun CoroutineScope.starterPackSearchStateHolder(
+    query: RouteQuery,
+    recordRepository: RecordRepository,
+): SearchResultStateHolder = actionSuspendingStateMutator(
+    state = SearchState.OfStarterPacks(
+        tilingData = TilingState.Data(
+            currentQuery = SearchQuery(
+                query = query.initialQueryString,
+                data = defaultSearchQueryData(),
+            ),
+        ),
+    ),
+    started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+    producer = { holderState, actions ->
+        actions.map { it.tilingAction }
+            .launchTilingMutations(
+                state = holderState,
+                updateQueryData = { copy(data = it) },
+                refreshQuery = { copy(data = data.reset()) },
+                cursorListLoader = recordRepository::starterPackSearch
+                    .mapCursorList(SearchResult::OfStarterPack),
+                onNewItems = { items ->
+                    items.distinctBy { it.starterPack.cid }
+                },
+                queryRefreshBy = {
+                    it.query to it.data.cursorAnchor
+                },
+            )
+    },
+)
+
 /**
  * Dispatches a fresh [TilingState.Action.LoadAround] into each tab holder. The post tabs re-tile
  * against a new [Timeline.Source.Search] carried by the [TimelineQuery]; because the cursor anchor
@@ -664,6 +704,17 @@ private fun List<SearchScreenStateHolders>.loadAround(
         )
 
         is SearchScreenStateHolders.Feeds -> holder.accept(
+            SearchState.Tile(
+                tilingAction = TilingState.Action.LoadAround(
+                    SearchQuery(
+                        query = query,
+                        data = defaultSearchQueryData(),
+                    ),
+                ),
+            ),
+        )
+
+        is SearchScreenStateHolders.StarterPacks -> holder.accept(
             SearchState.Tile(
                 tilingAction = TilingState.Action.LoadAround(
                     SearchQuery(
