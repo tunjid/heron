@@ -222,6 +222,7 @@ private fun AttributionContent(
                                         profile = data.post.author,
                                         post = data.post,
                                         quotingPostUri = null,
+                                        clickedElement = PostAction.OfProfile.ClickedElement.Avatar,
                                     ),
                                 )
                             },
@@ -280,6 +281,7 @@ private fun AttributionContent(
                                 profile = data.post.author,
                                 post = data.post,
                                 quotingPostUri = null,
+                                clickedElement = PostAction.OfProfile.ClickedElement.Name,
                             ),
                         )
                     },
@@ -507,6 +509,7 @@ private fun EmbedContent(
                     profile = quotedProfile,
                     post = quotedPost,
                     quotingPostUri = data.post.uri,
+                    clickedElement = PostAction.OfProfile.ClickedElement.Name,
                 ),
             )
         },

@@ -34,6 +34,9 @@ import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.profile.ProfileSearchAction
 import com.tunjid.heron.sheets.profile.ProfileSearchState
 import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsAction
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsState
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListAction
 import com.tunjid.heron.sheets.selectlist.SelectListState
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
@@ -103,6 +106,12 @@ fun stubSheetStateHolder(
             ProfileSearchStateHolder,
             ActionSuspendingStateMutator<ProfileSearchAction, ProfileSearchState>
             by ProfileSearchState.Immutable().asNoOpActionSuspendingStateMutator() {}
+
+    ProfileVerificationsStateHolder::class ->
+        object :
+            ProfileVerificationsStateHolder,
+            ActionSuspendingStateMutator<ProfileVerificationsAction, ProfileVerificationsState>
+            by ProfileVerificationsState.Immutable().asNoOpActionSuspendingStateMutator() {}
 
     else -> additionalSheetStateHolderFactory?.invoke(type) ?: error("No stub SheetStateHolder registered for $type")
 }

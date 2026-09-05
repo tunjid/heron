@@ -35,6 +35,8 @@ import com.tunjid.heron.sheets.postoptions.PostOptionsSheetState
 import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.profile.ProfileSearchSheetState
 import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsSheetState
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListSheetState
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState
@@ -142,5 +144,14 @@ fun PaneScaffoldState.rememberProfileSearchSheetState(
 ): ProfileSearchSheetState =
     ProfileSearchSheetState.rememberUpdatedProfileSearchSheetState(
         stateHolder = retainSheetStateHolder<ProfileSearchStateHolder>(),
+        onProfileClicked = onProfileClicked,
+    )
+
+@Composable
+fun PaneScaffoldState.rememberProfileVerificationsSheetState(
+    onProfileClicked: (Profile) -> Unit,
+): ProfileVerificationsSheetState =
+    ProfileVerificationsSheetState.rememberUpdatedProfileVerificationsSheetState(
+        stateHolder = retainSheetStateHolder<ProfileVerificationsStateHolder>(),
         onProfileClicked = onProfileClicked,
     )
