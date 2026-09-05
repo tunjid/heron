@@ -249,9 +249,10 @@ internal class MultipleEntitySaver(
                         it.followsCount != null &&
                         it.postsCount != null
                 },
-                // Profiles from messages may just be empty profiles with Dids
                 secondPredicate = {
-                    !it.handle.isUnknown() && it.displayName != null
+                    !it.handle.isUnknown() &&
+                        it.displayName != null &&
+                        it.createdAt != null
                 },
             )
             profileDao.upsertProfiles(fullProfileEntities)

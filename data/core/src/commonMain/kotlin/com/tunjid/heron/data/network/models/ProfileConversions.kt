@@ -138,6 +138,7 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
         ),
         status = null,
         pronouns = null,
+        verification = null,
     )
 
 internal fun stubProfileEntity(
@@ -162,6 +163,7 @@ internal fun stubProfileEntity(
     ),
     status = null,
     pronouns = null,
+    verification = null,
 )
 
 internal fun ProfileViewBasic.profileViewerStateEntity(

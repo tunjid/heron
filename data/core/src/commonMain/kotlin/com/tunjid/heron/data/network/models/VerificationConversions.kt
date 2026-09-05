@@ -64,6 +64,7 @@ internal fun VerificationView.issuerProfileEntity(): ProfileEntity =
         ),
         status = null,
         pronouns = null,
+        verification = null,
     )
 
 internal fun VerificationState.verificationStatus(): Profile.VerificationStatus =

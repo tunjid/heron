@@ -61,9 +61,8 @@ data class ProfileEntity(
     val status: Status?,
     @ColumnInfo(defaultValue = "NULL")
     val pronouns: String?,
-    // Newly added fields should have defaults for serialization
     @Embedded(prefix = "verification_")
-    val verification: VerificationStatus? = null,
+    val verification: VerificationStatus?,
 ) {
     data class Partial(
         val did: ProfileId,
