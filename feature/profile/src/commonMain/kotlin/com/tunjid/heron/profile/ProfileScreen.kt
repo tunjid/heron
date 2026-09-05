@@ -126,6 +126,7 @@ import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberProfileVerificationsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -143,6 +144,7 @@ import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.profile.verificationBadge
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
@@ -277,6 +279,20 @@ internal fun ProfileScreen(
 
     val inferenceSheetState = paneScaffoldState.rememberInferenceSheetState()
 
+    val verificationsSheetState = paneScaffoldState.rememberProfileVerificationsSheetState(
+        onProfileClicked = { verifier ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        profile = verifier,
+                        avatarSharedElementKey = verifier.avatarSharedElementKey(prefix = null),
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ),
+                ),
+            )
+        },
+    )
+
     CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
@@ -342,6 +358,11 @@ internal fun ProfileScreen(
                 },
                 onNavigate = { destination ->
                     actions(Action.Navigate.To(destination))
+                },
+                onVerificationClicked = if (state.profile.verificationBadge() != null) {
+                    { verificationsSheetState.show(state.profile.did) }
+                } else {
+                    null
                 },
                 onProfileAvatarClicked = {
                     actions(
@@ -669,6 +690,7 @@ private fun ProfileHeader(
     onModerationAction: (Action.Moderation) -> Unit,
     onUpdateProfileLiveStatus: () -> Unit,
     onVibeClicked: (ProfileId) -> Unit,
+    onVerificationClicked: (() -> Unit)?,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -743,6 +765,7 @@ private fun ProfileHeader(
                     onVibeClicked = onVibeClicked,
                     onNavigate = onNavigate,
                     canRunInference = canRunInference,
+                    onVerificationClicked = onVerificationClicked,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -1005,6 +1028,7 @@ private fun ProfileHeadline(
     onVibeClicked: (ProfileId) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     canRunInference: Boolean,
+    onVerificationClicked: (() -> Unit)?,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -1021,6 +1045,7 @@ private fun ProfileHeadline(
                     modifier = Modifier,
                     profile = profile,
                     ellipsize = false,
+                    onVerificationBadgeClicked = onVerificationClicked,
                 )
                 Spacer(Modifier.height(4.dp))
                 Row(

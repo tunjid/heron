@@ -50,11 +50,13 @@ import com.tunjid.heron.sheets.profile.ProfileRestrictionDialogState.Companion.r
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPostInteractionsSheetState
 import com.tunjid.heron.sheets.rememberPostOptionsSheetState
+import com.tunjid.heron.sheets.rememberProfileVerificationsSheetState
 import com.tunjid.heron.sheets.rememberTimelineThreadGateSheetState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostMetadata
+import com.tunjid.heron.timeline.ui.profile.verificationBadge
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.contentType
@@ -103,6 +105,17 @@ internal fun PostDetailScreen(
     )
     val threadGateSheetState = paneScaffoldState.rememberTimelineThreadGateSheetState()
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
+    val verificationsSheetState = paneScaffoldState.rememberProfileVerificationsSheetState(
+        onProfileClicked = { profile ->
+            navigateTo(
+                profileDestination(
+                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    profile = profile,
+                    avatarSharedElementKey = null,
+                ),
+            )
+        },
+    )
 
     val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
         onProfileRestricted = { profileRestriction ->
@@ -242,7 +255,11 @@ internal fun PostDetailScreen(
                                     }
 
                                     is PostAction.OfProfile -> {
-                                        navigateTo(
+                                        if (action.clickedElement == PostAction.OfProfile.ClickedElement.Name &&
+                                            action.profile.verificationBadge() != null
+                                        ) {
+                                            verificationsSheetState.show(action.profile.did)
+                                        } else navigateTo(
                                             profileDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 profile = action.profile,
