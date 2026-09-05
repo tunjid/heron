@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.FollowUri
@@ -217,6 +218,15 @@ sealed interface SearchScreenStateHolders {
         override val key: String
             get() = mutator.state.key
     }
+
+    @Stable
+    class StarterPacks(
+        val mutator: SearchResultStateHolder,
+    ) : SearchScreenStateHolders,
+        SearchResultStateHolder by mutator {
+        override val key: String
+            get() = mutator.state.key
+    }
 }
 
 sealed interface SearchResult {
@@ -226,6 +236,10 @@ sealed interface SearchResult {
 
     data class OfFeedGenerator(
         val feedGenerator: FeedGenerator,
+    ) : SearchResult
+
+    data class OfStarterPack(
+        val starterPack: StarterPack,
     ) : SearchResult
 }
 
@@ -241,6 +255,11 @@ sealed class SearchState {
     ) : SearchState(),
         TilingState<SearchQuery, SearchResult.OfFeedGenerator>
 
+    data class OfStarterPacks(
+        override val tilingData: TilingState.Data<SearchQuery, SearchResult.OfStarterPack>,
+    ) : SearchState(),
+        TilingState<SearchQuery, SearchResult.OfStarterPack>
+
     data class Tile(
         val tilingAction: TilingState.Action,
     )
@@ -250,6 +269,7 @@ val SearchState.key
     get() = when (this) {
         is SearchState.OfFeedGenerators -> "feed-generators"
         is SearchState.OfProfiles -> "profiles"
+        is SearchState.OfStarterPacks -> "starter-packs"
     }
 
 val SearchState.sharedElementPrefix

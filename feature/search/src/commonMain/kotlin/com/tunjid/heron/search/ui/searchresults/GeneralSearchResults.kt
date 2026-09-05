@@ -60,6 +60,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -82,6 +83,7 @@ import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.feeds
 import heron.feature.search.generated.resources.latest
 import heron.feature.search.generated.resources.people
+import heron.feature.search.generated.resources.starter_packs
 import heron.feature.search.generated.resources.top
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -104,6 +106,7 @@ internal fun GeneralSearchResults(
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
+    onStarterPackClicked: (StarterPack, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -284,6 +287,23 @@ internal fun GeneralSearchResults(
                             scrollBy = listState::animateScrollBy,
                         )
                     }
+
+                    is SearchScreenStateHolders.StarterPacks -> {
+                        val listState = rememberLazyListState()
+                        StarterPackSearchResults(
+                            stateHolder = searchResultStateHolder,
+                            listState = listState,
+                            modifier = modifier,
+                            paneScaffoldState = paneScaffoldState,
+                            onStarterPackClicked = onStarterPackClicked,
+                        )
+                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+                            pagerState = pagerState,
+                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                            scrollBy = listState::animateScrollBy,
+                        )
+                    }
                 }
             },
         )
@@ -310,9 +330,10 @@ private fun searchTabs(
     val latest = stringResource(resource = Res.string.latest)
     val people = stringResource(resource = Res.string.people)
     val feeds = stringResource(resource = Res.string.feeds)
+    val starterPacks = stringResource(resource = Res.string.starter_packs)
     val supportsNonPostSearch = query.supportsNonPostSearch
-    // top proxies latest/people/feeds as a remember key since they all change
-    // together on locale; keying on just one avoids the >4 arg vararg allocation.
+    // top proxies latest/people/feeds/starterPacks as a remember key since they all
+    // change together on locale; keying on just one avoids the >4 arg vararg allocation.
     return remember(
         isSignedIn,
         supportsNonPostSearch,
@@ -327,6 +348,7 @@ private fun searchTabs(
             if (supportsNonPostSearch && !hasAdvancedSearchFilters) {
                 add(people)
                 add(feeds)
+                add(starterPacks)
             }
         }.map { Tab(title = it, hasUpdate = false) }
     }
