@@ -127,7 +127,7 @@ import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 
 @Serializable
-data class FeedGeneratorSearchQuery(
+data class SearchQuery(
     val query: String,
     override val data: CursorQuery.Data,
 ) : CursorQuery
@@ -164,7 +164,7 @@ interface BlueskyRecordOperations {
     ): Flow<CursorList<FeedGenerator>>
 
     fun feedGeneratorSearch(
-        query: FeedGeneratorSearchQuery,
+        query: SearchQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
 
@@ -465,7 +465,7 @@ internal class OfflineFirstBlueskyRecordOperations(
             .flowOn(ioDispatcher)
 
     override fun feedGeneratorSearch(
-        query: FeedGeneratorSearchQuery,
+        query: SearchQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()

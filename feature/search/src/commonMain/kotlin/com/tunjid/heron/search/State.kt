@@ -29,7 +29,7 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ProfileSearchQuery
-import com.tunjid.heron.data.repository.records.FeedGeneratorSearchQuery
+import com.tunjid.heron.data.repository.records.SearchQuery
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -237,9 +237,9 @@ sealed class SearchState {
         TilingState<ProfileSearchQuery, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
-        override val tilingData: TilingState.Data<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>,
+        override val tilingData: TilingState.Data<SearchQuery, SearchResult.OfFeedGenerator>,
     ) : SearchState(),
-        TilingState<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>
+        TilingState<SearchQuery, SearchResult.OfFeedGenerator>
 
     data class Tile(
         val tilingAction: TilingState.Action,
