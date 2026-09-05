@@ -31,6 +31,7 @@ import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import app.bsky.graph.Listitem
+import app.bsky.graph.SearchStarterPacksV2QueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
@@ -166,6 +167,11 @@ interface BlueskyRecordOperations {
         query: SearchQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
+
+    fun starterPackSearch(
+        query: SearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StarterPack>>
 
     fun suggestedFeeds(): Flow<List<FeedGenerator>>
 
@@ -506,6 +512,59 @@ internal class OfflineFirstBlueskyRecordOperations(
                                 .map(PopulatedFeedGeneratorEntity::asExternalModel)
                                 .sortedWithNetworkList(
                                     networkList = feedUris,
+                                    databaseId = { it.uri.uri },
+                                    networkId = { it.uri },
+                                ),
+                            nextCursor = nextCursor,
+                        )
+                    }
+            },
+        )
+            .flowOn(ioDispatcher)
+
+    override fun starterPackSearch(
+        query: SearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StarterPack>> =
+        if (query.query.isBlank()) emptyFlow()
+        else networkService.observedItems(
+            cursor = cursor,
+            responseFetcher = {
+                searchStarterPacksV2(
+                    params = SearchStarterPacksV2QueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        cursor = cursor.value,
+                    ),
+                )
+            },
+            responseSaver = { response ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.starterPacks
+                        .forEach { starterPackView ->
+                            add(starterPack = starterPackView)
+                        }
+                }
+            },
+            responseCursor = { response ->
+                response.cursor?.let(Cursor::Next)
+            },
+            networkItems = { _, _ ->
+                null
+            },
+            observedItems = { response, nextCursor ->
+                val starterPackUris = response.starterPacks
+                    .map { it.uri.atUri.let(::StarterPackUri) }
+
+                starterPackDao.starterPacks(
+                    uris = starterPackUris,
+                )
+                    .distinctUntilChangedMap { populatedStarterPackEntities ->
+                        CursorList(
+                            items = populatedStarterPackEntities
+                                .map(PopulatedStarterPackEntity::asExternalModel)
+                                .sortedWithNetworkList(
+                                    networkList = starterPackUris,
                                     databaseId = { it.uri.uri },
                                     networkId = { it.uri },
                                 ),
