@@ -42,7 +42,7 @@ internal class WorkManagerTransferDelegate(
     private val workManager = WorkManager.getInstance(context)
 
     override suspend fun schedule(
-        task: Task.Download,
+        task: Task,
     ) {
         val request = OneTimeWorkRequestBuilder<TransferWorker>()
             .setInputData(

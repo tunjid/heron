@@ -41,7 +41,7 @@ internal class UidtTransferDelegate(
     private val jobScheduler = context.getSystemService(JobScheduler::class.java)
 
     override suspend fun schedule(
-        task: Task.Download,
+        task: Task,
     ) {
         val jobInfo = JobInfo.Builder(
             task.id.jobId(),
@@ -49,10 +49,19 @@ internal class UidtTransferDelegate(
         )
             .setUserInitiated(true)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-            .setEstimatedNetworkBytes(
-                task.sizeInBytes,
-                0L,
-            )
+            .apply {
+                when (task) {
+                    is Task.Download -> setEstimatedNetworkBytes(
+                        task.sizeInBytes,
+                        0L,
+                    )
+                    // The write queue owns the bytes, so the delegate has no size to estimate.
+                    is Task.Upload -> setEstimatedNetworkBytes(
+                        JobInfo.NETWORK_BYTES_UNKNOWN.toLong(),
+                        JobInfo.NETWORK_BYTES_UNKNOWN.toLong(),
+                    )
+                }
+            }
             .setExtras(
                 PersistableBundle().apply { putString(TransferJobService.KeyTaskId, task.id.value) },
             )

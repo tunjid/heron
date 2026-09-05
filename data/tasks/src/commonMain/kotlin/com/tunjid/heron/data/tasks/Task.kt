@@ -45,6 +45,7 @@ sealed interface Task {
 
     enum class Kind {
         Transfer,
+        Upload,
     }
 
     /**
@@ -64,5 +65,19 @@ sealed interface Task {
 
         override val kind: Kind
             get() = Kind.Transfer
+    }
+
+    /**
+     * Media being uploaded by the app's write queue. Nothing here sends the upload; this only
+     * describes the user visible job a platform opens to keep the process running while the bytes
+     * are in flight, for [BackgroundTaskScheduler.keepingProcessAlive]. Unlike a [Download] it is
+     * never put in the [TaskStore], because a hold on the process cannot outlive the process.
+     */
+    @Serializable
+    data class Upload(
+        override val id: TaskId,
+    ) : Task {
+        override val kind: Kind
+            get() = Kind.Upload
     }
 }
