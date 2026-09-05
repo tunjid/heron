@@ -31,8 +31,10 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
+import com.tunjid.heron.data.database.entities.profile.PopulatedProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
 import kotlin.time.Instant
@@ -254,4 +256,31 @@ interface ProfileDao {
         viewingProfileId: String,
         keepAppIds: List<String>,
     )
+
+    @Upsert
+    suspend fun upsertVerifications(
+        entities: List<ProfileVerificationEntity>,
+    )
+
+    @Query(
+        """
+            DELETE FROM profileVerifications
+            WHERE verifiedProfileId IN (:subjectIds)
+        """,
+    )
+    suspend fun deleteVerificationsForProfiles(
+        subjectIds: Collection<ProfileId>,
+    )
+
+    @Transaction
+    @Query(
+        """
+            SELECT * FROM profileVerifications
+            WHERE verifiedProfileId = :verifiedProfileId
+            ORDER BY createdAt DESC
+        """,
+    )
+    fun verifications(
+        verifiedProfileId: String,
+    ): Flow<List<PopulatedProfileVerificationEntity>>
 }

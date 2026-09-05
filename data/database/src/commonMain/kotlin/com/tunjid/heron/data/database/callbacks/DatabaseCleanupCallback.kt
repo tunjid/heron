@@ -126,6 +126,8 @@ private val DeleteOrphanedProfilesSql = """
         UNION SELECT creatorId FROM labelers
         UNION SELECT publisherId FROM standardPublications
         UNION SELECT authorId FROM standardDocuments
+        UNION SELECT verifiedProfileId FROM profileVerifications
+        UNION SELECT issuerProfileId FROM profileVerifications
     )
 """.trimIndent()
 

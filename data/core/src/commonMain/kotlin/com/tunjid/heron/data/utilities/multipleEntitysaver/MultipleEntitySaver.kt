@@ -76,6 +76,7 @@ import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
@@ -179,6 +180,8 @@ internal class MultipleEntitySaver(
 
     private val profileViewerEntities = LazyList<ProfileViewerStateEntity>()
 
+    private val profileVerificationEntities = LazyList<ProfileVerificationEntity>()
+
     private val profileTabEntities = LazyList<ProfileTabsEntity>()
 
     private val profileAtmosphereAppEntities = LazyList<ProfileAtmosphereAppEntity>()
@@ -262,6 +265,15 @@ internal class MultipleEntitySaver(
 
         if (profileAtmosphereAppEntities.isNotEmpty) {
             profileDao.upsertProfileAtmosphereApps(profileAtmosphereAppEntities.list)
+        }
+
+        if (profileVerificationEntities.isNotEmpty) {
+            val subjectIds = profileVerificationEntities.list.mapTo(
+                mutableSetOf(),
+                ProfileVerificationEntity::verifiedProfileId,
+            )
+            profileDao.deleteVerificationsForProfiles(subjectIds)
+            profileDao.upsertVerifications(profileVerificationEntities.list)
         }
 
         if (postEntities.isNotEmpty) {
@@ -502,6 +514,8 @@ internal class MultipleEntitySaver(
     fun add(entity: PostLikeEntity) = postLikeEntities.add(entity)
 
     fun add(entity: ProfileViewerStateEntity) = profileViewerEntities.add(entity)
+
+    fun add(entity: ProfileVerificationEntity) = profileVerificationEntities.add(entity)
 
     fun add(entity: LabelEntity) = labelEntities.add(entity)
 

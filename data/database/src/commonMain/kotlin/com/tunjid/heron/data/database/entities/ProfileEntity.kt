@@ -61,12 +61,17 @@ data class ProfileEntity(
     val status: Status?,
     @ColumnInfo(defaultValue = "NULL")
     val pronouns: String?,
+    // Newly added fields should have defaults for serialization
+    @Embedded(prefix = "verification_")
+    val verification: VerificationStatus? = null,
 ) {
     data class Partial(
         val did: ProfileId,
         val handle: ProfileHandle,
         val displayName: String?,
         val avatar: ImageUri?,
+        @Embedded(prefix = "verification_")
+        val verification: VerificationStatus?,
     )
 
     // TODO Should this be in a separate table?
@@ -89,6 +94,11 @@ data class ProfileEntity(
         val active: Boolean?,
         val disabled: Boolean?,
     )
+
+    data class VerificationStatus(
+        val verifiedStatus: String?,
+        val trustedVerifierStatus: String?,
+    )
 }
 
 fun ProfileEntity.partial() = ProfileEntity.Partial(
@@ -96,6 +106,7 @@ fun ProfileEntity.partial() = ProfileEntity.Partial(
     handle = handle,
     displayName = displayName,
     avatar = avatar,
+    verification = verification,
 )
 
 fun ProfileEntity?.asExternalModel(
@@ -127,6 +138,7 @@ fun ProfileEntity?.asExternalModel(
         isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
         pronouns = pronouns,
+        verification = toVerificationStatus(),
     )
 
 data class PopulatedProfileEntity(
@@ -167,6 +179,7 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         isLabeler = associated?.labeler ?: false,
         status = toProfileStatus(),
         pronouns = pronouns,
+        verification = toVerificationStatus(),
     )
 }
 
@@ -183,6 +196,21 @@ private fun ProfileEntity.toProfileStatus(): Profile.ProfileStatus? =
             isActive = status.active,
             isDisabled = status.disabled,
         )
+    }
+
+private fun ProfileEntity.toVerificationStatus(): Profile.VerificationStatus? {
+    val verification = verification ?: return null
+    return Profile.VerificationStatus(
+        verifiedStatus = verification.verifiedStatus.toVerificationStatusValue(),
+        trustedVerifierStatus = verification.trustedVerifierStatus.toVerificationStatusValue(),
+    )
+}
+
+private fun String?.toVerificationStatusValue(): Profile.VerificationStatus.Status =
+    when (this) {
+        VERIFICATION_STATUS_VALID -> Profile.VerificationStatus.Status.Valid
+        VERIFICATION_STATUS_INVALID -> Profile.VerificationStatus.Status.Invalid
+        else -> Profile.VerificationStatus.Status.None
     }
 
 fun PopulatedProfileEntity.asExternalModelWithViewerState() =
@@ -205,3 +233,6 @@ private fun emptyProfile() = stubProfile(
 
 private const val ALLOW_DMS_ALL = "all"
 private const val ALLOW_DMS_FOLLOWING = "following"
+
+private const val VERIFICATION_STATUS_VALID = "valid"
+private const val VERIFICATION_STATUS_INVALID = "invalid"

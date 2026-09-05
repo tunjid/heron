@@ -34,6 +34,12 @@ internal fun MultipleEntitySaver.add(
 ) {
     if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
+    profileView.verification?.let { verification ->
+        add(
+            verifiedProfileId = profileView.did.did.let(::ProfileId),
+            verification = verification,
+        )
+    }
     profileView.labels?.forEach(::add)
 
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
@@ -65,6 +71,12 @@ internal fun MultipleEntitySaver.add(
 ) {
     if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
+    profileView.verification?.let { verification ->
+        add(
+            verifiedProfileId = profileView.did.did.let(::ProfileId),
+            verification = verification,
+        )
+    }
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
     )?.let(::add)
@@ -94,6 +106,12 @@ internal fun MultipleEntitySaver.add(
 ) {
     if (viewingProfileId != null) add(stubProfileEntity(profileId = viewingProfileId))
     add(profileView.profileEntity())
+    profileView.verification?.let { verification ->
+        add(
+            verifiedProfileId = profileView.did.did.let(::ProfileId),
+            verification = verification,
+        )
+    }
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
     )?.let(::add)
