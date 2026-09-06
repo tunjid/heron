@@ -405,6 +405,7 @@ internal class OfflineFirstBlueskyRecordOperations(
                             add(list)
                             items.forEach { listItemView ->
                                 add(
+                                    viewingProfileId = signedInProfileId,
                                     listUri = list.uri.atUri.let(::ListUri),
                                     listItemView = listItemView,
                                 )
@@ -527,52 +528,57 @@ internal class OfflineFirstBlueskyRecordOperations(
         cursor: Cursor,
     ): Flow<CursorList<StarterPack>> =
         if (query.query.isBlank()) emptyFlow()
-        else networkService.observedItems(
-            cursor = cursor,
-            responseFetcher = {
-                searchStarterPacksV2(
-                    params = SearchStarterPacksV2QueryParams(
-                        q = query.query,
-                        limit = query.data.limit,
-                        cursor = cursor.value,
-                    ),
-                )
-            },
-            responseSaver = { response ->
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.starterPacks
-                        .forEach { starterPackView ->
-                            add(starterPack = starterPackView)
-                        }
-                }
-            },
-            responseCursor = { response ->
-                response.cursor?.let(Cursor::Next)
-            },
-            networkItems = { _, _ ->
-                null
-            },
-            observedItems = { response, nextCursor ->
-                val starterPackUris = response.starterPacks
-                    .map { it.uri.atUri.let(::StarterPackUri) }
-
-                starterPackDao.starterPacks(
-                    uris = starterPackUris,
-                )
-                    .distinctUntilChangedMap { populatedStarterPackEntities ->
-                        CursorList(
-                            items = populatedStarterPackEntities
-                                .map(PopulatedStarterPackEntity::asExternalModel)
-                                .sortedWithNetworkList(
-                                    networkList = starterPackUris,
-                                    databaseId = { it.uri.uri },
-                                    networkId = { it.uri },
-                                ),
-                            nextCursor = nextCursor,
-                        )
+        else savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            networkService.observedItems(
+                cursor = cursor,
+                responseFetcher = {
+                    searchStarterPacksV2(
+                        params = SearchStarterPacksV2QueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        ),
+                    )
+                },
+                responseSaver = { response ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        response.starterPacks
+                            .forEach { starterPackView ->
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    starterPack = starterPackView,
+                                )
+                            }
                     }
-            },
-        )
+                },
+                responseCursor = { response ->
+                    response.cursor?.let(Cursor::Next)
+                },
+                networkItems = { _, _ ->
+                    null
+                },
+                observedItems = { response, nextCursor ->
+                    val starterPackUris = response.starterPacks
+                        .map { it.uri.atUri.let(::StarterPackUri) }
+
+                    starterPackDao.starterPacks(
+                        uris = starterPackUris,
+                    )
+                        .distinctUntilChangedMap { populatedStarterPackEntities ->
+                            CursorList(
+                                items = populatedStarterPackEntities
+                                    .map(PopulatedStarterPackEntity::asExternalModel)
+                                    .sortedWithNetworkList(
+                                        networkList = starterPackUris,
+                                        databaseId = { it.uri.uri },
+                                        networkId = { it.uri },
+                                    ),
+                                nextCursor = nextCursor,
+                            )
+                        }
+                },
+            )
+        }
             .flowOn(ioDispatcher)
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
@@ -611,7 +617,7 @@ internal class OfflineFirstBlueskyRecordOperations(
             .flowOn(ioDispatcher)
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
-        savedStateDataSource.singleAuthorizedSessionFlow {
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 getSuggestedStarterPacksUnspecced(
                     GetSuggestedStarterPacksQueryParams(),
@@ -623,7 +629,10 @@ internal class OfflineFirstBlueskyRecordOperations(
 
             multipleEntitySaverProvider.saveInTransaction {
                 starterPackViews.forEach { starterPack ->
-                    add(starterPack = starterPack)
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        starterPack = starterPack,
+                    )
                 }
             }
 
