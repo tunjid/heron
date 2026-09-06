@@ -30,6 +30,7 @@ import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
@@ -92,7 +93,16 @@ class AppState(
 
     internal fun entry(route: Route) =
         entryTrie[route] ?: threePaneEntry(
-            render = { },
+            render = {
+                NotFoundRoute(
+                    onGoBack = {
+                        navigationStateHolder.accept(NavigationAction.Pop.navigationMutation)
+                    },
+                    onGoHome = {
+                        navigationStateHolder.accept(NavigationAction.Home.navigationMutation)
+                    },
+                )
+            },
         )
 
     fun onDeepLink(uri: GenericUri) =
