@@ -22,6 +22,8 @@
     <string name="inference_error_failed">Inference failed</string>
     <string name="inference_no_model_title">No model downloaded</string>
     <string name="inference_no_model_description">Tap to download an on-device model for inference.</string>
+    <string name="inference_select_model_title">Choose a model</string>
+    <string name="inference_select_model_description">Pick a downloaded model to use for on-device inference.</string>
     <string name="inference_unavailable_ai_off_title">Apple Intelligence is off</string>
     <string name="inference_unavailable_ai_off_description">Turn on Apple Intelligence in Settings to use on-device AI.</string>
     <string name="inference_unavailable_preparing_title">Preparing on-device AI</string>
