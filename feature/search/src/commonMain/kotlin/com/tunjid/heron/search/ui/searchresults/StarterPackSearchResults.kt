@@ -27,13 +27,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.SearchState
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.list.StarterPack
+import com.tunjid.heron.timeline.ui.list.ExpandedStarterPack
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
@@ -47,12 +48,13 @@ internal fun StarterPackSearchResults(
     modifier: Modifier,
     paneScaffoldState: PaneScaffoldState,
     onStarterPackClicked: (StarterPack, String) -> Unit,
+    onListMemberClicked: (ListMember, String) -> Unit,
 ) {
     val state = stateHolder.produceStateWithLifecycle() as SearchState.OfStarterPacks
     LazyColumn(
         modifier = modifier,
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
@@ -60,9 +62,9 @@ internal fun StarterPackSearchResults(
     ) {
         items(
             items = state.tiledItems,
-            key = { it.starterPack.cid.id },
+            key = { it.starterPack.uri.uri },
             itemContent = { result ->
-                StarterPack(
+                ExpandedStarterPack(
                     modifier = Modifier
                         .clip(StarterPackSearchResultShape)
                         .clickable {
@@ -76,6 +78,18 @@ internal fun StarterPackSearchResults(
                     paneTransitionScope = paneScaffoldState,
                     sharedElementPrefix = state.sharedElementPrefix,
                     starterPack = result.starterPack,
+                    onListMemberClicked = { listMember ->
+                        onListMemberClicked(
+                            listMember,
+                            state.sharedElementPrefix,
+                        )
+                    },
+                    onStarterPackClicked = { clickedStarterPack ->
+                        onStarterPackClicked(
+                            clickedStarterPack,
+                            state.sharedElementPrefix,
+                        )
+                    },
                 )
             },
         )

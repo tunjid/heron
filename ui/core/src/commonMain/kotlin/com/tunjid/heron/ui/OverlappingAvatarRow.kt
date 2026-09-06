@@ -44,7 +44,10 @@ fun OverlappingAvatarRow(
             )
         }
 
-        layout(constraints.maxWidth, itemSize) {
+        layout(
+            width = if (placeables.isEmpty()) 0 else constraints.maxWidth,
+            height = if (placeables.isEmpty()) 0 else itemSize,
+        ) {
             // Track the x co-ord we have placed children up to
             var xPosition = 0
 
