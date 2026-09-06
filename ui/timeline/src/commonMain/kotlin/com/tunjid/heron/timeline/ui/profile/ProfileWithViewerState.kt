@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui.profile
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -43,8 +42,8 @@ import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.LabelIconSize
@@ -57,7 +56,6 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.viewer_state_blocked
 import heron.ui.core.generated.resources.viewer_state_follows_you
 import heron.ui.core.generated.resources.viewer_state_muted

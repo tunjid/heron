@@ -37,8 +37,8 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 

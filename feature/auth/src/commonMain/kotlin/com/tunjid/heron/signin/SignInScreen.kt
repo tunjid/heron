@@ -53,8 +53,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.SessionSummary
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState

@@ -90,6 +90,7 @@ fun TimelineItem(
                                     profile = profile,
                                     post = post,
                                     quotingPostUri = null,
+                                    clickedElement = PostAction.OfProfile.ClickedElement.Name,
                                 ),
                             )
                         },

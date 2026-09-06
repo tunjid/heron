@@ -67,8 +67,8 @@ import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.profile.ProfileLiveChip
 import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.timeline.ui.PostAction
@@ -222,6 +222,7 @@ private fun AttributionContent(
                                         profile = data.post.author,
                                         post = data.post,
                                         quotingPostUri = null,
+                                        clickedElement = PostAction.OfProfile.ClickedElement.Avatar,
                                     ),
                                 )
                             },
@@ -280,6 +281,7 @@ private fun AttributionContent(
                                 profile = data.post.author,
                                 post = data.post,
                                 quotingPostUri = null,
+                                clickedElement = PostAction.OfProfile.ClickedElement.Name,
                             ),
                         )
                     },
@@ -507,6 +509,7 @@ private fun EmbedContent(
                     profile = quotedProfile,
                     post = quotedPost,
                     quotingPostUri = data.post.uri,
+                    clickedElement = PostAction.OfProfile.ClickedElement.Name,
                 ),
             )
         },

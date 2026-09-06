@@ -17,7 +17,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.composables.splitlayout.SplitLayoutState
-import com.tunjid.heron.images.ImageLoader
+import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction

@@ -95,8 +95,8 @@ import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDrop
 import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
 import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.JiggleBox

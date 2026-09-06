@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import android.content.Context
 import android.graphics.drawable.Animatable
@@ -24,8 +24,9 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
 import coil3.ComponentRegistry
 import coil3.DrawableImage
+import coil3.Image
 
-internal actual fun coil3.Image.renderInto(
+internal actual fun Image.renderInto(
     canvas: Canvas,
 ) = draw(canvas.nativeCanvas)
 
@@ -38,7 +39,7 @@ fun imageLoader(
 internal actual fun ComponentRegistry.Builder.addPlatformDecoders() = Unit
 
 @Composable
-internal actual fun coil3.Image.AnimationEffect() {
+internal actual fun Image.AnimationEffect() {
     DisposableEffect(this) {
         val animatable = (this@AnimationEffect as? DrawableImage)?.drawable as? Animatable
         animatable?.start()

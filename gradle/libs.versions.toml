@@ -37,7 +37,7 @@ kotlinx-datetime = "0.8.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.9"
 ktlint-cli = "1.8.0"
-ktor = "3.5.0"
+ktor = "3.5.2"
 lifecycle-android = "2.11.0"
 lifecycle-multiplatform = "2.11.0"
 logcat = "0.4"
@@ -47,10 +47,10 @@ metro = "1.4.2"
 navigationEventCompose = "1.1.0"
 navigation3Multiplatform = "1.1.1"
 okio = "3.18.1"
-ozone-atproto = "0.3.9"
-ozone-bluesky-lexicons = "2026.08.08"
+ozone-atproto = "0.3.10"
+ozone-bluesky-lexicons = "2026.09.04"
 savedstate-multiplatform = "1.4.0"
-spotless = "8.10.0"
+spotless = "8.10.2"
 tunjid-state-holder = "2.0.1"
 tunjid-tiler = "1.2.6"
 tunjid-tree-nav = "0.0.58"
@@ -61,7 +61,7 @@ javafx = "21"
 jna = "5.18.1"
 gstreamer-java = "1.4.0"
 tink = "1.23.0"
-aboutLibraries = "15.1.1"
+aboutLibraries = "15.2.0"
 snapshottable = "0.1.5"
 
 
@@ -163,6 +163,7 @@ kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotl
 ktlint = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlint-cli" }
 ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-java = { group = "io.ktor", name = "ktor-client-java", version.ref = "ktor" }

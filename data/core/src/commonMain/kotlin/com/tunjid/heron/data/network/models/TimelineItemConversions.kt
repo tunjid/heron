@@ -209,29 +209,7 @@ internal fun ReplyRefParentUnion.postEntity() = when (val ref = this) {
 
 internal fun FeedViewPostReasonUnion.profileEntity() =
     when (this) {
-        is FeedViewPostReasonUnion.ReasonRepost -> ProfileEntity(
-            did = ProfileId(value.by.did.did),
-            handle = ProfileHandle(value.by.handle.handle),
-            displayName = value.by.displayName,
-            description = null,
-            avatar = value.by.avatar?.uri?.let(::ImageUri),
-            banner = null,
-            followersCount = null,
-            followsCount = null,
-            postsCount = null,
-            joinedViaStarterPack = null,
-            indexedAt = null,
-            createdAt = value.by.createdAt,
-            associated = ProfileEntity.Associated(
-                createdListCount = value.by.associated?.lists,
-                createdFeedGeneratorCount = value.by.associated?.feedgens,
-                createdStarterPackCount = value.by.associated?.starterPacks,
-                labeler = value.by.associated?.labeler,
-                allowDms = value.by.associated?.chat?.allowIncoming?.value,
-            ),
-            status = value.by.status?.statusEntity(),
-            pronouns = value.by.pronouns,
-        )
+        is FeedViewPostReasonUnion.ReasonRepost -> value.by.profileEntity()
 
         else -> null
     }

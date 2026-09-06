@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.compose.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -83,14 +83,22 @@ fun PaneScaffoldState.ComposePostFabRow(
             .fillMaxWidth(),
         verticalAlignment = Alignment.Bottom,
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .padding(horizontal = 32.dp),
+            horizontalArrangement = spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ComposeThreadGate(
                 interactionSettingsPreference = state.interactionsPreference,
                 onInteractionSettingsUpdated = {
                     onAction(Action.UpdateInteractionSettings(it))
+                },
+            )
+            ComposePostLanguage(
+                languages = state.postLanguages,
+                onLanguagesChanged = {
+                    onAction(Action.SetPostLanguages(it))
                 },
             )
         }
@@ -134,6 +142,7 @@ private fun State.createPostAction(): Action.CreatePost? {
         authorId = authorId,
         text = postText.text,
         links = postText.annotatedString.links(),
+        langs = postLanguages,
         media = video?.let(::listOf) ?: photos,
         embeddedRecordReference = embeddedRecord?.reference,
         linkPreview = linkPreview,

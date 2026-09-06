@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -22,6 +22,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
+import coil3.ComponentRegistry
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.annotation.ExperimentalCoilApi
@@ -198,7 +199,7 @@ internal class CoilImageLoader private constructor(
 
 internal expect fun coil3.Image.renderInto(canvas: Canvas)
 
-internal expect fun coil3.ComponentRegistry.Builder.addPlatformDecoders()
+internal expect fun ComponentRegistry.Builder.addPlatformDecoders()
 
 @Composable
 internal expect fun coil3.Image.AnimationEffect()

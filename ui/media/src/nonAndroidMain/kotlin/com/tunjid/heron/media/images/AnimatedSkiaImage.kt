@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.collection.MutableIntList
 import androidx.compose.runtime.getValue

@@ -22,6 +22,8 @@
     <string name="inference_error_failed">Inference failed</string>
     <string name="inference_no_model_title">No model downloaded</string>
     <string name="inference_no_model_description">Tap to download an on-device model for inference.</string>
+    <string name="inference_select_model_title">Choose a model</string>
+    <string name="inference_select_model_description">Pick a downloaded model to use for on-device inference.</string>
     <string name="inference_unavailable_ai_off_title">Apple Intelligence is off</string>
     <string name="inference_unavailable_ai_off_description">Turn on Apple Intelligence in Settings to use on-device AI.</string>
     <string name="inference_unavailable_preparing_title">Preparing on-device AI</string>
@@ -125,10 +127,19 @@
     <string name="copy_link_to_clipboard">Copy link to clipboard</string>
     <string name="send_via_direct_message">Send via Direct Message</string>
     <string name="share_in_post">Share in a post</string>
+    <string name="share_record">Share %1$s</string>
+    <string name="verified_by">Verified by:</string>
+    <string name="verified_title">%1$s is verified</string>
+    <string name="verified_body">This account has a checkmark because it's been verified by trusted sources.</string>
+    <string name="trusted_verifier_title">%1$s is a trusted verifier</string>
+    <string name="trusted_verifier_body">Accounts with a scalloped blue check mark can verify others. These trusted verifiers are selected by Bluesky.</string>
+    <string name="trusted_verifier_label">Trusted Verifier</string>
+    <string name="verified_account_label">Verified Account</string>
     <string name="send_icon">Send icon</string>
     <string name="no_media">No media</string>
     <string name="label_source">Label by: %1$s</string>
     <string name="view_labeler">View Labeler</string>
+    <string name="open_starter_pack">Open pack</string>
     <string name="standard_site_published_in">Published in %1$s</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>
     <string name="thread_gate_anyone">Anyone</string>
@@ -158,6 +169,7 @@
     <string name="writable_reaction_removal">reaction removal</string>
     <string name="writable_follow">follow</string>
     <string name="writable_unfollow">unfollow</string>
+    <string name="writable_follow_starter_pack">starter pack follow</string>
     <string name="writable_block">block</string>
     <string name="writable_unblock">unblock</string>
     <string name="writable_mute">mute</string>
@@ -197,6 +209,7 @@
     <string name="writable_description_removing_reaction">Removing reaction %1$s</string>
     <string name="writable_description_following_profile">Following a profile</string>
     <string name="writable_description_unfollowing_profile">Unfollowing a profile</string>
+    <string name="writable_description_following_starter_pack">Following a starter pack</string>
     <string name="writable_description_adding_to_list">Adding to a list</string>
     <string name="writable_description_subscribing_publication">Subscribing to a publication</string>
     <string name="writable_description_linking_document">Linking document to post</string>

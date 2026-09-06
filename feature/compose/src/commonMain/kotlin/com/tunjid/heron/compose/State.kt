@@ -66,6 +66,8 @@ interface State {
         val interactionsPreference: PostInteractionSettingsPreference? = null,
         @Serializable(with = TextFieldValueSerializer::class)
         val postText: TextFieldValue = TextFieldValue(),
+        val postLanguages: List<String> = emptyList(),
+        val languagesManuallySet: Boolean = false,
         @Transient
         val photos: List<RestrictedFile.Media.Photo> = emptyList(),
         @Transient
@@ -136,6 +138,7 @@ sealed class Action(val key: String) {
         val authorId: ProfileId,
         val text: String,
         val links: List<Link>,
+        val langs: List<String>,
         val media: List<RestrictedFile.Media>,
         val embeddedRecordReference: Record.Reference?,
         val linkPreview: LinkPreview?,
@@ -152,6 +155,10 @@ sealed class Action(val key: String) {
     data class SetFabExpanded(
         val expanded: Boolean,
     ) : Action("SetFabExpanded")
+
+    data class SetPostLanguages(
+        val languages: List<String>,
+    ) : Action("SetPostLanguages")
 
     data class UpdateInteractionSettings(
         val interactionSettingsPreference: PostInteractionSettingsPreference?,

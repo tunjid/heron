@@ -28,6 +28,8 @@ import com.tunjid.heron.sheets.postoptions.PostOptionsStateHolder
 import com.tunjid.heron.sheets.postoptions.PostOptionsViewModelInitializer
 import com.tunjid.heron.sheets.profile.ProfileSearchStateHolder
 import com.tunjid.heron.sheets.profile.ProfileSearchViewModelInitializer
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsStateHolder
+import com.tunjid.heron.sheets.profileverifications.ProfileVerificationsViewModelInitializer
 import com.tunjid.heron.sheets.selectlist.SelectListStateHolder
 import com.tunjid.heron.sheets.selectlist.SelectListViewModelInitializer
 import com.tunjid.heron.sheets.threadgate.ThreadGateStateHolder
@@ -111,6 +113,14 @@ object SheetBindings {
     @ClassKey(ProfileSearchStateHolder::class)
     internal fun provideProfileSearchSViewModelInitializer(
         initializer: ProfileSearchViewModelInitializer,
+    ): SheetStateHolderInitializer =
+        SheetStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
+    @ClassKey(ProfileVerificationsStateHolder::class)
+    internal fun provideProfileVerificationsViewModelInitializer(
+        initializer: ProfileVerificationsViewModelInitializer,
     ): SheetStateHolderInitializer =
         SheetStateHolderInitializer(initializer::invoke)
 }

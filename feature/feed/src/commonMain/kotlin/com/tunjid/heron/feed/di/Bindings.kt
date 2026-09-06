@@ -39,7 +39,6 @@ import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.feed.Action
-import com.tunjid.heron.feed.ActualFeedViewModel
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolder
 import com.tunjid.heron.feed.FeedViewModelInitializer
@@ -48,8 +47,9 @@ import com.tunjid.heron.feed.withFeedTimelineOrNull
 import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordButton
+import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
+import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -69,6 +69,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -93,6 +94,8 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.feed.generated.resources.Res
 import heron.feature.feed.generated.resources.edit_feed
 import heron.feature.feed.generated.resources.scroll_to_top
+import heron.ui.core.generated.resources.record_feed
+import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
@@ -317,7 +320,11 @@ internal fun Route(
                                 },
                             )
                         }
-                    ShareRecordButton(
+                    ShareRecordAppBarButton(
+                        contentDescription = stringResource(
+                            TimelineStrings.share_record,
+                            stringResource(CommonStrings.record_feed),
+                        ),
                         onShareClicked = {
                             state.timelineState?.timeline?.uri
                                 ?.asEmbeddableRecordUriOrNull()

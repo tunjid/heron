@@ -75,7 +75,7 @@ import com.tunjid.heron.gallery.ui.PagerStates
 import com.tunjid.heron.gallery.ui.galleryHeightFraction
 import com.tunjid.heron.gallery.ui.isNotCollapsed
 import com.tunjid.heron.gallery.ui.rememberCommentsState
-import com.tunjid.heron.interpolatedVisibleIndexEffect
+import com.tunjid.heron.media.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.PlaybackStatus

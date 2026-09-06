@@ -343,4 +343,33 @@ class UriTest {
             "https://bsky.app/profile/$handle/widget/$rkey".asEmbeddableRecordUriOrNull(),
         )
     }
+
+    // ----- ProfileVerificationUri -----
+
+    @Test
+    fun asRecordUriOrNull_parsesPrefixedProfileVerificationUri() {
+        val input = "at://$authority/${ProfileVerificationUri.NAMESPACE}/$rkey"
+        val parsed = input.asRecordUriOrNull()
+        assertIs<ProfileVerificationUri>(parsed)
+        assertEquals(input, parsed.uri)
+    }
+
+    @Test
+    fun asRecordUriOrNull_parsesUnprefixedProfileVerificationUri() {
+        val input = "$authority/${ProfileVerificationUri.NAMESPACE}/$rkey"
+        assertIs<ProfileVerificationUri>(input.asRecordUriOrNull())
+    }
+
+    @Test
+    fun requireCollection_returnsNamespaceForProfileVerificationUri() {
+        val parsed = "at://$authority/${ProfileVerificationUri.NAMESPACE}/$rkey".asRecordUriOrNull()
+        assertIs<ProfileVerificationUri>(parsed)
+        assertEquals(ProfileVerificationUri.NAMESPACE, parsed.requireCollection())
+    }
+
+    @Test
+    fun asEmbeddableRecordUriOrNull_profileVerificationReturnsNull() {
+        val input = "$authority/${ProfileVerificationUri.NAMESPACE}/$rkey"
+        assertNull(input.asEmbeddableRecordUriOrNull())
+    }
 }

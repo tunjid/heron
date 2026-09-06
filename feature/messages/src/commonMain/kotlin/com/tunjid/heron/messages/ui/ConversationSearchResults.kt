@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.round
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.messages.ConversationSearchResult
 import com.tunjid.heron.messages.canBeMessaged
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle

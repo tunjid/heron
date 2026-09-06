@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -48,13 +50,15 @@ import com.tunjid.heron.list.ListStateHolder
 import com.tunjid.heron.list.ListViewModelInitializer
 import com.tunjid.heron.list.listUri
 import com.tunjid.heron.list.timelineState
-import com.tunjid.heron.list.withListTimelineOrNull
+import com.tunjid.heron.list.withFeedListOrNull
 import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
 import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordButton
+import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
+import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -73,6 +77,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -95,6 +100,11 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.list.generated.resources.Res
 import heron.feature.list.generated.resources.add_list_member
+import heron.feature.list.generated.resources.follow_starter_pack
+import heron.ui.core.generated.resources.record_feed
+import heron.ui.core.generated.resources.record_list
+import heron.ui.core.generated.resources.record_starter_pack
+import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
 private const val ListRoutePattern = "/profile/{profileId}/lists/{listUriSuffix}"
@@ -355,18 +365,40 @@ internal fun Route(
                 },
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                 actions = {
-                    state.timelineState
-                        ?.timeline
-                        ?.withListTimelineOrNull { listTimeline ->
-                            FeedListStatus(
-                                status = state.listStatus,
-                                uri = listTimeline.feedList.uri,
-                                onListStatusUpdated = {
-                                    stateHolder.accept(Action.UpdateFeedListStatus(it))
-                                },
-                            )
-                        }
-                    ShareRecordButton(
+                    val timeline = state.timelineState?.timeline
+                    timeline?.withFeedListOrNull { feedList ->
+                        FeedListStatus(
+                            status = state.listStatus,
+                            uri = feedList.uri,
+                            onListStatusUpdated = {
+                                stateHolder.accept(Action.UpdateFeedListStatus(it))
+                            },
+                        )
+                    }
+                    if (timeline is Timeline.StarterPack) {
+                        AppBarIconButton(
+                            icon = Icons.Rounded.GroupAdd,
+                            iconDescription = stringResource(Res.string.follow_starter_pack),
+                            onClick = click@{
+                                stateHolder.accept(
+                                    Action.FollowStarterPack(
+                                        signedInProfileId = state.signedInProfileId ?: return@click,
+                                        starterPackUri = timeline.starterPack.uri,
+                                        starterPackCid = timeline.starterPack.cid,
+                                        listUri = timeline.starterPack.list?.uri ?: return@click,
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                    ShareRecordAppBarButton(
+                        contentDescription = stringResource(
+                            TimelineStrings.share_record,
+                            stringResource(
+                                if (timeline is Timeline.StarterPack) CommonStrings.record_starter_pack
+                                else CommonStrings.record_list,
+                            ),
+                        ),
                         onShareClicked = {
                             state.timelineState?.timeline?.uri
                                 ?.asEmbeddableRecordUriOrNull()

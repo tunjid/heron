@@ -17,6 +17,9 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -42,8 +45,8 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.timeline.utilities.MediaOverlayText
 import com.tunjid.heron.timeline.utilities.bucketedRatio
@@ -91,6 +94,13 @@ internal fun PostMedia(
         LazyRow(
             state = listState,
             horizontalArrangement = spacedBy(8.dp),
+            flingBehavior = when (presentation) {
+                is Timeline.Presentation.Media -> rememberSnapFlingBehavior(
+                    lazyListState = listState,
+                    snapPosition = SnapPosition.Center,
+                )
+                is Timeline.Presentation.Text -> ScrollableDefaults.flingBehavior()
+            },
         ) {
             val tallestMedia = feature.media.minBy { it.aspectRatioOrSquare }
 

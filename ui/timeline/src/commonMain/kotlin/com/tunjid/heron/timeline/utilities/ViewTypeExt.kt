@@ -50,12 +50,14 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
-import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.ui.ScrimmedContent
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import heron.ui.timeline.generated.resources.Res
 import kotlin.math.abs
+
+typealias TimelineStrings = Res.string
 
 val TimelineItem.contentType: String
     get() = when (this) {

@@ -168,24 +168,26 @@ internal class PersistedSessionManager(
         // Update the auth server to use the endpoint from the request's server.
         sessionRequestUrl.update { Url(request.server.endpoint) }
         when (request) {
-            is SessionRequest.Credentials -> api.createSession(
-                CreateSessionRequest(
-                    identifier = request.handle.id,
-                    password = request.password,
-                ),
-            )
-                .map { result ->
-                    SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = ProfileId(result.did.did),
-                        auth = result.accessJwt,
-                        refresh = result.refreshJwt,
-                        didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                            jsonContent = result.didDoc,
-                        ),
-                        authEndpoint = request.server.endpoint,
+            is SessionRequest.Credentials -> {
+                val result = api.createSession(
+                    CreateSessionRequest(
+                        identifier = request.handle.id,
+                        password = request.password,
+                    ),
+                )
+                    .requireResponse()
+
+                SavedState.AuthTokens.Authenticated.Bearer(
+                    authProfileId = ProfileId(result.did.did),
+                    auth = result.accessJwt,
+                    refresh = result.refreshJwt,
+                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
+                        jsonContent = result.didDoc,
                     )
-                }
-                .requireResponse()
+                        .withResolvedPds(did = result.did),
+                    authEndpoint = request.server.endpoint,
+                )
+            }
             is SessionRequest.Oauth -> {
                 val existingAuth = withTimeoutOrNull(PendingTokenTimeout) {
                     savedStateDataSource.savedState
@@ -382,7 +384,8 @@ internal class PersistedSessionManager(
                     refresh = refreshed.refreshJwt,
                     didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                         jsonContent = refreshed.didDoc,
-                    ),
+                    )
+                        .withResolvedPds(did = refreshed.did),
                     authEndpoint = tokens.authEndpoint,
                 )
             }
@@ -400,6 +403,22 @@ internal class PersistedSessionManager(
                 clientId = tokens.clientId,
             )
         }
+    }
+
+    private suspend fun SavedState.AuthTokens.DidDoc.withResolvedPds(
+        did: Did,
+    ): SavedState.AuthTokens.DidDoc {
+        if (service.isNotEmpty()) return this
+        val pdsUrl = identityResolver.resolvePds(did) ?: return this
+        return copy(
+            service = listOf(
+                SavedState.AuthTokens.DidDoc.Service(
+                    id = AtProtoPdsServiceId,
+                    type = AtProtoPdsServiceType,
+                    serviceEndpoint = pdsUrl.toString(),
+                ),
+            ),
+        )
     }
 }
 
@@ -736,6 +755,9 @@ private val PendingTokenTimeout = 2.seconds
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
+
+private const val AtProtoPdsServiceId = "#atproto_pds"
+private const val AtProtoPdsServiceType = "AtprotoPersonalDataServer"
 
 private const val UploadBlobPath = "com.atproto.repo.uploadBlob"
 private const val SendInteractionsPath = "app.bsky.feed.sendInteractions"

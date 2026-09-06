@@ -19,6 +19,7 @@ package com.tunjid.heron.list
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -43,6 +44,7 @@ import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.isNoOp
@@ -53,6 +55,8 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import heron.feature.list.generated.resources.Res
+import heron.feature.list.generated.resources.following_starter_pack_start
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -160,6 +164,10 @@ class ActualListViewModel(
                             writeQueue = writeQueue,
                         )
                         is Action.AddListMember -> action.flow.launchAddListMemberMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.FollowStarterPack -> action.flow.launchFollowStarterPackMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -333,6 +341,28 @@ private fun Flow<Action.AddListMember>.launchAddListMemberMutations(
 )
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.FollowStarterPack>.launchFollowStarterPackMutations(
+    state: State.SnapshotMutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = {
+        Writable.Connection(
+            connection = Profile.Connection.FollowStarterPack(
+                signedInProfileId = it.signedInProfileId,
+                starterPackUri = it.starterPackUri,
+                starterPackCid = it.starterPackCid,
+                listUri = it.listUri,
+            ),
+        )
+    },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+        else state.messages += Memo.Resource(Res.string.following_starter_pack_start)
+    },
+)
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
     state: State.SnapshotMutable,
     writeQueue: WriteQueue,
@@ -435,13 +465,13 @@ private fun launchListStatusMutations(
     state: State.SnapshotMutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
-) = timeline.withListTimelineOrNull { listTimeline ->
+) = timeline.withFeedListOrNull { feedList ->
     timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
         .launchedCollect { preferences ->
             val pinned =
                 preferences.timelinePreferences.firstOrNull {
-                    it.timelineRecordUri == listTimeline.feedList.uri
+                    it.timelineRecordUri == feedList.uri
                 }?.pinned
 
             state.listStatus = when (pinned) {
@@ -494,8 +524,10 @@ private fun defaultQueryData() = CursorQuery.Data(
     limit = 15,
 )
 
-internal inline fun <T> Timeline.withListTimelineOrNull(
-    block: (Timeline.Home.List) -> T,
-) =
-    if (this is Timeline.Home.List) block(this)
-    else null
+internal inline fun <T> Timeline.withFeedListOrNull(
+    block: (FeedList) -> T,
+) = when (this) {
+    is Timeline.Home.List -> block(feedList)
+    is Timeline.StarterPack -> block(listTimeline.feedList)
+    else -> null
+}

@@ -75,7 +75,7 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.crypto.jdk)
-                implementation(libs.ktor.client.android)
+                implementation(libs.ktor.client.okhttp)
             }
         }
         iosMain {

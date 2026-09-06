@@ -39,4 +39,7 @@
     <string name="alt_text_add">Add alt text</string>
     <string name="alt_text_descriptive">Descriptive Alt text</string>
     <string name="alt_text">Alt text</string>
+    <string name="post_language">Post language</string>
+    <string name="post_language_title">Post languages</string>
+    <string name="post_language_search">Search languages</string>
 </resources>

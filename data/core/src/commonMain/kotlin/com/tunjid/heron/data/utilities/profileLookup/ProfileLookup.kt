@@ -25,11 +25,11 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableProfileException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -44,6 +44,7 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntity
+import com.tunjid.heron.data.network.observedItems
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -53,9 +54,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.Did
@@ -111,45 +110,35 @@ internal class OfflineProfileLookup(
         responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
-    ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        // Final or pending cursor, nothing to fetch
-        if (!cursor.canRequestData) return@flow
-
-        val response = networkService.runCatchingWithMonitoredNetworkRetry(
-            block = responseFetcher,
-        ).getOrNull()
-            ?: return@flow
-
-        val profileViews = response.responseProfileViews()
-
-        val nextCursor = response.responseCursor()
-            ?.let(Cursor::Next)
-            ?: Cursor.Final
-
-        // Emit network results immediately for minimal latency
-        emit(
+    ): Flow<CursorList<ProfileWithViewerState>> = networkService.observedItems(
+        cursor = cursor,
+        responseFetcher = responseFetcher,
+        responseSaver = { response ->
+            multipleEntitySaverProvider.saveInTransaction {
+                response.responseProfileViews()
+                    .forEach { profileView ->
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            profileView = profileView,
+                        )
+                    }
+            }
+        },
+        responseCursor = { response ->
+            response.responseCursor()?.let(Cursor::Next)
+        },
+        networkItems = { response, nextCursor ->
             CursorList(
-                items = profileViews.toProfileWithViewerStates(
+                items = response.responseProfileViews().toProfileWithViewerStates(
                     signedInProfileId = signedInProfileId,
                     profileMapper = ProfileView::profile,
                     profileViewerStateMapper = ProfileView::profileViewerStateEntity,
                 ),
                 nextCursor = nextCursor,
-            ),
-        )
-
-        multipleEntitySaverProvider.saveInTransaction {
-            profileViews
-                .forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
-        }
-
-        emitAll(
-            profileViews.observeProfileWithViewerStates(
+            )
+        },
+        observedItems = { response, nextCursor ->
+            response.responseProfileViews().observeProfileWithViewerStates(
                 profileDao = profileDao,
                 signedInProfileId = signedInProfileId,
                 profileMapper = ProfileView::profile,
@@ -160,9 +149,9 @@ internal class OfflineProfileLookup(
                         items = profileWithViewerStates,
                         nextCursor = nextCursor,
                     )
-                },
-        )
-    }
+                }
+        },
+    )
 
     override suspend fun lookupProfileDid(
         profileId: Id.Profile,
@@ -198,7 +187,7 @@ internal class OfflineProfileLookup(
     override suspend fun <T : RecordUri> withDidAuthority(
         uri: T,
     ): T {
-        if (uri is com.tunjid.heron.data.core.types.UnknownRecordUri) return uri
+        if (uri is UnknownRecordUri) return uri
         val profileId = uri.profileId()
         if (Did.Regex.matches(profileId.id)) return uri
         val did = lookupProfileDid(profileId) ?: return uri

@@ -27,6 +27,7 @@ import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
 internal fun MultipleEntitySaver.add(
+    viewingProfileId: ProfileId?,
     starterPack: StarterPackView,
 ) {
     val bskyStarterPack = try {
@@ -44,6 +45,7 @@ internal fun MultipleEntitySaver.add(
         )
         starterPack.listItemsSample?.forEach { listItemView ->
             add(
+                viewingProfileId = viewingProfileId,
                 listUri = listView.uri.atUri.let(::ListUri),
                 listItemView = listItemView,
             )

@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostStatistics
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape

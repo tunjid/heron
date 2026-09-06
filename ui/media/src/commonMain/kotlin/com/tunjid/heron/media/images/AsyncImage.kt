@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,12 +41,13 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.files.uiDisplayModel
+import com.tunjid.heron.media.LocalMediaConfig
+import com.tunjid.heron.media.MediaConfig
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
 import kotlin.math.min
@@ -66,6 +68,7 @@ sealed interface Image {
     val painter: Painter
 }
 
+@Stable
 interface ImageLoader {
     suspend fun fetchImage(
         request: ImageRequest,
@@ -97,6 +100,7 @@ sealed class DownloadStatus {
     ) : DownloadStatus()
 }
 
+@Immutable
 data class ImageArgs(
     val request: ImageRequest,
     val contentDescription: String? = null,
@@ -107,12 +111,10 @@ data class ImageArgs(
 
 @Stable
 class ImageState internal constructor(
-    args: ImageArgs,
-    private val imageLoader: ImageLoader,
-    private val windowSize: () -> IntSize,
+    internal val args: () -> ImageArgs,
+    internal val mediaConfig: () -> MediaConfig,
+    private val imageLoader: () -> ImageLoader,
 ) {
-    var args by mutableStateOf(args)
-
     internal var image by mutableStateOf<Image?>(null)
     private var layoutSize by mutableStateOf(IntSize.Zero)
 
@@ -152,7 +154,7 @@ class ImageState internal constructor(
         )
             .distinctUntilChanged()
             .collectLatest { (request, size) ->
-                imageLoader.fetchImage(
+                imageLoader().fetchImage(
                     request = request,
                     size = size,
                 )
@@ -161,7 +163,7 @@ class ImageState internal constructor(
     }
 
     private fun requests(): Flow<ImageRequest> =
-        snapshotFlow { args.request }
+        snapshotFlow { args().request }
 
     private fun fetchSizes(): Flow<IntSize> =
         snapshotFlow { layoutSize }
@@ -171,23 +173,27 @@ class ImageState internal constructor(
                 if (index == 0) 0.milliseconds
                 else ImageLayoutSizeRefetchDebounce.milliseconds
             }
-            .map { (_, size) -> size.bucketedFetchSize(windowSize()) }
+            .map { (_, size) -> mediaConfig().bucketedFetchSize(size) }
 }
 
 @Composable
 fun rememberUpdatedImageState(
     args: ImageArgs,
 ): ImageState {
-    val imageLoader = LocalImageLoader.current
-    val windowSize = rememberUpdatedState(LocalWindowInfo.current.containerSize)
-    return remember(imageLoader) {
+    val updatedArgs = rememberUpdatedState(args)
+    val updatedImageLoader = rememberUpdatedState(LocalImageLoader.current)
+    val updatedMediaConfig = rememberUpdatedState(LocalMediaConfig.current)
+    return remember(
+        updatedArgs,
+        updatedImageLoader,
+        updatedMediaConfig,
+    ) {
         ImageState(
-            args = args,
-            imageLoader = imageLoader,
-            windowSize = windowSize::value,
+            mediaConfig = updatedMediaConfig::value,
+            imageLoader = updatedImageLoader::value,
+            args = updatedArgs::value,
         )
     }
-        .also { it.args = args }
 }
 
 fun ImageArgs(
@@ -248,14 +254,14 @@ fun AsyncImage(
         """.trimIndent()
     }
 
-    val contentDescription = state.args.contentDescription
+    val contentDescription = state.args().contentDescription
     val contentScaleState = rememberUpdatedState(
-        state.args.contentScale.animate(ImageInterpolationSpec),
+        state.args().contentScale.animate(ImageInterpolationSpec),
     )
     val alignmentState = rememberUpdatedState(
-        state.args.alignment.animate(ImageInterpolationSpec),
+        state.args().alignment.animate(ImageInterpolationSpec),
     )
-    val shape = state.args.shape.animate(ImageInterpolationSpec)
+    val shape = state.args().shape.animate(ImageInterpolationSpec)
 
     Box(
         modifier = modifier
@@ -279,7 +285,9 @@ fun AsyncImage(
             contentScale = contentScaleState.value,
         )
 
-        state.image?.AnimationEffect()
+        if (state.mediaConfig().autoPlayGifs()) {
+            state.image?.AnimationEffect()
+        }
     }
 
     val scope = rememberCoroutineScope(
@@ -307,45 +315,30 @@ private val IntSize.isUsable: Boolean
         height > IntSize.Zero.height &&
         height < Int.MAX_VALUE
 
-private fun IntSize.bucketedFetchSize(
-    windowSize: IntSize,
+private fun MediaConfig.bucketedFetchSize(
+    size: IntSize,
 ): IntSize {
-    val maxWidth = windowSize.width.takeIf { it > 0 } ?: width
-    val maxHeight = windowSize.height.takeIf { it > 0 } ?: height
+    val windowSize = windowSize()
+    val maxWidth = if (windowSize.width > 0) windowSize.width else size.width
+    val maxHeight = if (windowSize.height > 0) windowSize.height else size.height
     return IntSize(
-        width = min(width, maxWidth)
-            .roundedUpToDecodeBucket()
+        width = roundedUpToDecodeBucket(min(size.width, maxWidth))
             .coerceAtMost(maxWidth),
-        height = min(height, maxHeight)
-            .roundedUpToDecodeBucket()
+        height = roundedUpToDecodeBucket(min(size.height, maxHeight))
             .coerceAtMost(maxHeight),
     )
 }
 
-private fun Int.roundedUpToDecodeBucket(): Int {
-    DecodeBucketsPx
-    // Smallest bucket >= this, via a lower-bound binary search over the ascending buckets. If this is
-    // larger than every bucket, keep the requested size (never upscale); the window cap still applies.
-    var low = 0
-    var high = DecodeBucketsPx.size - 1
-    var ceiling = this
-    while (low <= high) {
-        val mid = (low + high) ushr 1
-        val bucket = DecodeBucketsPx[mid]
-        if (bucket >= this) {
-            ceiling = bucket
-            high = mid - 1
-        } else {
-            low = mid + 1
-        }
-    }
-    return ceiling
+private fun MediaConfig.roundedUpToDecodeBucket(
+    dimension: Int,
+): Int {
+    val currentBuckets = imageSizeBuckets()
+    val search = currentBuckets.binarySearch(dimension)
+    val index = if (search >= 0) search else search.inv()
+    return currentBuckets[
+        minOf(index, currentBuckets.size - 1),
+    ]
 }
-
-private val DecodeBucketsPx = intArrayOf(
-    96, 128, 256, 320, 480, 640,
-    720, 1024, 1280, 1536, 1920,
-)
 
 private val ImageInterpolationSpec = spring<Float>(
     stiffness = Spring.StiffnessLow,

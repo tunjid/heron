@@ -28,10 +28,10 @@ import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.roundToIntSize
+import com.tunjid.heron.media.scaleAndAlignTo
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
 import com.tunjid.heron.media.video.linux.GStreamerPlayerState
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
-import com.tunjid.heron.scaleAndAlignTo
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Scene

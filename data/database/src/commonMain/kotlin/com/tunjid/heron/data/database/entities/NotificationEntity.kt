@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlin.time.Instant
@@ -85,6 +86,8 @@ data class PopulatedNotificationEntity(
     val entity: NotificationEntity,
     @Embedded
     val viewerState: ProfileViewerStateEntity?,
+    @Embedded
+    val postPostEntity: PostPostEntity?,
     @Relation(
         parentColumn = "authorId",
         entityColumn = "did",

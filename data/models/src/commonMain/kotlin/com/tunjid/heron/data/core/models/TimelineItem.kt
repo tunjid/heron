@@ -50,7 +50,7 @@ val Timeline.uri: Uri?
         is Timeline.Home -> uri
         is Timeline.Profile -> null
         is Timeline.Search -> null
-        is Timeline.StarterPack -> listTimeline.uri
+        is Timeline.StarterPack -> starterPack.uri
     }
 
 sealed class TimelineItem {

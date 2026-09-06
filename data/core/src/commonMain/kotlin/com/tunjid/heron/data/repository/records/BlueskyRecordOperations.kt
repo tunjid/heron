@@ -31,6 +31,7 @@ import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import app.bsky.graph.Listitem
+import app.bsky.graph.SearchStarterPacksV2QueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
@@ -50,7 +51,6 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -81,6 +81,7 @@ import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
+import com.tunjid.heron.data.network.observedItems
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
@@ -113,7 +114,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
@@ -127,7 +127,7 @@ import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 
 @Serializable
-data class FeedGeneratorSearchQuery(
+data class SearchQuery(
     val query: String,
     override val data: CursorQuery.Data,
 ) : CursorQuery
@@ -164,9 +164,14 @@ interface BlueskyRecordOperations {
     ): Flow<CursorList<FeedGenerator>>
 
     fun feedGeneratorSearch(
-        query: FeedGeneratorSearchQuery,
+        query: SearchQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
+
+    fun starterPackSearch(
+        query: SearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StarterPack>>
 
     fun suggestedFeeds(): Flow<List<FeedGenerator>>
 
@@ -400,6 +405,7 @@ internal class OfflineFirstBlueskyRecordOperations(
                             add(list)
                             items.forEach { listItemView ->
                                 add(
+                                    viewingProfileId = signedInProfileId,
                                     listUri = list.uri.atUri.let(::ListUri),
                                     listItemView = listItemView,
                                 )
@@ -465,13 +471,13 @@ internal class OfflineFirstBlueskyRecordOperations(
             .flowOn(ioDispatcher)
 
     override fun feedGeneratorSearch(
-        query: FeedGeneratorSearchQuery,
+        query: SearchQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
-        else if (!cursor.canRequestData) emptyFlow()
-        else flow {
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+        else networkService.observedItems(
+            cursor = cursor,
+            responseFetcher = {
                 getPopularFeedGeneratorsUnspecced(
                     params = GetPopularFeedGeneratorsQueryParams(
                         query = query.query,
@@ -479,21 +485,25 @@ internal class OfflineFirstBlueskyRecordOperations(
                         cursor = cursor.value,
                     ),
                 )
-            }
-                .getOrNull()
-                ?: return@flow
+            },
+            responseSaver = { response ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.feeds
+                        .forEach { generatorView ->
+                            add(feedGeneratorView = generatorView)
+                        }
+                }
+            },
+            responseCursor = { response ->
+                response.cursor?.let(Cursor::Next)
+            },
+            networkItems = { _, _ ->
+                null
+            },
+            observedItems = { response, nextCursor ->
+                val feedUris = response.feeds
+                    .map { it.uri.atUri.let(::FeedGeneratorUri) }
 
-            multipleEntitySaverProvider.saveInTransaction {
-                response.feeds
-                    .forEach { generatorView ->
-                        add(feedGeneratorView = generatorView)
-                    }
-            }
-
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
-            val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
-
-            emitAll(
                 feedGeneratorDao.feedGenerators(
                     feedUris = feedUris,
                 )
@@ -508,7 +518,65 @@ internal class OfflineFirstBlueskyRecordOperations(
                                 ),
                             nextCursor = nextCursor,
                         )
-                    },
+                    }
+            },
+        )
+            .flowOn(ioDispatcher)
+
+    override fun starterPackSearch(
+        query: SearchQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StarterPack>> =
+        if (query.query.isBlank()) emptyFlow()
+        else savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            networkService.observedItems(
+                cursor = cursor,
+                responseFetcher = {
+                    searchStarterPacksV2(
+                        params = SearchStarterPacksV2QueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        ),
+                    )
+                },
+                responseSaver = { response ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        response.starterPacks
+                            .forEach { starterPackView ->
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    starterPack = starterPackView,
+                                )
+                            }
+                    }
+                },
+                responseCursor = { response ->
+                    response.cursor?.let(Cursor::Next)
+                },
+                networkItems = { _, _ ->
+                    null
+                },
+                observedItems = { response, nextCursor ->
+                    val starterPackUris = response.starterPacks
+                        .map { it.uri.atUri.let(::StarterPackUri) }
+
+                    starterPackDao.starterPacks(
+                        uris = starterPackUris,
+                    )
+                        .distinctUntilChangedMap { populatedStarterPackEntities ->
+                            CursorList(
+                                items = populatedStarterPackEntities
+                                    .map(PopulatedStarterPackEntity::asExternalModel)
+                                    .sortedWithNetworkList(
+                                        networkList = starterPackUris,
+                                        databaseId = { it.uri.uri },
+                                        networkId = { it.uri },
+                                    ),
+                                nextCursor = nextCursor,
+                            )
+                        }
+                },
             )
         }
             .flowOn(ioDispatcher)
@@ -549,7 +617,7 @@ internal class OfflineFirstBlueskyRecordOperations(
             .flowOn(ioDispatcher)
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
-        savedStateDataSource.singleAuthorizedSessionFlow {
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 getSuggestedStarterPacksUnspecced(
                     GetSuggestedStarterPacksQueryParams(),
@@ -561,7 +629,10 @@ internal class OfflineFirstBlueskyRecordOperations(
 
             multipleEntitySaverProvider.saveInTransaction {
                 starterPackViews.forEach { starterPack ->
-                    add(starterPack = starterPack)
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        starterPack = starterPack,
+                    )
                 }
             }
 

@@ -23,14 +23,14 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ProfileSearchQuery
-import com.tunjid.heron.data.repository.records.FeedGeneratorSearchQuery
-import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
+import com.tunjid.heron.data.repository.records.SearchQuery
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -217,6 +217,15 @@ sealed interface SearchScreenStateHolders {
         override val key: String
             get() = mutator.state.key
     }
+
+    @Stable
+    class StarterPacks(
+        val mutator: SearchResultStateHolder,
+    ) : SearchScreenStateHolders,
+        SearchResultStateHolder by mutator {
+        override val key: String
+            get() = mutator.state.key
+    }
 }
 
 sealed interface SearchResult {
@@ -226,6 +235,10 @@ sealed interface SearchResult {
 
     data class OfFeedGenerator(
         val feedGenerator: FeedGenerator,
+    ) : SearchResult
+
+    data class OfStarterPack(
+        val starterPack: StarterPack,
     ) : SearchResult
 }
 
@@ -237,9 +250,14 @@ sealed class SearchState {
         TilingState<ProfileSearchQuery, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
-        override val tilingData: TilingState.Data<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>,
+        override val tilingData: TilingState.Data<SearchQuery, SearchResult.OfFeedGenerator>,
     ) : SearchState(),
-        TilingState<FeedGeneratorSearchQuery, SearchResult.OfFeedGenerator>
+        TilingState<SearchQuery, SearchResult.OfFeedGenerator>
+
+    data class OfStarterPacks(
+        override val tilingData: TilingState.Data<SearchQuery, SearchResult.OfStarterPack>,
+    ) : SearchState(),
+        TilingState<SearchQuery, SearchResult.OfStarterPack>
 
     data class Tile(
         val tilingAction: TilingState.Action,
@@ -250,6 +268,7 @@ val SearchState.key
     get() = when (this) {
         is SearchState.OfFeedGenerators -> "feed-generators"
         is SearchState.OfProfiles -> "profiles"
+        is SearchState.OfStarterPacks -> "starter-packs"
     }
 
 val SearchState.sharedElementPrefix
@@ -277,7 +296,7 @@ interface State {
         @Transient
         val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
         @Transient
-        val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
+        val suggestedStarterPacks: List<StarterPack> = emptyList(),
         @Transient
         val feedGenerators: List<FeedGenerator> = emptyList(),
         @Transient

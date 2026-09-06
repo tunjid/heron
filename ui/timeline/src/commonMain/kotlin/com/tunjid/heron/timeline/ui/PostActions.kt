@@ -38,7 +38,13 @@ sealed interface PostAction {
         val profile: Profile,
         val post: Post,
         val quotingPostUri: PostUri?,
-    ) : PostAction
+        val clickedElement: ClickedElement,
+    ) : PostAction {
+        enum class ClickedElement {
+            Name,
+            Avatar,
+        }
+    }
 
     data class OfPost(
         val post: Post,

@@ -128,6 +128,7 @@ import kotlinx.serialization.json.put
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Language
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.Blob
@@ -272,35 +273,23 @@ internal class OfflinePostRepository(
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
-                combine(
-                    postDao.repostedBy(
-                        postUri = postUri.uri,
-                        viewingProfileId = signedInProfileId?.id,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
-                        .distinctUntilChanged()
-                        .map(List<PopulatedProfileEntity>::asExternalModels),
-
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getRepostedBy(
-                                GetRepostedByQueryParams(
-                                    uri = postUri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
-                            )
-                        },
-                        nextCursor = GetRepostedByResponse::cursor,
-                        onResponse = {
-                            // TODO: Figure out how to get indexedAt for reposts
-                        },
-                    ),
-                    ::CursorList,
+                // indexedAt and other metadata is not provided by the response;
+                // nothing is persistedand this request does not work offline.
+                profileLookup.profilesWithViewerState(
+                    signedInProfileId = signedInProfileId,
+                    cursor = cursor,
+                    responseFetcher = {
+                        getRepostedBy(
+                            GetRepostedByQueryParams(
+                                uri = postUri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    responseProfileViews = GetRepostedByResponse::repostedBy,
+                    responseCursor = GetRepostedByResponse::cursor,
                 )
-                    .distinctUntilChanged()
             }
         }
             .flowOn(ioDispatcher)
@@ -863,6 +852,12 @@ internal class OfflinePostRepository(
                 externalThumbBlob = externalThumbBlob,
             ),
             facets = resolvedLinks.facet(),
+            // The lexicon caps a post at three languages; clamp so the record's own
+            // `require` never trips on publish, and omit the field entirely when unset.
+            langs = metadata.langs
+                .take(3)
+                .map(::Language)
+                .takeIf(List<Language>::isNotEmpty),
             createdAt = createdAt,
         )
             .asJsonContent(BskyPost.serializer())

@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
+import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
@@ -86,6 +87,10 @@ sealed class InferenceAction(
         val post: Post,
     ) : InferenceAction(key = "Tea")
 
+    data class SelectDefaultModel(
+        val model: LoadedModel,
+    ) : InferenceAction(key = "SelectDefaultModel")
+
     sealed class Navigate :
         InferenceAction(key = "Navigate"),
         NavigationAction {
@@ -115,8 +120,13 @@ sealed interface InferenceOutcome {
         override val text: String = "",
     ) : InferenceOutcome
 
-    /** No on-device model is available; the UI should prompt the user to download one. */
     data object NoModel : InferenceOutcome {
+        override val text: String = ""
+    }
+
+    data class SelectDefault(
+        val models: List<LoadedModel>,
+    ) : InferenceOutcome {
         override val text: String = ""
     }
 
@@ -127,7 +137,6 @@ sealed interface InferenceOutcome {
     }
 }
 
-/** What the engine is currently inferring; drives the inference sheet's title. */
 enum class InferenceKind(
     val titleRes: StringResource,
 ) {

@@ -66,8 +66,8 @@ import com.tunjid.heron.data.core.models.allowsFollowers
 import com.tunjid.heron.data.core.models.allowsFollowing
 import com.tunjid.heron.data.core.models.allowsMentioned
 import com.tunjid.heron.data.core.models.allowsNone
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -86,7 +86,6 @@ import heron.ui.timeline.generated.resources.thread_gate_save
 import heron.ui.timeline.generated.resources.thread_gate_select_from_your_lists
 import heron.ui.timeline.generated.resources.thread_gate_who_can_reply
 import heron.ui.timeline.generated.resources.thread_gate_your_followers
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.compose.resources.stringResource
 
 @Stable

@@ -16,10 +16,21 @@
 
 package com.tunjid.heron.timeline.ui.profile
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Verified
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.BoldedText
 import com.tunjid.heron.ui.text.SmallOutlinedText
 
@@ -28,14 +39,34 @@ fun ProfileName(
     modifier: Modifier = Modifier,
     profile: Profile,
     ellipsize: Boolean = true,
+    onVerificationBadgeClicked: (() -> Unit)? = null,
 ) {
-    BoldedText(
+    Row(
         modifier = modifier,
-        text = remember(profile.displayName) {
-            profile.displayNameOrBlank
-        },
-        ellipsize = ellipsize,
-    )
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BoldedText(
+            text = remember(profile.displayName) {
+                profile.displayNameOrBlank
+            },
+            ellipsize = ellipsize,
+        )
+        profile.verificationBadge()
+            ?.let {
+                Icon(
+                    modifier = Modifier
+                        .then(
+                            if (onVerificationBadgeClicked == null) Modifier
+                            else Modifier.clickable(onClick = onVerificationBadgeClicked),
+                        )
+                        .size(16.dp),
+                    imageVector = it,
+                    contentDescription = "",
+                    tint = UiTokens.BookmarkBlue,
+                )
+            }
+    }
 }
 
 @Composable
@@ -56,3 +87,10 @@ val Profile?.displayNameOrBlank: String
 
 val Profile?.nameOrHandleOrUnknown: String
     get() = this?.displayName ?: this?.handle?.id ?: "-"
+
+fun Profile.verificationBadge() =
+    when {
+        verification?.trustedVerifierStatus == Profile.VerificationStatus.Status.Valid -> Icons.Rounded.Verified
+        verification?.verifiedStatus == Profile.VerificationStatus.Status.Valid -> Icons.Rounded.CheckCircle
+        else -> null
+    }

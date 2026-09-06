@@ -31,8 +31,8 @@ import androidx.compose.ui.layout.ContentScale
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState

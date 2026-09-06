@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
@@ -74,6 +75,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
+import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
@@ -205,6 +207,20 @@ internal fun NotificationsScreen(
             )
         }
     }
+    val onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit = remember {
+        { notification, media, index ->
+            actions(
+                Action.Navigate.To(
+                    galleryDestination(
+                        post = notification.associatedPost,
+                        media = media,
+                        startIndex = index,
+                        sharedElementPrefix = notification.sharedElementPrefix(),
+                    ),
+                ),
+            )
+        }
+    }
     val onPostInteraction = remember {
         { notification: Notification.PostAssociated, options: PostAction.Options ->
             when (options) {
@@ -316,6 +332,8 @@ internal fun NotificationsScreen(
                                 aggregatedProfiles = item.aggregatedProfiles,
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
+                                onLinkTargetClicked = onLinkTargetClicked,
                             )
 
                             is Notification.Mentioned -> MentionRow(
@@ -328,6 +346,7 @@ internal fun NotificationsScreen(
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -341,6 +360,7 @@ internal fun NotificationsScreen(
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -354,6 +374,7 @@ internal fun NotificationsScreen(
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -366,6 +387,8 @@ internal fun NotificationsScreen(
                                 aggregatedProfiles = item.aggregatedProfiles,
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
+                                onLinkTargetClicked = onLinkTargetClicked,
                             )
 
                             is Notification.Unknown -> Unit
@@ -397,6 +420,8 @@ internal fun NotificationsScreen(
                                 aggregatedProfiles = item.aggregatedProfiles,
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
+                                onPostMediaClicked = onPostMediaClicked,
+                                onLinkTargetClicked = onLinkTargetClicked,
                             )
                             is Notification.DocumentPublished -> DocumentPublishedRow(
                                 modifier = itemModifier,

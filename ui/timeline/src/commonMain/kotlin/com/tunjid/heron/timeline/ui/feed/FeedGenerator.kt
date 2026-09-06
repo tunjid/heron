@@ -26,8 +26,8 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey

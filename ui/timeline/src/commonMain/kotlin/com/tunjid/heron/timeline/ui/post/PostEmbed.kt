@@ -70,7 +70,7 @@ import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun PostEmbed(
+fun PostEmbed(
     modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,

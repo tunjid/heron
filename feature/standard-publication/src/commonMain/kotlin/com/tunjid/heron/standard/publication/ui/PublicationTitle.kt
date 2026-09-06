@@ -35,8 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.standard.PublicationSubscriptionIcon
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.collectionShape

@@ -29,6 +29,8 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.tiling.TilingState
@@ -135,7 +137,7 @@ val State.timelineState
 
 val State.listUri
     get() = timelineState?.timeline
-        ?.withListTimelineOrNull { it.feedList.uri }
+        ?.withFeedListOrNull(FeedList::uri)
 
 @Stable
 sealed class ListScreenStateHolders {
@@ -237,6 +239,13 @@ sealed class Action(val key: String) {
 
     data class AddListMember(
         val profileId: ProfileId,
+        val listUri: ListUri,
+    ) : Action(key = "AddListMember")
+
+    data class FollowStarterPack(
+        val signedInProfileId: ProfileId,
+        val starterPackUri: StarterPackUri,
+        val starterPackCid: StarterPackId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
 

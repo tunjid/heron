@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.settings.Section
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.allow_all_timeline_presentations
+import heron.feature.settings.generated.resources.auto_play_timeline_gifs
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
@@ -47,6 +48,7 @@ fun ContentAndMediaItem(
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
+    setAutoplayTimelineGifs: (Boolean) -> Unit,
     setShowPostEngagementMetrics: (Boolean) -> Unit,
     setShowTrendingTopics: (Boolean) -> Unit,
     setAllowAllTimelinePresentations: (Boolean) -> Unit,
@@ -108,6 +110,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.autoPlayTimelineVideos,
             onCheckedChange = setAutoplayTimelineVideos,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.auto_play_timeline_gifs),
+            enabled = true,
+            checked = signedInProfilePreferences.local.autoPlayTimelineGifs,
+            onCheckedChange = setAutoplayTimelineGifs,
         )
         SettingsToggleItem(
             modifier = Modifier

@@ -45,9 +45,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.files.RestrictedFile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.images.rememberUpdatedImageState
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.media.images.rememberUpdatedImageState
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState

@@ -16,28 +16,59 @@
 
 package com.tunjid.heron.timeline.ui.list
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowOutward
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.ListUri
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
+import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
+import com.tunjid.heron.ui.RecordSubtitle
+import com.tunjid.heron.ui.RecordTitle
+import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.subtitleSharedElementKey
+import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.list_by
+import heron.ui.timeline.generated.resources.open_starter_pack
 import heron.ui.timeline.generated.resources.starter_pack_by
 import org.jetbrains.compose.resources.stringResource
 
@@ -143,6 +174,140 @@ fun StarterPack(
 }
 
 @Composable
+fun ExpandedStarterPack(
+    modifier: Modifier = Modifier,
+    paneTransitionScope: PaneTransitionScope,
+    starterPack: StarterPack,
+    sharedElementPrefix: String,
+    onListMemberClicked: (ListMember) -> Unit,
+    onStarterPackClicked: (StarterPack) -> Unit,
+) = with(paneTransitionScope) {
+    OutlinedCard(
+        modifier = modifier,
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 12.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AttributionLayout(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    avatar = {},
+                    label = {
+                        PaneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = titleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = starterPack.uri,
+                                ),
+                            ),
+                        ) {
+                            RecordTitle(
+                                title = starterPack.name,
+                            )
+                        }
+                        PaneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = subtitleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = starterPack.uri,
+                                ),
+                            ),
+                        ) {
+                            RecordSubtitle(
+                                subtitle = stringResource(
+                                    Res.string.starter_pack_by,
+                                    starterPack.creator.handle.id,
+                                ),
+                            )
+                        }
+                    },
+                    action = {
+                        FilledTonalIconButton(
+                            onClick = {
+                                onStarterPackClicked(starterPack)
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowOutward,
+                                    contentDescription = stringResource(TimelineStrings.open_starter_pack),
+                                )
+                            },
+                        )
+                    },
+                )
+                OverlappingAvatarRow(
+                    overlap = AvatarOverlap,
+                    maxItems = MaxAvatars,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                ) {
+                    val count = MaxAvatars - 1
+                    if (starterPack.members.isNotEmpty()) starterPack.members.take(count)
+                        .forEachIndexed { index, listMember ->
+                            PaneStickySharedElement(
+                                modifier = Modifier
+                                    .zIndex((MaxAvatars - index).toFloat())
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .shapedClickable(CircleShape) {
+                                        onListMemberClicked(listMember)
+                                    },
+                                sharedContentState = with(paneTransitionScope) {
+                                    rememberSharedContentState(
+                                        key = listMember.avatarSharedElementKey(
+                                            prefix = sharedElementPrefix,
+                                        ),
+                                    )
+                                },
+                                content = {
+                                    AsyncImage(
+                                        modifier = Modifier
+                                            .fillParentAxisIfFixedOrWrap(),
+                                        args = remember(listMember.subject.avatar) {
+                                            ImageArgs(
+                                                url = listMember.subject.avatar?.uri,
+                                                contentScale = ContentScale.Crop,
+                                                shape = RoundedPolygonShape.Circle,
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+                        }
+                    starterPack.list?.listItemCount?.let { joined ->
+                        val itemsLeft = joined - starterPack.members.size
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(56.dp),
+                                    shape = CircleShape,
+                                )
+                                .zIndex(0f)
+                                .fillMaxWidth()
+                                .aspectRatio(1f),
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .padding(start = AvatarOverlap)
+                                    .align(Alignment.Center),
+                                text = profilesLeftInStarterPack(itemsLeft),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
 fun FeedListStatus(
     status: Timeline.Home.Status,
     uri: ListUri,
@@ -160,3 +325,9 @@ fun FeedListStatus(
         },
     )
 }
+
+private fun profilesLeftInStarterPack(itemsLeft: Long) = "+${format(itemsLeft)}"
+
+private val AvatarOverlap = 16.dp
+
+private const val MaxAvatars = 10

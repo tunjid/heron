@@ -25,7 +25,7 @@ import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcherOwner
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.images.StubImageLoader
+import com.tunjid.heron.media.images.StubImageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.sheets.preview.stubSheetStateHolder
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction

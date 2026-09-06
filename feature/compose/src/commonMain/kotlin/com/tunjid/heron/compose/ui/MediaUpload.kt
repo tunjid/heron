@@ -53,8 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaAltTextSheetState.Companion.rememberMediaAltTextSheetState
 import com.tunjid.heron.data.files.RestrictedFile
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.media.images.AsyncImage
+import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState

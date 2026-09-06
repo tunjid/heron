@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.media.images
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Size
@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toSize
-import com.tunjid.heron.scaleAndAlignTo
+import com.tunjid.heron.media.scaleAndAlignTo
 
 /**
  * A [Painter] that draws the latest image available to it.

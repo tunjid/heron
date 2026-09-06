@@ -17,6 +17,7 @@
 package com.tunjid.heron.compose
 
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -26,6 +27,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.PostLanguageSelection
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -35,6 +37,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
+import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfileSearchQuery
@@ -105,6 +108,7 @@ class ActualComposeViewModel(
         recordRepository: RecordRepository,
         fileManager: FileManager,
         writeQueue: WriteQueue,
+        languageDetector: LanguageDetector,
         @Assisted scope: CoroutineScope,
         @Assisted route: Route,
     ) : this(
@@ -119,6 +123,14 @@ class ActualComposeViewModel(
                 launchInteractionSettingsMutations(
                     state = state,
                     userDataRepository = userDataRepository,
+                )
+                launchPostLanguageDefaultMutations(
+                    state = state,
+                    userDataRepository = userDataRepository,
+                )
+                launchPostLanguageDetectionMutations(
+                    state = state,
+                    languageDetector = languageDetector,
                 )
                 launchEmbeddedRecordMutations(
                     state = state,
@@ -140,6 +152,9 @@ class ActualComposeViewModel(
                         is Action.SetFabExpanded -> action.flow.launchFabExpansionMutations(
                             state = state,
                         )
+                        is Action.SetPostLanguages -> action.flow.launchPostLanguageMutations(
+                            state = state,
+                        )
                         is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
                             state = state,
                         )
@@ -153,6 +168,7 @@ class ActualComposeViewModel(
                         is Action.CreatePost -> action.flow.launchCreatePostMutations(
                             state = state,
                             navActions = navActions,
+                            userDataRepository = userDataRepository,
                             writeQueue = writeQueue,
                             fileManager = fileManager,
                         )
@@ -207,6 +223,37 @@ private fun launchInteractionSettingsMutations(
 }
 
 context(productionScope: CoroutineScope)
+private fun launchPostLanguageDefaultMutations(
+    state: State.SnapshotMutable,
+    userDataRepository: UserDataRepository,
+) = userDataRepository.preferences.launchedCollect { preferences ->
+    if (state.postLanguages.isEmpty() && !state.languagesManuallySet) {
+        state.postLanguages = preferences.local.recentPostLanguages
+            .firstOrNull()
+            ?.tags
+            .orEmpty()
+    }
+}
+
+context(productionScope: CoroutineScope)
+private fun launchPostLanguageDetectionMutations(
+    state: State.SnapshotMutable,
+    languageDetector: LanguageDetector,
+) = snapshotFlow { state.postText.text }
+    .debounce(500.milliseconds)
+    .launchedCollectLatest { text ->
+        // Auto-detect the language from the text until the user picks one themselves.
+        if (state.languagesManuallySet) return@launchedCollectLatest
+        val detectedTag = text
+            .takeUnless(String::isBlank)
+            ?.let { languageDetector.detectLanguageTag(it) }
+            ?: return@launchedCollectLatest
+        // Detection can return script/region subtags (e.g. "zh-Hant"); the picker and feeds work
+        // in bare language codes, so keep the primary subtag.
+        state.postLanguages = listOf(detectedTag.substringBefore('-'))
+    }
+
+context(productionScope: CoroutineScope)
 private fun launchEmbeddedRecordMutations(
     state: State.SnapshotMutable,
     embeddedRecordUri: EmbeddableRecordUri?,
@@ -253,6 +300,14 @@ private fun Flow<Action.SetFabExpanded>.launchFabExpansionMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { action ->
     state.fabExpanded = action.expanded
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetPostLanguages>.launchPostLanguageMutations(
+    state: State.SnapshotMutable,
+) = launchedCollect { action ->
+    state.postLanguages = action.languages
+    state.languagesManuallySet = true
 }
 
 context(productionScope: CoroutineScope)
@@ -335,6 +390,7 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
     state: State.SnapshotMutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
 ) = launchedCollect { action ->
     val postWrite = withContext(Dispatchers.IO) {
@@ -343,6 +399,7 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
                 authorId = action.authorId,
                 text = action.text,
                 links = action.links,
+                langs = action.langs,
                 reply = action.postType as? Post.Create.Reply,
                 media = action.media,
                 embeddedRecordReference = action.embeddedRecordReference,
@@ -359,6 +416,11 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
     if (memo != null) state.messages += memo
 
     if (status !is WriteQueue.Status.Enqueued) return@launchedCollect
+
+    // Remember the languages so the next post defaults to them.
+    if (action.langs.isNotEmpty()) userDataRepository.addRecentPostLanguage(
+        selection = PostLanguageSelection(tags = action.langs),
+    )
 
     state.messages += Memo.Resource(stringResource = Res.string.sending_post)
 
@@ -381,11 +443,13 @@ private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
             draft = Post.Draft(
                 id = state.draftId,
                 authorId = authorId,
+                langs = state.postLanguages,
                 posts = listOf(
                     composeRequest(
                         authorId = authorId,
                         text = state.postText.text,
                         links = state.postText.annotatedString.links(),
+                        langs = state.postLanguages,
                         // Drafts have no reply parent, so a draft is always a top-level post.
                         reply = null,
                         media = state.video?.let(::listOf) ?: state.photos,
@@ -418,6 +482,10 @@ private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
     state: State.SnapshotMutable,
 ) = launchedCollect { action ->
     state.draftId = action.draft.id
+    state.postLanguages = action.draft.langs
+    // Treat a draft that carried languages as a deliberate choice so detection does not overwrite
+    // it while the draft is edited.
+    state.languagesManuallySet = action.draft.langs.isNotEmpty()
     val firstPost = action.draft.posts.firstOrNull()
     val text = firstPost?.text.orEmpty()
     state.photos = emptyList()
@@ -437,6 +505,7 @@ private suspend fun composeRequest(
     authorId: ProfileId,
     text: String,
     links: List<Link>,
+    langs: List<String>,
     reply: Post.Create.Reply?,
     media: List<RestrictedFile.Media>,
     embeddedRecordReference: Record.Reference?,
@@ -455,6 +524,7 @@ private suspend fun composeRequest(
         },
         allowed = allowed,
         linkPreview = linkPreview,
+        langs = langs,
     ),
 )
 
