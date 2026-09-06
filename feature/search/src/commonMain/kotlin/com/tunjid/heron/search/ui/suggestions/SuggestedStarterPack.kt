@@ -16,16 +16,18 @@
 
 package com.tunjid.heron.search.ui.suggestions
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
@@ -45,6 +47,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -52,6 +55,7 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.by_creator
+import heron.ui.timeline.generated.resources.open_starter_pack
 import org.jetbrains.compose.resources.stringResource
 
 data class SuggestedStarterPack(
@@ -59,13 +63,13 @@ data class SuggestedStarterPack(
     val members: List<ListMember>,
 )
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SuggestedStarterPack(
     modifier: Modifier = Modifier,
     paneTransitionScope: PaneTransitionScope,
     starterPackWithMembers: SuggestedStarterPack,
     onListMemberClicked: (ListMember) -> Unit,
+    onStarterPackClicked: (StarterPack) -> Unit,
 ) = with(paneTransitionScope) {
     OutlinedCard(
         modifier = modifier,
@@ -150,21 +154,41 @@ fun SuggestedStarterPack(
                     modifier = Modifier
                         .height(8.dp),
                 )
-                Text(
-                    text = starterPackWithMembers.starterPack.name,
-                )
-                Text(
-                    text = stringResource(
-                        Res.string.by_creator,
-                        remember(starterPackWithMembers.starterPack.creator.handle) {
-                            starterPackWithMembers.starterPack.creator.handle.id
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f),
+                    ) {
+                        Text(
+                            text = starterPackWithMembers.starterPack.name,
+                        )
+                        Text(
+                            text = stringResource(
+                                Res.string.by_creator,
+                                remember(starterPackWithMembers.starterPack.creator.handle) {
+                                    starterPackWithMembers.starterPack.creator.handle.id
+                                },
+                            ),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            onStarterPackClicked(starterPackWithMembers.starterPack)
                         },
-                    ),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+                        content = {
+                            Text(
+                                text = stringResource(TimelineStrings.open_starter_pack),
+                            )
+                        },
+                    )
+                }
             }
         },
     )

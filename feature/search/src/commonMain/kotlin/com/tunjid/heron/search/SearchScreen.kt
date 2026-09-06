@@ -160,6 +160,7 @@ internal fun SearchScreen(
     }
     val onStarterPackClicked = remember(navigateTo) {
         { starterPack: StarterPack, sharedElementPrefix: String ->
+            println("PATH: ${starterPack.uri.path}")
             navigateTo(
                 pathDestination(
                     path = starterPack.uri.path,
@@ -265,6 +266,7 @@ internal fun SearchScreen(
                 onTrendClicked = onTrendClicked,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onUpdateTimelineClicked = onTimelineUpdateClicked,
+                onStarterPackClicked = onStarterPackClicked,
             )
 
             ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
