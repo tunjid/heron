@@ -42,7 +42,6 @@ import com.tunjid.heron.search.ui.searchresults.AutoCompleteProfileSearchResults
 import com.tunjid.heron.search.ui.searchresults.GeneralSearchResults
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.search.ui.suggestions.SuggestedContent
-import com.tunjid.heron.search.ui.suggestions.avatarSharedElementKey
 import com.tunjid.heron.tiling.toCursors
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
@@ -119,19 +118,21 @@ internal fun SearchScreen(
                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                     profile = profile,
                     avatarSharedElementKey = post.avatarSharedElementKey(
-                        sharedElementPrefix,
+                        prefix = sharedElementPrefix,
                     ),
                 ),
             )
         }
     }
     val onListMemberClicked = remember(navigateTo) {
-        { listMember: ListMember ->
+        { listMember: ListMember, sharedElementPrefix: String ->
             navigateTo(
                 profileDestination(
                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                     profile = listMember.subject,
-                    avatarSharedElementKey = listMember.avatarSharedElementKey(),
+                    avatarSharedElementKey = listMember.avatarSharedElementKey(
+                        prefix = sharedElementPrefix,
+                    ),
                 ),
             )
         }
@@ -160,7 +161,6 @@ internal fun SearchScreen(
     }
     val onStarterPackClicked = remember(navigateTo) {
         { starterPack: StarterPack, sharedElementPrefix: String ->
-            println("PATH: ${starterPack.uri.path}")
             navigateTo(
                 pathDestination(
                     path = starterPack.uri.path,
@@ -255,9 +255,10 @@ internal fun SearchScreen(
                 paneScaffoldState = paneScaffoldState,
                 showTrendingTopics = state.preferences.local.showTrendingTopics,
                 trends = state.trends,
-                suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
-                    ?: emptyList(),
-                starterPacksWithMembers = state.starterPacksWithMembers,
+                suggestedProfiles = state.categoriesToSuggestedProfiles[
+                    state.suggestedProfileCategory,
+                ] ?: emptyList(),
+                suggestedStarterPacks = state.suggestedStarterPacks,
                 feedGenerators = state.feedGenerators,
                 timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
                 onProfileClicked = onProfileClicked,
@@ -293,7 +294,9 @@ internal fun SearchScreen(
                 onPostSearchResultClicked = onPostSearchResultClicked,
                 onReplyToPost = onReplyToPost,
                 onPostRecordClicked = onPostRecordClicked,
-                onPublicationSubscriptionToggled = { actions(Action.TogglePublicationSubscription(it)) },
+                onPublicationSubscriptionToggled = {
+                    actions(Action.TogglePublicationSubscription(it))
+                },
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
@@ -315,8 +318,12 @@ internal fun SearchScreen(
                         ),
                     )
                 },
-                onDeletePostClicked = { actions(Action.DeleteRecord(it)) },
-                onPresentationSelected = { actions(Action.UpdatePresentation(it)) },
+                onDeletePostClicked = {
+                    actions(Action.DeleteRecord(it))
+                },
+                onPresentationSelected = {
+                    actions(Action.UpdatePresentation(it))
+                },
             )
         }
     }
