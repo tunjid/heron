@@ -30,5 +30,6 @@ data class AtmosphereApp(
     companion object {
         const val StandardSiteId = "site.standard"
         const val RockskyId = "app.rocksky"
+        const val DerakkumaId = "com.derakkuma"
     }
 }

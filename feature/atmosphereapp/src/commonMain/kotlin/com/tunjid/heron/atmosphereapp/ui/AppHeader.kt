@@ -46,7 +46,14 @@ import heron.feature.atmosphereapp.generated.resources.Res
 import heron.feature.atmosphereapp.generated.resources.profiles_apps
 import heron.feature.atmosphereapp.generated.resources.tab_albums
 import heron.feature.atmosphereapp.generated.resources.tab_artists
+import heron.feature.atmosphereapp.generated.resources.tab_bests
+import heron.feature.atmosphereapp.generated.resources.tab_circle
 import heron.feature.atmosphereapp.generated.resources.tab_documents
+import heron.feature.atmosphereapp.generated.resources.tab_favorites
+import heron.feature.atmosphereapp.generated.resources.tab_friends
+import heron.feature.atmosphereapp.generated.resources.tab_members
+import heron.feature.atmosphereapp.generated.resources.tab_plays
+import heron.feature.atmosphereapp.generated.resources.tab_profile
 import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
@@ -131,10 +138,11 @@ fun AtmosphereAppHeader(
                 ),
             )
         }
+        val visibleStateHolders = stateHolders.filterNot { it is AppScreenStateHolders.Derakkuma.CircleMembers }
         AtmosphereAppTabs(
             modifier = Modifier
                 .fillMaxWidth(),
-            tabs = stateHolders.map { holder ->
+            tabs = visibleStateHolders.map { holder ->
                 Tab(
                     title = holder.tabTitle(),
                     id = holder.key,
@@ -259,6 +267,13 @@ private fun AppScreenStateHolders.tabTitle(): String = stringResource(
         is AppScreenStateHolders.Rocksky.Tracks -> Res.string.tab_tracks
         is AppScreenStateHolders.Rocksky.Artists -> Res.string.tab_artists
         is AppScreenStateHolders.Rocksky.Scrobbles -> Res.string.tab_scrobbles
+        is AppScreenStateHolders.Derakkuma.Profiles -> Res.string.tab_profile
+        is AppScreenStateHolders.Derakkuma.Plays -> Res.string.tab_plays
+        is AppScreenStateHolders.Derakkuma.Bests -> Res.string.tab_bests
+        is AppScreenStateHolders.Derakkuma.Friends -> Res.string.tab_friends
+        is AppScreenStateHolders.Derakkuma.FavoriteSongs -> Res.string.tab_favorites
+        is AppScreenStateHolders.Derakkuma.Circle -> Res.string.tab_circle
+        is AppScreenStateHolders.Derakkuma.CircleMembers -> Res.string.tab_members
     },
 )
 

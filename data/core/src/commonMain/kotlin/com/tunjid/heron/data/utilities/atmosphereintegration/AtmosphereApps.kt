@@ -19,6 +19,13 @@ package com.tunjid.heron.data.utilities.atmosphereintegration
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
+import com.tunjid.heron.data.core.types.DerakkumaBestUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleMemberUri
+import com.tunjid.heron.data.core.types.DerakkumaCircleUri
+import com.tunjid.heron.data.core.types.DerakkumaFavoriteSongUri
+import com.tunjid.heron.data.core.types.DerakkumaFriendUri
+import com.tunjid.heron.data.core.types.DerakkumaPlayUri
+import com.tunjid.heron.data.core.types.DerakkumaProfileUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
@@ -38,6 +45,11 @@ internal val SupportedAtmosphereApps: List<AtmosphereApp> = listOf(
         webpage = GenericUri("https://rocksky.app"),
         logo = ImageUri("https://rocksky.app/favicon.ico"),
     ),
+    AtmosphereApp(
+        id = AtmosphereApp.DerakkumaId,
+        webpage = GenericUri("https://derakkuma.com"),
+        logo = ImageUri("https://derakkuma.com/favicon.ico"),
+    ),
 )
 
 internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
@@ -50,5 +62,14 @@ internal val AtmosphereAppNsids: Map<String, List<String>> = mapOf(
         TrackUri.NAMESPACE,
         AlbumUri.NAMESPACE,
         ArtistUri.NAMESPACE,
+    ),
+    AtmosphereApp.DerakkumaId to listOf(
+        DerakkumaProfileUri.NAMESPACE,
+        DerakkumaPlayUri.NAMESPACE,
+        DerakkumaBestUri.NAMESPACE,
+        DerakkumaFriendUri.NAMESPACE,
+        DerakkumaFavoriteSongUri.NAMESPACE,
+        DerakkumaCircleUri.NAMESPACE,
+        DerakkumaCircleMemberUri.NAMESPACE,
     ),
 )

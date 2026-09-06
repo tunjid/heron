@@ -17,6 +17,7 @@
 package com.tunjid.heron.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,10 +46,13 @@ fun RecordLayout(
     sharedElementPrefix: String?,
     sharedElementType: RecordUri,
     avatar: @Composable () -> Unit,
+    onClick: (() -> Unit)? = null,
+    extraContent: @Composable (() -> Unit)? = null,
     action: @Composable (() -> Unit)? = null,
 ) = with(paneTransitionScope) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick)),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AttributionLayout(
@@ -93,6 +97,7 @@ fun RecordLayout(
                 blurb = it,
             )
         }
+        extraContent?.invoke()
     }
 }
 
