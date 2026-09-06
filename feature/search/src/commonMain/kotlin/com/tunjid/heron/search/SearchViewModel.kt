@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.data.repository.RecordRepository
@@ -39,7 +38,6 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.search.di.query
-import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
@@ -71,8 +69,6 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
 
 @Stable
@@ -264,45 +260,9 @@ context(productionScope: CoroutineScope)
 private fun launchSuggestedStarterPackMutations(
     state: State.SnapshotMutable,
     recordRepository: RecordRepository,
-) = recordRepository.suggestedStarterPacks()
-    .flatMapLatest { starterPacks ->
-        val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
-        val listMembersFlow = starterPackListUris.map { listUri ->
-            recordRepository.listMembers(
-                query = ListMemberQuery(
-                    listUri = listUri,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
-                        limit = 10,
-                    ),
-                ),
-                cursor = Cursor.Initial(),
-            )
-        }
-
-        val starterPackWithMembersList = starterPacks.map { starterPack ->
-            SuggestedStarterPack(
-                starterPack = starterPack,
-                members = emptyList(),
-            )
-        }
-
-        listMembersFlow
-            .merge()
-            .scan(starterPackWithMembersList) { list, fetchedMembers ->
-                val listUri = fetchedMembers.firstOrNull()?.listUri ?: return@scan list
-                list.map { packWithMembers ->
-                    if (packWithMembers.starterPack.list?.uri == listUri) packWithMembers.copy(
-                        members = fetchedMembers,
-                    )
-                    else packWithMembers
-                }
-            }
-    }
-    .launchedCollect {
-        state.starterPacksWithMembers = it
-    }
+) = recordRepository.suggestedStarterPacks().launchedCollect {
+    state.suggestedStarterPacks = it
+}
 
 context(productionScope: CoroutineScope)
 private fun launchSuggestedFeedGeneratorMutations(

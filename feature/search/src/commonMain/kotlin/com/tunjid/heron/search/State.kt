@@ -31,7 +31,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.data.repository.records.SearchQuery
-import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -297,7 +296,7 @@ interface State {
         @Transient
         val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
         @Transient
-        val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
+        val suggestedStarterPacks: List<StarterPack> = emptyList(),
         @Transient
         val feedGenerators: List<FeedGenerator> = emptyList(),
         @Transient

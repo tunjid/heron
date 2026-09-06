@@ -68,6 +68,7 @@ import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
+import com.tunjid.heron.timeline.ui.list.ExpandedStarterPack
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.roundComponent
@@ -94,13 +95,13 @@ internal fun SuggestedContent(
     showTrendingTopics: Boolean,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
-    starterPacksWithMembers: List<SuggestedStarterPack>,
+    suggestedStarterPacks: List<StarterPack>,
     feedGenerators: List<FeedGenerator>,
     timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
-    onListMemberClicked: (ListMember) -> Unit,
+    onListMemberClicked: (ListMember, String) -> Unit,
     onStarterPackClicked: (StarterPack, String) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onUpdateTimelineClicked: (Timeline.Update) -> Unit,
@@ -181,7 +182,7 @@ internal fun SuggestedContent(
                 )
             },
         )
-        if (starterPacksWithMembers.isNotEmpty()) item {
+        if (suggestedStarterPacks.isNotEmpty()) item {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -191,20 +192,26 @@ internal fun SuggestedContent(
             )
         }
         items(
-            items = starterPacksWithMembers.take(5),
-            key = { starterPackWithMember -> starterPackWithMember.starterPack.cid.id },
-            itemContent = { starterPackWithMember ->
-                SuggestedStarterPack(
+            items = suggestedStarterPacks.take(5),
+            key = { starterPack -> starterPack.uri.uri },
+            itemContent = { starterPack ->
+                ExpandedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .suggestedContentPadding()
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
-                    starterPackWithMembers = starterPackWithMember,
-                    onListMemberClicked = onListMemberClicked,
-                    onStarterPackClicked = { starterPack ->
+                    starterPack = starterPack,
+                    sharedElementPrefix = SuggestedStarterPacksSharedElementPrefix,
+                    onListMemberClicked = { clickedListMember ->
+                        onListMemberClicked(
+                            clickedListMember,
+                            SuggestedStarterPacksSharedElementPrefix,
+                        )
+                    },
+                    onStarterPackClicked = { clickedStarterPack ->
                         onStarterPackClicked(
-                            starterPack,
+                            clickedStarterPack,
                             SuggestedStarterPacksSharedElementPrefix,
                         )
                     },
