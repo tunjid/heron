@@ -127,6 +127,7 @@
     <string name="copy_link_to_clipboard">Copy link to clipboard</string>
     <string name="send_via_direct_message">Send via Direct Message</string>
     <string name="share_in_post">Share in a post</string>
+    <string name="share_record">Share %1$s</string>
     <string name="verified_by">Verified by:</string>
     <string name="verified_title">%1$s is verified</string>
     <string name="verified_body">This account has a checkmark because it's been verified by trusted sources.</string>
