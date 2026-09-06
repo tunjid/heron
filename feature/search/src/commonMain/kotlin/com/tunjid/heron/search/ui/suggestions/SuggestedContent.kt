@@ -60,6 +60,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.RecordUri
@@ -100,6 +101,7 @@ internal fun SuggestedContent(
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onListMemberClicked: (ListMember) -> Unit,
+    onStarterPackClicked: (StarterPack, String) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onUpdateTimelineClicked: (Timeline.Update) -> Unit,
 ) {
@@ -200,6 +202,12 @@ internal fun SuggestedContent(
                     paneTransitionScope = paneScaffoldState,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
+                    onStarterPackClicked = { starterPack ->
+                        onStarterPackClicked(
+                            starterPack,
+                            SuggestedStarterPacksSharedElementPrefix,
+                        )
+                    },
                 )
             },
         )
@@ -423,5 +431,6 @@ private val TrendAgePadding = PaddingValues(4.dp)
 
 private const val SuggestedProfilesSharedElementPrefix = "suggested-profile"
 private const val SuggestedFeedsSharedElementPrefix = "suggested-feeds"
+private const val SuggestedStarterPacksSharedElementPrefix = "suggested-starter-packs"
 
 private const val MaxTrendAvatars = 3

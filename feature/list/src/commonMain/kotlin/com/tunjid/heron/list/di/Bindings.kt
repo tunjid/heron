@@ -380,11 +380,6 @@ internal fun Route(
                             icon = Icons.Rounded.GroupAdd,
                             iconDescription = stringResource(Res.string.follow_starter_pack),
                             onClick = click@{
-                                println(
-                                    """
-                                    s: ${state.signedInProfileId}; l: ${timeline.starterPack.list?.uri}
-                                    """.trimIndent(),
-                                )
                                 stateHolder.accept(
                                     Action.FollowStarterPack(
                                         signedInProfileId = state.signedInProfileId ?: return@click,
