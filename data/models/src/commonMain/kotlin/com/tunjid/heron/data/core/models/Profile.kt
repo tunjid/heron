@@ -20,9 +20,12 @@ import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
+import com.tunjid.heron.data.core.types.StarterPackId
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.File
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
@@ -54,22 +57,34 @@ data class Profile(
     @Serializable
     sealed class Connection {
         abstract val signedInProfileId: ProfileId
-        abstract val profileId: ProfileId
-        abstract val followedBy: FollowUri?
 
         @Serializable
         data class Follow(
             override val signedInProfileId: ProfileId,
-            override val profileId: ProfileId,
-            override val followedBy: FollowUri?,
+            val profileId: ProfileId,
+            val followedBy: FollowUri?,
         ) : Connection()
 
         @Serializable
         data class Unfollow(
             override val signedInProfileId: ProfileId,
-            override val profileId: ProfileId,
-            override val followedBy: FollowUri?,
+            val profileId: ProfileId,
+            val followedBy: FollowUri?,
             val followUri: FollowUri,
+        ) : Connection()
+
+        /**
+         * Bulk-follows every not-yet-followed member of a starter pack in a single batched
+         * write. Members are derived from [listUri] (the pack's list); [starterPackUri] and
+         * [starterPackCid] form the `via` strong-ref stamped on each follow record so the pack
+         * creator gets join attribution.
+         */
+        @Serializable
+        data class FollowStarterPack(
+            override val signedInProfileId: ProfileId,
+            val starterPackUri: StarterPackUri,
+            val starterPackCid: StarterPackId,
+            val listUri: ListUri,
         ) : Connection()
     }
 

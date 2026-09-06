@@ -31,18 +31,23 @@ import app.bsky.graph.GetFollowersQueryParams
 import app.bsky.graph.GetFollowersResponse
 import app.bsky.graph.GetFollowsQueryParams
 import app.bsky.graph.GetFollowsResponse
+import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetMutesQueryParams
 import app.bsky.graph.GetMutesResponse
 import app.bsky.graph.MuteActorRequest
 import app.bsky.graph.UnmuteActorRequest
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetSuggestedUsersResponse
+import com.atproto.repo.ApplyWritesCreate
+import com.atproto.repo.ApplyWritesRequest
+import com.atproto.repo.ApplyWritesRequestWriteUnion
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.ListRecordsQueryParams
 import com.atproto.repo.PutRecordRequest
+import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -59,8 +64,10 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -76,6 +83,7 @@ import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.atmosphereintegration.AtmosphereAppNsids
 import com.tunjid.heron.data.utilities.atmosphereintegration.SupportedAtmosphereApps
@@ -109,6 +117,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -209,6 +218,7 @@ internal class OfflineProfileRepository(
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val tidGenerator: TidGenerator,
 ) : ProfileRepository {
 
     override fun profile(
@@ -591,6 +601,9 @@ internal class OfflineProfileRepository(
                     ),
                 )
             }
+
+        is Profile.Connection.FollowStarterPack ->
+            followStarterPackMembers(connection)
     }
 
     override suspend fun updateRestriction(
@@ -828,6 +841,98 @@ internal class OfflineProfileRepository(
             }
         }
     } ?: expiredSessionOutcome()
+
+    private suspend fun followStarterPackMembers(
+        connection: Profile.Connection.FollowStarterPack,
+    ): Outcome {
+        val signedInProfileId = connection.signedInProfileId
+        val via = StrongRef(
+            cid = connection.starterPackCid.id.let(::Cid),
+            uri = connection.starterPackUri.uri.let(::AtUri),
+        )
+
+        // Enumerate all of the pack list's members in memory; nothing is persisted.
+        val members = buildList {
+            var cursor: String? = null
+            for (page in 0 until MaxStarterPackMemberPages) {
+                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getList(
+                        GetListQueryParams(
+                            list = connection.listUri.uri.let(::AtUri),
+                            limit = StarterPackMemberPageLimit,
+                            cursor = cursor,
+                        ),
+                    )
+                }.getOrElse { return Outcome.Failure(it) }
+                addAll(response.items)
+                cursor = response.cursor ?: break
+            }
+        }
+
+        // Skip self, already-followed, blocked/blocking and muted members, keying each
+        // remaining follow with a client generated record key.
+        val now = Clock.System.now()
+        val writes = members.mapNotNull { item ->
+            val viewer = item.subject.viewer
+            val alreadyHandled = item.subject.did.did == signedInProfileId.id ||
+                viewer?.following != null ||
+                viewer?.muted == true ||
+                viewer?.blocking != null ||
+                viewer?.blockedBy == true
+            if (alreadyHandled) return@mapNotNull null
+
+            val rkey = tidGenerator.generate()
+            val followUri = recordUriOrNull(
+                signedInProfileId,
+                FollowUri.NAMESPACE,
+                RecordKey(rkey),
+            ) as FollowUri
+
+            StarterPackFollowWrite(
+                memberId = item.subject.did.did.let(::ProfileId),
+                followedBy = viewer?.followedBy?.atUri?.let(::FollowUri),
+                followUri = followUri,
+                create = ApplyWritesCreate(
+                    collection = Nsid(FollowUri.NAMESPACE),
+                    rkey = RKey(rkey),
+                    value = BskyFollow(
+                        subject = item.subject.did,
+                        createdAt = now,
+                        via = via,
+                    ).asJsonContent(BskyFollow.serializer()),
+                ),
+            )
+        }
+        // Everyone in the pack is already followed (or otherwise filtered out).
+        if (writes.isEmpty()) return Outcome.Success
+
+        for (chunk in writes.chunked(MaxFollowWritesPerBatch)) {
+            val outcome = networkService.runCatchingWithMonitoredNetworkRetry {
+                applyWrites(
+                    ApplyWritesRequest(
+                        repo = signedInProfileId.id.let(::Did),
+                        writes = chunk.map {
+                            ApplyWritesRequestWriteUnion.Create(it.create)
+                        },
+                        validate = true,
+                    ),
+                )
+            }.toOutcome {
+                profileDao.updatePartialProfileViewers(
+                    chunk.map { write ->
+                        ProfileViewerStateEntity.Partial(
+                            profileId = signedInProfileId,
+                            otherProfileId = write.memberId,
+                            following = write.followUri,
+                            followedBy = write.followedBy,
+                        )
+                    },
+                )
+            }
+            if (outcome is Outcome.Failure) return outcome
+        }
+        return Outcome.Success
+    }
 }
 
 private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
@@ -865,3 +970,20 @@ private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
         value = TabsCollectionTab(collection = TabsCollectionTabCollection.SiteStandardPublication),
     )
 }
+
+/**
+ * A single pending starter-pack follow: the [ApplyWritesCreate] to send plus the data needed to
+ * reflect the follow locally once its batch commits.
+ */
+private class StarterPackFollowWrite(
+    val memberId: ProfileId,
+    val followedBy: FollowUri?,
+    val followUri: FollowUri,
+    val create: ApplyWritesCreate,
+)
+
+// Starter-pack lists are capped well below these bounds; they simply keep a single "follow all"
+// from fanning out unbounded work.
+private const val MaxStarterPackMemberPages = 6
+private const val StarterPackMemberPageLimit = 50L
+private const val MaxFollowWritesPerBatch = 50

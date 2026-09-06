@@ -185,6 +185,8 @@ sealed interface Writable {
             get() = when (connection) {
                 is Profile.Connection.Follow -> "follow-$connection"
                 is Profile.Connection.Unfollow -> "unfollow-$connection"
+                is Profile.Connection.FollowStarterPack ->
+                    "follow-starter-pack-${connection.starterPackUri}"
             }
 
         override suspend fun WriteQueue.write(): Outcome =
