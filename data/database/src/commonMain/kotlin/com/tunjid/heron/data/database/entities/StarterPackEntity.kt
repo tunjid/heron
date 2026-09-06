@@ -16,14 +16,17 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.DatabaseView
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
@@ -81,6 +84,12 @@ data class PopulatedStarterPackEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
+    @Relation(
+        entity = StarterPackMemberView::class,
+        parentColumn = "listUri",
+        entityColumn = "listUri",
+    )
+    val members: List<PopulatedStarterPackMemberEntity>,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -103,4 +112,51 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         joinedAllTimeCount = entity.joinedAllTimeCount,
         indexedAt = entity.indexedAt,
         labels = labelEntities.asActiveExternalModels(),
+        members = members
+            .sortedByDescending { it.member.createdAt }
+            .map { populatedMember ->
+                ListMember(
+                    uri = populatedMember.member.uri,
+                    subject = populatedMember.subject.asExternalModel(),
+                    listUri = populatedMember.member.listUri,
+                    createdAt = populatedMember.member.createdAt,
+                    viewerState = null,
+                )
+            },
     )
+
+@DatabaseView(
+    viewName = "starterPackMembers",
+    value = """
+        SELECT uri, listUri, subjectId, createdAt
+        FROM (
+            SELECT
+                uri,
+                listUri,
+                subjectId,
+                createdAt,
+                ROW_NUMBER() OVER (
+                    PARTITION BY listUri
+                    ORDER BY createdAt DESC
+                ) AS memberRank
+            FROM listMembers
+        )
+        WHERE memberRank <= 10
+    """,
+)
+data class StarterPackMemberView(
+    val uri: ListMemberUri,
+    val listUri: ListUri,
+    val subjectId: ProfileId,
+    val createdAt: Instant,
+)
+
+data class PopulatedStarterPackMemberEntity(
+    @Embedded
+    val member: StarterPackMemberView,
+    @Relation(
+        parentColumn = "subjectId",
+        entityColumn = "did",
+    )
+    val subject: ProfileEntity?,
+)

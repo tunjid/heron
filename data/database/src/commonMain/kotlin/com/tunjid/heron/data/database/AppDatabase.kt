@@ -66,6 +66,7 @@ import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
+import com.tunjid.heron.data.database.entities.StarterPackMemberView
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
 import com.tunjid.heron.data.database.entities.ThreadGateHiddenPostEntity
@@ -112,7 +113,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 51,
+    version = 52,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -164,6 +165,9 @@ import kotlinx.coroutines.IO
         RockskyScrobbleEntity::class,
         RockskyAlbumEntity::class,
         RockskyArtistEntity::class,
+    ],
+    views = [
+        StarterPackMemberView::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -267,6 +271,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 49, to = 50),
         // Add ProfileVerificationEntity and verification_* embedded columns on profiles
         AutoMigration(from = 50, to = 51),
+        // Add starterPackMembers view and index listMembers.listUri
+        AutoMigration(from = 51, to = 52),
     ],
     exportSchema = true,
 )
