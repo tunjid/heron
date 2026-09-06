@@ -39,6 +39,7 @@ import heron.ui.timeline.generated.resources.writable_failed
 import heron.ui.timeline.generated.resources.writable_failed_post_interaction
 import heron.ui.timeline.generated.resources.writable_feed_interaction
 import heron.ui.timeline.generated.resources.writable_follow
+import heron.ui.timeline.generated.resources.writable_follow_starter_pack
 import heron.ui.timeline.generated.resources.writable_like
 import heron.ui.timeline.generated.resources.writable_link_document
 import heron.ui.timeline.generated.resources.writable_message
@@ -113,6 +114,8 @@ fun Writable.writeStatusMessage(
                     when (connection) {
                         is Profile.Connection.Follow -> Res.string.writable_follow
                         is Profile.Connection.Unfollow -> Res.string.writable_unfollow
+                        is Profile.Connection.FollowStarterPack ->
+                            Res.string.writable_follow_starter_pack
                     },
                 ),
             )

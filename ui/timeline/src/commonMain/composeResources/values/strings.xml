@@ -167,6 +167,7 @@
     <string name="writable_reaction_removal">reaction removal</string>
     <string name="writable_follow">follow</string>
     <string name="writable_unfollow">unfollow</string>
+    <string name="writable_follow_starter_pack">starter pack follow</string>
     <string name="writable_block">block</string>
     <string name="writable_unblock">unblock</string>
     <string name="writable_mute">mute</string>
@@ -206,6 +207,7 @@
     <string name="writable_description_removing_reaction">Removing reaction %1$s</string>
     <string name="writable_description_following_profile">Following a profile</string>
     <string name="writable_description_unfollowing_profile">Unfollowing a profile</string>
+    <string name="writable_description_following_starter_pack">Following a starter pack</string>
     <string name="writable_description_adding_to_list">Adding to a list</string>
     <string name="writable_description_subscribing_publication">Subscribing to a publication</string>
     <string name="writable_description_linking_document">Linking document to post</string>

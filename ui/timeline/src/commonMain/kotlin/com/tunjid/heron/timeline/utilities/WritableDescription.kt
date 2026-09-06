@@ -47,6 +47,7 @@ import heron.ui.timeline.generated.resources.writable_description_creating_post
 import heron.ui.timeline.generated.resources.writable_description_deleting_draft
 import heron.ui.timeline.generated.resources.writable_description_deleting_record
 import heron.ui.timeline.generated.resources.writable_description_following_profile
+import heron.ui.timeline.generated.resources.writable_description_following_starter_pack
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
 import heron.ui.timeline.generated.resources.writable_description_liking_post
 import heron.ui.timeline.generated.resources.writable_description_linking_document
@@ -128,6 +129,11 @@ fun Writable.describe(): WritableDescription =
             is Profile.Connection.Unfollow -> WritableDescription(
                 icon = Icons.Rounded.PersonRemove,
                 title = Resource(Res.string.writable_description_unfollowing_profile),
+                summary = null,
+            )
+            is Profile.Connection.FollowStarterPack -> WritableDescription(
+                icon = Icons.Rounded.PersonAdd,
+                title = Resource(Res.string.writable_description_following_starter_pack),
                 summary = null,
             )
         }
