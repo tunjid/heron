@@ -55,6 +55,7 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAc
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -107,6 +108,7 @@ internal fun GeneralSearchResults(
     onNavigate: (NavigationAction.Destination) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onStarterPackClicked: (StarterPack, String) -> Unit,
+    onListMemberClicked: (ListMember, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -296,6 +298,7 @@ internal fun GeneralSearchResults(
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
                             onStarterPackClicked = onStarterPackClicked,
+                            onListMemberClicked = onListMemberClicked,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,

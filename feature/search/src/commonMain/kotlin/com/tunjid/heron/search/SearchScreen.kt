@@ -301,6 +301,7 @@ internal fun SearchScreen(
                 onNavigate = navigateTo,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onStarterPackClicked = onStarterPackClicked,
+                onListMemberClicked = onListMemberClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
                 onMuteAccountClicked = { signInProfileId, profileId ->
                     actions(

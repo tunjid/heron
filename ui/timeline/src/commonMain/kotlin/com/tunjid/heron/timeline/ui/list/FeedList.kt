@@ -20,18 +20,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowOutward
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -40,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.FeedList
@@ -58,13 +56,17 @@ import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
+import com.tunjid.heron.ui.RecordSubtitle
+import com.tunjid.heron.ui.RecordTitle
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.subtitleSharedElementKey
+import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.by_creator
 import heron.ui.timeline.generated.resources.list_by
 import heron.ui.timeline.generated.resources.open_starter_pack
 import heron.ui.timeline.generated.resources.starter_pack_by
@@ -189,7 +191,55 @@ fun ExpandedStarterPack(
                         horizontal = 16.dp,
                         vertical = 12.dp,
                     ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                AttributionLayout(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    avatar = {},
+                    label = {
+                        PaneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = titleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = starterPack.uri,
+                                ),
+                            ),
+                        ) {
+                            RecordTitle(
+                                title = starterPack.name,
+                            )
+                        }
+                        PaneStickySharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = subtitleSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    type = starterPack.uri,
+                                ),
+                            ),
+                        ) {
+                            RecordSubtitle(
+                                subtitle = stringResource(
+                                    Res.string.starter_pack_by,
+                                    starterPack.creator.handle.id,
+                                ),
+                            )
+                        }
+                    },
+                    action = {
+                        FilledTonalIconButton(
+                            onClick = {
+                                onStarterPackClicked(starterPack)
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Rounded.ArrowOutward,
+                                    contentDescription = stringResource(TimelineStrings.open_starter_pack),
+                                )
+                            },
+                        )
+                    },
+                )
                 OverlappingAvatarRow(
                     overlap = AvatarOverlap,
                     maxItems = MaxAvatars,
@@ -197,16 +247,7 @@ fun ExpandedStarterPack(
                         .fillMaxWidth(),
                 ) {
                     val count = MaxAvatars - 1
-                    if (starterPack.members.isEmpty()) (0..<count).forEach { index ->
-                        Surface(
-                            modifier = Modifier
-                                .zIndex((MaxAvatars - index).toFloat())
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                            shape = CircleShape,
-                        ) { }
-                    }
-                    else starterPack.members.take(count)
+                    if (starterPack.members.isNotEmpty()) starterPack.members.take(count)
                         .forEachIndexed { index, listMember ->
                             PaneStickySharedElement(
                                 modifier = Modifier
@@ -260,45 +301,6 @@ fun ExpandedStarterPack(
                             )
                         }
                     }
-                }
-                Spacer(
-                    modifier = Modifier
-                        .height(8.dp),
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f),
-                    ) {
-                        Text(
-                            text = starterPack.name,
-                        )
-                        Text(
-                            text = stringResource(
-                                Res.string.by_creator,
-                                remember(starterPack.creator.handle) {
-                                    starterPack.creator.handle.id
-                                },
-                            ),
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                    }
-                    FilledTonalButton(
-                        onClick = {
-                            onStarterPackClicked(starterPack)
-                        },
-                        content = {
-                            Text(
-                                text = stringResource(TimelineStrings.open_starter_pack),
-                            )
-                        },
-                    )
                 }
             }
         },
