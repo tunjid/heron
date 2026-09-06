@@ -53,6 +53,7 @@ import heron.ui.timeline.generated.resources.inference_error_model_not_loaded
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -94,6 +95,9 @@ class InferenceViewModel(
             state = InferenceState.Immutable().toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(SheetWhileSubscribed),
             producer = { state, actions ->
+                val modelSelectionFlow = MutableSharedFlow<LoadedModel>(
+                    extraBufferCapacity = 1,
+                )
                 launchEngineStateMutations(
                     state = state,
                     inferenceEngine = inferenceEngine,
@@ -108,6 +112,7 @@ class InferenceViewModel(
                             inferenceEngine = inferenceEngine,
                             inferenceModelManager = inferenceModelManager,
                             userDataRepository = userDataRepository,
+                            modelSelectionFlow = modelSelectionFlow,
                         )
                         is InferenceAction.Vibe -> action.flow.launchVibeMutations(
                             state = state,
@@ -116,6 +121,7 @@ class InferenceViewModel(
                             userDataRepository = userDataRepository,
                             profileRepository = profileRepository,
                             timelineRepository = timelineRepository,
+                            modelSelectionFlow = modelSelectionFlow,
                         )
                         is InferenceAction.Tea -> action.flow.launchTeaMutations(
                             state = state,
@@ -123,7 +129,13 @@ class InferenceViewModel(
                             inferenceModelManager = inferenceModelManager,
                             userDataRepository = userDataRepository,
                             timelineRepository = timelineRepository,
+                            modelSelectionFlow = modelSelectionFlow,
                         )
+                        is InferenceAction.SelectDefaultModel ->
+                            action.flow.launchSelectDefaultModelMutations(
+                                userDataRepository = userDataRepository,
+                                selectModel = modelSelectionFlow::emit,
+                            )
                         is InferenceAction.Navigate.To -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
                         }
@@ -149,11 +161,13 @@ private fun Flow<InferenceAction.Translate>.launchTranslationMutations(
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
+    modelSelectionFlow: Flow<LoadedModel>,
 ) = launchedCollectLatest { action ->
     state.kind = InferenceKind.Translation
     inferenceEngine.outcomes(
         inferenceModelManager = inferenceModelManager,
         userDataRepository = userDataRepository,
+        modelSelectionFlow = modelSelectionFlow,
         // Near-greedy decoding: translation is a constrained task, so a low temperature keeps
         // the output faithful and free of the preamble and format drift that higher
         // temperatures invite on small on-device models.
@@ -177,6 +191,7 @@ private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
     userDataRepository: UserDataRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    modelSelectionFlow: Flow<LoadedModel>,
 ) = distinctUntilChanged()
     .launchedCollectLatest { action ->
         state.kind = InferenceKind.Vibe
@@ -210,6 +225,7 @@ private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
         inferenceEngine.outcomes(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
+            modelSelectionFlow = modelSelectionFlow,
             prompt = vibePrompt(
                 items = timelineRepository.recentTimelineItems(
                     profileId = action.profileId,
@@ -234,6 +250,7 @@ private fun Flow<InferenceAction.Tea>.launchTeaMutations(
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
     timelineRepository: TimelineRepository,
+    modelSelectionFlow: Flow<LoadedModel>,
 ) = distinctUntilChanged()
     .launchedCollectLatest { action ->
         state.kind = InferenceKind.Tea
@@ -261,12 +278,24 @@ private fun Flow<InferenceAction.Tea>.launchTeaMutations(
         inferenceEngine.outcomes(
             inferenceModelManager = inferenceModelManager,
             userDataRepository = userDataRepository,
+            modelSelectionFlow = modelSelectionFlow,
             prompt = teaPrompt(items = items),
             transform = String::trim,
         ).collect { outcome ->
             state.teaOutcome = outcome
         }
     }
+
+context(productionScope: CoroutineScope)
+private fun Flow<InferenceAction.SelectDefaultModel>.launchSelectDefaultModelMutations(
+    userDataRepository: UserDataRepository,
+    selectModel: suspend (LoadedModel) -> Unit,
+) = launchedCollect { action ->
+    // Persist the account's choice so the picker is a one-time prompt, then hand the model to the
+    // inference awaiting it so generation resumes without the user re-triggering the action.
+    userDataRepository.setDefaultModelName(action.model.model.name)
+    selectModel(action.model)
+}
 
 /**
  * Streams [InferenceOutcome]s for a single [prompt]: an initial [InferenceOutcome.Loading] whose
@@ -277,6 +306,7 @@ private fun Flow<InferenceAction.Tea>.launchTeaMutations(
 private fun InferenceEngine.outcomes(
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
+    modelSelectionFlow: Flow<LoadedModel>,
     prompt: String,
     params: GenerationParams = GenerationParams(),
     transform: (String) -> String = { it },
@@ -293,6 +323,12 @@ private fun InferenceEngine.outcomes(
         ) {
             // Loading an already loaded model is idempotent across engine implementations.
             is DefaultModelResolution.Loadable -> load(resolution.model)
+            // Models are downloaded but this account picked no default: surface them and suspend
+            // until the user adopts one, then load it and fall through to generation.
+            is DefaultModelResolution.SelectableDefault -> {
+                emit(InferenceOutcome.SelectDefault(resolution.models))
+                load(modelSelectionFlow.first())
+            }
             is DefaultModelResolution.Unavailable -> {
                 emit(InferenceOutcome.Unavailable(resolution.reason))
                 return@flow
@@ -341,6 +377,10 @@ private sealed interface DefaultModelResolution {
         val model: LoadedModel,
     ) : DefaultModelResolution
 
+    data class SelectableDefault(
+        val models: List<LoadedModel>,
+    ) : DefaultModelResolution
+
     data class Unavailable(
         val reason: PlatformUnavailableReason,
     ) : DefaultModelResolution
@@ -363,13 +403,20 @@ private suspend fun resolveDefaultModel(
                 else -> DefaultModelResolution.None
             }
         }
+
+    val availableModels = inferenceModelManager.models
+        .mapNotNull { model ->
+            (inferenceModelManager.status(model).first() as? ModelStatus.Available)?.loadedModel
+        }
     val defaultModelName = userDataRepository.preferences.first().local.defaultModelName
-        ?: return DefaultModelResolution.None
-    val model = inferenceModelManager.models.firstOrNull { it.name == defaultModelName }
-        ?: return DefaultModelResolution.None
-    return when (val status = inferenceModelManager.status(model).first()) {
-        is ModelStatus.Available -> DefaultModelResolution.Loadable(status.loadedModel)
-        else -> DefaultModelResolution.None
+    val defaultModel = defaultModelName?.let { name ->
+        availableModels.firstOrNull { it.model.name == name }
+    }
+    return when (defaultModel) {
+        null ->
+            if (availableModels.isEmpty()) DefaultModelResolution.None
+            else DefaultModelResolution.SelectableDefault(availableModels)
+        else -> DefaultModelResolution.Loadable(defaultModel)
     }
 }
 

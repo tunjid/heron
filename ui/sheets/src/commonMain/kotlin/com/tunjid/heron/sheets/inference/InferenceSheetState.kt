@@ -20,6 +20,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,9 +35,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,12 +52,15 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.ml.engine.EngineState
+import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
@@ -80,6 +86,8 @@ import heron.ui.timeline.generated.resources.inference_no_model_title
 import heron.ui.timeline.generated.resources.inference_phase_generating
 import heron.ui.timeline.generated.resources.inference_phase_loading_model
 import heron.ui.timeline.generated.resources.inference_phase_preparing
+import heron.ui.timeline.generated.resources.inference_select_model_description
+import heron.ui.timeline.generated.resources.inference_select_model_title
 import heron.ui.timeline.generated.resources.inference_unavailable_ai_off_description
 import heron.ui.timeline.generated.resources.inference_unavailable_ai_off_title
 import heron.ui.timeline.generated.resources.inference_unavailable_preparing_description
@@ -167,21 +175,22 @@ internal fun InferenceBottomSheet(
             InferenceAction.Navigate.To(inferenceDestination()),
         )
     }
+    val onSelectModel: (LoadedModel) -> Unit = { model ->
+        state.stateHolder(
+            InferenceAction.SelectDefaultModel(model),
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // The outcome for the kind on screen decides whether the header is shown; vibe reads its
-        // posts slot since both vibe slots share the same no-model state.
         val headerOutcome = when (kind) {
             InferenceKind.Vibe -> inferenceState.postsOutcome
             InferenceKind.Translation -> inferenceState.translationOutcome
             InferenceKind.Tea -> inferenceState.teaOutcome
         }
-        // The no-model / unavailable prompts carry their own title, so only show the kind header
-        // otherwise.
         if (!headerOutcome.isFullBleedPrompt) {
             Text(
                 text = stringResource(kind.titleRes),
@@ -214,11 +223,13 @@ internal fun InferenceBottomSheet(
                     outcome = inferenceState.translationOutcome,
                     engineState = inferenceState.engineState,
                     onNavigateToModels = onNavigateToModels,
+                    onSelectModel = onSelectModel,
                 )
                 InferenceKind.Tea -> InferenceOutcomeContent(
                     outcome = inferenceState.teaOutcome,
                     engineState = inferenceState.engineState,
                     onNavigateToModels = onNavigateToModels,
+                    onSelectModel = onSelectModel,
                 )
                 InferenceKind.Vibe -> ProfileVibeContent(
                     profileId = inferenceState.vibeProfileId,
@@ -234,6 +245,7 @@ internal fun InferenceBottomSheet(
                         )
                     },
                     onNavigateToModels = onNavigateToModels,
+                    onSelectModel = onSelectModel,
                 )
             }
         }
@@ -253,6 +265,7 @@ private fun ProfileVibeContent(
     engineState: EngineState?,
     onSelectLens: (ProfileId, Timeline.Profile.Type) -> Unit,
     onNavigateToModels: () -> Unit,
+    onSelectModel: (LoadedModel) -> Unit,
 ) {
     // With no usable model, a single prompt reads better than one repeated behind every tab.
     if (postsOutcome.isFullBleedPrompt) {
@@ -260,6 +273,7 @@ private fun ProfileVibeContent(
             outcome = postsOutcome,
             engineState = engineState,
             onNavigateToModels = onNavigateToModels,
+            onSelectModel = onSelectModel,
         )
         return
     }
@@ -303,6 +317,7 @@ private fun ProfileVibeContent(
                     },
                     engineState = engineState,
                     onNavigateToModels = onNavigateToModels,
+                    onSelectModel = onSelectModel,
                 )
             }
         }
@@ -329,6 +344,7 @@ private fun InferenceOutcomeContent(
     outcome: InferenceOutcome?,
     engineState: EngineState?,
     onNavigateToModels: () -> Unit,
+    onSelectModel: (LoadedModel) -> Unit,
 ) {
     when (outcome) {
         null,
@@ -386,6 +402,11 @@ private fun InferenceOutcomeContent(
             )
         }
 
+        is InferenceOutcome.SelectDefault -> SelectDefaultModelContent(
+            models = outcome.models,
+            onSelectModel = onSelectModel,
+        )
+
         is InferenceOutcome.Unavailable -> EmptyContent(
             modifier = Modifier.fillMaxWidth(),
             titleRes = when (outcome.reason) {
@@ -411,9 +432,66 @@ private fun InferenceOutcomeContent(
     }
 }
 
-/** Prompts that render their own centered title/description, so the kind header is suppressed. */
+@Composable
+private fun SelectDefaultModelContent(
+    models: List<LoadedModel>,
+    onSelectModel: (LoadedModel) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 24.dp,
+                vertical = 24.dp,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                modifier = Modifier.size(36.dp),
+                imageVector = Icons.Rounded.AutoAwesome,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(Res.string.inference_select_model_title),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = stringResource(Res.string.inference_select_model_description),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        // One button per downloaded model; tapping adopts it as this account's default and resumes
+        // the pending inference on it.
+        models.forEach { model ->
+            FilledTonalButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onSelectModel(model) },
+            ) {
+                Text(text = model.model.name)
+            }
+        }
+    }
+}
+
 private val InferenceOutcome?.isFullBleedPrompt: Boolean
-    get() = this is InferenceOutcome.NoModel || this is InferenceOutcome.Unavailable
+    get() = this is InferenceOutcome.NoModel ||
+        this is InferenceOutcome.SelectDefault ||
+        this is InferenceOutcome.Unavailable
 
 private fun EngineState?.loadingCaptionRes(): StringResource = when (this) {
     is EngineState.Loading -> Res.string.inference_phase_loading_model
