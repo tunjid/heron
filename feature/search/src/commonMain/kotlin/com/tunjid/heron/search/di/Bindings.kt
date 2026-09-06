@@ -27,12 +27,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.round
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.GrazeFeedPreviewPrefix
 import com.tunjid.heron.search.ProfilePostSearchPrefix
@@ -40,6 +46,7 @@ import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchStateHolder
 import com.tunjid.heron.search.SearchViewModelInitializer
+import com.tunjid.heron.search.State
 import com.tunjid.heron.search.canShowFab
 import com.tunjid.heron.search.isQueryEditable
 import com.tunjid.heron.search.isRoot
@@ -67,7 +74,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -92,7 +98,6 @@ import heron.feature.search.generated.resources.filters_content_description
 import heron.feature.search.generated.resources.hint_general_search
 import heron.feature.search.generated.resources.hint_graze_feed_preview
 import heron.feature.search.generated.resources.hint_profile_post_search
-import heron.ui.core.generated.resources.feed_generator_create
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/search"
@@ -212,11 +217,9 @@ internal fun Route(
         },
     )
 
+    val keyboard = LocalSoftwareKeyboardController.current
     val searchFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        if (state.searchBarText.isBlank()) searchFocusRequester.requestFocus()
-    }
+    KeyboardPopupEffect(state, searchFocusRequester)
 
     val topAppBarNestedScrollConnection =
         paneScaffoldState.topAppBarNestedScrollConnection
@@ -379,12 +382,19 @@ internal fun Route(
                     },
                 onNavItemReselected = {
                     searchFocusRequester.requestFocus()
+                    keyboard?.show()
                     true
                 },
             )
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                onNavItemReselected = {
+                    searchFocusRequester.requestFocus()
+                    keyboard?.show()
+                    true
+                },
+            )
         },
         content = {
             SearchScreen(
@@ -395,6 +405,22 @@ internal fun Route(
             )
         },
     )
+}
+
+@Composable
+private fun KeyboardPopupEffect(
+    state: State,
+    searchFocusRequester: FocusRequester,
+) {
+    var restored by rememberSaveable {
+        mutableStateOf(false)
+    }
+    LifecycleResumeEffect(Unit) {
+        onPauseOrDispose { restored = true }
+    }
+    LaunchedEffect(Unit) {
+        if (state.searchBarText.isBlank() && !restored) searchFocusRequester.requestFocus()
+    }
 }
 
 @Composable
