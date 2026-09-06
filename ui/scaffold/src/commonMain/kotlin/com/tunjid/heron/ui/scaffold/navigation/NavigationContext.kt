@@ -41,7 +41,7 @@ internal class ImmutableNavigationContext(
     override val navState: MultiStackNav get() = state
 
     override val String.toRoute: Route
-        get() = routeParser.parse(this) ?: unknownRoute()
+        get() = routeParser.parse(lowercase()) ?: unknownRoute()
 
     @OptIn(ExperimentalEncodingApi::class)
     override fun Route.encodeToQueryParam(): String =
