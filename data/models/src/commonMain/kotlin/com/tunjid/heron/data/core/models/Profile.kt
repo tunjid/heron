@@ -73,12 +73,6 @@ data class Profile(
             val followUri: FollowUri,
         ) : Connection()
 
-        /**
-         * Bulk-follows every not-yet-followed member of a starter pack in a single batched
-         * write. Members are derived from [listUri] (the pack's list); [starterPackUri] and
-         * [starterPackCid] form the `via` strong-ref stamped on each follow record so the pack
-         * creator gets join attribution.
-         */
         @Serializable
         data class FollowStarterPack(
             override val signedInProfileId: ProfileId,
@@ -163,7 +157,6 @@ data class Profile(
         val verifiedStatus: Status,
         val trustedVerifierStatus: Status,
     ) {
-        val isVerified get() = verifiedStatus == Status.Valid
         val isTrustedVerifier get() = trustedVerifierStatus == Status.Valid
 
         @Serializable
