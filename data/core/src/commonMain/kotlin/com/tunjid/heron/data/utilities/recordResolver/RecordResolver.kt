@@ -466,7 +466,12 @@ internal class OfflineRecordResolver(
                 )
             }
                 .mapCatchingUnlessCancelled {
-                    multipleEntitySaverProvider.saveInTransaction { add(it.starterPack) }
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = viewingProfileId,
+                            starterPack = it.starterPack,
+                        )
+                    }
                     it.starterPack.asExternalModel()
                 }
             is LabelerUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {

@@ -851,7 +851,6 @@ internal class OfflineProfileRepository(
             uri = connection.starterPackUri.uri.let(::AtUri),
         )
 
-        // Enumerate all of the pack list's members in memory; nothing is persisted.
         val members = buildList {
             var cursor: String? = null
             for (page in 0 until MaxStarterPackMemberPages) {
@@ -971,10 +970,6 @@ private fun ProfileTab.asNetworkTab(): PutTabsRequestItemUnion = when (this) {
     )
 }
 
-/**
- * A single pending starter-pack follow: the [ApplyWritesCreate] to send plus the data needed to
- * reflect the follow locally once its batch commits.
- */
 private class StarterPackFollowWrite(
     val memberId: ProfileId,
     val followedBy: FollowUri?,
@@ -982,8 +977,6 @@ private class StarterPackFollowWrite(
     val create: ApplyWritesCreate,
 )
 
-// Starter-pack lists are capped well below these bounds; they simply keep a single "follow all"
-// from fanning out unbounded work.
 private const val MaxStarterPackMemberPages = 6
 private const val StarterPackMemberPageLimit = 50L
 private const val MaxFollowWritesPerBatch = 50
