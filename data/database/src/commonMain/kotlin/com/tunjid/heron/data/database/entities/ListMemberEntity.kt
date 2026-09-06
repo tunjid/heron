@@ -50,6 +50,7 @@ import kotlin.time.Instant
     ],
     indices = [
         Index(value = ["createdAt"]),
+        Index(value = ["listUri"]),
     ],
 )
 data class ListMemberEntity(
