@@ -56,6 +56,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.links
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -152,6 +153,9 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
+    val topAppBarNestedScrollConnection =
+        paneScaffoldState.topAppBarNestedScrollConnection
+
     val bottomNavigationNestedScrollConnection =
         paneScaffoldState.bottomNavigationNestedScrollConnection
 
@@ -159,6 +163,7 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
@@ -205,6 +210,7 @@ internal fun Route(
                         },
                     )
                 },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
             )
         },
@@ -254,7 +260,7 @@ internal fun Route(
                 state = state,
                 actions = stateHolder.accept,
                 modifier = Modifier
-                    .padding(paddingValues),
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
             )
         },
     )

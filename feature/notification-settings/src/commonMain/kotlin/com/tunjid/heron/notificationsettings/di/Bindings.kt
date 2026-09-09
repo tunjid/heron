@@ -18,7 +18,6 @@ package com.tunjid.heron.notificationsettings.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -173,6 +173,7 @@ internal fun Route(
                 title = {
                     AppBarTitle(title = stringResource(CommonStrings.notification_settings))
                 },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
             )
         },
@@ -206,15 +207,11 @@ internal fun Route(
         navigationRail = {
             PaneNavigationRail()
         },
-        content = { paddingValues ->
+        content = {
             NotificationSettingsScreen(
                 paneScaffoldState = this,
                 state = state,
                 actions = stateHolder.accept,
-                modifier = Modifier
-                    .padding(
-                        top = paddingValues.calculateTopPadding(),
-                    ),
             )
             SecondaryPaneCloseBackHandler()
         },
