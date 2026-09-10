@@ -17,6 +17,8 @@
 package com.tunjid.heron.graze.editor.ui.filter
 
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -52,7 +54,10 @@ inline fun <T : Any> Dropdown(
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             label = { Text(text = label) },
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier
+                .menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                ),
         )
         ExposedDropdownMenu(
             expanded = expanded,

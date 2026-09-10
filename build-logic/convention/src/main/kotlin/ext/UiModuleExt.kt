@@ -34,13 +34,14 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.lifecycle.multiplatform.runtime)
                 api(libs.lifecycle.multiplatform.runtime.compose)
 
-                api(libs.compose.multiplatform.components.resources)
-                api(libs.compose.multiplatform.runtime)
                 api(libs.compose.multiplatform.animation)
-                api(libs.compose.multiplatform.material.icons.extended)
-                api(libs.compose.multiplatform.material3)
+                api(libs.compose.multiplatform.components.resources)
                 api(libs.compose.multiplatform.foundation.layout)
                 api(libs.compose.multiplatform.foundation.foundation)
+                api(libs.compose.multiplatform.runtime)
+                api(libs.compose.multiplatform.material3)
+                api(libs.compose.multiplatform.material.icons.extended)
+                api(libs.compose.multiplatform.ui.graphics)
                 api(libs.compose.multiplatform.ui.ui)
 
                 api(libs.compose.multiplatform.ui.tooling.preview)
