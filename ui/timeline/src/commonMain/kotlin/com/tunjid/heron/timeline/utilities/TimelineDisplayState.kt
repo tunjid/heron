@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
@@ -38,12 +39,8 @@ class TimelineDisplayState internal constructor(
     private val density: () -> Density,
     private val windowWidthPx: () -> Int,
 ) {
-    /**
-     * The card size to feed to `StaggeredGridCells.Adaptive`. Returns the presentation's baseline
-     * [cardSize] unless the full window would fit more than [maxColumns] of them, in which case it
-     * grows just enough to cap the column count. The window is an upper bound on every pane's
-     * width, so a narrower pane simply renders fewer columns.
-     */
+    val cacheWindow: LazyLayoutCacheWindow = TimelineLazyLayoutCacheWindow
+
     @Stable
     fun cardSize(
         presentation: Timeline.Presentation,
@@ -84,3 +81,9 @@ fun rememberTimelineDisplayState(): TimelineDisplayState {
         )
     }
 }
+
+private val TimelineLazyLayoutCacheWindow = LazyLayoutCacheWindow(
+    aheadFraction = 0.7f,
+    behindFraction = 0.7f,
+    isNonScrollCachingEnabled = false,
+)

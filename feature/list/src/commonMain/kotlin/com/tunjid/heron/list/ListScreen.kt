@@ -541,6 +541,7 @@ private fun ListTimeline(
                     )
                 },
             state = gridState,
+            cacheWindow = displayState.cacheWindow,
             columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
             verticalItemSpacing = displayState.verticalItemSpacing(presentation),
             contentPadding = bottomNavAndInsetPaddingValues(

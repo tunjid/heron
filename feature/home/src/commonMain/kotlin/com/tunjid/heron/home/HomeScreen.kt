@@ -560,6 +560,7 @@ private fun HomeTimeline(
                         )
                     },
                 state = gridState,
+                cacheWindow = displayState.cacheWindow,
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
