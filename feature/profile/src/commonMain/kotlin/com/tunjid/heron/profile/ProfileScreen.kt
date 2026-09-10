@@ -1510,6 +1510,7 @@ private fun ProfileTimeline(
                     )
                 },
             state = gridState,
+            cacheWindow = displayState.cacheWindow,
             columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,

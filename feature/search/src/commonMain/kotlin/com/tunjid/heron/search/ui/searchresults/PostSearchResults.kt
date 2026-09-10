@@ -220,6 +220,7 @@ internal fun PostSearchResults(
             },
         ),
         state = gridState,
+        cacheWindow = displayState.cacheWindow,
         columns = StaggeredGridCells.Adaptive(
             displayState.cardSize(presentation),
         ),
