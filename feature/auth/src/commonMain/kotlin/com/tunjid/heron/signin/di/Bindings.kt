@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.Action
-import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolder
@@ -188,7 +187,6 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = false,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.MessageConsumed(it))

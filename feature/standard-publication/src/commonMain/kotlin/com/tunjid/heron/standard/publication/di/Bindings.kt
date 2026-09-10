@@ -196,7 +196,6 @@ object StandardPublicationBindings {
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
                     .nestedScroll(topAppBarNestedScrollConnection),
-                showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))

@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.standard.subscription.Action
-import com.tunjid.heron.standard.subscription.ActualStandardSubscriptionViewModel
 import com.tunjid.heron.standard.subscription.StandardSubscriptionScreen
 import com.tunjid.heron.standard.subscription.StandardSubscriptionStateHolder
 import com.tunjid.heron.standard.subscription.StandardSubscriptionViewModelInitializer
@@ -142,7 +141,6 @@ object StandardSubscriptionBindings {
                     .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                         nestedScroll(bottomNavigationNestedScrollConnection)
                     },
-                showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))

@@ -34,9 +34,6 @@ class AppUiStateHolder(
                     is UiAction.UpdatePaneAnchor -> action.flow.launchPaneAnchorMutations(
                         state = state,
                     )
-                    is UiAction.UpdateShowNavigation -> action.flow.launchShowNavigationMutations(
-                        state = state,
-                    )
                     is UiAction.UpdateRouteImmersion -> action.flow.launchRouteImmersionMutations(
                         state = state,
                     )
@@ -44,13 +41,6 @@ class AppUiStateHolder(
             }
         },
     )
-
-context(productionScope: CoroutineScope)
-private fun Flow<UiAction.UpdateShowNavigation>.launchShowNavigationMutations(
-    state: UiState.SnapshotMutable,
-) = launchedCollectLatest {
-    state.showNavigation = it.showNavigation
-}
 
 context(productionScope: CoroutineScope)
 private fun Flow<UiAction.UpdateDismissBehavior>.launchDismissBehaviorMutations(

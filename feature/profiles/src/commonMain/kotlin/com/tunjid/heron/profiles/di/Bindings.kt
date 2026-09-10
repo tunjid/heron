@@ -23,7 +23,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.profiles.Action
-import com.tunjid.heron.profiles.ActualProfilesViewModel
 import com.tunjid.heron.profiles.Load
 import com.tunjid.heron.profiles.ProfilesScreen
 import com.tunjid.heron.profiles.ProfilesStateHolder
@@ -306,7 +305,6 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection),
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

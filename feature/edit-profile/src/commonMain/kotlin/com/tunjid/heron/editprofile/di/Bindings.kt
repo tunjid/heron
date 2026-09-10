@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.editprofile.Action
-import com.tunjid.heron.editprofile.ActualEditProfileViewModel
 import com.tunjid.heron.editprofile.EditProfileScreen
 import com.tunjid.heron.editprofile.EditProfileStateHolder
 import com.tunjid.heron.editprofile.EditProfileViewModelInitializer
@@ -171,7 +170,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

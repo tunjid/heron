@@ -24,7 +24,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.profile.avatar.Action
-import com.tunjid.heron.profile.avatar.ActualProfileAvatarViewModel
 import com.tunjid.heron.profile.avatar.AvatarScreen
 import com.tunjid.heron.profile.avatar.ProfileAvatarViewModelInitializer
 import com.tunjid.heron.profile.avatar.ProfileStateHolder
@@ -149,7 +148,6 @@ object ProfileAvatarBindings {
                         nestedScroll(bottomNavigationNestedScrollConnection)
                     },
                 containerColor = Color.Transparent,
-                showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,

@@ -78,7 +78,6 @@ import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
-import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -264,7 +263,6 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
 @Composable
 fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
-    showNavigation: Boolean = true,
     containerColor: Color = defaultContainerColor,
     snackBarMessages: List<Memo> = emptyList(),
     onSnackBarMessageConsumed: (Memo) -> Unit = {},
@@ -350,12 +348,6 @@ fun PaneScaffoldState.PaneScaffold(
         messages = snackBarMessages,
         onMessageConsumed = onSnackBarMessageConsumed,
     )
-
-    if (paneState.pane == ThreePane.Primary) {
-        LaunchedEffect(showNavigation) {
-            appScaffoldState.staticStates.onUiAction(UiAction.UpdateShowNavigation(showNavigation))
-        }
-    }
 }
 
 @Composable

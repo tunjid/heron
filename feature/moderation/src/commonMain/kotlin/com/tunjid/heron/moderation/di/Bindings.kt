@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.moderation.Action
-import com.tunjid.heron.moderation.ActualModerationViewModel
 import com.tunjid.heron.moderation.ModerationScreen
 import com.tunjid.heron.moderation.ModerationStateHolder
 import com.tunjid.heron.moderation.ModerationViewModelInitializer
@@ -156,7 +155,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
