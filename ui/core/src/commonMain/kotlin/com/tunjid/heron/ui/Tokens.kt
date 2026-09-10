@@ -114,6 +114,8 @@ fun Modifier.fillMaxRestrictedWidth() =
 
 private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottomPadding()
 
+val UiTokens.statusAndToolbarHeight
+    @Composable get() = toolbarHeight + statusBarHeight
 val WindowInsets.Companion.platformStatusBars
     @Composable get() = WindowInsets.stableStatusBars.union(WindowInsets.platformExtraStatusBars)
 

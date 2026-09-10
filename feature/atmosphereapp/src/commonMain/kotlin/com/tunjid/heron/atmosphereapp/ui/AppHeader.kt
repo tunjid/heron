@@ -3,6 +3,7 @@ package com.tunjid.heron.atmosphereapp.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -39,8 +40,10 @@ import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import heron.feature.atmosphereapp.generated.resources.Res
 import heron.feature.atmosphereapp.generated.resources.profiles_apps
@@ -74,6 +77,11 @@ fun AtmosphereAppHeader(
                 )
             },
     ) {
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(UiTokens.statusAndToolbarHeight),
+        )
         Row(
             modifier = Modifier
                 .height(AvatarSize * 1.5f)
