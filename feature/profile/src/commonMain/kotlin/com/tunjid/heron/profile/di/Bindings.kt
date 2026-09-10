@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.profile.Action
-import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.profile.ProfileStateHolder
@@ -191,7 +190,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,

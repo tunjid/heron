@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.notificationsettings.Action
-import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
 import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
 import com.tunjid.heron.notificationsettings.NotificationSettingsStateHolder
 import com.tunjid.heron.notificationsettings.NotificationSettingsViewModelInitializer
@@ -163,7 +162,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

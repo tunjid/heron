@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.inference.Action
-import com.tunjid.heron.inference.ActualInferenceViewModel
 import com.tunjid.heron.inference.InferenceScreen
 import com.tunjid.heron.inference.InferenceStateHolder
 import com.tunjid.heron.inference.InferenceViewModelInitializer
@@ -155,7 +154,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         topBar = {
             PoppableDestinationTopAppBar(
                 title = {

@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.notifications.Action
-import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.NotificationsStateHolder
 import com.tunjid.heron.notifications.NotificationsViewModelInitializer
@@ -161,7 +160,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

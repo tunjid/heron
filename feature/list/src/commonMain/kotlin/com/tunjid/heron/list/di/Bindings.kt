@@ -305,7 +305,6 @@ internal fun Route(
             .fillMaxSize()
             .nestedScroll(fabExpansionNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

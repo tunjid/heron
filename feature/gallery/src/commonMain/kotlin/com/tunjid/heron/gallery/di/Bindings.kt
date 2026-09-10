@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.gallery.Action
-import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.GalleryStateHolder
 import com.tunjid.heron.gallery.GalleryViewModelInitializer
@@ -136,7 +135,6 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = false,
         containerColor = Color.Transparent,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {

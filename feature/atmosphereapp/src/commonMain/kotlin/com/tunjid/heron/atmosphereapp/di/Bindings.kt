@@ -149,7 +149,6 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection),
-        showNavigation = true,
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,

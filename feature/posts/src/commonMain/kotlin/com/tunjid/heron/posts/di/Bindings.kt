@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.posts.Action
-import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
 import com.tunjid.heron.posts.PostsStateHolder
 import com.tunjid.heron.posts.PostsViewModelInitializer
@@ -209,7 +208,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

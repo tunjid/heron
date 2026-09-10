@@ -12,7 +12,6 @@ import com.tunjid.treenav.strings.Route
 interface UiState {
     @SnapshotSpec
     data class Immutable(
-        val showNavigation: Boolean = false,
         val dismissBehavior: DismissBehavior = DismissBehavior.None,
         val currentPaneAnchor: PaneAnchor = PaneAnchor.Half,
         val immersiveRouteIds: Set<String> = emptySet(),
@@ -25,10 +24,6 @@ val UiState.isImmersive: Boolean
 sealed class UiAction(
     val key: String,
 ) {
-    data class UpdateShowNavigation(
-        val showNavigation: Boolean,
-    ) : UiAction("UpdateShowNavigation")
-
     data class UpdateDismissBehavior(
         val dismissBehavior: DismissBehavior,
     ) : UiAction("UpdateDismissBehavior")
