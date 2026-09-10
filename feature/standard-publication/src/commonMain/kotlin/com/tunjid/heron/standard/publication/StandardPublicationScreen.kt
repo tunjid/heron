@@ -158,6 +158,10 @@ internal fun StandardPublicationScreen(
                                 },
                             )
                             Text(
+                                modifier = Modifier
+                                    .padding(
+                                        vertical = 8.dp,
+                                    ),
                                 text = annotatedText,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
