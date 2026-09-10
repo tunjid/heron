@@ -16,6 +16,7 @@
 
 plugins {
     id("kotlin-library-convention")
+    id("ui-module-convention")
     id("ksp-convention")
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.composeCompiler)
@@ -57,15 +58,8 @@ kotlin {
                 implementation(project(":ui:media"))
                 implementation(project(":ui:timeline"))
 
-                implementation(libs.compose.multiplatform.animation)
-                implementation(libs.compose.multiplatform.components.resources)
-                implementation(libs.compose.multiplatform.foundation.foundation)
-                implementation(libs.compose.multiplatform.foundation.layout)
-                implementation(libs.compose.multiplatform.runtime)
-                implementation(libs.compose.multiplatform.material)
                 implementation(libs.compose.multiplatform.material.icons)
                 implementation(libs.compose.multiplatform.material.icons.extended)
-                implementation(libs.compose.multiplatform.material3)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
