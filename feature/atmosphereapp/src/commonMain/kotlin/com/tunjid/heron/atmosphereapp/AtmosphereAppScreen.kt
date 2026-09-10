@@ -60,6 +60,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -72,7 +73,7 @@ internal fun AtmosphereAppScreen(
 ) {
     val density = LocalDensity.current
     val collapsedHeight = with(density) {
-        UiTokens.tabsHeight.toPx()
+        UiTokens.statusAndToolbarHeight.toPx() + UiTokens.tabsHeight.toPx()
     }
     val collapsingHeaderState = rememberCollapsingHeaderState(
         collapsedHeight = collapsedHeight,

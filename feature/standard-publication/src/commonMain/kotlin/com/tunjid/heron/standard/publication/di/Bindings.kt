@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.standard.publication.Action
-import com.tunjid.heron.standard.publication.ActualStandardPublicationViewModel
 import com.tunjid.heron.standard.publication.StandardPublicationScreen
 import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
 import com.tunjid.heron.standard.publication.StandardPublicationViewModelInitializer
@@ -234,13 +233,9 @@ object StandardPublicationBindings {
                         onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     StandardPublicationScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
                         state = state,
                         actions = stateHolder.accept,
                     )

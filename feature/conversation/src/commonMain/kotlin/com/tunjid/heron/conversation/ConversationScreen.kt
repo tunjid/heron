@@ -116,6 +116,7 @@ internal fun ConversationScreen(
         state = listState,
         reverseLayout = true,
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         modifier = modifier
