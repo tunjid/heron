@@ -88,6 +88,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.home.ui.EditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.rememberEditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDragAndDrop
@@ -326,6 +328,7 @@ private fun ExpandedTabs(
     val editableTimelineState = rememberEditableTimelineState(
         timelines = timelines,
     )
+    val isRunningState = rememberUpdatedState(animatedContentScope.transition.isRunning)
     Box(
         modifier = modifier
             .fillMaxSize(),
@@ -378,6 +381,7 @@ private fun ExpandedTabs(
                         sharedTransitionScope = sharedTransitionScope,
                         animatedContentScope = animatedContentScope,
                         timeline = timeline,
+                        isRunning = isRunningState::value,
                     )
                 }
             }
@@ -405,6 +409,7 @@ private fun ExpandedTabs(
                         sharedTransitionScope = sharedTransitionScope,
                         animatedContentScope = animatedContentScope,
                         timeline = timeline,
+                        isRunning = isRunningState::value,
                     )
                 }
             }
@@ -526,6 +531,7 @@ private fun TabsState.ExpandedTab(
     sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
+    isRunning: () -> Boolean,
 ) = with(sharedTransitionScope) {
     JiggleBox {
         val isHovered = editableTimelineState.isHoveredId(timeline.sourceId)
@@ -568,20 +574,35 @@ private fun TabsState.ExpandedTab(
                 )
             },
             label = {
-                Text(
-                    modifier = Modifier
-                        .width(IntrinsicSize.Max)
-                        .sharedElement(
-                            sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                timeline.sourceId,
+                Box {
+                    Text(
+                        modifier = Modifier
+                            .width(IntrinsicSize.Max)
+                            .sharedElement(
+                                sharedContentState = sharedTransitionScope.rememberSharedContentState(
+                                    timeline.sourceId,
+                                ),
+                                animatedVisibilityScope = animatedContentScope,
+                                boundsTransform = ExpandableTabsBoundsTransform,
+                                zIndexInOverlay = TabsSharedElementZIndex,
                             ),
-                            animatedVisibilityScope = animatedContentScope,
-                            boundsTransform = ExpandableTabsBoundsTransform,
-                            zIndexInOverlay = TabsSharedElementZIndex,
-                        ),
-                    text = timeline.name,
-                    maxLines = 1,
-                )
+                        text = timeline.name,
+                        maxLines = 1,
+                    )
+
+                    // Skiko based platforms can't capture the text above in the shared element
+                    // overlay in a skia picture causing text not to render when expanded.
+                    // To work around this, just render another text
+                    if (!Platform.current.isNativeCompose) Text(
+                        modifier = Modifier
+                            .width(IntrinsicSize.Max)
+                            .graphicsLayer {
+                                alpha = if (isRunning()) 0f else 1f
+                            },
+                        text = timeline.name,
+                        maxLines = 1,
+                    )
+                }
             },
             trailingIcon = {
                 Icon(
