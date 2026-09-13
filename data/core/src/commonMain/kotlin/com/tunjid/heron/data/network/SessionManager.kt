@@ -468,6 +468,16 @@ private fun atProtoAuth(
     }
 
     on(Send) intercept@{ context ->
+        // Blacksky serves topic feeds from its app view host directly and publicly. Route there and
+        // skip the PDS host-rewrite and auth entirely.
+        if (context.url.encodedPath.endsWith(GetTopicFeedPath)) {
+            val topicFeedUrl = Url(urlString = BlackSkyAppViewUrl)
+            context.url.protocol = topicFeedUrl.protocol
+            context.url.host = topicFeedUrl.host
+            context.url.port = topicFeedUrl.port
+            return@intercept proceed(context)
+        }
+
         val authTokens = readAuth.invoke()
 
         // Computed once: the feed-interaction branch resolves a DID and must not run twice.
@@ -608,6 +618,10 @@ private suspend fun HttpRequestBuilder.proxyHeaderValue(
 ): String? = when {
     ChatProxyPaths.any(predicate = url.encodedPath::endsWith) -> ChatAtProtoProxyHeaderValue
     HeronProxyPaths.any(predicate = url.encodedPath::endsWith) -> HeronAtProtoProxyHeaderValue
+    // Some app views (e.g. Blacksky) do not serve these discovery endpoints; their own front ends
+    // proxy them to Bluesky's app view. Apply uniformly so search and feed discovery works
+    // everywhere.
+    BlueskyAppViewProxyPaths.any(predicate = url.encodedPath::endsWith) -> BlueskyAtProtoProxyHeaderValue
     // Interactions are proxied to the feed generator's own service, whose DID varies per feed and
     // is not the AT-URI authority. Resolve it from the request body's `feed`, then target #bsky_fg.
     url.encodedPath.endsWith(SendInteractionsPath) ->
@@ -737,6 +751,13 @@ private val HeronProxyPaths = listOf(
     "app.rocksky.actor.getActorScrobbles",
 )
 
+private val BlueskyAppViewProxyPaths = listOf(
+    "app.bsky.feed.searchPostsV2",
+    "app.bsky.actor.searchActors",
+    "app.bsky.actor.searchActorsTypeahead",
+    "app.bsky.unspecced.getPopularFeedGenerators",
+)
+
 private val SignedOutPaths = listOf(
     "app.bsky.actor.getProfile",
     "app.bsky.actor.searchActors",
@@ -745,7 +766,7 @@ private val SignedOutPaths = listOf(
     "app.bsky.feed.getFeed",
     "app.bsky.feed.getPostThread",
     "app.bsky.feed.getFeedGenerator",
-    "app.bsky.feed.searchPosts",
+    "app.bsky.feed.searchPostsV2",
     "app.bsky.unspecced.getPopularFeedGenerators",
     "app.bsky.unspecced.getTrends",
 )
@@ -755,6 +776,7 @@ private val PendingTokenTimeout = 2.seconds
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
+private const val BlueskyAtProtoProxyHeaderValue = "did:web:api.bsky.app#bsky_appview"
 
 private const val AtProtoPdsServiceId = "#atproto_pds"
 private const val AtProtoPdsServiceType = "AtprotoPersonalDataServer"
@@ -764,6 +786,8 @@ private const val SendInteractionsPath = "app.bsky.feed.sendInteractions"
 private const val HeronAtProtoProxyHeaderValue = "did:web:heron.tunji.dev#heron_appview"
 private const val FeedGeneratorProxyFragment = "#bsky_fg"
 private const val SignedOutUrl = "https://public.api.bsky.app"
+private const val BlackSkyAppViewUrl = "https://api.blacksky.community"
+private const val GetTopicFeedPath = "app.bsky.unspecced.getTopicFeed"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"
 private const val ExpiredTokenError = "ExpiredToken"

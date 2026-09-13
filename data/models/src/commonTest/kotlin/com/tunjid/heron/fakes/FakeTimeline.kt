@@ -154,11 +154,20 @@ object FakeTimeline {
 
     val feedTimeline = Timeline.Home.Feed.stub(sampleFeedGenerator)
 
+    val blackSkyTopicTimeline = Timeline.BlackSkyTopic.stub(
+        blackSkyTopic = Timeline.Source.BlackSkyTopic(
+            id = "5018",
+            displayName = "Music",
+            category = "culture",
+        ),
+    )
+
     val all: List<Timeline> = listOf(
         following,
         listTimeline,
         feedTimeline,
         profileTimeline,
         starterPackTimeline,
+        blackSkyTopicTimeline,
     )
 }

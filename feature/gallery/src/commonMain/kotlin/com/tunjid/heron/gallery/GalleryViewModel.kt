@@ -19,7 +19,6 @@ package com.tunjid.heron.gallery
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -433,6 +432,7 @@ private suspend fun launchVerticalTimelineMutations(
             )
             is Timeline.Source.Following,
             is Timeline.Source.Record.List,
+            is Timeline.Source.BlackSkyTopic,
             null,
             -> null
         }?.let {
