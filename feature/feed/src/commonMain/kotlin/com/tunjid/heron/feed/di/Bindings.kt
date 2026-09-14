@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -58,6 +59,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.navigation.grazeEditorDestination
+import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
@@ -100,6 +102,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
 private const val RouteUriPattern = "/{feedUriPrefix}/app.bsky.feed.generator/{feedUriSuffix}"
+private const val TopicRoutePattern = "/topic/{topicId}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -116,7 +119,9 @@ private val Route.profileId by mappedRoutePath(
 
 private val Route.feedUriSuffix by routePath()
 
-private val RequestTrie = trieOf(
+private val Route.topicId by routePath()
+
+private val RequestTrie = trieOf<(Route) -> TimelineRequest>(
     RoutePattern to { route: Route ->
         TimelineRequest.OfFeed.WithProfile(
             profileHandleOrDid = route.profileId,
@@ -130,9 +135,20 @@ private val RequestTrie = trieOf(
                 .let(::FeedGeneratorUri),
         )
     },
+    TopicRoutePattern to { route: Route ->
+        // The trend tap carries the full Trend for its display name; the id always comes from the path.
+        val trend = route.model<Trend>()
+        TimelineRequest.OfBlackSkyTopic(
+            source = Timeline.Source.BlackSkyTopic(
+                id = route.topicId,
+                displayName = trend?.let { it.displayName ?: it.topic }.orEmpty(),
+                category = trend?.category,
+            ),
+        )
+    },
 )
 
-internal val Route.timelineRequest: TimelineRequest.OfFeed
+internal val Route.timelineRequest: TimelineRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)
 
 @BindingContainer
@@ -154,6 +170,15 @@ object FeedNavigationBindings {
     fun provideRouteUriMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RouteUriPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(TopicRoutePattern)
+    fun provideTopicRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = TopicRoutePattern,
             routeMapper = ::createRoute,
         )
 }
@@ -184,6 +209,17 @@ object FeedBindings {
     @IntoMap
     @StringKey(RouteUriPattern)
     fun provideUriPaneEntry(
+        routeParser: RouteParser,
+        navigationContentTransformer: NavigationContentTransformer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        navigationContentTransformer = navigationContentTransformer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(TopicRoutePattern)
+    fun provideTopicPaneEntry(
         routeParser: RouteParser,
         navigationContentTransformer: NavigationContentTransformer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
@@ -270,7 +306,6 @@ internal fun Route(
             .fillMaxSize()
             .nestedScroll(topAppBarNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -320,19 +355,22 @@ internal fun Route(
                                 },
                             )
                         }
-                    ShareRecordAppBarButton(
-                        contentDescription = stringResource(
-                            TimelineStrings.share_record,
-                            stringResource(CommonStrings.record_feed),
-                        ),
-                        onShareClicked = {
-                            state.timelineState?.timeline?.uri
-                                ?.asEmbeddableRecordUriOrNull()
-                                ?.let { recordUri ->
+                    // Only record-backed timelines (feeds) can be shared; topic timelines have no uri.
+                    state.timelineState
+                        ?.timeline
+                        ?.uri
+                        ?.asEmbeddableRecordUriOrNull()
+                        ?.let { recordUri ->
+                            ShareRecordAppBarButton(
+                                contentDescription = stringResource(
+                                    TimelineStrings.share_record,
+                                    stringResource(CommonStrings.record_feed),
+                                ),
+                                onShareClicked = {
                                     recordOptionsSheetState.showOptions(recordUri)
-                                }
-                        },
-                    )
+                                },
+                            )
+                        }
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },

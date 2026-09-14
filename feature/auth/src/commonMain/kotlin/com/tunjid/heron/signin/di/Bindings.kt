@@ -44,8 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.signin.Action
-import com.tunjid.heron.signin.ActualSignInViewModel
 import com.tunjid.heron.signin.AuthMode
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.SignInStateHolder
@@ -77,6 +77,7 @@ import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.optionalRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
@@ -107,6 +108,10 @@ private fun createRoute(
 
 // The issuer endpoint for an oauth token
 internal val Route.iss by optionalRouteQuery()
+
+internal val Route.profileId by optionalMappedRouteQuery(
+    mapper = ::ProfileId,
+)
 
 @BindingContainer
 @ContributesTo(NavigationScope::class)
@@ -188,7 +193,6 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = false,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.MessageConsumed(it))

@@ -16,10 +16,13 @@
 
 package com.tunjid.heron.standard.publication
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -34,6 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
@@ -47,6 +52,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.standard.Document
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -55,6 +61,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -70,9 +77,12 @@ internal fun StandardPublicationScreen(
 ) {
     val density = LocalDensity.current
 
+    val collapsedHeight = with(density) {
+        UiTokens.statusAndToolbarHeight.toPx()
+    }
     val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = 0f,
-        initialExpandedHeight = with(density) { 200.dp.toPx() },
+        collapsedHeight = collapsedHeight,
+        initialExpandedHeight = with(density) { 800.dp.toPx() },
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -116,10 +126,17 @@ internal fun StandardPublicationScreen(
                         }
                         .padding(
                             horizontal = 16.dp,
-                            vertical = 8.dp,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                        )
+                        .graphicsLayer {
+                            alpha = 1 - collapsingHeaderState.progress
+                        },
                 ) {
+                    Spacer(
+                        modifier = Modifier
+                            .background(Color.Yellow)
+                            .fillMaxWidth()
+                            .height(UiTokens.statusAndToolbarHeight),
+                    )
                     state.publication?.description
                         ?.takeIf(String::isNotBlank)
                         ?.let { description ->
@@ -141,6 +158,10 @@ internal fun StandardPublicationScreen(
                                 },
                             )
                             Text(
+                                modifier = Modifier
+                                    .padding(
+                                        vertical = 8.dp,
+                                    ),
                                 text = annotatedText,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,

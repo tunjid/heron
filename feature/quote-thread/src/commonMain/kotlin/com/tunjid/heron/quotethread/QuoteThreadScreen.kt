@@ -89,12 +89,12 @@ internal fun QuoteThreadScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
+    val displayState = rememberTimelineDisplayState()
+    val listState = rememberLazyListState(cacheWindow = displayState.cacheWindow)
     val items by rememberUpdatedState(state.items)
 
     val now = remember { Clock.System.now() }
     val presentation = Timeline.Presentation.Text.WithEmbed
-    val displayState = rememberTimelineDisplayState()
     val videoPlayerController = LocalVideoPlayerController.current
     val navigateTo = remember(actions) {
         { destination: NavigationAction.Destination ->

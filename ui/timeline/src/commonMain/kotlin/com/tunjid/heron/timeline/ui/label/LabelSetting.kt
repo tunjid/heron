@@ -88,7 +88,7 @@ fun LabelSetting(
                         .semantics {
                             role = Role.RadioButton
                         },
-                    colors = ToggleButtonDefaults.toggleButtonColors(
+                    colors = ToggleButtonDefaults.colors(
                         checkedContainerColor = overrideColors.containerColor,
                         checkedContentColor = overrideColors.contentColor,
                     ),

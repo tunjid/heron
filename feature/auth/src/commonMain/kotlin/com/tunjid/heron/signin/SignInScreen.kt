@@ -118,7 +118,7 @@ internal fun SignInScreen(
                         leadingIcon = {
                             LoadingIcon(
                                 field = field,
-                                mostRecentSession = state.mostRecentSession,
+                                mostRecentSession = state.mostPertinentSession(),
                                 isResolvingServer = state.isResolvingServer,
                             )
                         },
@@ -145,8 +145,8 @@ internal fun SignInScreen(
                     )
 
                     // Try to resolve the initial handle
-                    if (field.id == Username) LaunchedEffect(state.mostRecentSession) {
-                        if (state.mostRecentSession != null && field.value.isNotBlank()) actions(
+                    if (field.id == Username) LaunchedEffect(state.mostPertinentSession()) {
+                        if (state.mostPertinentSession() != null && field.value.isNotBlank()) actions(
                             Action.FieldChanged(
                                 id = Username,
                                 text = field.value,

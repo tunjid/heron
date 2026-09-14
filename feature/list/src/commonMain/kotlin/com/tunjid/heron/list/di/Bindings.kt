@@ -21,7 +21,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.GroupAdd
@@ -101,7 +100,6 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.list.generated.resources.Res
 import heron.feature.list.generated.resources.add_list_member
 import heron.feature.list.generated.resources.follow_starter_pack
-import heron.ui.core.generated.resources.record_feed
 import heron.ui.core.generated.resources.record_list
 import heron.ui.core.generated.resources.record_starter_pack
 import heron.ui.timeline.generated.resources.share_record
@@ -307,7 +305,6 @@ internal fun Route(
             .fillMaxSize()
             .nestedScroll(fabExpansionNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -448,13 +445,9 @@ internal fun Route(
                 )
             }
         },
-        content = { paddingValues ->
+        content = {
             ListScreen(
                 paneScaffoldState = this,
-                modifier = Modifier
-                    .padding(
-                        top = paddingValues.calculateTopPadding(),
-                    ),
                 state = state,
                 actions = stateHolder.accept,
             )

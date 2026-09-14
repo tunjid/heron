@@ -18,13 +18,11 @@ package com.tunjid.heron.moderation.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.moderation.Action
-import com.tunjid.heron.moderation.ActualModerationViewModel
 import com.tunjid.heron.moderation.ModerationScreen
 import com.tunjid.heron.moderation.ModerationStateHolder
 import com.tunjid.heron.moderation.ModerationViewModelInitializer
@@ -44,6 +42,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -142,6 +141,9 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
+    val topAppBarNestedScrollConnection =
+        paneScaffoldState.topAppBarNestedScrollConnection
+
     val bottomNavigationNestedScrollConnection =
         paneScaffoldState.bottomNavigationNestedScrollConnection
 
@@ -149,10 +151,10 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+            .nestedScroll(topAppBarNestedScrollConnection)
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -164,6 +166,7 @@ internal fun Route(
                         title = stringResource(Res.string.moderation_settings),
                     )
                 },
+                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
             )
         },
@@ -177,15 +180,11 @@ internal fun Route(
         navigationRail = {
             PaneNavigationRail()
         },
-        content = { paddingValues ->
+        content = {
             ModerationScreen(
                 paneScaffoldState = this,
                 state = state,
                 actions = stateHolder.accept,
-                modifier = Modifier
-                    .padding(
-                        top = paddingValues.calculateTopPadding(),
-                    ),
             )
             SecondaryPaneCloseBackHandler()
         },

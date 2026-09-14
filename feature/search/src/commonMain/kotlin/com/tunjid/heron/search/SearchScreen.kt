@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.destinationPath
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.search.ui.searchresults.AutoCompleteProfileSearchResults
@@ -141,7 +142,8 @@ internal fun SearchScreen(
         { trend: Trend ->
             navigateTo(
                 pathDestination(
-                    path = trend.link,
+                    path = trend.destinationPath,
+                    models = listOf(trend),
                     referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
             )

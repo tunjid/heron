@@ -182,7 +182,6 @@ object GrazeEditorBindings {
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))

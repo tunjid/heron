@@ -25,7 +25,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
-import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
 import com.tunjid.heron.settings.SettingsStateHolder
@@ -155,7 +154,6 @@ internal fun Route(
             .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                 nestedScroll(bottomNavigationNestedScrollConnection)
             },
-        showNavigation = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -79,6 +80,7 @@ fun Timeline.displayName() = when (this) {
     is Timeline.Home.Following -> name
     is Timeline.Home.List -> name
     is Timeline.Search -> search.query
+    is Timeline.BlackSkyTopic -> blackSkyTopic.displayName
     is Timeline.StarterPack -> starterPack.name
     is Timeline.Profile -> when (type) {
         Timeline.Profile.Type.Media -> stringResource(Res.string.media)
@@ -135,7 +137,9 @@ fun TimelineTitle(
             modifier = Modifier
                 .weight(1f),
         ) {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.Center,
+            ) {
                 PaneStickySharedElement(
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
@@ -151,22 +155,26 @@ fun TimelineTitle(
                         style = MaterialTheme.typography.titleSmallEmphasized,
                     )
                 }
-                PaneStickySharedElement(
-                    modifier = Modifier,
-                    sharedContentState = rememberSharedContentState(
-                        key = timeline.subtitleSharedElementKey(sharedElementPrefix),
-                    ),
-                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-                ) {
-                    Text(
-                        modifier = Modifier,
-                        text = timeline.creator(),
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                }
+                timeline.creator()
+                    .takeUnless(String::isBlank)
+                    ?.let { creator ->
+                        PaneStickySharedElement(
+                            modifier = Modifier,
+                            sharedContentState = rememberSharedContentState(
+                                key = timeline.subtitleSharedElementKey(sharedElementPrefix),
+                            ),
+                            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                        ) {
+                            Text(
+                                modifier = Modifier,
+                                text = creator,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
             }
             if (hasUpdates) Badge(
                 modifier = Modifier.size(4.dp),
@@ -205,6 +213,7 @@ val Timeline.description: String
         is Timeline.Home.Feed -> feedGenerator.description
         is Timeline.Home.List -> feedList.description
         is Timeline.StarterPack -> starterPack.description
+        is Timeline.BlackSkyTopic -> blackSkyTopic.category
 
         is Timeline.Home.Following,
         is Timeline.Search,
@@ -231,6 +240,7 @@ private fun Timeline.creator(): String = when (this) {
 
     is Timeline.Home.Following,
     is Timeline.Search,
+    is Timeline.BlackSkyTopic,
     is Timeline.Profile,
     -> null
 } ?: ""
@@ -280,6 +290,7 @@ private val Timeline.avatar: ImageUri
         is Timeline.StarterPack -> starterPack.list?.avatar
         is Timeline.Home.Following,
         is Timeline.Search,
+        is Timeline.BlackSkyTopic,
         is Timeline.Profile,
         -> BlueskyClouds
     } ?: BlueskyClouds
@@ -292,6 +303,7 @@ private fun Timeline.avatarSharedElementKey(
     is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
     is Timeline.Home.Following -> "$sharedElementPrefix-following"
     is Timeline.Search -> "$sharedElementPrefix-search"
+    is Timeline.BlackSkyTopic -> "$sharedElementPrefix-topic"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
 }
 
@@ -315,6 +327,7 @@ private fun Timeline.titleSharedElementKey(
 
     is Timeline.Home.Following -> "$sharedElementPrefix-following-title"
     is Timeline.Search -> "$sharedElementPrefix-search-title"
+    is Timeline.BlackSkyTopic -> "$sharedElementPrefix-topic-title"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-title"
 }
 
@@ -338,6 +351,7 @@ private fun Timeline.subtitleSharedElementKey(
 
     is Timeline.Home.Following -> "$sharedElementPrefix-following-subtitle"
     is Timeline.Search -> "$sharedElementPrefix-search-subtitle"
+    is Timeline.BlackSkyTopic -> "$sharedElementPrefix-topic-subtitle"
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
 }
 
@@ -348,6 +362,7 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.StarterPack -> StarterPackCollectionShape
         is Timeline.Home.Following,
         is Timeline.Search,
+        is Timeline.BlackSkyTopic,
         is Timeline.Profile,
         -> RoundedPolygonShape.Circle
     }

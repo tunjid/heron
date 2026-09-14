@@ -20,8 +20,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -114,6 +116,7 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -143,7 +146,7 @@ internal fun ListScreen(
     val scope = rememberCoroutineScope()
 
     val collapsedHeight = with(density) {
-        UiTokens.tabsHeight.toPx()
+        UiTokens.statusAndToolbarHeight.toPx() + UiTokens.tabsHeight.toPx()
     }
     val collapsingHeaderState = rememberCollapsingHeaderState(
         collapsedHeight = collapsedHeight,
@@ -198,6 +201,10 @@ internal fun ListScreen(
                             )
                         },
                 ) {
+                    Spacer(
+                        modifier = Modifier
+                            .height(UiTokens.statusAndToolbarHeight),
+                    )
                     state.timelineState
                         ?.timeline
                         ?.description
@@ -214,6 +221,9 @@ internal fun ListScreen(
                         }
                     Tabs(
                         modifier = Modifier
+                            .padding(
+                                horizontal = 8.dp,
+                            )
                             .fillMaxWidth()
                             .clip(CircleShape),
                         tabsState = rememberTabsState(
@@ -531,6 +541,7 @@ private fun ListTimeline(
                     )
                 },
             state = gridState,
+            cacheWindow = displayState.cacheWindow,
             columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
             verticalItemSpacing = displayState.verticalItemSpacing(presentation),
             contentPadding = bottomNavAndInsetPaddingValues(

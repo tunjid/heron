@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
@@ -35,6 +36,7 @@ interface IdentityState {
         sealed class Stable : SwitchStatus() {
             data object Idle : SwitchStatus.Stable()
             data class Error(
+                val profileId: ProfileId,
                 val memo: Memo,
             ) : SwitchStatus.Stable()
         }

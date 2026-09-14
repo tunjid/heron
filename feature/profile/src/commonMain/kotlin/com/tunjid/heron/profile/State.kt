@@ -23,8 +23,6 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
@@ -213,6 +211,7 @@ sealed class ProfileScreenStateHolders {
                 is com.tunjid.heron.data.core.models.Timeline.Home.List,
                 is com.tunjid.heron.data.core.models.Timeline.StarterPack,
                 is com.tunjid.heron.data.core.models.Timeline.Search,
+                is com.tunjid.heron.data.core.models.Timeline.BlackSkyTopic,
                 -> null
             }
             is LabelerSettings -> null

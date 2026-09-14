@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -53,6 +54,7 @@ internal fun ProfilesScreen(
             .paneClip(),
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
+            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             horizontal = 4.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),

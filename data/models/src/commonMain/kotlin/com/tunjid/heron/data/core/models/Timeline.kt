@@ -83,6 +83,13 @@ sealed interface Timeline {
                 override val sort: Sort,
             ) : Search
         }
+
+        @Serializable
+        data class BlackSkyTopic(
+            val id: String,
+            val displayName: String,
+            val category: String? = null,
+        ) : Source
     }
 
     @Serializable
@@ -252,6 +259,33 @@ sealed interface Timeline {
                 presentation: Presentation = Text.WithEmbed,
             ) = Search(
                 search = search,
+                lastRefreshed = null,
+                itemsAvailable = 0,
+                presentation = presentation,
+            )
+        }
+    }
+
+    @Serializable
+    data class BlackSkyTopic(
+        val blackSkyTopic: Source.BlackSkyTopic,
+        override val lastRefreshed: Instant?,
+        override val itemsAvailable: Long,
+        override val presentation: Presentation,
+    ) : Timeline {
+
+        override val source: Source
+            get() = blackSkyTopic
+
+        override val supportedPresentations: List<Presentation>
+            get() = TextOnlyPresentations
+
+        companion object {
+            fun stub(
+                blackSkyTopic: Source.BlackSkyTopic,
+                presentation: Presentation = Text.WithEmbed,
+            ) = BlackSkyTopic(
+                blackSkyTopic = blackSkyTopic,
                 lastRefreshed = null,
                 itemsAvailable = 0,
                 presentation = presentation,
@@ -460,6 +494,7 @@ val Timeline.isStrictlyMedia: Boolean
             -> true
         }
         is Timeline.StarterPack,
+        is Timeline.BlackSkyTopic,
         -> false
     }
 

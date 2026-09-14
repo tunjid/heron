@@ -17,12 +17,10 @@
 package com.tunjid.heron.atmosphereapp.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.atmosphereapp.Action
-import com.tunjid.heron.atmosphereapp.ActualAtmosphereAppViewModel
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
 import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
 import com.tunjid.heron.atmosphereapp.AtmosphereAppViewModelInitializer
@@ -151,7 +149,6 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection),
-        showNavigation = true,
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,
@@ -162,12 +159,8 @@ internal fun Route(
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
         },
-        content = { paddingValues ->
+        content = {
             AtmosphereAppScreen(
-                modifier = Modifier
-                    .padding(
-                        top = paddingValues.calculateTopPadding(),
-                    ),
                 paneScaffoldState = this,
                 state = state,
                 actions = stateHolder.accept,

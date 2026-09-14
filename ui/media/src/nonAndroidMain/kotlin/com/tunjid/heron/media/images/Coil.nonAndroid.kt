@@ -107,4 +107,4 @@ internal actual fun Image.AnimationEffect() {
     }
 }
 
-private val DefaultPaint = Paint()
+private val DefaultPaint by lazy { Paint() }
