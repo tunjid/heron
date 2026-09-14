@@ -164,7 +164,7 @@ private fun launchLoadPreferencesMutations(
 context(productionScope: CoroutineScope)
 private suspend fun launchTimelineStateHolderMutations(
     state: State.SnapshotMutable,
-    request: TimelineRequest.OfFeed,
+    request: TimelineRequest,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,

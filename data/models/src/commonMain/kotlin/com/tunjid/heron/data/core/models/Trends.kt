@@ -30,8 +30,17 @@ data class Trend(
     val postCount: Long,
     val category: String? = null,
     val actors: List<Profile>,
-) {
+) : UrlEncodableModel {
     enum class Status {
         Hot,
     }
 }
+
+val Trend.destinationPath: String
+    get() {
+        val normalized = link.removePrefix("/")
+        // Blacksky trends are off-protocol `topic/{id}`
+        return if (normalized.startsWith(TrendTopicLinkPrefix)) "/$normalized" else link
+    }
+
+private const val TrendTopicLinkPrefix = "topic/"
