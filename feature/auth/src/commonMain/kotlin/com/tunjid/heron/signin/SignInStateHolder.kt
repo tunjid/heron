@@ -21,9 +21,11 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.normalized
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -82,7 +84,7 @@ class ActualSignInViewModel(
         @Assisted route: Route,
     ) : this(
         mutator = scope.actionSuspendingStateMutator(
-            state = State().toSnapshotMutable(),
+            state = State(route).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
                 launchPastSessionMutations(
@@ -157,7 +159,9 @@ private fun launchPastSessionMutations(
     authRepository: AuthRepository,
 ) = authRepository.pastSessions
     .launchedCollect { pastSessions ->
-        val mostRecentSession = pastSessions.firstOrNull()
+        val mostRecentSession = pastSessions.mostPertinent(
+            profileId = state.seededProfileId,
+        )
         state.fields =
             if (state.fields != InitialFields || mostRecentSession == null) state.fields
             else state.fields.map { field ->
@@ -347,6 +351,12 @@ private suspend fun createSessionMutations(
     }
     state.isSubmitting = false
 }
+
+internal fun List<SessionSummary>.mostPertinent(
+    profileId: ProfileId?,
+) = profileId?.let { id ->
+    firstOrNull { it.profileId == id }
+} ?: firstOrNull()
 
 private val SubmissionDebounce = 200.milliseconds
 private val HandleResolutionDebounce = 500.milliseconds

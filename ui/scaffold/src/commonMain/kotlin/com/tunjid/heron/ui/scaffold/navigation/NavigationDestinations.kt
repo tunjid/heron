@@ -173,8 +173,13 @@ fun grazeFeedPreviewDestination(
     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
 )
 
-fun signInDestination(): NavigationAction.Destination = pathDestination(
+fun signInDestination(
+    profileId: ProfileId? = null,
+): NavigationAction.Destination = pathDestination(
     path = "/auth",
+    miscQueryParams = profileId?.let {
+        mapOf("profileId" to listOf(it.id))
+    } ?: emptyMap(),
 )
 
 fun settingsDestination(): NavigationAction.Destination = pathDestination(
