@@ -492,6 +492,7 @@ private fun launchTimelineCreatorMutations(
         is Timeline.Home.Feed,
         is Timeline.Home.Following,
         is Timeline.Search,
+        is Timeline.BlackSkyTopic,
         is Timeline.Profile,
         -> return
 

@@ -30,10 +30,12 @@ import app.bsky.feed.GetListFeedQueryParams
 import app.bsky.feed.GetListFeedResponse
 import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
+import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.SearchPostsV2Sort
 import app.bsky.feed.SendInteractionsRequest
+import app.bsky.unspecced.GetTopicFeedQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -176,6 +178,10 @@ sealed interface TimelineRequest {
 
     data class OfSearch(
         val source: Timeline.Source.Search,
+    ) : TimelineRequest
+
+    data class OfBlackSkyTopic(
+        val source: Timeline.Source.BlackSkyTopic,
     ) : TimelineRequest
 }
 
@@ -336,6 +342,12 @@ internal class OfflineTimelineRepository(
         )
 
         is Timeline.Source.Search -> searchTimelineItems(
+            query = query,
+            cursor = cursor,
+            source = source,
+        )
+
+        is Timeline.Source.BlackSkyTopic -> blackSkyTopicTimelineItems(
             query = query,
             cursor = cursor,
             source = source,
@@ -574,6 +586,9 @@ internal class OfflineTimelineRepository(
 
         // Search results are fetched fresh on each query; there is no background polling yet.
         is Timeline.Search -> flowOf(false)
+
+        // Topic feeds, like search, are fetched fresh on each query; no background polling.
+        is Timeline.BlackSkyTopic -> flowOf(false)
 
         is Timeline.StarterPack -> hasUpdates(
             timeline = timeline.listTimeline,
@@ -856,6 +871,12 @@ internal class OfflineTimelineRepository(
 
                         is TimelineRequest.OfSearch -> emitAll(
                             searchTimeline(
+                                source = request.source,
+                            ),
+                        )
+
+                        is TimelineRequest.OfBlackSkyTopic -> emitAll(
+                            topicTimeline(
                                 source = request.source,
                             ),
                         )
@@ -1354,11 +1375,108 @@ internal class OfflineTimelineRepository(
         }
             .flowOn(ioDispatcher)
 
+    private fun blackSkyTopicTimelineItems(
+        query: TimelineQuery,
+        cursor: Cursor,
+        source: Timeline.Source.BlackSkyTopic,
+    ): Flow<CursorList<TimelineItem>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            if (!cursor.canRequestData) return@singleSessionFlow emptyFlow()
+            val topicId = source.id.toLongOrNull()
+                ?: return@singleSessionFlow emptyFlow()
+
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                getTopicFeedUnspecced(
+                    params = GetTopicFeedQueryParams(
+                        topicId = topicId,
+                        // getTopicFeed caps limit at its schema max; the tiling page size is larger.
+                        limit = query.data.limit.coerceAtMost(TOPIC_FEED_PAGE_SIZE.toLong()),
+                        cursor = cursor.value,
+                    ),
+                )
+            }
+                .getOrNull()
+                ?: return@singleSessionFlow emptyFlow()
+
+            // getTopicFeed returns bare post uris, so hydrate them in getPosts-sized chunks,
+            // preserving the endpoint's ordering.
+            val postViews = response.posts
+                .chunked(TOPIC_FEED_PAGE_SIZE)
+                .flatMap { uriChunk ->
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        getPosts(
+                            GetPostsQueryParams(uris = uriChunk),
+                        )
+                    }
+                        .getOrNull()
+                        ?.posts
+                        .orEmpty()
+                }
+
+            multipleEntitySaverProvider.saveInTransaction {
+                postViews.forEach { postView ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        postView = postView,
+                    )
+                }
+            }
+
+            // The endpoint returns a cursor even when exhausted, so stop paging on an empty page
+            // rather than trusting a non-null cursor.
+            val nextCursor = when {
+                response.posts.isEmpty() -> Cursor.Final
+                else -> response.cursor?.let(Cursor::Next) ?: Cursor.Final
+            }
+
+            recordResolver.timelineItems(
+                items = postViews,
+                signedInProfileId = signedInProfileId,
+                postUri = { PostUri(it.uri.atUri) },
+                associatedRecordUris = { postView ->
+                    postView.blueskyEmbeddedRecords(
+                        viewingProfileId = signedInProfileId,
+                    )
+                        .map(Record.Embeddable::embeddableRecordUri)
+                        .plus(postView.externalEmbeddedRecordUris())
+                },
+                associatedProfileIds = {
+                    emptyList()
+                },
+                block = block@{ item ->
+                    if (!isMuted(post)) push(
+                        TimelineItem.Single(
+                            id = item.uri.atUri,
+                            post = post,
+                            isMuted = false,
+                            threadGate = threadGate(PostUri(item.uri.atUri)),
+                            appliedLabels = appliedLabels,
+                            signedInProfileId = signedInProfileId,
+                        ),
+                    )
+                },
+            ).map {
+                CursorList(
+                    items = it,
+                    nextCursor = nextCursor,
+                )
+            }
+        }
+            .flowOn(ioDispatcher)
+
     private fun searchTimeline(
         source: Timeline.Source.Search,
     ): Flow<Timeline.Search> = flowOf(
         Timeline.Search.stub(
             search = source,
+        ),
+    )
+
+    private fun topicTimeline(
+        source: Timeline.Source.BlackSkyTopic,
+    ): Flow<Timeline.BlackSkyTopic> = flowOf(
+        Timeline.BlackSkyTopic.stub(
+            blackSkyTopic = source,
         ),
     )
 
@@ -1716,3 +1834,6 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
 private const val MAX_REPLY_DEPTH = 3
 private const val MAX_SIBLINGS_PER_NODE = 3
+
+// getTopicFeed caps its limit at 25 in its lexicon, and getPosts hydrates at most 25 uris per call.
+private const val TOPIC_FEED_PAGE_SIZE = 25

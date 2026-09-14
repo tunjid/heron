@@ -107,6 +107,7 @@ fun CoroutineScope.timelineStateHolder(
 
         is Timeline.Profile,
         is Timeline.Search,
+        is Timeline.BlackSkyTopic,
         -> null
     }
     val initialQuery = TimelineQuery(
@@ -235,6 +236,7 @@ private fun Timeline.toTimelineRequest(): TimelineRequest = when (this) {
         type = type,
     )
     is Timeline.Search -> TimelineRequest.OfSearch(source = search)
+    is Timeline.BlackSkyTopic -> TimelineRequest.OfBlackSkyTopic(source = blackSkyTopic)
     is Timeline.StarterPack -> TimelineRequest.OfStarterPack.WithUri(uri = starterPack.uri)
 }
 
@@ -264,6 +266,7 @@ private fun TimelineQuery.refreshBy(): String =
         is Timeline.Source.Record.List,
         -> data.cursorAnchor.toString()
         is Timeline.Source.Search.OneOff,
+        is Timeline.Source.BlackSkyTopic,
         -> "${source.id}-${data.cursorAnchor}"
     }
 

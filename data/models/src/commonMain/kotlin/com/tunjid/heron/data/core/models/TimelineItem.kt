@@ -33,6 +33,7 @@ val Source.id
         // TODO: The full [SearchFilter] is not encoded here; two searches differing only by a
         //  non-media filter dimension currently collide. Fine for transient searches.
         is Source.Search -> "search-${sort.name}-${filter.media.name}-$query"
+        is Source.BlackSkyTopic -> "topic-$id"
     }
 
 val Timeline.sourceId: String
@@ -50,6 +51,7 @@ val Timeline.uri: Uri?
         is Timeline.Home -> uri
         is Timeline.Profile -> null
         is Timeline.Search -> null
+        is Timeline.BlackSkyTopic -> null
         is Timeline.StarterPack -> starterPack.uri
     }
 

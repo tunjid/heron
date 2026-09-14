@@ -20,6 +20,7 @@ class TimelineSerializationTest(
         FakeTimeline.feedTimeline,
         FakeTimeline.profileTimeline,
         FakeTimeline.starterPackTimeline,
+        FakeTimeline.blackSkyTopicTimeline,
     ),
 ) {
     @Test

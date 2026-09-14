@@ -1,0 +1,67 @@
+{
+  "lexicon": 1,
+  "id": "app.bsky.unspecced.getTopicFeed",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get the posts for a Blacksky trending topic. Off-protocol Blacksky endpoint served by the Blacksky app view; returns post AT-URIs rather than hydrated feed view posts.",
+      "parameters": {
+        "type": "params",
+        "required": ["topicId"],
+        "properties": {
+          "topicId": {
+            "type": "integer",
+            "description": "The numeric id of the Blacksky topic."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25,
+            "default": 25
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["topic", "posts"],
+          "properties": {
+            "topic": {
+              "type": "ref",
+              "ref": "#topicView"
+            },
+            "posts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "at-uri"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "topicView": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
