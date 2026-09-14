@@ -332,7 +332,11 @@ private fun PaneScaffoldState.SwitchStatus(
                         contentDescription = description
                         role = Role.Button
                     },
-                onClick = appScaffoldState::addAccount,
+                onClick = {
+                    appScaffoldState.addAccount(
+                        profileId = currentState.profileId,
+                    )
+                },
                 content = {
                     Icon(
                         imageVector = Icons.Rounded.Error,

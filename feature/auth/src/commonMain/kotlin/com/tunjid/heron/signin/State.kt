@@ -32,6 +32,8 @@ import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.signin.di.profileId
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.Status
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -41,6 +43,7 @@ import com.tunjid.heron.ui.text.Validator
 import com.tunjid.heron.ui.text.valueFor
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
+import com.tunjid.treenav.strings.Route
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.at_sign_not_allowed
 import heron.feature.auth.generated.resources.empty_form
@@ -93,6 +96,7 @@ interface State {
         val selectedServer: Server = Server.BlueSky,
         val availableServers: List<Server> = StartingServers,
         val showCustomServerPopup: Boolean = false,
+        val seededProfileId: ProfileId? = null,
         val pastSessions: List<SessionSummary> = emptyList(),
         @Transient
         val fields: List<FormField> = InitialFields,
@@ -101,12 +105,16 @@ interface State {
     ) : State
 
     companion object {
-        operator fun invoke(): Immutable = Immutable()
+        operator fun invoke(
+            route: Route,
+        ): Immutable = Immutable(
+            seededProfileId = route.profileId,
+        )
     }
 }
 
-val State.mostRecentSession
-    get() = pastSessions.firstOrNull()
+fun State.mostPertinentSession() =
+    pastSessions.mostPertinent(seededProfileId)
 
 internal val InitialFields: List<FormField> = listOf(
     FormField(

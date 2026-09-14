@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.UiTokens
@@ -110,12 +111,16 @@ class AppScaffoldState internal constructor(
             tasksDestination(showFailedWrites = true).navigationMutation,
         )
 
-    internal fun addAccount() {
+    internal fun addAccount(
+        profileId: ProfileId? = null,
+    ) {
         staticStates.onIdentityAction(
             IdentityAction.Switch.Cancel,
         )
         staticStates.onNavigationAction(
-            signInDestination().navigationMutation,
+            signInDestination(
+                profileId = profileId,
+            ).navigationMutation,
         )
     }
 

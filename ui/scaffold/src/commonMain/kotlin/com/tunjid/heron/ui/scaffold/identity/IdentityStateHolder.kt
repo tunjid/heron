@@ -131,7 +131,7 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
             IdentityAction.Switch.Choose ->
                 state.switchStatus = IdentityState.SwitchStatus.Choosing
             is IdentityAction.Switch.Transition ->
-                when (action.summary.profileId) {
+                when (val profileId = action.summary.profileId) {
                     state.signedInProfile?.did -> {
                         state.switchStatus = IdentityState.SwitchStatus.Stable.Idle
                     }
@@ -147,7 +147,8 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
 
                             is Outcome.Failure -> {
                                 state.switchStatus = IdentityState.SwitchStatus.Stable.Error(
-                                    outcome.exception.message?.let(Memo::Text)
+                                    profileId = profileId,
+                                    memo = outcome.exception.message?.let(Memo::Text)
                                         ?: Memo.Resource(CommonStrings.error_session_switch),
                                 )
                                 // Give the user 3 seconds to act, else revert
