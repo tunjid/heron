@@ -8,7 +8,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.GenericUri

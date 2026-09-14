@@ -2,6 +2,7 @@ package com.tunjid.heron.ui.scaffold.navigation
 
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.UrlEncodableModel
+import com.tunjid.heron.data.core.models.destinationPath
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import kotlin.test.Test
