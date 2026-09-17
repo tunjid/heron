@@ -745,6 +745,11 @@ private val HeronProxyPaths = listOf(
     "site.standard.heron.getPublications",
     "site.standard.heron.getSubscribedPublications",
     "dev.tunji.heron.getModelUrl",
+    "social.heron.graze.createFeed",
+    "social.heron.graze.editFeed",
+    "social.heron.graze.deleteFeed",
+    "social.heron.graze.getFeed",
+    "social.heron.notification.registerPush",
     "app.rocksky.actor.getActorAlbums",
     "app.rocksky.actor.getActorSongs",
     "app.rocksky.actor.getActorArtists",
@@ -783,7 +788,7 @@ private const val AtProtoPdsServiceType = "AtprotoPersonalDataServer"
 
 private const val UploadBlobPath = "com.atproto.repo.uploadBlob"
 private const val SendInteractionsPath = "app.bsky.feed.sendInteractions"
-private const val HeronAtProtoProxyHeaderValue = "did:web:heron.tunji.dev#heron_appview"
+private const val HeronAtProtoProxyHeaderValue = "did:web:heron.social#heron_appview"
 private const val FeedGeneratorProxyFragment = "#bsky_fg"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val BlackSkyAppViewUrl = "https://api.blacksky.community"

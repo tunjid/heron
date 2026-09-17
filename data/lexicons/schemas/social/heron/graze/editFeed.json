@@ -1,0 +1,40 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.graze.editFeed",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Edit an existing Graze feed generator for the authenticated account. A successful edit enqueues a delayed, out-of-band publish. The AppView proxies to the Graze API with its own platform credentials; the caller's service-auth only establishes the viewer DID.",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["rkey"],
+          "properties": {
+            "rkey": {
+              "type": "string",
+              "description": "Record key of the feed generator (app.bsky.feed.generator)."
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "filter": {
+              "type": "unknown",
+              "description": "The Graze algorithm filter object; opaque to the AppView and passed through to Graze."
+            }
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "ref",
+          "ref": "social.heron.graze.defs#feedResult"
+        }
+      }
+    }
+  }
+}

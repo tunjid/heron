@@ -16,11 +16,9 @@
 
 package com.tunjid.heron.data.network
 
-import com.atproto.server.GetServiceAuthQueryParams
-import com.tunjid.heron.data.InternalEndpoints
+import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.data.graze.GrazeDid
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
@@ -28,30 +26,16 @@ import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
+import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.http.takeFrom
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.Nsid
+import social.heron.graze.CreateFeedRequest
+import social.heron.graze.DeleteFeedRequest
+import social.heron.graze.EditFeedRequest
+import social.heron.graze.FeedResult
+import social.heron.graze.GetFeedQueryParams
 
 internal interface FeedCreationService {
 
@@ -60,137 +44,100 @@ internal interface FeedCreationService {
     ): Result<GrazeResponse>
 }
 
+/**
+ * Manages Graze feed generators through the Heron AppView's XRPC methods (`social.heron.graze.*`).
+ * Each call is proxied to the AppView by the user's PDS the same way reads are (see
+ * [HeronProxyPaths]), so the PDS mints the service-auth (`aud` = the AppView DID) transparently and
+ * the client neither talks to a bespoke endpoint nor mints its own service-auth. The AppView then
+ * authenticates to Graze with its own platform credentials.
+ */
 @Inject
 internal class GrazeFeedCreationService(
-    httpClient: HttpClient,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
 ) : FeedCreationService {
 
-    private val feedCreationClient = httpClient.config {
-        install(DefaultRequest) {
-            url.takeFrom(InternalEndpoints.HeronEndpoint)
-        }
-        install(Logging) {
-            level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-                    logcat(LogPriority.VERBOSE) { message }
-                }
-            }
-        }
-        install(HttpTimeout) {
-            requestTimeoutMillis = 15.seconds.inWholeMilliseconds
-        }
-    }
-
     override suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
-    ): Result<GrazeResponse> =
-        when (update) {
-            is GrazeFeed.Update.Create -> performRequest<GrazeResponse.Created>(
-                call = GrazeCall.Create,
-                body = GrazeRequestBody.Feed(update.feed),
-            )
-            is GrazeFeed.Update.Delete -> performRequest<GrazeResponse.Deleted>(
-                call = (GrazeCall.Delete),
-                body = GrazeRequestBody.Key(
-                    recordKey = update.recordKey,
-                ),
-            )
-
-            is GrazeFeed.Update.Edit -> performRequest<GrazeResponse.Edited>(
-                call = GrazeCall.Edit,
-                body = GrazeRequestBody.Feed(update.feed),
-            )
-            is GrazeFeed.Update.Get -> performRequest<GrazeResponse.Read>(
-                call = GrazeCall.Get,
-                body = GrazeRequestBody.Key(
-                    recordKey = update.recordKey,
-                ),
-            )
-        }
-
-    private suspend inline fun <reified T : GrazeResponse> performRequest(
-        call: GrazeCall,
-        body: GrazeRequestBody,
     ): Result<GrazeResponse> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
 
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getServiceAuth(
-                GetServiceAuthQueryParams(
-                    aud = GrazeDid.id,
-                    exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
-                    lxm = call.lexicon,
-                ),
-            )
-        }.mapCatchingUnlessCancelled { tokenResponse ->
-            val response = feedCreationClient.post(call.path) {
-                setBody(body.body())
-                contentType(ContentType.Application.Json)
-                bearerAuth(tokenResponse.token)
-            }
+        when (update) {
+            is GrazeFeed.Update.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
+                createFeed(update.feed.toCreateRequest())
+            }.mapCatchingUnlessCancelled(FeedResult::toCreated)
 
-            if (!response.status.isSuccess()) when (response.status) {
-                HttpStatusCode.NotFound -> return@mapCatchingUnlessCancelled GrazeResponse.Deleted(
-                    rkey = body.recordKey,
-                )
-                else -> throw Exception(response.bodyAsText())
+            is GrazeFeed.Update.Edit -> networkService.runCatchingWithMonitoredNetworkRetry {
+                editFeed(update.feed.toEditRequest())
+            }.mapCatchingUnlessCancelled(FeedResult::toEdited)
+
+            is GrazeFeed.Update.Get -> networkService.runCatchingWithMonitoredNetworkRetry {
+                getFeed(GetFeedQueryParams(rkey = update.recordKey.value))
+            }.mapCatchingUnlessCancelled(FeedResult::toRead)
+
+            is GrazeFeed.Update.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteFeed(DeleteFeedRequest(rkey = update.recordKey.value))
+            }.foldToDeleted(recordKey = update.recordKey)
+        }.onFailure { throwable ->
+            logcat(LogPriority.DEBUG) {
+                "Failed graze call for ${update::class.simpleName}: ${throwable.loggableText()}"
             }
-            response.body<T>()
         }
-            .onFailure {
-                logcat(LogPriority.DEBUG) {
-                    "Failed graze call notification for ${call.path}: ${it.loggableText()}"
-                }
-            }
     } ?: expiredSessionResult()
 }
 
-private enum class GrazeCall(
-    val path: String,
-    val lexicon: Nsid,
-) {
-    Create(
-        path = "/createGrazeFeed",
-        lexicon = Nsid("com.atproto.repo.createRecord"),
-    ),
-    Edit(
-        path = "/editGrazeFeed",
-        lexicon = Nsid("com.atproto.repo.putRecord"),
-    ),
-    Delete(
-        path = "/deleteGrazeFeed",
-        lexicon = Nsid("com.atproto.repo.deleteRecord"),
-    ),
-    Get(
-        path = "/getGrazeFeed",
-        lexicon = Nsid("com.atproto.repo.getRecord"),
-    ),
-}
+private fun GrazeFeed.Editable.toCreateRequest() = CreateFeedRequest(
+    rkey = recordKey.value,
+    displayName = displayName,
+    description = description,
+    filter = filter.asJsonContent(Filter.Root.serializer()),
+)
 
-private sealed interface GrazeRequestBody {
-    val recordKey: RecordKey
+private fun GrazeFeed.Editable.toEditRequest() = EditFeedRequest(
+    rkey = recordKey.value,
+    displayName = displayName,
+    description = description,
+    filter = filter.asJsonContent(Filter.Root.serializer()),
+)
 
-    fun body(): Any
+private fun FeedResult.toCreated(): GrazeResponse = GrazeResponse.Created(
+    rkey = requireOk().let { RecordKey(rkey) },
+    contentMode = contentMode.orEmpty(),
+)
 
-    @Serializable
-    data class Key(
-        @SerialName("rkey")
-        override val recordKey: RecordKey,
-    ) : GrazeRequestBody {
-        override fun body(): Any = this
-    }
+private fun FeedResult.toEdited(): GrazeResponse = GrazeResponse.Edited(
+    rkey = requireOk().let { RecordKey(rkey) },
+    contentMode = contentMode.orEmpty(),
+)
 
-    data class Feed(
-        val feed: GrazeFeed,
-    ) : GrazeRequestBody {
-        override val recordKey: RecordKey
-            get() = feed.recordKey
+private fun FeedResult.toRead(): GrazeResponse = GrazeResponse.Read(
+    rkey = requireOk().let { RecordKey(rkey) },
+    contentMode = contentMode.orEmpty(),
+    algorithm = checkNotNull(algorithm) {
+        "Graze getFeed returned no algorithm manifest"
+    }.decodeAs(),
+)
 
-        override fun body(): Any = feed
-    }
+/**
+ * The AppView passes Graze's upstream HTTP status straight through, so deleting a feed that no
+ * longer exists surfaces as a 404 (an [AtProtoException]) rather than a [FeedResult] body. Treat
+ * that as an idempotent success, matching the prior direct-HTTP client.
+ */
+private fun Result<FeedResult>.foldToDeleted(
+    recordKey: RecordKey,
+): Result<GrazeResponse> = fold(
+    onSuccess = { Result.success(GrazeResponse.Deleted(rkey = RecordKey(it.rkey))) },
+    onFailure = { throwable ->
+        if (throwable is AtProtoException && throwable.statusCode == HttpStatusCode.NotFound.value) {
+            Result.success(GrazeResponse.Deleted(rkey = recordKey))
+        } else {
+            Result.failure(throwable)
+        }
+    },
+)
+
+private fun FeedResult.requireOk(): FeedResult = apply {
+    check(ok) { "Graze call failed with status $status: $error" }
 }
 
 @Serializable
@@ -223,7 +170,7 @@ internal sealed interface GrazeResponse {
     ) : GrazeResponse {
         @Serializable
         data class Detail(
-            val order: String,
+            val order: String?,
             val manifest: Manifest,
         )
 

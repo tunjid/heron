@@ -108,7 +108,7 @@ internal actual fun oauthRedirect(): OauthRedirect =
     LoopbackRedirect()
 
 private val HeronDesktopOauthClient = OAuthClient(
-    clientId = "https://heron.tunji.dev/oauth-client-metadata.json",
+    clientId = "https://heron.social/oauth-client-metadata.json",
     redirectUri = "http://$LoopbackHost$CallbackPath",
 )
 
