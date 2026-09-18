@@ -12,3 +12,7 @@
 -dontwarn com.google.ai.edge.litert.**
 -keep class com.google.ai.edge.litertlm.** { *; }
 -dontwarn com.google.ai.edge.litertlm.**
+
+ -assumevalues public class androidx.compose.runtime.ComposeRuntimeFlags {
+     *     static boolean isLinkBufferComposerEnabled return true;
+     * }
