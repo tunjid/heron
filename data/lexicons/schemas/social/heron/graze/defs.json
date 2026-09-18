@@ -1,0 +1,37 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.graze.defs",
+  "defs": {
+    "feedResult": {
+      "type": "object",
+      "description": "The Heron-shaped result of a Graze feed operation: the upstream status plus the passthrough body.",
+      "required": ["ok", "status", "rkey"],
+      "properties": {
+        "ok": {
+          "type": "boolean",
+          "description": "Whether the upstream Graze call succeeded."
+        },
+        "status": {
+          "type": "integer",
+          "description": "Upstream Graze HTTP status code."
+        },
+        "rkey": {
+          "type": "string",
+          "description": "Record key of the affected feed generator."
+        },
+        "contentMode": {
+          "type": "string",
+          "description": "Derived feed content mode (present on create/edit/get)."
+        },
+        "algorithm": {
+          "type": "unknown",
+          "description": "Stored algorithm manifest (present on get)."
+        },
+        "error": {
+          "type": "unknown",
+          "description": "Upstream error detail (present when ok is false)."
+        }
+      }
+    }
+  }
+}

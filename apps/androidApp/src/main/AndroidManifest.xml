@@ -86,6 +86,10 @@
               android:scheme="https"
               android:host="heron.tunji.dev"
               android:path="/oauth/callback" />
+            <data
+              android:scheme="https"
+              android:host="heron.social"
+              android:path="/oauth/callback" />
           </intent-filter>
         </activity>
     </application>

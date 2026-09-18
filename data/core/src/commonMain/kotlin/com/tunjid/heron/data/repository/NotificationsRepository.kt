@@ -28,8 +28,6 @@ import app.bsky.notification.ListNotificationsResponse
 import app.bsky.notification.Preference
 import app.bsky.notification.PutPreferencesV2Request
 import app.bsky.notification.UpdateSeenRequest
-import com.atproto.server.GetServiceAuthQueryParams
-import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -62,7 +60,6 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.NotificationFilteredOutException
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RestrictedProfileException
@@ -78,7 +75,6 @@ import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
-import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asGenericId
@@ -93,21 +89,10 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
-import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.DefaultRequest
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.takeFrom
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
@@ -129,8 +114,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
+import social.heron.notification.RegisterPushRequest
 
 @Serializable
 data class NotificationsQuery(
@@ -189,20 +174,9 @@ internal class OfflineNotificationsRepository(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val recordResolver: RecordResolver,
     private val networkService: NetworkService,
-    private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
-    httpClient: HttpClient,
 ) : NotificationsRepository {
-
-    private val notificationsClient = httpClient.config {
-        install(DefaultRequest) {
-            url.takeFrom(InternalEndpoints.HeronEndpoint)
-        }
-        install(HttpTimeout) {
-            requestTimeoutMillis = 15.seconds.inWholeMilliseconds
-        }
-    }
 
     override val unreadCount: Flow<Long> =
         savedStateDataSource.singleAuthorizedSessionFlow {
@@ -330,33 +304,11 @@ internal class OfflineNotificationsRepository(
         if (signedProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
-            getServiceAuth(
-                GetServiceAuthQueryParams(
-                    aud = signedProfileId.id,
-                    exp = Clock.System.now().epochSeconds + 5.minutes.inWholeSeconds,
-                    lxm = Nsid(PostUri.NAMESPACE),
+            registerPush(
+                RegisterPushRequest(
+                    did = signedProfileId.id,
+                    token = token,
                 ),
-            )
-        }.mapToResult { tokenResponse ->
-            val saveNotificationTokenRequest = SaveNotificationTokenRequest(
-                did = signedProfileId.id,
-                token = token,
-                otherDids = savedStateDataSource.savedState
-                    .value.pastSessions
-                    ?.mapNotNull {
-                        if (it.profileId == signedProfileId) null
-                        else it.profileId.id
-                    }
-                    .orEmpty(),
-            )
-            networkMonitor.runCatchingWithNetworkRetry(
-                block = {
-                    notificationsClient.post(SaveNotificationTokenPath) {
-                        contentType(ContentType.Application.Json)
-                        setBody(saveNotificationTokenRequest)
-                        bearerAuth(tokenResponse.token)
-                    }
-                },
             )
         }.toOutcome()
     } ?: expiredSessionOutcome()
@@ -761,12 +713,4 @@ private fun SavedState.signedInProfileNotifications() =
     signedInProfileData
         ?.notifications
 
-@Serializable
-private data class SaveNotificationTokenRequest(
-    val did: String,
-    val token: String,
-    val otherDids: List<String>,
-)
-
-private const val SaveNotificationTokenPath = "/saveNotificationToken"
 private const val MaxPostsFetchedPerQuery = 25

@@ -8,6 +8,8 @@
 	<array>
 		<string>applinks:heron.tunji.dev</string>
 		<string>webcredentials:heron.tunji.dev</string>
+		<string>applinks:heron.social</string>
+		<string>webcredentials:heron.social</string>
 	</array>
 </dict>
 </plist>

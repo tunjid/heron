@@ -55,6 +55,6 @@ abstract class OauthRedirect {
 internal expect fun oauthRedirect(): OauthRedirect
 
 private val HeronOauthClient = OAuthClient(
-    clientId = "https://heron.tunji.dev/oauth-client.json",
-    redirectUri = "https://heron.tunji.dev/oauth/callback",
+    clientId = "https://heron.social/oauth-client-metadata.json",
+    redirectUri = "https://heron.social/oauth/callback",
 )

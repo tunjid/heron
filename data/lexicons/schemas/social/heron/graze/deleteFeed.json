@@ -1,0 +1,30 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.graze.deleteFeed",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Delete a Graze feed generator for the authenticated account. The AppView proxies to the Graze API with its own platform credentials; the caller's service-auth only establishes the viewer DID.",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["rkey"],
+          "properties": {
+            "rkey": {
+              "type": "string",
+              "description": "Record key of the feed generator (app.bsky.feed.generator)."
+            }
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "ref",
+          "ref": "social.heron.graze.defs#feedResult"
+        }
+      }
+    }
+  }
+}
