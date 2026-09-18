@@ -44,13 +44,6 @@ internal interface FeedCreationService {
     ): Result<GrazeResponse>
 }
 
-/**
- * Manages Graze feed generators through the Heron AppView's XRPC methods (`social.heron.graze.*`).
- * Each call is proxied to the AppView by the user's PDS the same way reads are (see
- * [HeronProxyPaths]), so the PDS mints the service-auth (`aud` = the AppView DID) transparently and
- * the client neither talks to a bespoke endpoint nor mints its own service-auth. The AppView then
- * authenticates to Graze with its own platform credentials.
- */
 @Inject
 internal class GrazeFeedCreationService(
     private val networkService: NetworkService,
@@ -118,11 +111,6 @@ private fun FeedResult.toRead(): GrazeResponse = GrazeResponse.Read(
     }.decodeAs(),
 )
 
-/**
- * The AppView passes Graze's upstream HTTP status straight through, so deleting a feed that no
- * longer exists surfaces as a 404 (an [AtProtoException]) rather than a [FeedResult] body. Treat
- * that as an idempotent success, matching the prior direct-HTTP client.
- */
 private fun Result<FeedResult>.foldToDeleted(
     recordKey: RecordKey,
 ): Result<GrazeResponse> = fold(
