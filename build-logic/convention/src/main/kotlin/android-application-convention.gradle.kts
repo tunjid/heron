@@ -41,7 +41,7 @@ android {
         create("staging") {
             initWith(getByName("release"))
             applicationIdSuffix = ".staging"
-            isMinifyEnabled = false
+            isMinifyEnabled = true
         }
     }
 
