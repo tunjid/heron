@@ -16,9 +16,7 @@
 
 package com.tunjid.heron
 
-import androidx.compose.runtime.ComposeRuntimeFlags
 import androidx.compose.runtime.Composer
-import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.tooling.ComposeStackTraceMode
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.Logger
@@ -37,7 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-@OptIn(ExperimentalComposeApi::class)
 fun createAppState(
     imageLoader: () -> ImageLoader,
     notifier: (appMainScope: CoroutineScope) -> Notifier,
@@ -46,7 +43,6 @@ fun createAppState(
     args: (appMainScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
     with(Platform.current) {
-        ComposeRuntimeFlags.isLinkBufferComposerEnabled = true
         if (supportsComposeDiagnosticStackTraces) Composer.setDiagnosticStackTraceMode(
             if (isRelease) ComposeStackTraceMode.Auto
             else ComposeStackTraceMode.SourceInformation,
