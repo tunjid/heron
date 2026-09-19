@@ -23,7 +23,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -37,10 +36,8 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.list.Action
 import com.tunjid.heron.list.ListScreen
@@ -49,22 +46,14 @@ import com.tunjid.heron.list.ListStateHolder
 import com.tunjid.heron.list.ListViewModelInitializer
 import com.tunjid.heron.list.listUri
 import com.tunjid.heron.list.timelineState
-import com.tunjid.heron.list.withFeedListOrNull
-import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
+import com.tunjid.heron.list.ui.PaneActions
 import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
-import com.tunjid.heron.timeline.ui.list.FeedListStatus
-import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.TimelineTitle
-import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
-import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
-import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
@@ -76,7 +65,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -99,10 +87,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.list.generated.resources.Res
 import heron.feature.list.generated.resources.add_list_member
-import heron.feature.list.generated.resources.follow_starter_pack
-import heron.ui.core.generated.resources.record_list
-import heron.ui.core.generated.resources.record_starter_pack
-import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
 private const val ListRoutePattern = "/profile/{profileId}/lists/{listUriSuffix}"
@@ -310,32 +294,6 @@ internal fun Route(
             stateHolder.accept(Action.SnackbarDismissed(it))
         },
         topBar = {
-            val recordOptionsSheetState = rememberEmbeddableRecordOptionsSheetState(
-                editTitle = null,
-                onEditClicked = {},
-                onShareInConversationClicked = { recordUri, conversation ->
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = conversation.id,
-                                members = conversation.members,
-                                sharedElementPrefix = conversation.id.id,
-                                sharedUri = recordUri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
-                },
-                onShareInPostClicked = { recordUri ->
-                    stateHolder.accept(
-                        Action.Navigate.To(
-                            composePostDestination(
-                                sharedUri = recordUri.asGenericUri(),
-                            ),
-                        ),
-                    )
-                },
-            )
             PoppableDestinationTopAppBar(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surface),
@@ -362,47 +320,9 @@ internal fun Route(
                 },
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                 actions = {
-                    val timeline = state.timelineState?.timeline
-                    timeline?.withFeedListOrNull { feedList ->
-                        FeedListStatus(
-                            status = state.listStatus,
-                            uri = feedList.uri,
-                            onListStatusUpdated = {
-                                stateHolder.accept(Action.UpdateFeedListStatus(it))
-                            },
-                        )
-                    }
-                    if (timeline is Timeline.StarterPack) {
-                        AppBarIconButton(
-                            icon = Icons.Rounded.GroupAdd,
-                            iconDescription = stringResource(Res.string.follow_starter_pack),
-                            onClick = click@{
-                                stateHolder.accept(
-                                    Action.FollowStarterPack(
-                                        signedInProfileId = state.signedInProfileId ?: return@click,
-                                        starterPackUri = timeline.starterPack.uri,
-                                        starterPackCid = timeline.starterPack.cid,
-                                        listUri = timeline.starterPack.list?.uri ?: return@click,
-                                    ),
-                                )
-                            },
-                        )
-                    }
-                    ShareRecordAppBarButton(
-                        contentDescription = stringResource(
-                            TimelineStrings.share_record,
-                            stringResource(
-                                if (timeline is Timeline.StarterPack) CommonStrings.record_starter_pack
-                                else CommonStrings.record_list,
-                            ),
-                        ),
-                        onShareClicked = {
-                            state.timelineState?.timeline?.uri
-                                ?.asEmbeddableRecordUriOrNull()
-                                ?.let { recordUri ->
-                                    recordOptionsSheetState.showOptions(recordUri)
-                                }
-                        },
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
                     )
                 },
             )

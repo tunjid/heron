@@ -29,8 +29,8 @@ import com.tunjid.heron.graze.editor.GrazeEditorStateHolder
 import com.tunjid.heron.graze.editor.GrazeEditorViewModelInitializer
 import com.tunjid.heron.graze.editor.State
 import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
+import com.tunjid.heron.graze.editor.ui.PaneActions
 import com.tunjid.heron.graze.editor.ui.Title
-import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
@@ -226,7 +226,7 @@ object GrazeEditorBindings {
                             )
                         },
                         actions = {
-                            TopBarActions(
+                            PaneActions(
                                 grazeFeed = state.grazeFeed,
                                 enabled = !state.isLoading,
                                 onEditClicked = {

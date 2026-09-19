@@ -17,7 +17,6 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Preview
@@ -45,7 +44,7 @@ import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun TopBarActions(
+internal fun PaneActions(
     grazeFeed: GrazeFeed.Editable,
     enabled: Boolean,
     onEditClicked: () -> Unit,

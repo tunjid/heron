@@ -351,6 +351,9 @@ fun EditProfileHeader(
             )
         }
 
+        val collapsedAvatarOffsetY = with(UiTokens) {
+            statusBarHeight + (toolbarHeight / 2) - (CollapsedAvatarSize / 2)
+        }
         ProfileAvatarEditableImage(
             modifier = Modifier
                 .align(
@@ -363,12 +366,12 @@ fun EditProfileHeader(
                     Offset(
                         x = lerp(
                             start = 16.dp,
-                            stop = -(48).dp,
+                            stop = -CollapsedAvatarSize - (16 + 16).dp,
                             fraction = headerState.progress,
                         ).toPx(),
                         y = lerp(
-                            start = 40.dp,
-                            stop = 80.dp,
+                            start = ExpandedAvatarSize / 2,
+                            stop = collapsedAvatarOffsetY,
                             fraction = headerState.progress,
                         ).toPx(),
                     ).round()
@@ -381,8 +384,8 @@ fun EditProfileHeader(
             shape = CircleShape,
             onEditClick = onAvatarEditClick,
             size = lerp(
-                start = 96.dp,
-                stop = 30.dp,
+                start = ExpandedAvatarSize,
+                stop = CollapsedAvatarSize,
                 fraction = headerState.progress,
             ),
             localFile = avatarFile,
@@ -542,3 +545,6 @@ private fun Modifier.screenHorizontalPadding() =
     padding(
         horizontal = 16.dp,
     )
+
+private val ExpandedAvatarSize = 96.dp
+private val CollapsedAvatarSize = 36.dp

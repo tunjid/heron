@@ -18,7 +18,6 @@ package com.tunjid.heron.splash.di
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.heron.splash.SplashStateHolder
 import com.tunjid.heron.splash.SplashViewModelInitializer
