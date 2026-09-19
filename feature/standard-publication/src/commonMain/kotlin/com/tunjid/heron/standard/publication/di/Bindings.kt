@@ -17,10 +17,8 @@
 package com.tunjid.heron.standard.publication.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.Uri
@@ -29,8 +27,8 @@ import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.StandardPublicationScreen
 import com.tunjid.heron.standard.publication.StandardPublicationStateHolder
 import com.tunjid.heron.standard.publication.StandardPublicationViewModelInitializer
+import com.tunjid.heron.standard.publication.ui.PaneActions
 import com.tunjid.heron.standard.publication.ui.PublicationTitle
-import com.tunjid.heron.standard.publication.ui.SubscribeButton
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -210,23 +208,10 @@ object StandardPublicationBindings {
                             )
                         },
                         actions = {
-                            state.publication?.let {
-                                SubscribeButton(
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp),
-                                    publication = it,
-                                    onSubscriptionToggled = { publication, subscription ->
-                                        stateHolder.accept(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
-                                            ),
-                                        )
-                                    },
-                                )
-                            }
+                            PaneActions(
+                                state = state,
+                                actions = stateHolder.accept,
+                            )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },

@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import heron.feature.edit_profile.generated.resources.Res
-import heron.feature.edit_profile.generated.resources.edit_banner_icon
+import heron.feature.edit_profile.generated.resources.edit_avatar_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -47,7 +47,7 @@ fun EditButton(
     ) {
         Icon(
             imageVector = Icons.Rounded.Edit,
-            contentDescription = stringResource(Res.string.edit_banner_icon),
+            contentDescription = stringResource(Res.string.edit_avatar_icon),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .align(Alignment.Center)

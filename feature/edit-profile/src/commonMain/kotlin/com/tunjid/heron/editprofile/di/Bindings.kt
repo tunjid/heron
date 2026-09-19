@@ -18,13 +18,11 @@ package com.tunjid.heron.editprofile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.editprofile.Action
@@ -32,7 +30,7 @@ import com.tunjid.heron.editprofile.EditProfileScreen
 import com.tunjid.heron.editprofile.EditProfileStateHolder
 import com.tunjid.heron.editprofile.EditProfileViewModelInitializer
 import com.tunjid.heron.editprofile.saveProfileAction
-import com.tunjid.heron.editprofile.ui.EditButton
+import com.tunjid.heron.editprofile.ui.PaneActions
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -179,9 +177,8 @@ internal fun Route(
                 transparencyFactor = ::fullAppbarTransparency,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                 actions = {
-                    EditButton(
-                        modifier = Modifier
-                            .padding(8.dp),
+                    PaneActions(
+                        actions = stateHolder.accept,
                     )
                 },
             )

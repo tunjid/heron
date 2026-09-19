@@ -188,7 +188,12 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             AnimatedVisibility(
                 visible = identityState.isStable,
             ) {
-                if (actions != null) actions()
+                if (actions != null) Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    actions()
+                }
             }
             LazyRow(
                 modifier = Modifier
@@ -312,7 +317,10 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                 title()
             }
         },
-        actions = actions,
+        actions = {
+            actions()
+            Spacer(Modifier.width(8.dp))
+        },
     )
 }
 

@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.compose.di
 
-import androidx.compose.animation.animateBounds
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -25,10 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Drafts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -50,13 +44,10 @@ import com.tunjid.heron.compose.ComposeViewModelInitializer
 import com.tunjid.heron.compose.canDraft
 import com.tunjid.heron.compose.drafts.DraftsStateHolder
 import com.tunjid.heron.compose.drafts.DraftsViewModelInitializer
-import com.tunjid.heron.compose.drafts.rememberDraftsSheetState
 import com.tunjid.heron.compose.hasComposedContent
-import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
-import com.tunjid.heron.compose.ui.TopAppBarFab
-import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.compose.ui.PaneActions
 import com.tunjid.heron.ui.DestructiveDialogButton
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
@@ -64,7 +55,6 @@ import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
@@ -177,9 +167,6 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val draftsSheetState = paneScaffoldState.rememberDraftsSheetState(
-        onDraftSelected = { stateHolder.accept(Action.LoadDraft(it)) },
-    )
     val discardDialogState = rememberSimpleDialogState()
 
     // Only interrupt leaving when there is unsaved content on a post that could become a draft.
@@ -200,34 +187,13 @@ internal fun Route(
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
         },
-        topBar = scope@{
+        topBar = {
             PoppableDestinationTopAppBar(
                 actions = {
-                    if (state.canDraft) AppBarIconButton(
-                        modifier = Modifier
-                            .animateBounds(
-                                lookaheadScope = this@scope,
-                                boundsTransform = this@scope.childBoundsTransform,
-                            ),
-                        icon = Icons.Rounded.Drafts,
-                        iconDescription = stringResource(Res.string.drafts),
-                        onClick = draftsSheetState::showDrafts,
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
                     )
-                    Box(
-                        modifier = Modifier
-                            .ifTrue(state.hasLongPost) {
-                                padding(horizontal = 8.dp)
-                            }
-                            .ifTrue(!state.hasLongPost) {
-                                // Always has to be in composition, so make very narrow
-                                requiredWidth(Dp.Hairline)
-                            },
-                    ) {
-                        TopAppBarFab(
-                            state = state,
-                            onCreatePost = stateHolder.accept,
-                        )
-                    }
                 },
                 onBackPressed = {
                     if (shouldOfferDraft) discardDialogState.show()
