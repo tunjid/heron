@@ -63,6 +63,7 @@ gstreamer-java = "1.4.0"
 tink = "1.23.0"
 aboutLibraries = "15.2.0"
 snapshottable = "0.1.5"
+valkyrie = "0.5.2"
 
 
 [libraries]
@@ -225,3 +226,4 @@ spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
 axionRelease = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 tunjid-snapshottable = { id = "com.tunjid.snapshottable", version.ref = "snapshottable" }
+valkyrie = { id = "io.github.composegears.valkyrie", version.ref = "valkyrie" }
