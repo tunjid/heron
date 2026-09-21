@@ -94,6 +94,7 @@ include(
     ":feature:tasks",
     ":feature:template",
     ":ui:core",
+    ":ui:icons",
     ":ui:media",
     ":ui:preview",
     ":ui:profile",

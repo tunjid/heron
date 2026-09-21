@@ -22,6 +22,11 @@ captures
 /apps/composeApp/src/release/google-services.json
 /apps/composeApp/src/staging/google-services.json
 /apps/iosApp/iosApp/GoogleService-Info.plist
+
+# Generated iOS asset catalog: imagesets are regenerated from the SVG masters in
+# ui/icons/src/commonMain/valkyrieResources by :ui:icons:generateIosIconAssets. Only the
+# .xcassets root Contents.json stub is committed so the Xcode folder reference always resolves.
+/apps/iosApp/iosApp/HeronIcons.xcassets/*.imageset/
 /apps/iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 /dependencies.txt
 /dependency-tree-diff.jar
