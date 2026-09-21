@@ -16,12 +16,12 @@
 
 package com.tunjid.heron.quotethread.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.quotethread.State
 import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.AutoAwesome
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.quote_thread.generated.resources.Res
 import heron.feature.quote_thread.generated.resources.spill_the_tea
@@ -34,7 +34,7 @@ internal fun PaneScaffoldState.PaneActions(
     val inferenceSheetState = rememberInferenceSheetState()
     // Only surface the tea when the device can actually run on-device inference.
     if (state.canRunInference) AppBarIconButton(
-        icon = Icons.Rounded.AutoAwesome,
+        icon = HeronIcons.Regular.AutoAwesome,
         iconDescription = stringResource(Res.string.spill_the_tea),
         onClick = onClick@{
             val anchorPost = state.anchorPost ?: return@onClick

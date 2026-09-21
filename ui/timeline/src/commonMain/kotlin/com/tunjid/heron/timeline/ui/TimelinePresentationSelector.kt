@@ -21,11 +21,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.GridOn
-import androidx.compose.material.icons.rounded.Splitscreen
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
@@ -33,6 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.Article
+import com.tunjid.heron.ui.icons.regular.Dashboard
+import com.tunjid.heron.ui.icons.regular.GridOn
+import com.tunjid.heron.ui.icons.regular.Splitscreen
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.condensed_media
 import heron.ui.timeline.generated.resources.expanded_media
@@ -76,8 +76,8 @@ private val Timeline.Presentation.textResource: StringResource
 
 private val Timeline.Presentation.icon: ImageVector
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> Icons.AutoMirrored.Rounded.Article
-        Timeline.Presentation.Media.Condensed -> Icons.Rounded.Dashboard
-        Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
-        Timeline.Presentation.Media.Grid -> Icons.Rounded.GridOn
+        Timeline.Presentation.Text.WithEmbed -> HeronIcons.AutoMirrored.Article
+        Timeline.Presentation.Media.Condensed -> HeronIcons.Regular.Dashboard
+        Timeline.Presentation.Media.Expanded -> HeronIcons.Regular.Splitscreen
+        Timeline.Presentation.Media.Grid -> HeronIcons.Regular.GridOn
     }

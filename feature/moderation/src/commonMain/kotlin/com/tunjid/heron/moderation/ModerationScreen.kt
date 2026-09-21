@@ -25,11 +25,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.ConnectWithoutContact
-import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -53,6 +48,11 @@ import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.regular.Block
+import com.tunjid.heron.ui.icons.regular.ConnectWithoutContact
+import com.tunjid.heron.ui.icons.regular.FilterAlt
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.ui.scaffold.navigation.blocksDestination
@@ -404,19 +404,19 @@ private enum class ModerationTools(
 ) {
     InteractionSettings(
         stringResource = Res.string.moderation_options_interaction_settings,
-        icon = Icons.Rounded.ConnectWithoutContact,
+        icon = HeronIcons.Regular.ConnectWithoutContact,
     ),
     MutedWords(
         stringResource = Res.string.mute_words_tags,
-        icon = Icons.Rounded.FilterAlt,
+        icon = HeronIcons.Regular.FilterAlt,
     ),
     MutedAccounts(
         stringResource = Res.string.moderation_options_muted_accounts,
-        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+        icon = HeronIcons.AutoMirrored.VolumeOff,
     ),
     BlockedAccounts(
         stringResource = Res.string.moderation_options_blocked_accounts,
-        icon = Icons.Rounded.Block,
+        icon = HeronIcons.Regular.Block,
     ),
 }
 

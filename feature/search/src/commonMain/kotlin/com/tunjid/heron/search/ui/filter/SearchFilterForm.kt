@@ -28,10 +28,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -65,6 +61,10 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.SearchFilter
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.sheets.rememberProfileSearchSheetState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.CalendarMonth
+import com.tunjid.heron.ui.icons.regular.Cancel
+import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.search.generated.resources.Res
@@ -451,7 +451,7 @@ private fun DateField(
                     },
                     content = {
                         Icon(
-                            imageVector = Icons.Rounded.CalendarMonth,
+                            imageVector = HeronIcons.Regular.CalendarMonth,
                             contentDescription = stringResource(Res.string.filter_pick_date),
                         )
                     },
@@ -536,7 +536,7 @@ private fun PersonGroupCard(
                 )
                 IconButton(onClick = onRemoveGroup) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        imageVector = HeronIcons.Regular.Close,
                         contentDescription = stringResource(Res.string.filter_remove),
                     )
                 }
@@ -560,7 +560,7 @@ private fun PersonGroupCard(
                         trailingIcon = {
                             IconButton(onClick = { onRemovePerson(profileId) }) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Cancel,
+                                    imageVector = HeronIcons.Regular.Cancel,
                                     contentDescription = null,
                                 )
                             }

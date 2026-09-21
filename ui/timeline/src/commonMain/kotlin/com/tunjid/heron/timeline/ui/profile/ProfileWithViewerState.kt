@@ -23,9 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -51,6 +48,9 @@ import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.regular.Block
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -156,12 +156,12 @@ fun ProfileWithViewerState(
                 onClick = profileClicked,
             )
             if (viewerState.isBlocked) IconLabel(
-                icon = Icons.Rounded.Block,
+                icon = HeronIcons.Regular.Block,
                 contentDescription = stringResource(CommonStrings.viewer_state_blocked),
                 onClick = profileClicked,
             )
             if (viewerState.isMuted) IconLabel(
-                icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                icon = HeronIcons.AutoMirrored.VolumeOff,
                 contentDescription = stringResource(CommonStrings.viewer_state_muted),
                 onClick = profileClicked,
             )

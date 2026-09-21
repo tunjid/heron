@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -36,6 +33,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.canQuote
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.FormatQuote
+import com.tunjid.heron.ui.icons.regular.Repeat
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -148,7 +148,7 @@ private fun PostInteractionsBottomSheet(
                                 else Res.string.remove_repost,
                             ),
                             enabled = true,
-                            icon = Icons.Rounded.Repeat,
+                            icon = HeronIcons.Regular.Repeat,
                             onClick = {
                                 state.stateHolder.accept(PostInteractionsAction.SendInteraction(currentInteraction))
                                 state.hide()
@@ -157,7 +157,7 @@ private fun PostInteractionsBottomSheet(
                         Item(
                             contentDescription = stringResource(Res.string.quote),
                             enabled = action.viewerStats.canQuote,
-                            icon = Icons.Rounded.FormatQuote,
+                            icon = HeronIcons.Regular.FormatQuote,
                             onClick = {
                                 state.stateHolder.accept(
                                     PostInteractionsAction.Navigate.To(

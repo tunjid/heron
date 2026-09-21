@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -40,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.inference.ui.ModelCard
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.CloudOff
 import com.tunjid.heron.ui.scaffold.notifications.hasNotificationPermissions
 import com.tunjid.heron.ui.scaffold.notifications.notificationPermissionsLauncher
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
@@ -219,7 +219,7 @@ private fun LoadDefaultModelToggle(
             ) {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Rounded.CloudOff,
+                    imageVector = HeronIcons.Regular.CloudOff,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

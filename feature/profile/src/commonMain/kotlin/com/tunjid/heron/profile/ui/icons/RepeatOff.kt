@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 /**
- * The [androidx.compose.material.icons.rounded.Repeat] glyph struck through with a
+ * The [com.tunjid.heron.ui.icons.regular.Repeat] glyph struck through with a
  * diagonal slash, used to signal that an account's reposts are muted. The glyph and
  * the slash share a fill so [androidx.compose.material3.Icon] can tint them together,
  * while a slightly wider transparent channel keeps the slash visually separated from

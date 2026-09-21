@@ -14,21 +14,22 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons.brand
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.HeronIcons
 
-internal val Bluesky: ImageVector
+val HeronIcons.Brand.Bluesky: ImageVector
     get() {
         if (_Bluesky != null) {
             return _Bluesky!!
         }
         _Bluesky = ImageVector.Builder(
-            name = "Bluesky",
+            name = "Brand.Bluesky",
             defaultWidth = 64.dp,
             defaultHeight = 57.dp,
             viewportWidth = 64f,

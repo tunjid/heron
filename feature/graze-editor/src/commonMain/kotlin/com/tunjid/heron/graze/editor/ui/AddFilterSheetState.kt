@@ -27,40 +27,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.CallSplit
-import androidx.compose.material.icons.automirrored.rounded.CompareArrows
-import androidx.compose.material.icons.automirrored.rounded.ManageSearch
-import androidx.compose.material.icons.automirrored.rounded.Rule
-import androidx.compose.material.icons.rounded.AccountTree
-import androidx.compose.material.icons.rounded.Analytics
-import androidx.compose.material.icons.rounded.AttachMoney
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Backpack
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Code
-import androidx.compose.material.icons.rounded.Diversity3
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.Face
-import androidx.compose.material.icons.rounded.Gavel
-import androidx.compose.material.icons.rounded.Group
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.Mood
-import androidx.compose.material.icons.rounded.PermMedia
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Tag
-import androidx.compose.material.icons.rounded.TextFields
-import androidx.compose.material.icons.rounded.Topic
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -80,6 +46,40 @@ import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.CallSplit
+import com.tunjid.heron.ui.icons.automirrored.CompareArrows
+import com.tunjid.heron.ui.icons.automirrored.ManageSearch
+import com.tunjid.heron.ui.icons.automirrored.Rule
+import com.tunjid.heron.ui.icons.regular.AccountTree
+import com.tunjid.heron.ui.icons.regular.Analytics
+import com.tunjid.heron.ui.icons.regular.AttachMoney
+import com.tunjid.heron.ui.icons.regular.AutoAwesome
+import com.tunjid.heron.ui.icons.regular.Backpack
+import com.tunjid.heron.ui.icons.regular.Block
+import com.tunjid.heron.ui.icons.regular.Code
+import com.tunjid.heron.ui.icons.regular.Diversity3
+import com.tunjid.heron.ui.icons.regular.ExpandLess
+import com.tunjid.heron.ui.icons.regular.ExpandMore
+import com.tunjid.heron.ui.icons.regular.Face
+import com.tunjid.heron.ui.icons.regular.Gavel
+import com.tunjid.heron.ui.icons.regular.Group
+import com.tunjid.heron.ui.icons.regular.Groups
+import com.tunjid.heron.ui.icons.regular.Image
+import com.tunjid.heron.ui.icons.regular.Language
+import com.tunjid.heron.ui.icons.regular.Mood
+import com.tunjid.heron.ui.icons.regular.PermMedia
+import com.tunjid.heron.ui.icons.regular.Person
+import com.tunjid.heron.ui.icons.regular.Psychology
+import com.tunjid.heron.ui.icons.regular.Search
+import com.tunjid.heron.ui.icons.regular.SelectAll
+import com.tunjid.heron.ui.icons.regular.Share
+import com.tunjid.heron.ui.icons.regular.Tag
+import com.tunjid.heron.ui.icons.regular.TextFields
+import com.tunjid.heron.ui.icons.regular.Topic
+import com.tunjid.heron.ui.icons.regular.Tune
+import com.tunjid.heron.ui.icons.regular.VisibilityOff
+import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -320,8 +320,8 @@ private fun FilterGroupItem(
             trailingContent = {
                 Icon(
                     imageVector =
-                    if (isExpanded) Icons.Rounded.ExpandLess
-                    else Icons.Rounded.ExpandMore,
+                    if (isExpanded) HeronIcons.Regular.ExpandLess
+                    else HeronIcons.Regular.ExpandMore,
                     contentDescription = null,
                 )
             },
@@ -375,7 +375,7 @@ private class FilterOption(
 private val SimpleFilterOptions: List<FilterOption> = listOf(
     FilterOption(
         titleRes = Res.string.images_only,
-        icon = Icons.Rounded.Image,
+        icon = HeronIcons.Regular.Image,
         factory = {
             Filter.Attribute.Embed(
                 embedType = Filter.Attribute.Embed.Kind.Image,
@@ -385,7 +385,7 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.images_and_videos_only,
-        icon = Icons.Rounded.PermMedia,
+        icon = HeronIcons.Regular.PermMedia,
         factory = {
             Filter.Or(
                 filters = listOf(
@@ -403,12 +403,12 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.posts_from_profiles,
-        icon = Icons.Rounded.Person,
+        icon = HeronIcons.Regular.Person,
         factory = Filter.Social.UserList::empty,
     ),
     FilterOption(
         titleRes = Res.string.posts_with_hashtags,
-        icon = Icons.Rounded.Tag,
+        icon = HeronIcons.Regular.Tag,
         factory = Filter.Entity.Matches::empty,
     ),
 )
@@ -416,112 +416,112 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
 private val AllFilterGroups: List<FilterGroup> = listOf(
     FilterGroup(
         nameRes = Res.string.filter_group_logic,
-        icon = Icons.Rounded.AccountTree,
+        icon = HeronIcons.Regular.AccountTree,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.all_of_these_and,
-                icon = Icons.Rounded.SelectAll,
+                icon = HeronIcons.Regular.SelectAll,
                 factory = Filter.And::empty,
             ),
             FilterOption(
                 titleRes = Res.string.any_of_these_or,
-                icon = Icons.AutoMirrored.Rounded.CallSplit,
+                icon = HeronIcons.AutoMirrored.CallSplit,
                 factory = Filter.Or::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_entity,
-        icon = Icons.AutoMirrored.Rounded.ManageSearch,
+        icon = HeronIcons.AutoMirrored.ManageSearch,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
-                icon = Icons.Rounded.Search,
+                icon = HeronIcons.Regular.Search,
                 factory = Filter.Entity.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
-                icon = Icons.Rounded.Block,
+                icon = HeronIcons.Regular.Block,
                 factory = Filter.Entity.Excludes::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_attribute,
-        icon = Icons.Rounded.Tune,
+        icon = HeronIcons.Regular.Tune,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.attribute_compare,
-                icon = Icons.AutoMirrored.Rounded.CompareArrows,
+                icon = HeronIcons.AutoMirrored.CompareArrows,
                 factory = Filter.Attribute.Compare::empty,
             ),
             FilterOption(
                 titleRes = Res.string.embed_type,
-                icon = Icons.Rounded.PermMedia,
+                icon = HeronIcons.Regular.PermMedia,
                 factory = Filter.Attribute.Embed::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_regex,
-        icon = Icons.Rounded.Code,
+        icon = HeronIcons.Regular.Code,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.regex_matches,
-                icon = Icons.AutoMirrored.Rounded.Rule,
+                icon = HeronIcons.AutoMirrored.Rule,
                 factory = Filter.Regex.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_negation,
-                icon = Icons.Rounded.Block,
+                icon = HeronIcons.Regular.Block,
                 factory = Filter.Regex.Negation::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_any,
-                icon = Icons.AutoMirrored.Rounded.Rule,
+                icon = HeronIcons.AutoMirrored.Rule,
                 factory = Filter.Regex.Any::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_none,
-                icon = Icons.Rounded.Block,
+                icon = HeronIcons.Regular.Block,
                 factory = Filter.Regex.None::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
-        icon = Icons.Rounded.Diversity3,
+        icon = HeronIcons.Regular.Diversity3,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
-                icon = Icons.Rounded.Share,
+                icon = HeronIcons.Regular.Share,
                 factory = Filter.Social.Graph::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_user_list,
-                icon = Icons.Rounded.Group,
+                icon = HeronIcons.Regular.Group,
                 factory = Filter.Social.UserList::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_starter_pack,
-                icon = Icons.Rounded.Backpack,
+                icon = HeronIcons.Regular.Backpack,
                 factory = Filter.Social.StarterPack::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_list_member,
-                icon = Icons.Rounded.Groups,
+                icon = HeronIcons.Regular.Groups,
                 factory = Filter.Social.ListMember::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_magic_audience,
-                icon = Icons.Rounded.AutoAwesome,
+                icon = HeronIcons.Regular.AutoAwesome,
                 factory = Filter.Social.MagicAudience::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_ml,
-        icon = Icons.Rounded.Psychology,
+        icon = HeronIcons.Regular.Psychology,
         options = listOf(
             // Unsupported for now
 //            FilterOption(
@@ -534,58 +534,58 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.content_moderation,
-                icon = Icons.Rounded.Gavel,
+                icon = HeronIcons.Regular.Gavel,
                 factory = Filter.ML.Moderation::empty,
             ),
         ),
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_analysis,
-        icon = Icons.Rounded.Analytics,
+        icon = HeronIcons.Regular.Analytics,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.language_analysis,
-                icon = Icons.Rounded.Language,
+                icon = HeronIcons.Regular.Language,
                 factory = Filter.Analysis.Language::empty,
             ),
             FilterOption(
                 titleRes = Res.string.sentiment_analysis,
-                icon = Icons.Rounded.Mood,
+                icon = HeronIcons.Regular.Mood,
                 factory = Filter.Analysis.Sentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.financial_sentiment,
-                icon = Icons.Rounded.AttachMoney,
+                icon = HeronIcons.Regular.AttachMoney,
                 factory = Filter.Analysis.FinancialSentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.emotion_analysis,
-                icon = Icons.Rounded.Face,
+                icon = HeronIcons.Regular.Face,
                 factory = Filter.Analysis.Emotion::empty,
             ),
             FilterOption(
                 titleRes = Res.string.toxicity_analysis,
-                icon = Icons.Rounded.Warning,
+                icon = HeronIcons.Regular.Warning,
                 factory = Filter.Analysis.Toxicity::empty,
             ),
             FilterOption(
                 titleRes = Res.string.topic_analysis,
-                icon = Icons.Rounded.Topic,
+                icon = HeronIcons.Regular.Topic,
                 factory = Filter.Analysis.Topic::empty,
             ),
             FilterOption(
                 titleRes = Res.string.text_arbitrary,
-                icon = Icons.Rounded.TextFields,
+                icon = HeronIcons.Regular.TextFields,
                 factory = Filter.Analysis.TextArbitrary::empty,
             ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
-                icon = Icons.Rounded.VisibilityOff,
+                icon = HeronIcons.Regular.VisibilityOff,
                 factory = Filter.Analysis.ImageNsfw::empty,
             ),
             FilterOption(
                 titleRes = Res.string.image_arbitrary,
-                icon = Icons.Rounded.Image,
+                icon = HeronIcons.Regular.Image,
                 factory = Filter.Analysis.ImageArbitrary::empty,
             ),
         ),

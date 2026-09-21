@@ -37,14 +37,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.BookmarkBorder
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
@@ -83,6 +75,14 @@ import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.heron.ui.UiTokens.RepostGreen
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.ArrowCircleUp
+import com.tunjid.heron.ui.icons.regular.Bookmark
+import com.tunjid.heron.ui.icons.regular.BookmarkBorder
+import com.tunjid.heron.ui.icons.regular.ChatBubbleOutline
+import com.tunjid.heron.ui.icons.regular.Favorite
+import com.tunjid.heron.ui.icons.regular.FavoriteBorder
+import com.tunjid.heron.ui.icons.regular.Repeat
 import com.tunjid.heron.ui.rememberLatchedState
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
@@ -533,11 +533,11 @@ private sealed class PostInteractionButton {
         fun PostInteractionButton.icon(
             isChecked: Boolean,
         ) = when (this) {
-            Comment -> Icons.Rounded.ChatBubbleOutline
-            Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
-            Repost -> Icons.Rounded.Repeat
-            Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            MoreOptions -> Icons.Rounded.ArrowCircleUp
+            Comment -> HeronIcons.Regular.ChatBubbleOutline
+            Like -> if (isChecked) HeronIcons.Regular.Favorite else HeronIcons.Regular.FavoriteBorder
+            Repost -> HeronIcons.Regular.Repeat
+            Bookmark -> if (isChecked) HeronIcons.Regular.Bookmark else HeronIcons.Regular.BookmarkBorder
+            MoreOptions -> HeronIcons.Regular.ArrowCircleUp
         }
 
         val PostInteractionButton.stringResource

@@ -20,8 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -45,6 +43,8 @@ import com.tunjid.heron.feed.ui.PaneActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Straight
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -300,7 +300,7 @@ internal fun Route(
         floatingActionButton = {
             PaneFab(
                 text = stringResource(Res.string.scroll_to_top),
-                icon = Icons.Rounded.Straight,
+                icon = HeronIcons.Regular.Straight,
                 expanded = isFabExpanded {
                     topAppBarNestedScrollConnection.offset * -1f
                 },

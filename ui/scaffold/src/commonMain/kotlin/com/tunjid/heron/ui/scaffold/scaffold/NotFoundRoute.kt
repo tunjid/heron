@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.timeline.ui.EmptyContent
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.SearchOff
 import heron.ui.scaffold.generated.resources.Res
 import heron.ui.scaffold.generated.resources.go_back
 import heron.ui.scaffold.generated.resources.go_home
@@ -56,7 +56,7 @@ internal fun NotFoundRoute(
                 .fillMaxWidth(),
             titleRes = Res.string.not_found_title,
             descriptionRes = Res.string.not_found_description,
-            icon = Icons.Rounded.SearchOff,
+            icon = HeronIcons.Regular.SearchOff,
         )
         Row(
             modifier = Modifier

@@ -18,8 +18,6 @@ package com.tunjid.heron.notifications.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -31,6 +29,8 @@ import com.tunjid.heron.notifications.NotificationsStateHolder
 import com.tunjid.heron.notifications.NotificationsViewModelInitializer
 import com.tunjid.heron.notifications.ui.PaneActions
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Edit
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -196,7 +196,7 @@ internal fun Route(
                         fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
                 text = stringResource(CommonStrings.notifications_create_post),
-                icon = Icons.Rounded.Edit,
+                icon = HeronIcons.Regular.Edit,
                 expanded = isFabExpanded {
                     if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                     else topAppBarNestedScrollConnection.offset * -1f

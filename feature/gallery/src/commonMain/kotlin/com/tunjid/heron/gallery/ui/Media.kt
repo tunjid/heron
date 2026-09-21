@@ -30,10 +30,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,6 +72,10 @@ import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.ScrimmedContent
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.automirrored.VolumeUp
+import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -200,7 +200,7 @@ internal fun MediaActions(
                     shape = CircleShape,
                     onClick = onCloseClicked,
                 ),
-            imageVector = Icons.Rounded.Close,
+            imageVector = HeronIcons.Regular.Close,
             tint = MaterialTheme.colorScheme.outline,
             contentDescription = stringResource(CommonStrings.close),
         )
@@ -464,8 +464,8 @@ private fun VideoPlayerController.MuteButton(
 ) {
     Icon(
         imageVector =
-        if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-        else Icons.AutoMirrored.Rounded.VolumeUp,
+        if (isMuted) HeronIcons.AutoMirrored.VolumeOff
+        else HeronIcons.AutoMirrored.VolumeUp,
         contentDescription = stringResource(
             if (isMuted) Res.string.mute_video
             else Res.string.unmute_video,

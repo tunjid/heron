@@ -53,11 +53,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -109,6 +104,11 @@ import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.ArrowDropDown
+import com.tunjid.heron.ui.icons.regular.Bookmark
+import com.tunjid.heron.ui.icons.regular.Remove
+import com.tunjid.heron.ui.icons.regular.Settings
 import com.tunjid.heron.ui.modifiers.chipBackground
 import com.tunjid.heron.ui.modifiers.roundedBorder
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -276,14 +276,14 @@ internal fun HomeTabs(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
                     colors = TabButtonColors,
-                    icon = Icons.Rounded.Settings,
+                    icon = HeronIcons.Regular.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 AppBarIconButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
                     colors = TabButtonColors,
-                    icon = Icons.Rounded.Bookmark,
+                    icon = HeronIcons.Regular.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
             }
@@ -297,7 +297,7 @@ internal fun HomeTabs(
                         rotationZ = expandableTabsState.expansionProgress * 180f
                     },
                 colors = TabButtonColors,
-                icon = Icons.Rounded.ArrowDropDown,
+                icon = HeronIcons.Regular.ArrowDropDown,
                 iconDescription = stringResource(
                     if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
                     else Res.string.expand_timeline_settings,
@@ -610,7 +610,7 @@ private fun TabsState.ExpandedTab(
                         .clickable {
                             editableTimelineState.remove(timeline)
                         },
-                    imageVector = Icons.Rounded.Remove,
+                    imageVector = HeronIcons.Regular.Remove,
                     contentDescription = "",
                 )
             },

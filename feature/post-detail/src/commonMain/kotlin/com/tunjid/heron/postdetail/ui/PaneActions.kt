@@ -16,9 +16,6 @@
 
 package com.tunjid.heron.postdetail.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
-import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.State
@@ -26,6 +23,9 @@ import com.tunjid.heron.postdetail.canTranslate
 import com.tunjid.heron.postdetail.hasQuotePost
 import com.tunjid.heron.sheets.rememberInferenceSheetState
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.ReceiptLong
+import com.tunjid.heron.ui.icons.regular.Translate
 import com.tunjid.heron.ui.scaffold.navigation.quoteThreadDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.post_detail.generated.resources.Res
@@ -40,7 +40,7 @@ internal fun PaneScaffoldState.PaneActions(
 ) {
     val inferenceSheetState = rememberInferenceSheetState()
     if (state.canTranslate) AppBarIconButton(
-        icon = Icons.Rounded.Translate,
+        icon = HeronIcons.Regular.Translate,
         iconDescription = stringResource(Res.string.translate_post_text),
         onClick = click@{
             val post = state.anchorPost ?: return@click
@@ -54,7 +54,7 @@ internal fun PaneScaffoldState.PaneActions(
         },
     )
     if (state.hasQuotePost) AppBarIconButton(
-        icon = Icons.AutoMirrored.Rounded.ReceiptLong,
+        icon = HeronIcons.AutoMirrored.ReceiptLong,
         iconDescription = stringResource(Res.string.unroll_post_quotes),
         onClick = click@{
             state.anchorPost?.let { post ->

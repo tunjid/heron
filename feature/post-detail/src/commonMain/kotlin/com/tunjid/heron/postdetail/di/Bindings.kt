@@ -18,9 +18,6 @@ package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -34,6 +31,9 @@ import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.PostDetailStateHolder
 import com.tunjid.heron.postdetail.PostDetailViewModelInitializer
 import com.tunjid.heron.postdetail.ui.PaneActions
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.Login
+import com.tunjid.heron.ui.icons.automirrored.Reply
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -244,8 +244,8 @@ internal fun Route(
                     },
                 ),
                 icon = when {
-                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                    else -> Icons.AutoMirrored.Rounded.Reply
+                    isSignedOut -> HeronIcons.AutoMirrored.Login
+                    else -> HeronIcons.AutoMirrored.Reply
                 },
                 expanded = isFabExpanded {
                     if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset

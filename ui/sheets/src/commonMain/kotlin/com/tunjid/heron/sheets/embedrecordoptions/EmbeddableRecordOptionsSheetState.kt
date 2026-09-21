@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -40,6 +38,8 @@ import com.tunjid.heron.sheets.utilities.CopyToClipboardCard
 import com.tunjid.heron.sheets.utilities.SendDirectMessageCard
 import com.tunjid.heron.sheets.utilities.ShareInPostCard
 import com.tunjid.heron.timeline.utilities.shareUri
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Edit
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -135,7 +135,7 @@ private fun EmbeddableRecordOptionsBottomSheet(
                         modifier = Modifier.semantics {
                             contentDescription = editTitle
                         },
-                        icon = Icons.Rounded.Edit,
+                        icon = HeronIcons.Regular.Edit,
                         text = editTitle,
                     )
                 }

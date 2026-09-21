@@ -25,11 +25,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -56,6 +51,11 @@ import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Check
+import com.tunjid.heron.ui.icons.regular.MoreVert
+import com.tunjid.heron.ui.icons.regular.SwapHoriz
+import com.tunjid.heron.ui.icons.regular.Timer
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
@@ -224,9 +224,9 @@ internal fun Route(
                     stringResource(state.selectedServer.stringResource),
                 ),
                 icon = when {
-                    state.canSignInLater -> Icons.Rounded.Timer
-                    state.canSwitchAccount -> Icons.Rounded.SwapHoriz
-                    else -> Icons.Rounded.Check
+                    state.canSignInLater -> HeronIcons.Regular.Timer
+                    state.canSwitchAccount -> HeronIcons.Regular.SwapHoriz
+                    else -> HeronIcons.Regular.Check
                 },
                 enabled = state.submitButtonEnabled,
                 expanded = true,
@@ -283,7 +283,7 @@ private fun PaneScaffoldState.TopBar(
                     },
                     content = {
                         Icon(
-                            imageVector = Icons.Rounded.MoreVert,
+                            imageVector = HeronIcons.Regular.MoreVert,
                             contentDescription = stringResource(CommonStrings.more_options),
                         )
                     },

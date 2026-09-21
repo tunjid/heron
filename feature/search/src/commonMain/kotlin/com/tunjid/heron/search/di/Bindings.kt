@@ -19,8 +19,6 @@ package com.tunjid.heron.search.di
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,6 +51,8 @@ import com.tunjid.heron.search.profileHandle
 import com.tunjid.heron.search.ui.PaneActions
 import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
 import com.tunjid.heron.ui.SearchBar
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.SwapHoriz
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -349,7 +349,7 @@ internal fun Route(
                             fabOffset(bottomNavigationNestedScrollConnection.offset)
                         },
                     text = stringResource(Res.string.adapt_to_feed),
-                    icon = Icons.Rounded.SwapHoriz,
+                    icon = HeronIcons.Regular.SwapHoriz,
                     expanded = isFabExpanded {
                         if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                         else topAppBarNestedScrollConnection.offset * -1f

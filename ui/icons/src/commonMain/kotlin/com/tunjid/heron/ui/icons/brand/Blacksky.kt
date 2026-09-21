@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons.brand
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -23,14 +23,15 @@ import androidx.compose.ui.graphics.vector.PathData
 import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.HeronIcons
 
-internal val Blacksky: ImageVector
+val HeronIcons.Brand.Blacksky: ImageVector
     get() {
         if (_Blacksky != null) {
             return _Blacksky!!
         }
         _Blacksky = ImageVector.Builder(
-            name = "Blacksky",
+            name = "Brand.Blacksky",
             defaultWidth = 285.dp,
             defaultHeight = 243.dp,
             viewportWidth = 285f,

@@ -19,8 +19,6 @@ package com.tunjid.heron.notifications.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +35,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.LikeRed
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Favorite
 import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_liked_your_post
@@ -75,7 +75,7 @@ fun LikeRow(
         onLinkTargetClicked = onLinkTargetClicked,
         icon = {
             Icon(
-                painter = rememberVectorPainter(Icons.Rounded.Favorite),
+                painter = rememberVectorPainter(HeronIcons.Regular.Favorite),
                 tint = LikeRed,
                 contentDescription = stringResource(
                     when (notification) {

@@ -21,8 +21,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -51,6 +49,8 @@ import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -353,7 +353,7 @@ internal fun Route(
                 val addListMember = stringResource(Res.string.add_list_member)
                 PaneFab(
                     text = addListMember,
-                    icon = Icons.Rounded.Add,
+                    icon = HeronIcons.Regular.Add,
                     expanded = isFabExpanded {
                         fabExpansionNestedScrollConnection.offset
                     },

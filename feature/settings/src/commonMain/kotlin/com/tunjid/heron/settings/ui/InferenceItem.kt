@@ -2,10 +2,10 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.AutoAwesome
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.inference
 import org.jetbrains.compose.resources.stringResource
@@ -23,6 +23,6 @@ fun InferenceItem(
             }
             .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.inference),
-        icon = Icons.Rounded.AutoAwesome,
+        icon = HeronIcons.Regular.AutoAwesome,
     )
 }
