@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.list.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.GroupAdd
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
@@ -32,6 +30,8 @@ import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.GroupAdd
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -88,7 +88,7 @@ internal fun PaneScaffoldState.PaneActions(
     }
     if (timeline is Timeline.StarterPack) {
         AppBarIconButton(
-            icon = Icons.Rounded.GroupAdd,
+            icon = HeronIcons.Regular.GroupAdd,
             iconDescription = stringResource(Res.string.follow_starter_pack),
             onClick = click@{
                 actions(

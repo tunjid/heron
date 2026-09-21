@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -64,6 +62,8 @@ import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.HideImage
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.no_media
 import kotlin.time.Instant
@@ -161,7 +161,7 @@ fun PostEmbed(
                         Icon(
                             modifier = Modifier
                                 .align(Alignment.Center),
-                            imageVector = Icons.Rounded.HideImage,
+                            imageVector = HeronIcons.Regular.HideImage,
                             contentDescription = stringResource(Res.string.no_media),
                         )
                     }

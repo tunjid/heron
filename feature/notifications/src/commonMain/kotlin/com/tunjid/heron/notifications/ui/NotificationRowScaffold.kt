@@ -33,8 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,6 +61,8 @@ import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.KeyboardArrowDown
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import org.jetbrains.compose.resources.StringResource
@@ -204,7 +204,7 @@ private fun PaneTransitionScope.ExpandButton(
         },
         content = {
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
+                imageVector = HeronIcons.Regular.KeyboardArrowDown,
                 contentDescription = null,
             )
         },

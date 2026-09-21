@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons.brand
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
@@ -22,14 +22,15 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.HeronIcons
 
-internal val Leaflet: ImageVector
+val HeronIcons.Brand.Leaflet: ImageVector
     get() {
         if (_Leaflet != null) {
             return _Leaflet!!
         }
         _Leaflet = ImageVector.Builder(
-            name = "Leaflet",
+            name = "Brand.Leaflet",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 24f,

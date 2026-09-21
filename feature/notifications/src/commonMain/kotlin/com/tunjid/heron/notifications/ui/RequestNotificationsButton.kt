@@ -19,14 +19,14 @@ package com.tunjid.heron.notifications.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.NotificationsOff
 import com.tunjid.heron.ui.scaffold.notifications.notificationPermissionsLauncher
 import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.notification_permissions_request
@@ -55,7 +55,7 @@ internal fun RequestNotificationsButton(
             .graphicsLayer {
                 rotationZ = calculateDampedBellRotation(ringProgressAnimatable.value)
             },
-        icon = Icons.Rounded.NotificationsOff,
+        icon = HeronIcons.Regular.NotificationsOff,
         iconDescription = stringResource(Res.string.notification_permissions_request),
         onClick = notificationPermissionsLauncher(),
     )

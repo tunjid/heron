@@ -32,8 +32,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -81,6 +79,8 @@ import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.detectActiveLink
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
@@ -278,7 +278,7 @@ private fun Post(
                         },
                         content = {
                             Icon(
-                                imageVector = Icons.Rounded.Close,
+                                imageVector = HeronIcons.Regular.Close,
                                 contentDescription = stringResource(Res.string.remove_link_preview),
                             )
                         },
@@ -328,7 +328,7 @@ private fun Post(
                 },
                 content = {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        imageVector = HeronIcons.Regular.Close,
                         contentDescription = contentDescription,
                     )
                 },

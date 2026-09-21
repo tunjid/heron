@@ -22,10 +22,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -40,6 +36,10 @@ import com.tunjid.heron.home.HomeViewModelInitializer
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.home.ui.TrendsTicker
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.Login
+import com.tunjid.heron.ui.icons.regular.Edit
+import com.tunjid.heron.ui.icons.regular.Save
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -245,9 +245,9 @@ internal fun Route(
                     },
                 ),
                 icon = when {
-                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                    state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
-                    else -> Icons.Rounded.Edit
+                    isSignedOut -> HeronIcons.AutoMirrored.Login
+                    state.tabLayout is TabLayout.Expanded -> HeronIcons.Regular.Save
+                    else -> HeronIcons.Regular.Edit
                 },
                 expanded = isFabExpanded {
                     if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset

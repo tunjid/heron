@@ -26,9 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Drafts
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -48,6 +45,9 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Delete
+import com.tunjid.heron.ui.icons.regular.Drafts
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainSheetStateHolder
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -123,7 +123,7 @@ private fun DraftsBottomSheet(
             modifier = Modifier.navigationBarsPadding(),
             titleRes = Res.string.drafts_empty_title,
             descriptionRes = Res.string.drafts_empty_description,
-            icon = Icons.Rounded.Drafts,
+            icon = HeronIcons.Regular.Drafts,
         )
         else LazyColumn(
             modifier = Modifier.navigationBarsPadding(),
@@ -216,7 +216,7 @@ private fun DraftItem(
                 onClick = onDelete,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Delete,
+                    imageVector = HeronIcons.Regular.Delete,
                     contentDescription = stringResource(Res.string.draft_delete),
                 )
             }

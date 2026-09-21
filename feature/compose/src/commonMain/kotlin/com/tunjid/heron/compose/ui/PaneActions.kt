@@ -20,8 +20,6 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Drafts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -32,6 +30,8 @@ import com.tunjid.heron.compose.canDraft
 import com.tunjid.heron.compose.drafts.rememberDraftsSheetState
 import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Drafts
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.compose.generated.resources.Res
@@ -52,7 +52,7 @@ internal fun PaneScaffoldState.PaneActions(
                 lookaheadScope = this@PaneActions,
                 boundsTransform = childBoundsTransform,
             ),
-        icon = Icons.Rounded.Drafts,
+        icon = HeronIcons.Regular.Drafts,
         iconDescription = stringResource(Res.string.drafts),
         onClick = draftsSheetState::showDrafts,
     )

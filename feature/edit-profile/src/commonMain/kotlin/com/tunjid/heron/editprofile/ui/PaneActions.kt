@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.editprofile.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -26,6 +24,8 @@ import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Edit
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
 import org.jetbrains.compose.resources.stringResource
@@ -44,7 +44,7 @@ internal fun PaneActions(
             ?.let { actions(Action.BannerPicked(it)) }
     }
     AppBarIconButton(
-        icon = Icons.Rounded.Edit,
+        icon = HeronIcons.Regular.Edit,
         iconDescription = stringResource(Res.string.edit_banner_icon),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceBright,

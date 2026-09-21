@@ -33,16 +33,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.ModeStandby
-import androidx.compose.material.icons.rounded.Storage
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalIconButton
@@ -73,6 +63,16 @@ import com.tunjid.heron.ui.SimpleDialogState
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Check
+import com.tunjid.heron.ui.icons.regular.Close
+import com.tunjid.heron.ui.icons.regular.Delete
+import com.tunjid.heron.ui.icons.regular.Download
+import com.tunjid.heron.ui.icons.regular.Info
+import com.tunjid.heron.ui.icons.regular.Memory
+import com.tunjid.heron.ui.icons.regular.ModeStandby
+import com.tunjid.heron.ui.icons.regular.Storage
+import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import heron.feature.inference.generated.resources.Res
 import heron.feature.inference.generated.resources.ability_summary
@@ -145,11 +145,11 @@ internal fun ModelCard(
             ) {
                 if (external != null) {
                     MetadataChip(
-                        icon = Icons.Rounded.Storage,
+                        icon = HeronIcons.Regular.Storage,
                         text = formatModelSize(external.sizeInBytes),
                     )
                     MetadataChip(
-                        icon = Icons.Rounded.Memory,
+                        icon = HeronIcons.Regular.Memory,
                         text = stringResource(
                             Res.string.minimum_memory,
                             external.minDeviceMemoryInGb,
@@ -304,7 +304,7 @@ private fun ModelActions(
             is ModelStatus.Available -> {
                 // A downloaded file can be deleted; the platform system model cannot.
                 if (status.loadedModel is LoadedModel.FileBacked) ModelActionButton(
-                    icon = Icons.Rounded.Delete,
+                    icon = HeronIcons.Regular.Delete,
                     contentDescription = stringResource(Res.string.delete),
                     tint = MaterialTheme.colorScheme.error,
                     ring = Ring.None,
@@ -318,7 +318,7 @@ private fun ModelActions(
             }
             is ModelStatus.Pending -> when (val taskStatus = status.taskStatus) {
                 TaskStatus.NotFound -> ModelActionButton(
-                    icon = Icons.Rounded.Download,
+                    icon = HeronIcons.Regular.Download,
                     contentDescription = stringResource(Res.string.download),
                     tint = MaterialTheme.colorScheme.primary,
                     ring = Ring.None,
@@ -326,14 +326,14 @@ private fun ModelActions(
                     onClick = onDownload,
                 )
                 TaskStatus.Created -> ModelActionButton(
-                    icon = Icons.Rounded.Close,
+                    icon = HeronIcons.Regular.Close,
                     contentDescription = stringResource(Res.string.cancel),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     ring = Ring.Indeterminate,
                     onClick = onCancel,
                 )
                 is TaskStatus.Running -> ModelActionButton(
-                    icon = Icons.Rounded.Close,
+                    icon = HeronIcons.Regular.Close,
                     contentDescription = stringResource(Res.string.cancel),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     ring = when (val fraction = taskStatus.progress?.fraction) {
@@ -343,7 +343,7 @@ private fun ModelActions(
                     onClick = onCancel,
                 )
                 is TaskStatus.Failed -> ModelActionButton(
-                    icon = Icons.Rounded.Download,
+                    icon = HeronIcons.Regular.Download,
                     contentDescription = stringResource(Res.string.retry),
                     tint = MaterialTheme.colorScheme.error,
                     ring = Ring.None,
@@ -372,8 +372,8 @@ private fun LoadButton(
     }
     ModelActionButton(
         icon = when {
-            matches && engineState is EngineState.Ready -> Icons.Rounded.Check
-            else -> Icons.Rounded.ModeStandby
+            matches && engineState is EngineState.Ready -> HeronIcons.Regular.Check
+            else -> HeronIcons.Regular.ModeStandby
         },
         contentDescription = stringResource(descriptionRes),
         tint = when {
@@ -503,7 +503,7 @@ private fun MemoryWarning(
     ) {
         Icon(
             modifier = Modifier.size(16.dp),
-            imageVector = Icons.Rounded.Warning,
+            imageVector = HeronIcons.Regular.Warning,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error,
         )
@@ -531,7 +531,7 @@ private fun UnavailableStatus(
     ) {
         Icon(
             modifier = Modifier.size(16.dp),
-            imageVector = Icons.Rounded.Info,
+            imageVector = HeronIcons.Regular.Info,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )

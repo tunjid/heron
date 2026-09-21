@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.timeline.ui.icons
+package com.tunjid.heron.ui.icons.brand
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
@@ -22,14 +22,15 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.HeronIcons
 
-internal val Pckt: ImageVector
+val HeronIcons.Brand.Pckt: ImageVector
     get() {
         if (_Pckt != null) {
             return _Pckt!!
         }
         _Pckt = ImageVector.Builder(
-            name = "Pckt",
+            name = "Brand.Pckt",
             defaultWidth = 93.dp,
             defaultHeight = 107.dp,
             viewportWidth = 93f,

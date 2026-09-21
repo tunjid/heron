@@ -51,6 +51,10 @@ valkyrie {
             sourceFolder = "automirrored"
             autoMirror = true
         }
+        nested {
+            name = "Brand"
+            sourceFolder = "brand"
+        }
     }
 }
 

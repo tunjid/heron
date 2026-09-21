@@ -16,12 +16,12 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.State
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Settings
 import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.ui.scaffold.notifications.hasNotificationPermissions
 import com.tunjid.heron.ui.text.CommonStrings
@@ -41,7 +41,7 @@ internal fun PaneActions(
         )
     }
     AppBarIconButton(
-        icon = Icons.Rounded.Settings,
+        icon = HeronIcons.Regular.Settings,
         iconDescription = stringResource(CommonStrings.notification_settings),
         onClick = {
             actions(

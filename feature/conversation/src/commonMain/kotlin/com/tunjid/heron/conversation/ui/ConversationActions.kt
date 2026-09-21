@@ -17,8 +17,6 @@
 package com.tunjid.heron.conversation.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -30,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.MoreVert
 import heron.feature.conversation.generated.resources.Res
 import heron.feature.conversation.generated.resources.conversation_accept
 import heron.feature.conversation.generated.resources.conversation_leave
@@ -56,7 +56,7 @@ internal fun ConversationOverflowMenu(
     ) {
         var expanded by remember { mutableStateOf(false) }
         AppBarIconButton(
-            icon = Icons.Rounded.MoreVert,
+            icon = HeronIcons.Regular.MoreVert,
             iconDescription = stringResource(Res.string.conversation_options),
             onClick = { expanded = true },
         )

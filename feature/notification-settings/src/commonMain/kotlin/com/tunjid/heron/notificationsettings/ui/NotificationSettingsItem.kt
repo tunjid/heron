@@ -1,19 +1,19 @@
 package com.tunjid.heron.notificationsettings.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.ChatBubble
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.Interests
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.PersonAdd
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.AlternateEmail
+import com.tunjid.heron.ui.icons.regular.ChatBubble
+import com.tunjid.heron.ui.icons.regular.Favorite
+import com.tunjid.heron.ui.icons.regular.FormatQuote
+import com.tunjid.heron.ui.icons.regular.Interests
+import com.tunjid.heron.ui.icons.regular.NotificationsActive
+import com.tunjid.heron.ui.icons.regular.PersonAdd
+import com.tunjid.heron.ui.icons.regular.Repeat
+import com.tunjid.heron.ui.icons.regular.RepeatOne
 import heron.feature.notification_settings.generated.resources.Res
 import heron.feature.notification_settings.generated.resources.notif_activity_from_others_desc
 import heron.feature.notification_settings.generated.resources.notif_activity_from_others_title
@@ -44,7 +44,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
         listOf(
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_likes_title,
-                icon = Icons.Rounded.Favorite,
+                icon = HeronIcons.Regular.Favorite,
                 description = Res.string.notif_likes_desc,
                 preference = pendingUpdates[Notification.Reason.Like]
                     .pendingOrDefault(prefs.like),
@@ -52,7 +52,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_new_followers_title,
-                icon = Icons.Rounded.PersonAdd,
+                icon = HeronIcons.Regular.PersonAdd,
                 description = Res.string.notif_new_followers_desc,
                 preference = pendingUpdates[Notification.Reason.Follow]
                     .pendingOrDefault(prefs.follow),
@@ -60,7 +60,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_replies_title,
-                icon = Icons.Rounded.ChatBubble,
+                icon = HeronIcons.Regular.ChatBubble,
                 description = Res.string.notif_replies_desc,
                 preference = pendingUpdates[Notification.Reason.Reply]
                     .pendingOrDefault(prefs.reply),
@@ -68,7 +68,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_mentions_title,
-                icon = Icons.Rounded.AlternateEmail,
+                icon = HeronIcons.Regular.AlternateEmail,
                 description = Res.string.notif_mentions_desc,
                 preference = pendingUpdates[Notification.Reason.Mention]
                     .pendingOrDefault(prefs.mention),
@@ -76,7 +76,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_quotes_title,
-                icon = Icons.Rounded.FormatQuote,
+                icon = HeronIcons.Regular.FormatQuote,
                 description = Res.string.notif_quotes_desc,
                 preference = pendingUpdates[Notification.Reason.Quote]
                     .pendingOrDefault(prefs.quote),
@@ -84,7 +84,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_reposts_title,
-                icon = Icons.Rounded.Repeat,
+                icon = HeronIcons.Regular.Repeat,
                 description = Res.string.notif_reposts_desc,
                 preference = pendingUpdates[Notification.Reason.Repost]
                     .pendingOrDefault(prefs.repost),
@@ -92,7 +92,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.ActivityFromOthers(
                 title = Res.string.notif_activity_from_others_title,
-                icon = Icons.Rounded.NotificationsActive,
+                icon = HeronIcons.Regular.NotificationsActive,
                 description = Res.string.notif_activity_from_others_desc,
                 preferences = mapOf(
                     Notification.Reason.Verified to pendingUpdates[Notification.Reason.Verified]
@@ -103,7 +103,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_likes_via_repost_title,
-                icon = Icons.Rounded.Repeat,
+                icon = HeronIcons.Regular.Repeat,
                 description = Res.string.notif_likes_via_repost_desc,
                 preference = pendingUpdates[Notification.Reason.LikeViaRepost]
                     .pendingOrDefault(prefs.likeViaRepost),
@@ -111,7 +111,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.Filterable(
                 title = Res.string.notif_reposts_via_repost_title,
-                icon = Icons.Rounded.RepeatOne,
+                icon = HeronIcons.Regular.RepeatOne,
                 description = Res.string.notif_reposts_via_repost_desc,
                 preference = pendingUpdates[Notification.Reason.RepostViaRepost]
                     .pendingOrDefault(prefs.repostViaRepost),
@@ -119,7 +119,7 @@ fun NotificationPreferences?.toNotificationSettingItems(
             ),
             NotificationSettingItem.EverythingElse(
                 title = Res.string.notif_everything_else_title,
-                icon = Icons.Rounded.Interests,
+                icon = HeronIcons.Regular.Interests,
                 description = Res.string.notif_everything_else_desc,
                 preferences = mapOf(
                     Notification.Reason.JoinedStarterPack to pendingUpdates[Notification.Reason.JoinedStarterPack]

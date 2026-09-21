@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowOutward
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +60,8 @@ import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.heron.ui.RecordSubtitle
 import com.tunjid.heron.ui.RecordTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.ArrowOutward
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
@@ -233,7 +233,7 @@ fun ExpandedStarterPack(
                             },
                             content = {
                                 Icon(
-                                    imageVector = Icons.Rounded.ArrowOutward,
+                                    imageVector = HeronIcons.Regular.ArrowOutward,
                                     contentDescription = stringResource(TimelineStrings.open_starter_pack),
                                 )
                             },

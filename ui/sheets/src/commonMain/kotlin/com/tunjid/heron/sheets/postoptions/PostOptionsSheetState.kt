@@ -3,16 +3,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.EditAttributes
-import androidx.compose.material.icons.rounded.FilterAlt
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.LinkOff
-import androidx.compose.material.icons.rounded.PersonOff
-import androidx.compose.material.icons.rounded.ThumbDown
-import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -39,6 +29,16 @@ import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.regular.Delete
+import com.tunjid.heron.ui.icons.regular.EditAttributes
+import com.tunjid.heron.ui.icons.regular.FilterAlt
+import com.tunjid.heron.ui.icons.regular.Link
+import com.tunjid.heron.ui.icons.regular.LinkOff
+import com.tunjid.heron.ui.icons.regular.PersonOff
+import com.tunjid.heron.ui.icons.regular.ThumbDown
+import com.tunjid.heron.ui.icons.regular.ThumbUp
 import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -229,7 +229,7 @@ private fun FeedInteractionMenuSection(
         BottomSheetItemCardRow(
             modifier = Modifier
                 .fillMaxWidth(),
-            icon = Icons.Rounded.ThumbUp,
+            icon = HeronIcons.Regular.ThumbUp,
             text = stringResource(Res.string.feed_interaction_show_more),
             onClick = {
                 state.sendFeedInteraction(
@@ -243,7 +243,7 @@ private fun FeedInteractionMenuSection(
         BottomSheetItemCardRow(
             modifier = Modifier
                 .fillMaxWidth(),
-            icon = Icons.Rounded.ThumbDown,
+            icon = HeronIcons.Regular.ThumbDown,
             text = stringResource(Res.string.feed_interaction_show_less),
             onClick = {
                 state.sendFeedInteraction(
@@ -290,7 +290,7 @@ private fun PostManagementMenuSection(
             BottomSheetItemCardRow(
                 modifier = Modifier
                     .fillMaxWidth(),
-                icon = Icons.Rounded.EditAttributes,
+                icon = HeronIcons.Regular.EditAttributes,
                 text = stringResource(Res.string.thread_gate_post_reply_settings),
                 onClick = {
                     onOptionClicked(PostOption.ThreadGate(post.uri))
@@ -328,8 +328,8 @@ private fun PostManagementMenuSection(
                     modifier = Modifier
                         .fillMaxWidth(),
                     icon =
-                    if (isLinkedPost) Icons.Rounded.LinkOff
-                    else Icons.Rounded.Link,
+                    if (isLinkedPost) HeronIcons.Regular.LinkOff
+                    else HeronIcons.Regular.Link,
                     text = stringResource(
                         if (isLinkedPost) Res.string.unlink_document_from_post
                         else Res.string.link_document_to_post,
@@ -378,7 +378,7 @@ private fun PostManagementMenuSection(
             BottomSheetItemCardRow(
                 modifier = Modifier
                     .fillMaxWidth(),
-                icon = Icons.Rounded.Delete,
+                icon = HeronIcons.Regular.Delete,
                 text = stringResource(Res.string.delete_post),
                 iconTint = MaterialTheme.colorScheme.error,
                 onClick = {
@@ -459,14 +459,14 @@ enum class PostModerationTools(
 ) {
     MuteWords(
         stringRes = Res.string.mute_words_tags,
-        icon = Icons.Rounded.FilterAlt,
+        icon = HeronIcons.Regular.FilterAlt,
     ),
     BlockAccount(
         stringRes = CommonStrings.viewer_state_block_account,
-        icon = Icons.Rounded.PersonOff,
+        icon = HeronIcons.Regular.PersonOff,
     ),
     MuteAccount(
         stringRes = CommonStrings.viewer_state_mute_account,
-        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+        icon = HeronIcons.AutoMirrored.VolumeOff,
     ),
 }

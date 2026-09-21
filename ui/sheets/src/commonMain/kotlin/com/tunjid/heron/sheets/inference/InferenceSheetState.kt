@@ -36,9 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,13 +60,16 @@ import com.tunjid.heron.data.ml.engine.EngineState
 import com.tunjid.heron.data.ml.model.LoadedModel
 import com.tunjid.heron.data.ml.model.PlatformUnavailableReason
 import com.tunjid.heron.timeline.ui.EmptyContent
-import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
 import com.tunjid.heron.ui.LoaderCurve
 import com.tunjid.heron.ui.MorphingLoader
 import com.tunjid.heron.ui.MorphingLoaderState.Companion.rememberMorphingLoaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.brand.Help
+import com.tunjid.heron.ui.icons.regular.AutoAwesome
+import com.tunjid.heron.ui.icons.regular.Download
 import com.tunjid.heron.ui.scaffold.navigation.inferenceDestination
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -205,7 +205,7 @@ internal fun InferenceBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
-                    imageVector = AtmosphereIcons.Help,
+                    imageVector = HeronIcons.Brand.Help,
                     contentDescription = null,
                 )
                 Text(
@@ -398,7 +398,7 @@ private fun InferenceOutcomeContent(
             EmptyContent(
                 titleRes = Res.string.inference_no_model_title,
                 descriptionRes = Res.string.inference_no_model_description,
-                icon = Icons.Rounded.Download,
+                icon = HeronIcons.Regular.Download,
             )
         }
 
@@ -421,7 +421,7 @@ private fun InferenceOutcomeContent(
                 PlatformUnavailableReason.ModelDownloading ->
                     Res.string.inference_unavailable_preparing_description
             },
-            icon = Icons.Rounded.AutoAwesome,
+            icon = HeronIcons.Regular.AutoAwesome,
         )
 
         is InferenceOutcome.Error -> Text(
@@ -456,7 +456,7 @@ private fun SelectDefaultModelContent(
         ) {
             Icon(
                 modifier = Modifier.size(36.dp),
-                imageVector = Icons.Rounded.AutoAwesome,
+                imageVector = HeronIcons.Regular.AutoAwesome,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )

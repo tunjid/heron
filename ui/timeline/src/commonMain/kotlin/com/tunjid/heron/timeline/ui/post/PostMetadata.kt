@@ -23,10 +23,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,6 +49,10 @@ import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.pluralString
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.singularStringResource
 import com.tunjid.heron.timeline.utilities.formatDate
 import com.tunjid.heron.timeline.utilities.formatTime
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Block
+import com.tunjid.heron.ui.icons.regular.Groups
+import com.tunjid.heron.ui.icons.regular.Public
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.like
 import heron.ui.timeline.generated.resources.likes
@@ -251,9 +251,9 @@ private val PostInteractionStatus.stringRes
 
 private val PostInteractionStatus.icon
     get() = when (this) {
-        PostInteractionStatus.All -> Icons.Rounded.Public
-        PostInteractionStatus.Some -> Icons.Rounded.Groups
-        PostInteractionStatus.None -> Icons.Rounded.Block
+        PostInteractionStatus.All -> HeronIcons.Regular.Public
+        PostInteractionStatus.Some -> HeronIcons.Regular.Groups
+        PostInteractionStatus.None -> HeronIcons.Regular.Block
     }
 
 sealed class PostMetadata {

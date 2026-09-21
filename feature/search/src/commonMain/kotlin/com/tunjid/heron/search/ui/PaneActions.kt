@@ -16,8 +16,6 @@
 
 package com.tunjid.heron.search.ui
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.focus.FocusManager
@@ -25,6 +23,8 @@ import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.State
 import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Tune
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.filters_content_description
@@ -69,7 +69,7 @@ private fun SearchFilterAction(
     onClick: () -> Unit,
 ) {
     AppBarIconButton(
-        icon = Icons.Rounded.Tune,
+        icon = HeronIcons.Regular.Tune,
         iconDescription = stringResource(Res.string.filters_content_description),
         tint = when {
             isActive -> MaterialTheme.colorScheme.primary
