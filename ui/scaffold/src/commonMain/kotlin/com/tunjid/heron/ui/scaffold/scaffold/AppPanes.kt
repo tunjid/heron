@@ -39,7 +39,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -247,7 +247,7 @@ internal class PaneAnchorState(
                                 scaleY = 0.6f
                                 rotationZ = 90f
                             },
-                        imageVector = Icons.Default.UnfoldMore,
+                        imageVector = Icons.Rounded.UnfoldMore,
                         contentDescription = "Drag",
                         colorFilter = ColorFilter.tint(
                             color = MaterialTheme.colorScheme.surface,

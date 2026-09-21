@@ -37,7 +37,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -153,7 +153,7 @@ fun ExpandableSettingsItemRow(
                 modifier = Modifier.graphicsLayer {
                     rotationX = iconRotation.value
                 },
-                imageVector = Icons.Default.ExpandLess,
+                imageVector = Icons.Rounded.ExpandLess,
                 contentDescription = stringResource(
                     if (isExpanded) CommonStrings.collapse_icon
                     else CommonStrings.expand_icon,
