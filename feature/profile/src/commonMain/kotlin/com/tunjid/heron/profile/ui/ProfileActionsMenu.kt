@@ -11,9 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Search
@@ -74,7 +74,7 @@ internal fun ProfileActionsMenu(
             label = {}, // keep empty
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(CommonStrings.more_options),
                 )
             },

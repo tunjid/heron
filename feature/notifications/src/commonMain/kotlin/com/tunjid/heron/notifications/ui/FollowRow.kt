@@ -19,7 +19,7 @@ package com.tunjid.heron.notifications.ui
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,7 +61,7 @@ fun FollowRow(
         onProfileClicked = onProfileClicked,
         icon = {
             Icon(
-                painter = rememberVectorPainter(Icons.Default.Person),
+                painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(CommonStrings.notifications_followed_you_description),
             )
