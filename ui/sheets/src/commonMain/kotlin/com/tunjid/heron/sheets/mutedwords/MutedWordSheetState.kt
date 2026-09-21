@@ -18,12 +18,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.RadioButtonChecked
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -177,7 +177,7 @@ private fun MutedWordsContent(
                     onClick = { sheetState.hide() },
                     modifier = Modifier.size(40.dp),
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                    Icon(Icons.Rounded.Close, contentDescription = null)
                 }
             }
         }
@@ -236,7 +236,7 @@ private fun MutedWordsContent(
                         trailingIcon = {
                             if (state.newWord.isNotBlank()) {
                                 IconButton(onClick = { actions(MutedWordsAction.UpdateNewWord("")) }) {
-                                    Icon(Icons.Default.Close, contentDescription = null)
+                                    Icon(Icons.Rounded.Close, contentDescription = null)
                                 }
                             }
                         },
@@ -438,7 +438,7 @@ private fun DurationChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
-                imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
+                imageVector = if (isSelected) Icons.Rounded.RadioButtonChecked else Icons.Rounded.RadioButtonUnchecked,
                 contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(14.dp),
@@ -490,7 +490,7 @@ private fun MuteTargetChip(
         ) {
             if (isSelected) {
                 Icon(
-                    Icons.Default.Check,
+                    Icons.Rounded.Check,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = contentColor,
@@ -556,7 +556,7 @@ private fun MutedWordItem(
                 ),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(Res.string.remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
@@ -577,7 +577,7 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Block,
+            imageVector = Icons.Rounded.Block,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(56.dp),
@@ -615,7 +615,7 @@ private fun ErrorMessage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Default.ErrorOutline,
+                imageVector = Icons.Rounded.ErrorOutline,
                 contentDescription = stringResource(Res.string.error),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(18.dp),

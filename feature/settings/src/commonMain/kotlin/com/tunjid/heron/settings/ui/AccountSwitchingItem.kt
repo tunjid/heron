@@ -24,11 +24,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.SwitchAccount
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -87,7 +87,7 @@ fun AccountSwitchingItem(
         sessionSummaries.size <= 1 -> {
             SettingsItem(
                 title = stringResource(Res.string.add_another_account),
-                icon = Icons.Default.PersonAdd,
+                icon = Icons.Rounded.PersonAdd,
                 modifier = modifier
                     .shapedClickable(onClick = onAddAccountClick)
                     .settingsItemPaddingAndMinHeight(),
@@ -153,7 +153,7 @@ private fun MultiSessionLayout(
                     modifier = modifier
                         .settingsItemMinHeight(),
                     title = stringResource(Res.string.switch_account),
-                    icon = Icons.Default.SwitchAccount,
+                    icon = Icons.Rounded.SwitchAccount,
                 )
             }
         }
@@ -206,7 +206,7 @@ private fun MultiSessionLayout(
         ) {
             SettingsItem(
                 title = stringResource(Res.string.add_or_reauthenticate_account),
-                icon = Icons.Default.PersonAdd,
+                icon = Icons.Rounded.PersonAdd,
                 modifier = Modifier
                     .clickable(onClick = onAddAccountClick)
                     .settingsItemPaddingAndMinHeight(),
@@ -374,7 +374,7 @@ private fun PaneTransitionScope.SessionSummaries(
                     )
                     if (isActive) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            imageVector = Icons.Rounded.Check,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp),
@@ -496,7 +496,7 @@ private fun SuccessCheckmarkOverlay(
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Icon(
-            imageVector = Icons.Default.CheckCircle,
+            imageVector = Icons.Rounded.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
