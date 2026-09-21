@@ -40,7 +40,6 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.compose.multiplatform.foundation.foundation)
                 api(libs.compose.multiplatform.runtime)
                 api(libs.compose.multiplatform.material3)
-                api(libs.compose.multiplatform.material.icons.extended)
                 api(project(":ui:icons"))
                 api(libs.compose.multiplatform.ui.graphics)
                 api(libs.compose.multiplatform.ui.ui)

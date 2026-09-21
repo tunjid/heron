@@ -58,9 +58,6 @@ kotlin {
                 implementation(project(":ui:media"))
                 implementation(project(":ui:timeline"))
 
-                implementation(libs.compose.multiplatform.material.icons)
-                implementation(libs.compose.multiplatform.material.icons.extended)
-
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
