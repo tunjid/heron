@@ -18,10 +18,6 @@ package com.tunjid.heron.quotethread.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.automirrored.rounded.Reply
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -34,8 +30,10 @@ import com.tunjid.heron.quotethread.Action
 import com.tunjid.heron.quotethread.QuoteThreadScreen
 import com.tunjid.heron.quotethread.QuoteThreadStateHolder
 import com.tunjid.heron.quotethread.QuoteThreadViewModelInitializer
-import com.tunjid.heron.sheets.rememberInferenceSheetState
-import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.quotethread.ui.PaneActions
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.Login
+import com.tunjid.heron.ui.icons.automirrored.Reply
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -80,7 +78,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.quote_thread.generated.resources.Res
 import heron.feature.quote_thread.generated.resources.reply
-import heron.feature.quote_thread.generated.resources.spill_the_tea
 import heron.feature.quote_thread.generated.resources.title
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
@@ -196,17 +193,8 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    val inferenceSheetState = rememberInferenceSheetState()
-                    // Only surface the tea when the device can actually run on-device inference.
-                    if (state.canRunInference) AppBarIconButton(
-                        icon = Icons.Rounded.AutoAwesome,
-                        iconDescription = stringResource(Res.string.spill_the_tea),
-                        onClick = onClick@{
-                            val anchorPost = state.anchorPost ?: return@onClick
-                            inferenceSheetState.spillTea(
-                                post = anchorPost,
-                            )
-                        },
+                    PaneActions(
+                        state = state,
                     )
                 },
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
@@ -233,8 +221,8 @@ internal fun Route(
                     },
                 ),
                 icon = when {
-                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                    else -> Icons.AutoMirrored.Rounded.Reply
+                    isSignedOut -> HeronIcons.AutoMirrored.Login
+                    else -> HeronIcons.AutoMirrored.Reply
                 },
                 expanded = isFabExpanded {
                     if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset

@@ -25,9 +25,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CloudDone
-import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -40,6 +37,9 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.CloudDone
+import com.tunjid.heron.ui.icons.regular.TaskAlt
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.tabIndex
 import heron.feature.tasks.generated.resources.Res
@@ -131,7 +131,7 @@ private fun InFlightList(
         modifier = Modifier.fillMaxSize(),
         titleRes = Res.string.empty_in_flight,
         descriptionRes = Res.string.empty_in_flight_description,
-        icon = Icons.Rounded.TaskAlt,
+        icon = HeronIcons.Regular.TaskAlt,
     )
     else LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -165,7 +165,7 @@ private fun FailedList(
         modifier = Modifier.fillMaxSize(),
         titleRes = Res.string.empty_failed,
         descriptionRes = Res.string.empty_failed_description,
-        icon = Icons.Rounded.CloudDone,
+        icon = HeronIcons.Regular.CloudDone,
     )
     else LazyColumn(
         modifier = Modifier.fillMaxSize(),

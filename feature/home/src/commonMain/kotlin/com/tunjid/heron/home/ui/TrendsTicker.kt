@@ -32,9 +32,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.ui.AnimatedVerticallySlidingContent
 import com.tunjid.heron.ui.AppBarTextButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.TrendingUp
+import com.tunjid.heron.ui.icons.regular.Cancel
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import heron.ui.core.generated.resources.close
@@ -130,7 +130,7 @@ private fun VerticalTicker(
     ) {
         Icon(
             modifier = Modifier,
-            imageVector = Icons.AutoMirrored.Rounded.TrendingUp,
+            imageVector = HeronIcons.AutoMirrored.TrendingUp,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.outline,
         )
@@ -213,7 +213,7 @@ private fun HorizontalTicker(
                 .padding(all = 8.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Cancel,
+                imageVector = HeronIcons.Regular.Cancel,
                 contentDescription = stringResource(CommonStrings.close),
             )
         }

@@ -57,7 +57,7 @@ actual fun rememberOauthFlowState(
 }
 
 private const val OauthIssuerKey = "iss"
-private const val OauthCallbackHost = "heron.tunji.dev"
+private const val OauthCallbackHost = "heron.social"
 private const val OauthCallbackPath = "/oauth/callback"
 
 @OptIn(ExperimentalForeignApi::class)

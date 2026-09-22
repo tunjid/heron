@@ -30,10 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -68,6 +64,10 @@ import com.tunjid.heron.data.core.models.allowsMentioned
 import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.InfoOutline
+import com.tunjid.heron.ui.icons.regular.KeyboardArrowDown
+import com.tunjid.heron.ui.icons.regular.KeyboardArrowUp
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -302,8 +302,8 @@ private fun ThreadGateBottomSheet(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Icon(
-                        imageVector = if (listsExpanded) Icons.Rounded.KeyboardArrowUp
-                        else Icons.Rounded.KeyboardArrowDown,
+                        imageVector = if (listsExpanded) HeronIcons.Regular.KeyboardArrowUp
+                        else HeronIcons.Regular.KeyboardArrowDown,
                         contentDescription = stringResource(Res.string.thread_gate_select_from_your_lists),
                     )
                 }
@@ -371,7 +371,7 @@ private fun InfoBanner() {
         verticalAlignment = Alignment.Top,
     ) {
         Icon(
-            imageVector = Icons.Outlined.Info,
+            imageVector = HeronIcons.Regular.InfoOutline,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp),

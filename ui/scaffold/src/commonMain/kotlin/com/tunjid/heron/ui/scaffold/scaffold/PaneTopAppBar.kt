@@ -39,13 +39,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ElevatedCard
@@ -94,6 +87,13 @@ import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Add
+import com.tunjid.heron.ui.icons.regular.Cancel
+import com.tunjid.heron.ui.icons.regular.Close
+import com.tunjid.heron.ui.icons.regular.CloudOff
+import com.tunjid.heron.ui.icons.regular.Error
+import com.tunjid.heron.ui.icons.regular.PriorityHigh
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -188,7 +188,12 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             AnimatedVisibility(
                 visible = identityState.isStable,
             ) {
-                if (actions != null) actions()
+                if (actions != null) Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    actions()
+                }
             }
             LazyRow(
                 modifier = Modifier
@@ -250,7 +255,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     ),
                     content = {
                         Icon(
-                            imageVector = Icons.Rounded.Cancel,
+                            imageVector = HeronIcons.Regular.Cancel,
                             contentDescription = null,
                         )
                     },
@@ -312,7 +317,10 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                 title()
             }
         },
-        actions = actions,
+        actions = {
+            actions()
+            Spacer(Modifier.width(8.dp))
+        },
     )
 }
 
@@ -339,7 +347,7 @@ private fun PaneScaffoldState.SwitchStatus(
                 },
                 content = {
                     Icon(
-                        imageVector = Icons.Rounded.Error,
+                        imageVector = HeronIcons.Regular.Error,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error,
                     )
@@ -360,7 +368,7 @@ private fun PaneScaffoldState.SwitchStatus(
                 onClick = appScaffoldState::addAccount,
                 content = {
                     Icon(
-                        imageVector = Icons.Rounded.Add,
+                        imageVector = HeronIcons.Regular.Add,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.outline,
                     )
@@ -455,7 +463,7 @@ private fun PaneScaffoldState.OfflineIcon(
 ) {
     NavigationIconPopoverButton(
         modifier = modifier,
-        icon = Icons.Rounded.CloudOff,
+        icon = HeronIcons.Regular.CloudOff,
         popOverContent = { onClose ->
             BadgePopover(
                 title = stringResource(Res.string.offline_title),
@@ -478,7 +486,7 @@ private fun PaneScaffoldState.FailedWriteIcon(
     val description = remember(failedWrite) { failedWrite.writable.describe() }
     NavigationIconPopoverButton(
         modifier = modifier,
-        icon = Icons.Rounded.PriorityHigh,
+        icon = HeronIcons.Regular.PriorityHigh,
         popOverContent = { onClose ->
             BadgePopover(
                 title = stringResource(Res.string.failed_write_title),
@@ -625,7 +633,7 @@ private fun BadgePopover(
                     onClick = onClose,
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        imageVector = HeronIcons.Regular.Close,
                         contentDescription = stringResource(Res.string.close),
                     )
                 }

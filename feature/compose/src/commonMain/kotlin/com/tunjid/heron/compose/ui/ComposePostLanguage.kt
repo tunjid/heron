@@ -26,9 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -49,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.ml.language.isoLanguageTags
 import com.tunjid.heron.data.ml.language.languageDisplayName
 import com.tunjid.heron.data.ml.language.localeCollator
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Check
+import com.tunjid.heron.ui.icons.regular.Language
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -82,7 +82,7 @@ internal fun ComposePostLanguage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = Icons.Rounded.Language,
+                imageVector = HeronIcons.Regular.Language,
                 contentDescription = stringResource(Res.string.post_language),
                 tint = MaterialTheme.colorScheme.outline,
             )
@@ -181,7 +181,7 @@ private fun PostLanguageBottomSheet(
                     },
                     trailingContent = {
                         if (isSelected) Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = HeronIcons.Regular.Check,
                             contentDescription = null,
                         )
                     },

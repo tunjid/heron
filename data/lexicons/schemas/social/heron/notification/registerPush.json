@@ -1,0 +1,50 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.notification.registerPush",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Register (or refresh) an FCM push-notification token for the authenticated account. The `did` must equal the service-auth issuer DID; the token is stored in the shared notification-token store. XRPC form of the legacy Node `/saveNotificationToken` endpoint.",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["did", "token"],
+          "properties": {
+            "did": {
+              "type": "string",
+              "description": "The account the token belongs to. Must equal the authenticated (service-auth issuer) DID."
+            },
+            "token": {
+              "type": "string",
+              "description": "The FCM registration token for this device."
+            }
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "knownValues": ["ok"]
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "InvalidRequest",
+          "description": "Missing did/token, or the FCM token failed validation."
+        },
+        {
+          "name": "Forbidden",
+          "description": "The service-auth DID does not match the `did` being registered."
+        }
+      ]
+    }
+  }
+}

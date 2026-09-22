@@ -28,10 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,6 +53,10 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.nameOrHandleOrUnknown
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.ArrowForward
+import com.tunjid.heron.ui.icons.regular.CheckCircle
+import com.tunjid.heron.ui.icons.regular.Verified
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -227,7 +227,7 @@ private fun TrustedVerifierInfographic(
                 Icon(
                     modifier = Modifier
                         .size(48.dp),
-                    imageVector = Icons.Rounded.Verified,
+                    imageVector = HeronIcons.Regular.Verified,
                     contentDescription = null,
                     tint = UiTokens.BookmarkBlue,
                 )
@@ -239,7 +239,7 @@ private fun TrustedVerifierInfographic(
                 Icon(
                     modifier = Modifier
                         .size(48.dp),
-                    imageVector = Icons.Rounded.CheckCircle,
+                    imageVector = HeronIcons.Regular.CheckCircle,
                     contentDescription = null,
                     tint = UiTokens.BookmarkBlue,
                 )
@@ -274,7 +274,7 @@ private fun InfographicArrow() {
     Icon(
         modifier = Modifier
             .size(20.dp),
-        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+        imageVector = HeronIcons.AutoMirrored.ArrowForward,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )

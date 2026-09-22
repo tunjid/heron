@@ -19,9 +19,6 @@ package com.tunjid.heron.search.di
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,9 +48,11 @@ import com.tunjid.heron.search.canShowFab
 import com.tunjid.heron.search.isQueryEditable
 import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.profileHandle
+import com.tunjid.heron.search.ui.PaneActions
 import com.tunjid.heron.search.ui.filter.rememberUpdatedSearchFilterSheetState
-import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.SearchBar
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.SwapHoriz
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -94,7 +93,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.adapt_to_feed
-import heron.feature.search.generated.resources.filters_content_description
 import heron.feature.search.generated.resources.hint_general_search
 import heron.feature.search.generated.resources.hint_graze_feed_preview
 import heron.feature.search.generated.resources.hint_profile_post_search
@@ -276,12 +274,10 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    if (state.signedInProfile != null) SearchFilterAction(
-                        isActive = state.appliedFilter != null,
-                        onClick = {
-                            stateHolder.accept(Action.Filter.Begin)
-                            searchFilterSheetState.show()
-                        },
+                    PaneActions(
+                        state = state,
+                        focusManager = focusManager,
+                        actions = stateHolder.accept,
                     )
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
@@ -323,12 +319,10 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    if (state.signedInProfile != null) SearchFilterAction(
-                        isActive = state.appliedFilter != null,
-                        onClick = {
-                            stateHolder.accept(Action.Filter.Begin)
-                            searchFilterSheetState.show()
-                        },
+                    PaneActions(
+                        state = state,
+                        focusManager = focusManager,
+                        actions = stateHolder.accept,
                     )
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
@@ -355,7 +349,7 @@ internal fun Route(
                             fabOffset(bottomNavigationNestedScrollConnection.offset)
                         },
                     text = stringResource(Res.string.adapt_to_feed),
-                    icon = Icons.Rounded.SwapHoriz,
+                    icon = HeronIcons.Regular.SwapHoriz,
                     expanded = isFabExpanded {
                         if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                         else topAppBarNestedScrollConnection.offset * -1f
@@ -420,20 +414,4 @@ private fun KeyboardPopupEffect(
     LaunchedEffect(Unit) {
         if (state.searchBarText.isBlank() && !restored) searchFocusRequester.requestFocus()
     }
-}
-
-@Composable
-private fun SearchFilterAction(
-    isActive: Boolean,
-    onClick: () -> Unit,
-) {
-    AppBarIconButton(
-        icon = Icons.Rounded.Tune,
-        iconDescription = stringResource(Res.string.filters_content_description),
-        tint = when {
-            isActive -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        onClick = onClick,
-    )
 }

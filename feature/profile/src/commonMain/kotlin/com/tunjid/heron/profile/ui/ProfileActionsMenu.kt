@@ -8,16 +8,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.PersonOff
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -41,6 +31,16 @@ import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.data.core.models.isMutingReposts
 import com.tunjid.heron.profile.ui.icons.RepeatOff
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.automirrored.VolumeUp
+import com.tunjid.heron.ui.icons.regular.AutoAwesome
+import com.tunjid.heron.ui.icons.regular.ContentCopy
+import com.tunjid.heron.ui.icons.regular.MoreVert
+import com.tunjid.heron.ui.icons.regular.PersonOff
+import com.tunjid.heron.ui.icons.regular.Repeat
+import com.tunjid.heron.ui.icons.regular.Search
+import com.tunjid.heron.ui.icons.regular.Videocam
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.action_copy_profile_link
 import heron.ui.core.generated.resources.action_edit_live_status
@@ -74,7 +74,7 @@ internal fun ProfileActionsMenu(
             label = {}, // keep empty
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = HeronIcons.Regular.MoreVert,
                     contentDescription = stringResource(CommonStrings.more_options),
                 )
             },
@@ -163,19 +163,19 @@ internal fun ProfileViewerState?.profileActionMenuItems(
     add(
         ProfileActionMenu.Item(
             title = CommonStrings.action_copy_profile_link,
-            icon = Icons.Rounded.ContentCopy,
+            icon = HeronIcons.Regular.ContentCopy,
         ),
     )
     add(
         ProfileActionMenu.Item(
             title = CommonStrings.action_search_posts,
-            icon = Icons.Rounded.Search,
+            icon = HeronIcons.Regular.Search,
         ),
     )
     if (inferenceAvailable) add(
         ProfileActionMenu.Item(
             title = CommonStrings.action_vibe_check,
-            icon = Icons.Rounded.AutoAwesome,
+            icon = HeronIcons.Regular.AutoAwesome,
         ),
     )
     when {
@@ -183,11 +183,11 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             when {
                 isLive -> ProfileActionMenu.Item(
                     title = CommonStrings.action_edit_live_status,
-                    icon = Icons.Rounded.Videocam,
+                    icon = HeronIcons.Regular.Videocam,
                 )
                 else -> ProfileActionMenu.Item(
                     title = CommonStrings.action_go_live,
-                    icon = Icons.Rounded.Videocam,
+                    icon = HeronIcons.Regular.Videocam,
                 )
             },
         )
@@ -195,18 +195,18 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             if (!isBlocked) add(
                 ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_block_account,
-                    icon = Icons.Rounded.PersonOff,
+                    icon = HeronIcons.Regular.PersonOff,
                     isDestructive = true,
                 ),
             )
             add(
                 if (isMuted) ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_unmute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                    icon = HeronIcons.AutoMirrored.VolumeUp,
                 )
                 else ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_mute_account,
-                    icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                    icon = HeronIcons.AutoMirrored.VolumeOff,
                 ),
             )
             // Reposts can be muted on their own, but only while the account isn't
@@ -214,7 +214,7 @@ internal fun ProfileViewerState?.profileActionMenuItems(
             if (!isMuted) add(
                 if (isMutingReposts) ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_unmute_reposts,
-                    icon = Icons.Rounded.Repeat,
+                    icon = HeronIcons.Regular.Repeat,
                 )
                 else ProfileActionMenu.Item(
                     title = CommonStrings.viewer_state_mute_reposts,

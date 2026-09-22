@@ -17,7 +17,6 @@
 package com.tunjid.heron
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
@@ -50,6 +49,9 @@ fun main() {
         }
     }
 
+    // AppState needs to be created before first composition
+    val appState = createAppState()
+
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -65,7 +67,7 @@ fun main() {
                 putClientProperty("apple.awt.windowTitleVisible", false)
             }
             App(
-                appState = remember { createAppState() },
+                appState = appState,
                 modifier = Modifier.fillMaxSize(),
             )
         }

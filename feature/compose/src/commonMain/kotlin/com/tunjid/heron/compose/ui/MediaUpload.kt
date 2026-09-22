@@ -31,9 +31,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.DoNotDisturbOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,6 +55,9 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Add
+import com.tunjid.heron.ui.icons.regular.DoNotDisturbOn
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.alt_text_add
@@ -212,7 +212,7 @@ private fun MediaUpload(
                 .size(32.dp)
                 .clip(CircleShape)
                 .clickable { removeMediaItem(media) },
-            imageVector = Icons.Rounded.DoNotDisturbOn,
+            imageVector = HeronIcons.Regular.DoNotDisturbOn,
             contentDescription = stringResource(Res.string.remove_media),
         )
         val addAltTextContentDescription = stringResource(Res.string.alt_text_add)
@@ -235,7 +235,7 @@ private fun MediaUpload(
             Icon(
                 modifier = Modifier
                     .size(16.dp),
-                imageVector = Icons.Rounded.Add,
+                imageVector = HeronIcons.Regular.Add,
                 contentDescription = null,
             )
             Text(

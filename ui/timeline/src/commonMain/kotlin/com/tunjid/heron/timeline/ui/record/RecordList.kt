@@ -22,17 +22,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.automirrored.rounded.List
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.DynamicFeed
-import androidx.compose.material.icons.rounded.Group
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Inbox
-import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Public
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +47,17 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.EmptyContent
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.Article
+import com.tunjid.heron.ui.icons.automirrored.List
+import com.tunjid.heron.ui.icons.regular.Album
+import com.tunjid.heron.ui.icons.regular.DynamicFeed
+import com.tunjid.heron.ui.icons.regular.Group
+import com.tunjid.heron.ui.icons.regular.History
+import com.tunjid.heron.ui.icons.regular.Inbox
+import com.tunjid.heron.ui.icons.regular.Mic
+import com.tunjid.heron.ui.icons.regular.MusicNote
+import com.tunjid.heron.ui.icons.regular.Public
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -186,14 +186,14 @@ internal val KClass<out Record>.emptyDescriptionRes: StringResource
 @PublishedApi
 internal val KClass<out Record>.emptyIcon: ImageVector
     get() = when (this) {
-        FeedGenerator::class -> Icons.Rounded.DynamicFeed
-        StarterPack::class -> Icons.Rounded.Group
-        FeedList::class -> Icons.AutoMirrored.Rounded.List
-        StandardDocument::class -> Icons.AutoMirrored.Rounded.Article
-        StandardPublication::class -> Icons.Rounded.Public
-        RockskyAlbum::class -> Icons.Rounded.Album
-        RockskyTrack::class -> Icons.Rounded.MusicNote
-        RockskyArtist::class -> Icons.Rounded.Mic
-        RockskyScrobble::class -> Icons.Rounded.History
-        else -> Icons.Rounded.Inbox
+        FeedGenerator::class -> HeronIcons.Regular.DynamicFeed
+        StarterPack::class -> HeronIcons.Regular.Group
+        FeedList::class -> HeronIcons.AutoMirrored.List
+        StandardDocument::class -> HeronIcons.AutoMirrored.Article
+        StandardPublication::class -> HeronIcons.Regular.Public
+        RockskyAlbum::class -> HeronIcons.Regular.Album
+        RockskyTrack::class -> HeronIcons.Regular.MusicNote
+        RockskyArtist::class -> HeronIcons.Regular.Mic
+        RockskyScrobble::class -> HeronIcons.Regular.History
+        else -> HeronIcons.Regular.Inbox
     }

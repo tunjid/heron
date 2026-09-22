@@ -32,8 +32,8 @@ import com.tunjid.heron.conversation.ConversationScreen
 import com.tunjid.heron.conversation.ConversationStateHolder
 import com.tunjid.heron.conversation.ConversationViewModelInitializer
 import com.tunjid.heron.conversation.pendingRecord
-import com.tunjid.heron.conversation.ui.ConversationOverflowMenu
 import com.tunjid.heron.conversation.ui.ConversationTitle
+import com.tunjid.heron.conversation.ui.PaneActions
 import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
@@ -195,17 +195,9 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    ConversationOverflowMenu(
-                        conversation = state.conversation,
-                        onAccept = {
-                            stateHolder.accept(Action.AcceptConversation)
-                        },
-                        onLeave = {
-                            stateHolder.accept(Action.LeaveConversation)
-                        },
-                        onToggleMute = { muted ->
-                            stateHolder.accept(Action.ToggleMute(muted))
-                        },
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
                     )
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,

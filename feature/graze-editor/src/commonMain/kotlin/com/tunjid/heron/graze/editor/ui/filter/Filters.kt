@@ -32,9 +32,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -57,6 +54,9 @@ import com.tunjid.heron.data.graze.isValid
 import com.tunjid.heron.sheets.SelectTextSheetState
 import com.tunjid.heron.sheets.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Cancel
+import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
@@ -115,7 +115,7 @@ fun FilterCard(
                         .size(24.dp),
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
+                        imageVector = HeronIcons.Regular.Close,
                         contentDescription = stringResource(Res.string.remove_filter),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -370,7 +370,7 @@ fun <T> FilterTextChips(
                                                 },
                                             )
                                         },
-                                    imageVector = Icons.Rounded.Cancel,
+                                    imageVector = HeronIcons.Regular.Cancel,
                                     contentDescription = stringResource(CommonStrings.cancel),
                                 )
                             },

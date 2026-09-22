@@ -32,12 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -67,6 +61,12 @@ import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.ScrimmedContent
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.automirrored.VolumeOff
+import com.tunjid.heron.ui.icons.automirrored.VolumeUp
+import com.tunjid.heron.ui.icons.regular.Movie
+import com.tunjid.heron.ui.icons.regular.Pause
+import com.tunjid.heron.ui.icons.regular.PlayArrow
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -223,7 +223,7 @@ private fun PlayerInfo(
                         modifier = Modifier
                             .padding(4.dp),
                         contentDescription = stringResource(Res.string.pause_video),
-                        imageVector = Icons.Rounded.Pause,
+                        imageVector = HeronIcons.Regular.Pause,
                     )
                 },
             )
@@ -244,8 +244,8 @@ private fun PlayerInfo(
                             else Res.string.unmute_video,
                         ),
                         imageVector =
-                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-                        else Icons.AutoMirrored.Rounded.VolumeUp,
+                        if (videoPlayerState.isMuted) HeronIcons.AutoMirrored.VolumeOff
+                        else HeronIcons.AutoMirrored.VolumeUp,
                     )
                 },
             )
@@ -330,11 +330,11 @@ private val Timeline.Presentation.playButtonIcon
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-        -> Icons.Rounded.PlayArrow
+        -> HeronIcons.Regular.PlayArrow
 
         Timeline.Presentation.Media.Condensed,
         Timeline.Presentation.Media.Grid,
-        -> Icons.Rounded.Movie
+        -> HeronIcons.Regular.Movie
     }
 
 fun Video.sharedElementKey(

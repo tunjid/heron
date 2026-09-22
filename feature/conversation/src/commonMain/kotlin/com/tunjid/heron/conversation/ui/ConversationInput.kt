@@ -31,8 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -61,6 +59,8 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.withFormattedTextPost
@@ -109,7 +109,7 @@ fun PaneScaffoldState.UserInput(
                     onClick = removePendingRecordClicked,
                     content = {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            imageVector = HeronIcons.Regular.Close,
                             contentDescription = null,
                         )
                     },

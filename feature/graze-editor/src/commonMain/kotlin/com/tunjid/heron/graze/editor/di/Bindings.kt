@@ -18,8 +18,6 @@ package com.tunjid.heron.graze.editor.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.types.RecordKey
@@ -29,10 +27,12 @@ import com.tunjid.heron.graze.editor.GrazeEditorStateHolder
 import com.tunjid.heron.graze.editor.GrazeEditorViewModelInitializer
 import com.tunjid.heron.graze.editor.State
 import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
+import com.tunjid.heron.graze.editor.ui.PaneActions
 import com.tunjid.heron.graze.editor.ui.Title
-import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -226,7 +226,7 @@ object GrazeEditorBindings {
                             )
                         },
                         actions = {
-                            TopBarActions(
+                            PaneActions(
                                 grazeFeed = state.grazeFeed,
                                 enabled = !state.isLoading,
                                 onEditClicked = {
@@ -262,7 +262,7 @@ object GrazeEditorBindings {
                 floatingActionButton = {
                     PaneFab(
                         text = stringResource(Res.string.add_filter),
-                        icon = Icons.Rounded.Add,
+                        icon = HeronIcons.Regular.Add,
                         expanded = true,
                         enabled = !state.isLoading,
                         onClick = addFilterSheetState::show,

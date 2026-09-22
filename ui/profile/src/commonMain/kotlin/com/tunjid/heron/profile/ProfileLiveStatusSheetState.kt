@@ -24,14 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material.icons.rounded.Videocam
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -69,6 +61,14 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Close
+import com.tunjid.heron.ui.icons.regular.Info
+import com.tunjid.heron.ui.icons.regular.Link
+import com.tunjid.heron.ui.icons.regular.Refresh
+import com.tunjid.heron.ui.icons.regular.Timer
+import com.tunjid.heron.ui.icons.regular.Videocam
+import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -243,7 +243,7 @@ private fun GoLiveContent(
             shape = RoundedCornerShape(size = 12.dp),
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Rounded.Link,
+                    imageVector = HeronIcons.Regular.Link,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                 )
@@ -256,7 +256,7 @@ private fun GoLiveContent(
                 ) {
                     IconButton(onClick = { urlInput = "" }) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            imageVector = HeronIcons.Regular.Close,
                             contentDescription = stringResource(CommonStrings.live_status_clear_url),
                             modifier = Modifier.size(18.dp),
                         )
@@ -338,7 +338,7 @@ private fun EditLiveContent(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Timer,
+                    imageVector = HeronIcons.Regular.Timer,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -366,7 +366,7 @@ private fun EditLiveContent(
             shape = RoundedCornerShape(12.dp),
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Rounded.Link,
+                    imageVector = HeronIcons.Regular.Link,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                 )
@@ -379,7 +379,7 @@ private fun EditLiveContent(
                 ) {
                     IconButton(onClick = { urlInput = status.embedUri }) {
                         Icon(
-                            imageVector = Icons.Rounded.Refresh,
+                            imageVector = HeronIcons.Regular.Refresh,
                             contentDescription = stringResource(CommonStrings.live_status_reset_url),
                             modifier = Modifier.size(18.dp),
                         )
@@ -503,7 +503,7 @@ private fun PlatformInfoCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = if (showWarning) Icons.Rounded.Warning else Icons.Rounded.Info,
+            imageVector = if (showWarning) HeronIcons.Regular.Warning else HeronIcons.Regular.Info,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
             tint = if (showWarning) MaterialTheme.colorScheme.error
@@ -522,7 +522,7 @@ private fun PlatformInfoCard(
             exit = fadeOut() + scaleOut(),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Close,
+                imageVector = HeronIcons.Regular.Close,
                 contentDescription = stringResource(CommonStrings.live_status_url_not_supported),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.error,
@@ -552,7 +552,7 @@ private fun StreamLinkCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Videocam,
+                    imageVector = HeronIcons.Regular.Videocam,
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
                     tint = platform.brandColor.copy(alpha = 0.6f),
@@ -625,7 +625,7 @@ private fun DurationSelector(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Timer,
+                    imageVector = HeronIcons.Regular.Timer,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,

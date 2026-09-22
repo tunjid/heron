@@ -38,8 +38,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -70,6 +68,8 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.UnfoldMore
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
@@ -247,7 +247,7 @@ internal class PaneAnchorState(
                                 scaleY = 0.6f
                                 rotationZ = 90f
                             },
-                        imageVector = Icons.Default.UnfoldMore,
+                        imageVector = HeronIcons.Regular.UnfoldMore,
                         contentDescription = "Drag",
                         colorFilter = ColorFilter.tint(
                             color = MaterialTheme.colorScheme.surface,

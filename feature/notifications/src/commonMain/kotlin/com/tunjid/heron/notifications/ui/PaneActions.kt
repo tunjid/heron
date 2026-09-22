@@ -1,0 +1,52 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.notifications.ui
+
+import androidx.compose.runtime.Composable
+import com.tunjid.heron.notifications.Action
+import com.tunjid.heron.notifications.State
+import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Settings
+import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.ui.scaffold.notifications.hasNotificationPermissions
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.notification_settings
+import org.jetbrains.compose.resources.stringResource
+
+@Composable
+internal fun PaneActions(
+    state: State,
+    actions: (Action) -> Unit,
+) {
+    androidx.compose.animation.AnimatedVisibility(
+        visible = !hasNotificationPermissions(),
+    ) {
+        RequestNotificationsButton(
+            animateIcon = state.canAnimateRequestPermissionsButton,
+        )
+    }
+    AppBarIconButton(
+        icon = HeronIcons.Regular.Settings,
+        iconDescription = stringResource(CommonStrings.notification_settings),
+        onClick = {
+            actions(
+                Action.Navigate.To(notificationSettingsDestination()),
+            )
+        },
+    )
+}

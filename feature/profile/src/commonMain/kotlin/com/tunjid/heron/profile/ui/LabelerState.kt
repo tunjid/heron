@@ -18,15 +18,15 @@ package com.tunjid.heron.profile.ui
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Add
+import com.tunjid.heron.ui.icons.regular.Check
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.subscribe
 import heron.feature.profile.generated.resources.subscribed
@@ -50,8 +50,8 @@ fun LabelerState(
         leadingIcon = {
             Icon(
                 imageVector =
-                if (isSubscribed) Icons.Rounded.Check
-                else Icons.Rounded.Add,
+                if (isSubscribed) HeronIcons.Regular.Check
+                else HeronIcons.Regular.Add,
                 contentDescription = followStatusText,
             )
         },

@@ -23,9 +23,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -36,6 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.NotificationsActive
+import com.tunjid.heron.ui.icons.regular.NotificationsOff
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.standard_publication_subscribe_to
 import heron.ui.core.generated.resources.standard_publication_unsubscribe_from
@@ -64,8 +64,8 @@ fun PublicationSubscriptionIcon(
             modifier = Modifier
                 .size(iconSize),
             imageVector =
-            if (isSubscribed) Icons.Rounded.NotificationsActive
-            else Icons.Rounded.NotificationsOff,
+            if (isSubscribed) HeronIcons.Regular.NotificationsActive
+            else HeronIcons.Regular.NotificationsOff,
             contentDescription = stringResource(
                 if (isSubscribed) CommonStrings.standard_publication_unsubscribe_from
                 else CommonStrings.standard_publication_subscribe_to,

@@ -48,14 +48,11 @@ jobs:
             -out "apps/androidApp/src/release/google-services.json"
 
       - name: Build Unsigned AAB
-        env:
-          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
         run: |
           ./gradlew spotlessCheck \
             bundleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
-            -Pheron.isRelease=true \
-            -Pheron.endpoint="$HERON_ENDPOINT"
+            -Pheron.isRelease=true
 
       - name: Sign AAB
         uses: r0adkll/sign-android-release@v1
@@ -88,7 +85,6 @@ jobs:
 
       - name: Build and sign per-ABI sideload APKs
         env:
-          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
           SIGNING_KEY_BASE_64: ${{ secrets.SIGNING_KEY_BASE_64 }}
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -101,8 +97,7 @@ jobs:
           # same release keystore the AAB uses.
           ./gradlew assembleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
-            -Pheron.isRelease=true \
-            -Pheron.endpoint="$HERON_ENDPOINT"
+            -Pheron.isRelease=true
 
           echo "$SIGNING_KEY_BASE_64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
           BUILD_TOOLS="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)"
@@ -224,7 +219,6 @@ jobs:
 
       - name: Build archive
         env:
-          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
           ORG_GRADLE_PROJECT_heron.isRelease: "true"
           ORG_GRADLE_PROJECT_heron.versionCode: ${{ github.run_number }}
         run: |
@@ -324,12 +318,9 @@ jobs:
           p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
 
       - name: Build and sign release DMG
-        env:
-          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
         run: |
           ./gradlew :desktopApp:packageReleaseDmg \
             -Pheron.versionCode=${{ github.run_number }} \
-            -Pheron.endpoint="$HERON_ENDPOINT" \
             -Pheron.macOS.signing.identity="${{ secrets.MACOS_SIGNING_IDENTITY }}"
 
       - name: Notarize and staple DMG

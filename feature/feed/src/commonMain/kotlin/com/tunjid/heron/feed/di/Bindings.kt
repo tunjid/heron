@@ -20,8 +20,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -34,31 +32,22 @@ import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
-import com.tunjid.heron.data.graze.isGrazeFeed
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.FeedStateHolder
 import com.tunjid.heron.feed.FeedViewModelInitializer
 import com.tunjid.heron.feed.timelineState
-import com.tunjid.heron.feed.withFeedTimelineOrNull
-import com.tunjid.heron.sheets.rememberEmbeddableRecordOptionsSheetState
+import com.tunjid.heron.feed.ui.PaneActions
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordAppBarButton
-import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
-import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Straight
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
-import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
-import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
-import com.tunjid.heron.ui.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
@@ -71,7 +60,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
@@ -94,10 +82,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.feed.generated.resources.Res
-import heron.feature.feed.generated.resources.edit_feed
 import heron.feature.feed.generated.resources.scroll_to_top
-import heron.ui.core.generated.resources.record_feed
-import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileId}/feed/{feedUriSuffix}"
@@ -257,47 +242,6 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val editFeedText = stringResource(Res.string.edit_feed)
-    val recordOptionsSheetState = paneScaffoldState.rememberEmbeddableRecordOptionsSheetState(
-        editTitle = state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
-            val isEditable = timeline.feedGenerator.isGrazeFeed &&
-                state.signedInProfileId == timeline.feedGenerator.creator.did
-            if (isEditable) editFeedText else null
-        },
-        onShareInConversationClicked = { recordUri, conversation ->
-            stateHolder.accept(
-                Action.Navigate.To(
-                    conversationDestination(
-                        id = conversation.id,
-                        members = conversation.members,
-                        sharedElementPrefix = conversation.id.id,
-                        sharedUri = recordUri.asGenericUri(),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ),
-                ),
-            )
-        },
-        onEditClicked = onEditClicked@{
-            stateHolder.accept(
-                Action.Navigate.To(
-                    grazeEditorDestination(
-                        feedGenerator = state.timelineState
-                            ?.timeline
-                            ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
-                            ?: return@onEditClicked,
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-        onShareInPostClicked = { recordUri ->
-            stateHolder.accept(
-                Action.Navigate.To(
-                    composePostDestination(sharedUri = recordUri.asGenericUri()),
-                ),
-            )
-        },
-    )
     val topAppBarNestedScrollConnection =
         paneScaffoldState.topAppBarNestedScrollConnection
 
@@ -344,33 +288,10 @@ internal fun Route(
                     )
                 },
                 actions = {
-                    state.timelineState
-                        ?.timeline
-                        ?.withFeedTimelineOrNull { feedTimeline ->
-                            FeedGeneratorStatus(
-                                status = state.feedStatus,
-                                uri = feedTimeline.feedGenerator.uri,
-                                onFeedGeneratorStatusUpdated = {
-                                    stateHolder.accept(Action.UpdateFeedGeneratorStatus(it))
-                                },
-                            )
-                        }
-                    // Only record-backed timelines (feeds) can be shared; topic timelines have no uri.
-                    state.timelineState
-                        ?.timeline
-                        ?.uri
-                        ?.asEmbeddableRecordUriOrNull()
-                        ?.let { recordUri ->
-                            ShareRecordAppBarButton(
-                                contentDescription = stringResource(
-                                    TimelineStrings.share_record,
-                                    stringResource(CommonStrings.record_feed),
-                                ),
-                                onShareClicked = {
-                                    recordOptionsSheetState.showOptions(recordUri)
-                                },
-                            )
-                        }
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
+                    )
                 },
                 transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
@@ -379,7 +300,7 @@ internal fun Route(
         floatingActionButton = {
             PaneFab(
                 text = stringResource(Res.string.scroll_to_top),
-                icon = Icons.Rounded.Straight,
+                icon = HeronIcons.Regular.Straight,
                 expanded = isFabExpanded {
                     topAppBarNestedScrollConnection.offset * -1f
                 },

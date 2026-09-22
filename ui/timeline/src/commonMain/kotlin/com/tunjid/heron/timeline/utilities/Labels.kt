@@ -23,9 +23,6 @@ import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Report
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -40,6 +37,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Report
+import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 
@@ -121,10 +121,10 @@ fun Label.Definition.locale(
 internal fun Label.Severity?.icon() =
     when (this) {
         Label.Severity.Alert,
-        -> Icons.Rounded.Report
+        -> HeronIcons.Regular.Report
         Label.Severity.Inform,
         Label.Severity.None,
-        -> Icons.Rounded.Warning
+        -> HeronIcons.Regular.Warning
         null,
         -> null
     }
