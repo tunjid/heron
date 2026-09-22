@@ -104,7 +104,7 @@ fun PaneScaffoldState.PaneNavigationBar(
                     Modifier,
                     onNavItemReselected,
                 )
-                else appScaffoldState.PaneNavigationBar(
+                else appScaffoldState.PlatformNavigationBar(
                     modifier = Modifier,
                     onNavItemReselected = onNavItemReselected,
                 )
@@ -151,57 +151,52 @@ fun PaneScaffoldState.PaneNavigationRail(
 }
 
 @Composable
-internal fun AppScaffoldState.PaneNavigationBar(
-    modifier: Modifier = Modifier,
+internal fun AppScaffoldState.CommonNavigationBar(
+    modifier: Modifier,
     onNavItemReselected: () -> Boolean,
 ) = with(staticStates) {
-    LookaheadScope {
-        Surface(
-            modifier = modifier
+    Surface(
+        modifier = modifier
+            .fillMaxWidth(),
+        color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
+        contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
+        shape = navigationBarShape(identityState.prefersCompactBottomNav),
+    ) {
+        Row(
+            modifier = Modifier
+                .navigationBarsPadding()
                 .fillMaxWidth()
-                .animateBounds(
-                    lookaheadScope = this@LookaheadScope,
-                ),
-            color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
-            contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
-            shape = navigationBarShape(identityState.prefersCompactBottomNav),
-        ) {
-            Row(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .fillMaxWidth()
-                    .height(
-                        UiTokens.bottomNavHeight(
-                            isCompact = identityState.prefersCompactBottomNav,
-                        ),
+                .height(
+                    UiTokens.bottomNavHeight(
+                        isCompact = identityState.prefersCompactBottomNav,
                     ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                navItems.forEach { item ->
-                    NavigationBarItem(
-                        modifier = Modifier
-                            .weight(1f),
-                        icon = {
-                            BadgedBox(
-                                badge = {
-                                    Badge(item.badgeCount)
-                                },
-                                content = {
-                                    Icon(
-                                        imageVector = item.stack.icon,
-                                        contentDescription = stringResource(item.stack.titleRes),
-                                    )
-                                },
-                            )
-                        },
-                        enabled = identityState.isStable,
-                        selected = item.selected,
-                        onClick = {
-                            if (item.selected && onNavItemReselected()) return@NavigationBarItem
-                            onNavItemSelected(item)
-                        },
-                    )
-                }
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            navItems.forEach { item ->
+                NavigationBarItem(
+                    modifier = Modifier
+                        .weight(1f),
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                Badge(item.badgeCount)
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = item.stack.icon,
+                                    contentDescription = stringResource(item.stack.titleRes),
+                                )
+                            },
+                        )
+                    },
+                    enabled = identityState.isStable,
+                    selected = item.selected,
+                    onClick = {
+                        if (item.selected && onNavItemReselected()) return@NavigationBarItem
+                        onNavItemSelected(item)
+                    },
+                )
             }
         }
     }
