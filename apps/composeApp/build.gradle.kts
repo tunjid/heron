@@ -40,17 +40,9 @@ kotlin {
             isStatic = true
             export(project(":ui:scaffold"))
             export(project(":data:ml"))
-            // Kotlin/Native's DevirtualizationAnalysis phase OOMs on large
-            // (>100k LOC) codebases during the release link — the memory is
-            // consumed by ConstraintGraphBuilder. We also disable the
-            // downstream Devirtualization phase which would otherwise crash
-            // trying to apply missing analysis results. BuildDFG, DCEPhase,
-            // EscapeAnalysis and the rest still run normally, so we only
-            // lose devirtualization as an optimization (minor perf cost,
-            // marginally larger binary). Revisit after Kotlin 2.4.0 stable
-            // (see KT-80367) and a Compose Multiplatform release targeting it.
+            // Reduce RAM needed for building
             if (buildType == NativeBuildType.RELEASE) {
-                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization"
+                freeCompilerArgs += "-Xdisable-phases=DevirtualizationAnalysis,Devirtualization,RemoveRedundantCallsToStaticInitializersPhase"
             }
         }
     }
