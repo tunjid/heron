@@ -394,6 +394,7 @@ private fun HorizontalItems(
                     when (val media = item.media[page]) {
                         is GalleryItem.Media.Photo -> {
                             val zoomState = rememberGestureZoomState(
+                                panWithInertia = true,
                                 options = remember {
                                     Options(
                                         scale = Options.Scale.Layout,
