@@ -142,37 +142,56 @@ fun PaneScaffoldState.PaneFab(
             // Modifier.animateContentSize() on its row.
             PaneStickySharedElement(
                 modifier = Modifier
-                    .animateFabSize()
+                    .animateFabSize(
+                        alignment = Alignment.TopEnd,
+                    )
                     .then(modifier),
                 sharedContentState = sharedContentState,
                 zIndexInOverlay = UiTokens.fabSharedElementZIndex,
             ) {
-                FloatingActionButton(
+                PlatformFab(
                     modifier = Modifier
                         .requiredHeight(DefaultFabSize)
                         .graphicsLayer { alpha = fabAlpha.value },
+                    expanded = expanded,
+                    text = text,
+                    icon = icon,
                     onClick = { if (clickable) onClick() },
-                    shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
-                    content = {
-                        Row(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .animateFabSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (icon != null) FabIcon(icon)
-                            if (icon == null || expanded) {
-                                if (icon != null) Spacer(modifier = Modifier.width(8.dp))
-                                AnimatedContent(targetState = text) { text ->
-                                    Text(
-                                        text = text,
-                                        maxLines = 1,
-                                    )
-                                }
-                            }
-                        }
-                    },
                 )
+            }
+        },
+    )
+}
+
+@Composable
+internal fun CommonFab(
+    modifier: Modifier,
+    expanded: Boolean,
+    text: String,
+    icon: ImageVector?,
+    onClick: () -> Unit,
+) {
+    FloatingActionButton(
+        modifier = modifier,
+        onClick = onClick,
+        shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+        content = {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .animateFabSize(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (icon != null) FabIcon(icon)
+                if (icon == null || expanded) {
+                    if (icon != null) Spacer(modifier = Modifier.width(8.dp))
+                    AnimatedContent(targetState = text) { text ->
+                        Text(
+                            text = text,
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
         },
     )

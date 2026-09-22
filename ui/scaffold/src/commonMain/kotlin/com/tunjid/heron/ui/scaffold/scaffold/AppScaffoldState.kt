@@ -180,7 +180,7 @@ class AppScaffoldState internal constructor(
 
         internal val movableNavigationBar =
             movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
-                PaneNavigationBar(
+                PlatformNavigationBar(
                     modifier = modifier,
                     onNavItemReselected = onNavItemReselected,
                 )
