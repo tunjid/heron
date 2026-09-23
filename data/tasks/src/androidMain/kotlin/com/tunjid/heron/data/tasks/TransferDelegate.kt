@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.Flow
 internal interface TransferDelegate {
 
     suspend fun schedule(
-        task: Task.Download,
+        task: Task,
     )
 
     suspend fun cancelScheduled(

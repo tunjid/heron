@@ -82,6 +82,7 @@ interface AppGraph {
         routeStateHolderInitializers = routeStateHolderInitializers,
         backgroundTaskScheduler = backgroundTaskScheduler,
         backgroundTaskRunner = backgroundTaskRunner,
+        processScope = appMainScope,
     )
 
     val appState: AppState

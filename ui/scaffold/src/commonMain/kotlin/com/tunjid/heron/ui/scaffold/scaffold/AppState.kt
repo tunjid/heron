@@ -52,6 +52,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 
 /**
@@ -70,6 +71,7 @@ class AppState(
     internal val routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
     override val backgroundTaskScheduler: BackgroundTaskScheduler,
     override val backgroundTaskRunner: BackgroundTaskRunner,
+    override val processScope: CoroutineScope,
 ) : BackgroundTaskHost {
     var showPlatformSplashScreen by mutableStateOf(true)
         private set

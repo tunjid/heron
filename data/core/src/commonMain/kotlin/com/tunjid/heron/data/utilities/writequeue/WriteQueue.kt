@@ -254,7 +254,7 @@ internal class PersistedWriteQueue(
         writes: List<Writable>,
     ) {
         for (writable in writes) {
-            if (writable.shouldBeProcessedInBackground && backgroundTaskScheduler.backgroundsWrites) {
+            if (writable.shouldBeProcessedInBackground) {
                 backgroundTaskScheduler.enqueue(
                     Task.Write(
                         queueId = writable.queueId,

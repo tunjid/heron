@@ -17,16 +17,25 @@
 package com.tunjid.heron.data.tasks
 
 import android.content.Context
+import com.tunjid.heron.data.files.path
 import kotlinx.coroutines.flow.first
 
 internal suspend fun Context.runTransfer(
     id: TaskId,
-    onProgress: suspend (Task.Download, Progress) -> Unit,
+    onProgress: suspend (title: String, progress: Progress?) -> Unit,
 ): Result<Unit> {
-    val task = backgroundTaskScheduler.taskStore.pending
-        .first()
-        .firstOrNull { it.id == id } as? Task.Download
+    val title = when (
+        val task = backgroundTaskScheduler.taskStore.pending
+            .first()
+            .firstOrNull { it.id == id }
+    ) {
+        is Task.Download -> task.destination.path.name
+        is Task.Write, null -> WriteNotificationTitle
+    }
+    onProgress(title, null)
     return backgroundTaskRunner.run(id) { progress ->
-        if (task != null) onProgress(task, progress)
+        onProgress(title, progress)
     }
 }
+
+private const val WriteNotificationTitle = "Posting"

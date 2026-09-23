@@ -23,7 +23,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.tasks.KeyCompletedBytes
 import com.tunjid.heron.data.tasks.KeyTotalBytes
 import com.tunjid.heron.data.tasks.Progress
@@ -46,15 +45,15 @@ internal class TransferWorker(
         val id = TaskId(inputData.getString(KeyTaskId) ?: return Result.failure())
         val outcome = applicationContext.runTransfer(
             id = id,
-        ) { task, progress ->
+        ) { title, progress ->
             setForeground(
                 foregroundInfo(
                     id = id,
-                    title = task.destination.path.name,
+                    title = title,
                     progress = progress,
                 ),
             )
-            setProgress(progressData(progress))
+            if (progress != null) setProgress(progressData(progress))
         }
         return if (outcome.isSuccess) Result.success() else Result.failure()
     }
@@ -97,6 +96,6 @@ internal class TransferWorker(
 
     companion object {
         const val KeyTaskId = "taskId"
-        private const val DefaultTitle = "Download"
+        private const val DefaultTitle = "Working"
     }
 }
