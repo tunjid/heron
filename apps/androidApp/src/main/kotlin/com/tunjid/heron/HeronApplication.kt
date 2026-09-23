@@ -18,6 +18,7 @@ package com.tunjid.heron
 
 import android.app.Application
 import com.tunjid.heron.data.tasks.BackgroundTaskHost
+import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 
@@ -31,6 +32,9 @@ class HeronApplication :
 
     override val backgroundTaskScheduler: BackgroundTaskScheduler
         get() = appState.backgroundTaskScheduler
+
+    override val backgroundTaskRunner: BackgroundTaskRunner
+        get() = appState.backgroundTaskRunner
 
     override fun onCreate() {
         super.onCreate()

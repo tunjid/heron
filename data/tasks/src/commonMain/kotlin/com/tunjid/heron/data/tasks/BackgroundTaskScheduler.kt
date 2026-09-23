@@ -16,41 +16,19 @@
 
 package com.tunjid.heron.data.tasks
 
-import com.tunjid.heron.data.files.FileManager
-import com.tunjid.heron.data.logging.logcat
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * The single app-facing entry point for background work. It persists the tasks that have been asked
- * for (via [taskStore]) and hands execution to the platform.
+ * for (via [taskStore]) and hands scheduling to the platform. Execution itself belongs to a
+ * [BackgroundTaskRunner]; the scheduler only decides when and where the OS runs a task and reports
+ * its [status].
  */
 abstract class BackgroundTaskScheduler(
     internal val taskStore: TaskStore,
-    httpClient: HttpClient,
-    internal val fileManager: FileManager,
 ) {
-
-    internal val httpClient = httpClient.config {
-        installOrReplace(Logging) {
-            level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-                    logcat { "BackgroundTask: $message" }
-                }
-            }
-        }
-        installOrReplace(HttpTimeout) {
-            requestTimeoutMillis = 2.hours.inWholeMilliseconds
-        }
-    }
 
     val tasks: Flow<List<Task>>
         get() = taskStore.pending

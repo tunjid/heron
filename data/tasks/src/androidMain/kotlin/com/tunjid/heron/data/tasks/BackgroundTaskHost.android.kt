@@ -21,6 +21,9 @@ import android.content.Context
 internal val Context.backgroundTaskScheduler: BackgroundTaskScheduler
     get() = (applicationContext as BackgroundTaskHost).backgroundTaskScheduler
 
+internal val Context.backgroundTaskRunner: BackgroundTaskRunner
+    get() = (applicationContext as BackgroundTaskHost).backgroundTaskRunner
+
 /**
  * Byte-count keys a running transfer publishes as its [Progress]. Shared by both delegates so the
  * writer and reader agree: the WorkManager worker puts them in `WorkInfo.progress`
