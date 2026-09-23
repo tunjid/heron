@@ -48,6 +48,13 @@ sealed interface Writable {
      */
     val queueId: String
 
+    /**
+     * Whether this write should be handed to the platform's background task runner instead of being
+     * processed inline on the [WriteQueue] drain — for long, media-bearing writes that must survive
+     * the app being backgrounded. Computed, never persisted.
+     */
+    val shouldBeProcessedInBackground: Boolean get() = false
+
     suspend fun WriteQueue.write(): Outcome
 
     @Serializable
@@ -101,6 +108,9 @@ sealed interface Writable {
 
         override val queueId: String
             get() = "create-post-$request"
+
+        override val shouldBeProcessedInBackground: Boolean
+            get() = request.metadata.embeddedMedia.isNotEmpty()
 
         override suspend fun WriteQueue.write(): Outcome =
             postRepository.createPost(

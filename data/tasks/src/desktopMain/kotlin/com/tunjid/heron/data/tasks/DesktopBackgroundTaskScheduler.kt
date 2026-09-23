@@ -22,6 +22,8 @@ internal class DesktopBackgroundTaskScheduler(
     taskStore: TaskStore,
 ) : BackgroundTaskScheduler(taskStore) {
 
+    override val backgroundsWrites: Boolean get() = true
+
     override suspend fun schedule(
         task: Task,
     ) = DesktopBackgroundTaskService.run(task.id)

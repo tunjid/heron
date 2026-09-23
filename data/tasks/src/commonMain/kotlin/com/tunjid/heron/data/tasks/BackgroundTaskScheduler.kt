@@ -33,6 +33,11 @@ abstract class BackgroundTaskScheduler(
     val tasks: Flow<List<Task>>
         get() = taskStore.pending
 
+    open val backgroundsWrites: Boolean get() = false
+
+    /**
+     * Enqueues a task to run. This method is indempotent.
+     */
     suspend fun enqueue(
         task: Task,
     ) {

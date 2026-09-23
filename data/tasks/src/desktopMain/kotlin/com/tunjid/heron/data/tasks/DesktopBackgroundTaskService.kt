@@ -25,6 +25,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -47,6 +48,13 @@ object DesktopBackgroundTaskService {
         host: BackgroundTaskHost,
     ) {
         this.host = host
+        // Resume anything a previous run left pending; a killed process loses the coroutines, but the
+        // durable TaskStore does not. run() dedupes, so this is safe alongside the write queue's drain.
+        scope.launch {
+            host.backgroundTaskScheduler.taskStore.pending
+                .first()
+                .forEach { run(it.id) }
+        }
     }
 
     suspend fun run(

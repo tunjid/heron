@@ -24,6 +24,7 @@ import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.Task
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TaskStore
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
@@ -48,6 +49,7 @@ internal class GeneralBackgroundTaskRunner(
     private val taskStore: TaskStore,
     private val httpClient: HttpClient,
     private val fileManager: FileManager,
+    private val writeQueue: WriteQueue,
 ) : BackgroundTaskRunner {
 
     override suspend fun run(
@@ -75,6 +77,10 @@ internal class GeneralBackgroundTaskRunner(
                         onProgress = onProgress,
                     )
                 }
+                is Task.Write -> writeQueue.processInBackgroundOrThrow(
+                    queueId = task.queueId,
+                    profileId = task.profileId,
+                )
             }
             taskStore.remove(id)
             Result.success(Unit)
