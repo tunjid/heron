@@ -18,11 +18,9 @@ package com.tunjid.heron.data.tasks
 
 import android.content.Context
 import android.os.Build
-import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import com.tunjid.heron.data.tasks.uidt.UidtTransferDelegate
 import com.tunjid.heron.data.tasks.workmanager.WorkManagerTransferDelegate
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,9 +32,7 @@ import kotlinx.coroutines.flow.Flow
 class AndroidBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
-    httpClient: HttpClient,
-    fileManager: FileManager,
-) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
+) : BackgroundTaskScheduler(taskStore) {
 
     init {
         context.ensureChannel()
@@ -66,11 +62,7 @@ class AndroidBackgroundTaskScheduler(
 fun createBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
-    httpClient: HttpClient,
-    fileManager: FileManager,
 ): BackgroundTaskScheduler = AndroidBackgroundTaskScheduler(
     context = context.applicationContext,
     taskStore = taskStore,
-    httpClient = httpClient,
-    fileManager = fileManager,
 )

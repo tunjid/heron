@@ -16,25 +16,12 @@
 
 package com.tunjid.heron.data.tasks
 
-import kotlinx.coroutines.flow.Flow
-
-internal class DesktopBackgroundTaskScheduler(
-    taskStore: TaskStore,
-) : BackgroundTaskScheduler(taskStore) {
-
-    override suspend fun schedule(
-        task: Task,
-    ) = DesktopBackgroundTaskService.run(task.id)
-
-    override fun liveStatus(
+/**
+ * Executes a [Task] handed off out of band by the platform.
+ */
+interface BackgroundTaskRunner {
+    suspend fun run(
         id: TaskId,
-    ): Flow<TaskStatus.Running?> = DesktopBackgroundTaskService.liveStatus(id)
-
-    override suspend fun cancelScheduled(
-        id: TaskId,
-    ): Boolean = DesktopBackgroundTaskService.cancel(id)
+        onProgress: suspend (Progress) -> Unit,
+    ): Result<Unit>
 }
-
-fun createBackgroundTaskScheduler(
-    taskStore: TaskStore,
-): BackgroundTaskScheduler = DesktopBackgroundTaskScheduler(taskStore)

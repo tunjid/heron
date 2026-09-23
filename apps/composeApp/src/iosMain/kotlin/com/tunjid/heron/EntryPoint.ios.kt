@@ -89,8 +89,8 @@ fun createAppState(
                 ),
                 languageDetector = createLanguageDetector(Dispatchers.IO),
                 memoryMonitor = createMemoryMonitor(),
-                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
-                    NoOpBackgroundTaskScheduler(taskStore, httpClient, fileManager)
+                backgroundTaskScheduler = { taskStore ->
+                    NoOpBackgroundTaskScheduler(taskStore)
                 },
             )
         },

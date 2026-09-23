@@ -16,20 +16,12 @@
 
 package com.tunjid.heron.data.tasks
 
-import com.tunjid.heron.data.files.FileManager
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-/**
- * A [BackgroundTaskScheduler] that never runs anything — a placeholder for targets whose real
- * implementation has not been wired yet (currently Android and iOS).
- */
 class NoOpBackgroundTaskScheduler(
     taskStore: TaskStore,
-    httpClient: HttpClient,
-    fileManager: FileManager,
-) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
+) : BackgroundTaskScheduler(taskStore) {
 
     override suspend fun schedule(
         task: Task,

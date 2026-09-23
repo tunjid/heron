@@ -18,4 +18,5 @@ package com.tunjid.heron.data.tasks
 
 interface BackgroundTaskHost {
     val backgroundTaskScheduler: BackgroundTaskScheduler
+    val backgroundTaskRunner: BackgroundTaskRunner
 }
