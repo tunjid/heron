@@ -17,15 +17,17 @@
 package com.tunjid.heron
 
 import android.app.Application
-import com.tunjid.heron.data.tasks.BackgroundTaskHost
+import com.tunjid.heron.data.tasks.AndroidBackgroundTaskHost
+import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
 import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
+import com.tunjid.heron.ui.scaffold.R as ScaffoldR
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import kotlinx.coroutines.CoroutineScope
 
 class HeronApplication :
     Application(),
-    BackgroundTaskHost {
+    AndroidBackgroundTaskHost {
 
     // This needs to be lateinit instead of lazy to ensure it is
     // instantiated on the main thread
@@ -39,6 +41,12 @@ class HeronApplication :
 
     override val backgroundTaskRunner: BackgroundTaskRunner
         get() = appState.backgroundTaskRunner
+
+    override val backgroundTaskDescriptor: BackgroundTaskDescriptor
+        get() = appState.backgroundTaskDescriptor
+
+    override val notificationIcon: Int
+        get() = ScaffoldR.drawable.ic_heron_notification
 
     override fun onCreate() {
         super.onCreate()

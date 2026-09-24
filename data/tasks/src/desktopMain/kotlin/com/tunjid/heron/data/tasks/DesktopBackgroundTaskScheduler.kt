@@ -28,7 +28,7 @@ internal class DesktopBackgroundTaskScheduler(
 
     override suspend fun schedule(
         task: Task,
-    ) = DesktopBackgroundTaskService.scheduleOrLaunch(task.id)
+    ) = DesktopBackgroundTaskService.scheduleOrLaunch(task)
 
     override fun liveStatus(
         id: TaskId,

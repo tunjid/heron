@@ -62,15 +62,19 @@ abstract class SelfTrackingBackgroundTaskService {
         scope.launch {
             host.backgroundTaskScheduler.taskStore.pending
                 .first()
-                .forEach { scheduleOrLaunch(it.id) }
+                .forEach { scheduleOrLaunch(it) }
         }
     }
 
     protected open fun onInstalled() = Unit
 
     open suspend fun scheduleOrLaunch(
-        id: TaskId,
-    ) = launchInProcess(id)
+        task: Task,
+    ) = launchInProcess(task.id)
+
+    protected suspend fun describe(
+        task: Task,
+    ): TaskDescription = host.backgroundTaskDescriptor.describe(task)
 
     fun liveStatus(
         id: TaskId,

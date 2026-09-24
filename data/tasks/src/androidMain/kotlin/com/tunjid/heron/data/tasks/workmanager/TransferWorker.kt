@@ -26,9 +26,11 @@ import androidx.work.WorkerParameters
 import com.tunjid.heron.data.tasks.KeyCompletedBytes
 import com.tunjid.heron.data.tasks.KeyTotalBytes
 import com.tunjid.heron.data.tasks.Progress
+import com.tunjid.heron.data.tasks.TaskDescription
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
 import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
+import com.tunjid.heron.data.tasks.describeTransfer
 import com.tunjid.heron.data.tasks.runTransfer
 
 /**
@@ -45,11 +47,11 @@ internal class TransferWorker(
         val id = TaskId(inputData.getString(KeyTaskId) ?: return Result.failure())
         val outcome = applicationContext.runTransfer(
             id = id,
-        ) { title, progress ->
+        ) { description, progress ->
             setForeground(
                 foregroundInfo(
                     id = id,
-                    title = title,
+                    description = description,
                     progress = progress,
                 ),
             )
@@ -59,21 +61,23 @@ internal class TransferWorker(
     }
 
     // Required for expedited work: shown while WorkManager runs the request as a foreground service.
-    // A generic title until the first progress callback replaces it with the file name.
-    override suspend fun getForegroundInfo(): ForegroundInfo =
-        foregroundInfo(
-            id = TaskId(inputData.getString(KeyTaskId).orEmpty()),
-            title = DefaultTitle,
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        val id = TaskId(inputData.getString(KeyTaskId).orEmpty())
+        return foregroundInfo(
+            id = id,
+            description = applicationContext.describeTransfer(id),
             progress = null,
         )
+    }
 
     private fun foregroundInfo(
         id: TaskId,
-        title: String,
+        description: TaskDescription,
         progress: Progress?,
     ): ForegroundInfo {
         val notification = applicationContext.progressNotification(
-            title = title,
+            id = id,
+            description = description,
             progress = progress,
         )
         val notificationId = TransferNotifications.notificationId(id)
@@ -96,6 +100,5 @@ internal class TransferWorker(
 
     companion object {
         const val KeyTaskId = "taskId"
-        private const val DefaultTitle = "Working"
     }
 }

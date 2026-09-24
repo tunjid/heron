@@ -17,25 +17,38 @@
 package com.tunjid.heron.data.tasks
 
 import android.content.Context
-import com.tunjid.heron.data.files.path
+import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import kotlinx.coroutines.flow.first
 
 internal suspend fun Context.runTransfer(
     id: TaskId,
-    onProgress: suspend (title: String, progress: Progress?) -> Unit,
+    onProgress: suspend (description: TaskDescription, progress: Progress?) -> Unit,
 ): Result<Unit> {
-    val title = when (
-        val task = backgroundTaskScheduler.taskStore.pending
-            .first()
-            .firstOrNull { it.id == id }
-    ) {
-        is Task.Download -> task.destination.path.name
-        is Task.Write, null -> WriteNotificationTitle
-    }
-    onProgress(title, null)
+    val task = pendingTask(id)
+        ?: return Result.failure(IllegalStateException("No pending task for ${id.value}"))
+    ensureChannel()
+    val description = backgroundTaskDescriptor.describe(task)
+    onProgress(description, null)
     return backgroundTaskRunner.run(id) { progress ->
-        onProgress(title, progress)
+        onProgress(description, progress)
     }
 }
 
-private const val WriteNotificationTitle = "Posting"
+internal suspend fun Context.describeTransfer(
+    id: TaskId,
+): TaskDescription {
+    ensureChannel()
+    return pendingTask(id)
+        ?.let { backgroundTaskDescriptor.describe(it) }
+        ?: TaskDescription(
+            title = backgroundTaskDescriptor.channelName(),
+            subtitle = null,
+            destination = null,
+        )
+}
+
+private suspend fun Context.pendingTask(
+    id: TaskId,
+): Task? = backgroundTaskScheduler.taskStore.pending
+    .first()
+    .firstOrNull { it.id == id }

@@ -38,7 +38,7 @@ internal class IosBackgroundTaskScheduler(
 
     override suspend fun schedule(
         task: Task,
-    ) = IosBackgroundTaskService.scheduleOrLaunch(task.id)
+    ) = IosBackgroundTaskService.scheduleOrLaunch(task)
 
     override fun liveStatus(
         id: TaskId,
@@ -55,8 +55,9 @@ object IosBackgroundTaskService : SelfTrackingBackgroundTaskService() {
     private val registeredIdentifiers = mutableSetOf<String>()
 
     override suspend fun scheduleOrLaunch(
-        id: TaskId,
+        task: Task,
     ) {
+        val id = task.id
         if (!supportsContinuedProcessing) return launchInProcess(id)
         val identifier = taskIdentifier(id)
         // The OS blocks registering a single handler for the wildcard pattern; the wildcard in
@@ -66,10 +67,11 @@ object IosBackgroundTaskService : SelfTrackingBackgroundTaskService() {
             identifier = identifier,
             id = id,
         )
+        val description = describe(task)
         val request = BGContinuedProcessingTaskRequest(
             identifier = identifier,
-            title = ContinuedProcessingTitle,
-            subtitle = "",
+            title = description.title,
+            subtitle = description.subtitle.orEmpty(),
         )
         // If submission is declined (e.g. background scheduling is unavailable), fall back to
         // in-process so the task still runs.
@@ -116,7 +118,6 @@ object IosBackgroundTaskService : SelfTrackingBackgroundTaskService() {
 }
 
 private const val IdentifierPrefix = "com.tunjid.heron.tasks."
-private const val ContinuedProcessingTitle = "Posting"
 private const val MinimumContinuedProcessingMajorVersion = 26L
 
 // 16 hex chars (64 bits) of the id's SHA-256: collision-safe for the handful of concurrent tasks.

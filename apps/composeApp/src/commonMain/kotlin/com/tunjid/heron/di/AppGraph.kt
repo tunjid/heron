@@ -18,6 +18,7 @@ package com.tunjid.heron.di
 
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
 import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.media.images.ImageLoader
@@ -70,6 +71,7 @@ interface AppGraph {
         routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
         backgroundTaskScheduler: BackgroundTaskScheduler,
         backgroundTaskRunner: BackgroundTaskRunner,
+        backgroundTaskDescriptor: BackgroundTaskDescriptor,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -82,6 +84,7 @@ interface AppGraph {
         routeStateHolderInitializers = routeStateHolderInitializers,
         backgroundTaskScheduler = backgroundTaskScheduler,
         backgroundTaskRunner = backgroundTaskRunner,
+        backgroundTaskDescriptor = backgroundTaskDescriptor,
         processScope = appMainScope,
     )
 

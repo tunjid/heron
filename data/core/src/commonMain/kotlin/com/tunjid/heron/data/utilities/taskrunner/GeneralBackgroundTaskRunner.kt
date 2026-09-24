@@ -78,8 +78,7 @@ internal class GeneralBackgroundTaskRunner(
                     )
                 }
                 is Task.Write -> writeQueue.processInBackgroundOrThrow(
-                    queueId = task.queueId,
-                    profileId = task.profileId,
+                    task = task,
                 )
             }
             taskStore.remove(id)

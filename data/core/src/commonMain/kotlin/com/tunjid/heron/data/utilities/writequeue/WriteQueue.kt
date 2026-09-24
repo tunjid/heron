@@ -88,9 +88,12 @@ sealed class WriteQueue {
 
     abstract suspend fun drain()
 
+    abstract suspend fun backgroundWrite(
+        task: Task.Write,
+    ): Writable?
+
     abstract suspend fun processInBackgroundOrThrow(
-        queueId: String,
-        profileId: ProfileId,
+        task: Task.Write,
     )
 
     abstract suspend fun retry(
@@ -232,20 +235,24 @@ internal class PersistedWriteQueue(
             }
     }
 
+    override suspend fun backgroundWrite(
+        task: Task.Write,
+    ): Writable? = savedStateDataSource.inProfileSession(task.profileId) {
+        profileData.writes.pendingWrites.backgroundWrite(task)
+    }
+
     override suspend fun processInBackgroundOrThrow(
-        queueId: String,
-        profileId: ProfileId,
+        task: Task.Write,
     ) {
-        savedStateDataSource.inProfileSession(profileId) {
-            val writable = profileData.writes.pendingWrites
-                .firstOrNull { it.queueId == queueId }
+        savedStateDataSource.inProfileSession(task.profileId) {
+            val writable = profileData.writes.pendingWrites.backgroundWrite(task)
                 ?: return@inProfileSession
             concurrentWrite(writable).collect { (written, outcome) ->
-                onWriteOutcome(outcome, written, profileId)
+                onWriteOutcome(outcome, written, task.profileId)
             }
         }
             ?: throw IllegalStateException(
-                "No session for profile ${profileId.id}; background write $queueId was not processed",
+                "No session for profile ${task.profileId.id}; background write ${task.queueId} was not processed",
             )
     }
 
@@ -409,6 +416,12 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     updateProfileData(profileId) {
         copy(writes = writes.block())
     }
+}
+
+private fun List<Writable>.backgroundWrite(
+    task: Task.Write,
+): Writable? = firstOrNull { writable ->
+    writable.queueId == task.queueId && writable.shouldBeProcessedInBackground
 }
 
 private fun Writable.writeTimeout() =

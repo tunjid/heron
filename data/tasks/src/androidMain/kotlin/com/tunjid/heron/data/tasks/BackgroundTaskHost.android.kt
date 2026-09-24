@@ -17,12 +17,27 @@
 package com.tunjid.heron.data.tasks
 
 import android.content.Context
+import androidx.annotation.DrawableRes
+
+interface AndroidBackgroundTaskHost : BackgroundTaskHost {
+    @get:DrawableRes
+    val notificationIcon: Int
+}
+
+private val Context.backgroundTaskHost: AndroidBackgroundTaskHost
+    get() = applicationContext as AndroidBackgroundTaskHost
 
 internal val Context.backgroundTaskScheduler: BackgroundTaskScheduler
-    get() = (applicationContext as BackgroundTaskHost).backgroundTaskScheduler
+    get() = backgroundTaskHost.backgroundTaskScheduler
 
 internal val Context.backgroundTaskRunner: BackgroundTaskRunner
-    get() = (applicationContext as BackgroundTaskHost).backgroundTaskRunner
+    get() = backgroundTaskHost.backgroundTaskRunner
+
+internal val Context.backgroundTaskDescriptor: BackgroundTaskDescriptor
+    get() = backgroundTaskHost.backgroundTaskDescriptor
+
+internal val Context.backgroundTaskNotificationIcon: Int
+    get() = backgroundTaskHost.notificationIcon
 
 /**
  * Byte-count keys a running transfer publishes as its [Progress]. Shared by both delegates so the

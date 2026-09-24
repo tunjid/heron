@@ -16,11 +16,16 @@
 
 package com.tunjid.heron.data.tasks
 
-import kotlinx.coroutines.CoroutineScope
+interface BackgroundTaskDescriptor {
+    suspend fun describe(
+        task: Task,
+    ): TaskDescription
 
-interface BackgroundTaskHost {
-    val processScope: CoroutineScope
-    val backgroundTaskScheduler: BackgroundTaskScheduler
-    val backgroundTaskRunner: BackgroundTaskRunner
-    val backgroundTaskDescriptor: BackgroundTaskDescriptor
+    suspend fun channelName(): String
 }
+
+data class TaskDescription(
+    val title: String,
+    val subtitle: String?,
+    val destination: String?,
+)

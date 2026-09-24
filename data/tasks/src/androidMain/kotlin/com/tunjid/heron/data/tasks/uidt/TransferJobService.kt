@@ -50,7 +50,7 @@ class TransferJobService : JobService() {
         jobs[params.jobId] = scope.launch {
             val outcome = applicationContext.runTransfer(
                 id = id,
-            ) { title, progress ->
+            ) { description, progress ->
                 setNotification(
                     /* params = */
                     params,
@@ -58,7 +58,8 @@ class TransferJobService : JobService() {
                     TransferNotifications.notificationId(id),
                     /* notification = */
                     applicationContext.progressNotification(
-                        title = title,
+                        id = id,
+                        description = description,
                         progress = progress,
                     ),
                     /* jobEndNotificationPolicy = */

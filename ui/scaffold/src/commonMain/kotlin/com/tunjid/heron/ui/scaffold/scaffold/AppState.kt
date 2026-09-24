@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
 import com.tunjid.heron.data.tasks.BackgroundTaskHost
 import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
@@ -71,6 +72,7 @@ class AppState(
     internal val routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
     override val backgroundTaskScheduler: BackgroundTaskScheduler,
     override val backgroundTaskRunner: BackgroundTaskRunner,
+    override val backgroundTaskDescriptor: BackgroundTaskDescriptor,
     override val processScope: CoroutineScope,
 ) : BackgroundTaskHost {
     var showPlatformSplashScreen by mutableStateOf(true)
