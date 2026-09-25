@@ -18,7 +18,6 @@ package com.tunjid.heron.data.tasks
 
 import android.content.Context
 import android.os.Build
-import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import com.tunjid.heron.data.tasks.uidt.UidtTransferDelegate
 import com.tunjid.heron.data.tasks.workmanager.WorkManagerTransferDelegate
 import kotlinx.coroutines.flow.Flow
@@ -34,10 +33,6 @@ class AndroidBackgroundTaskScheduler(
     taskStore: TaskStore,
 ) : BackgroundTaskScheduler(taskStore) {
 
-    init {
-        context.ensureChannel()
-    }
-
     private val delegate: TransferDelegate =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) UidtTransferDelegate(
             context,
@@ -46,9 +41,7 @@ class AndroidBackgroundTaskScheduler(
 
     override suspend fun schedule(
         task: Task,
-    ) {
-        if (task is Task.Download) delegate.schedule(task)
-    }
+    ) = delegate.schedule(task)
 
     override fun liveStatus(
         id: TaskId,

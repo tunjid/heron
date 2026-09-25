@@ -16,22 +16,16 @@
 
 package com.tunjid.heron.data.tasks
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-
-class NoOpBackgroundTaskScheduler(
-    taskStore: TaskStore,
-) : BackgroundTaskScheduler(taskStore) {
-
-    override suspend fun schedule(
+interface BackgroundTaskDescriptor {
+    suspend fun describe(
         task: Task,
-    ) = Unit
+    ): TaskDescription
 
-    override fun liveStatus(
-        id: TaskId,
-    ): Flow<TaskStatus.Running?> = flowOf(null)
-
-    override suspend fun cancelScheduled(
-        id: TaskId,
-    ): Boolean = false
+    suspend fun channelName(): String
 }
+
+data class TaskDescription(
+    val title: String,
+    val subtitle: String?,
+    val destination: String?,
+)

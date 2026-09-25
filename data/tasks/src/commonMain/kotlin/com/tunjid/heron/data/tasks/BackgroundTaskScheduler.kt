@@ -20,12 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/**
- * The single app-facing entry point for background work. It persists the tasks that have been asked
- * for (via [taskStore]) and hands scheduling to the platform. Execution itself belongs to a
- * [BackgroundTaskRunner]; the scheduler only decides when and where the OS runs a task and reports
- * its [status].
- */
 abstract class BackgroundTaskScheduler(
     internal val taskStore: TaskStore,
 ) {
@@ -33,6 +27,9 @@ abstract class BackgroundTaskScheduler(
     val tasks: Flow<List<Task>>
         get() = taskStore.pending
 
+    /**
+     * Enqueues a task to run. This method is indempotent.
+     */
     suspend fun enqueue(
         task: Task,
     ) {

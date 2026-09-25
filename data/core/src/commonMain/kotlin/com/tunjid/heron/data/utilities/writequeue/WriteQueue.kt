@@ -32,8 +32,12 @@ import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.expiredSessionOutcome
 import com.tunjid.heron.data.repository.inCurrentProfileSession
+import com.tunjid.heron.data.repository.inProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
+import com.tunjid.heron.data.repository.updateSignedInProfileData
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
+import com.tunjid.heron.data.tasks.Task
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -84,6 +88,14 @@ sealed class WriteQueue {
 
     abstract suspend fun drain()
 
+    abstract suspend fun backgroundWrite(
+        task: Task.Write,
+    ): Writable?
+
+    abstract suspend fun processInBackgroundOrThrow(
+        task: Task.Write,
+    )
+
     abstract suspend fun retry(
         failedWrite: FailedWrite,
     ): Status
@@ -108,6 +120,7 @@ internal class PersistedWriteQueue(
     private val savedStateDataSource: SavedStateDataSource,
     override val notificationRepository: NotificationsRepository,
     override val recordRepository: RecordRepository,
+    private val backgroundTaskScheduler: BackgroundTaskScheduler,
 ) : WriteQueue() {
 
     private val processingWriteIds = mutableSetOf<String>()
@@ -205,24 +218,58 @@ internal class PersistedWriteQueue(
             }
     }
 
-    override suspend fun drain() = savedStateDataSource.onEachSignedInProfile {
+    override suspend fun drain() = savedStateDataSource.onEachSignedInProfile { profileId ->
         savedStateDataSource.signedInProfileWrites()
             .transform { writes ->
-                filterAndRecordNewWrites(writes)
+                filterAndRecordNewWrites(
+                    profileId = profileId,
+                    writes = writes,
+                )
             }
             .buffer()
             .flatMapMerge(concurrency = MaxConcurrentWrites) { writable ->
                 concurrentWrite(writable)
             }
             .collect { (writable, outcome) ->
-                onWriteOutcome(outcome, writable)
+                onWriteOutcome(outcome, writable, profileId)
             }
     }
 
+    override suspend fun backgroundWrite(
+        task: Task.Write,
+    ): Writable? = savedStateDataSource.inProfileSession(task.profileId) {
+        profileData.writes.pendingWrites.backgroundWrite(task)
+    }
+
+    override suspend fun processInBackgroundOrThrow(
+        task: Task.Write,
+    ) {
+        savedStateDataSource.inProfileSession(task.profileId) {
+            val writable = profileData.writes.pendingWrites.backgroundWrite(task)
+                ?: return@inProfileSession
+            concurrentWrite(writable).collect { (written, outcome) ->
+                onWriteOutcome(outcome, written, task.profileId)
+            }
+        }
+            ?: throw IllegalStateException(
+                "No session for profile ${task.profileId.id}; background write ${task.queueId} was not processed",
+            )
+    }
+
     private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(
+        profileId: ProfileId,
         writes: List<Writable>,
     ) {
         for (writable in writes) {
+            if (writable.shouldBeProcessedInBackground) {
+                backgroundTaskScheduler.enqueue(
+                    Task.Write(
+                        queueId = writable.queueId,
+                        profileId = profileId,
+                    ),
+                )
+                continue
+            }
             var inserted = false
             try {
                 inserted = maybeInsertIntoConcurrentProcessingQueue(writable)
@@ -253,6 +300,7 @@ internal class PersistedWriteQueue(
     private suspend fun onWriteOutcome(
         outcome: Outcome,
         writable: Writable,
+        profileId: ProfileId,
     ) {
         val failure = when (outcome) {
             is Outcome.Failure -> outcome.exception
@@ -274,7 +322,7 @@ internal class PersistedWriteQueue(
         }
 
         try {
-            savedStateDataSource.updateWrites {
+            savedStateDataSource.updateWrites(profileId) {
                 copy(
                     failedWrites = when {
                         failure != null && !shouldTryAgain ->
@@ -359,6 +407,21 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     updateSignedInProfileData { signedInProfileId ->
         copy(writes = writes.block(signedInProfileId))
     }
+}
+
+private suspend inline fun SavedStateDataSource.updateWrites(
+    profileId: ProfileId,
+    crossinline block: SavedState.Writes.() -> SavedState.Writes,
+) {
+    updateProfileData(profileId) {
+        copy(writes = writes.block())
+    }
+}
+
+private fun List<Writable>.backgroundWrite(
+    task: Task.Write,
+): Writable? = firstOrNull { writable ->
+    writable.queueId == task.queueId && writable.shouldBeProcessedInBackground
 }
 
 private fun Writable.writeTimeout() =

@@ -16,7 +16,11 @@
 
 package com.tunjid.heron.data.tasks
 
+import kotlinx.coroutines.CoroutineScope
+
 interface BackgroundTaskHost {
+    val processScope: CoroutineScope
     val backgroundTaskScheduler: BackgroundTaskScheduler
     val backgroundTaskRunner: BackgroundTaskRunner
+    val backgroundTaskDescriptor: BackgroundTaskDescriptor
 }

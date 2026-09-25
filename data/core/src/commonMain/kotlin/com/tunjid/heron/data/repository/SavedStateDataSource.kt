@@ -345,8 +345,9 @@ internal sealed class SavedStateDataSource {
         freshAuth: SavedState.AuthTokens.Authenticated,
     )
 
-    internal abstract suspend fun updateSignedInProfileData(
-        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+    internal abstract suspend fun updateProfileData(
+        profileId: ProfileId,
+        block: suspend SavedState.ProfileData.(profileId: ProfileId) -> SavedState.ProfileData,
     )
 
     internal abstract suspend fun updateTasks(
@@ -468,16 +469,16 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
-    override suspend fun updateSignedInProfileData(
-        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+    override suspend fun updateProfileData(
+        profileId: ProfileId,
+        block: suspend SavedState.ProfileData.(profileId: ProfileId) -> SavedState.ProfileData,
     ) = updateState {
-        val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
-        val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
+        val currentProfileData = profileData[profileId] ?: SavedState.ProfileData(
             notifications = SavedState.Notifications(),
             preferences = Preferences.EmptyPreferences,
             writes = SavedState.Writes(),
         )
-        val update = signedInProfileId to signedInProfileData.block(signedInProfileId)
+        val update = profileId to currentProfileData.block(profileId)
         copy(
             profileData = profileData + update,
         )
@@ -494,6 +495,13 @@ internal class DataStoreSavedStateDataSource(
     ) {
         dataStore.updateData(update)
     }
+}
+
+internal suspend fun SavedStateDataSource.updateSignedInProfileData(
+    block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+) {
+    val signedInProfileId = savedState.value.signedInProfileId ?: return
+    updateProfileData(signedInProfileId) { block(it) }
 }
 
 internal fun SavedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault(): Flow<Preferences> =
@@ -539,7 +547,7 @@ internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
  * Repeats [block] for each signed in user
  */
 internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
-    crossinline block: suspend () -> Unit,
+    crossinline block: suspend (ProfileId) -> Unit,
 ) = observedSignedInProfileId.collectLatest { profileId ->
     if (profileId == null) return@collectLatest
     val profileData = savedState.value.signedInProfileData ?: return@collectLatest
@@ -550,7 +558,7 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
             profileData = profileData,
         ),
     ) {
-        block()
+        block(profileId)
     }
 }
 

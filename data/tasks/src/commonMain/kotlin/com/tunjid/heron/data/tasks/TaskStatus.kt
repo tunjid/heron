@@ -16,28 +16,19 @@
 
 package com.tunjid.heron.data.tasks
 
-/**
- * The observable status of a [Task]. Only four states are definitively knowable across every
- * platform. Success is deliberately not one of them: a finished download is simply [NotFound]
- * with its output file present on disk.
- */
 sealed interface TaskStatus {
-    /** Present in the datastore: the task has been asked for. */
     data object Created : TaskStatus
 
-    /** The platform reports the task is actively running. */
     data class Running(
         val progress: Progress?,
     ) : TaskStatus
 
-    /** A terminal failure recorded in the datastore from a platform callback. */
     data class Failed(
         val reason: String?,
     ) : TaskStatus
 
     /**
-     * None of the above. The task may never have been created, or may have succeeded — in which
-     * case its output file is on disk.
+     * None of the above. The task may have never been created, or may have succeeded.
      */
     data object NotFound : TaskStatus
 }

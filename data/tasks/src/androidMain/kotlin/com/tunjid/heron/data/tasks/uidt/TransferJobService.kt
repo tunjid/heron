@@ -19,7 +19,6 @@ package com.tunjid.heron.data.tasks.uidt
 import android.app.job.JobParameters
 import android.app.job.JobService
 import androidx.annotation.RequiresApi
-import com.tunjid.heron.data.files.path
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TransferNotifications
 import com.tunjid.heron.data.tasks.TransferNotifications.progressNotification
@@ -51,7 +50,7 @@ class TransferJobService : JobService() {
         jobs[params.jobId] = scope.launch {
             val outcome = applicationContext.runTransfer(
                 id = id,
-            ) { task, progress ->
+            ) { description, progress ->
                 setNotification(
                     /* params = */
                     params,
@@ -59,7 +58,8 @@ class TransferJobService : JobService() {
                     TransferNotifications.notificationId(id),
                     /* notification = */
                     applicationContext.progressNotification(
-                        title = task.destination.path.name,
+                        id = id,
+                        description = description,
                         progress = progress,
                     ),
                     /* jobEndNotificationPolicy = */

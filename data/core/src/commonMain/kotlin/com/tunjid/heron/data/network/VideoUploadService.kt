@@ -26,6 +26,8 @@ import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.writequeue.WriteProgress
+import com.tunjid.heron.data.utilities.writequeue.reportingUploadProgress
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -48,12 +50,12 @@ import io.ktor.http.takeFrom
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.io.IOException
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
 
@@ -124,7 +126,7 @@ internal class SuspendingVideoUploadService(
                     }
                     bearerAuth(tokenResponse.token)
                     contentType(ContentType.Video.MP4)
-                    setBody(ByteReadChannel(source))
+                    setBody(ByteReadChannel(source.reportingUploadProgress(file = file)))
                     headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
                 }
             }
@@ -137,7 +139,7 @@ internal class SuspendingVideoUploadService(
                 }
         }.mapCatchingUnlessCancelled { uploadResponse ->
             repeat(MaxVideoUploadStatusCheckCount) {
-                runCatchingUnlessCancelled {
+                val jobStatus = runCatchingUnlessCancelled {
                     videoUploadClient.get(VideoStatusEndpoint) {
                         parameter(JobIdQueryParam, uploadResponse.jobId)
                     }
@@ -145,10 +147,15 @@ internal class SuspendingVideoUploadService(
                 }
                     .getOrNull()
                     ?.jobStatus
-                    ?.blob
-                    ?.let { processedBlob ->
-                        return@mapCatchingUnlessCancelled processedBlob
-                    }
+                jobStatus?.progress?.let { percent ->
+                    currentCoroutineContext()[WriteProgress]?.onProcessed(
+                        file = file,
+                        percent = percent,
+                    )
+                }
+                jobStatus?.blob?.let { processedBlob ->
+                    return@mapCatchingUnlessCancelled processedBlob
+                }
                 delay(MaxVideoUploadStatusCheckPollInterval)
             }
 
