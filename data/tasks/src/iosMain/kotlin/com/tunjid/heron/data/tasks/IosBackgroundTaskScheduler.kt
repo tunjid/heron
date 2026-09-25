@@ -94,7 +94,13 @@ object IosBackgroundTaskService : SelfTrackingBackgroundTaskService() {
             val continuedTask = task as? BGContinuedProcessingTask ?: return@registerForTaskWithIdentifier
             val job = scope.launch {
                 continuedTask.setTaskCompletedWithSuccess(
-                    success = runTracked(id).isSuccess,
+                    success = runTracked(
+                        id = id,
+                        onProgress = { progress ->
+                            continuedTask.progress.totalUnitCount = progress.totalBytes
+                            continuedTask.progress.completedUnitCount = progress.completedBytes
+                        },
+                    ).isSuccess,
                 )
             }
             continuedTask.expirationHandler = {

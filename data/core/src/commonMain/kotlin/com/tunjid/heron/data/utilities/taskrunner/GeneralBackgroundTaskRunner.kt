@@ -24,6 +24,7 @@ import com.tunjid.heron.data.tasks.Progress
 import com.tunjid.heron.data.tasks.Task
 import com.tunjid.heron.data.tasks.TaskId
 import com.tunjid.heron.data.tasks.TaskStore
+import com.tunjid.heron.data.utilities.writequeue.WriteProgress
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -37,7 +38,10 @@ import io.ktor.http.contentLength
 import io.ktor.utils.io.readAvailable
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.hours
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.HashingSource
 import okio.Source
 import okio.blackholeSink
@@ -77,8 +81,9 @@ internal class GeneralBackgroundTaskRunner(
                         onProgress = onProgress,
                     )
                 }
-                is Task.Write -> writeQueue.processInBackgroundOrThrow(
+                is Task.Write -> processWrite(
                     task = task,
+                    onProgress = onProgress,
                 )
             }
             taskStore.remove(id)
@@ -204,6 +209,25 @@ internal class GeneralBackgroundTaskRunner(
             source = partial,
             target = destination,
         )
+    }
+
+    private suspend fun processWrite(
+        task: Task.Write,
+        onProgress: suspend (Progress) -> Unit,
+    ) = coroutineScope {
+        val writeProgress = WriteProgress()
+        val reporting = launch {
+            writeProgress.updates.collect(onProgress)
+        }
+        try {
+            withContext(writeProgress) {
+                writeQueue.processInBackgroundOrThrow(
+                    task = task,
+                )
+            }
+        } finally {
+            reporting.cancel()
+        }
     }
 }
 

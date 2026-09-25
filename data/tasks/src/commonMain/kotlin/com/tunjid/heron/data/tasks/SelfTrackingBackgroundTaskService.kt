@@ -100,11 +100,9 @@ abstract class SelfTrackingBackgroundTaskService {
         scope.launch { runTracked(id) }
     }
 
-    /**
-     * Runs [id] on the current coroutine, registered in [jobs], so [cancel] can reach it.
-     */
     protected suspend fun runTracked(
         id: TaskId,
+        onProgress: (Progress) -> Unit = {},
     ): Result<Unit> {
         val job = currentCoroutineContext().job
         val started = mutex.withLock {
@@ -116,7 +114,10 @@ abstract class SelfTrackingBackgroundTaskService {
         return try {
             host.backgroundTaskRunner.run(
                 id = id,
-                onProgress = { progress -> progresses.update { it + (id to progress) } },
+                onProgress = { progress ->
+                    progresses.update { it + (id to progress) }
+                    onProgress(progress)
+                },
             )
         } finally {
             withContext(NonCancellable) {
