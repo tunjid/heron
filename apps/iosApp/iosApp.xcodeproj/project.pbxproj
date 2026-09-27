@@ -113,10 +113,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
+				A1856F7F3061E1C400149880 /* Generate Icons */,
 				F36B1CEB2AD83DDC00CB74D5 /* Compile Kotlin Framework */,
 				7555FF77242A565900829871 /* Sources */,
 				B92378962B6B1156000C7307 /* Frameworks */,
-				A1856F7F3061E1C400149880 /* Generate Icons */,
 				7555FF79242A565900829871 /* Resources */,
 			);
 			buildRules = (
@@ -192,6 +192,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/../../ui/icons/src/commonMain/valkyrieResources",
 			);
 			name = "Generate Icons";
 			outputFileListPaths = (

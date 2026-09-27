@@ -17,44 +17,38 @@
 package com.tunjid.heron.data.tasks
 
 import android.content.Context
-import kotlin.coroutines.cancellation.CancellationException
+import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import kotlinx.coroutines.flow.first
 
-/**
- * Runs the download for [id] on whichever OS component invoked it (worker or job service).
- */
 internal suspend fun Context.runTransfer(
     id: TaskId,
-    onProgress: suspend (Task.Download, Progress) -> Unit,
+    onProgress: suspend (description: TaskDescription, progress: Progress?) -> Unit,
 ): Result<Unit> {
-    val scheduler = backgroundTaskScheduler
-    val taskStore = scheduler.taskStore
-    val task = taskStore.pending
-        .first()
-        .firstOrNull { it.id == id } as? Task.Download
-        ?: return Result.failure(
-            IllegalStateException("No pending download for ${id.value}"),
-        )
-
-    return try {
-        onProgress(
-            task,
-            Progress(0L, task.sizeInBytes),
-        )
-        scheduler.download(
-            request = task,
-            authHeader = null, // TODO: resolve a gated-host bearer token (e.g. Hugging Face) at run time.
-            onProgress = { progress -> onProgress(task, progress) },
-        )
-        taskStore.remove(id)
-        Result.success(Unit)
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (throwable: Throwable) {
-        taskStore.markFailed(
-            id = id,
-            reason = throwable.message,
-        )
-        Result.failure(throwable)
+    val task = pendingTask(id)
+        ?: return Result.failure(IllegalStateException("No pending task for ${id.value}"))
+    ensureChannel()
+    val description = backgroundTaskDescriptor.describe(task)
+    onProgress(description, null)
+    return backgroundTaskRunner.run(id) { progress ->
+        onProgress(description, progress)
     }
 }
+
+internal suspend fun Context.describeTransfer(
+    id: TaskId,
+): TaskDescription {
+    ensureChannel()
+    return pendingTask(id)
+        ?.let { backgroundTaskDescriptor.describe(it) }
+        ?: TaskDescription(
+            title = backgroundTaskDescriptor.channelName(),
+            subtitle = null,
+            destination = null,
+        )
+}
+
+private suspend fun Context.pendingTask(
+    id: TaskId,
+): Task? = backgroundTaskScheduler.taskStore.pending
+    .first()
+    .firstOrNull { it.id == id }

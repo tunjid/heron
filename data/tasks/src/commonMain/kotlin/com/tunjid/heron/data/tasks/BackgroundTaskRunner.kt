@@ -16,28 +16,12 @@
 
 package com.tunjid.heron.data.tasks
 
-sealed interface TaskStatus {
-    data object Created : TaskStatus
-
-    data class Running(
-        val progress: Progress?,
-    ) : TaskStatus
-
-    data class Failed(
-        val reason: String?,
-    ) : TaskStatus
-
-    /**
-     * None of the above. The task may have never been created, or may have succeeded.
-     */
-    data object NotFound : TaskStatus
-}
-
-data class Progress(
-    val completedBytes: Long,
-    val totalBytes: Long,
-) {
-    /** Completion in `[0, 1]`, or `0` when the total size is unknown. */
-    val fraction: Float
-        get() = if (totalBytes <= 0L) 0f else (completedBytes.toFloat() / totalBytes).coerceIn(0f, 1f)
+/**
+ * Executes a [Task] handed off out of band by the platform.
+ */
+interface BackgroundTaskRunner {
+    suspend fun run(
+        id: TaskId,
+        onProgress: suspend (Progress) -> Unit,
+    ): Result<Unit>
 }

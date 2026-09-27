@@ -17,10 +17,6 @@
 package com.tunjid.heron.data.tasks
 
 import com.tunjid.heron.data.core.utilities.File
-import com.tunjid.heron.data.files.createFileManager
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respondOk
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,8 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import okio.FileSystem
-import okio.SYSTEM
 
 class BackgroundTaskSchedulerTest {
 
@@ -38,8 +32,6 @@ class BackgroundTaskSchedulerTest {
         destination = File.System("/tmp/heron/models/model.bin"),
         sizeInBytes = 100L,
     )
-
-    private val httpClient = HttpClient(MockEngine { respondOk() })
 
     @Test
     fun status_is_not_found_when_unknown() = runTest {
@@ -127,7 +119,6 @@ class BackgroundTaskSchedulerTest {
         cancelResult: Boolean = true,
     ): TestBackgroundTaskScheduler = TestBackgroundTaskScheduler(
         taskStore = store,
-        httpClient = httpClient,
         live = live,
         cancelResult = cancelResult,
     )
@@ -135,15 +126,10 @@ class BackgroundTaskSchedulerTest {
 
 private class TestBackgroundTaskScheduler(
     taskStore: TaskStore,
-    httpClient: HttpClient,
     private val live: MutableStateFlow<TaskStatus.Running?>,
     private val cancelResult: Boolean,
 ) : BackgroundTaskScheduler(
     taskStore = taskStore,
-    httpClient = httpClient,
-    fileManager = createFileManager(
-        fileSystem = FileSystem.SYSTEM,
-    ),
 ) {
 
     val scheduled = mutableListOf<Task>()

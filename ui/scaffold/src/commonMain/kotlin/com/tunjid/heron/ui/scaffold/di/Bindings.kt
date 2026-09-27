@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui.scaffold.di
 
+import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.AppIdentityStateHolder
@@ -28,6 +29,7 @@ import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.Notifier
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PredictiveBackContentTransformer
+import com.tunjid.heron.ui.scaffold.tasks.AppBackgroundTaskDescriptor
 import com.tunjid.heron.ui.scaffold.ui.AppUiStateHolder
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.treenav.strings.RouteMatcher
@@ -77,6 +79,13 @@ object ScaffoldBindings {
         args: ScaffoldBindingArgs,
     ): VideoPlayerController =
         args.videoPlayerController
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun backgroundTaskDescriptor(
+        descriptor: AppBackgroundTaskDescriptor,
+    ): BackgroundTaskDescriptor =
+        descriptor
 
     @Provides
     fun provideNavigationContentTransformer(): NavigationContentTransformer =

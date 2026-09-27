@@ -19,7 +19,11 @@ package com.tunjid.heron.data.tasks
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
 
@@ -28,27 +32,35 @@ internal object TransferNotifications {
 
     const val ChannelId = "heron.transfers"
 
-    fun Context.ensureChannel() {
-        val manager = getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(ChannelId) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(
-                    ChannelId,
-                    "Downloads",
-                    NotificationManager.IMPORTANCE_LOW,
-                ),
-            )
-        }
+    // Mirrors the in-app deep links AndroidNotifier builds in :ui:scaffold.
+    private const val DeepLinkActivity = "com.tunjid.heron.MainActivity"
+    private const val DeepLinkScheme = "at"
+
+    suspend fun Context.ensureChannel() {
+        getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(
+                ChannelId,
+                backgroundTaskDescriptor.channelName(),
+                NotificationManager.IMPORTANCE_LOW,
+            ),
+        )
     }
 
     fun Context.progressNotification(
-        title: String,
+        id: TaskId,
+        description: TaskDescription,
         progress: Progress?,
-    ): Notification {
-        this.ensureChannel()
-        return NotificationCompat.Builder(this, ChannelId)
-            .setContentTitle(title)
-            .setSmallIcon(android.R.drawable.stat_sys_download)
+    ): Notification =
+        NotificationCompat.Builder(this, ChannelId)
+            .setContentTitle(description.title)
+            .setContentText(description.subtitle)
+            .setSmallIcon(backgroundTaskNotificationIcon)
+            .setContentIntent(
+                contentIntent(
+                    id = id,
+                    destination = description.destination,
+                ),
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .apply {
@@ -67,9 +79,33 @@ internal object TransferNotifications {
                 }
             }
             .build()
+
+    private fun Context.contentIntent(
+        id: TaskId,
+        destination: String?,
+    ): PendingIntent? {
+        val intent = when (destination) {
+            null -> packageManager.getLaunchIntentForPackage(packageName)
+            else -> Intent().apply {
+                component = ComponentName(packageName, DeepLinkActivity)
+                data = Uri.Builder()
+                    .scheme(DeepLinkScheme)
+                    .path(destination)
+                    .build()
+            }
+        } ?: return null
+        return PendingIntent.getActivity(
+            /* context = */
+            this,
+            /* requestCode = */
+            notificationId(id),
+            /* intent = */
+            intent,
+            /* flags = */
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
-    /** A stable notification id per task, so progress updates replace rather than stack. */
     fun notificationId(
         id: TaskId,
     ): Int = id.value.hashCode()

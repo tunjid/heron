@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.tasks
 
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.File
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
@@ -45,6 +46,7 @@ sealed interface Task {
 
     enum class Kind {
         Transfer,
+        Write,
     }
 
     /**
@@ -64,5 +66,17 @@ sealed interface Task {
 
         override val kind: Kind
             get() = Kind.Transfer
+    }
+
+    @Serializable
+    data class Write(
+        val queueId: String,
+        val profileId: ProfileId,
+    ) : Task {
+        override val id: TaskId
+            get() = TaskId("write:${profileId.id}:$queueId")
+
+        override val kind: Kind
+            get() = Kind.Write
     }
 }

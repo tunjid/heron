@@ -18,11 +18,8 @@ package com.tunjid.heron.data.tasks
 
 import android.content.Context
 import android.os.Build
-import com.tunjid.heron.data.files.FileManager
-import com.tunjid.heron.data.tasks.TransferNotifications.ensureChannel
 import com.tunjid.heron.data.tasks.uidt.UidtTransferDelegate
 import com.tunjid.heron.data.tasks.workmanager.WorkManagerTransferDelegate
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,13 +31,7 @@ import kotlinx.coroutines.flow.Flow
 class AndroidBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
-    httpClient: HttpClient,
-    fileManager: FileManager,
-) : BackgroundTaskScheduler(taskStore, httpClient, fileManager) {
-
-    init {
-        context.ensureChannel()
-    }
+) : BackgroundTaskScheduler(taskStore) {
 
     private val delegate: TransferDelegate =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) UidtTransferDelegate(
@@ -50,9 +41,7 @@ class AndroidBackgroundTaskScheduler(
 
     override suspend fun schedule(
         task: Task,
-    ) {
-        if (task is Task.Download) delegate.schedule(task)
-    }
+    ) = delegate.schedule(task)
 
     override fun liveStatus(
         id: TaskId,
@@ -66,11 +55,7 @@ class AndroidBackgroundTaskScheduler(
 fun createBackgroundTaskScheduler(
     context: Context,
     taskStore: TaskStore,
-    httpClient: HttpClient,
-    fileManager: FileManager,
 ): BackgroundTaskScheduler = AndroidBackgroundTaskScheduler(
     context = context.applicationContext,
     taskStore = taskStore,
-    httpClient = httpClient,
-    fileManager = fileManager,
 )

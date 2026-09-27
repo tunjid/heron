@@ -29,7 +29,8 @@ import com.tunjid.heron.data.ml.engine.createFoundationModelsEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
 import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.repository.SavedStateEncryption
-import com.tunjid.heron.data.tasks.NoOpBackgroundTaskScheduler
+import com.tunjid.heron.data.tasks.IosBackgroundTaskService
+import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.data.utilities.inference.FoundationModelsManager
 import com.tunjid.heron.media.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
@@ -89,12 +90,12 @@ fun createAppState(
                 ),
                 languageDetector = createLanguageDetector(Dispatchers.IO),
                 memoryMonitor = createMemoryMonitor(),
-                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
-                    NoOpBackgroundTaskScheduler(taskStore, httpClient, fileManager)
+                backgroundTaskScheduler = { taskStore ->
+                    createBackgroundTaskScheduler(taskStore)
                 },
             )
         },
-    )
+    ).also(IosBackgroundTaskService::install)
 }
 
 /**

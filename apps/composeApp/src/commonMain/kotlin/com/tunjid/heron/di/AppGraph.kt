@@ -18,6 +18,8 @@ package com.tunjid.heron.di
 
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
+import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -68,6 +70,8 @@ interface AppGraph {
         sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
         routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
         backgroundTaskScheduler: BackgroundTaskScheduler,
+        backgroundTaskRunner: BackgroundTaskRunner,
+        backgroundTaskDescriptor: BackgroundTaskDescriptor,
     ): AppState = AppState(
         entryMap = entryMap,
         identityStateHolder = identityStateHolder,
@@ -79,6 +83,9 @@ interface AppGraph {
         sheetStateHolderInitializers = sheetStateHolderInitializers,
         routeStateHolderInitializers = routeStateHolderInitializers,
         backgroundTaskScheduler = backgroundTaskScheduler,
+        backgroundTaskRunner = backgroundTaskRunner,
+        backgroundTaskDescriptor = backgroundTaskDescriptor,
+        processScope = appMainScope,
     )
 
     val appState: AppState

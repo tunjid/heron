@@ -48,6 +48,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
+import com.tunjid.heron.timeline.utilities.mediaSummaryMessage
 import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -56,10 +57,6 @@ import heron.feature.tasks.generated.resources.Res
 import heron.feature.tasks.generated.resources.dismiss
 import heron.feature.tasks.generated.resources.failed_at
 import heron.feature.tasks.generated.resources.failed_reason_io
-import heron.feature.tasks.generated.resources.media_photos_multiple
-import heron.feature.tasks.generated.resources.media_photos_single
-import heron.feature.tasks.generated.resources.media_videos_multiple
-import heron.feature.tasks.generated.resources.media_videos_single
 import heron.feature.tasks.generated.resources.retry
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -156,10 +153,7 @@ private fun TaskCard(
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    val media = mediaSummary(
-                        photoCount = description.photoCount,
-                        videoCount = description.videoCount,
-                    )
+                    val media = description.mediaSummaryMessage
                     if (media != null) Text(
                         text = media,
                         style = MaterialTheme.typography.labelMedium,
@@ -236,28 +230,4 @@ private fun TaskIcon(
             )
         }
     }
-}
-
-@Composable
-private fun mediaSummary(
-    photoCount: Int,
-    videoCount: Int,
-): String? {
-    val parts = buildList {
-        if (photoCount > 0) add(
-            stringResource(
-                if (photoCount == 1) Res.string.media_photos_single
-                else Res.string.media_photos_multiple,
-                photoCount,
-            ),
-        )
-        if (videoCount > 0) add(
-            stringResource(
-                if (videoCount == 1) Res.string.media_videos_single
-                else Res.string.media_videos_multiple,
-                videoCount,
-            ),
-        )
-    }
-    return parts.takeIf(List<String>::isNotEmpty)?.joinToString(separator = " · ")
 }

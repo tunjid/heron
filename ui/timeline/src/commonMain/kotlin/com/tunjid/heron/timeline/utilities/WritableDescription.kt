@@ -1,5 +1,6 @@
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
@@ -38,6 +39,7 @@ import com.tunjid.heron.ui.icons.regular.Subscriptions
 import com.tunjid.heron.ui.icons.regular.Tune
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Memo.Resource
+import com.tunjid.heron.ui.text.message
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_description_accepting_conversation
 import heron.ui.timeline.generated.resources.writable_description_adding_to_list
@@ -51,6 +53,10 @@ import heron.ui.timeline.generated.resources.writable_description_following_star
 import heron.ui.timeline.generated.resources.writable_description_leaving_conversation
 import heron.ui.timeline.generated.resources.writable_description_liking_post
 import heron.ui.timeline.generated.resources.writable_description_linking_document
+import heron.ui.timeline.generated.resources.writable_description_media_photos_multiple
+import heron.ui.timeline.generated.resources.writable_description_media_photos_single
+import heron.ui.timeline.generated.resources.writable_description_media_videos_multiple
+import heron.ui.timeline.generated.resources.writable_description_media_videos_single
 import heron.ui.timeline.generated.resources.writable_description_muting_conversation
 import heron.ui.timeline.generated.resources.writable_description_muting_profile
 import heron.ui.timeline.generated.resources.writable_description_post_photo
@@ -83,6 +89,37 @@ data class WritableDescription(
     val photoCount: Int = 0,
     val videoCount: Int = 0,
 )
+
+val WritableDescription.mediaSummary: List<Memo>
+    get() = buildList {
+        if (photoCount > 0) add(
+            Resource(
+                stringResource = if (photoCount == 1) Res.string.writable_description_media_photos_single
+                else Res.string.writable_description_media_photos_multiple,
+                args = listOf(photoCount),
+            ),
+        )
+        if (videoCount > 0) add(
+            Resource(
+                stringResource = if (videoCount == 1) Res.string.writable_description_media_videos_single
+                else Res.string.writable_description_media_videos_multiple,
+                args = listOf(videoCount),
+            ),
+        )
+    }
+
+val WritableDescription.mediaSummaryMessage: String?
+    @Composable get() = mediaSummary
+        .map { it.message }
+        .joinMediaSummary()
+
+suspend fun WritableDescription.mediaSummaryMessage(): String? =
+    mediaSummary
+        .map { it.message() }
+        .joinMediaSummary()
+
+private fun List<String>.joinMediaSummary(): String? =
+    takeIf(List<String>::isNotEmpty)?.joinToString(separator = " · ")
 
 fun Writable.describe(): WritableDescription =
     when (this) {

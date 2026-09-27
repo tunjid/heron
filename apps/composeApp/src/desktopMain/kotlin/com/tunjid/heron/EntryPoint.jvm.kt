@@ -34,6 +34,7 @@ import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.createMemoryMonitor
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.repository.SavedStateEncryption
+import com.tunjid.heron.data.tasks.DesktopBackgroundTaskService
 import com.tunjid.heron.data.tasks.createBackgroundTaskScheduler
 import com.tunjid.heron.media.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
@@ -94,18 +95,13 @@ fun createAppState(): AppState =
                 memoryMonitor = createMemoryMonitor(
                     ioDispatcher = Dispatchers.IO,
                 ),
-                backgroundTaskScheduler = { taskStore, httpClient, fileManager ->
-                    createBackgroundTaskScheduler(
-                        scope = appMainScope,
-                        ioDispatcher = Dispatchers.IO,
-                        fileManager = fileManager,
-                        taskStore = taskStore,
-                        httpClient = httpClient,
-                    )
+                backgroundTaskScheduler = { taskStore ->
+                    createBackgroundTaskScheduler(taskStore)
                 },
             )
         },
     )
+        .also(DesktopBackgroundTaskService::install)
 
 private fun appDataDirectory(): File {
     val platform = Platform.current as JVMPlatform

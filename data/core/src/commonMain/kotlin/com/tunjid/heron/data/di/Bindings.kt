@@ -88,6 +88,7 @@ import com.tunjid.heron.data.repository.records.OfflineFirstRockskyRecordOperati
 import com.tunjid.heron.data.repository.records.OfflineFirstStandardSiteRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
+import com.tunjid.heron.data.tasks.BackgroundTaskRunner
 import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.data.tasks.TaskStore
 import com.tunjid.heron.data.utilities.TidGenerator
@@ -105,6 +106,7 @@ import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.taskrunner.GeneralBackgroundTaskRunner
 import com.tunjid.heron.data.utilities.taskstore.SavedStateTaskStore
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -157,8 +159,6 @@ class DataBindingArgs(
     val memoryMonitor: MemoryMonitor,
     val backgroundTaskScheduler: (
         taskStore: TaskStore,
-        httpClient: HttpClient,
-        fileManager: FileManager,
     ) -> BackgroundTaskScheduler,
 )
 
@@ -495,13 +495,13 @@ object DataBindings {
     fun provideBackgroundTaskScheduler(
         args: DataBindingArgs,
         taskStore: TaskStore,
-        httpClient: HttpClient,
-        fileManager: FileManager,
-    ): BackgroundTaskScheduler = args.backgroundTaskScheduler(
-        taskStore,
-        httpClient,
-        fileManager,
-    )
+    ): BackgroundTaskScheduler = args.backgroundTaskScheduler(taskStore)
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideBackgroundTaskRunner(
+        runner: GeneralBackgroundTaskRunner,
+    ): BackgroundTaskRunner = runner
 
     @SingleIn(AppScope::class)
     @Provides

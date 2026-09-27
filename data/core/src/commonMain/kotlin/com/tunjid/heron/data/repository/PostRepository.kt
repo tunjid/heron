@@ -100,6 +100,8 @@ import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
+import com.tunjid.heron.data.utilities.writequeue.WriteProgress
+import com.tunjid.heron.data.utilities.writequeue.reportingUploadProgress
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.request.prepareGet
@@ -113,6 +115,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -544,6 +547,7 @@ internal class OfflinePostRepository(
                 ),
             )
         }.toOutcome {
+            currentCoroutineContext()[WriteProgress]?.onPublished()
             // Only delete the uploaded media once the post has been created, so the
             // write can be safely retried with the source files intact if it fails.
             request.metadata.embeddedMedia.forEach { file ->
@@ -868,6 +872,16 @@ internal class OfflinePostRepository(
 
     private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
         runCatchingUnlessCancelled {
+            // Register every item before any upload starts, so the reported total never grows.
+            val writeProgress = currentCoroutineContext()[WriteProgress]
+            if (writeProgress != null) metadata.embeddedMedia.forEach { media ->
+                writeProgress.append(
+                    file = media,
+                    sizeInBytes = fileManager.size(media),
+                    // The video service encodes videos after upload.
+                    processedRemotely = media is File.Media.Video,
+                )
+            }
             val blobs = coroutineScope {
                 metadata.embeddedMedia.map { media ->
                     async {
@@ -908,10 +922,10 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
 
 context(fileManager: FileManager)
 private suspend fun NetworkService.uploadFileBlob(
-    file: File.Media,
+    file: File,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
     fileManager.source(file).use {
-        uploadBlob(ByteReadChannel(it))
+        uploadBlob(ByteReadChannel(it.reportingUploadProgress(file = file)))
             .map(UploadBlobResponse::blob)
     }
 }
