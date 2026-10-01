@@ -119,7 +119,7 @@ class ActualProfilesViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfileId = it?.did
@@ -127,7 +127,7 @@ private fun launchLoadSignedInProfileIdMutations(
 
 context(productionScope: CoroutineScope)
 internal fun Flow<Action.Tile>.launchProfilesLoadMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     load: Load,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
@@ -184,7 +184,7 @@ internal fun Flow<Action.Tile>.launchProfilesLoadMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -213,7 +213,7 @@ private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }

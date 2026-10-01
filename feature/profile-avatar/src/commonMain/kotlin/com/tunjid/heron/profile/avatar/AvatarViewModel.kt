@@ -105,7 +105,7 @@ class ActualProfileAvatarViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.profile(profileId).launchedCollect {
@@ -114,7 +114,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }

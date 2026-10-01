@@ -149,7 +149,7 @@ class InferenceViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchEngineStateMutations(
-    state: InferenceState.SnapshotMutable,
+    state: InferenceState.Mutable,
     inferenceEngine: InferenceEngine,
 ) = inferenceEngine.state.launchedCollect {
     state.engineState = it
@@ -157,7 +157,7 @@ private fun launchEngineStateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<InferenceAction.Translate>.launchTranslationMutations(
-    state: InferenceState.SnapshotMutable,
+    state: InferenceState.Mutable,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
@@ -185,7 +185,7 @@ private fun Flow<InferenceAction.Translate>.launchTranslationMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
-    state: InferenceState.SnapshotMutable,
+    state: InferenceState.Mutable,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,
@@ -245,7 +245,7 @@ private fun Flow<InferenceAction.Vibe>.launchVibeMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<InferenceAction.Tea>.launchTeaMutations(
-    state: InferenceState.SnapshotMutable,
+    state: InferenceState.Mutable,
     inferenceEngine: InferenceEngine,
     inferenceModelManager: InferenceModelManager,
     userDataRepository: UserDataRepository,

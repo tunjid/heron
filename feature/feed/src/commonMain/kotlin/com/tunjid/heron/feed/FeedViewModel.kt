@@ -147,7 +147,7 @@ class ActualFeedViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
@@ -155,7 +155,7 @@ private fun launchSignedInProfileIdMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -163,7 +163,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private suspend fun launchTimelineStateHolderMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     request: TimelineRequest,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
@@ -210,7 +210,7 @@ private suspend fun launchTimelineStateHolderMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -222,7 +222,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -241,7 +241,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -260,7 +260,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -272,21 +272,21 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 
 @OptIn(ExperimentalUuidApi::class)
 context(productionScope: CoroutineScope)
-private fun Flow<Action.ScrollToTop>.launchScrollToTopMutations(state: State.SnapshotMutable) =
+private fun Flow<Action.ScrollToTop>.launchScrollToTopMutations(state: State.Mutable) =
     launchedCollect {
         state.scrollToTopRequestId = Uuid.random().toString()
     }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -298,7 +298,7 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.launchFeedGeneratorStatusMuta
 
 context(productionScope: CoroutineScope)
 private fun launchTimelineCreatorMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timeline: Timeline,
     profileRepository: ProfileRepository,
 ) = timeline.withFeedTimelineOrNull { feedTimeline ->
@@ -311,7 +311,7 @@ private fun launchTimelineCreatorMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchFeedStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ) = timeline.withFeedTimelineOrNull { feedTimeline ->

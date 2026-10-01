@@ -78,7 +78,7 @@ class EmbeddableRecordOptionsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(
-    state: EmbeddableRecordOptionsState.SnapshotMutable,
+    state: EmbeddableRecordOptionsState.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
@@ -86,7 +86,7 @@ private fun launchLoadSignedInProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadRecentConversationsMutations(
-    state: EmbeddableRecordOptionsState.SnapshotMutable,
+    state: EmbeddableRecordOptionsState.Mutable,
     messageRepository: MessageRepository,
 ) = messageRepository.recentConversations()
     .launchedCollect { state.recentConversations = it }

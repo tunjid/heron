@@ -96,7 +96,7 @@ class AppNotificationStateHolder(
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.launchMonitorUnreadCountMutations(
-    state: NotificationState.SnapshotMutable,
+    state: NotificationState.Mutable,
     notificationsRepository: NotificationsRepository,
     messageRepository: MessageRepository,
 ) = distinctUntilChanged()
@@ -117,14 +117,14 @@ private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.launchMoni
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.UpdatePermissions>.launchUpdateNotificationPermissions(
-    state: NotificationState.SnapshotMutable,
+    state: NotificationState.Mutable,
 ) = launchedCollect {
     state.hasNotificationPermissions = it.hasNotificationPermissions
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.RegisterToken>.launchRegisterTokenMutations(
-    state: NotificationState.SnapshotMutable,
+    state: NotificationState.Mutable,
     notificationsRepository: NotificationsRepository,
 ) = launchedCollectLatest { action ->
     // TODO: This should be enqueued, but the write queue does not currently
@@ -146,7 +146,7 @@ private fun Flow<NotificationAction.RegisterToken>.launchRegisterTokenMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.HandleNotification>.launchHandleNotificationMutations(
-    state: NotificationState.SnapshotMutable,
+    state: NotificationState.Mutable,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ) = buffer(NotificationProcessingBufferSize)
@@ -203,7 +203,7 @@ private fun Flow<NotificationAction.NotificationDismissed>.launchNotificationDis
 
 context(productionScope: CoroutineScope)
 private fun Flow<NotificationAction.NotificationProcessedOrDropped>.launchNotificationProcessedOrDroppedMutations(
-    state: NotificationState.SnapshotMutable,
+    state: NotificationState.Mutable,
 ) = launchedCollect { action ->
     state.processedNotificationRecordUris -= action.recordUri
 }

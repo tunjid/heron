@@ -129,7 +129,7 @@ class ActualInferenceViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchEngineStatesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     inferenceEngine: InferenceEngine,
 ) {
     inferenceEngine.state
@@ -140,7 +140,7 @@ private fun launchEngineStatesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchModelStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     inferenceModelManager: InferenceModelManager,
     platformMemoryBytes: Long,
 ) {
@@ -164,7 +164,7 @@ private fun launchModelStatusMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) {
     userDataRepository.preferences

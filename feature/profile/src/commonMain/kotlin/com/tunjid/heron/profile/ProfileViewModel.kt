@@ -231,7 +231,7 @@ class ActualProfileViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -239,7 +239,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchInferenceCapabilityMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     inferenceModelManager: InferenceModelManager,
 ) = inferenceModelManager.source.launchedCollect { capability ->
     state.canRunInference = capability.isAvailable
@@ -247,7 +247,7 @@ private fun launchInferenceCapabilityMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchSubscribedLabelerMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
 ) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
     state.subscribedLabelers = labelers
@@ -255,7 +255,7 @@ private fun launchSubscribedLabelerMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchCommonFollowerMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.commonFollowers(
@@ -267,7 +267,7 @@ private fun launchCommonFollowerMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     viewModelScope: CoroutineScope,
     writeQueue: WriteQueue,
@@ -363,7 +363,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchProfileRelationshipMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.profileRelationships(setOf(profileId)).launchedCollect {
@@ -372,7 +372,7 @@ private fun launchProfileRelationshipMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchSupportedAppMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.supportedApps(profileId).launchedCollect {
@@ -381,7 +381,7 @@ private fun launchSupportedAppMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchFeedGeneratorUrisToStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
     .distinctUntilChangedBy { it.timelinePreferences }
@@ -410,7 +410,7 @@ private fun Action.Block.toBlockWritable(): Writable.Restriction =
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Block>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -437,7 +437,7 @@ private fun Action.Mute.toMuteWritable(): Writable.Restriction =
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Mute>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -463,7 +463,7 @@ private fun Action.UpdateLiveStatus.toLiveStatusWritable(): Writable.StatusUpdat
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateLiveStatus>.launchLiveStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -475,14 +475,14 @@ private fun Flow<Action.UpdateLiveStatus>.launchLiveStatusMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -503,7 +503,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -532,7 +532,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -544,7 +544,7 @@ private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdatePreferences>.launchFeedGeneratorStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -669,7 +669,7 @@ private fun CoroutineScope.labelerSettingsStateHolder(
 
 context(productionScope: CoroutineScope)
 private fun launchSubscribedLabelerSettingMutations(
-    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.Mutable,
     profileId: ProfileId,
     recordRepository: RecordRepository,
 ) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
@@ -678,7 +678,7 @@ private fun launchSubscribedLabelerSettingMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLabelSettingMutations(
-    state: ProfileScreenStateHolders.LabelerSettings.Settings.SnapshotMutable,
+    state: ProfileScreenStateHolders.LabelerSettings.Settings.Mutable,
     profileId: ProfileId,
     timelineRepository: TimelineRepository,
     recordRepository: RecordRepository,

@@ -208,7 +208,7 @@ class ActualComposeViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
@@ -216,7 +216,7 @@ private fun launchLoadSignedInProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchInteractionSettingsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.interactionsPreference = it.postInteractionSettings
@@ -224,7 +224,7 @@ private fun launchInteractionSettingsMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchPostLanguageDefaultMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect { preferences ->
     if (state.postLanguages.isEmpty() && !state.languagesManuallySet) {
@@ -237,7 +237,7 @@ private fun launchPostLanguageDefaultMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchPostLanguageDetectionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     languageDetector: LanguageDetector,
 ) = snapshotFlow { state.postText.text }
     .debounce(500.milliseconds)
@@ -255,7 +255,7 @@ private fun launchPostLanguageDetectionMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchEmbeddedRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     embeddedRecordUri: EmbeddableRecordUri?,
     recordRepository: RecordRepository,
 ) {
@@ -268,7 +268,7 @@ private fun launchEmbeddedRecordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UriDetected>.launchEmbedUrlMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
 ) = debounce(400.milliseconds)
     .launchedCollectLatest { action ->
@@ -290,21 +290,21 @@ private fun Flow<Action.UriDetected>.launchEmbedUrlMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.PostTextChanged>.launchPostTextMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.postText = action.textFieldValue
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetFabExpanded>.launchFabExpansionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.fabExpanded = action.expanded
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetPostLanguages>.launchPostLanguageMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.postLanguages = action.languages
     state.languagesManuallySet = true
@@ -312,14 +312,14 @@ private fun Flow<Action.SetPostLanguages>.launchPostLanguageMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.RemoveDetectedUri>.launchRemoveDetectedUriMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     when (action.uri) {
         state.embeddedRecord?.embeddableRecordUri -> state.embeddedRecord = null
@@ -331,14 +331,14 @@ private fun Flow<Action.RemoveDetectedUri>.launchRemoveDetectedUriMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateInteractionSettings>.launchUpdateInteractionSettingsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.interactionsPreference = action.interactionSettingsPreference
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.EditMedia>.launchEditMediaMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     fileManager: FileManager,
 ) = launchedCollect { action ->
     // Invoke in IO context as creating media items may perform IO
@@ -387,7 +387,7 @@ private fun Flow<Action.EditMedia>.launchEditMediaMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.CreatePost>.launchCreatePostMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     userDataRepository: UserDataRepository,
@@ -432,7 +432,7 @@ private fun Flow<Action.CreatePost>.launchCreatePostMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
@@ -479,7 +479,7 @@ private fun Flow<Action.SaveDraft>.launchSaveDraftMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.LoadDraft>.launchLoadDraftMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.draftId = action.draft.id
     state.postLanguages = action.draft.langs
@@ -530,7 +530,7 @@ private suspend fun composeRequest(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchProfiles>.launchSearchMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileRepository: ProfileRepository,
 ) = debounce(SEARCH_DEBOUNCE)
     .launchedCollectLatest { action ->
@@ -551,7 +551,7 @@ private fun Flow<Action.SearchProfiles>.launchSearchMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ClearSuggestions>.launchClearSuggestionsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect {
     state.suggestedProfiles = emptyList()
 }

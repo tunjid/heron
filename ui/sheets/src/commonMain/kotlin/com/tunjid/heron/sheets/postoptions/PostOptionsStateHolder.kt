@@ -95,7 +95,7 @@ class PostOptionsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: PostOptionsState.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
@@ -105,7 +105,7 @@ private fun launchLoadSignedInProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchUpdateRecentConversionsMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: PostOptionsState.Mutable,
     messageRepository: MessageRepository,
 ) = messageRepository.recentConversations()
     .launchedCollect {
@@ -114,7 +114,7 @@ private fun launchUpdateRecentConversionsMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<PostOptionsAction.UpdatePostReference>.launchUpdatePostReferenceMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: PostOptionsState.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -125,7 +125,7 @@ private fun Flow<PostOptionsAction.UpdatePostReference>.launchUpdatePostReferenc
 
 context(productionScope: CoroutineScope)
 private fun Flow<PostOptionsAction.SendFeedInteraction>.launchSendFeedInteractionMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: PostOptionsState.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -136,7 +136,7 @@ private fun Flow<PostOptionsAction.SendFeedInteraction>.launchSendFeedInteractio
 
 context(productionScope: CoroutineScope)
 private fun Flow<PostOptionsAction.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: PostOptionsState.SnapshotMutable,
+    state: PostOptionsState.Mutable,
 ) = launchedCollect {
     state.messages -= it.message
 }

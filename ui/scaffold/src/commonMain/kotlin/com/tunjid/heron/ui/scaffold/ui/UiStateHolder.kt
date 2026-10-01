@@ -44,21 +44,21 @@ class AppUiStateHolder(
 
 context(productionScope: CoroutineScope)
 private fun Flow<UiAction.UpdateDismissBehavior>.launchDismissBehaviorMutations(
-    state: UiState.SnapshotMutable,
+    state: UiState.Mutable,
 ) = launchedCollectLatest {
     state.dismissBehavior = it.dismissBehavior
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<UiAction.UpdatePaneAnchor>.launchPaneAnchorMutations(
-    state: UiState.SnapshotMutable,
+    state: UiState.Mutable,
 ) = launchedCollectLatest {
     state.currentPaneAnchor = it.paneAnchor
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<UiAction.UpdateRouteImmersion>.launchRouteImmersionMutations(
-    state: UiState.SnapshotMutable,
+    state: UiState.Mutable,
 ) = launchedCollectLatest {
     when (it) {
         is UiAction.UpdateRouteImmersion.Immersive -> state.immersiveRouteIds += it.route.id
