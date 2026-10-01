@@ -45,4 +45,6 @@ internal data class OAuthParRequest(
     val state: String,
     @SerialName("login_hint")
     val loginHint: String? = null,
+    @SerialName("prompt")
+    val prompt: String? = null,
 )
