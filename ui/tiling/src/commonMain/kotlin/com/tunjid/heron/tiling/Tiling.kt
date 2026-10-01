@@ -150,10 +150,7 @@ fun <Query : CursorQuery> TilingState<Query, *>.seed(
     updateQueryData: Query.(CursorQuery.Data) -> Query,
 ) {
     cursors ?: return
-    val tilingData = tilingData
-    check(tilingData is TilingState.Data.SnapshotMutable) {
-        "Tiling state must be snapshot mutable"
-    }
+    val tilingData = tilingData.requireMutable()
     // Resume from the origin timeline's anchor so the seeded page cursors line up with the
     // queries this pipeline will issue (same cursorAnchor across the generation).
     tilingData.currentQuery = tilingData.currentQuery.updateQueryData(cursors.anchorData)
@@ -166,10 +163,8 @@ fun <Query : CursorQuery> TilingState<Query, *>.seed(
 }
 
 inline fun <reified Query : CursorQuery, reified Item> TilingState.Data<Query, Item>.withRefreshedStatus(): TilingState.Data<Query, Item> {
-    check(this is TilingState.Data.SnapshotMutable<Query, Item>)
-    return update(
-        status = refreshedStatus(),
-    )
+    requireMutable().status = refreshedStatus()
+    return this
 }
 
 inline fun <reified Query : CursorQuery, reified Item, State : TilingState<Query, Item>> State.updateItems(
@@ -182,8 +177,7 @@ inline fun <reified Query : CursorQuery, reified Item, State : TilingState<Query
 inline fun <reified Query : CursorQuery, reified Item> TilingState.Data<Query, Item>.updateItems(
     block: TilingState.Data<Query, Item>.() -> TiledList<Query, Item>,
 ): TilingState.Data<Query, Item> {
-    check(this is TilingState.Data.SnapshotMutable<Query, Item>)
-    items = block()
+    requireMutable().items = block()
 
     return this
 }
@@ -193,11 +187,19 @@ fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() 
         cursorAnchor = currentQuery.data.cursorAnchor,
     )
 
+@PublishedApi
+internal fun <Query : CursorQuery, Item> TilingState.Data<Query, Item>.requireMutable(): TilingState.Data.Mutable<Query, Item> {
+    check(this is TilingState.Data.Mutable<Query, Item>) {
+        "Tiling state must be mutable"
+    }
+    return this
+}
+
 /**
  * Feed mutations as a function of the user's scroll position.
  *
  * The function launches a coroutine in [productionScope] that mutates
- * `currentState().tilingData` (which must be a [TilingState.Data.SnapshotMutable]) directly via
+ * `currentState().tilingData` (which must be a [TilingState.Data.Mutable]) directly via
  * Compose snapshot writes. The call returns immediately so the caller's producer block does not
  * stall.
  *
@@ -221,10 +223,7 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
 ) {
     productionScope.launch {
         // Read the starting state at the time of subscription
-        val startingState: TilingState.Data<Query, Item> = state.tilingData
-        check(startingState is TilingState.Data.SnapshotMutable) {
-            "Tiling state must be snapshot mutable"
-        }
+        val startingState = state.tilingData.requireMutable()
         // The registry lives on the tiling state, so every feature gets no-downgrade paging and
         // resume handoff without per-caller wiring.
         val cursorCache = startingState.cursorCache
@@ -287,7 +286,7 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                         startingState.currentQuery = newQuery
                     }
                     numColumns.launchedCollect {
-                        startingState.update(numColumns = it)
+                        startingState.numColumns = it
                     }
                     refreshes
                         .withIndex()
@@ -327,20 +326,18 @@ inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>>
                                 // receiver, so callers can read live snapshot-state fields
                                 // race-free with other producer-scope writers.
                                 val toCommit = with(state) { onWriteItems(deduped) }
-                                startingState.update(
-                                    items = toCommit,
-                                    status = when {
-                                        isRefreshedOnNewItems && items.isNotEmpty() -> {
-                                            val fetchedQuery = items.queryAt(0)
-                                            if (fetchedQuery.hasDifferentAnchor(startingState.currentQuery)) startingState.status
-                                            else TilingState.Status.Refreshed(
-                                                cursorAnchor = fetchedQuery.data.cursorAnchor,
-                                            )
-                                        }
+                                startingState.items = toCommit
+                                startingState.status = when {
+                                    isRefreshedOnNewItems && items.isNotEmpty() -> {
+                                        val fetchedQuery = items.queryAt(0)
+                                        if (fetchedQuery.hasDifferentAnchor(startingState.currentQuery)) startingState.status
+                                        else TilingState.Status.Refreshed(
+                                            cursorAnchor = fetchedQuery.data.cursorAnchor,
+                                        )
+                                    }
 
-                                        else -> startingState.status
-                                    },
-                                )
+                                    else -> startingState.status
+                                }
                             }
                         }
                 }

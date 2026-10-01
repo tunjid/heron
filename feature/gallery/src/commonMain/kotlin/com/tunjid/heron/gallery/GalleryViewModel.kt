@@ -189,7 +189,7 @@ class ActualGalleryViewModel(
 
 context(productionScope: CoroutineScope)
 private suspend fun launchLoadPostMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
@@ -214,7 +214,7 @@ private suspend fun launchLoadPostMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -222,7 +222,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInProfileIdMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfileId = it?.did
@@ -230,7 +230,7 @@ private fun launchLoadSignedInProfileIdMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchProfileRelationshipMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
 ) = profileRepository.profileRelationships(setOf(profileId))
@@ -246,7 +246,7 @@ private fun launchProfileRelationshipMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -258,7 +258,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -277,7 +277,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -296,7 +296,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -325,7 +325,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -351,7 +351,7 @@ private fun Action.SendReply.toReplyWritable(): Writable.Create =
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SendReply>.launchSendReplyMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -364,14 +364,14 @@ private fun Flow<Action.SendReply>.launchSendReplyMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.LoadComments>.launchLoadCommentsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
 ) = launchedCollectLatest { action ->
@@ -408,7 +408,7 @@ private fun Flow<Action.LoadComments>.launchLoadCommentsMutations(
 
 context(productionScope: CoroutineScope)
 private suspend fun launchVerticalTimelineMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,

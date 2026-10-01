@@ -139,7 +139,7 @@ class ActualTasksViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadInFlightWrites(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
@@ -165,7 +165,7 @@ private fun launchLoadInFlightWrites(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadFailedWrites(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
@@ -198,7 +198,7 @@ private fun Flow<Action.Retry>.launchRetryMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Dismiss>.launchDismissMutations(
     writeQueue: WriteQueue,
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     if (writeQueue.dismiss(action.failedWrite) is Outcome.Failure) {
         state.messages += Memo.Resource(Res.string.dismiss_failed)
@@ -207,7 +207,7 @@ private fun Flow<Action.Dismiss>.launchDismissMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }

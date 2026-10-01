@@ -61,7 +61,7 @@ jna = "5.18.1"
 gstreamer-java = "1.4.0"
 tink = "1.23.0"
 aboutLibraries = "15.2.0"
-snapshottable = "0.1.5"
+snapshottable = "0.1.6"
 valkyrie = "0.5.2"
 
 

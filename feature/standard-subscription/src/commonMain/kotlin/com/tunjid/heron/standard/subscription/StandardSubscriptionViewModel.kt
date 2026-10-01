@@ -103,7 +103,7 @@ class ActualStandardSubscriptionViewModel(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchSubscriptionLoadMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
 ) = map { it.tilingAction }
     .launchTilingMutations(
@@ -116,7 +116,7 @@ private fun Flow<Action.Tile>.launchSubscriptionLoadMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -137,7 +137,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }

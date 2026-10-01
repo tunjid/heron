@@ -146,7 +146,7 @@ class ActualSignInViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchIsSignedInMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.isSignedIn
     .launchedCollect {
@@ -155,7 +155,7 @@ private fun launchIsSignedInMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchPastSessionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.pastSessions
     .launchedCollect { pastSessions ->
@@ -173,7 +173,7 @@ private fun launchPastSessionMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchAuthDeeplinkMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     authRepository: AuthRepository,
 ) = flow<Unit> {
@@ -197,7 +197,7 @@ private fun launchAuthDeeplinkMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FieldChanged>.launchFormEditMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) {
     val shared = shareIn(
@@ -232,7 +232,7 @@ private fun Flow<Action.FieldChanged>.launchFormEditMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetServer>.launchSetServerMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { (server) ->
     state.isServerResolvedFromHandle = false
     state.selectedServer = server
@@ -247,14 +247,14 @@ private fun Flow<Action.SetServer>.launchSetServerMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.OauthAvailabilityChanged>.launchOauthAvailabilityChangedMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { (isOauthAvailable) ->
     state.isOauthAvailable = isOauthAvailable
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.OauthFlowResultAvailable>.launchOauthFlowResultMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = launchedCollectLatest { action ->
     when (val result = action.result) {
@@ -277,7 +277,7 @@ private fun Flow<Action.OauthFlowResultAvailable>.launchOauthFlowResultMutations
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BeginOauthFlow>.launchBeginOauthMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = launchedCollectLatest {
     val result = authRepository.oauthRequestUri(
@@ -301,14 +301,14 @@ private fun Flow<Action.BeginOauthFlow>.launchBeginOauthMutations(
  */
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MessageConsumed>.launchMessageConsumptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { (message) ->
     state.messages -= message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePasswordPreference>.launchPasswordPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect {
     val preferPassword = !state.prefersPassword
     state.prefersPassword = preferPassword
@@ -323,7 +323,7 @@ private fun Flow<Action.TogglePasswordPreference>.launchPasswordPreferenceMutati
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.CreateSession>.launchSubmissionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = debounce(SubmissionDebounce)
     .launchedCollectLatest { (sessionRequest) ->
@@ -335,7 +335,7 @@ private fun Flow<Action.CreateSession>.launchSubmissionMutations(
     }
 
 private suspend fun createSessionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     request: SessionRequest,
     authRepository: AuthRepository,
 ) {

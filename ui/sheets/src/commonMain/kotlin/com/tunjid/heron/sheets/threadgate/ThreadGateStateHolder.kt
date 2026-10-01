@@ -89,14 +89,14 @@ class ThreadGateViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadRecentListsMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
     recordRepository: RecordRepository,
 ) = recordRepository.recentLists
     .launchedCollect { state.recentLists = it }
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.Initialize>.launchInitializeMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
 ) = launchedCollect {
     state.mode = it.mode
     state.allowed = it.allowed
@@ -104,14 +104,14 @@ private fun Flow<ThreadGateAction.Initialize>.launchInitializeMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.UpdateAllowed>.launchUpdateAllowedMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
 ) = launchedCollect { action ->
     state.allowed = action.allowed
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.Reset>.launchResetMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
 ) = launchedCollect {
     state.mode = null
     state.allowed = null
@@ -120,7 +120,7 @@ private fun Flow<ThreadGateAction.Reset>.launchResetMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.SendInteraction>.launchSendInteractionMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -134,7 +134,7 @@ private fun Flow<ThreadGateAction.SendInteraction>.launchSendInteractionMutation
 
 context(productionScope: CoroutineScope)
 private fun Flow<ThreadGateAction.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: ThreadGateState.SnapshotMutable,
+    state: ThreadGateState.Mutable,
 ) = launchedCollect {
     state.messages -= it.message
 }

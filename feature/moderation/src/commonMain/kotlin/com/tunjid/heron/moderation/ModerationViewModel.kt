@@ -127,7 +127,7 @@ class ActualModerationViewModel(
 
 context(productionScope: CoroutineScope)
 fun launchAdultContentAndGlobalLabelPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timelineRepository: TimelineRepository,
 ) = timelineRepository.preferences
     .map { it.allowAdultContent to it.contentLabelPreferences }
@@ -139,7 +139,7 @@ fun launchAdultContentAndGlobalLabelPreferenceMutations(
 
 context(productionScope: CoroutineScope)
 fun launchSubscribedLabelerMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
 ) = recordRepository.subscribedLabelers
     .launchedCollect {
@@ -148,7 +148,7 @@ fun launchSubscribedLabelerMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences
     .launchedCollect {
@@ -157,7 +157,7 @@ private fun launchLoadPreferenceMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateThreadGates>.launchUpdateThreadGateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -175,7 +175,7 @@ private fun Flow<Action.UpdateThreadGates>.launchUpdateThreadGateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateAdultLabelVisibility>.launchUpdateGlobalLabelMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -194,7 +194,7 @@ private fun Flow<Action.UpdateAdultLabelVisibility>.launchUpdateGlobalLabelMutat
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateAdultContentPreferences>.launchUpdateAdultContentPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -212,7 +212,7 @@ private fun Flow<Action.UpdateAdultContentPreferences>.launchUpdateAdultContentP
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }

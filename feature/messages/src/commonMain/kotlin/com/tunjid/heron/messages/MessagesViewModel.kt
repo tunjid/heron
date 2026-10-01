@@ -141,7 +141,7 @@ class ActualMessagesViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
@@ -149,21 +149,21 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetIsSearching>.launchSetIsSearchingMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.isSearching = event.isSearching
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
 ) = launchedCollectLatest { action ->
@@ -196,7 +196,7 @@ private fun Flow<Action.ResolveConversation>.launchResolveConversationMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SearchQueryChanged>.launchSearchQueryChangeMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     profileRepository: ProfileRepository,
 ) {
     val sharedActions = shareIn(

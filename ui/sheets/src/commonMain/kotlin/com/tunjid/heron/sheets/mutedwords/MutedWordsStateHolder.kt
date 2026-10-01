@@ -108,7 +108,7 @@ class MutedWordsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences
     .take(1)
@@ -119,7 +119,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateNewWord>.launchUpdateNewWordMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.newWord = it.value
     state.error = null
@@ -127,28 +127,28 @@ private fun Flow<MutedWordsAction.UpdateNewWord>.launchUpdateNewWordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateDuration>.launchUpdateDurationMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.newWordDuration = it.duration
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateTargets>.launchUpdateTargetsMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.newWordTargets = it.targets
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateExcludeNonFollowers>.launchUpdateExcludeNonFollowersMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.newWordExcludeNonFollowers = it.exclude
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.RemoveMutedWord>.launchRemoveMutedWordMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.mutedWords = state.mutedWords.filterNot { w -> w.value == it.value }
     state.error = null
@@ -156,7 +156,7 @@ private fun Flow<MutedWordsAction.RemoveMutedWord>.launchRemoveMutedWordMutation
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.ClearAll>.launchClearAllMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.mutedWords = emptyList()
     state.error = null
@@ -164,14 +164,14 @@ private fun Flow<MutedWordsAction.ClearAll>.launchClearAllMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.ResetErrors>.launchResetErrorsMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.error = null
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.AddMutedWord>.launchAddWordMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) =
     launchedCollect {
         val trimmedWord = state.newWord.trim()
@@ -183,25 +183,23 @@ private fun Flow<MutedWordsAction.AddMutedWord>.launchAddWordMutations(
         }
 
         val expiresAt = state.newWordDuration?.let { Clock.System.now().plus(it) }
-        state.update(
-            mutedWords = state.mutedWords + MutedWordPreference(
-                value = trimmedWord,
-                targets = state.newWordTargets.map { MutedWordPreference.Target(it) },
-                actorTarget = if (state.newWordExcludeNonFollowers)
-                    MutedWordPreference.Target("non_followers") else null,
-                expiresAt = expiresAt,
-            ),
-            newWord = "",
-            newWordDuration = null,
-            newWordTargets = listOf("content", "tag"),
-            newWordExcludeNonFollowers = false,
-            error = null,
+        state.mutedWords += MutedWordPreference(
+            value = trimmedWord,
+            targets = state.newWordTargets.map { MutedWordPreference.Target(it) },
+            actorTarget = if (state.newWordExcludeNonFollowers)
+                MutedWordPreference.Target("non_followers") else null,
+            expiresAt = expiresAt,
         )
+        state.newWord = ""
+        state.newWordDuration = null
+        state.newWordTargets = listOf("content", "tag")
+        state.newWordExcludeNonFollowers = false
+        state.error = null
     }
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.UpdateMutedWord>.launchUpdateMutedWordMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue,
@@ -218,7 +216,7 @@ private fun Flow<MutedWordsAction.UpdateMutedWord>.launchUpdateMutedWordMutation
 
 context(productionScope: CoroutineScope)
 private fun Flow<MutedWordsAction.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: MutedWordsState.SnapshotMutable,
+    state: MutedWordsState.Mutable,
 ) = launchedCollect {
     state.messages -= it.message
 }

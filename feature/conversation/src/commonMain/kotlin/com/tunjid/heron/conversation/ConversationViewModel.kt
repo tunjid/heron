@@ -191,7 +191,7 @@ class ActualConversationViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
@@ -199,7 +199,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchConversationMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     messagesRepository: MessageRepository,
 ) = messagesRepository.conversation(state.id).launchedCollect { conversation ->
     // Keep the route-seeded stub until the conversation is available locally, otherwise a
@@ -209,7 +209,7 @@ private fun launchConversationMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action>.launchConversationUpdateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
 ) = launchAndCollectEnqueueMutations(
@@ -236,7 +236,7 @@ private fun Flow<Action>.launchConversationUpdateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MarkConversationRead>.launchMarkConversationReadMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     messagesRepository: MessageRepository,
 ) = launchedCollectLatest { action ->
     messagesRepository.markConversationRead(
@@ -247,7 +247,7 @@ private fun Flow<Action.MarkConversationRead>.launchMarkConversationReadMutation
 
 context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = writeQueue.queueChanges.launchedCollect { writes ->
     val queuedIds = writes.mapTo(mutableSetOf(), Writable::queueId)
@@ -261,7 +261,7 @@ private fun launchPendingMessageFlushMutations(
 }
 
 private suspend fun consumeSharedUri(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     sharedUri: Uri?,
     overrideExisting: Boolean,
     recordRepository: RecordRepository,
@@ -290,7 +290,7 @@ private suspend fun consumeSharedUri(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -302,7 +302,7 @@ private fun Flow<Action.SendPostInteraction>.launchPostInteractionMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -314,14 +314,14 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateMessageReaction>.launchUpdateMessageReactionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -333,14 +333,14 @@ private fun Flow<Action.UpdateMessageReaction>.launchUpdateMessageReactionMutati
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TextChanged>.launchInputTextChangeMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollectLatest { action ->
     state.inputText = action.inputText
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
     navActions: (NavigationMutation) -> Unit,
 ) = launchedCollectLatest { action ->
@@ -360,7 +360,7 @@ private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SendMessage>.launchSendMessageMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
 ) = launchedCollect { action ->
@@ -401,7 +401,7 @@ private fun Flow<Action.SendMessage>.launchSendMessageMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchMessagingTilingMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     messagesRepository: MessageRepository,
 ) = map { it.tilingAction }
     .launchTilingMutations(
@@ -413,7 +413,7 @@ private fun Flow<Action.Tile>.launchMessagingTilingMutations(
         ),
         onNewItems = { items -> items.distinctBy(MessageItem::id) },
         onWriteItems = { deduped ->
-            // Receiver is State.SnapshotMutable; runs on the production dispatcher.
+            // Receiver is State.Mutable; runs on the production dispatcher.
             // pendingItems and tilingData.currentQuery are read here race-free with the
             // launchSendMessageMutations / launchPendingMessageFlushMutations writers.
             // Database refreshes can happen at any time. Add pending items.

@@ -169,7 +169,7 @@ class ActualHomeViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
@@ -177,7 +177,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchTimelineMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -218,7 +218,7 @@ private fun launchTimelineMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -226,7 +226,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchTrendsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
 ) = recordRepository.trends().launchedCollect {
     state.trends = it
@@ -235,7 +235,7 @@ private fun launchTrendsMutations(
 @OptIn(ExperimentalUuidApi::class)
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchedCollectLatest { action ->
     when (action) {
@@ -259,7 +259,7 @@ private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -271,7 +271,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -290,7 +290,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -309,7 +309,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -321,14 +321,14 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = launchedCollectLatest { action ->
     // Write to memory in state immediately
@@ -341,14 +341,14 @@ private fun Flow<Action.SetCurrentTab>.launchSetCurrentTabMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SetTabLayout>.launchSetTabLayoutMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.tabLayout = action.layout
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.RefreshCurrentTab>.launchTabRefreshMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect {
     state.timelineStateHolders
         .firstOrNull { it.state.timeline.uri == state.currentTabUri }
