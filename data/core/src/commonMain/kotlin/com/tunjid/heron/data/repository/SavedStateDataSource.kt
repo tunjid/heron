@@ -112,7 +112,9 @@ abstract class SavedState {
 
             @Serializable
             data class DPoP(
-                val profileHandle: ProfileHandle,
+                // Null when signing up, as the new account's identity is only known once the
+                // authorization code has been exchanged for a token.
+                val profileHandle: ProfileHandle?,
                 val endpoint: String,
                 val authorizeRequestUrl: String,
                 val codeVerifier: String,

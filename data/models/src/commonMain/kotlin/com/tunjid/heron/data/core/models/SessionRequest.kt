@@ -47,10 +47,21 @@ sealed class SessionRequest {
 }
 
 @Serializable
-data class OauthUriRequest(
-    val handle: ProfileHandle,
-    val server: Server,
-)
+sealed class OauthUriRequest {
+
+    abstract val server: Server
+
+    @Serializable
+    data class SignIn(
+        val handle: ProfileHandle,
+        override val server: Server,
+    ) : OauthUriRequest()
+
+    @Serializable
+    data class SignUp(
+        override val server: Server,
+    ) : OauthUriRequest()
+}
 
 @Serializable
 data class Server(

@@ -281,7 +281,7 @@ private fun Flow<Action.BeginOauthFlow>.launchBeginOauthMutations(
     authRepository: AuthRepository,
 ) = launchedCollectLatest {
     val result = authRepository.oauthRequestUri(
-        request = OauthUriRequest(
+        request = OauthUriRequest.SignIn(
             handle = it.handle,
             server = it.server,
         ),
