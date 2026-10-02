@@ -1,6 +1,7 @@
 package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -13,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
@@ -64,6 +67,8 @@ class AppScaffoldState internal constructor(
     density: Density,
     internal val staticStates: StaticStates,
     private val windowWidth: State<Dp>,
+    private val leftSystemUiInset: State<Dp>,
+    private val rightSystemUiInset: State<Dp>,
 ) {
     internal var density by mutableStateOf(density)
 
@@ -81,6 +86,15 @@ class AppScaffoldState internal constructor(
             isCompact = staticStates.identityState.prefersCompactBottomNav,
         )
 
+    internal val verticalSystemUiWidth: Dp
+        get() = maxOf(leftSystemUiInset.value, rightSystemUiInset.value)
+
+    // The rail fills the reserved system-UI strip when there is one (iPhone Duo), else the default
+    // icon-rail width.
+    internal val navigationRailWidth: Dp
+        get() = verticalSystemUiWidth.takeIf { it > 0.dp }
+            ?: UiTokens.NavRailWidth
+
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
         maxCount = PaneRenderOrder.size,
@@ -93,8 +107,14 @@ class AppScaffoldState internal constructor(
         },
     )
 
-    internal val isMediumScreenWidthOrWider
-        get() = windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
+    internal val navRailEdge: NavRailEdge
+        get() =
+            if (rightSystemUiInset.value > leftSystemUiInset.value) NavRailEdge.End
+            else NavRailEdge.Start
+
+    internal val prefersNavigationRail
+        get() = verticalSystemUiWidth > 0.dp ||
+            windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     internal fun update(
         density: Density,
@@ -303,6 +323,29 @@ class AppScaffoldState internal constructor(
                 return displayState
             }
         }
+    }
+}
+
+enum class NavRailEdge : Arrangement.Horizontal {
+    Start,
+    End,
+    ;
+
+    override fun Density.arrange(
+        totalSize: Int,
+        sizes: IntArray,
+        layoutDirection: LayoutDirection,
+        outPositions: IntArray,
+    ) = with(Arrangement.Start) {
+        arrange(
+            totalSize = totalSize,
+            sizes = sizes,
+            layoutDirection = when (this@NavRailEdge) {
+                Start -> LayoutDirection.Ltr
+                End -> LayoutDirection.Rtl
+            },
+            outPositions = outPositions,
+        )
     }
 }
 

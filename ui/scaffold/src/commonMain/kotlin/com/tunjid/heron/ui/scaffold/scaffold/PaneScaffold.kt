@@ -28,6 +28,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -55,6 +56,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
@@ -117,8 +119,16 @@ class PaneScaffoldState(
 
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
-    val isMediumScreenWidthOrWider: Boolean
-        get() = appScaffoldState.isMediumScreenWidthOrWider
+    val prefersNavigationRail: Boolean
+        get() = appScaffoldState.prefersNavigationRail
+
+    internal val navRailEdge: NavRailEdge
+        get() = appScaffoldState.navRailEdge
+
+    // The rail fills the reserved system-UI strip when there is one (iPhone Duo), else the default
+    // icon-rail width.
+    internal val navigationRailWidth: Dp
+        get() = appScaffoldState.navigationRailWidth
 
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
         get() = appScaffoldState.staticStates.uiState.dismissBehavior
@@ -140,14 +150,20 @@ class PaneScaffoldState(
     )
 
     internal val canShowNavigationBar: Boolean
-        get() = !isMediumScreenWidthOrWider
+        get() = !prefersNavigationRail
 
     internal val canUseMovableNavigationBar: Boolean
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane &&
-            isMediumScreenWidthOrWider
+        get() {
+            if (!prefersNavigationRail) return false
+            val owner = when (navRailEdge) {
+                NavRailEdge.Start -> appScaffoldState.filteredPaneOrder.firstOrNull()
+                NavRailEdge.End -> appScaffoldState.filteredPaneOrder.lastOrNull()
+            }
+            return owner == paneState.pane
+        }
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
@@ -275,6 +291,8 @@ fun PaneScaffoldState.PaneScaffold(
 ) {
     PaneNavigationRailScaffold(
         modifier = modifier,
+        railEdge = navRailEdge,
+        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -432,17 +450,20 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 }
 
 @Composable
-private inline fun PaneNavigationRailScaffold(
+private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
+    railEdge: NavRailEdge,
+    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
     Row(
         modifier = modifier,
+        horizontalArrangement = railEdge,
         content = {
             Box(
                 modifier = Modifier
-                    .widthIn(max = 80.dp)
+                    .fillMaxHeight()
                     .zIndex(2f),
                 content = {
                     navigationRail()

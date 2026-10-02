@@ -27,7 +27,9 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.seconds
 
@@ -81,6 +83,13 @@ object UiTokens {
     val navigationBarHeight: Dp
         @Composable get() = WindowInsets.platformNavigationBars.asPaddingValues().height()
 
+    val leftVerticalSystemUiWidth: Dp
+        @Composable get() = verticalSystemUiStrip(fromLeft = true)
+
+    /** @see leftVerticalSystemUiWidth — the trailing physical edge. */
+    val rightVerticalSystemUiWidth: Dp
+        @Composable get() = verticalSystemUiStrip(fromLeft = false)
+
     fun bottomNavHeight(
         isCompact: Boolean,
     ): Dp = if (isCompact) 48.dp else 80.dp
@@ -113,6 +122,18 @@ fun Modifier.fillMaxRestrictedWidth() =
         .fillMaxWidth()
 
 private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottomPadding()
+
+@Composable
+private fun verticalSystemUiStrip(fromLeft: Boolean): Dp {
+    val density = LocalDensity.current
+    val ltr = LayoutDirection.Ltr
+    val system = WindowInsets.platformSystemBars
+    val nav = WindowInsets.platformNavigationBars
+    val strip =
+        if (fromLeft) system.getLeft(density, ltr) - nav.getLeft(density, ltr)
+        else system.getRight(density, ltr) - nav.getRight(density, ltr)
+    return with(density) { strip.coerceAtLeast(0).toDp() }
+}
 
 val UiTokens.statusAndToolbarHeight
     @Composable get() = toolbarHeight + statusBarHeight
