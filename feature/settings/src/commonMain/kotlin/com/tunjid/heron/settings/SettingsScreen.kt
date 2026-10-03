@@ -19,6 +19,7 @@ package com.tunjid.heron.settings
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +42,7 @@ import com.tunjid.heron.settings.ui.PublicationSubscriptionsItem
 import com.tunjid.heron.settings.ui.SignOutItem
 import com.tunjid.heron.settings.ui.TasksItem
 import com.tunjid.heron.settings.ui.ThreadPreferencesSection
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.inferenceDestination
 import com.tunjid.heron.ui.scaffold.navigation.moderationDestination
 import com.tunjid.heron.ui.scaffold.navigation.notificationSettingsDestination
@@ -111,6 +113,14 @@ internal fun SettingsScreen(
                         )
                     }
                 }
+                Spacer(
+                    modifier = Modifier
+                        .padding(
+                            UiTokens.bottomNavAndInsetPaddingValues(
+                                isCompact = paneScaffoldState.prefersCompactBottomNav,
+                            ),
+                        ),
+                )
             }
         },
     )
