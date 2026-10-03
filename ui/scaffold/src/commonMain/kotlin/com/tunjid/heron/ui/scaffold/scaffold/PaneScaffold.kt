@@ -203,6 +203,17 @@ class PaneScaffoldState(
     interface NestedNavigationKey {
         val isRoot: Boolean
     }
+    enum class BottomNavConfig {
+        PartiallyCollapse,
+        Hide,
+        FullyCollapse,
+        ;
+
+        companion object {
+            fun fromOrdinal(ordinal: Int): BottomNavConfig =
+                entries.getOrElse(ordinal) { Hide }
+        }
+    }
 }
 
 @Composable

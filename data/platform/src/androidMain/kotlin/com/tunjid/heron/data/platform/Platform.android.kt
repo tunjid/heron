@@ -25,4 +25,7 @@ class AndroidPlatform internal constructor() : Platform {
     override val supportsComposeDiagnosticStackTraces: Boolean = true
 }
 
+actual val Platform.isIOS: Boolean
+    get() = false
+
 actual val Platform.Companion.current: Platform by lazy(::AndroidPlatform)

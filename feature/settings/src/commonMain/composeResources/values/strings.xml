@@ -55,7 +55,10 @@
     <string name="dark_theme_light">Light</string>
     <string name="dark_theme_dark">Dark</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
-    <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
+    <string name="bottom_navigation_on_scroll">Bottom navigation bar scroll behavior</string>
+    <string name="bottom_navigation_partially_collapse">Collapse, showing all items</string>
+    <string name="bottom_navigation_hide">Hide</string>
+    <string name="bottom_navigation_fully_collapse">Collapse to the current item</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>
     <string name="auto_play_timeline_gifs">Autoplay GIFs on the timeline</string>
     <string name="show_post_engagement_metrics">Show post engagement metrics</string>

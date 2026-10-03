@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState.BottomNavConfig
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -67,5 +68,10 @@ internal val IdentityState.isStable
 internal val IdentityState.prefersCompactBottomNav: Boolean
     get() = preferences?.local?.useCompactNavigation ?: false
 
+internal val IdentityState.bottomNavConfig: BottomNavConfig
+    get() = BottomNavConfig.fromOrdinal(
+        ordinal = preferences?.local?.bottomNavConfigOrdinal ?: BottomNavConfig.Hide.ordinal,
+    )
+
 internal val IdentityState.prefersAutoHidingBottomNav: Boolean
-    get() = preferences?.local?.autoHideBottomNavigation ?: true
+    get() = bottomNavConfig == BottomNavConfig.Hide
