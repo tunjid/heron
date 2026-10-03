@@ -16,9 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
-import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
@@ -84,6 +81,7 @@ import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.timeline.utilities.reportVideoVisibility
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.CountDown
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
@@ -91,16 +89,14 @@ import com.tunjid.heron.ui.icons.regular.VisibilityOff
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.skippableBoundsTransform
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_words_post_hidden
 import heron.ui.timeline.generated.resources.sensitive_media
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
-import kotlin.time.TimeSource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -588,7 +584,7 @@ private fun Modifier.animateContentBounds(
 ) = ifTrue(Platform.current.isNativeCompose) {
     animateBounds(
         lookaheadScope = data.presentationLookaheadScope,
-        boundsTransform = data.delayedBoundsTransform,
+        boundsTransform = data.skippableBoundsTransform,
     )
 }
 
@@ -851,22 +847,11 @@ private class PostData(
     var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
     var hasClickedThroughSensitiveMedia by mutableStateOf(hasClickedThroughSensitiveMedia)
 
-    // Stop bounds transform from running on first composition as it causes
-    // a jelly scroll.
-    private val createdTime = TimeSource.Monotonic.markNow()
-    private var elapsedAtPresentationChange by mutableStateOf<Duration?>(null)
-
-    val delayedBoundsTransform = BoundsTransform { initial, target ->
-        val changedAt = elapsedAtPresentationChange ?: return@BoundsTransform BoundsSnapSpec
-        val elapsed = createdTime.elapsedNow()
-        val diff = elapsed - changedAt
-
-        if (diff.isPositive() && diff > BoundsTransformDelay) BoundsSnapSpec
-        else paneTransitionScope.childBoundsTransform.createAnimationSpec(
-            initial,
-            target,
-        )
-    }
+    val countDown = CountDown()
+    val skippableBoundsTransform = skippableBoundsTransform(
+        delegate = paneTransitionScope.childBoundsTransform,
+        skip = countDown::lapsed,
+    )
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
@@ -881,7 +866,7 @@ private class PostData(
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
 
     fun onPresentationChanged() {
-        elapsedAtPresentationChange = createdTime.elapsedNow()
+        countDown.reset()
     }
 }
 
@@ -956,9 +941,6 @@ private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
 
 private val MutedWordShape = RoundedCornerShape(8.dp)
-
-private val BoundsTransformDelay = 800.milliseconds
-private val BoundsSnapSpec = SnapSpec<Rect>()
 
 private val Post.videoId
     get() = when (val embed = embed) {

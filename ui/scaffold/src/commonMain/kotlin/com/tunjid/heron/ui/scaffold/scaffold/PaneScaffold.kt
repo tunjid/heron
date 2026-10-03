@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
@@ -42,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -144,6 +144,12 @@ class PaneScaffoldState(
 
     val prefersAutoHidingBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
+
+    val isBottomNavOffsetNearOrigin: Boolean by derivedStateOf {
+        bottomNavigationNestedScrollConnection.offset.y < with(appScaffoldState.density) {
+            DefaultFabSize.toPx()
+        }
+    }
 
     internal val nestedNavigationState = PaneNestedNavigationState(
         paneScaffoldState = this,

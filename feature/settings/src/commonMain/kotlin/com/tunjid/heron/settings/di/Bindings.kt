@@ -22,14 +22,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
 import com.tunjid.heron.settings.SettingsStateHolder
 import com.tunjid.heron.settings.SettingsViewModelInitializer
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -42,6 +40,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -151,9 +150,7 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                nestedScroll(bottomNavigationNestedScrollConnection)
-            },
+            .nestedScroll(bottomNavigationNestedScrollConnection),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -179,7 +176,7 @@ internal fun Route(
             if (state.switchPhase == AccountSwitchPhase.IDLE) {
                 PaneNavigationBar(
                     modifier = Modifier.offset {
-                        bottomNavigationNestedScrollConnection.offset.round()
+                        bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                     },
                 )
             }

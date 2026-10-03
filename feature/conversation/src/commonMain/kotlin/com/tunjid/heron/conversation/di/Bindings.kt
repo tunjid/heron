@@ -38,7 +38,6 @@ import com.tunjid.heron.conversation.ui.UserInput
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -163,9 +162,7 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection)
-            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                nestedScroll(bottomNavigationNestedScrollConnection)
-            },
+            .nestedScroll(bottomNavigationNestedScrollConnection),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

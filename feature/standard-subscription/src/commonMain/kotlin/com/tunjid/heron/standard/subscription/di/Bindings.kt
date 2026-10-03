@@ -20,12 +20,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import com.tunjid.heron.standard.subscription.Action
 import com.tunjid.heron.standard.subscription.StandardSubscriptionScreen
 import com.tunjid.heron.standard.subscription.StandardSubscriptionStateHolder
 import com.tunjid.heron.standard.subscription.StandardSubscriptionViewModelInitializer
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -36,6 +34,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -138,9 +137,7 @@ object StandardSubscriptionBindings {
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))
@@ -159,7 +156,7 @@ object StandardSubscriptionBindings {
                 navigationBar = {
                     PaneNavigationBar(
                         modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
+                            bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                         },
                     )
                 },

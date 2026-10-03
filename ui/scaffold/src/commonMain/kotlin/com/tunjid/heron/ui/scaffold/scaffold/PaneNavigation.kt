@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
@@ -58,9 +57,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
@@ -149,6 +150,11 @@ fun PaneScaffoldState.PaneNavigationRail(
             }
         },
     )
+}
+
+fun PaneScaffoldState.bottomNavOffset(offset: Offset): IntOffset {
+    return if (prefersAutoHidingBottomNav) offset.round()
+    else IntOffset.Zero
 }
 
 @Composable

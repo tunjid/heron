@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
@@ -46,7 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,9 +75,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.ui.CountDown
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.skippableBoundsTransform
 import com.tunjid.treenav.compose.NavigationEventStatus
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -101,6 +104,20 @@ fun PaneScaffoldState.PaneFab(
         mutableStateOf(DefaultFabSize)
     }
     val clickable = enabled && appScaffoldState.staticStates.identityState.isStable
+
+    val countDown = remember(::CountDown)
+    val skippableBoundsTransform = remember(this, countDown) {
+        skippableBoundsTransform(
+            delegate = childBoundsTransform,
+            skip = {
+                !this.isTransitionActive && countDown.lapsed
+            },
+        )
+    }
+    SideEffect(
+        key1 = expanded,
+        effect = countDown::reset,
+    )
     AnimatedVisibility(
         modifier = Modifier
             // Use the enter and exit transition on navigation
@@ -142,8 +159,9 @@ fun PaneScaffoldState.PaneFab(
             // Modifier.animateContentSize() on its row.
             PaneStickySharedElement(
                 modifier = Modifier
-                    .animateFabSize(
-                        alignment = Alignment.TopEnd,
+                    .animateBounds(
+                        lookaheadScope = this@PaneFab,
+                        boundsTransform = skippableBoundsTransform,
                     )
                     .then(modifier),
                 sharedContentState = sharedContentState,
@@ -220,31 +238,21 @@ private fun FabIcon(icon: ImageVector) {
     }
 }
 
-@Composable
-fun PaneScaffoldState.isFabExpanded(
-    offset: () -> Offset,
-): Boolean {
-    val derivedState = remember(appScaffoldState.density) {
-        derivedStateOf {
-            offset().y < with(appScaffoldState.density) { DefaultFabSize.toPx() }
-        }
-    }
-    return derivedState.value
-}
-
 fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
-    return if (prefersNavigationRail) IntOffset.Zero
-    else IntOffset(
-        x = offset.x.roundToInt(),
-        y = min(
-            offset.y.roundToInt(),
-            with(appScaffoldState.density) {
-                UiTokens.bottomNavHeight(
-                    isCompact = prefersCompactBottomNav,
-                ).roundToPx()
-            },
-        ),
-    )
+    return when {
+        prefersNavigationRail -> IntOffset.Zero
+        else -> IntOffset(
+            x = offset.x.roundToInt(),
+            y = min(
+                offset.y.roundToInt(),
+                with(appScaffoldState.density) {
+                    UiTokens.bottomNavHeight(
+                        isCompact = prefersCompactBottomNav,
+                    ).roundToPx()
+                },
+            ),
+        )
+    }
 }
 
 private data object FabSharedElementKey
@@ -431,4 +439,4 @@ private val DefaultEnterTransition: EnterTransition =
 private val DefaultExitTransition: ExitTransition =
     slideOutVertically(targetOffsetY = { it * 2 })
 
-private val DefaultFabSize = 56.dp
+internal val DefaultFabSize = 56.dp

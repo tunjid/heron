@@ -25,9 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
@@ -48,7 +46,6 @@ import com.tunjid.heron.list.ui.PaneActions
 import com.tunjid.heron.sheets.rememberProfileSearchSheetState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
@@ -60,7 +57,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -271,23 +267,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-        invert = true,
-        maxOffset = maxOffset@{
-            Offset(
-                x = 0f,
-                y = UiTokens.bottomNavHeight(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ).toPx(),
-            )
-        },
-        minOffset = { Offset.Zero },
-    )
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(fabExpansionNestedScrollConnection)
+            .nestedScroll(paneScaffoldState.bottomNavigationNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
@@ -354,9 +337,7 @@ internal fun Route(
                 PaneFab(
                     text = addListMember,
                     icon = HeronIcons.Regular.Add,
-                    expanded = isFabExpanded {
-                        fabExpansionNestedScrollConnection.offset
-                    },
+                    expanded = isBottomNavOffsetNearOrigin,
                     onClick = {
                         addListMemberSheetState.show(
                             title = addListMember,
