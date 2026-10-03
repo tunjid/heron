@@ -233,7 +233,7 @@ fun PaneScaffoldState.isFabExpanded(
 }
 
 fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
-    return if (isMediumScreenWidthOrWider) IntOffset.Zero
+    return if (prefersNavigationRail) IntOffset.Zero
     else IntOffset(
         x = offset.x.roundToInt(),
         y = min(

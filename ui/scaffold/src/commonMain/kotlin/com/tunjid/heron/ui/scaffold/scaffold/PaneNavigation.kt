@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -209,7 +210,8 @@ internal fun AppScaffoldState.PaneNavigationRail(
 ) = with(staticStates) {
     Box(
         modifier = modifier
-            .padding(start = 8.dp)
+            .padding(horizontal = 8.dp)
+            .widthIn(max = navigationRailWidth)
             .fillMaxSize(),
     ) {
         val color by animateColorAsState(
@@ -221,7 +223,7 @@ internal fun AppScaffoldState.PaneNavigationRail(
                 .align(Alignment.Center)
                 .constrainedSizePlacement(
                     orientation = Orientation.Horizontal,
-                    minSize = UiTokens.NavRailWidth,
+                    minSize = navigationRailWidth,
                     atStart = true,
                 )
                 .background(
@@ -306,7 +308,7 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
     derivedStateOf {
         splitLayoutState.weightAt(0)
             .times(splitLayoutState.size)
-            .minus(UiTokens.NavRailWidth) < minPaneWidth
+            .minus(navigationRailWidth) < minPaneWidth
     }
 }.value
 
