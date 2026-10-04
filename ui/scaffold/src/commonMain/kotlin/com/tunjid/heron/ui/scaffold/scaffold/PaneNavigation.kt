@@ -43,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.treenav.compose.Adaptation
 import org.jetbrains.compose.resources.stringResource
 
@@ -67,13 +69,18 @@ fun PaneScaffoldState.PaneNavigationBar(
     exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
     onNavItemReselected: () -> Boolean = { false },
 ) {
-    val status =
-        if (expanded) BottomNavStatus.Expanded
+    val status = appScaffoldState.staticStates.uiState.transientBottomNavStatus
+        ?: if (expanded) BottomNavStatus.Expanded
         else when (bottomNavConfig) {
             PaneScaffoldState.BottomNavConfig.PartiallyCollapse -> BottomNavStatus.Collapsed.Partially
             PaneScaffoldState.BottomNavConfig.Hide -> BottomNavStatus.Expanded
             PaneScaffoldState.BottomNavConfig.FullyCollapse -> BottomNavStatus.Collapsed.Fully
         }
+    SideEffect(expanded) {
+        if (!expanded) appScaffoldState.updateTransientBottomNav(
+            show = false,
+        )
+    }
     AnimatedVisibility(
         modifier = modifier,
         visible = canShowNavigationBar,

@@ -45,6 +45,7 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.navigation.NavItem
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
@@ -137,10 +138,22 @@ internal fun PaneScaffoldState.CommonNavigationBar(
                                 )
                             },
                             enabled = identityState.isStable,
-                            selected = item.selected && bottomNavConfig != PaneScaffoldState.BottomNavConfig.FullyCollapse,
+                            selected = item.selected && status != BottomNavStatus.Collapsed.Fully,
                             onClick = click@{
-                                if (item.selected && onNavItemReselected()) return@click
-                                onNavItemSelected(item)
+                                when (status) {
+                                    BottomNavStatus.Collapsed.Fully -> appScaffoldState.updateTransientBottomNav(
+                                        show = true,
+                                    )
+                                    BottomNavStatus.Collapsed.Partially,
+                                    BottomNavStatus.Expanded,
+                                    -> {
+                                        // Collapse just in case its expanded
+                                        if (item.selected && onNavItemReselected()) appScaffoldState.updateTransientBottomNav(
+                                            show = false,
+                                        )
+                                        onNavItemSelected(item)
+                                    }
+                                }
                             },
                         )
                     }
@@ -248,10 +261,10 @@ private fun Modifier.commonBottomNavPadding(
 
 internal data object NavigationBarSharedElementKey
 
-internal sealed class BottomNavStatus {
-    data object Expanded : BottomNavStatus()
+sealed class BottomNavStatus {
+    internal data object Expanded : BottomNavStatus()
 
-    sealed class Collapsed : BottomNavStatus() {
+    internal sealed class Collapsed : BottomNavStatus() {
         data object Partially : Collapsed()
         data object Fully : Collapsed()
     }

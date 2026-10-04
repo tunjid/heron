@@ -80,9 +80,24 @@ internal actual fun PaneScaffoldState.PlatformNavigationBar(
         return
     }
     with(appScaffoldState.staticStates) {
+        // Mirrors CommonNavigationBar: tapping a fully collapsed bar expands it transiently
+        // instead of navigating.
         val onSelect by rememberUpdatedState<(Int) -> Unit> { index ->
             val item = navItems[index]
-            if (!(item.selected && onNavItemReselected())) onNavItemSelected(item)
+            when (status) {
+                BottomNavStatus.Collapsed.Fully -> appScaffoldState.updateTransientBottomNav(
+                    show = true,
+                )
+                BottomNavStatus.Collapsed.Partially,
+                BottomNavStatus.Expanded,
+                -> {
+                    // Collapse just in case its expanded
+                    if (item.selected && onNavItemReselected()) appScaffoldState.updateTransientBottomNav(
+                        show = false,
+                    )
+                    onNavItemSelected(item)
+                }
+            }
         }
         val selectedColor = MaterialTheme.colorScheme.primary
         val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -261,7 +276,10 @@ private class GlassTabBarView(
             // UITabBar's own animated setItems fades new item views in with the default tint
             // from a zero frame, so items are always set without it.
             if (itemsChanged) tabBar.setItems(barItems, animated = false)
-            tabBar.selectedItem = barItems.firstOrNull { it.tag.toInt() == selectedIndex }
+            // Like CommonNavigationBar, a fully collapsed bar shows its item without the selection.
+            tabBar.selectedItem =
+                if (showOnlySelected) null
+                else barItems.firstOrNull { it.tag.toInt() == selectedIndex }
         }
 
         if (!collapseChanged) {

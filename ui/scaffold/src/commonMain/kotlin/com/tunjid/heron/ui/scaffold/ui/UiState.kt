@@ -2,6 +2,7 @@ package com.tunjid.heron.ui.scaffold.ui
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState.DismissBehavior
+import com.tunjid.heron.ui.scaffold.scaffold.BottomNavStatus
 import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchor
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
@@ -18,6 +19,7 @@ interface UiState {
         val dismissBehavior: DismissBehavior = DismissBehavior.None,
         val currentPaneAnchor: PaneAnchor = PaneAnchor.Half,
         val immersiveRouteIds: Set<String> = emptySet(),
+        val transientBottomNavStatus: BottomNavStatus? = null,
     ) : UiState
 }
 
@@ -43,5 +45,10 @@ sealed class UiAction(
         data class Standard(
             val route: Route,
         ) : UpdateRouteImmersion()
+    }
+
+    sealed class UpdateTransientBottomNav : UiAction("UpdateTransientBottomNav") {
+        data object SetTransient : UpdateTransientBottomNav()
+        data object ClearTransient : UpdateTransientBottomNav()
     }
 }

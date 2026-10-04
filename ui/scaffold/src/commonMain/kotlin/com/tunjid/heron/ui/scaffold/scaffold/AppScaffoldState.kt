@@ -154,6 +154,13 @@ class AppScaffoldState internal constructor(
         )
     }
 
+    internal fun updateTransientBottomNav(
+        show: Boolean,
+    ) = staticStates.onUiAction(
+        if (show) UiAction.UpdateTransientBottomNav.SetTransient
+        else UiAction.UpdateTransientBottomNav.ClearTransient,
+    )
+
     internal fun pop() =
         staticStates.onNavigationAction {
             navState.pop()
