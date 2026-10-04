@@ -314,7 +314,6 @@ fun PaneScaffoldState.PaneScaffold(
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
-        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -475,7 +474,6 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
-    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {

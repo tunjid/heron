@@ -215,7 +215,7 @@ class AppScaffoldState internal constructor(
             }
 
         internal val movableNavigationRail =
-            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<PaneScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
                 PaneNavigationRail(
                     modifier = modifier,
                     onNavItemReselected = onNavItemReselected,

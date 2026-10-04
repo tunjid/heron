@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
-import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.treenav.compose.Adaptation
 import org.jetbrains.compose.resources.stringResource
 
@@ -126,13 +125,13 @@ fun PaneScaffoldState.PaneNavigationRail(
         ) enterTransition else EnterTransition.None,
         exit = exitTransition,
         content = {
-            with(appScaffoldState) {
-                if (canUseMovableNavigationRail) staticStates.movableNavigationRail(
+            with(this@PaneNavigationRail) {
+                if (canUseMovableNavigationRail) appScaffoldState.staticStates.movableNavigationRail(
                     this,
                     Modifier,
                     onNavItemReselected,
                 )
-                else PaneNavigationRail(
+                else PlatformNavigationRail(
                     modifier = Modifier,
                     onNavItemReselected = onNavItemReselected,
                 )
@@ -147,10 +146,10 @@ fun PaneScaffoldState.bottomNavOffset(offset: Offset): IntOffset {
 }
 
 @Composable
-internal fun AppScaffoldState.PaneNavigationRail(
+internal fun PaneScaffoldState.PlatformNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
-) = with(staticStates) {
+) = with(appScaffoldState.staticStates) {
     Box(
         modifier = modifier
             .padding(horizontal = 8.dp)
@@ -158,7 +157,7 @@ internal fun AppScaffoldState.PaneNavigationRail(
             .fillMaxSize(),
     ) {
         val color by animateColorAsState(
-            if (shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
+            if (appScaffoldState.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
             else MaterialTheme.colorScheme.surface,
         )
         Column(
