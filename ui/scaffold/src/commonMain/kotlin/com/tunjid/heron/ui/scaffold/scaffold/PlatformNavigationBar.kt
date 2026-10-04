@@ -45,7 +45,6 @@ import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.navigation.NavItem
-import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
