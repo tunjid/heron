@@ -199,9 +199,10 @@ class AppScaffoldState internal constructor(
             get() = uiStateHolder.state
 
         internal val movableNavigationBar =
-            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<PaneScaffoldState, Modifier, BottomNavStatus, () -> Boolean> { modifier, status, onNavItemReselected ->
                 PlatformNavigationBar(
                     modifier = modifier,
+                    status = status,
                     onNavItemReselected = onNavItemReselected,
                 )
             }

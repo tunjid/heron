@@ -241,6 +241,7 @@ internal fun Route(
         },
         navigationBar = {
             PaneNavigationBar(
+                expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier.offset {
                     bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                 },

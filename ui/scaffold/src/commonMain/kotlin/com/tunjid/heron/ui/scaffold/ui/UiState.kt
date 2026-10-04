@@ -6,6 +6,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneAnchor
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.strings.Route
+import kotlin.collections.Set
+import kotlin.collections.emptySet
+import kotlin.collections.isNotEmpty
 
 @Stable
 @Snapshottable

@@ -75,6 +75,7 @@ import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.scaffold.identity.bottomNavConfig
 import com.tunjid.heron.ui.scaffold.identity.isSignedIn
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
@@ -155,6 +156,9 @@ class PaneScaffoldState(
         paneScaffoldState = this,
     )
 
+    internal val bottomNavConfig: BottomNavConfig
+        get() = appScaffoldState.staticStates.identityState.bottomNavConfig
+
     internal val canShowNavigationBar: Boolean
         get() = !prefersNavigationRail
 
@@ -203,6 +207,7 @@ class PaneScaffoldState(
     interface NestedNavigationKey {
         val isRoot: Boolean
     }
+
     enum class BottomNavConfig {
         PartiallyCollapse,
         Hide,

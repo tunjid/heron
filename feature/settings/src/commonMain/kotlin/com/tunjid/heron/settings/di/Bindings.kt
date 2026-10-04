@@ -175,6 +175,7 @@ internal fun Route(
         navigationBar = {
             if (state.switchPhase == AccountSwitchPhase.IDLE) {
                 PaneNavigationBar(
+                    expanded = isBottomNavOffsetNearOrigin,
                     modifier = Modifier.offset {
                         bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                     },
