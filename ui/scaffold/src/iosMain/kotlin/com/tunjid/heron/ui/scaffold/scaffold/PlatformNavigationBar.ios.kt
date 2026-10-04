@@ -167,9 +167,8 @@ private fun Modifier.iosBottomNavSharedElement(
         animatedVisibilityScope = this,
         zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
     )
-        // The glass tab bar is a UIKit overlay, so Compose alpha and skipped draws during the
-        // shared element transition never reach it, and the outgoing pane's bar would stay fully
-        // opaque. Unplacing it removes the UIKit view instead.
+        // Prevent double rendering of shared elements as compose graphic layer and
+        // shared element overlay semantics do not affect UI kit overlays.
         .visible(
             visible = isActive || !isTransitionActive,
         )
@@ -272,7 +271,7 @@ private class GlassTabBarView(
 
         // Swap the items as a crossfade, laid out in the current frame, so the spring below
         // moves them from where they already are rather than from a zero frame.
-        if (itemsChanged) UIView.transitionWithView(
+        if (itemsChanged) transitionWithView(
             view = tabBar,
             duration = ItemCrossfadeDurationSeconds,
             options = UIViewAnimationOptionTransitionCrossDissolve or
@@ -287,7 +286,7 @@ private class GlassTabBarView(
 
         // Let Core Animation drive the collapse, so it runs at the display's refresh rate
         // independently of Compose frames.
-        UIView.animateWithDuration(
+        animateWithDuration(
             duration = CollapseAnimationDurationSeconds,
             delay = 0.0,
             usingSpringWithDamping = CollapseAnimationDampingRatio,
@@ -359,5 +358,9 @@ private const val ItemCrossfadeDurationSeconds = 0.2
 // Leaves room at the end of the bar for the collapsed FAB.
 private val PartiallyCollapsedTrailingInset = DefaultFabSize + 16.dp
 
-// Wide enough for the glass capsule to hold a single item.
-private val FullyCollapsedWidth = 112.dp
+private val GlassTabBarHorizontalInset = 20.dp
+private val GlassTabBarCapsuleHeight = 60.dp
+
+// Sizes the tab bar's frame so the capsule holding the single selected item is a circle,
+// matching the circular fully collapsed common navigation bar.
+private val FullyCollapsedWidth = GlassTabBarCapsuleHeight + GlassTabBarHorizontalInset * 2
