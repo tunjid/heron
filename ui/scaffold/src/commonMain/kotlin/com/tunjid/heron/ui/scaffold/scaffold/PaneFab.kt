@@ -249,27 +249,18 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
             y = min(
                 offset.y.roundToInt(),
                 with(appScaffoldState.density) {
-                    maxFabDrop().roundToPx()
+                    val navHeight = UiTokens.bottomNavHeight(
+                        isCompact = prefersCompactBottomNav,
+                    )
+                    when (bottomNavConfig) {
+                        BottomNavConfig.Hide -> navHeight
+                        BottomNavConfig.PartiallyCollapse,
+                        BottomNavConfig.FullyCollapse,
+                        -> FabSpacing + DefaultFabSize / 2 + navHeight / 2
+                    }.roundToPx()
                 },
             ),
         )
-    }
-}
-
-/**
- * How far the FAB drops as the bottom nav collapses or hides. The FAB rests [FabSpacing] above the
- * bottom nav. When the nav hides, the FAB drops by the nav's height. When it collapses, the FAB
- * drops until its center lines up with the nav's center.
- */
-private fun PaneScaffoldState.maxFabDrop(): Dp {
-    val navHeight = UiTokens.bottomNavHeight(
-        isCompact = prefersCompactBottomNav,
-    )
-    return when (bottomNavConfig) {
-        BottomNavConfig.Hide -> navHeight
-        BottomNavConfig.PartiallyCollapse,
-        BottomNavConfig.FullyCollapse,
-        -> FabSpacing + DefaultFabSize / 2 + navHeight / 2
     }
 }
 
