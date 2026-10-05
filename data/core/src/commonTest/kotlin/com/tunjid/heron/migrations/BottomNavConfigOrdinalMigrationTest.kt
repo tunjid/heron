@@ -52,6 +52,19 @@ class BottomNavConfigOrdinalMigrationTest {
     }
 
     @Test
+    fun noStoredValue_decodesAsDefault() {
+        val migrated = proto.decodeFromByteArray(
+            deserializer = Preferences.Local.serializer(),
+            bytes = ByteArray(0),
+        )
+
+        assertEquals(
+            expected = Preferences.Local().bottomNavConfigOrdinal,
+            actual = migrated.bottomNavConfigOrdinal,
+        )
+    }
+
+    @Test
     fun legacyAutoHideTrue_decodesAsOrdinalOne() {
         val legacyBytes = proto.encodeToByteArray(
             serializer = LegacyLocal.serializer(),
@@ -94,6 +107,6 @@ class BottomNavConfigOrdinalMigrationTest {
     @Serializable
     private data class LegacyLocal(
         @ProtoNumber(5)
-        val autoHideBottomNavigation: Boolean = true,
+        val autoHideBottomNavigation: Boolean,
     )
 }
