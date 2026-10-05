@@ -106,55 +106,57 @@ internal fun PaneScaffoldState.CommonNavigationBar(
                 prefersCompactBottomNav = identityState.prefersCompactBottomNav,
             ),
         ) {
-            val fillsMaxWidth = status is BottomNavStatus.Expanded || status is BottomNavStatus.Collapsed.Partially
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .ifTrue(fillsMaxWidth) {
-                        fillMaxWidth()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                navItems.forEach { item ->
-                    if (status.canShow(item)) key(item.stack.name) {
-                        NavigationBarItem(
-                            modifier = Modifier
-                                .weight(1f)
-                                .animateBounds(
-                                    lookaheadScope = this@CommonNavigationBar,
-                                ),
-                            icon = {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(item.badgeCount)
-                                    },
-                                    content = {
-                                        Icon(
-                                            imageVector = item.stack.icon,
-                                            contentDescription = stringResource(item.stack.titleRes),
-                                        )
-                                    },
-                                )
-                            },
-                            enabled = identityState.isStable,
-                            selected = item.selected && status != BottomNavStatus.Collapsed.Fully,
-                            onClick = click@{
-                                when (status) {
-                                    BottomNavStatus.Collapsed.Fully -> appScaffoldState.updateTransientBottomNav(
-                                        show = true,
+            Box {
+                val fillsMaxWidth = status is BottomNavStatus.Expanded || status is BottomNavStatus.Collapsed.Partially
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .ifTrue(fillsMaxWidth) {
+                            fillMaxWidth()
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    navItems.forEach { item ->
+                        if (status.canShow(item)) key(item.stack.name) {
+                            NavigationBarItem(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .animateBounds(
+                                        lookaheadScope = this@CommonNavigationBar,
+                                    ),
+                                icon = {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge(item.badgeCount)
+                                        },
+                                        content = {
+                                            Icon(
+                                                imageVector = item.stack.icon,
+                                                contentDescription = stringResource(item.stack.titleRes),
+                                            )
+                                        },
                                     )
-                                    BottomNavStatus.Collapsed.Partially,
-                                    BottomNavStatus.Expanded,
-                                    -> {
-                                        // Collapse just in case its expanded
-                                        if (item.selected && onNavItemReselected()) appScaffoldState.updateTransientBottomNav(
-                                            show = false,
+                                },
+                                enabled = identityState.isStable,
+                                selected = item.selected && status != BottomNavStatus.Collapsed.Fully,
+                                onClick = click@{
+                                    when (status) {
+                                        BottomNavStatus.Collapsed.Fully -> appScaffoldState.updateTransientBottomNav(
+                                            show = true,
                                         )
-                                        onNavItemSelected(item)
+                                        BottomNavStatus.Collapsed.Partially,
+                                        BottomNavStatus.Expanded,
+                                        -> {
+                                            // Collapse just in case its expanded
+                                            if (item.selected && onNavItemReselected()) appScaffoldState.updateTransientBottomNav(
+                                                show = false,
+                                            )
+                                            onNavItemSelected(item)
+                                        }
                                     }
-                                }
-                            },
-                        )
+                                },
+                            )
+                        }
                     }
                 }
             }

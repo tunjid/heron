@@ -148,7 +148,7 @@ class PaneScaffoldState(
 
     val isBottomNavOffsetNearOrigin: Boolean by derivedStateOf {
         bottomNavigationNestedScrollConnection.offset.y < with(appScaffoldState.density) {
-            DefaultFabSize.toPx()
+            BottomNavOffsetThreshold.toPx()
         }
     }
 
@@ -565,5 +565,7 @@ private val BoundsTransformSpring = spring(
     stiffness = Spring.StiffnessMediumLow,
     visibilityThreshold = Rect.VisibilityThreshold,
 )
+
+private val BottomNavOffsetThreshold = 30.dp
 
 private object PersistentSharedElementKey

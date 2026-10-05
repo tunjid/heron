@@ -70,6 +70,7 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
@@ -79,6 +80,8 @@ import com.tunjid.heron.ui.CountDown
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState.BottomNavConfig
+import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
 import com.tunjid.heron.ui.skippableBoundsTransform
 import com.tunjid.treenav.compose.NavigationEventStatus
 import kotlin.math.min
@@ -246,12 +249,27 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
             y = min(
                 offset.y.roundToInt(),
                 with(appScaffoldState.density) {
-                    UiTokens.bottomNavHeight(
-                        isCompact = prefersCompactBottomNav,
-                    ).roundToPx()
+                    maxFabDrop().roundToPx()
                 },
             ),
         )
+    }
+}
+
+/**
+ * How far the FAB drops as the bottom nav collapses or hides. The FAB rests [FabSpacing] above the
+ * bottom nav. When the nav hides, the FAB drops by the nav's height. When it collapses, the FAB
+ * drops until its center lines up with the nav's center.
+ */
+private fun PaneScaffoldState.maxFabDrop(): Dp {
+    val navHeight = UiTokens.bottomNavHeight(
+        isCompact = prefersCompactBottomNav,
+    )
+    return when (bottomNavConfig) {
+        BottomNavConfig.Hide -> navHeight
+        BottomNavConfig.PartiallyCollapse,
+        BottomNavConfig.FullyCollapse,
+        -> FabSpacing + DefaultFabSize / 2 + navHeight / 2
     }
 }
 
