@@ -107,8 +107,8 @@ internal fun SettingsScreen(
                             setCompactNavigation = {
                                 actions(Action.SetCompactNavigation(it))
                             },
-                            setAutoHideBottomNavigation = {
-                                actions(Action.SetAutoHideBottomNavigation(it))
+                            setBottomNavConfigOrdinal = {
+                                actions(Action.SetBottomNavConfigOrdinal(it))
                             },
                         )
                     }

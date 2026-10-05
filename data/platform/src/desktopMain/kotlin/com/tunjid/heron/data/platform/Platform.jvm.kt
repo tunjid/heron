@@ -38,4 +38,7 @@ class JVMPlatform internal constructor() : Platform {
     }
 }
 
+actual val Platform.isIOS: Boolean
+    get() = false
+
 actual val Platform.Companion.current: Platform by lazy(::JVMPlatform)

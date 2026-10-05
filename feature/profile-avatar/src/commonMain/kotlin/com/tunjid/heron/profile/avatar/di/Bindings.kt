@@ -27,7 +27,6 @@ import com.tunjid.heron.profile.avatar.Action
 import com.tunjid.heron.profile.avatar.AvatarScreen
 import com.tunjid.heron.profile.avatar.ProfileAvatarViewModelInitializer
 import com.tunjid.heron.profile.avatar.ProfileStateHolder
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -144,9 +143,7 @@ object ProfileAvatarBindings {
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 containerColor = Color.Transparent,
                 topBar = {
                     PoppableDestinationTopAppBar(

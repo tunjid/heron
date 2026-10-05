@@ -31,6 +31,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.platform.isIOS
+import com.tunjid.heron.ui.UiTokens.leftVerticalSystemUiWidth
 import kotlin.time.Duration.Companion.seconds
 
 val AvatarSize = 40.dp
@@ -92,7 +96,7 @@ object UiTokens {
 
     fun bottomNavHeight(
         isCompact: Boolean,
-    ): Dp = if (isCompact) 48.dp else 80.dp
+    ): Dp = if (isCompact || Platform.current.isIOS) 48.dp else 80.dp
 
     @Composable
     fun bottomNavAndInsetPaddingValues(

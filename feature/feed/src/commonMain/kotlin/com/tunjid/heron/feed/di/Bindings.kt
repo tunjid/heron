@@ -55,7 +55,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -249,6 +248,7 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(topAppBarNestedScrollConnection)
+            .nestedScroll(paneScaffoldState.bottomNavigationNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
@@ -301,9 +301,7 @@ internal fun Route(
             PaneFab(
                 text = stringResource(Res.string.scroll_to_top),
                 icon = HeronIcons.Regular.Straight,
-                expanded = isFabExpanded {
-                    topAppBarNestedScrollConnection.offset * -1f
-                },
+                expanded = isBottomNavOffsetNearOrigin,
                 onClick = {
                     stateHolder.accept(Action.ScrollToTop)
                 },

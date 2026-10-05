@@ -154,6 +154,13 @@ class AppScaffoldState internal constructor(
         )
     }
 
+    internal fun updateTransientBottomNav(
+        show: Boolean,
+    ) = staticStates.onUiAction(
+        if (show) UiAction.UpdateTransientBottomNav.SetTransient
+        else UiAction.UpdateTransientBottomNav.ClearTransient,
+    )
+
     internal fun pop() =
         staticStates.onNavigationAction {
             navState.pop()
@@ -199,15 +206,16 @@ class AppScaffoldState internal constructor(
             get() = uiStateHolder.state
 
         internal val movableNavigationBar =
-            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<PaneScaffoldState, Modifier, BottomNavStatus, () -> Boolean> { modifier, status, onNavItemReselected ->
                 PlatformNavigationBar(
                     modifier = modifier,
+                    status = status,
                     onNavItemReselected = onNavItemReselected,
                 )
             }
 
         internal val movableNavigationRail =
-            movableContentWithReceiverOf<AppScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
+            movableContentWithReceiverOf<PaneScaffoldState, Modifier, () -> Boolean> { modifier, onNavItemReselected ->
                 PaneNavigationRail(
                     modifier = modifier,
                     onNavItemReselected = onNavItemReselected,

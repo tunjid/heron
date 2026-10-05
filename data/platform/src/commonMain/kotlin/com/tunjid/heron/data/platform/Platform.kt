@@ -27,4 +27,6 @@ interface Platform {
     companion object
 }
 
+expect val Platform.isIOS: Boolean
+
 expect val Platform.Companion.current: Platform

@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
@@ -42,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +75,7 @@ import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.scaffold.identity.bottomNavConfig
 import com.tunjid.heron.ui.scaffold.identity.isSignedIn
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
@@ -145,9 +146,18 @@ class PaneScaffoldState(
     val prefersAutoHidingBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
 
+    val isBottomNavOffsetNearOrigin: Boolean by derivedStateOf {
+        bottomNavigationNestedScrollConnection.offset.y < with(appScaffoldState.density) {
+            BottomNavOffsetThreshold.toPx()
+        }
+    }
+
     internal val nestedNavigationState = PaneNestedNavigationState(
         paneScaffoldState = this,
     )
+
+    internal val bottomNavConfig: BottomNavConfig
+        get() = appScaffoldState.staticStates.identityState.bottomNavConfig
 
     internal val canShowNavigationBar: Boolean
         get() = !prefersNavigationRail
@@ -196,6 +206,18 @@ class PaneScaffoldState(
 
     interface NestedNavigationKey {
         val isRoot: Boolean
+    }
+
+    enum class BottomNavConfig {
+        PartiallyCollapse,
+        Hide,
+        FullyCollapse,
+        ;
+
+        companion object {
+            fun fromOrdinal(ordinal: Int): BottomNavConfig =
+                entries.getOrElse(ordinal) { Hide }
+        }
     }
 }
 
@@ -292,7 +314,6 @@ fun PaneScaffoldState.PaneScaffold(
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
-        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -453,7 +474,6 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
-    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -545,5 +565,7 @@ private val BoundsTransformSpring = spring(
     stiffness = Spring.StiffnessMediumLow,
     visibilityThreshold = Rect.VisibilityThreshold,
 )
+
+private val BottomNavOffsetThreshold = 30.dp
 
 private object PersistentSharedElementKey

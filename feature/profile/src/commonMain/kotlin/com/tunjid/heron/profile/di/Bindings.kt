@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -33,7 +32,6 @@ import com.tunjid.heron.profile.ProfileViewModelInitializer
 import com.tunjid.heron.profile.State
 import com.tunjid.heron.profile.ui.ProfileFab
 import com.tunjid.heron.profile.ui.ProfileFabState
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -48,9 +46,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -187,9 +185,7 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection)
-            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                nestedScroll(bottomNavigationNestedScrollConnection)
-            },
+            .nestedScroll(bottomNavigationNestedScrollConnection),
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,
@@ -210,10 +206,7 @@ internal fun Route(
                     .offset {
                         fabOffset(bottomNavigationNestedScrollConnection.offset)
                     },
-                fabExpanded = isFabExpanded {
-                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                    else topAppBarNestedScrollConnection.offset * -1f
-                },
+                fabExpanded = isBottomNavOffsetNearOrigin,
                 state = profileFabState(state),
                 profileHandle = state.profile.handle,
                 onStateClicked = { fabState ->
@@ -239,8 +232,9 @@ internal fun Route(
         },
         navigationBar = {
             PaneNavigationBar(
+                expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier.offset {
-                    bottomNavigationNestedScrollConnection.offset.round()
+                    bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                 },
             )
         },

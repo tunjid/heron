@@ -332,4 +332,4 @@ private val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
         .union(WindowInsets.platformStatusBars)
 
 // FAB spacing above the bottom bar / bottom of the Scaffold
-private val FabSpacing = 16.dp
+internal val FabSpacing = 16.dp

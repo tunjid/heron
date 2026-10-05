@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.editprofile.EditProfileScreen
@@ -31,7 +30,6 @@ import com.tunjid.heron.editprofile.saveProfileAction
 import com.tunjid.heron.editprofile.ui.PaneActions
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Save
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -43,9 +41,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.ui.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -165,9 +163,7 @@ internal fun Route(
             .fillMaxSize()
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
             .nestedScroll(topAppBarNestedScrollConnection)
-            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                nestedScroll(bottomNavigationNestedScrollConnection)
-            },
+            .nestedScroll(bottomNavigationNestedScrollConnection),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -185,8 +181,9 @@ internal fun Route(
         },
         navigationBar = {
             PaneNavigationBar(
+                expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier.offset {
-                    bottomNavigationNestedScrollConnection.offset.round()
+                    bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
                 },
             )
         },
@@ -202,10 +199,7 @@ internal fun Route(
                 ),
                 icon = HeronIcons.Regular.Save,
                 enabled = !state.submitting,
-                expanded = isFabExpanded {
-                    if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                    else topAppBarNestedScrollConnection.offset * -1f
-                },
+                expanded = isBottomNavOffsetNearOrigin,
                 onClick = {
                     stateHolder.accept(state.saveProfileAction())
                 },

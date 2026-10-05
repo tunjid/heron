@@ -45,8 +45,8 @@ interface UserDataRepository {
         compactNavigation: Boolean,
     ): Outcome
 
-    suspend fun setAutoHideBottomNavigation(
-        autoHideBottomNavigation: Boolean,
+    suspend fun setBottomNavConfigOrdinal(
+        bottomNavConfigOrdinal: Int,
     ): Outcome
 
     suspend fun setAutoPlayTimelineVideos(
@@ -140,10 +140,10 @@ internal class OfflineUserDataRepository(
         copy(local = local.copy(useCompactNavigation = compactNavigation))
     }
 
-    override suspend fun setAutoHideBottomNavigation(
-        autoHideBottomNavigation: Boolean,
+    override suspend fun setBottomNavConfigOrdinal(
+        bottomNavConfigOrdinal: Int,
     ): Outcome = updatePreferences {
-        copy(local = local.copy(autoHideBottomNavigation = autoHideBottomNavigation))
+        copy(local = local.copy(bottomNavConfigOrdinal = bottomNavConfigOrdinal))
     }
 
     override suspend fun setAutoPlayTimelineVideos(

@@ -146,7 +146,7 @@ class ActualSettingsViewModel(
                             userDataRepository = userDataRepository,
                         )
 
-                        is Action.SetAutoHideBottomNavigation -> action.flow.launchToggleAutoHideBottomNavigation(
+                        is Action.SetBottomNavConfigOrdinal -> action.flow.launchSetBottomNavConfigOrdinal(
                             userDataRepository = userDataRepository,
                         )
 
@@ -367,10 +367,10 @@ private fun Flow<Action.SetCompactNavigation>.launchToggleCompactNavigation(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SetAutoHideBottomNavigation>.launchToggleAutoHideBottomNavigation(
+private fun Flow<Action.SetBottomNavConfigOrdinal>.launchSetBottomNavConfigOrdinal(
     userDataRepository: UserDataRepository,
-) = launchedCollect { (autoHideBottomNavigation) ->
-    userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
+) = launchedCollect { (bottomNavConfigOrdinal) ->
+    userDataRepository.setBottomNavConfigOrdinal(bottomNavConfigOrdinal)
 }
 
 context(productionScope: CoroutineScope)

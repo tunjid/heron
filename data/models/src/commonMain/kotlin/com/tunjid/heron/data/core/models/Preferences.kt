@@ -22,6 +22,9 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.platform.isIOS
 import kotlin.jvm.JvmInline
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
@@ -67,8 +70,9 @@ data class Preferences(
         val currentThemeOrdinal: Int = 0,
         @ProtoNumber(4)
         val useCompactNavigation: Boolean = false,
+        // 0 for iOS to partially collapse, otherwise auto hide
         @ProtoNumber(5)
-        val autoHideBottomNavigation: Boolean = true,
+        val bottomNavConfigOrdinal: Int = if (Platform.current.isIOS) 0 else 1,
         @ProtoNumber(6)
         val autoPlayTimelineVideos: Boolean = true,
         @ProtoNumber(7)
