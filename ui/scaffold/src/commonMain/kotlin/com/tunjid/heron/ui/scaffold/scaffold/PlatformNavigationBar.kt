@@ -16,9 +16,14 @@
 
 package com.tunjid.heron.ui.scaffold.scaffold
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -94,6 +99,7 @@ internal fun PaneScaffoldState.CommonNavigationBar(
         Surface(
             modifier = Modifier
                 .commonBottomNavSharedElement(
+                    status = status,
                     sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
                 )
                 .matchParentSize()
@@ -184,11 +190,20 @@ fun Modifier.bottomNavigationSharedBounds(
 
 context(paneScaffoldState: PaneScaffoldState)
 private fun Modifier.commonBottomNavSharedElement(
+    status: BottomNavStatus,
     sharedContentState: SharedTransitionScope.SharedContentState,
 ) = with(paneScaffoldState) {
-    sharedElement(
+    sharedBounds(
         sharedContentState = sharedContentState,
         animatedVisibilityScope = this,
+        enter = when (status) {
+            BottomNavStatus.Collapsed.Partially -> PartialCollapsedEnterTransition
+            BottomNavStatus.Collapsed.Fully,
+            BottomNavStatus.Expanded,
+            -> EnterTransition.None
+        },
+        exit = FadeShrinkExitTransition,
+        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
         zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
     )
         .renderInSharedTransitionScopeOverlay(
@@ -270,6 +285,12 @@ sealed class BottomNavStatus {
         data object Fully : Collapsed()
     }
 }
+
+private val PartialCollapsedEnterTransition: EnterTransition = fadeIn()
+
+private val FadeShrinkExitTransition: ExitTransition = fadeOut() + shrinkOut(
+    shrinkTowards = Alignment.CenterStart,
+)
 
 private val CompactCornerSize = 0.dp
 private val RegularCornerSize = 16.dp
