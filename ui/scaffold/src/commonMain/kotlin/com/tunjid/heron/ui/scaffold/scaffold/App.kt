@@ -116,6 +116,8 @@ fun AppScaffold(
                 }
                 val windowSizeState = windowSizeAsState()
                 val windowWidthDpState = windowWidthDpAsState(windowSizeState)
+                val leftSystemUiInsetState = rememberUpdatedState(UiTokens.leftVerticalSystemUiWidth)
+                val rightSystemUiInsetState = rememberUpdatedState(UiTokens.rightVerticalSystemUiWidth)
                 if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
                 val saveableStateHolderNavEntryDecorator =
@@ -168,6 +170,8 @@ fun AppScaffold(
                             paneNavigationState = { displayScope.paneNavigationState },
                             density = density,
                             windowWidth = windowWidthDpState,
+                            leftSystemUiInset = leftSystemUiInsetState,
+                            rightSystemUiInset = rightSystemUiInsetState,
                             staticStates = staticStates,
                         )
                     }.also {

@@ -157,7 +157,7 @@ private fun Flow<Action>.withInitialLoad(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Update>.launchUpdateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
@@ -202,7 +202,7 @@ private fun Flow<Action.Update>.launchUpdateMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchSeedFeedFromSearchFilterMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     authRepository: AuthRepository,
     profileRepository: ProfileRepository,
@@ -243,7 +243,7 @@ private fun launchSeedFeedFromSearchFilterMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Metadata>.launchUpdateMetadataMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.grazeFeed = when (val grazeFeed = state.grazeFeed) {
         is GrazeFeed.Created -> grazeFeed.copy(
@@ -259,7 +259,7 @@ private fun Flow<Action.Metadata>.launchUpdateMetadataMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.EditorNavigation>.launchEditorNavigationMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     when (action) {
         is Action.EditorNavigation.EnterFilter -> {
@@ -275,7 +275,7 @@ private fun Flow<Action.EditorNavigation>.launchEditorNavigationMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.EditFilter>.launchEditFilterMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     val editedFilter = state.grazeFeed.filter.updateAt(action.path) { target ->
         if (action is Action.EditFilter.FlipRootFilter) when (target) {
@@ -312,7 +312,7 @@ private fun Flow<Action.EditFilter>.launchEditFilterMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.PreviewFeed>.launchFeedPreviewMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     navActions: (NavigationMutation) -> Unit,
     profileRepository: ProfileRepository,
 ) = launchedCollectLatest { action ->
@@ -342,7 +342,7 @@ private fun Flow<Action.PreviewFeed>.launchFeedPreviewMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }

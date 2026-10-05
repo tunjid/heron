@@ -52,7 +52,7 @@ interface InferenceState {
     ) : InferenceState
 }
 
-internal fun InferenceState.SnapshotMutable.vibeOutcome(
+internal fun InferenceState.Mutable.vibeOutcome(
     type: Timeline.Profile.Type,
 ): InferenceOutcome? = when (type) {
     Timeline.Profile.Type.Posts -> postsOutcome
@@ -60,7 +60,7 @@ internal fun InferenceState.SnapshotMutable.vibeOutcome(
     else -> null
 }
 
-internal fun InferenceState.SnapshotMutable.setVibeOutcome(
+internal fun InferenceState.Mutable.setVibeOutcome(
     type: Timeline.Profile.Type,
     outcome: InferenceOutcome?,
 ) = when (type) {

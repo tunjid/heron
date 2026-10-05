@@ -185,7 +185,7 @@ class ActualListViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
@@ -193,7 +193,7 @@ private fun launchSignedInProfileIdMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -201,7 +201,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchTimelineStateHolderMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
@@ -255,7 +255,7 @@ private fun launchTimelineStateHolderMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchListMemberStateHolderMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     request: TimelineRequest.OfList,
     viewModelScope: CoroutineScope,
     timelineRepository: TimelineRepository,
@@ -311,7 +311,7 @@ private fun launchListMemberStateHolderMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -323,7 +323,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.AddListMember>.launchAddListMemberMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -342,7 +342,7 @@ private fun Flow<Action.AddListMember>.launchAddListMemberMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FollowStarterPack>.launchFollowStarterPackMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -364,7 +364,7 @@ private fun Flow<Action.FollowStarterPack>.launchFollowStarterPackMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -383,7 +383,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -402,7 +402,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -414,7 +414,7 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
@@ -438,7 +438,7 @@ private fun Action.ToggleViewerState.toConnectionWritable(): Writable.Connection
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -450,7 +450,7 @@ private fun Flow<Action.ToggleViewerState>.launchToggleViewerStateMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateFeedListStatus>.launchFeedListStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -462,7 +462,7 @@ private fun Flow<Action.UpdateFeedListStatus>.launchFeedListStatusMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchListStatusMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ) = timeline.withFeedListOrNull { feedList ->
@@ -484,7 +484,7 @@ private fun launchListStatusMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchTimelineCreatorMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     timeline: Timeline,
     profileRepository: ProfileRepository,
 ) {
@@ -508,13 +508,13 @@ private fun launchTimelineCreatorMutations(
     }
 }
 
-private fun State.SnapshotMutable.existingTimelineStateHolder(): ListScreenStateHolders.Timeline? =
+private fun State.Mutable.existingTimelineStateHolder(): ListScreenStateHolders.Timeline? =
     stateHolders
         .filterIsInstance<ListScreenStateHolders.Timeline>()
         .firstOrNull()
         .takeUnless { it?.mutator.isNoOp() }
 
-private fun State.SnapshotMutable.existingMembersStateHolder(): ListScreenStateHolders.Members? =
+private fun State.Mutable.existingMembersStateHolder(): ListScreenStateHolders.Members? =
     stateHolders
         .filterIsInstance<ListScreenStateHolders.Members>()
         .firstOrNull()

@@ -26,4 +26,7 @@ class IOSPlatform internal constructor() : Platform {
     override val supportsComposeDiagnosticStackTraces: Boolean = false
 }
 
+actual val Platform.isIOS: Boolean
+    get() = true
+
 actual val Platform.Companion.current: Platform by lazy(::IOSPlatform)

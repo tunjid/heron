@@ -156,7 +156,7 @@ class ActualQuoteThreadViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchPostQuoteThreadsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     languageDetector: LanguageDetector,
     profileRepository: ProfileRepository,
@@ -205,7 +205,7 @@ private fun launchPostQuoteThreadsMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchSignedInProfileIdMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect { signedInProfile ->
     state.signedInProfileId = signedInProfile?.did
@@ -213,7 +213,7 @@ private fun launchSignedInProfileIdMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -221,14 +221,14 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchInferenceCapabilityMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     inferenceModelManager: InferenceModelManager,
 ) = inferenceModelManager.source.launchedCollect { capability ->
     state.canRunInference = capability.isAvailable
 }
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -240,7 +240,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -259,7 +259,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -278,7 +278,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -290,14 +290,14 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateCurrentLanguageTag>.launchUpdateCurrentLanguageTagMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.currentLanguageTag = action.languageTag
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }

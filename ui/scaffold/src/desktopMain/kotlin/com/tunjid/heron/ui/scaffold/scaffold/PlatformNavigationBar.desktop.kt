@@ -20,10 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-internal actual fun AppScaffoldState.PlatformNavigationBar(
+internal actual fun PaneScaffoldState.PlatformNavigationBar(
     modifier: Modifier,
+    status: BottomNavStatus,
     onNavItemReselected: () -> Boolean,
 ) = CommonNavigationBar(
     modifier = modifier,
+    status = status,
     onNavItemReselected = onNavItemReselected,
 )

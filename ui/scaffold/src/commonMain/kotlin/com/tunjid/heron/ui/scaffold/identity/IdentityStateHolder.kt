@@ -115,7 +115,7 @@ class AppIdentityStateHolder(
 
 context(productionScope: CoroutineScope)
 private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
-    state: IdentityState.SnapshotMutable,
+    state: IdentityState.Mutable,
     authRepository: AuthRepository,
 ) = debounce { action ->
     when (action) {
@@ -163,7 +163,7 @@ private fun Flow<IdentityAction.Switch>.launchSwitchSessionMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<IdentityAction.ClearFailedWrite>.launchClearFailedWriteMutations(
-    state: IdentityState.SnapshotMutable,
+    state: IdentityState.Mutable,
 ) = launchedCollect {
     state.lastFailedWrite = null
 }

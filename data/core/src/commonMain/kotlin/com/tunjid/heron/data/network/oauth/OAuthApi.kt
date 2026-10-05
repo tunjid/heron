@@ -27,6 +27,7 @@ package com.tunjid.heron.data.network.oauth
 import com.tunjid.heron.data.network.oauth.network.OAuthAuthorizationServer
 import com.tunjid.heron.data.network.oauth.network.OAuthParRequest
 import com.tunjid.heron.data.network.oauth.network.OAuthParResponse
+import com.tunjid.heron.data.network.oauth.network.OAuthProtectedResource
 import com.tunjid.heron.data.network.oauth.network.OAuthTokenResponse
 import dev.whyoleg.cryptography.algorithms.ECDSA
 import dev.whyoleg.cryptography.algorithms.SHA256
@@ -43,6 +44,7 @@ import io.ktor.http.Parameters
 import io.ktor.http.ParametersBuilder
 import io.ktor.http.Url
 import io.ktor.http.buildUrl
+import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
 import kotlin.random.Random
@@ -82,11 +84,15 @@ class OAuthApi(
      *
      * Keep track of the [OAuthAuthorizationRequest]'s [nonce][OAuthAuthorizationRequest.nonce] and
      * [codeVerifier][OAuthAuthorizationRequest.codeVerifier] to use later when requesting an access token.
+     *
+     * The [prompt] is only sent if the OAuth server lists it in its supported prompt values. Servers that
+     * don't show their default authorization page instead.
      */
     suspend fun buildAuthorizationRequest(
         oauthClient: OAuthClient,
         scopes: List<OAuthScope>,
         loginHandleHint: String? = null,
+        prompt: String? = null,
     ): OAuthAuthorizationRequest = coroutineScope {
         val oauthServer = resolveOAuthAuthorizationServer()
 
@@ -114,6 +120,7 @@ class OAuthApi(
             codeChallenge = codeChallenge,
             state = state,
             loginHint = loginHandleHint,
+            prompt = prompt?.takeIf(oauthServer.promptValuesSupported::contains),
         )
 
         // Per the atproto OAuth spec, the client generates a new DPoP key for the session and
@@ -429,6 +436,25 @@ class OAuthApi(
 
         return "$signedData.$signature"
     }
+
+    /**
+     * Resolve the authorization servers that protect the given [resourceServer], like an account's PDS,
+     * from its OAuth protected resource metadata.
+     */
+    suspend fun resolveAuthorizationServers(
+        resourceServer: Url,
+    ): List<String> = client.get(
+        buildUrl {
+            takeFrom(resourceServer)
+            encodedPath = "/.well-known/oauth-protected-resource"
+        },
+    ).decodeResponse<OAuthProtectedResource>(
+        onSuccess = { it },
+        onNewNonce = { error("Should not happen") },
+        onFailure = {
+            throw AtpException(StatusCode.fromCode(status.value))
+        },
+    ).authorizationServers
 
     private suspend fun resolveOAuthAuthorizationServer(): OAuthAuthorizationServer {
         return client.get("/.well-known/oauth-authorization-server").decodeResponse(

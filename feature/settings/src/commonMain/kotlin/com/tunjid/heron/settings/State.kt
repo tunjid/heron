@@ -137,9 +137,9 @@ sealed class Action(val key: String) {
         val compactNavigation: Boolean,
     ) : Action(key = "SetCompactNavigation")
 
-    data class SetAutoHideBottomNavigation(
-        val autoHideBottomNavigation: Boolean,
-    ) : Action(key = "SetAutoHideBottomNavigation")
+    data class SetBottomNavConfigOrdinal(
+        val bottomNavConfigOrdinal: Int,
+    ) : Action(key = "SetBottomNavConfigOrdinal")
 
     data class SetShowPostEngagementMetrics(
         val showPostEngagementMetrics: Boolean,

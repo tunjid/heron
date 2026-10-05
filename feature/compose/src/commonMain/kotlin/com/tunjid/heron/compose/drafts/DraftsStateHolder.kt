@@ -89,7 +89,7 @@ class DraftsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun Flow<DraftsAction.Tile>.launchDraftsLoadMutations(
-    state: DraftsState.SnapshotMutable,
+    state: DraftsState.Mutable,
     postRepository: PostRepository,
 ) = map { it.tilingAction }
     .launchTilingMutations(

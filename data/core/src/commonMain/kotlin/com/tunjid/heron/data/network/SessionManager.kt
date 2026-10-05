@@ -140,14 +140,22 @@ internal class PersistedSessionManager(
         request: OauthUriRequest,
     ): SavedState.AuthTokens.Pending {
         sessionRequestUrl.update { Url(request.server.endpoint) }
+        val profileHandle = when (request) {
+            is OauthUriRequest.SignIn -> request.handle
+            is OauthUriRequest.SignUp -> null
+        }
         return oAuthApi.buildAuthorizationRequest(
             oauthClient = oauthRedirect.initializeOAuthClient(),
             scopes = HeronOauthScopes,
-            loginHandleHint = request.handle.id,
+            loginHandleHint = profileHandle?.id,
+            prompt = when (request) {
+                is OauthUriRequest.SignIn -> null
+                is OauthUriRequest.SignUp -> OauthCreateAccountPrompt
+            },
         )
             .let {
                 SavedState.AuthTokens.Pending.DPoP(
-                    profileHandle = request.handle,
+                    profileHandle = profileHandle,
                     endpoint = request.server.endpoint,
                     authorizeRequestUrl = it.authorizeRequestUrl,
                     codeVerifier = it.codeVerifier,
@@ -234,22 +242,34 @@ internal class PersistedSessionManager(
                     ),
                 )
 
-                val callingDid = api.resolveHandle(
-                    ResolveHandleQueryParams(Handle(pendingRequest.profileHandle.id)),
-                )
-                    .requireResponse()
-                    .did
-
-                if (oAuthToken.subject != callingDid) {
-                    throw IllegalStateException("Invalid login session")
-                }
-
                 // Access tokens are opaque per the atproto OAuth spec, so the PDS is discovered
                 // from the account's DID document instead of being parsed out of the token.
                 val pdsUrl = identityResolver.resolvePds(oAuthToken.subject)
                     ?: throw IllegalStateException(
                         "Could not resolve a PDS for ${oAuthToken.subject.did}",
                     )
+
+                when (val profileHandle = pendingRequest.profileHandle) {
+                    // A new account has no handle to check the token against. Instead, per the
+                    // atproto OAuth spec, its PDS must delegate to the server that issued the token.
+                    null -> require(
+                        oAuthApi.resolveAuthorizationServers(resourceServer = pdsUrl)
+                            .containsIssuer(issuer = pendingRequest.endpoint),
+                    ) {
+                        "The PDS for ${oAuthToken.subject.did} does not delegate to ${pendingRequest.endpoint}"
+                    }
+                    else -> {
+                        val callingDid = api.resolveHandle(
+                            ResolveHandleQueryParams(Handle(profileHandle.id)),
+                        )
+                            .requireResponse()
+                            .did
+
+                        if (oAuthToken.subject != callingDid) {
+                            throw IllegalStateException("Invalid login session")
+                        }
+                    }
+                }
 
                 oAuthToken.toAppToken(
                     authEndpoint = request.server.endpoint,
@@ -706,6 +726,25 @@ private val SavedState.AuthTokens.Authenticated.singleAccessKey
         is SavedState.AuthTokens.Authenticated.DPoP -> "$auth-$refresh"
     }
 
+/**
+ * Whether [issuer] is one of these authorization servers. Issuers are bare origins, so they're
+ * compared by origin to tolerate cosmetic differences like a trailing slash.
+ */
+internal fun List<String>.containsIssuer(
+    issuer: String,
+): Boolean {
+    val issuerUrl = Url(issuer)
+    return any { authorizationServer ->
+        val authorizationServerUrl = runCatching { Url(authorizationServer) }
+            .getOrNull()
+            ?: return@any false
+
+        authorizationServerUrl.protocol == issuerUrl.protocol &&
+            authorizationServerUrl.host.equals(issuerUrl.host, ignoreCase = true) &&
+            authorizationServerUrl.port == issuerUrl.port
+    }
+}
+
 internal val BlueskyJson: Json = Json(
     from = buildXrpcJsonConfiguration(XrpcSerializersModule),
     builderAction = {
@@ -795,6 +834,7 @@ private const val BlackSkyAppViewUrl = "https://api.blacksky.community"
 private const val GetTopicFeedPath = "app.bsky.unspecced.getTopicFeed"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"
+private const val OauthCreateAccountPrompt = "create"
 private const val ExpiredTokenError = "ExpiredToken"
 private const val InvalidTokenError = "invalid_token"
 private const val UseDPoPNonce = "use_dpop_nonce"

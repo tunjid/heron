@@ -20,9 +20,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -33,79 +31,71 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
-import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.treenav.compose.Adaptation
-import com.tunjid.treenav.compose.NavigationEventStatus
-import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaneScaffoldState.PaneNavigationBar(
+    expanded: Boolean,
     modifier: Modifier = Modifier,
     enterTransition: EnterTransition = slideInVertically(initialOffsetY = { it }),
     exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
     onNavItemReselected: () -> Boolean = { false },
 ) {
-    val sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey)
+    val status = appScaffoldState.staticStates.uiState.transientBottomNavStatus
+        ?: if (expanded) BottomNavStatus.Expanded
+        else when (bottomNavConfig) {
+            PaneScaffoldState.BottomNavConfig.PartiallyCollapse -> BottomNavStatus.Collapsed.Partially
+            PaneScaffoldState.BottomNavConfig.Hide -> BottomNavStatus.Expanded
+            PaneScaffoldState.BottomNavConfig.FullyCollapse -> BottomNavStatus.Collapsed.Fully
+        }
+    SideEffect(expanded) {
+        if (!expanded) appScaffoldState.updateTransientBottomNav(
+            show = false,
+        )
+    }
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
-                sharedContentState = sharedContentState,
-                animatedVisibilityScope = this,
-                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-            )
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-                renderInOverlay = {
-                    isActive &&
-                        isTransitionActive &&
-                        !sharedContentState.isMatchFound &&
-                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
-                },
-            ),
+        modifier = modifier,
         visible = canShowNavigationBar,
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            with(appScaffoldState) {
-                if (canUseMovableNavigationBar) staticStates.movableNavigationBar(
+            with(this@PaneNavigationBar) {
+                if (canUseMovableNavigationBar) appScaffoldState.staticStates.movableNavigationBar(
                     this,
                     Modifier,
+                    status,
                     onNavItemReselected,
                 )
-                else appScaffoldState.PlatformNavigationBar(
+                else PlatformNavigationBar(
                     modifier = Modifier,
+                    status = status,
                     onNavItemReselected = onNavItemReselected,
                 )
             }
@@ -135,13 +125,13 @@ fun PaneScaffoldState.PaneNavigationRail(
         ) enterTransition else EnterTransition.None,
         exit = exitTransition,
         content = {
-            with(appScaffoldState) {
-                if (canUseMovableNavigationRail) staticStates.movableNavigationRail(
+            with(this@PaneNavigationRail) {
+                if (canUseMovableNavigationRail) appScaffoldState.staticStates.movableNavigationRail(
                     this,
                     Modifier,
                     onNavItemReselected,
                 )
-                else PaneNavigationRail(
+                else PlatformNavigationRail(
                     modifier = Modifier,
                     onNavItemReselected = onNavItemReselected,
                 )
@@ -150,70 +140,24 @@ fun PaneScaffoldState.PaneNavigationRail(
     )
 }
 
-@Composable
-internal fun AppScaffoldState.CommonNavigationBar(
-    modifier: Modifier,
-    onNavItemReselected: () -> Boolean,
-) = with(staticStates) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth(),
-        color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
-        contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
-        shape = navigationBarShape(identityState.prefersCompactBottomNav),
-    ) {
-        Row(
-            modifier = Modifier
-                .navigationBarsPadding()
-                .fillMaxWidth()
-                .height(
-                    UiTokens.bottomNavHeight(
-                        isCompact = identityState.prefersCompactBottomNav,
-                    ),
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            navItems.forEach { item ->
-                NavigationBarItem(
-                    modifier = Modifier
-                        .weight(1f),
-                    icon = {
-                        BadgedBox(
-                            badge = {
-                                Badge(item.badgeCount)
-                            },
-                            content = {
-                                Icon(
-                                    imageVector = item.stack.icon,
-                                    contentDescription = stringResource(item.stack.titleRes),
-                                )
-                            },
-                        )
-                    },
-                    enabled = identityState.isStable,
-                    selected = item.selected,
-                    onClick = {
-                        if (item.selected && onNavItemReselected()) return@NavigationBarItem
-                        onNavItemSelected(item)
-                    },
-                )
-            }
-        }
-    }
+fun PaneScaffoldState.bottomNavOffset(offset: Offset): IntOffset {
+    return if (prefersAutoHidingBottomNav) offset.round()
+    else IntOffset.Zero
 }
 
 @Composable
-internal fun AppScaffoldState.PaneNavigationRail(
+internal fun PaneScaffoldState.PlatformNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
-) = with(staticStates) {
+) = with(appScaffoldState.staticStates) {
     Box(
         modifier = modifier
-            .padding(start = 8.dp)
+            .padding(horizontal = 8.dp)
+            .widthIn(max = navigationRailWidth)
             .fillMaxSize(),
     ) {
         val color by animateColorAsState(
-            if (shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
+            if (appScaffoldState.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
             else MaterialTheme.colorScheme.surface,
         )
         Column(
@@ -221,7 +165,7 @@ internal fun AppScaffoldState.PaneNavigationRail(
                 .align(Alignment.Center)
                 .constrainedSizePlacement(
                     orientation = Orientation.Horizontal,
-                    minSize = UiTokens.NavRailWidth,
+                    minSize = navigationRailWidth,
                     atStart = true,
                 )
                 .background(
@@ -260,7 +204,7 @@ internal fun AppScaffoldState.PaneNavigationRail(
 }
 
 @Composable
-private fun Badge(
+internal fun Badge(
     count: Long,
 ) {
     when (count) {
@@ -270,55 +214,18 @@ private fun Badge(
 }
 
 @Composable
-fun Modifier.bottomNavigationSharedBounds(
-    paneScaffoldState: PaneScaffoldState,
-): Modifier = with(paneScaffoldState) {
-    when (paneState.pane) {
-        ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
-            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
-            animatedVisibilityScope = this,
-        )
-
-        ThreePane.Secondary,
-        ThreePane.Tertiary,
-        ThreePane.Overlay,
-        null,
-        -> this@bottomNavigationSharedBounds
-    }
-}
-
-@Composable
-fun navigationBarShape(
-    prefersCompactBottomNav: Boolean,
-): Shape {
-    val topCornerSize by animateDpAsState(
-        if (prefersCompactBottomNav) CompactCornerSize else RegularCornerSize,
-    )
-
-    return RoundedCornerShape(
-        topStart = topCornerSize,
-        topEnd = topCornerSize,
-    )
-}
-
-@Composable
 private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
     derivedStateOf {
         splitLayoutState.weightAt(0)
             .times(splitLayoutState.size)
-            .minus(UiTokens.NavRailWidth) < minPaneWidth
+            .minus(navigationRailWidth) < minPaneWidth
     }
 }.value
 
-private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
-private val CompactCornerSize = 0.dp
-private val RegularCornerSize = 16.dp
 private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
 
 private const val MaxBadgeCount = 100L
-
-private const val BackgroundAlpha = 0.98f
 
 private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }

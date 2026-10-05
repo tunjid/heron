@@ -41,4 +41,6 @@ internal data class OAuthAuthorizationServer(
     val revocationEndpoint: String?,
     @SerialName("pushed_authorization_request_endpoint")
     val pushedAuthorizationRequestEndpoint: String,
+    @SerialName("prompt_values_supported")
+    val promptValuesSupported: List<String> = emptyList(),
 )

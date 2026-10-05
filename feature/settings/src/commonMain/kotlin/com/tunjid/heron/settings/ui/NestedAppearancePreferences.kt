@@ -22,11 +22,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState.BottomNavConfig
 import com.tunjid.heron.ui.scaffold.ui.theme.DarkThemeConfig
 import com.tunjid.heron.ui.scaffold.ui.theme.Theme
 import com.tunjid.heron.ui.scaffold.ui.theme.ordinal
 import heron.feature.settings.generated.resources.Res
-import heron.feature.settings.generated.resources.autohide_bottom_navigation
+import heron.feature.settings.generated.resources.bottom_navigation_fully_collapse
+import heron.feature.settings.generated.resources.bottom_navigation_hide
+import heron.feature.settings.generated.resources.bottom_navigation_on_scroll
+import heron.feature.settings.generated.resources.bottom_navigation_partially_collapse
 import heron.feature.settings.generated.resources.dark_theme
 import heron.feature.settings.generated.resources.dark_theme_dark
 import heron.feature.settings.generated.resources.dark_theme_light
@@ -52,7 +56,7 @@ fun AppearanceSection(
     setCurrentThemeOrdinal: (Int) -> Unit,
     setDarkThemeConfigOrdinal: (Int) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
-    setAutoHideBottomNavigation: (Boolean) -> Unit,
+    setBottomNavConfigOrdinal: (Int) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -95,6 +99,20 @@ fun AppearanceSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
+    SettingsRadioButtons(
+        modifier = Modifier
+            .fillMaxWidth(),
+        title = Res.string.bottom_navigation_on_scroll,
+        selectedItem = BottomNavConfig.fromOrdinal(
+            signedInProfilePreferences.local.bottomNavConfigOrdinal,
+        ),
+        items = BottomNavConfig.entries,
+        itemStringResource = BottomNavConfig::bottomNavConfigStringResource,
+        onItemClicked = { config ->
+            setBottomNavConfigOrdinal(config.ordinal)
+        },
+    )
+
     if (isCompactNavigationSupported) SettingsToggleItem(
         modifier = Modifier
             .fillMaxWidth(),
@@ -102,15 +120,6 @@ fun AppearanceSection(
         enabled = true,
         checked = signedInProfilePreferences.local.useCompactNavigation,
         onCheckedChange = setCompactNavigation,
-    )
-
-    SettingsToggleItem(
-        modifier = Modifier
-            .fillMaxWidth(),
-        text = stringResource(Res.string.autohide_bottom_navigation),
-        enabled = true,
-        checked = signedInProfilePreferences.local.autoHideBottomNavigation,
-        onCheckedChange = setAutoHideBottomNavigation,
     )
 }
 
@@ -131,4 +140,10 @@ private fun DarkThemeConfig.darkThemeConfigStringResource(): StringResource = wh
     DarkThemeConfig.System -> Res.string.dark_theme_system
     DarkThemeConfig.Light -> Res.string.dark_theme_light
     DarkThemeConfig.Dark -> Res.string.dark_theme_dark
+}
+
+private fun BottomNavConfig.bottomNavConfigStringResource(): StringResource = when (this) {
+    BottomNavConfig.PartiallyCollapse -> Res.string.bottom_navigation_partially_collapse
+    BottomNavConfig.Hide -> Res.string.bottom_navigation_hide
+    BottomNavConfig.FullyCollapse -> Res.string.bottom_navigation_fully_collapse
 }

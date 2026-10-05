@@ -136,7 +136,7 @@ class ActualNotificationsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser.launchedCollect {
     state.signedInProfile = it
@@ -144,7 +144,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
@@ -152,7 +152,7 @@ private fun launchLoadPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLastRefreshedMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     notificationsRepository: NotificationsRepository,
 ) = notificationsRepository.lastRefreshed.launchedCollect { refreshedAt ->
     state.lastRefreshed = refreshedAt
@@ -167,7 +167,7 @@ private fun launchLastRefreshedMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchCanShowRequestPermissionsButtonMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     notificationsRepository: NotificationsRepository,
 ) = notificationsRepository.hasPreviouslyRequestedNotificationPermissions
     .launchedCollect { hasPreviouslyRequestedNotificationPermissions ->
@@ -176,7 +176,7 @@ private fun launchCanShowRequestPermissionsButtonMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -195,7 +195,7 @@ private fun Flow<Action.BlockAccount>.launchBlockAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -214,7 +214,7 @@ private fun Flow<Action.MuteAccount>.launchMuteAccountMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -230,7 +230,7 @@ private fun Flow<Action.DeleteRecord>.launchDeleteRecordMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
@@ -244,7 +244,7 @@ private fun Flow<Action.MarkNotificationsRead>.launchMarkNotificationsReadMutati
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.Tile>.launchNotificationsMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     notificationsRepository: NotificationsRepository,
 ) = map { it.tilingAction }
     .launchTilingMutations(

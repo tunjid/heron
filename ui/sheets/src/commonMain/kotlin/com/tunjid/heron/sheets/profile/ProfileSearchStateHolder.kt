@@ -92,14 +92,14 @@ internal class ProfileSearchViewModel(
 
 context(productionScope: CoroutineScope)
 private fun Flow<ProfileSearchAction.UpdateTitle>.launchUpdateTitleMutations(
-    state: ProfileSearchState.SnapshotMutable,
+    state: ProfileSearchState.Mutable,
 ) = launchedCollectLatest { action ->
     state.title = action.title
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<ProfileSearchAction.Query>.launchSearchMutations(
-    state: ProfileSearchState.SnapshotMutable,
+    state: ProfileSearchState.Mutable,
     profileRepository: ProfileRepository,
 ) {
     val shared = shareIn(
@@ -137,7 +137,7 @@ private fun Flow<ProfileSearchAction.Query>.launchSearchMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<ProfileSearchAction.Seed>.launchSeedMutations(
-    state: ProfileSearchState.SnapshotMutable,
+    state: ProfileSearchState.Mutable,
     profileRepository: ProfileRepository,
 ) = launchedCollectLatest { action ->
     val fetched = action.ids

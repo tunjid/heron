@@ -60,7 +60,7 @@ import kotlinx.coroutines.flow.take
 @Stable
 internal interface EditProfileStateHolder :
     RouteStateHolder,
-    ActionSuspendingStateMutator<Action, State.SnapshotMutable>
+    ActionSuspendingStateMutator<Action, State.Mutable>
 
 @AssistedFactory
 fun interface EditProfileViewModelInitializer {
@@ -72,11 +72,11 @@ fun interface EditProfileViewModelInitializer {
 
 @Stable
 class ActualEditProfileViewModel(
-    mutator: ActionSuspendingStateMutator<Action, State.SnapshotMutable>,
+    mutator: ActionSuspendingStateMutator<Action, State.Mutable>,
     scope: CoroutineScope,
 ) : ViewModel(viewModelScope = scope),
     EditProfileStateHolder,
-    ActionSuspendingStateMutator<Action, State.SnapshotMutable> by mutator {
+    ActionSuspendingStateMutator<Action, State.Mutable> by mutator {
 
     @AssistedInject
     constructor(
@@ -142,7 +142,7 @@ class ActualEditProfileViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .filterNotNull()
@@ -165,7 +165,7 @@ private fun launchLoadProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchPendingUpdateSubmissionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = writeQueue.queueChanges.launchedCollect { writes ->
     state.submitting = writes.any { it is Writable.ProfileUpdate }
@@ -173,7 +173,7 @@ private fun launchPendingUpdateSubmissionMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchProfileTabMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     profileRepository: ProfileRepository,
 ) = profileRepository.tabs(route.profileHandleOrId)
@@ -187,7 +187,7 @@ private fun launchProfileTabMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchScreenTabMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     viewModelScope: CoroutineScope,
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
@@ -213,35 +213,35 @@ private fun launchScreenTabMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.AvatarPicked>.launchAvatarPickedMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.updatedAvatar = action.item
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.BannerPicked>.launchBannerPickedMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.updatedBanner = action.item
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.FieldChanged>.launchFormEditMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.fields = state.fields.copyWithValidation(action.id, action.text)
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
@@ -283,14 +283,14 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateTabsToSave>.launchPinnedTabMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.tabsToSave = action.tabs
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.ToggleFeed>.launchToggleFeedMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.feedUrisToFeeds =
         if (state.feedUrisToFeeds.contains(action.feedGenerator.uri)) state.feedUrisToFeeds - action.feedGenerator.uri

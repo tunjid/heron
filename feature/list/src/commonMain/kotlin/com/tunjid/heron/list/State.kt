@@ -204,7 +204,7 @@ interface MemberState : TilingState<ListMemberQuery, ListMember> {
     }
 }
 
-typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, MemberState.SnapshotMutable>
+typealias MembersStateHolder = ActionSuspendingStateMutator<TilingState.Action, MemberState>
 
 sealed class Action(val key: String) {
 

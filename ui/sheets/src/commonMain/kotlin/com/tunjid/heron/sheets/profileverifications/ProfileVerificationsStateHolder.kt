@@ -85,7 +85,7 @@ internal class ProfileVerificationsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun Flow<ProfileVerificationsAction.Load>.launchLoadMutations(
-    state: ProfileVerificationsState.SnapshotMutable,
+    state: ProfileVerificationsState.Mutable,
     profileRepository: ProfileRepository,
 ) = distinctUntilChanged()
     .launchedCollectLatest { action ->

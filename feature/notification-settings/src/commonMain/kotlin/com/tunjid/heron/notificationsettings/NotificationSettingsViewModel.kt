@@ -101,7 +101,7 @@ class ActualNotificationSettingsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadNotificationPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.notificationPreferences
     .launchedCollect { notificationPreferences ->
@@ -110,14 +110,14 @@ private fun launchLoadNotificationPreferencesMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.CacheNotificationPreferenceUpdate>.launchCacheUpdateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.pendingUpdates += (action.update.reason to action.update)
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateNotificationPreferences>.launchUpdateNotificationPreferencesMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -133,7 +133,7 @@ private fun Flow<Action.UpdateNotificationPreferences>.launchUpdateNotificationP
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }

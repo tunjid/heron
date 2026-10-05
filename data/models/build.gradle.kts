@@ -32,6 +32,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(project(":data:platform"))
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)

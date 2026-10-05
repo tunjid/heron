@@ -58,7 +58,7 @@ class SelectListViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadListsMutations(
-    state: SelectListState.SnapshotMutable,
+    state: SelectListState.Mutable,
     recordRepository: RecordRepository,
 ) = recordRepository.recentLists
     .launchedCollect { state.lists = it }

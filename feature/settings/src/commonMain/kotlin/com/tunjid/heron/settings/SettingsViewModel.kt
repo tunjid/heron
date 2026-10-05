@@ -146,7 +146,7 @@ class ActualSettingsViewModel(
                             userDataRepository = userDataRepository,
                         )
 
-                        is Action.SetAutoHideBottomNavigation -> action.flow.launchToggleAutoHideBottomNavigation(
+                        is Action.SetBottomNavConfigOrdinal -> action.flow.launchSetBottomNavConfigOrdinal(
                             userDataRepository = userDataRepository,
                         )
 
@@ -190,7 +190,7 @@ class ActualSettingsViewModel(
 
 context(productionScope: CoroutineScope)
 fun launchSignedInProfileSavedStateMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences
     .launchedCollect {
@@ -199,7 +199,7 @@ fun launchSignedInProfileSavedStateMutations(
 
 context(productionScope: CoroutineScope)
 fun launchLoadOpenSourceLibraryMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = flow {
     val libs = withContext(Dispatchers.IO) {
         Libs.Builder()
@@ -213,7 +213,7 @@ fun launchLoadOpenSourceLibraryMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSessionSummaryMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.pastSessions
     .launchedCollect { sessionSummaries ->
@@ -222,14 +222,14 @@ private fun launchLoadSessionSummaryMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateSection>.launchUpdateSectionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.section = action.section
 }
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateFeedPreference>.launchUpdateFeedPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -247,7 +247,7 @@ private fun Flow<Action.UpdateFeedPreference>.launchUpdateFeedPreferenceMutation
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.UpdateThreadViewPreference>.launchUpdateThreadPreferenceMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -265,7 +265,7 @@ private fun Flow<Action.UpdateThreadViewPreference>.launchUpdateThreadPreference
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SwitchSession>.launchHandleSwitchSessionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = debounce(SwitchActionDebounce)
     .launchedCollectLatest {
@@ -277,7 +277,7 @@ private fun Flow<Action.SwitchSession>.launchHandleSwitchSessionMutations(
     }
 
 private suspend fun switchSessionMutation(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
     sessionSummary: SessionSummary,
 ) {
@@ -307,7 +307,7 @@ private suspend fun switchSessionMutation(
 
 context(productionScope: CoroutineScope)
 private fun launchObserveActiveProfileMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .map { it?.did }
@@ -318,7 +318,7 @@ private fun launchObserveActiveProfileMutations(
 
 context(productionScope: CoroutineScope)
 private fun launchInferenceCapabilityMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     inferenceModelManager: InferenceModelManager,
 ) = inferenceModelManager.source.launchedCollect { capability ->
     state.canRunInference = capability.isAvailable
@@ -367,10 +367,10 @@ private fun Flow<Action.SetCompactNavigation>.launchToggleCompactNavigation(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.SetAutoHideBottomNavigation>.launchToggleAutoHideBottomNavigation(
+private fun Flow<Action.SetBottomNavConfigOrdinal>.launchSetBottomNavConfigOrdinal(
     userDataRepository: UserDataRepository,
-) = launchedCollect { (autoHideBottomNavigation) ->
-    userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
+) = launchedCollect { (bottomNavConfigOrdinal) ->
+    userDataRepository.setBottomNavConfigOrdinal(bottomNavConfigOrdinal)
 }
 
 context(productionScope: CoroutineScope)
@@ -396,7 +396,7 @@ private fun Flow<Action.SetAllowAllTimelinePresentations>.launchToggleAllowAllTi
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { action ->
     state.messages -= action.message
 }

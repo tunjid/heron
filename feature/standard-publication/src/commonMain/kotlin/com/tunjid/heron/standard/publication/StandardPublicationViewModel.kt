@@ -113,7 +113,7 @@ class ActualStandardPublicationViewModel(
 
 context(productionScope: CoroutineScope)
 private suspend fun launchPublicationMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     route: Route,
     viewModelScope: CoroutineScope,
     profileRepository: ProfileRepository,
@@ -145,7 +145,7 @@ private suspend fun launchPublicationMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -166,7 +166,7 @@ private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSu
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: State.SnapshotMutable,
+    state: State.Mutable,
 ) = launchedCollect { event ->
     state.messages -= event.message
 }

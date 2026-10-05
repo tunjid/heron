@@ -180,7 +180,7 @@ fun CoroutineScope.timelineStateHolder(
 
 context(scope: CoroutineScope)
 private fun launchHasUpdatesMutations(
-    state: TimelineState.SnapshotMutable,
+    state: TimelineState.Mutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ) {
@@ -195,7 +195,7 @@ private fun launchHasUpdatesMutations(
 
 context(scope: CoroutineScope)
 private fun launchTimelineUpdateMutations(
-    state: TimelineState.SnapshotMutable,
+    state: TimelineState.Mutable,
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ) {

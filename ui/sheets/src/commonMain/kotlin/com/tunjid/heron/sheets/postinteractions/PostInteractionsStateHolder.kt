@@ -91,7 +91,7 @@ class PostInteractionsViewModel(
 
 context(productionScope: CoroutineScope)
 private fun launchLoadSignedInMutations(
-    state: PostInteractionsState.SnapshotMutable,
+    state: PostInteractionsState.Mutable,
     authRepository: AuthRepository,
 ) = authRepository.signedInUser
     .distinctUntilChanged()
@@ -101,7 +101,7 @@ private fun launchLoadSignedInMutations(
 
 context(productionScope: CoroutineScope)
 private fun Flow<PostInteractionsAction.SendInteraction>.launchSendInteractionMutations(
-    state: PostInteractionsState.SnapshotMutable,
+    state: PostInteractionsState.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
@@ -112,7 +112,7 @@ private fun Flow<PostInteractionsAction.SendInteraction>.launchSendInteractionMu
 
 context(productionScope: CoroutineScope)
 private fun Flow<PostInteractionsAction.SnackbarDismissed>.launchSnackbarDismissalMutations(
-    state: PostInteractionsState.SnapshotMutable,
+    state: PostInteractionsState.Mutable,
 ) = launchedCollect {
     state.messages -= it.message
 }

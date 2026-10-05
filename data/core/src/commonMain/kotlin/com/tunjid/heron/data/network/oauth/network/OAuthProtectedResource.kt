@@ -14,18 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.ui.scaffold.scaffold
+package com.tunjid.heron.data.network.oauth.network
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@Composable
-internal actual fun PaneScaffoldState.PlatformNavigationBar(
-    modifier: Modifier,
-    status: BottomNavStatus,
-    onNavItemReselected: () -> Boolean,
-) = CommonNavigationBar(
-    modifier = modifier,
-    status = status,
-    onNavItemReselected = onNavItemReselected,
+@Serializable
+internal data class OAuthProtectedResource(
+    @SerialName("authorization_servers")
+    val authorizationServers: List<String> = emptyList(),
 )
