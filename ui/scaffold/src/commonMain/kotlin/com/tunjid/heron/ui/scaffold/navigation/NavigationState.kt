@@ -19,7 +19,7 @@ import com.tunjid.treenav.strings.routeString
 import com.tunjid.treenav.switch
 
 @Snapshottable
-interface NavigationState {
+internal interface NavigationState {
     @SnapshotSpec
     data class Immutable(
         val multiStackNav: MultiStackNav = Initial,

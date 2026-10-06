@@ -9,7 +9,7 @@ import com.tunjid.snapshottable.Snapshottable
 import kotlin.time.Instant
 
 @Snapshottable
-interface NotificationState {
+internal interface NotificationState {
     @SnapshotSpec
     data class Immutable(
         val unreadCount: Long = 0L,
@@ -20,7 +20,7 @@ interface NotificationState {
     ) : NotificationState
 }
 
-sealed class NotificationAction(
+internal sealed class NotificationAction(
     val key: String,
 ) {
     data class UpdatePermissions(

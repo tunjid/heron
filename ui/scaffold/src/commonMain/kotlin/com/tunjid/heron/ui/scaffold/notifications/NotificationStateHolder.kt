@@ -44,10 +44,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 @Stable
-interface NotificationStateHolder : ActionSuspendingStateMutator<NotificationAction, NotificationState>
+internal interface NotificationStateHolder : ActionSuspendingStateMutator<NotificationAction, NotificationState>
 
 @Inject
-class AppNotificationStateHolder(
+internal class AppNotificationStateHolder(
     @AppMainScope
     appMainScope: CoroutineScope,
     notifier: Notifier,

@@ -11,7 +11,7 @@ import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
 import com.tunjid.snapshottable.Snapshottable
 
-sealed class IdentityAction(
+internal sealed class IdentityAction(
     val key: String,
 ) {
     sealed class Switch :
@@ -32,7 +32,7 @@ sealed class IdentityAction(
 
 @Stable
 @Snapshottable
-interface IdentityState {
+internal interface IdentityState {
     sealed class SwitchStatus {
         sealed class Stable : SwitchStatus() {
             data object Idle : SwitchStatus.Stable()
