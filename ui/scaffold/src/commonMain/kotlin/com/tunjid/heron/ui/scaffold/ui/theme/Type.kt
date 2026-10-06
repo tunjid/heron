@@ -21,6 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.platform.isIOS
 import heron.ui.scaffold.generated.resources.Res
 import heron.ui.scaffold.generated.resources.Roboto_Black
 import heron.ui.scaffold.generated.resources.Roboto_BlackItalic
@@ -65,6 +68,9 @@ fun appTypography(fontFamily: FontFamily): Typography {
 
 @Composable
 fun appFont(): FontFamily {
+    // Use the system font (San Francisco) on iOS so text feels native.
+    if (Platform.current.isIOS) return FontFamily.Default
+
     return FontFamily(
         Font(
             resource = Res.font.Roboto_Black,

@@ -16,12 +16,11 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -104,6 +103,7 @@ fun PostEmbed(
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             when (embed) {
                 is ExternalEmbed -> PostExternal(
@@ -170,7 +170,6 @@ fun PostEmbed(
                 }
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
-                if (nativeEmbeddedRecord != null) Spacer(Modifier.height(16.dp))
                 when (nativeEmbeddedRecord) {
                     is Post -> when (nativeEmbeddedRecord.cid) {
                         Constants.notFoundPostId -> InvisiblePostPost(onClick = null)

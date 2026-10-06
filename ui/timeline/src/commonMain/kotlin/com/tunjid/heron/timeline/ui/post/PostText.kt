@@ -18,6 +18,8 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -27,12 +29,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 
 @Composable
@@ -67,18 +73,12 @@ fun PostText(
             },
         ),
     ) {
-        SelectionContainer {
-            Text(
-                text = rememberFormattedTextPost(
-                    text = text,
-                    textLinks = post.record?.links ?: emptyList(),
-                    onLinkTargetClicked = { onLinkTargetClicked(post, it) },
-                ),
-                maxLines = maxLines,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-            )
-        }
+        MultilineStyledText(
+            text = text,
+            links = post.record?.links ?: emptyList(),
+            onLinkTargetClicked = { onLinkTargetClicked(post, it) },
+            maxLines = maxLines,
+        )
     }
 }
 

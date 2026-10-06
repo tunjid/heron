@@ -130,7 +130,6 @@ internal fun ThreadedPost(
             item = item,
             maxItems = maxNodes,
         ) { node, position, flags, decorations, avatarShape ->
-            val index = position[NodeDimension.Index]
             val depth = position[NodeDimension.Depth]
             key(node.post.uri.uri) {
                 val connectorPath = remember { Path() }
@@ -210,10 +209,7 @@ internal fun ThreadedPost(
                     Timeline(
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .height(
-                                if (index == 0) 16.dp
-                                else 12.dp,
-                            )
+                            .height(4.dp)
                             .animateBounds(
                                 lookaheadScope = presentationLookaheadScope,
                                 boundsTransform = paneTransitionScope.childBoundsTransform,

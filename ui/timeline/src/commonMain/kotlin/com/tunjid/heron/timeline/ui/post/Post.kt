@@ -611,7 +611,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     content: PostContent,
 ) = when (content) {
     PostContent.Actions -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -625,7 +625,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     }
 
     is PostContent.Embed -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> when (content) {
             PostContent.Embed.Link -> 8.dp
             PostContent.Embed.Media -> 0.dp
@@ -636,7 +636,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     }
 
     PostContent.Text -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -645,7 +645,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     PostContent.Metadata -> 0.dp
 
     PostContent.Labels -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 8.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
