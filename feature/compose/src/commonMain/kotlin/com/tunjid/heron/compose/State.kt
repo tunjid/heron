@@ -20,12 +20,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.tunjid.heron.data.core.models.Gif
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.asEmbeddedGifOrNull
 import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
@@ -114,6 +116,9 @@ val State.canDraft
 val State.hasComposedContent
     get() = postText.text.isNotBlank() || photos.isNotEmpty() || video != null
 
+val State.hasGifPreview
+    get() = linkPreview?.embed?.asEmbeddedGifOrNull() != null
+
 val State.hasLongPost
     get() = when (val type = postType) {
         is Post.Create.Mention -> type.profile.handle.id.length
@@ -132,6 +137,10 @@ sealed class Action(val key: String) {
     data class UriDetected(
         val url: String,
     ) : Action("UriDetected")
+
+    data class SelectGif(
+        val gif: Gif,
+    ) : Action("SelectGif")
 
     data class CreatePost(
         val postType: Post.Create?,
