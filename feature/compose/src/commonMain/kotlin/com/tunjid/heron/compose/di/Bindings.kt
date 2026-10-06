@@ -44,6 +44,9 @@ import com.tunjid.heron.compose.ComposeViewModelInitializer
 import com.tunjid.heron.compose.canDraft
 import com.tunjid.heron.compose.drafts.DraftsStateHolder
 import com.tunjid.heron.compose.drafts.DraftsViewModelInitializer
+import com.tunjid.heron.compose.gifs.GifPickerStateHolder
+import com.tunjid.heron.compose.gifs.GifPickerViewModelInitializer
+import com.tunjid.heron.compose.gifs.rememberGifPickerSheetState
 import com.tunjid.heron.compose.hasComposedContent
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
 import com.tunjid.heron.compose.ui.ComposePostFabRow
@@ -126,13 +129,18 @@ object ComposeBindings {
         initializer: ComposeViewModelInitializer,
     ): RouteStateHolderInitializer = RouteStateHolderInitializer(initializer::invoke)
 
-    // The drafts sheet is compose-only, so its sheet state holder is contributed here rather than
-    // from the shared :ui:sheets SheetBindings. It merges into the same app-graph sheet map.
     @Provides
     @IntoMap
     @ClassKey(DraftsStateHolder::class)
     fun provideDraftsViewModelInitializer(
         initializer: DraftsViewModelInitializer,
+    ): SheetStateHolderInitializer = SheetStateHolderInitializer(initializer::invoke)
+
+    @Provides
+    @IntoMap
+    @ClassKey(GifPickerStateHolder::class)
+    fun provideGifPickerViewModelInitializer(
+        initializer: GifPickerViewModelInitializer,
     ): SheetStateHolderInitializer = SheetStateHolderInitializer(initializer::invoke)
 
     @Provides
@@ -168,6 +176,10 @@ internal fun Route(
     val state = stateHolder.produceStateWithLifecycle()
 
     val discardDialogState = rememberSimpleDialogState()
+
+    val gifPickerSheetState = paneScaffoldState.rememberGifPickerSheetState { gif ->
+        stateHolder.accept(Action.SelectGif(gif))
+    }
 
     // Only interrupt leaving when there is unsaved content on a post that could become a draft.
     // Replies and quotes can't be drafted, so they pop immediately.
@@ -235,7 +247,9 @@ internal fun Route(
                     .windowInsetsPadding(WindowInsets.platformNavigationBars),
                 postText = state.postText,
                 photos = state.photos,
+                canAddGif = state.photos.isEmpty() && state.video == null,
                 onMediaEdited = stateHolder.accept,
+                onGifClicked = gifPickerSheetState::showGifPicker,
             )
 
             DisposableEffect(hasBlankText, imeShowing) {

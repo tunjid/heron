@@ -1,0 +1,71 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.gif.defs",
+  "defs": {
+    "gifView": {
+      "type": "object",
+      "description": "A GIF from the AppView's GIF provider (KLIPY), normalized to a provider-agnostic shape.",
+      "required": ["id", "title", "description", "gif", "preview"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Provider id of the GIF."
+        },
+        "title": {
+          "type": "string",
+          "description": "Provider title of the GIF."
+        },
+        "description": {
+          "type": "string",
+          "description": "Provider content description of the GIF, suitable as default alt text."
+        },
+        "gif": {
+          "type": "ref",
+          "ref": "#mediaFormat",
+          "description": "The full size animated GIF. Its url is the one embedded in posts."
+        },
+        "preview": {
+          "type": "ref",
+          "ref": "#mediaFormat",
+          "description": "A still frame of the GIF, used as the external embed thumbnail."
+        },
+        "tinyGif": {
+          "type": "ref",
+          "ref": "#mediaFormat",
+          "description": "A small animated GIF, suitable for picker grids."
+        },
+        "mp4": {
+          "type": "ref",
+          "ref": "#mediaFormat",
+          "description": "An mp4 encoding of the GIF."
+        },
+        "webm": {
+          "type": "ref",
+          "ref": "#mediaFormat",
+          "description": "A webm encoding of the GIF."
+        }
+      }
+    },
+    "mediaFormat": {
+      "type": "object",
+      "description": "A single encoding of a GIF.",
+      "required": ["url", "width", "height"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size of the file in bytes."
+        }
+      }
+    }
+  }
+}

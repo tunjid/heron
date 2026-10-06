@@ -66,7 +66,9 @@ import com.tunjid.heron.data.platform.MemoryMonitor
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
+import com.tunjid.heron.data.repository.GifRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.NetworkGifRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.OfflineFirstRecordRepository
 import com.tunjid.heron.data.repository.OfflineMessageRepository
@@ -544,6 +546,12 @@ object DataBindings {
     internal fun provideOfflineMessageRepository(
         offlineMessageRepository: OfflineMessageRepository,
     ): MessageRepository = offlineMessageRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideNetworkGifRepository(
+        networkGifRepository: NetworkGifRepository,
+    ): GifRepository = networkGifRepository
 
     @SingleIn(AppScope::class)
     @Provides

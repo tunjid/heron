@@ -42,4 +42,14 @@
     <string name="post_language">Post language</string>
     <string name="post_language_title">Post languages</string>
     <string name="post_language_search">Search languages</string>
+    <string name="add_gif">Add GIF</string>
+    <string name="gif_search_placeholder">Search KLIPY</string>
+    <string name="gif_category_trending">Trending GIFs</string>
+    <string name="gif_category_love">Love GIFs</string>
+    <string name="gif_category_happy">Happy GIFs</string>
+    <string name="gif_category_sad">Sad GIFs</string>
+    <string name="gif_category_party">Party GIFs</string>
+    <string name="gif_category_yes">Yes GIFs</string>
+    <string name="gifs_empty_title">No GIFs found</string>
+    <string name="gifs_empty_description">Try a different search.</string>
 </resources>
