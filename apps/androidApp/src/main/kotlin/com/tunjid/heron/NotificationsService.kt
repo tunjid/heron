@@ -21,50 +21,26 @@ import android.content.Context
 import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.tunjid.heron.data.logging.LogPriority
-import com.tunjid.heron.data.logging.logcat
-import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
 import com.tunjid.heron.ui.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
-import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 
 class NotificationsService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) =
-        appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
+        appState.onPushTokenRegistered(
+            token = token,
+        )
 
-    override fun onMessageReceived(message: RemoteMessage) {
-        val action = NotificationAction.HandleNotification(payload = message.data)
-        action.senderDid ?: return
-        val recordUri = action.recordUri ?: return
-
-        logcat(LogPriority.DEBUG) {
-            "Received notification for $recordUri. Payload: ${message.data}"
-        }
-        appState.onNotificationAction(action)
-
-        // await processing completion or timeout to prevent the app from being
-        // killed due to background execution limits.
-        try {
-            runBlocking {
-                withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
-                    appState.awaitNotificationProcessing(recordUri)
-                }
-            }
-        } catch (e: Exception) {
-            logcat(LogPriority.WARN) {
-                "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
-            }
-        } finally {
-            appState.onNotificationAction(
-                NotificationAction.NotificationProcessedOrDropped(recordUri),
-            )
-        }
+    // Block until processing completes or times out to prevent the app from being
+    // killed due to background execution limits.
+    override fun onMessageReceived(message: RemoteMessage) = runBlocking {
+        appState.processPushNotification(
+            payload = message.data,
+        )
     }
 }
 
@@ -79,10 +55,8 @@ class NotificationDismissReceiver : BroadcastReceiver() {
             /* defaultValue = */
             0,
         )
-        if (dismissedAtEpoch > 0) context.appState.onNotificationAction(
-            NotificationAction.NotificationDismissed(
-                dismissedAt = Instant.fromEpochMilliseconds(dismissedAtEpoch),
-            ),
+        if (dismissedAtEpoch > 0) context.appState.onNotificationDismissed(
+            dismissedAt = Instant.fromEpochMilliseconds(dismissedAtEpoch),
         )
     }
 }

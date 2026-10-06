@@ -184,7 +184,7 @@ class AppScaffoldState internal constructor(
      * It also acts as a mixin for app level properties.
      */
     @Stable
-    class StaticStates(
+    class StaticStates internal constructor(
         private val identityStateHolder: IdentityStateHolder,
         private val navigationStateHolder: NavigationStateHolder,
         private val notificationStateHolder: NotificationStateHolder,
@@ -238,19 +238,19 @@ class AppScaffoldState internal constructor(
             onUiAction(UiAction.UpdatePaneAnchor(anchor))
         }
 
-        fun onIdentityAction(
+        internal fun onIdentityAction(
             action: IdentityAction,
         ) = identityStateHolder(action)
 
-        fun onNavigationAction(
+        internal fun onNavigationAction(
             action: NavigationMutation,
         ) = navigationStateHolder(action)
 
-        fun onNotificationAction(
+        internal fun onNotificationAction(
             action: NotificationAction,
         ) = notificationStateHolder(action)
 
-        fun onUiAction(
+        internal fun onUiAction(
             action: UiAction,
         ) = uiStateHolder(action)
 

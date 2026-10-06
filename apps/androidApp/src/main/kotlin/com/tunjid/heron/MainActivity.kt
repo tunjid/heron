@@ -38,7 +38,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.scaffold.App
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isImmersive
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isShowingSplashScreen
@@ -115,7 +114,9 @@ class MainActivity : ComponentActivity() {
             .getToken()
             .addOnSuccessListener { token ->
                 // appState will check if notification permissions are available
-                appState.onNotificationAction(NotificationAction.RegisterToken(token))
+                appState.onPushTokenRegistered(
+                    token = token,
+                )
             }
     }
 
@@ -123,10 +124,8 @@ class MainActivity : ComponentActivity() {
         NotificationManagerCompat.from(this)
             .areNotificationsEnabled()
             .let {
-                appState.onNotificationAction(
-                    NotificationAction.UpdatePermissions(
-                        hasNotificationPermissions = it,
-                    ),
+                appState.onNotificationPermissionsChanged(
+                    hasNotificationPermissions = it,
                 )
             }
     }

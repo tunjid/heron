@@ -13,7 +13,7 @@ import kotlin.collections.isNotEmpty
 
 @Stable
 @Snapshottable
-interface UiState {
+internal interface UiState {
     @SnapshotSpec
     data class Immutable(
         val dismissBehavior: DismissBehavior = DismissBehavior.None,
@@ -23,10 +23,10 @@ interface UiState {
     ) : UiState
 }
 
-val UiState.isImmersive: Boolean
+internal val UiState.isImmersive: Boolean
     get() = immersiveRouteIds.isNotEmpty()
 
-sealed class UiAction(
+internal sealed class UiAction(
     val key: String,
 ) {
     data class UpdateDismissBehavior(

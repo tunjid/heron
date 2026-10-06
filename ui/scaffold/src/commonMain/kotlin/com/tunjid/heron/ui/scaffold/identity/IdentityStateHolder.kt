@@ -44,10 +44,10 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 @Stable
-interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
+internal interface IdentityStateHolder : ActionSuspendingStateMutator<IdentityAction, IdentityState>
 
 @Inject
-class AppIdentityStateHolder(
+internal class AppIdentityStateHolder(
     @AppMainScope
     appMainScope: CoroutineScope,
     authRepository: AuthRepository,

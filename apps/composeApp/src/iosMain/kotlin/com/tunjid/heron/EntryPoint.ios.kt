@@ -21,9 +21,6 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.files.asSystemFile
 import com.tunjid.heron.data.logging.IOSLogger
-import com.tunjid.heron.data.logging.LogPriority
-import com.tunjid.heron.data.logging.logcat
-import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.ml.engine.FoundationModelsBridge
 import com.tunjid.heron.data.ml.engine.createFoundationModelsEngine
 import com.tunjid.heron.data.ml.language.createLanguageDetector
@@ -35,7 +32,6 @@ import com.tunjid.heron.data.utilities.inference.FoundationModelsManager
 import com.tunjid.heron.media.images.imageLoader
 import com.tunjid.heron.media.video.AVFoundationPlayerController
 import com.tunjid.heron.ui.scaffold.notifications.IosNotifier
-import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -45,7 +41,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -102,7 +97,9 @@ fun createAppState(
  * Called from Swift when Firebase provides a new FCM token.
  */
 fun onNewFcmToken(appState: AppState, token: String) {
-    appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
+    appState.onPushTokenRegistered(
+        token = token,
+    )
 }
 
 /**
@@ -110,8 +107,8 @@ fun onNewFcmToken(appState: AppState, token: String) {
  * permission state into appState.
  */
 fun onNotificationPermissionsUpdated(appState: AppState, hasPermissions: Boolean) {
-    appState.onNotificationAction(
-        NotificationAction.UpdatePermissions(hasNotificationPermissions = hasPermissions),
+    appState.onNotificationPermissionsChanged(
+        hasNotificationPermissions = hasPermissions,
     )
 }
 
@@ -144,29 +141,13 @@ private object IosNotificationBridge {
         payload: Map<String, String>,
         onComplete: () -> Unit,
     ) {
-        val action = NotificationAction.HandleNotification(payload = payload)
-        action.senderDid ?: return onComplete()
-        val recordUri = action.recordUri ?: return onComplete()
-
-        logcat(LogPriority.DEBUG) {
-            "Received push notification for $recordUri. Payload: $payload"
-        }
-        appState.onNotificationAction(action)
-
         scope.launch {
             try {
-                withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
-                    appState.awaitNotificationProcessing(recordUri)
-                }
-            } catch (e: Exception) {
-                logcat(LogPriority.WARN) {
-                    "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
-                }
+                appState.processPushNotification(
+                    payload = payload,
+                )
             } finally {
                 withContext(Dispatchers.Main) {
-                    appState.onNotificationAction(
-                        NotificationAction.NotificationProcessedOrDropped(recordUri),
-                    )
                     onComplete()
                 }
             }

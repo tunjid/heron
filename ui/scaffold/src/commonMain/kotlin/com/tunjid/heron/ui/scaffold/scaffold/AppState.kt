@@ -25,7 +25,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
 import com.tunjid.heron.data.tasks.BackgroundTaskHost
 import com.tunjid.heron.data.tasks.BackgroundTaskRunner
@@ -39,6 +41,7 @@ import com.tunjid.heron.ui.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.scaffold.ui.isImmersive
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -53,14 +56,16 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 
 /**
  * Application level state.
  */
 @Stable
-class AppState(
+class AppState internal constructor(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val identityStateHolder: IdentityStateHolder,
     private val navigationStateHolder: NavigationStateHolder,
@@ -115,25 +120,74 @@ class AppState(
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
 
-    fun onNotificationAction(action: NotificationAction) =
-        notificationStateHolder.accept(action)
+    fun onPushTokenRegistered(
+        token: String,
+    ) = notificationStateHolder.accept(
+        NotificationAction.RegisterToken(
+            token = token,
+        ),
+    )
+
+    fun onNotificationPermissionsChanged(
+        hasNotificationPermissions: Boolean,
+    ) = notificationStateHolder.accept(
+        NotificationAction.UpdatePermissions(
+            hasNotificationPermissions = hasNotificationPermissions,
+        ),
+    )
+
+    fun onNotificationDismissed(
+        dismissedAt: Instant,
+    ) = notificationStateHolder.accept(
+        NotificationAction.NotificationDismissed(
+            dismissedAt = dismissedAt,
+        ),
+    )
 
     /**
-     * This method is called from outside compose and
-     * needs manual snapshot observation.
+     * Processes a push notification [payload], suspending until it has been processed
+     * or [NOTIFICATION_PROCESSING_TIMEOUT_SECONDS] elapses, to keep the platform from
+     * killing the app due to background execution limits.
+     *
+     * This method is called from outside compose and needs manual snapshot observation.
      */
-    suspend fun awaitNotificationProcessing(
-        recordUri: RecordUri,
-    ) = withSnapshotNotifications {
-        snapshotFlow {
-            notificationStateHolder.state.processedNotificationRecordUris
-        }.first {
-            recordUri in it
+    suspend fun processPushNotification(
+        payload: Map<String, String>,
+    ) {
+        val action = NotificationAction.HandleNotification(payload = payload)
+        action.senderDid ?: return
+        val recordUri = action.recordUri ?: return
+
+        logcat(LogPriority.DEBUG) {
+            "Received notification for $recordUri. Payload: $payload"
+        }
+        notificationStateHolder.accept(action)
+
+        try {
+            withTimeout(NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                withSnapshotNotifications {
+                    snapshotFlow {
+                        notificationStateHolder.state.processedNotificationRecordUris
+                    }.first {
+                        recordUri in it
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN) {
+                "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
+            }
+        } finally {
+            notificationStateHolder.accept(
+                NotificationAction.NotificationProcessedOrDropped(
+                    recordUri = recordUri,
+                ),
+            )
         }
     }
 
     companion object {
-        val NOTIFICATION_PROCESSING_TIMEOUT_SECONDS = 10.seconds
+        internal val NOTIFICATION_PROCESSING_TIMEOUT_SECONDS = 10.seconds
 
         val AppState.isShowingSplashScreen: Boolean
             get() = navigationStateHolder.state.multiStackNav.isShowingSplashScreen
@@ -141,7 +195,7 @@ class AppState(
         val AppState.isImmersive: Boolean
             get() = uiStateHolder.state.isImmersive
 
-        fun AppState.staticStates() = AppScaffoldState.StaticStates(
+        internal fun AppState.staticStates() = AppScaffoldState.StaticStates(
             identityStateHolder = identityStateHolder,
             navigationStateHolder = navigationStateHolder,
             notificationStateHolder = notificationStateHolder,
