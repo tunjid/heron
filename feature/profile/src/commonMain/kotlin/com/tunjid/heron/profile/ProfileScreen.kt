@@ -191,9 +191,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.heron.ui.text.asClipEntry
 import com.tunjid.heron.ui.text.links
-import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.mutator.invoke
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -865,17 +865,10 @@ private fun ProfileBio(
     val bio = description.orEmpty()
     val textLinks = AnnotatedString(bio).links()
 
-    val annotatedText = rememberFormattedTextPost(
+    MultilineStyledText(
         text = bio,
-        textLinks = textLinks,
+        links = textLinks,
         onLinkTargetClicked = onLinkTargetClicked,
-    )
-
-    Text(
-        text = annotatedText,
-        style = MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-        ),
     )
 }
 

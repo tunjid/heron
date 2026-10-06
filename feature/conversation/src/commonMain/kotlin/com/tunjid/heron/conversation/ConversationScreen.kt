@@ -40,7 +40,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -91,7 +90,7 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
@@ -488,14 +487,11 @@ private fun ChatItemBubble(
             color = backgroundBubbleColor,
             shape = side.bubbleShape,
         ) {
-            Text(
-                text = rememberFormattedTextPost(
-                    text = message.text,
-                    textLinks = message.links,
-                    textLinkStyles = side.rememberTextLinkStyle(),
-                    onLinkTargetClicked = onLinkTargetClicked,
-                ),
-                style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+            MultilineStyledText(
+                text = message.text,
+                links = message.links,
+                linkStyles = side.rememberTextLinkStyle(),
+                onLinkTargetClicked = onLinkTargetClicked,
                 modifier = Modifier.padding(
                     vertical = 8.dp,
                     horizontal = 16.dp,

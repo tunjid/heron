@@ -224,7 +224,7 @@ fun PostFeatureTextContent(
                 text = title,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = Bold),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = Bold),
             )
         }
         if (!description.isNullOrBlank()) {
