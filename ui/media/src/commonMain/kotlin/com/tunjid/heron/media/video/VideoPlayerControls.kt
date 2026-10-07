@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,18 +111,27 @@ fun PlaybackStatus(
         modifier = modifier,
     ) {
         var adjustedPosition by remember { mutableFloatStateOf(Float.NaN) }
+        val sliderState = remember {
+            SliderState(
+                value = when {
+                    adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
+                    else -> adjustedPosition
+                },
+                trackRange = 0f..videoPlayerState.totalDuration.toFloat(),
+            )
+        }
         Slider(
             modifier = Modifier
                 .fillMaxWidth(),
-            value = when {
-                adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
-                else -> adjustedPosition
-            },
-            onValueChange = { newValue ->
+            state = sliderState,
+//            value = when {
+//                adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
+//                else -> adjustedPosition
+//            },
+            onValueChange = { newValue: Float ->
                 controlsState.onInteracted()
                 adjustedPosition = newValue
             },
-            valueRange = 0f..videoPlayerState.totalDuration.toFloat(),
             interactionSource = controlsState.controlsInteractionSource,
             onValueChangeFinished = {
                 if (!adjustedPosition.isNaN()) controlsState.videoPlayerController.play(
