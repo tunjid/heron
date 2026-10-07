@@ -111,7 +111,7 @@ fun PlaybackStatus(
         modifier = modifier,
     ) {
         var adjustedPosition by remember { mutableFloatStateOf(Float.NaN) }
-        val sliderState = remember {
+        val sliderState = remember(videoPlayerState.totalDuration) {
             SliderState(
                 value = when {
                     adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
@@ -124,10 +124,6 @@ fun PlaybackStatus(
             modifier = Modifier
                 .fillMaxWidth(),
             state = sliderState,
-//            value = when {
-//                adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
-//                else -> adjustedPosition
-//            },
             onValueChange = { newValue: Float ->
                 controlsState.onInteracted()
                 adjustedPosition = newValue
@@ -179,6 +175,20 @@ fun PlaybackStatus(
                     }
                 },
             )
+        }
+        LaunchedEffect(
+            sliderState,
+            videoPlayerState,
+        ) {
+            snapshotFlow {
+                when {
+                    adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
+                    else -> adjustedPosition
+                }
+            }
+                .collect {
+                    sliderState.value = it
+                }
         }
     }
 }
