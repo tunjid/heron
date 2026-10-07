@@ -79,7 +79,7 @@ fun TimelineItem(
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
                         modifier = Modifier.padding(
-                            start = 32.dp,
+                            start = 12.dp,
                             top = 4.dp,
                             bottom = 4.dp,
                         ),
