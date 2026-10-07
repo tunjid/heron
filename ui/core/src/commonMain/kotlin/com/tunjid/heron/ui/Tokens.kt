@@ -96,7 +96,11 @@ object UiTokens {
 
     fun bottomNavHeight(
         isCompact: Boolean,
-    ): Dp = if (isCompact || Platform.current.isIOS) 48.dp else 80.dp
+    ): Dp = when {
+        Platform.current.isIOS -> 62.dp
+        isCompact -> 48.dp
+        else -> 80.dp
+    }
 
     @Composable
     fun bottomNavAndInsetPaddingValues(
