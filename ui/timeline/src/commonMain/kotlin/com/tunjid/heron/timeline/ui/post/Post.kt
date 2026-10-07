@@ -77,6 +77,7 @@ import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.forEach
+import com.tunjid.heron.timeline.utilities.hasVisibleLabels
 import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.timeline.utilities.reportVideoVisibility
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
@@ -854,7 +855,10 @@ private class PostData(
     )
 
     val hasLabels
-        get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
+        get() = appliedLabels.hasVisibleLabels(
+            languageTag = languageTag,
+            labels = post.author.labels,
+        )
 
     val interactionStatus
         get() = postInteractionStatus(

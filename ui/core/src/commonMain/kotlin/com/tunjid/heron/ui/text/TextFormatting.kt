@@ -90,7 +90,7 @@ fun MultilineStyledText(
     )
     val style = MaterialTheme.typography.bodyLarge.copy(
         color = LocalContentColor.current,
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         lineHeight = 20.sp,
     )
     SelectionContainer(

@@ -101,6 +101,21 @@ inline fun AppliedLabels.forEach(
     }
 }
 
+fun AppliedLabels.hasVisibleLabels(
+    languageTag: String,
+    labels: List<Label>,
+): Boolean = labels.any { label ->
+    var visible = false
+    withPreferredLabelerAndLocaleInfo(
+        languageTag = languageTag,
+        label = label,
+        block = { _, _ ->
+            visible = true
+        },
+    )
+    visible
+}
+
 inline fun AppliedLabels.withPreferredLabelerAndLocaleInfo(
     languageTag: String,
     label: Label,
