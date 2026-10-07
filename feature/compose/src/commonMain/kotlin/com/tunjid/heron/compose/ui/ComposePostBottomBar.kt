@@ -46,18 +46,24 @@ import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.GifBox
 import com.tunjid.heron.ui.icons.regular.Movie
 import com.tunjid.heron.ui.icons.regular.Photo
 import de.cketti.codepoints.codePointCount
+import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.add_gif
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ComposePostBottomBar(
     postText: TextFieldValue,
     modifier: Modifier = Modifier,
     photos: List<RestrictedFile.Media.Photo>,
+    canAddGif: Boolean,
     onMediaEdited: (Action.EditMedia) -> Unit,
+    onGifClicked: () -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -114,6 +120,21 @@ internal fun ComposePostBottomBar(
                 },
             )
         }
+        IconButton(
+            enabled = canAddGif,
+            onClick = onGifClicked,
+            content = {
+                Icon(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (canAddGif) 1f else 0.6f
+                        },
+                    imageVector = HeronIcons.Regular.GifBox,
+                    contentDescription = stringResource(Res.string.add_gif),
+                    tint = FloatingActionButtonDefaults.containerColor,
+                )
+            },
+        )
         Spacer(Modifier.weight(1f))
         PostTextLimit(
             modifier = Modifier

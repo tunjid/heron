@@ -16,10 +16,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 @Stable
-interface UiStateHolder : ActionSuspendingStateMutator<UiAction, UiState>
+internal interface UiStateHolder : ActionSuspendingStateMutator<UiAction, UiState>
 
 @Inject
-class AppUiStateHolder(
+internal class AppUiStateHolder(
     @AppMainScope
     appMainScope: CoroutineScope,
     userDataRepository: UserDataRepository,

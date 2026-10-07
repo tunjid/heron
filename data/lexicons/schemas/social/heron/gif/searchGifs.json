@@ -1,0 +1,52 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.gif.searchGifs",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Search GIFs.",
+      "parameters": {
+        "type": "params",
+        "required": ["q"],
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Search query."
+          },
+          "locale": {
+            "type": "string",
+            "description": "Two letter region code used to localize results, e.g. 'us'."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 30
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["gifs"],
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "gifs": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "social.heron.gif.defs#gifView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

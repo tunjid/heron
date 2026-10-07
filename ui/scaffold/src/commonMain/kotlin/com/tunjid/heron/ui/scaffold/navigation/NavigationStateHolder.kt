@@ -53,11 +53,11 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
 @Stable
-interface NavigationStateHolder : ActionSuspendingStateMutator<NavigationMutation, NavigationState>
+internal interface NavigationStateHolder : ActionSuspendingStateMutator<NavigationMutation, NavigationState>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
 @Inject
-class PersistedNavigationStateHolder(
+internal class PersistedNavigationStateHolder(
     @AppMainScope
     appMainScope: CoroutineScope,
     userDataRepository: UserDataRepository,

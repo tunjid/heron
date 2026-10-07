@@ -77,6 +77,7 @@ import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.forEach
+import com.tunjid.heron.timeline.utilities.hasVisibleLabels
 import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.timeline.utilities.reportVideoVisibility
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
@@ -611,7 +612,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     content: PostContent,
 ) = when (content) {
     PostContent.Actions -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -625,7 +626,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     }
 
     is PostContent.Embed -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> when (content) {
             PostContent.Embed.Link -> 8.dp
             PostContent.Embed.Media -> 0.dp
@@ -636,7 +637,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     }
 
     PostContent.Text -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 16.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -645,7 +646,7 @@ private fun Timeline.Presentation.postContentStartPadding(
     PostContent.Metadata -> 0.dp
 
     PostContent.Labels -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Text.WithEmbed -> 32.dp
         Timeline.Presentation.Media.Expanded -> 8.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -854,7 +855,10 @@ private class PostData(
     )
 
     val hasLabels
-        get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
+        get() = appliedLabels.hasVisibleLabels(
+            languageTag = languageTag,
+            labels = post.author.labels,
+        )
 
     val interactionStatus
         get() = postInteractionStatus(

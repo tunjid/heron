@@ -35,10 +35,12 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.Gif
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.asEmbeddedGifOrNull
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.domain
@@ -94,7 +96,7 @@ internal fun PostExternal(
     onClick: () -> Unit,
     onSubscriptionToggled: (StandardPublication) -> Unit,
 ) = with(paneTransitionScope) {
-    val isGif = feature.isGif()
+    val gif = remember(feature) { feature.asEmbeddedGifOrNull() }
     FeatureContainer(
         modifier = Modifier,
         onClick = onClick,
@@ -110,7 +112,7 @@ internal fun PostExternal(
                 isBlurred = isBlurred,
                 sharedElementPrefix = sharedElementPrefix,
                 postUri = postUri,
-                isGif = isGif,
+                gif = gif,
                 presentation = presentation,
             )
             val publication = when (externalRecord) {
@@ -146,10 +148,10 @@ private fun PaneTransitionScope.ContentPreview(
     isBlurred: Boolean,
     sharedElementPrefix: String,
     postUri: PostUri,
-    isGif: Boolean,
+    gif: Gif.Embedded?,
     presentation: Timeline.Presentation,
 ) {
-    if (!feature.thumb?.uri.isNullOrBlank()) {
+    if (gif != null || !feature.thumb?.uri.isNullOrBlank()) {
         val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
             RoundedPolygonShape.Rectangle,
         )
@@ -157,7 +159,7 @@ private fun PaneTransitionScope.ContentPreview(
         PaneStickySharedElement(
             modifier = itemModifier
                 .fillMaxWidth()
-                .aspectRatio(2f / 1),
+                .aspectRatio(gif?.aspectRatio ?: ExternalEmbedAspectRatio),
             sharedContentState = rememberSharedContentState(
                 key = embedSharedElementKey(
                     prefix = sharedElementPrefix,
@@ -169,10 +171,10 @@ private fun PaneTransitionScope.ContentPreview(
             AsyncImage(
                 modifier = Modifier
                     .fillParentAxisIfFixedOrWrap(),
-                args = remember(isGif, feature.uri, feature.thumb) {
+                args = remember(gif, feature.thumb, feature.title) {
                     ImageArgs(
-                        url = if (isGif) feature.uri.uri else feature.thumb?.uri,
-                        contentDescription = feature.title,
+                        url = gif?.playbackUri?.uri ?: feature.thumb?.uri,
+                        contentDescription = gif?.altText ?: feature.title,
                         contentScale = ContentScale.Crop,
                         shape = RoundedPolygonShape.Rectangle,
                     )
@@ -180,7 +182,7 @@ private fun PaneTransitionScope.ContentPreview(
             )
         }
     }
-    if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
+    if (presentation == Timeline.Presentation.Text.WithEmbed && gif == null) {
         PaneStickySharedElement(
             modifier = Modifier
                 .fillMaxWidth()
@@ -222,7 +224,7 @@ fun PostFeatureTextContent(
                 text = title,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = Bold),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = Bold),
             )
         }
         if (!description.isNullOrBlank()) {
@@ -246,18 +248,13 @@ fun PostFeatureTextContent(
     }
 }
 
-private fun ExternalEmbed.isGif(): Boolean {
-    val path = uri.uri.substringBefore('?')
-    return path.endsWith(Gif_Format, ignoreCase = true)
-}
-
 private fun embedSharedElementKey(
     prefix: String,
     postUri: PostUri,
     text: String?,
 ): String = "$prefix-${postUri.uri}-$text"
 
-private const val Gif_Format = ".gif"
+private const val ExternalEmbedAspectRatio = 2f / 1
 
 // Placeholder identity for previews where no post exists yet; only feeds shared-element keys.
 // Uses a structurally valid AT-URI (a real-shaped did:plc authority + TID rkey) so utilities that

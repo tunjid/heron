@@ -104,11 +104,8 @@ internal actual fun PaneScaffoldState.PlatformNavigationBar(
         val bottomInset = with(LocalDensity.current) {
             WindowInsets.navigationBars.getBottom(this).toDp()
         }
-        // Liquid Glass chrome always uses the compact height; a regular height glass bar looks
-        // awkward.
-        val height = UiTokens.bottomNavHeight(
-            isCompact = true,
-        ) + bottomInset
+        // The bottom nav slot is as tall as the glass capsule, so the capsule fills it exactly.
+        val height = GlassTabBarCapsuleHeight + bottomInset
         val collapse = when (status) {
             BottomNavStatus.Expanded -> GlassTabBarCollapse.None
             BottomNavStatus.Collapsed.Partially -> GlassTabBarCollapse.Partial
@@ -328,8 +325,6 @@ private class GlassTabBarView(
         layoutTabBar()
     }
 
-    // The tab bar is sized from the full width, not this view's bounds, since this view
-    // narrows once the bar has collapsed. Points and dp are the same unit on iOS.
     private fun layoutTabBar() = bounds.useContents {
         val width = collapse.width(fullWidth).value.toDouble()
         // Collapse toward the leading edge.
@@ -340,7 +335,7 @@ private class GlassTabBarView(
                 x = if (isRtl) size.width - width else 0.0,
                 y = 0.0,
                 width = width,
-                height = size.height,
+                height = (GlassTabBarCapsuleHeight + GlassTabBarCapsuleBottomInset).value.toDouble(),
             ),
         )
     }
@@ -376,9 +371,10 @@ private const val ItemCrossfadeDurationSeconds = 0.2
 // Leaves room at the end of the bar for the collapsed FAB.
 private val PartiallyCollapsedTrailingInset = DefaultFabSize + 16.dp
 
-private val GlassTabBarHorizontalInset = 20.dp
-private val GlassTabBarCapsuleHeight = 60.dp
+private val GlassTabBarHorizontalInset = 21.dp
+private val GlassTabBarCapsuleBottomInset = 21.dp
+private val GlassTabBarCapsuleHeight = UiTokens.bottomNavHeight(
+    isCompact = true,
+)
 
-// Sizes the tab bar's frame so the capsule holding the single selected item is a circle,
-// matching the circular fully collapsed common navigation bar.
 private val FullyCollapsedWidth = GlassTabBarCapsuleHeight + GlassTabBarHorizontalInset * 2

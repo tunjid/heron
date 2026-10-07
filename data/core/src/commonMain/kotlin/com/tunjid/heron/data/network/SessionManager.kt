@@ -789,6 +789,8 @@ private val HeronProxyPaths = listOf(
     "social.heron.graze.deleteFeed",
     "social.heron.graze.getFeed",
     "social.heron.notification.registerPush",
+    "social.heron.gif.searchGifs",
+    "social.heron.gif.getTrendingGifs",
     "app.rocksky.actor.getActorAlbums",
     "app.rocksky.actor.getActorSongs",
     "app.rocksky.actor.getActorArtists",

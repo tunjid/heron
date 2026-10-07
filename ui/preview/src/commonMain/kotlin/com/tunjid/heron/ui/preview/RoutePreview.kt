@@ -28,29 +28,15 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.media.images.StubImageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.sheets.preview.stubSheetStateHolder
-import com.tunjid.heron.ui.scaffold.identity.IdentityAction
-import com.tunjid.heron.ui.scaffold.identity.IdentityState
-import com.tunjid.heron.ui.scaffold.identity.IdentityStateHolder
-import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
-import com.tunjid.heron.ui.scaffold.navigation.NavigationState
-import com.tunjid.heron.ui.scaffold.navigation.NavigationStateHolder
-import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
-import com.tunjid.heron.ui.scaffold.notifications.NotificationState
-import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.AppScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
-import com.tunjid.heron.ui.scaffold.ui.UiAction
-import com.tunjid.heron.ui.scaffold.ui.UiState
-import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.stubForPreview
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
-import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
-import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
 import com.tunjid.treenav.compose.threepane.threePaneEntry
-import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import kotlin.reflect.KClass
 
@@ -73,15 +59,9 @@ fun RoutePreview(
         routeStateHolder,
         signedInProfile,
     ) {
-        AppScaffoldState.StaticStates(
-            identityStateHolder = stubIdentityStateHolder(
-                signedInProfile = signedInProfile,
-            ),
-            navigationStateHolder = stubNavigationStateHolder(
-                route = route,
-            ),
-            notificationStateHolder = stubNotificationStateHolder(),
-            uiStateHolder = stubUiStateHolder(),
+        AppScaffoldState.StaticStates.stubForPreview(
+            route = route,
+            signedInProfile = signedInProfile,
             imageLoader = StubImageLoader,
             videoPlayerController = StubVideoPlayerController,
             stateHolderInitializer = object : StateHolderInitializer {
@@ -124,33 +104,3 @@ fun RoutePreview(
         }
     }
 }
-
-private fun stubIdentityStateHolder(
-    signedInProfile: Profile?,
-): IdentityStateHolder = object :
-    IdentityStateHolder,
-    ActionSuspendingStateMutator<IdentityAction, IdentityState> by IdentityState.Immutable(
-        signedInProfile = signedInProfile,
-    )
-        .asNoOpActionSuspendingStateMutator() {}
-
-private fun stubNavigationStateHolder(
-    route: Route,
-): NavigationStateHolder = object :
-    NavigationStateHolder,
-    ActionSuspendingStateMutator<NavigationMutation, NavigationState> by NavigationState.Immutable(
-        multiStackNav = NavigationState.Immutable()
-            .multiStackNav
-            .push(route),
-    )
-        .asNoOpActionSuspendingStateMutator() {}
-
-private fun stubNotificationStateHolder(): NotificationStateHolder = object :
-    NotificationStateHolder,
-    ActionSuspendingStateMutator<NotificationAction, NotificationState> by NotificationState.Immutable()
-        .asNoOpActionSuspendingStateMutator() {}
-
-private fun stubUiStateHolder(): UiStateHolder = object :
-    UiStateHolder,
-    ActionSuspendingStateMutator<UiAction, UiState> by UiState.Immutable()
-        .asNoOpActionSuspendingStateMutator() {}

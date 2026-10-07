@@ -16,7 +16,10 @@
 
 package com.tunjid.heron.ui.scaffold.di
 
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.tasks.BackgroundTaskDescriptor
+import com.tunjid.heron.data.tasks.BackgroundTaskRunner
+import com.tunjid.heron.data.tasks.BackgroundTaskScheduler
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.scaffold.identity.AppIdentityStateHolder
@@ -27,11 +30,17 @@ import com.tunjid.heron.ui.scaffold.navigation.PersistedNavigationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.AppNotificationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.notifications.Notifier
+import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PredictiveBackContentTransformer
 import com.tunjid.heron.ui.scaffold.tasks.AppBackgroundTaskDescriptor
 import com.tunjid.heron.ui.scaffold.ui.AppUiStateHolder
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
+import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
+import com.tunjid.heron.ui.stateproduction.SheetStateHolderInitializer
+import com.tunjid.treenav.compose.PaneEntry
+import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeParserFrom
@@ -40,6 +49,8 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineScope
 
 class ScaffoldBindingArgs(
     val imageLoader: ImageLoader,
@@ -93,31 +104,64 @@ object ScaffoldBindings {
 
     @SingleIn(AppScope::class)
     @Provides
-    fun navActions(
+    internal fun navActions(
         navStateHolder: NavigationStateHolder,
     ): (NavigationMutation) -> Unit = navStateHolder.accept
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideNavigationStateHolder(
+    internal fun provideNavigationStateHolder(
         persistedNavigationStateHolder: PersistedNavigationStateHolder,
     ): NavigationStateHolder = persistedNavigationStateHolder
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideNotificationStateHolder(
+    internal fun provideNotificationStateHolder(
         appNotificationStateHolder: AppNotificationStateHolder,
     ): NotificationStateHolder = appNotificationStateHolder
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideIdentityStateHolder(
+    internal fun provideIdentityStateHolder(
         appIdentityStateHolder: AppIdentityStateHolder,
     ): IdentityStateHolder = appIdentityStateHolder
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideUiStateHolder(
+    internal fun provideUiStateHolder(
         appUiStateHolder: AppUiStateHolder,
     ): UiStateHolder = appUiStateHolder
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun appState(
+        @AppMainScope
+        appMainScope: CoroutineScope,
+        entryMap: Map<String, PaneEntry<ThreePane, Route>>,
+        identityStateHolder: IdentityStateHolder,
+        navigationStateHolder: NavigationStateHolder,
+        notificationStateHolder: NotificationStateHolder,
+        uiStateHolder: UiStateHolder,
+        imageLoader: ImageLoader,
+        videoPlayerController: VideoPlayerController,
+        sheetStateHolderInitializers: Map<KClass<*>, SheetStateHolderInitializer>,
+        routeStateHolderInitializers: Map<KClass<*>, RouteStateHolderInitializer>,
+        backgroundTaskScheduler: BackgroundTaskScheduler,
+        backgroundTaskRunner: BackgroundTaskRunner,
+        backgroundTaskDescriptor: BackgroundTaskDescriptor,
+    ): AppState = AppState(
+        entryMap = entryMap,
+        identityStateHolder = identityStateHolder,
+        navigationStateHolder = navigationStateHolder,
+        notificationStateHolder = notificationStateHolder,
+        uiStateHolder = uiStateHolder,
+        imageLoader = imageLoader,
+        videoPlayerController = videoPlayerController,
+        sheetStateHolderInitializers = sheetStateHolderInitializers,
+        routeStateHolderInitializers = routeStateHolderInitializers,
+        backgroundTaskScheduler = backgroundTaskScheduler,
+        backgroundTaskRunner = backgroundTaskRunner,
+        backgroundTaskDescriptor = backgroundTaskDescriptor,
+        processScope = appMainScope,
+    )
 }

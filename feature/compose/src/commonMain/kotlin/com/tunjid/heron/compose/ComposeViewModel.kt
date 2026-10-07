@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.models.PostLanguageSelection
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.asLinkPreview
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -195,6 +196,9 @@ class ActualComposeViewModel(
                             state = state,
                             recordRepository = recordRepository,
                         )
+                        is Action.SelectGif -> action.flow.launchSelectGifMutations(
+                            state = state,
+                        )
                         is Action.Navigate -> action.flow.collect { navAction ->
                             navActions(navAction.navigationMutation)
                         }
@@ -287,6 +291,13 @@ private fun Flow<Action.UriDetected>.launchEmbedUrlMutations(
             }
         }
     }
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SelectGif>.launchSelectGifMutations(
+    state: State.Mutable,
+) = launchedCollect { action ->
+    state.linkPreview = action.gif.asLinkPreview()
+}
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.PostTextChanged>.launchPostTextMutations(
