@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -50,7 +51,7 @@ import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import kotlin.time.Instant
 
 @Composable
@@ -75,7 +76,7 @@ internal fun NotificationPostScaffold(
     ) {
         PostAttribution(
             paneTransitionScope = paneTransitionScope,
-            avatarShape = RoundedPolygonShape.Circle,
+            avatarShape = PolygonShape.Circle,
             onPostClicked = onPostClicked,
             onProfileClicked = onProfileClicked,
             notification = notification,
@@ -140,7 +141,7 @@ internal fun NotificationPostScaffold(
 @Composable
 private fun PostAttribution(
     paneTransitionScope: PaneTransitionScope,
-    avatarShape: RoundedPolygonShape,
+    avatarShape: PolygonShape,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,

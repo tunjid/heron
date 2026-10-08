@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
@@ -68,7 +69,7 @@ import com.tunjid.heron.ui.icons.regular.Movie
 import com.tunjid.heron.ui.icons.regular.Pause
 import com.tunjid.heron.ui.icons.regular.PlayArrow
 import com.tunjid.heron.ui.isPrimaryOrActive
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.roundedRectangle
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
@@ -342,7 +343,7 @@ fun Video.sharedElementKey(
     postUri: PostUri,
 ) = "$prefix-$postUri-${playlist.uri}"
 
-private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
-private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)
-private val ExpandedShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
-private val GridShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
+private val TextWithEmbedShape = PolygonShape.roundedRectangle(percent = 0.05f)
+private val CondensedShape = PolygonShape.roundedRectangle(percent = 0.0001f)
+private val ExpandedShape = PolygonShape.roundedRectangle(percent = 0f)
+private val GridShape = PolygonShape.roundedRectangle(percent = 0f)

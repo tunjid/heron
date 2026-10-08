@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
@@ -64,7 +65,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.KeyboardArrowDown
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -244,7 +245,7 @@ private fun PaneTransitionScope.ExpandableProfiles(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = profile.displayName ?: profile.handle.id,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     ),
                 )
             }

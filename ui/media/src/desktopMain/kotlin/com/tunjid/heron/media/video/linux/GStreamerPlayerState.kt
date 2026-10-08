@@ -1,5 +1,6 @@
 package com.tunjid.heron.media.video.linux
 
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State as ComposeState
 import androidx.compose.runtime.getValue
@@ -17,7 +18,7 @@ import com.sun.jna.Pointer
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.mac.copyBgraFrame
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import java.nio.ByteBuffer
 import java.util.EnumSet
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ internal class GStreamerPlayerState(
     override var thumbnailUrl by mutableStateOf(thumbnail)
     override var alignment by mutableStateOf(Alignment.Center)
     override var contentScale by mutableStateOf(ContentScale.Crop)
-    override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
+    override var shape by mutableStateOf<PolygonShape>(PolygonShape.Rectangle)
     override var videoId by mutableStateOf(videoId)
         internal set
     override var videoUrl by mutableStateOf(videoUrl)

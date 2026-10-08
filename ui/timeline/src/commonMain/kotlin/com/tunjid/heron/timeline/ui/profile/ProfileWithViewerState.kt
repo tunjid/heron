@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -54,7 +55,7 @@ import com.tunjid.heron.ui.icons.regular.Block
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.viewer_state_blocked
 import heron.ui.core.generated.resources.viewer_state_follows_you
@@ -112,7 +113,7 @@ fun ProfileWithViewerState(
                                     url = profile.avatar?.uri,
                                     contentScale = ContentScale.Crop,
                                     contentDescription = profile.contentDescription,
-                                    shape = RoundedPolygonShape.Circle,
+                                    shape = PolygonShape.Circle,
                                 )
                             },
                         )

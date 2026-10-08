@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -82,7 +83,7 @@ import com.tunjid.heron.ui.detectActiveLink
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Close
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.insertMention
@@ -221,7 +222,7 @@ private fun Post(
                             url = signedInProfile?.avatar?.uri,
                             contentDescription = signedInProfile?.contentDescription,
                             contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                 )
@@ -363,7 +364,7 @@ private fun ReplyingTo(
                             contentScale = ContentScale.Crop,
                             contentDescription = type.parent.author.displayName
                                 ?: type.parent.author.handle.id,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                     sharedElement = { state, modifier ->

@@ -52,6 +52,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -111,7 +112,7 @@ import com.tunjid.heron.ui.icons.regular.Remove
 import com.tunjid.heron.ui.icons.regular.Settings
 import com.tunjid.heron.ui.modifiers.chipBackground
 import com.tunjid.heron.ui.modifiers.roundedBorder
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
@@ -568,7 +569,7 @@ private fun TabsState.ExpandedTab(
                             url = url,
                             contentScale = ContentScale.Crop,
                             contentDescription = null,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                 )

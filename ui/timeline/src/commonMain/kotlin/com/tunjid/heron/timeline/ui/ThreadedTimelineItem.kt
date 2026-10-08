@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +56,7 @@ import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Commit
 import com.tunjid.heron.ui.icons.regular.LinearScale
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.see_more_posts
 import heron.ui.timeline.generated.resources.show_more
@@ -79,7 +80,7 @@ import org.jetbrains.compose.resources.stringResource
  * - [NodePosition] — packed index and depth (two [Int]s in a [Long])
  * - [NodeFlags] — bitmask of boolean metadata (main post, anchored, timeline visibility,
  *   sibling/child status, and ancestor continuation lines)
- * - [RoundedPolygonShape] — avatar shape
+ * - [PolygonShape] — avatar shape
  * - [NodeDecorations] — bitmask of decorations to render after the post
  *
  * Because all per-node values are lambda parameters (not mutable properties), they are
@@ -519,7 +520,7 @@ private object ThreadedItemIterator {
             position: NodePosition,
             flags: NodeFlags,
             decorations: NodeDecorations,
-            avatarShape: RoundedPolygonShape,
+            avatarShape: PolygonShape,
         ) -> Unit,
     ) {
         when (item) {
@@ -535,7 +536,7 @@ private object ThreadedItemIterator {
             position: NodePosition,
             flags: NodeFlags,
             nodeDecorations: NodeDecorations,
-            avatarShape: RoundedPolygonShape,
+            avatarShape: PolygonShape,
         ) -> Unit,
     ) {
         val noDecorations = NodeDecorations()
@@ -555,7 +556,7 @@ private object ThreadedItemIterator {
                 hasChildren = hasReplies,
             ),
             noDecorations,
-            RoundedPolygonShape.Circle,
+            PolygonShape.Circle,
         )
 
         // Replies at depth 1
@@ -575,7 +576,7 @@ private object ThreadedItemIterator {
                     isLastSibling = replyIsLastSibling,
                 ),
                 noDecorations,
-                RoundedPolygonShape.Circle,
+                PolygonShape.Circle,
             )
 
             // Children at depth 2
@@ -596,7 +597,7 @@ private object ThreadedItemIterator {
                         ancestorContinuationDepth0 = !replyIsLastSibling,
                     ),
                     noDecorations,
-                    RoundedPolygonShape.Circle,
+                    PolygonShape.Circle,
                 )
 
                 // Grandchildren at depth 3
@@ -613,7 +614,7 @@ private object ThreadedItemIterator {
                             ancestorContinuationDepth1 = !childIsLastSibling,
                         ),
                         noDecorations,
-                        RoundedPolygonShape.Circle,
+                        PolygonShape.Circle,
                     )
                 }
             }
@@ -628,7 +629,7 @@ private object ThreadedItemIterator {
             position: NodePosition,
             flags: NodeFlags,
             decorations: NodeDecorations,
-            avatarShape: RoundedPolygonShape,
+            avatarShape: PolygonShape,
         ) -> Unit,
     ) {
         val isAncestor = item.isThreadedAncestor
@@ -644,14 +645,14 @@ private object ThreadedItemIterator {
             if (nodeIndex > 0 && nodes[nodeIndex].post.uri == nodes[nodeIndex - 1].post.uri) continue
 
             val avatarShape = when {
-                isAnchor -> RoundedPolygonShape.Circle
+                isAnchor -> PolygonShape.Circle
                 isAncestor ->
                     if (nodes.size == 1) ReplyThreadStartImageShape
                     else ReplyThreadImageShape
 
                 else -> when (nodeIndex) {
                     0 ->
-                        if (nodes.size == 1) RoundedPolygonShape.Circle
+                        if (nodes.size == 1) PolygonShape.Circle
                         else ReplyThreadStartImageShape
 
                     nodes.lastIndex -> ReplyThreadEndImageShape

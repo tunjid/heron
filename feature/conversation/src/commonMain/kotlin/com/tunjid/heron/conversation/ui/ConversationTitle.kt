@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,7 +46,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.conversation.generated.resources.Res
@@ -110,7 +111,7 @@ private fun MultipleParticipantTitle(
                     ImageArgs(
                         url = participant.avatar?.uri,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                         contentDescription = null,
                     )
                 },
@@ -162,7 +163,7 @@ private fun SingleMemberTitle(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
                 sharedElement = { state, modifier ->

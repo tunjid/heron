@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -103,7 +104,7 @@ import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityState
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.components.ClickPassThroughToolbar
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.NavigationEventStatus
@@ -438,7 +439,7 @@ private fun PaneScaffoldState.SessionAvatar(
                         url = profileAvatar?.uri,
                         contentDescription = profileDescription,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )

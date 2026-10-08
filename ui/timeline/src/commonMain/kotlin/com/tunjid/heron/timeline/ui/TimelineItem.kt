@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -49,7 +50,9 @@ import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.shapes.roundedPolygon
+import com.tunjid.heron.ui.shapes.roundedRectangle
 import kotlin.time.Instant
 
 @Composable
@@ -131,7 +134,7 @@ fun TimelineItem(
                         isAnchoredInTimeline = false,
                         isMainPost = true,
                         showEngagementMetrics = showEngagementMetrics,
-                        avatarShape = RoundedPolygonShape.Circle,
+                        avatarShape = PolygonShape.Circle,
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = item.post.createdAt,
                         presentation = presentation,
@@ -201,7 +204,7 @@ fun TimelineCard(
 }
 
 val ReplyThreadStartImageShape =
-    RoundedPolygonShape.RoundedRectangle(
+    PolygonShape.roundedRectangle(
         topStartPercent = 1f,
         topEndPercent = 1f,
         bottomStartPercent = 0.3f,
@@ -209,7 +212,7 @@ val ReplyThreadStartImageShape =
     )
 
 val ReplyThreadImageShape =
-    RoundedPolygonShape.Polygon(
+    PolygonShape.roundedPolygon(
         cornerSizePercentAtIndex = (0..4).map { index ->
             if (index == 2 || index == 3) 2f / 3
             else 1f
@@ -217,7 +220,7 @@ val ReplyThreadImageShape =
     )
 
 internal val ReplyThreadEndImageShape =
-    RoundedPolygonShape.RoundedRectangle(
+    PolygonShape.roundedRectangle(
         topStartPercent = 0.3f,
         topEndPercent = 1f,
         bottomStartPercent = 1f,

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -70,7 +71,7 @@ import com.tunjid.heron.ui.icons.regular.Timer
 import com.tunjid.heron.ui.icons.regular.Videocam
 import com.tunjid.heron.ui.icons.regular.Warning
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -469,7 +470,7 @@ private fun LiveAvatarBadge(
                 url = profile.avatar?.uri,
                 contentDescription = profile.displayName ?: profile.handle.id,
                 contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Circle,
+                shape = PolygonShape.Circle,
             ),
             modifier = Modifier
                 .size(50.dp)

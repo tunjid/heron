@@ -19,6 +19,7 @@ package com.tunjid.heron.profile.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ import com.tunjid.heron.timeline.utilities.forEach
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.automirrored.VolumeOff
 import com.tunjid.heron.ui.icons.regular.Block
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.post_author_label
 import heron.ui.core.generated.resources.viewer_state_blocked
@@ -116,7 +117,7 @@ internal fun ProfileLabels(
                                 url = labelerSummary.creatorAvatar?.uri,
                                 contentScale = ContentScale.Crop,
                                 contentDescription = null,
-                                shape = RoundedPolygonShape.Circle,
+                                shape = PolygonShape.Circle,
                             )
                         },
                         modifier = Modifier

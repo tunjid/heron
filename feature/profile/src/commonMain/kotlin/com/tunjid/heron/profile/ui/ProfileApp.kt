@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +19,7 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.profile.AppLogoZIndex
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 
 @Composable
 fun ProfileApps(
@@ -69,7 +70,7 @@ private fun ProfileApp(
                         ImageArgs(
                             url = app.logo.uri,
                             contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                 )
