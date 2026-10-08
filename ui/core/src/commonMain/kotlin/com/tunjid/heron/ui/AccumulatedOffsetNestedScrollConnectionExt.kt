@@ -22,6 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
@@ -88,4 +90,16 @@ fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {
     val maxDifference = maxDimension - minDimension
 
     return currentDifference / maxDifference
+}
+
+fun AccumulatedOffsetNestedScrollConnection.displaceVerticallyBy(
+    delta: Float,
+) {
+    onPreScroll(
+        available = Offset(
+            x = 0f,
+            y = delta,
+        ),
+        source = NestedScrollSource.SideEffect,
+    )
 }

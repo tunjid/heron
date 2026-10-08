@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.editprofile.Action
 import com.tunjid.heron.editprofile.EditProfileScreen
@@ -152,18 +151,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
-    val bottomNavigationNestedScrollConnection =
-        paneScaffoldState.bottomNavigationNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection)
-            .nestedScroll(bottomNavigationNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -183,7 +174,7 @@ internal fun Route(
             PaneNavigationBar(
                 expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier.offset {
-                    bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                    bottomNavOffset()
                 },
             )
         },
@@ -191,7 +182,7 @@ internal fun Route(
             PaneFab(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
                 text = stringResource(
                     if (state.submitting) Res.string.profile_updating

@@ -90,6 +90,7 @@ import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.displaceVerticallyBy
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.roundedMaxDelta
@@ -105,6 +106,7 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.settingsDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -266,8 +268,9 @@ internal fun HomeScreen(
             },
         )
 
-        tabsOffsetNestedScrollConnection.TabsExpansionEffect(
+        TabsExpansionEffect(
             isExpanded = state.tabLayout is TabLayout.Expanded,
+            onDisplaced = tabsOffsetNestedScrollConnection::displaceVerticallyBy,
         )
 
         tabsOffsetNestedScrollConnection.TabsCollapseEffect(
@@ -535,7 +538,7 @@ private fun HomeTimeline(
                             ) - tabsNestedScrollConnection.roundedMaxDelta
                         },
                         bottomRightInset = {
-                            paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                            paneScaffoldState.bottomNavVisibleInset()
                         },
                         isEnabled = {
                             paneScaffoldState.paneState.pane == ThreePane.Primary &&

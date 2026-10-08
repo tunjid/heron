@@ -18,7 +18,6 @@ package com.tunjid.heron.standard.publication.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.Uri
@@ -39,8 +38,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -186,14 +185,10 @@ object StandardPublicationBindings {
             )
             val state = stateHolder.produceStateWithLifecycle()
 
-            val topAppBarNestedScrollConnection =
-                paneScaffoldState.topAppBarNestedScrollConnection
-
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))
@@ -213,7 +208,7 @@ object StandardPublicationBindings {
                                 actions = stateHolder.accept,
                             )
                         },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                        transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                         onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },

@@ -69,7 +69,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
@@ -88,6 +90,7 @@ import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.displaceVerticallyBy
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.icons.regular.Cancel
@@ -107,6 +110,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.components.ClickPassThroughToolbar
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.scaffold.generated.resources.Res
@@ -324,6 +328,18 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         },
     )
 }
+
+fun PaneScaffoldState.topAppBarOffset(): IntOffset =
+    topAppBarNestedScrollConnection.offset.round()
+
+fun PaneScaffoldState.topAppBarTransparencyFactor(): Float =
+    topAppBarNestedScrollConnection.verticalOffsetProgress()
+
+fun PaneScaffoldState.offsetTopAppBarBy(
+    delta: Float,
+) = topAppBarNestedScrollConnection.displaceVerticallyBy(
+    delta = delta,
+)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

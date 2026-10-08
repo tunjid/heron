@@ -105,7 +105,6 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.RemoveCircle
 import com.tunjid.heron.ui.modifiers.gridColumnCount
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -115,6 +114,7 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
@@ -517,7 +517,7 @@ private fun ListTimeline(
                     // No top inset: the grid is laid out beneath the collapsing header, so its own
                     // bounds already exclude it.
                     bottomRightInset = {
-                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        paneScaffoldState.bottomNavVisibleInset()
                     },
                     isEnabled = {
                         paneScaffoldState.paneState.pane == ThreePane.Primary &&
