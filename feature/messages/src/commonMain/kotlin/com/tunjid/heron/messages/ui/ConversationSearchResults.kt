@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -52,7 +53,7 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import heron.feature.messages.generated.resources.Res
 import heron.feature.messages.generated.resources.error_cannot_be_messaged
 import org.jetbrains.compose.resources.stringResource
@@ -108,7 +109,7 @@ internal fun ConversationSearchResults(
                                         url = profile.avatar?.uri,
                                         contentDescription = profile.displayName,
                                         contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
+                                        shape = PolygonShape.Circle,
                                     )
                                 },
                             )

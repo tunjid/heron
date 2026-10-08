@@ -17,6 +17,7 @@
 package com.tunjid.heron.timeline.ui.rocksky
 
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -30,7 +31,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.LabelIconSize
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.apple_music
 import heron.ui.timeline.generated.resources.spotify
@@ -76,7 +77,7 @@ internal fun MusicServiceIcon(
                 url = iconUri.uri,
                 contentScale = ContentScale.Fit,
                 contentDescription = null,
-                shape = RoundedPolygonShape.Circle,
+                shape = PolygonShape.Circle,
             )
         },
     )

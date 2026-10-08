@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.media.video.javafx
 
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -29,7 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import javafx.beans.value.ChangeListener
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
@@ -52,7 +53,7 @@ internal class JavaFxPlayerState(
 
     override var contentScale by mutableStateOf(ContentScale.Crop)
 
-    override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
+    override var shape by mutableStateOf<PolygonShape>(PolygonShape.Rectangle)
 
     override var videoId by mutableStateOf(videoId)
         internal set

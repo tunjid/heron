@@ -17,6 +17,7 @@
 package com.tunjid.heron.media.video
 
 import androidx.annotation.OptIn
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -35,7 +36,7 @@ import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 
 @Stable
 internal class ExoPlayerState internal constructor(
@@ -56,7 +57,7 @@ internal class ExoPlayerState internal constructor(
 
     override var contentScale by mutableStateOf(ContentScale.Crop)
 
-    override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
+    override var shape by mutableStateOf<PolygonShape>(PolygonShape.Rectangle)
 
     // Business logic fields
 

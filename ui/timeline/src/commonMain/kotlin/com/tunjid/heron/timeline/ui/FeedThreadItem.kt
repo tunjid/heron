@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +38,7 @@ import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostStatistics
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import kotlin.time.Instant
 
 @Composable
@@ -63,7 +64,7 @@ fun FeedThreadItem(
                     url = author.avatar?.uri,
                     contentDescription = author.displayName ?: author.handle.id,
                     contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 ),
             )
             Column(Modifier.weight(1f)) {

@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -58,7 +59,7 @@ import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.roundedRectangle
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
 @Composable
@@ -270,7 +271,7 @@ fun Image.sharedElementKey(
     postUri: PostUri,
 ) = "$prefix-$postUri-${thumb.uri}"
 
-private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
-private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)
-private val ExpandedShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
-private val GridShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
+private val TextWithEmbedShape = PolygonShape.roundedRectangle(percent = 0.05f)
+private val CondensedShape = PolygonShape.roundedRectangle(percent = 0.0001f)
+private val ExpandedShape = PolygonShape.roundedRectangle(percent = 0f)
+private val GridShape = PolygonShape.roundedRectangle(percent = 0f)

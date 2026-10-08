@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
@@ -64,7 +65,7 @@ import com.tunjid.heron.ui.icons.regular.ThumbUp
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainSheetStateHolder
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.roundedRectangle
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -323,4 +324,4 @@ private val GifCategory.label: StringResource
 
 private val GifCellMinWidth = 100.dp
 
-private val GifCellShape = RoundedPolygonShape.RoundedRectangle(percent = 0.08f)
+private val GifCellShape = PolygonShape.roundedRectangle(percent = 0.08f)

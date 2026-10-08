@@ -37,6 +37,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -89,7 +90,8 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
@@ -447,7 +449,7 @@ fun ProfileAvatarEditableImage(
                 profile = profile,
                 localFile = localFile,
                 remoteUri = profile.avatar?.uri,
-                shape = RoundedPolygonShape.Circle,
+                shape = PolygonShape.Circle,
             ),
             sharedElement = { state, modifier ->
                 AsyncImage(state, modifier)
@@ -495,7 +497,7 @@ fun ProfileBannerEditableImage(
                 profile = profile,
                 localFile = localFile,
                 remoteUri = profile.banner?.uri,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = PolygonShape.Rectangle,
             ),
             sharedElement = { state, modifier ->
                 AsyncImage(state, modifier)
@@ -520,7 +522,7 @@ private fun rememberEditableImageArgs(
     profile: Profile,
     localFile: RestrictedFile.Media.Photo?,
     remoteUri: String?,
-    shape: RoundedPolygonShape,
+    shape: PolygonShape,
 ): ImageArgs {
     return remember(localFile?.path, remoteUri) {
         val contentDescription = profile.displayName ?: profile.handle.id

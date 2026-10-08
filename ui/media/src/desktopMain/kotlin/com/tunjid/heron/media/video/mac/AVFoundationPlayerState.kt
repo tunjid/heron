@@ -10,6 +10,7 @@
 
 package com.tunjid.heron.media.video.mac
 
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -28,7 +29,7 @@ import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +59,7 @@ internal class AVFoundationPlayerState(
 
     override var contentScale by mutableStateOf(ContentScale.Crop)
 
-    override var shape by mutableStateOf<RoundedPolygonShape>(RoundedPolygonShape.Rectangle)
+    override var shape by mutableStateOf<PolygonShape>(PolygonShape.Rectangle)
 
     override var videoId by mutableStateOf(videoId)
         internal set

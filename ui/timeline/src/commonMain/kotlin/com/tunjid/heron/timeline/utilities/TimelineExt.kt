@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +57,7 @@ import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Bookmark
 import com.tunjid.heron.ui.icons.regular.BookmarkAdd
 import com.tunjid.heron.ui.icons.regular.Star
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
@@ -355,7 +356,7 @@ private fun Timeline.subtitleSharedElementKey(
     is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
 }
 
-private val Timeline.shape: RoundedPolygonShape
+private val Timeline.shape: PolygonShape
     get() = when (this) {
         is Timeline.Home.Feed -> FeedGeneratorCollectionShape
         is Timeline.Home.List -> ListCollectionShape
@@ -364,5 +365,5 @@ private val Timeline.shape: RoundedPolygonShape
         is Timeline.Search,
         is Timeline.BlackSkyTopic,
         is Timeline.Profile,
-        -> RoundedPolygonShape.Circle
+        -> PolygonShape.Circle
     }

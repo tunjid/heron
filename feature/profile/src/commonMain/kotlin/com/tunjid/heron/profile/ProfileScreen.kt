@@ -42,6 +42,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
@@ -188,7 +189,8 @@ import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.MultilineStyledText
@@ -904,7 +906,7 @@ private fun ProfileBanner(
                 url = profile.banner?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = profile.displayName ?: profile.handle.id,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = PolygonShape.Rectangle,
             )
         },
         sharedElement = { state, modifier ->
@@ -985,7 +987,7 @@ private fun ProfileAvatar(
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
                     shape = if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
-                    else RoundedPolygonShape.Circle,
+                    else PolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->
@@ -1314,7 +1316,7 @@ private fun CommonFollowers(
                                 contentScale = ContentScale.Crop,
                                 contentDescription = profile.displayName
                                     ?: profile.handle.id,
-                                shape = RoundedPolygonShape.Circle,
+                                shape = PolygonShape.Circle,
                             )
                         },
                     )

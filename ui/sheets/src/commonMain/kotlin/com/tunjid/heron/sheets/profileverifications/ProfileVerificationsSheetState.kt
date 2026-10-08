@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,7 +58,7 @@ import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.automirrored.ArrowForward
 import com.tunjid.heron.ui.icons.regular.CheckCircle
 import com.tunjid.heron.ui.icons.regular.Verified
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -213,7 +214,7 @@ private fun TrustedVerifierInfographic(
                             url = subject.avatar?.uri,
                             contentScale = ContentScale.Crop,
                             contentDescription = subject.contentDescription,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                     modifier = Modifier
@@ -305,7 +306,7 @@ private fun VerificationItem(
                             url = issuer.avatar?.uri,
                             contentScale = ContentScale.Crop,
                             contentDescription = issuer.contentDescription,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         )
                     },
                     modifier = Modifier

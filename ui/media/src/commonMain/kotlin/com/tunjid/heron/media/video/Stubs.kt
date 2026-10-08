@@ -16,12 +16,13 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 
 object StubVideoPlayerController : VideoPlayerController {
 
@@ -78,7 +79,7 @@ private data class NoOpVideoPlayerState(
     override var thumbnailUrl: String? = null,
     override var alignment: Alignment = Alignment.Center,
     override var contentScale: ContentScale = ContentScale.Crop,
-    override var shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
+    override var shape: PolygonShape = PolygonShape.Rectangle,
     override val status: PlayerStatus = PlayerStatus.Idle.Initial,
     override val shouldReplay: Boolean = false,
     override val videoSize: IntSize = IntSize.Zero,

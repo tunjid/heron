@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -89,7 +90,7 @@ import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -386,7 +387,7 @@ private fun MessageAvatar(
                     url = item.sender?.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 )
             },
             modifier = Modifier.matchParentSize(),

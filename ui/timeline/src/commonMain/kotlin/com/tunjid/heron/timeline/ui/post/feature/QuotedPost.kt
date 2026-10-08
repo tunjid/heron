@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,7 +61,7 @@ import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.sensitive_media
 import kotlin.time.Clock
@@ -113,7 +114,7 @@ internal fun QuotedPost(
                             url = author.avatar?.uri,
                             contentDescription = author.displayName ?: author.handle.id,
                             contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                         ),
                     )
                 }

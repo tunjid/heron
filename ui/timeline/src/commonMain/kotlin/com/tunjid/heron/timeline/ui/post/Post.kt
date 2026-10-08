@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -89,7 +90,6 @@ import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.VisibilityOff
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.skippableBoundsTransform
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -112,7 +112,7 @@ internal fun Post(
     isAnchoredInTimeline: Boolean,
     isMainPost: Boolean,
     showEngagementMetrics: Boolean,
-    avatarShape: RoundedPolygonShape,
+    avatarShape: PolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
@@ -721,7 +721,7 @@ private fun rememberUpdatedPostData(
     hasMutedWords: Boolean,
     showEngagementMetrics: Boolean,
     sharedElementPrefix: String,
-    avatarShape: RoundedPolygonShape,
+    avatarShape: PolygonShape,
     now: Instant,
     createdAt: Instant,
     languageTag: String,
@@ -814,7 +814,7 @@ private class PostData(
     showEngagementMetrics: Boolean,
     isMainPost: Boolean,
     sharedElementPrefix: String,
-    avatarShape: RoundedPolygonShape,
+    avatarShape: PolygonShape,
     now: Instant,
     created: Instant,
     languageTag: String,

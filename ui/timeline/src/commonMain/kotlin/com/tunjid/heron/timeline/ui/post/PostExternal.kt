@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,7 +52,7 @@ import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -153,7 +154,7 @@ private fun PaneTransitionScope.ContentPreview(
 ) {
     if (gif != null || !feature.thumb?.uri.isNullOrBlank()) {
         val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(
-            RoundedPolygonShape.Rectangle,
+            PolygonShape.Rectangle,
         )
         else Modifier
         PaneStickySharedElement(
@@ -176,7 +177,7 @@ private fun PaneTransitionScope.ContentPreview(
                         url = gif?.playbackUri?.uri ?: feature.thumb?.uri,
                         contentDescription = gif?.altText ?: feature.title,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Rectangle,
+                        shape = PolygonShape.Rectangle,
                     )
                 },
             )
