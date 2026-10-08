@@ -49,13 +49,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.treenav.compose.Adaptation
 import org.jetbrains.compose.resources.stringResource
@@ -140,8 +140,11 @@ fun PaneScaffoldState.PaneNavigationRail(
     )
 }
 
-fun PaneScaffoldState.bottomNavOffset(offset: Offset): IntOffset {
-    return if (prefersAutoHidingBottomNav) offset.round()
+fun PaneScaffoldState.bottomNavVisibleInset(): IntOffset =
+    bottomNavigationNestedScrollConnection.roundedMaxDelta
+
+fun PaneScaffoldState.bottomNavOffset(): IntOffset {
+    return if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset.round()
     else IntOffset.Zero
 }
 

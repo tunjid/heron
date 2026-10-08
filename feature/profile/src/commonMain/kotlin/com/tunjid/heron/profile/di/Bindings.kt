@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -174,18 +173,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
-    val bottomNavigationNestedScrollConnection =
-        paneScaffoldState.bottomNavigationNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection)
-            .nestedScroll(bottomNavigationNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,
@@ -196,7 +187,7 @@ internal fun Route(
             PaneSnackbarHost(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
             )
         },
@@ -204,7 +195,7 @@ internal fun Route(
             ProfileFab(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
                 fabExpanded = isBottomNavOffsetNearOrigin,
                 state = profileFabState(state),
@@ -234,7 +225,7 @@ internal fun Route(
             PaneNavigationBar(
                 expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier.offset {
-                    bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                    bottomNavOffset()
                 },
             )
         },

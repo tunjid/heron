@@ -20,10 +20,9 @@ import androidx.compose.animation.core.animate
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
@@ -75,9 +74,11 @@ internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
 }
 
 @Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
+internal fun TabsExpansionEffect(
     isExpanded: Boolean,
+    onDisplaced: (Float) -> Unit,
 ) {
+    val updatedOnDisplaced by rememberUpdatedState(onDisplaced)
     val density = LocalDensity.current
     val expandedHeight = rememberUpdatedState(
         with(density) {
@@ -95,13 +96,7 @@ internal fun AccumulatedOffsetNestedScrollConnection.TabsExpansionEffect(
         ) { current, _ ->
             val delta = current - cumulative
             cumulative += delta
-            onPreScroll(
-                available = Offset(
-                    x = 0f,
-                    y = delta,
-                ),
-                source = NestedScrollSource.SideEffect,
-            )
+            updatedOnDisplaced(delta)
         }
     }
 }

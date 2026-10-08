@@ -71,7 +71,6 @@ import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -81,7 +80,9 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -243,10 +244,10 @@ private fun FeedTimeline(
                         IntOffset(
                             x = 0,
                             y = gridState.layoutInfo.beforeContentPadding,
-                        ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                        ) + paneScaffoldState.topAppBarOffset()
                     },
                     bottomRightInset = {
-                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        paneScaffoldState.bottomNavVisibleInset()
                     },
                     isEnabled = {
                         paneScaffoldState.paneState.pane == ThreePane.Primary &&

@@ -171,7 +171,6 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -188,6 +187,7 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
@@ -1481,7 +1481,7 @@ private fun ProfileTimeline(
                     // No top inset: the grid is laid out beneath the collapsing header, so its own
                     // bounds already exclude it.
                     bottomRightInset = {
-                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        paneScaffoldState.bottomNavVisibleInset()
                     },
                     isEnabled = {
                         paneScaffoldState.paneState.pane == ThreePane.Primary &&

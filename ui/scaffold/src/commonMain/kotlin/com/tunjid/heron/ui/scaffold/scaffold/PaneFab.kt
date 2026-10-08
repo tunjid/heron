@@ -55,7 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.IntrinsicMeasurable
@@ -240,27 +239,26 @@ private fun FabIcon(icon: ImageVector) {
     }
 }
 
-fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
-    return when {
-        prefersNavigationRail -> IntOffset.Zero
-        else -> IntOffset(
-            x = offset.x.roundToInt(),
-            y = min(
-                offset.y.roundToInt(),
-                with(appScaffoldState.density) {
-                    val navHeight = UiTokens.bottomNavHeight(
-                        isCompact = prefersCompactBottomNav,
-                    )
-                    when (bottomNavConfig) {
-                        BottomNavConfig.Hide -> navHeight
-                        BottomNavConfig.PartiallyCollapse,
-                        BottomNavConfig.FullyCollapse,
-                        -> FabSpacing + DefaultFabSize / 2 + navHeight / 2
-                    }.roundToPx()
-                },
-            ),
-        )
-    }
+fun PaneScaffoldState.fabOffset(): IntOffset {
+    if (prefersNavigationRail) return IntOffset.Zero
+    val offset = bottomNavigationNestedScrollConnection.offset
+    return IntOffset(
+        x = offset.x.roundToInt(),
+        y = min(
+            offset.y.roundToInt(),
+            with(appScaffoldState.density) {
+                val navHeight = UiTokens.bottomNavHeight(
+                    isCompact = prefersCompactBottomNav,
+                )
+                when (bottomNavConfig) {
+                    BottomNavConfig.Hide -> navHeight
+                    BottomNavConfig.PartiallyCollapse,
+                    BottomNavConfig.FullyCollapse,
+                    -> FabSpacing + DefaultFabSize / 2 + navHeight / 2
+                }.roundToPx()
+            },
+        ),
+    )
 }
 
 private data object FabSharedElementKey

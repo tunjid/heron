@@ -31,10 +31,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.GrazeFeedPreviewPrefix
@@ -71,8 +69,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -218,18 +217,10 @@ internal fun Route(
     val searchFocusRequester = remember { FocusRequester() }
     KeyboardPopupEffect(state, searchFocusRequester)
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
-    val bottomNavigationNestedScrollConnection =
-        paneScaffoldState.bottomNavigationNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection)
-            .nestedScroll(bottomNavigationNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -250,7 +241,7 @@ internal fun Route(
             }
             if (state.query.isRoot) RootDestinationTopAppBar(
                 modifier = Modifier.offset {
-                    topAppBarNestedScrollConnection.offset.round()
+                    topAppBarOffset()
                 },
                 title = {
                     SearchBar(
@@ -277,7 +268,7 @@ internal fun Route(
                         actions = stateHolder.accept,
                     )
                 },
-                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                 onSignedInProfileClicked = { profile, sharedElementKey ->
                     stateHolder.accept(
                         Action.Navigate.To(
@@ -322,7 +313,7 @@ internal fun Route(
                         actions = stateHolder.accept,
                     )
                 },
-                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                 onBackPressed = {
                     stateHolder.accept(Action.Navigate.Pop)
                 },
@@ -332,7 +323,7 @@ internal fun Route(
             PaneSnackbarHost(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
             )
         },
@@ -343,7 +334,7 @@ internal fun Route(
                 PaneFab(
                     modifier = Modifier
                         .offset {
-                            fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            fabOffset()
                         },
                     text = stringResource(Res.string.adapt_to_feed),
                     icon = HeronIcons.Regular.SwapHoriz,
@@ -366,7 +357,7 @@ internal fun Route(
                 expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier
                     .offset {
-                        bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                        bottomNavOffset()
                     },
                 onNavItemReselected = {
                     searchFocusRequester.requestFocus()

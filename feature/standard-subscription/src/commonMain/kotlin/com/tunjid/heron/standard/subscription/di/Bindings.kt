@@ -19,7 +19,6 @@ package com.tunjid.heron.standard.subscription.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.standard.subscription.Action
 import com.tunjid.heron.standard.subscription.StandardSubscriptionScreen
 import com.tunjid.heron.standard.subscription.StandardSubscriptionStateHolder
@@ -38,8 +37,8 @@ import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -126,18 +125,10 @@ object StandardSubscriptionBindings {
             )
             val state = stateHolder.produceStateWithLifecycle()
 
-            val topAppBarNestedScrollConnection =
-                paneScaffoldState.topAppBarNestedScrollConnection
-
-            val bottomNavigationNestedScrollConnection =
-                paneScaffoldState.bottomNavigationNestedScrollConnection
-
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))
@@ -149,7 +140,7 @@ object StandardSubscriptionBindings {
                                 title = stringResource(Res.string.subscriptions),
                             )
                         },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                        transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                         onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
                     )
                 },
@@ -157,7 +148,7 @@ object StandardSubscriptionBindings {
                     PaneNavigationBar(
                         expanded = isBottomNavOffsetNearOrigin,
                         modifier = Modifier.offset {
-                            bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                            bottomNavOffset()
                         },
                     )
                 },

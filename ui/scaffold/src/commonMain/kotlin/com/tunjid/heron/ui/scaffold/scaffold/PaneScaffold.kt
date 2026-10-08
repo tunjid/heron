@@ -56,6 +56,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -103,8 +104,8 @@ class PaneScaffoldState(
     internal val appScaffoldState: AppScaffoldState,
     @PublishedApi
     internal val stateHolderInitializer: StateHolderInitializer,
-    val topAppBarNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
-    val bottomNavigationNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
+    internal val topAppBarNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
+    internal val bottomNavigationNestedScrollConnection: AccumulatedOffsetNestedScrollConnection,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : PaneTransitionScope,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
@@ -373,7 +374,9 @@ fun PaneScaffoldState.PaneScaffold(
                                 orientation = Orientation.Horizontal,
                                 minSize = appScaffoldState.minPaneWidth,
                                 atStart = paneState.pane == ThreePane.Secondary,
-                            ),
+                            )
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .nestedScroll(bottomNavigationNestedScrollConnection),
                     ) {
                         PersistentSharedElement()
                         content(paddingValues)
