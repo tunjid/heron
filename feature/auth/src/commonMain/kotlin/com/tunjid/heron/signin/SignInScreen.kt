@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
@@ -92,12 +93,9 @@ internal fun SignInScreen(
         val keyboardController = LocalSoftwareKeyboardController.current
 
         val oauthFlowUri = rememberUpdatedState(state.oauthRequestUri)
-        val currentProfileHandle = rememberUpdatedState(state.profileHandle)
-
         val oauthFlowState = rememberOauthFlowState { result ->
             actions(
                 Action.OauthFlowResultAvailable(
-                    handle = currentProfileHandle.value,
                     result = result,
                 ),
             )
@@ -176,7 +174,17 @@ internal fun SignInScreen(
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
+            isSignUpAvailable = state.isOauthAvailable,
             onServerSelected = serverSelectionSheetState::onServer,
+            onSignUp = { server ->
+                actions(
+                    Action.BeginOauthFlow(
+                        request = OauthUriRequest.SignUp(
+                            server = server,
+                        ),
+                    ),
+                )
+            },
         )
 
         LaunchedEffect(Unit) {

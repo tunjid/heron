@@ -23,6 +23,7 @@
     <string name="sign_with_oauth">Sign in with %1$s</string>
     <string name="sign_with_password">Sign in with password to %1$s</string>
     <string name="oauth_flow_failed">Authorization failed</string>
+    <string name="oauth_sign_up_start_error">There was an error starting sign up. Please try again or pick another provider.</string>
     <string name="oauth_start_error">There was an error starting the authorization flow. Please check your username and try again.</string>
     <string name="cancel">Cancel</string>
     <string name="at_sign_not_allowed">Enter your username without the '@'</string>
@@ -36,7 +37,8 @@
     <string name="no_account_help_content_description">Help creating an account</string>
     <string name="no_account_help_button">I don't have an account</string>
     <string name="no_account_dialog_title">About Heron</string>
-    <string name="no_account_dialog_details">Heron is a client app for the Authenticated Transfer Protocol (ATProto), an open, decentralized network for building social applications. As a result, it currently does not administer sign ups.\n\nPlease sign up with your preferred provider and then return here to sign in.\n\nYou can learn more about ATProto, or any of the providers below by tapping learn more.</string>
+    <string name="no_account_dialog_details">Heron is a client for the AT Protocol (ATProto), an open, decentralized network for social apps. Your account lives with a provider you choose, not with Heron.\n\nPick a provider below to sign up on their site. You'll come back to Heron signed in.</string>
+    <string name="sign_up_on">Sign up on %1$s</string>
     <string name="learn_more">Learn more about %1$s</string>
     <string name="okay">Okay</string>
 </resources>

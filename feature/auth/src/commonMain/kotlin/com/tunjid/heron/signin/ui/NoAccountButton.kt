@@ -17,6 +17,7 @@
 package com.tunjid.heron.signin.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,12 +63,15 @@ import heron.feature.auth.generated.resources.no_account_dialog_details
 import heron.feature.auth.generated.resources.no_account_dialog_title
 import heron.feature.auth.generated.resources.no_account_help_button
 import heron.feature.auth.generated.resources.no_account_help_content_description
+import heron.feature.auth.generated.resources.sign_up_on
 import heron.ui.core.generated.resources.dismiss
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NoAccountButton(
     modifier: Modifier = Modifier,
+    isSignUpAvailable: Boolean,
+    onSignUp: (Server) -> Unit,
 ) {
     var showNoAccountDialog by remember { mutableStateOf(false) }
 
@@ -91,17 +96,29 @@ fun NoAccountButton(
             }
         },
     )
-    if (showNoAccountDialog) NoAccountDialog {
-        showNoAccountDialog = false
-    }
+    if (showNoAccountDialog) NoAccountDialog(
+        isSignUpAvailable = isSignUpAvailable,
+        onSignUp = { server ->
+            showNoAccountDialog = false
+            onSignUp(server)
+        },
+        onDismiss = {
+            showNoAccountDialog = false
+        },
+    )
 }
 
 @Composable
 private fun NoAccountDialog(
+    isSignUpAvailable: Boolean,
+    onSignUp: (Server) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var selectedServer by remember {
-        mutableStateOf(AtProtoServer)
+        mutableStateOf(
+            if (isSignUpAvailable) Server.BlueSky
+            else AtProtoServer,
+        )
     }
     SimpleDialog(
         onDismissRequest = onDismiss,
@@ -112,6 +129,8 @@ private fun NoAccountDialog(
         },
         text = {
             Column(
+                modifier = Modifier
+                    .animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -142,6 +161,29 @@ private fun NoAccountDialog(
                             },
                         )
                     }
+                }
+
+                AnimatedContent(
+                    targetState = selectedServer.takeIf {
+                        isSignUpAvailable && it in Server.KnownServers
+                    },
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                ) { server ->
+                    if (server != null) OutlinedButton(
+                        onClick = {
+                            onSignUp(server)
+                        },
+                        content = {
+                            Text(
+                                text = stringResource(
+                                    Res.string.sign_up_on,
+                                    stringResource(server.stringResource),
+                                ),
+                            )
+                        },
+                    )
                 }
             }
         },

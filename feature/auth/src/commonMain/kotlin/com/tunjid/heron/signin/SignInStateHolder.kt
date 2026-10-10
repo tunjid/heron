@@ -46,6 +46,7 @@ import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.oauth_flow_failed
+import heron.feature.auth.generated.resources.oauth_sign_up_start_error
 import heron.feature.auth.generated.resources.oauth_start_error
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
@@ -279,19 +280,21 @@ context(productionScope: CoroutineScope)
 private fun Flow<Action.BeginOauthFlow>.launchBeginOauthMutations(
     state: State.Mutable,
     authRepository: AuthRepository,
-) = launchedCollectLatest {
+) = launchedCollectLatest { (request) ->
     val result = authRepository.oauthRequestUri(
-        request = OauthUriRequest.SignIn(
-            handle = it.handle,
-            server = it.server,
-        ),
+        request = request,
     )
     result.fold(
         onSuccess = {
             state.oauthRequestUri = it
         },
         onFailure = {
-            state.messages += Memo.Resource(Res.string.oauth_start_error)
+            state.messages += Memo.Resource(
+                when (request) {
+                    is OauthUriRequest.SignIn -> Res.string.oauth_start_error
+                    is OauthUriRequest.SignUp -> Res.string.oauth_sign_up_start_error
+                },
+            )
         },
     )
 }
