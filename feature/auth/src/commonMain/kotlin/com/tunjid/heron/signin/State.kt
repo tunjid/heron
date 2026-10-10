@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
@@ -204,8 +205,10 @@ fun State.createSessionAction() = when {
     )
     else -> when (authMode) {
         AuthMode.Oauth -> Action.BeginOauthFlow(
-            handle = profileHandle,
-            server = selectedServer,
+            request = OauthUriRequest.SignIn(
+                handle = profileHandle,
+                server = selectedServer,
+            ),
         )
         AuthMode.Password -> Action.CreateSession(
             request = SessionRequest.Credentials(
@@ -235,12 +238,10 @@ sealed class Action(val key: String) {
     ) : Action("OauthAvailabilityChanged")
 
     data class BeginOauthFlow(
-        val handle: ProfileHandle,
-        val server: Server,
+        val request: OauthUriRequest,
     ) : Action("BeginOauthFlow")
 
     data class OauthFlowResultAvailable(
-        val handle: ProfileHandle,
         val result: OauthFlowResult,
     ) : Action("OauthFlowResultAvailable")
 
