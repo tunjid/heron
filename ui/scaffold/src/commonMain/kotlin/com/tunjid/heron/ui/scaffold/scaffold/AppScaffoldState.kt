@@ -21,6 +21,9 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.platform.isIOS
 import com.tunjid.heron.media.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.ui.UiTokens
@@ -89,11 +92,12 @@ class AppScaffoldState internal constructor(
     internal val verticalSystemUiWidth: Dp
         get() = maxOf(leftSystemUiInset.value, rightSystemUiInset.value)
 
-    // The rail fills the reserved system-UI strip when there is one (iPhone Duo), else the default
-    // icon-rail width.
     internal val navigationRailWidth: Dp
         get() = verticalSystemUiWidth.takeIf { it > 0.dp }
             ?: UiTokens.NavRailWidth
+
+    internal val bottomAlignsNavigationRail: Boolean
+        get() = Platform.current.isIOS && verticalSystemUiWidth > 0.dp
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,

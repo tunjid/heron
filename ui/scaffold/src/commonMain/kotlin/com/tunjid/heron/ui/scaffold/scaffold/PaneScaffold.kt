@@ -132,6 +132,11 @@ class PaneScaffoldState(
     internal val navigationRailWidth: Dp
         get() = appScaffoldState.navigationRailWidth
 
+    // The rail sits at the bottom when there is a reserved system-UI strip (iPhone Duo), else it is
+    // centered.
+    internal val bottomAlignsNavigationRail: Boolean
+        get() = appScaffoldState.bottomAlignsNavigationRail
+
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
         get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
