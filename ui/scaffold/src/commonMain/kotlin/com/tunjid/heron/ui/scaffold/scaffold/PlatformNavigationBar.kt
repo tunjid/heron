@@ -54,14 +54,6 @@ import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * The bottom navigation surface. Most platforms render [CommonNavigationBar] (the Material
- * `NavigationBar`). iOS renders a native Liquid Glass `UITabBar` on iOS 26+, which is self contained
- * and so is not wrapped in a Compose surface, and renders [CommonNavigationBar] on older systems.
- *
- * The nav items already live on [AppScaffoldState], so this reads them directly rather than taking
- * them as parameters.
- */
 @Composable
 internal expect fun PaneScaffoldState.PlatformNavigationBar(
     modifier: Modifier,

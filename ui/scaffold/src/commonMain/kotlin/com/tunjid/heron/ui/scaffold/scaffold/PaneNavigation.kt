@@ -20,45 +20,23 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.times
-import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.roundedMaxDelta
-import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.treenav.compose.Adaptation
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaneScaffoldState.PaneNavigationBar(
@@ -149,64 +127,6 @@ fun PaneScaffoldState.bottomNavOffset(): IntOffset {
 }
 
 @Composable
-internal fun PaneScaffoldState.PlatformNavigationRail(
-    modifier: Modifier = Modifier,
-    onNavItemReselected: () -> Boolean,
-) = with(appScaffoldState.staticStates) {
-    Box(
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .widthIn(max = navigationRailWidth)
-            .fillMaxSize(),
-    ) {
-        val color by animateColorAsState(
-            if (appScaffoldState.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
-            else MaterialTheme.colorScheme.surface,
-        )
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .constrainedSizePlacement(
-                    orientation = Orientation.Horizontal,
-                    minSize = navigationRailWidth,
-                    atStart = true,
-                )
-                .background(
-                    color = color,
-                    shape = NavRailShape,
-                )
-                .padding(vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            navItems.forEach { item ->
-                NavigationRailItem(
-                    enabled = identityState.isStable,
-                    selected = item.selected,
-                    icon = {
-                        BadgedBox(
-                            badge = {
-                                Badge(item.badgeCount)
-                            },
-                            content = {
-                                Icon(
-                                    imageVector = item.stack.icon,
-                                    contentDescription = stringResource(item.stack.titleRes),
-                                )
-                            },
-                        )
-                    },
-                    onClick = {
-                        if (item.selected && onNavItemReselected()) return@NavigationRailItem
-                        onNavItemSelected(item)
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
 internal fun Badge(
     count: Long,
 ) {
@@ -216,18 +136,7 @@ internal fun Badge(
     }
 }
 
-@Composable
-private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
-    derivedStateOf {
-        splitLayoutState.weightAt(0)
-            .times(splitLayoutState.size)
-            .minus(navigationRailWidth) < minPaneWidth
-    }
-}.value
-
 private data object NavigationRailSharedElementKey
-
-private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
 
 private const val MaxBadgeCount = 100L
 
