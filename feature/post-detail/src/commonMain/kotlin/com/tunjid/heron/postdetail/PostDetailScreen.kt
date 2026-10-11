@@ -78,7 +78,9 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.time.Clock
 
@@ -179,6 +181,10 @@ internal fun PostDetailScreen(
     ) {
         LazyColumn(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                )
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 8.dp)
                 .fillMaxHeight()
@@ -205,7 +211,7 @@ internal fun PostDetailScreen(
                 ),
             state = listState,
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                top = UiTokens.statusAndToolbarHeight,
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             verticalArrangement = Arrangement.spacedBy(displayState.verticalItemSpacing(presentation)),

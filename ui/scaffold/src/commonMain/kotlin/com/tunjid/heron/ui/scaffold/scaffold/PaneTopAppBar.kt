@@ -69,9 +69,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.util.lerp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
@@ -102,6 +104,7 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
+import com.tunjid.heron.ui.modifiers.verticalProgressiveBlur
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityState
@@ -340,6 +343,43 @@ fun PaneScaffoldState.offsetTopAppBarBy(
 ) = topAppBarNestedScrollConnection.displaceVerticallyBy(
     delta = delta,
 )
+
+fun Modifier.topAppBarBlur(
+    paneScaffoldState: PaneScaffoldState,
+    topAppBarHeight: Dp,
+    isOffsetByScroll: Boolean = false,
+    radius: Dp = 16.dp,
+    fade: Dp = 24.dp,
+): Modifier = verticalProgressiveBlur { size ->
+    val progress = paneScaffoldState.topAppBarTransparencyFactor()
+    val currentRadius =
+        if (progress.isNaN()) 0.dp
+        else radius * progress.coerceIn(0f, 1f)
+
+    val bandHeight = when {
+        isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
+        else -> topAppBarHeight.toPx()
+    }
+    val fadeEnd =
+        if (size.height <= 0f) 0f
+        else (bandHeight / size.height).coerceIn(0f, 1f)
+    val bandEnd =
+        if (size.height <= 0f) 0f
+        else ((bandHeight - fade.toPx()) / size.height).coerceIn(0f, fadeEnd)
+
+    stop(
+        fraction = 0f,
+        radius = currentRadius,
+    )
+    stop(
+        fraction = bandEnd,
+        radius = currentRadius,
+    )
+    stop(
+        fraction = fadeEnd,
+        radius = 0.dp,
+    )
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -695,7 +735,11 @@ private fun Modifier.rootAppBarBackground(
     drawRect(
         color = backgroundColor,
         alpha = when (val currentProgress = progress()) {
-            in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
+            in 0f..1f -> lerp(
+                start = HundredPercent,
+                stop = UiTokens.appBarMinScrimAlpha,
+                fraction = currentProgress,
+            )
             else -> 0F
         },
     )
@@ -709,5 +753,4 @@ private fun Modifier.appbarAnimatedBounds(): Modifier =
     )
 
 private val PopOverShape = RoundedCornerShape(16.dp)
-private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
