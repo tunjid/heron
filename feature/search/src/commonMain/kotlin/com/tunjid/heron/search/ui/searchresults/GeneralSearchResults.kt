@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -68,6 +69,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.search.RouteQuery
 import com.tunjid.heron.search.SearchScreenStateHolders
 import com.tunjid.heron.search.State
+import com.tunjid.heron.search.isRoot
 import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
@@ -78,6 +80,8 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
 import heron.feature.search.generated.resources.Res
@@ -119,7 +123,7 @@ internal fun GeneralSearchResults(
         modifier = modifier,
     ) {
         val scope = rememberCoroutineScope()
-        val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
+        val topClearance = UiTokens.statusAndToolbarHeight
         var tabsCollapsed by rememberSaveable {
             mutableStateOf(false)
         }
@@ -149,6 +153,12 @@ internal fun GeneralSearchResults(
                     ) + tabsOffsetNestedScrollConnection.offset.round()
                 }
                 .drawBehind {
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            0f to tabsBackgroundColor.copy(alpha = UiTokens.appBarMinScrimAlpha),
+                            1f to tabsBackgroundColor.copy(alpha = 0f),
+                        ),
+                    )
                     drawRect(
                         color = tabsBackgroundColor,
                         size = size.copy(width = size.width * tabsBackgroundProgress.value),
@@ -205,6 +215,14 @@ internal fun GeneralSearchResults(
             modifier = Modifier
                 .zIndex(0f)
                 .nestedScroll(tabsOffsetNestedScrollConnection)
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = when {
+                        state.query.isRoot -> topClearance + UiTokens.tabsHeight
+                        else -> topClearance
+                    },
+                    isOffsetByScroll = state.query.isRoot,
+                )
                 .clip(
                     remember {
                         RoundedCornerShape(

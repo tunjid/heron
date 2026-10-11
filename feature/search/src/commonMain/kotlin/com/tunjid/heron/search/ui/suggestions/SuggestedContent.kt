@@ -77,7 +77,9 @@ import com.tunjid.heron.ui.icons.regular.LocalFireDepartment
 import com.tunjid.heron.ui.icons.regular.RssFeed
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.discover_feeds
 import heron.feature.search.generated.resources.hot
@@ -93,6 +95,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun SuggestedContent(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
+    isRootQuery: Boolean,
     showTrendingTopics: Boolean,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
@@ -109,10 +112,15 @@ internal fun SuggestedContent(
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneScaffoldState,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                isOffsetByScroll = isRootQuery,
+            ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight + 16.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
             horizontal = 8.dp,
         ),
