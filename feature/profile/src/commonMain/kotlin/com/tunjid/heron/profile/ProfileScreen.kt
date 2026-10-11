@@ -87,8 +87,6 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
-import com.tunjid.composables.collapsingheader.CollapsingHeaderState
-import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Labeler
@@ -163,6 +161,7 @@ import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -171,6 +170,8 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pinnedHeaderBlur
+import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -243,9 +244,9 @@ internal fun ProfileScreen(
 
     val collapsedHeight = UiTokens.toolbarHeight + UiTokens.statusBarHeight
 
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = with(density) { collapsedHeight.toPx() },
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+        pinnedHeight = collapsedHeight,
+        initialExpandedHeight = 800.dp,
     )
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
@@ -313,7 +314,7 @@ internal fun ProfileScreen(
                         ?.refresh()
                 },
             ),
-        state = headerState.headerState,
+        state = headerState.headerState.collapsingHeaderState,
         headerContent = {
             ProfileHeader(
                 paneScaffoldState = paneScaffoldState,
@@ -415,6 +416,10 @@ internal fun ProfileScreen(
             ) {
                 HorizontalPager(
                     modifier = Modifier
+                        .pinnedHeaderBlur(
+                            state = collapsingHeaderState,
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        )
                         .paneClip(),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
@@ -1725,7 +1730,7 @@ private fun Map<RecordUri?, Boolean>.status(
 
 @Stable
 private class HeaderState(
-    val headerState: CollapsingHeaderState,
+    val headerState: PinnedCollapsingHeaderState,
 ) {
     var width by mutableStateOf(160.dp * 3)
     private val profileBannerHeight by derivedStateOf {
