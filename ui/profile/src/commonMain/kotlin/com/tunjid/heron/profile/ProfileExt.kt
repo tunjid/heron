@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileTab
+import com.tunjid.heron.ui.UiTokens
 import heron.ui.profile.generated.resources.Res
 import heron.ui.profile.generated.resources.tab_documents
 import heron.ui.profile.generated.resources.tab_feeds
@@ -75,11 +76,11 @@ val ProfileBioTabHeight = 32.dp
 val MaxBannerHeight = 240.dp
 
 const val BannerAspectRatio = 16f / 9
-const val AvatarLiveZIndex = 7f
-const val AvatarZIndex = 6f
-const val AvatarHaloZIndex = 5f
+val AvatarLiveZIndex = UiTokens.higherThanAppBarSharedElementZIndex(3)
+val AvatarZIndex = UiTokens.higherThanAppBarSharedElementZIndex(2)
+val AvatarHaloZIndex = UiTokens.higherThanAppBarSharedElementZIndex(1)
 
-const val AppLogoZIndex = 5f
+val AppLogoZIndex = UiTokens.higherThanAppBarSharedElementZIndex(1)
 
 const val SurfaceZIndex = 4f
 const val BannerZIndex = 3f
