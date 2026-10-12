@@ -97,6 +97,7 @@ internal fun QuotedPost(
                 horizontalArrangement = spacedBy(8.dp),
             ) {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     modifier = Modifier
                         .size(24.dp)
                         .align(Alignment.CenterVertically),

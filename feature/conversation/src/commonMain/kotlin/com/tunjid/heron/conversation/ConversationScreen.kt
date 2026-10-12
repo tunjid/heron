@@ -385,6 +385,7 @@ private fun MessageAvatar(
         modifier = modifier,
     ) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
+            boundsTransform = paneScaffoldState.sharedElementBoundsTransform,
             sharedContentState = paneScaffoldState.rememberSharedContentState(
                 key = item.avatarSharedElementKey(),
             ),

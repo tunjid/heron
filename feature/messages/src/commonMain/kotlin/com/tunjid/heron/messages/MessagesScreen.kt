@@ -249,6 +249,7 @@ fun ConversationMembers(
         val membersSize = members.size
         members.forEachIndexed { index, profile ->
             UpdatedMovableStickySharedElementOf(
+                boundsTransform = sharedElementBoundsTransform,
                 sharedContentState = paneScaffoldState.rememberSharedContentState(
                     key = profile.avatarSharedElementKey(
                         prefix = conversationListSharedElementPrefix(conversationId),

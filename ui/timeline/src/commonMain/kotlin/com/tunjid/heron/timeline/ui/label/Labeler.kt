@@ -55,6 +55,7 @@ fun Labeler(
         avatar = {
             val avatar = labeler.creator.avatar.orDefault
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(

@@ -182,6 +182,7 @@ private inline fun PostInteractionsButtons(
         }
         key(button) {
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier,
                 sharedContentState = rememberSharedContentState(
                     key = remember(sharedElementPrefix, post.cid, button) {

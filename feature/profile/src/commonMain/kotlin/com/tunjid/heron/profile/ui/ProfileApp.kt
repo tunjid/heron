@@ -58,6 +58,7 @@ private fun ProfileApp(
         shape = CircleShape,
         leadingIcon = {
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(24.dp),
                 sharedContentState = rememberSharedContentState(app.id),

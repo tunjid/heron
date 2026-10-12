@@ -111,6 +111,7 @@ fun TimelineTitle(
     ) {
         val avatar = timeline.avatar
         PaneStickySharedElement(
+            boundsTransform = sharedElementBoundsTransform,
             modifier = Modifier
                 .size(44.dp),
             sharedContentState = rememberSharedContentState(
@@ -142,6 +143,7 @@ fun TimelineTitle(
                 verticalArrangement = Arrangement.Center,
             ) {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
                         key = timeline.titleSharedElementKey(sharedElementPrefix),
@@ -160,6 +162,7 @@ fun TimelineTitle(
                     .takeUnless(String::isBlank)
                     ?.let { creator ->
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             modifier = Modifier,
                             sharedContentState = rememberSharedContentState(
                                 key = timeline.subtitleSharedElementKey(sharedElementPrefix),

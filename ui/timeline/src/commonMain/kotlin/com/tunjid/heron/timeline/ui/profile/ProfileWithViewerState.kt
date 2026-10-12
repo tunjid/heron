@@ -85,6 +85,7 @@ fun ProfileWithViewerState(
             modifier = Modifier,
             avatar = {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .ifTrue(viewerState.isBlocked) {

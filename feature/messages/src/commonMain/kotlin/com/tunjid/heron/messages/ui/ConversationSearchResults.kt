@@ -95,6 +95,7 @@ internal fun ConversationSearchResults(
                         .padding(16.dp),
                     avatar = {
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             modifier = Modifier
                                 .size(36.dp),
                             sharedContentState = rememberSharedContentState(

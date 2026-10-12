@@ -162,6 +162,7 @@ private fun ProfileSearchResult(
             },
         avatar = {
             UpdatedMovableStickySharedElementOf(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .shapedClickable(CircleShape) {

@@ -120,6 +120,13 @@ class PaneScaffoldState(
         }
     }
 
+    override val sharedElementBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
+        childBoundsTransform.createAnimationSpec(
+            initialBounds = initialBounds,
+            targetBounds = targetBounds,
+        )
+    }
+
     internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
 
     internal val snackbarHostState = SnackbarHostState()

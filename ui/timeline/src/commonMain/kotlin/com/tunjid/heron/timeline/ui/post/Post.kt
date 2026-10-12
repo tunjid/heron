@@ -211,6 +211,7 @@ private fun AttributionContent(
             avatar = {
                 Box {
                     UpdatedMovableStickySharedElementOf(
+                        boundsTransform = sharedElementBoundsTransform,
                         modifier = Modifier
                             .size(UiTokens.avatarSize)
                             .shapedClickable(data.avatarShape) {
@@ -242,6 +243,7 @@ private fun AttributionContent(
                         },
                     )
                     if (data.post.author.status?.isLive == true) PaneStickySharedElement(
+                        boundsTransform = sharedElementBoundsTransform,
                         modifier = Modifier
                             .align(Alignment.BottomCenter),
                         sharedContentState = rememberSharedContentState(
@@ -327,6 +329,7 @@ private fun LabelContent(
                         localeInfo.description,
                     )
                     PaneStickySharedElement(
+                        boundsTransform = sharedElementBoundsTransform,
                         modifier = Modifier,
                         sharedContentState = rememberSharedContentState(
                             remember(data.sharedElementPrefix, data.post.cid, label) {

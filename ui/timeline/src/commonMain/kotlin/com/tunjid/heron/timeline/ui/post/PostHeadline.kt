@@ -61,21 +61,21 @@ fun PostHeadline(
                     .clickable { onPostClicked() },
             ) {
                 PaneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = author.rememberTextSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = primaryText,
-                        ),
+                    boundsTransform = sharedElementBoundsTransform,
+                sharedContentState = rememberSharedContentState(
+                    key = author.rememberTextSharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                        text = primaryText,
                     ),
-                ) {
-                    ProfileName(
-                        modifier = Modifier
-                            .shapedClickable { onAuthorClicked() }
-                            .padding(horizontal = 2.dp),
-                        profile = author,
-                    )
-                }
+                ),
+            ) {
+                ProfileName(
+                    modifier = Modifier
+                        .shapedClickable { onAuthorClicked() }
+                        .padding(horizontal = 2.dp),
+                    profile = author,
+                )}
             }
             TimeDelta(
                 modifier = Modifier.alignByBaseline(),
@@ -86,6 +86,7 @@ fun PostHeadline(
             Spacer(Modifier.height(2.dp))
             Row(horizontalArrangement = spacedBy(4.dp)) {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
                         key = author.rememberTextSharedElementKey(
