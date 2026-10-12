@@ -156,9 +156,9 @@ internal expect fun verticalProgressiveBlurEffect(
 
 @Stable
 class HeaderBlurState(
-    radius: Dp,
     fade: Dp,
     height: Density.() -> Float,
+    radius: () -> Dp,
     progress: () -> Float,
 ) {
     var radius by mutableStateOf(radius)
@@ -169,7 +169,7 @@ class HeaderBlurState(
     internal val currentRadius: Dp
         get() = progress().let { progress ->
             if (progress.isNaN()) 0.dp
-            else radius * progress.coerceIn(0f, 1f)
+            else radius() * progress.coerceIn(0f, 1f)
         }
 }
 

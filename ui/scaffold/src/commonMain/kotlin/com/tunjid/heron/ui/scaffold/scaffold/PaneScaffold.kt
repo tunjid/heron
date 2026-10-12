@@ -19,11 +19,13 @@ package com.tunjid.heron.ui.scaffold.scaffold
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -97,10 +99,12 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Stable
 class PaneScaffoldState(
@@ -121,11 +125,37 @@ class PaneScaffoldState(
     }
 
     override val sharedElementBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
+        // triggered when transitions start.
+        sharedElementTransitionBounds.add(initialBounds)
+        sharedElementTransitionBounds.add(targetBounds)
         childBoundsTransform.createAnimationSpec(
             initialBounds = initialBounds,
             targetBounds = targetBounds,
         )
     }
+
+    internal val sharedElementTransitionBounds = mutableStateListOf<Rect>()
+
+    internal val headerBlurStrength = Animatable(1f)
+
+    internal val hasHeaderBlurOcclusion: Boolean
+        get() {
+            val density = appScaffoldState.density
+            for (stateIndex in headerBlurStates.indices) {
+                val state = headerBlurStates[stateIndex]
+                val progress = state.progress()
+                if (progress.isNaN() || progress <= 0f) continue
+
+                val height = state.height(density)
+                if (height <= 0f) continue
+
+                for (boundsIndex in sharedElementTransitionBounds.indices) {
+                    val bounds = sharedElementTransitionBounds[boundsIndex]
+                    if (bounds.top < height && bounds.bottom > 0f) return true
+                }
+            }
+            return false
+        }
 
     internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
 
@@ -139,13 +169,9 @@ class PaneScaffoldState(
     internal val navRailEdge: NavRailEdge
         get() = appScaffoldState.navRailEdge
 
-    // The rail fills the reserved system-UI strip when there is one (iPhone Duo), else the default
-    // icon-rail width.
     internal val navigationRailWidth: Dp
         get() = appScaffoldState.navigationRailWidth
 
-    // The rail sits at the bottom when there is a reserved system-UI strip (iPhone Duo), else it is
-    // centered.
     internal val bottomAlignsNavigationRail: Boolean
         get() = appScaffoldState.bottomAlignsNavigationRail
 
@@ -239,26 +265,21 @@ class PaneScaffoldState(
     }
 }
 
-/**
- * Remembers a [HeaderBlurState] for content in this pane that sits under a header.
- */
 @Composable
 fun PaneScaffoldState.rememberHeaderBlurState(
-    radius: Dp = 16.dp,
-    fade: Dp = 24.dp,
     height: Density.() -> Float,
     progress: () -> Float,
 ): HeaderBlurState {
-    val state = remember {
+    val state = remember(this) {
         HeaderBlurState(
-            radius = radius,
-            fade = fade,
+            radius = {
+                16.dp * headerBlurStrength.value
+            },
+            fade = 24.dp,
             height = height,
             progress = progress,
         )
     }
-    state.radius = radius
-    state.fade = fade
     state.height = height
     state.progress = progress
 
@@ -276,11 +297,7 @@ fun PaneScaffoldState.rememberHeaderBlurState(
 @Composable
 fun PaneScaffoldState.rememberHeaderBlurState(
     pinnedCollapsingHeaderState: PinnedCollapsingHeaderState,
-    radius: Dp = 16.dp,
-    fade: Dp = 24.dp,
 ): HeaderBlurState = rememberHeaderBlurState(
-    radius = radius,
-    fade = fade,
     height = { pinnedCollapsingHeaderState.bodyOverlap },
     progress = pinnedCollapsingHeaderState::bodyOverlapFraction,
 )
@@ -324,6 +341,31 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             bottomNavigationNestedScrollConnection = bottomNavigationNestedScrollConnection,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
+    }
+
+    LaunchedEffect(paneScaffoldState) {
+        snapshotFlow { paneScaffoldState.isTransitionActive }
+            .collect { isTransitionActive ->
+                if (!isTransitionActive) paneScaffoldState.sharedElementTransitionBounds.clear()
+            }
+    }
+    LaunchedEffect(paneScaffoldState) {
+        snapshotFlow { paneScaffoldState.hasHeaderBlurOcclusion }
+            .filter { it }
+            .collectLatest {
+                paneScaffoldState.headerBlurStrength.snapTo(0f)
+                // Bounds transforms are asked for as the transition starts.
+                withTimeoutOrNull(HeaderBlurTransitionStartTimeout) {
+                    snapshotFlow { paneScaffoldState.isTransitionActive }
+                        .first { it }
+                }
+                snapshotFlow { paneScaffoldState.isTransitionActive }
+                    .first { !it }
+                paneScaffoldState.headerBlurStrength.animateTo(
+                    targetValue = 1f,
+                    animationSpec = HeaderBlurFeatherSpec,
+                )
+            }
     }
 
     val scope = rememberCoroutineScope()
@@ -635,3 +677,7 @@ private val BoundsTransformSpring = spring(
 private val BottomNavOffsetThreshold = 30.dp
 
 private object PersistentSharedElementKey
+
+private val HeaderBlurFeatherSpec = tween<Float>(durationMillis = 800)
+
+private val HeaderBlurTransitionStartTimeout = 200.milliseconds
