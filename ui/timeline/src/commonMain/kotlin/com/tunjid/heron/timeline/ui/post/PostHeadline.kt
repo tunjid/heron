@@ -62,20 +62,21 @@ fun PostHeadline(
             ) {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
-                sharedContentState = rememberSharedContentState(
-                    key = author.rememberTextSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                        text = primaryText,
+                    sharedContentState = rememberSharedContentState(
+                        key = author.rememberTextSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = primaryText,
+                        ),
                     ),
-                ),
-            ) {
-                ProfileName(
-                    modifier = Modifier
-                        .shapedClickable { onAuthorClicked() }
-                        .padding(horizontal = 2.dp),
-                    profile = author,
-                )}
+                ) {
+                    ProfileName(
+                        modifier = Modifier
+                            .shapedClickable { onAuthorClicked() }
+                            .padding(horizontal = 2.dp),
+                        profile = author,
+                    )
+                }
             }
             TimeDelta(
                 modifier = Modifier.alignByBaseline(),
