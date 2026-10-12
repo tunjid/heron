@@ -57,6 +57,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -71,8 +72,10 @@ import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.modifiers.HeaderBlurState
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -116,6 +119,8 @@ class PaneScaffoldState(
                 appScaffoldState.paneAnchorState.hasInteractions
         }
     }
+
+    internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
 
     internal val snackbarHostState = SnackbarHostState()
 
@@ -226,6 +231,52 @@ class PaneScaffoldState(
         }
     }
 }
+
+/**
+ * Remembers a [HeaderBlurState] for content in this pane that sits under a header.
+ */
+@Composable
+fun PaneScaffoldState.rememberHeaderBlurState(
+    radius: Dp = 16.dp,
+    fade: Dp = 24.dp,
+    height: Density.() -> Float,
+    progress: () -> Float,
+): HeaderBlurState {
+    val state = remember {
+        HeaderBlurState(
+            radius = radius,
+            fade = fade,
+            height = height,
+            progress = progress,
+        )
+    }
+    state.radius = radius
+    state.fade = fade
+    state.height = height
+    state.progress = progress
+
+    DisposableEffect(this, state) {
+        headerBlurStates.add(state)
+        onDispose { headerBlurStates.remove(state) }
+    }
+    return state
+}
+
+/**
+ * Remembers a [HeaderBlurState] for the part of the body of a `CollapsingHeaderLayout` that has
+ * scrolled behind the pinned header of [pinnedCollapsingHeaderState].
+ */
+@Composable
+fun PaneScaffoldState.rememberHeaderBlurState(
+    pinnedCollapsingHeaderState: PinnedCollapsingHeaderState,
+    radius: Dp = 16.dp,
+    fade: Dp = 24.dp,
+): HeaderBlurState = rememberHeaderBlurState(
+    radius = radius,
+    fade = fade,
+    height = { pinnedCollapsingHeaderState.bodyOverlap },
+    progress = pinnedCollapsingHeaderState::bodyOverlapFraction,
+)
 
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(

@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.heron.ui.modifiers.verticalProgressiveBlur
+import com.tunjid.heron.ui.modifiers.HeaderBlurState
+import com.tunjid.heron.ui.modifiers.headerBlur
 import kotlin.math.max
 import kotlin.math.min
 
@@ -114,33 +115,12 @@ fun rememberPinnedCollapsingHeaderState(
 
 fun Modifier.pinnedHeaderBlur(
     state: PinnedCollapsingHeaderState,
+    blurState: HeaderBlurState,
     scrimColor: Color,
     scrimAlpha: Float = 0.9f,
-    radius: Dp = 16.dp,
     fade: Dp = 24.dp,
 ): Modifier = this
-    .verticalProgressiveBlur { size ->
-        val overlap = state.bodyOverlap
-        val currentRadius = radius * state.bodyOverlapFraction
-        val fadeEnd =
-            if (size.height <= 0f) 0f
-            else (overlap / size.height).coerceIn(0f, 1f)
-        val bandEnd =
-            if (size.height <= 0f) 0f
-            else ((overlap - fade.toPx()) / size.height).coerceIn(0f, fadeEnd)
-        stop(
-            fraction = 0f,
-            radius = currentRadius,
-        )
-        stop(
-            fraction = bandEnd,
-            radius = currentRadius,
-        )
-        stop(
-            fraction = fadeEnd,
-            radius = 0.dp,
-        )
-    }
+    .headerBlur(state = blurState)
     // Drawn over the content, inside the blurred band.
     .drawWithContent {
         drawContent()

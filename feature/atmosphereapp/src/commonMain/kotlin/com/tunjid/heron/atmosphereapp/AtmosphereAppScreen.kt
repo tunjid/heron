@@ -61,6 +61,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import kotlin.math.roundToInt
@@ -139,6 +140,9 @@ internal fun AtmosphereAppScreen(
                         .fillMaxSize()
                         .pinnedHeaderBlur(
                             state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
                             scrimColor = MaterialTheme.colorScheme.surface,
                         ),
                     state = pagerState,

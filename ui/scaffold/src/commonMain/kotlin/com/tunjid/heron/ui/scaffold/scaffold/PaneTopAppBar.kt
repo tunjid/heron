@@ -101,10 +101,10 @@ import com.tunjid.heron.ui.icons.regular.CloudOff
 import com.tunjid.heron.ui.icons.regular.Error
 import com.tunjid.heron.ui.icons.regular.PriorityHigh
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.headerBlur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
-import com.tunjid.heron.ui.modifiers.verticalProgressiveBlur
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityState
@@ -356,42 +356,22 @@ fun PaneScaffoldState.offsetTopAppBarBy(
     delta = delta,
 )
 
+@Composable
 fun Modifier.topAppBarBlur(
     paneScaffoldState: PaneScaffoldState,
     topAppBarHeight: Dp,
     isOffsetByScroll: Boolean = false,
-    radius: Dp = 16.dp,
-    fade: Dp = 24.dp,
-): Modifier = verticalProgressiveBlur { size ->
-    val progress = paneScaffoldState.topAppBarTransparencyFactor()
-    val currentRadius =
-        if (progress.isNaN()) 0.dp
-        else radius * progress.coerceIn(0f, 1f)
-
-    val bandHeight = when {
-        isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
-        else -> topAppBarHeight.toPx()
-    }
-    val fadeEnd =
-        if (size.height <= 0f) 0f
-        else (bandHeight / size.height).coerceIn(0f, 1f)
-    val bandEnd =
-        if (size.height <= 0f) 0f
-        else ((bandHeight - fade.toPx()) / size.height).coerceIn(0f, fadeEnd)
-
-    stop(
-        fraction = 0f,
-        radius = currentRadius,
-    )
-    stop(
-        fraction = bandEnd,
-        radius = currentRadius,
-    )
-    stop(
-        fraction = fadeEnd,
-        radius = 0.dp,
-    )
-}
+): Modifier = headerBlur(
+    state = paneScaffoldState.rememberHeaderBlurState(
+        height = {
+            when {
+                isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
+                else -> topAppBarHeight.toPx()
+            }
+        },
+        progress = paneScaffoldState::topAppBarTransparencyFactor,
+    ),
+)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

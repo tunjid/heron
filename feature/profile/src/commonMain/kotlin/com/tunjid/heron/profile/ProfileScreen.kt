@@ -190,6 +190,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
@@ -423,6 +424,9 @@ internal fun ProfileScreen(
                     modifier = Modifier
                         .pinnedHeaderBlur(
                             state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
                             scrimColor = MaterialTheme.colorScheme.surface,
                         )
                         .paneClip(),

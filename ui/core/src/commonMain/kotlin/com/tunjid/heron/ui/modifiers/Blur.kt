@@ -16,6 +16,10 @@
 
 package com.tunjid.heron.ui.modifiers
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlurEffect
@@ -39,6 +43,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -80,6 +85,31 @@ fun Modifier.verticalProgressiveBlur(
         stops = stops,
     ),
 )
+
+fun Modifier.headerBlur(
+    state: HeaderBlurState,
+): Modifier = verticalProgressiveBlur { size ->
+    val height = state.height(this)
+    val currentRadius = state.currentRadius
+    val fadeEnd =
+        if (size.height <= 0f) 0f
+        else (height / size.height).coerceIn(0f, 1f)
+    val bandEnd =
+        if (size.height <= 0f) 0f
+        else ((height - state.fade.toPx()) / size.height).coerceIn(0f, fadeEnd)
+    stop(
+        fraction = 0f,
+        radius = currentRadius,
+    )
+    stop(
+        fraction = bandEnd,
+        radius = currentRadius,
+    )
+    stop(
+        fraction = fadeEnd,
+        radius = 0.dp,
+    )
+}
 
 fun GraphicsLayerScope.blurEffect(
     radius: () -> Dp,
@@ -123,6 +153,25 @@ internal expect fun verticalProgressiveBlurEffect(
     density: Density,
     edgeTreatment: TileMode,
 ): RenderEffect?
+
+@Stable
+class HeaderBlurState(
+    radius: Dp,
+    fade: Dp,
+    height: Density.() -> Float,
+    progress: () -> Float,
+) {
+    var radius by mutableStateOf(radius)
+    var fade by mutableStateOf(fade)
+    var height by mutableStateOf(height)
+    var progress by mutableStateOf(progress)
+
+    internal val currentRadius: Dp
+        get() = progress().let { progress ->
+            if (progress.isNaN()) 0.dp
+            else radius * progress.coerceIn(0f, 1f)
+        }
+}
 
 private sealed interface ProgressiveBlurSpec {
     data class TwoPoint(
