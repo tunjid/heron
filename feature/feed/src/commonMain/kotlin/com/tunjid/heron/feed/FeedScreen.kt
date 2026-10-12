@@ -82,7 +82,9 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -239,31 +241,36 @@ private fun FeedTimeline(
     ) {
         LookaheadScope {
             LazyVerticalStaggeredGrid(
-                modifier = Modifier.onDominantVideoChange(
-                    topLeftInset = {
-                        IntOffset(
-                            x = 0,
-                            y = gridState.layoutInfo.beforeContentPadding,
-                        ) + paneScaffoldState.topAppBarOffset()
-                    },
-                    bottomRightInset = {
-                        paneScaffoldState.bottomNavVisibleInset()
-                    },
-                    isEnabled = {
-                        paneScaffoldState.paneState.pane == ThreePane.Primary &&
-                            autoPlayTimelineVideos
-                    },
-                    onIdChanged = { videoId ->
-                        if (videoId != null) videoPlayerController.play(videoId = videoId)
-                        else videoPlayerController.pauseActiveVideo()
-                    },
-                ),
+                modifier = Modifier
+                    .topAppBarBlur(
+                        paneScaffoldState = paneScaffoldState,
+                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    )
+                    .onDominantVideoChange(
+                        topLeftInset = {
+                            IntOffset(
+                                x = 0,
+                                y = gridState.layoutInfo.beforeContentPadding,
+                            ) + paneScaffoldState.topAppBarOffset()
+                        },
+                        bottomRightInset = {
+                            paneScaffoldState.bottomNavVisibleInset()
+                        },
+                        isEnabled = {
+                            paneScaffoldState.paneState.pane == ThreePane.Primary &&
+                                autoPlayTimelineVideos
+                        },
+                        onIdChanged = { videoId ->
+                            if (videoId != null) videoPlayerController.play(videoId = videoId)
+                            else videoPlayerController.pauseActiveVideo()
+                        },
+                    ),
                 state = gridState,
                 cacheWindow = displayState.cacheWindow,
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                    top = UiTokens.statusAndToolbarHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(

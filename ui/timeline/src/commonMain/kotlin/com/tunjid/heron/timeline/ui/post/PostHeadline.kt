@@ -61,6 +61,7 @@ fun PostHeadline(
                     .clickable { onPostClicked() },
             ) {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     sharedContentState = rememberSharedContentState(
                         key = author.rememberTextSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -86,6 +87,7 @@ fun PostHeadline(
             Spacer(Modifier.height(2.dp))
             Row(horizontalArrangement = spacedBy(4.dp)) {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
                         key = author.rememberTextSharedElementKey(

@@ -222,6 +222,7 @@ internal fun PostImage(
     presentation: Timeline.Presentation,
 ) {
     paneTransitionScope.UpdatedMovableStickySharedElementOf(
+        boundsTransform = paneTransitionScope.sharedElementBoundsTransform,
         modifier = modifier,
         clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.localOverlayClip,
         sharedContentState = with(paneTransitionScope) {

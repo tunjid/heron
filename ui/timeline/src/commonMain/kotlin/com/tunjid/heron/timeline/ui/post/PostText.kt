@@ -60,6 +60,7 @@ fun PostText(
 
     if (text.isBlank()) Spacer(Modifier.height(0.dp))
     else PaneStickySharedElement(
+        boundsTransform = sharedElementBoundsTransform,
         modifier = modifier
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

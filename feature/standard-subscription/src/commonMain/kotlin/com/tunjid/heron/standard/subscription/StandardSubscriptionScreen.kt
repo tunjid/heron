@@ -48,6 +48,8 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import heron.feature.standard_subscription.generated.resources.Res
 import heron.feature.standard_subscription.generated.resources.empty_subscriptions
@@ -88,6 +90,10 @@ internal fun StandardSubscriptionScreen(
     ) {
         LazyVerticalStaggeredGrid(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                )
                 .fillMaxSize()
                 .gridColumnCount(density) { numColumns ->
                     actions(
@@ -98,7 +104,7 @@ internal fun StandardSubscriptionScreen(
             columns = StaggeredGridCells.Adaptive(360.dp),
             verticalItemSpacing = 8.dp,
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                top = UiTokens.statusAndToolbarHeight,
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

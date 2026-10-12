@@ -58,7 +58,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
-import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
@@ -105,6 +104,8 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.RemoveCircle
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.pinnedHeaderBlur
+import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -116,6 +117,8 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
@@ -141,16 +144,12 @@ internal fun ListScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
     val pagerState = rememberPagerState { state.stateHolders.size }
     val scope = rememberCoroutineScope()
 
-    val collapsedHeight = with(density) {
-        UiTokens.statusAndToolbarHeight.toPx() + UiTokens.tabsHeight.toPx()
-    }
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+        pinnedHeight = UiTokens.statusAndToolbarHeight + UiTokens.tabsHeight,
+        initialExpandedHeight = 800.dp,
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -189,10 +188,14 @@ internal fun ListScreen(
         CollapsingHeaderLayout(
             modifier = Modifier
                 .fillMaxSize(),
-            state = collapsingHeaderState,
+            state = collapsingHeaderState.collapsingHeaderState,
             headerContent = {
                 Column(
                     modifier = Modifier
+                        .renderHeaderInTransitionOverlay(
+                            paneScaffoldState = paneScaffoldState,
+                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                        )
                         .fillMaxWidth()
                         .offset {
                             IntOffset(
@@ -247,7 +250,14 @@ internal fun ListScreen(
             body = {
                 HorizontalPager(
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .pinnedHeaderBlur(
+                            state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        ),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->

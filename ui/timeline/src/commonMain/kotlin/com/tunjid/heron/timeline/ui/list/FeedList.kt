@@ -97,6 +97,7 @@ fun FeedList(
         avatar = {
             val avatar = list.avatar ?: BlueskyClouds
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -151,6 +152,7 @@ fun StarterPack(
         avatar = {
             val avatar = BlueskyClouds
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -200,6 +202,7 @@ fun ExpandedStarterPack(
                     avatar = {},
                     label = {
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             sharedContentState = rememberSharedContentState(
                                 key = titleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -212,6 +215,7 @@ fun ExpandedStarterPack(
                             )
                         }
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             sharedContentState = rememberSharedContentState(
                                 key = subtitleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -251,6 +255,7 @@ fun ExpandedStarterPack(
                     if (starterPack.members.isNotEmpty()) starterPack.members.take(count)
                         .forEachIndexed { index, listMember ->
                             PaneStickySharedElement(
+                                boundsTransform = sharedElementBoundsTransform,
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()

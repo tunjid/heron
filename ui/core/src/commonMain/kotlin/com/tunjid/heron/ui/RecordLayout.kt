@@ -57,6 +57,7 @@ fun RecordLayout(
             avatar = avatar,
             label = {
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     sharedContentState = rememberSharedContentState(
                         key = titleSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -69,6 +70,7 @@ fun RecordLayout(
                     )
                 }
                 PaneStickySharedElement(
+                    boundsTransform = sharedElementBoundsTransform,
                     sharedContentState = rememberSharedContentState(
                         key = subtitleSharedElementKey(
                             prefix = sharedElementPrefix,

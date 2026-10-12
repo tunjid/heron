@@ -76,10 +76,17 @@ object UiTokens {
 
     const val navigationIconZIndex = 16f
 
+    const val appBarMinScrimAlpha = 0.9f
+
     @Stable
     fun higherThanAppBarSharedElementZIndex(
         index: Int = 0,
     ) = appBarSharedElementZIndex + ((index + 1) * ZIndexIncrement)
+
+    @Stable
+    fun lowerThanAppBarSharedElementZIndex(
+        index: Int = 0,
+    ) = appBarSharedElementZIndex - ((index + 1) * ZIndexIncrement)
 
     val statusBarHeight: Dp
         @Composable get() = WindowInsets.platformStatusBars.asPaddingValues().height()

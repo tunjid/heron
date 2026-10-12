@@ -19,11 +19,13 @@ package com.tunjid.heron.ui.scaffold.scaffold
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -57,6 +59,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -71,8 +74,10 @@ import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.modifiers.HeaderBlurState
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -94,10 +99,12 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Stable
 class PaneScaffoldState(
@@ -117,6 +124,41 @@ class PaneScaffoldState(
         }
     }
 
+    override val sharedElementBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
+        // triggered when transitions start.
+        sharedElementTransitionBounds.add(initialBounds)
+        sharedElementTransitionBounds.add(targetBounds)
+        childBoundsTransform.createAnimationSpec(
+            initialBounds = initialBounds,
+            targetBounds = targetBounds,
+        )
+    }
+
+    internal val sharedElementTransitionBounds = mutableStateListOf<Rect>()
+
+    internal val headerBlurStrength = Animatable(1f)
+
+    internal val hasHeaderBlurOcclusion: Boolean
+        get() {
+            val density = appScaffoldState.density
+            for (stateIndex in headerBlurStates.indices) {
+                val state = headerBlurStates[stateIndex]
+                val progress = state.progress()
+                if (progress.isNaN() || progress <= 0f) continue
+
+                val height = state.height(density)
+                if (height <= 0f) continue
+
+                for (boundsIndex in sharedElementTransitionBounds.indices) {
+                    val bounds = sharedElementTransitionBounds[boundsIndex]
+                    if (bounds.top < height && bounds.bottom > 0f) return true
+                }
+            }
+            return false
+        }
+
+    internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
+
     internal val snackbarHostState = SnackbarHostState()
 
     internal val snackbarMessages = mutableStateListOf<Memo>()
@@ -127,13 +169,9 @@ class PaneScaffoldState(
     internal val navRailEdge: NavRailEdge
         get() = appScaffoldState.navRailEdge
 
-    // The rail fills the reserved system-UI strip when there is one (iPhone Duo), else the default
-    // icon-rail width.
     internal val navigationRailWidth: Dp
         get() = appScaffoldState.navigationRailWidth
 
-    // The rail sits at the bottom when there is a reserved system-UI strip (iPhone Duo), else it is
-    // centered.
     internal val bottomAlignsNavigationRail: Boolean
         get() = appScaffoldState.bottomAlignsNavigationRail
 
@@ -228,6 +266,43 @@ class PaneScaffoldState(
 }
 
 @Composable
+fun PaneScaffoldState.rememberHeaderBlurState(
+    height: Density.() -> Float,
+    progress: () -> Float,
+): HeaderBlurState {
+    val state = remember(this) {
+        HeaderBlurState(
+            radius = {
+                16.dp * headerBlurStrength.value
+            },
+            fade = 24.dp,
+            height = height,
+            progress = progress,
+        )
+    }
+    state.height = height
+    state.progress = progress
+
+    DisposableEffect(this, state) {
+        headerBlurStates.add(state)
+        onDispose { headerBlurStates.remove(state) }
+    }
+    return state
+}
+
+/**
+ * Remembers a [HeaderBlurState] for the part of the body of a `CollapsingHeaderLayout` that has
+ * scrolled behind the pinned header of [pinnedCollapsingHeaderState].
+ */
+@Composable
+fun PaneScaffoldState.rememberHeaderBlurState(
+    pinnedCollapsingHeaderState: PinnedCollapsingHeaderState,
+): HeaderBlurState = rememberHeaderBlurState(
+    height = { pinnedCollapsingHeaderState.bodyOverlap },
+    progress = pinnedCollapsingHeaderState::bodyOverlapFraction,
+)
+
+@Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
     route: Route,
 ): T = stateHolderInitializer.retainRouteStateHolder(
@@ -266,6 +341,31 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             bottomNavigationNestedScrollConnection = bottomNavigationNestedScrollConnection,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
+    }
+
+    LaunchedEffect(paneScaffoldState) {
+        snapshotFlow { paneScaffoldState.isTransitionActive }
+            .collect { isTransitionActive ->
+                if (!isTransitionActive) paneScaffoldState.sharedElementTransitionBounds.clear()
+            }
+    }
+    LaunchedEffect(paneScaffoldState) {
+        snapshotFlow { paneScaffoldState.hasHeaderBlurOcclusion }
+            .filter { it }
+            .collectLatest {
+                paneScaffoldState.headerBlurStrength.snapTo(0f)
+                // Bounds transforms are asked for as the transition starts.
+                withTimeoutOrNull(HeaderBlurTransitionStartTimeout) {
+                    snapshotFlow { paneScaffoldState.isTransitionActive }
+                        .first { it }
+                }
+                snapshotFlow { paneScaffoldState.isTransitionActive }
+                    .first { !it }
+                paneScaffoldState.headerBlurStrength.animateTo(
+                    targetValue = 1f,
+                    animationSpec = HeaderBlurFeatherSpec,
+                )
+            }
     }
 
     val scope = rememberCoroutineScope()
@@ -577,3 +677,7 @@ private val BoundsTransformSpring = spring(
 private val BottomNavOffsetThreshold = 30.dp
 
 private object PersistentSharedElementKey
+
+private val HeaderBlurFeatherSpec = tween<Float>(durationMillis = 800)
+
+private val HeaderBlurTransitionStartTimeout = 200.milliseconds

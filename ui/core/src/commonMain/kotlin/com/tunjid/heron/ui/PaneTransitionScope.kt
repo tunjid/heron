@@ -32,7 +32,17 @@ import com.tunjid.treenav.strings.Route
 
 @Stable
 interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route> {
+    /**
+     * [BoundsTransform] for general elements in the scope. It creates transforms suitable
+     * for the scope's current configuration.
+     */
     val childBoundsTransform: BoundsTransform
+
+    /**
+     * [BoundsTransform] for shared elements of scrolling content. It informs the scope
+     * of where elements transition from and to.
+     */
+    val sharedElementBoundsTransform: BoundsTransform
 }
 
 val PaneTransitionScope.isPrimaryOrActive

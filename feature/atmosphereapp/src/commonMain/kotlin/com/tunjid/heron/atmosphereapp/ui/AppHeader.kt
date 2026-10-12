@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
-import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.AppScreenStateHolders
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Profile
@@ -38,6 +37,7 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.profile.AppLogoZIndex
 import com.tunjid.heron.timeline.ui.profile.nameOrHandleOrUnknown
 import com.tunjid.heron.timeline.utilities.displayName
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -62,7 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AtmosphereAppHeader(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
-    headerState: CollapsingHeaderState,
+    headerState: PinnedCollapsingHeaderState,
     pagerState: PagerState,
     avatarSharedElementKey: String,
     profile: Profile?,
@@ -159,7 +159,7 @@ fun AtmosphereAppHeader(
 fun OverlappingAvatars(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
-    headerState: CollapsingHeaderState,
+    headerState: PinnedCollapsingHeaderState,
     avatarSharedElementKey: String,
     app: AtmosphereApp?,
     profile: Profile?,
@@ -245,14 +245,14 @@ private fun AtmosphereAppTabs(
     )
 }
 
-private val CollapsingHeaderState.horizontalOffset: Dp
+private val PinnedCollapsingHeaderState.horizontalOffset: Dp
     get() = lerp(
         start = -AvatarSize / 2,
         stop = 0.dp,
         fraction = progress,
     )
 
-private val CollapsingHeaderState.verticalOffset: Dp
+private val PinnedCollapsingHeaderState.verticalOffset: Dp
     get() = lerp(
         start = AvatarSize / 2,
         stop = 0.dp,

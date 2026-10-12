@@ -67,6 +67,7 @@ fun FeedGenerator(
         avatar = {
             val avatar = feedGenerator.avatar.orDefault
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(

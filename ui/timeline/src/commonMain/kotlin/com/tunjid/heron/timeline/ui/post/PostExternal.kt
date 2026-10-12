@@ -158,6 +158,7 @@ private fun PaneTransitionScope.ContentPreview(
         )
         else Modifier
         PaneStickySharedElement(
+            boundsTransform = sharedElementBoundsTransform,
             modifier = itemModifier
                 .fillMaxWidth()
                 .aspectRatio(gif?.aspectRatio ?: ExternalEmbedAspectRatio),
@@ -185,6 +186,7 @@ private fun PaneTransitionScope.ContentPreview(
     }
     if (presentation == Timeline.Presentation.Text.WithEmbed && gif == null) {
         PaneStickySharedElement(
+            boundsTransform = sharedElementBoundsTransform,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(

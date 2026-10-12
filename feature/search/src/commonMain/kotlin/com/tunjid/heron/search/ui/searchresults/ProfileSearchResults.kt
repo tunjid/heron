@@ -50,7 +50,9 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -58,16 +60,22 @@ import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 @Composable
 internal fun AutoCompleteProfileSearchResults(
     paneTransitionScope: PaneScaffoldState,
+    isRootQuery: Boolean,
     modifier: Modifier = Modifier,
     results: List<SearchResult.OfProfile>,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneTransitionScope,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                isOffsetByScroll = isRootQuery,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight + 16.dp,
             horizontal = 16.dp,
             isCompact = paneTransitionScope.prefersCompactBottomNav,
         ),
@@ -103,7 +111,7 @@ internal fun ProfileSearchResults(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+            top = UiTokens.statusAndToolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
@@ -154,6 +162,7 @@ private fun ProfileSearchResult(
             },
         avatar = {
             UpdatedMovableStickySharedElementOf(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .shapedClickable(CircleShape) {

@@ -228,6 +228,7 @@ private fun PaneTransitionScope.ExpandableProfiles(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(ExpandableAvatarSize)
                     .clip(CircleShape)

@@ -110,6 +110,7 @@ fun Document(
                         icon = {
                             publication.icon?.let { icon ->
                                 PaneStickySharedElement(
+                                    boundsTransform = sharedElementBoundsTransform,
                                     modifier = Modifier
                                         .size(20.dp),
                                     sharedContentState = rememberSharedContentState(

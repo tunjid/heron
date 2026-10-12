@@ -153,6 +153,7 @@ private fun PostAttribution(
     AttributionLayout(
         avatar = {
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .shapedClickable(avatarShape) { onProfileClicked(notification, post.author) },
