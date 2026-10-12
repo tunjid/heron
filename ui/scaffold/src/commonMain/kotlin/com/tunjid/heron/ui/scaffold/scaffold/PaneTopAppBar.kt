@@ -144,6 +144,9 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 minSize = appScaffoldState.minPaneWidth,
                 atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
+            .renderHeaderInTransitionOverlay(
+                paneScaffoldState = this,
+            )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 progress = transparencyFactor,
@@ -289,14 +292,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                 minSize = appScaffoldState.minPaneWidth,
                 atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
-                renderInOverlay = {
-                    paneState.pane == ThreePane.Primary &&
-                        isTransitionActive &&
-                        isActive &&
-                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
-                },
+            .renderHeaderInTransitionOverlay(
+                paneScaffoldState = this,
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
@@ -328,6 +325,21 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         actions = {
             actions()
             Spacer(Modifier.width(8.dp))
+        },
+    )
+}
+
+fun Modifier.renderHeaderInTransitionOverlay(
+    paneScaffoldState: PaneScaffoldState,
+    zIndexInOverlay: Float = UiTokens.appBarSharedElementZIndex,
+): Modifier = with(paneScaffoldState) {
+    renderInSharedTransitionScopeOverlay(
+        zIndexInOverlay = zIndexInOverlay,
+        renderInOverlay = {
+            paneState.pane == ThreePane.Primary &&
+                isTransitionActive &&
+                isActive &&
+                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
         },
     )
 }

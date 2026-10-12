@@ -775,5 +775,5 @@ private val TabButtonColors
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     )
 
-private const val TabsSharedElementZIndex = 1f
-private const val HomeTimelineButtonSharedElementZIndex = 2f
+private val TabsSharedElementZIndex = UiTokens.higherThanAppBarSharedElementZIndex(index = 0)
+private val HomeTimelineButtonSharedElementZIndex = UiTokens.higherThanAppBarSharedElementZIndex(index = 1)

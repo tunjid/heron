@@ -63,6 +63,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
@@ -114,6 +115,10 @@ internal fun StandardPublicationScreen(
             headerContent = {
                 Column(
                     modifier = Modifier
+                        .renderHeaderInTransitionOverlay(
+                            paneScaffoldState = paneScaffoldState,
+                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                        )
                         .fillMaxWidth()
                         .offset {
                             IntOffset(

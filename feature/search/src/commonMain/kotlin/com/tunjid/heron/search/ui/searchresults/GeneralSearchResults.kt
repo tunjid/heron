@@ -80,6 +80,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
@@ -146,6 +147,10 @@ internal fun GeneralSearchResults(
                 .padding(horizontal = 8.dp)
                 .fillMaxWidth()
                 .zIndex(1f)
+                .renderHeaderInTransitionOverlay(
+                    paneScaffoldState = paneScaffoldState,
+                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                )
                 .offset {
                     IntOffset(
                         x = 0,

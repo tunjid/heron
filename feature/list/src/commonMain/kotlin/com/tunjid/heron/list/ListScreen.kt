@@ -117,6 +117,7 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
@@ -190,6 +191,10 @@ internal fun ListScreen(
             headerContent = {
                 Column(
                     modifier = Modifier
+                        .renderHeaderInTransitionOverlay(
+                            paneScaffoldState = paneScaffoldState,
+                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                        )
                         .fillMaxWidth()
                         .offset {
                             IntOffset(

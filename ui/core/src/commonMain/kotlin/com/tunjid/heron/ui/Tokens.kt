@@ -83,6 +83,11 @@ object UiTokens {
         index: Int = 0,
     ) = appBarSharedElementZIndex + ((index + 1) * ZIndexIncrement)
 
+    @Stable
+    fun lowerThanAppBarSharedElementZIndex(
+        index: Int = 0,
+    ) = appBarSharedElementZIndex - ((index + 1) * ZIndexIncrement)
+
     val statusBarHeight: Dp
         @Composable get() = WindowInsets.platformStatusBars.asPaddingValues().height()
 

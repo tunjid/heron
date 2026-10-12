@@ -190,6 +190,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.tabIndex
@@ -322,6 +323,10 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 modifier = Modifier
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    )
                     .fillMaxWidth(),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
