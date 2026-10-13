@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.repository.records
 
 import app.bsky.actor.ProfileViewBasic
+import app.bsky.actor.PutPreferencesRequest
 import app.bsky.feed.Generator
 import app.bsky.feed.GetActorFeedsQueryParams
 import app.bsky.feed.GetActorFeedsResponse
@@ -50,6 +51,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -98,9 +100,11 @@ import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.listsIdentity
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.starterPacksIdentity
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
@@ -201,6 +205,7 @@ internal class OfflineFirstBlueskyRecordOperations(
     private val savedStateDataSource: SavedStateDataSource,
     private val feedCreationService: FeedCreationService,
     private val profileLookup: ProfileLookup,
+    private val preferenceUpdater: PreferenceUpdater,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val cursorQueryRefreshTracker: CursorQueryRefreshTracker,
@@ -772,6 +777,12 @@ internal class OfflineFirstBlueskyRecordOperations(
         response: GrazeResponse,
         profileId: ProfileId,
     ) {
+        val feedGeneratorUri = recordUriOrNull(
+            profileId = profileId,
+            namespace = FeedGeneratorUri.NAMESPACE,
+            recordKey = response.rkey,
+        ) as? FeedGeneratorUri ?: return
+
         if (response is GrazeResponse.Created) networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
                 CreateRecordRequest(
@@ -788,13 +799,27 @@ internal class OfflineFirstBlueskyRecordOperations(
                     ).asJsonContent(Generator.serializer()),
                 ),
             )
-        }
-
-        val feedGeneratorUri = recordUriOrNull(
-            profileId = profileId,
-            namespace = FeedGeneratorUri.NAMESPACE,
-            recordKey = response.rkey,
-        ) ?: return
+        }.mapToResult {
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                getPreferencesForAppBskyActor()
+            }
+        }.fold(
+            onSuccess = { preferencesResponse ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    putPreferences(
+                        PutPreferencesRequest(
+                            preferences = preferenceUpdater.update(
+                                networkPreferences = preferencesResponse.preferences,
+                                update = Timeline.Update.OfFeedGenerator.Pin(
+                                    feedGeneratorUri,
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            },
+            onFailure = Outcome::Failure,
+        )
 
         if (response is GrazeResponse.Deleted) {
             networkService.runCatchingWithMonitoredNetworkRetry {
