@@ -18,6 +18,7 @@ package com.tunjid.heron.home.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollBy
@@ -80,25 +81,27 @@ fun TrendsTicker(
             val focusedIndex = ticker % trends.size
             val trend = trends[focusedIndex]
 
-            AnimatedContent(
-                targetState = isVertical,
-            ) { vertical ->
-                if (vertical) VerticalTicker(
-                    sharedTransitionScope = sharedTransitionScope,
-                    animatedVisibilityScope = this@AnimatedContent,
-                    trend = trend,
-                )
-                else HorizontalTicker(
-                    sharedTransitionScope = sharedTransitionScope,
-                    animatedVisibilityScope = this@AnimatedContent,
-                    focusedIndex = focusedIndex,
-                    trends = trends,
-                    onCollapsed = { firstCompletelyVisibleIndex ->
-                        ticker = firstCompletelyVisibleIndex
-                        isVertical = true
-                    },
-                    onTrendClicked = onTrendClicked,
-                )
+            SharedTransitionLayout {
+                AnimatedContent(
+                    targetState = isVertical,
+                ) { vertical ->
+                    if (vertical) VerticalTicker(
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        trend = trend,
+                    )
+                    else HorizontalTicker(
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        focusedIndex = focusedIndex,
+                        trends = trends,
+                        onCollapsed = { firstCompletelyVisibleIndex ->
+                            ticker = firstCompletelyVisibleIndex
+                            isVertical = true
+                        },
+                        onTrendClicked = onTrendClicked,
+                    )
+                }
             }
 
             LaunchedEffect(Unit) {
@@ -135,16 +138,16 @@ private fun VerticalTicker(
             tint = MaterialTheme.colorScheme.outline,
         )
         AnimatedVerticallySlidingContent(
-            modifier = Modifier
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = trend.link,
-                    ),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                ),
             targetState = trend.tickerValue,
         ) { currentText ->
             EmphasizedSingleLineOutlinedText(
+                modifier = Modifier
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState(
+                            key = trend.link,
+                        ),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    ),
                 text = currentText,
             )
         }
