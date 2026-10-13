@@ -18,7 +18,10 @@
 
 package com.tunjid.heron.ui.scaffold.scaffold
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.approachLayout
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
@@ -71,8 +76,11 @@ internal actual fun PlatformFab(
     var contentWidth by remember {
         mutableStateOf(if (showText) 160.dp else FabHeightPoints.dp)
     }
+    // Matches the spring PaneFab's animateBounds moves the fab with, so the leading edge travels
+    // exactly as far as the width changes and the trailing edge stays pinned.
     val animatedWidth by animateDpAsState(
         targetValue = contentWidth,
+        animationSpec = GlassFabWidthSpring,
         label = "GlassFabWidth",
     )
 
@@ -85,7 +93,28 @@ internal actual fun PlatformFab(
                 },
             )
         },
-        modifier = modifier.width(animatedWidth),
+        modifier = modifier
+            .approachLayout(
+                isMeasurementApproachInProgress = { animatedWidth != contentWidth },
+            ) { measurable, constraints ->
+                val width = animatedWidth.roundToPx()
+                val placeable = measurable.measure(
+                    constraints.copy(
+                        minWidth = width,
+                        maxWidth = width,
+                    ),
+                )
+                layout(
+                    width = placeable.width,
+                    height = placeable.height,
+                ) {
+                    placeable.place(
+                        x = 0,
+                        y = 0,
+                    )
+                }
+            }
+            .width(contentWidth),
         update = { view ->
             view.configure(
                 title = if (showText) text else null,
@@ -162,3 +191,9 @@ private class GlassFabView(
 }
 
 private const val FabHeightPoints = 56.0
+
+private val GlassFabWidthSpring = spring(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = Dp.VisibilityThreshold,
+)
