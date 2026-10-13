@@ -25,9 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -270,7 +267,6 @@ internal fun Route(
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(paneScaffoldState.bottomNavigationNestedScrollConnection)
             .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {

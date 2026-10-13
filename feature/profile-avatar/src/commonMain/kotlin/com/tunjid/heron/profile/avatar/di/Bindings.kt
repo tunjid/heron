@@ -19,7 +19,6 @@ package com.tunjid.heron.profile.avatar.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -136,14 +135,10 @@ object ProfileAvatarBindings {
             )
             val state = stateHolder.produceStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                paneScaffoldState.bottomNavigationNestedScrollConnection
-
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 containerColor = Color.Transparent,
                 topBar = {
                     PoppableDestinationTopAppBar(

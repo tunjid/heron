@@ -19,7 +19,6 @@ package com.tunjid.heron.profiles.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.profiles.Action
@@ -38,9 +37,9 @@ import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -297,14 +296,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -317,7 +312,7 @@ internal fun Route(
                         title = stringResource(titleRes),
                     )
                 },
-                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
             )
         },
         content = {

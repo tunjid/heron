@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,7 +64,7 @@ import com.tunjid.heron.ui.RecordTitle
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.ArrowOutward
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
 import heron.ui.timeline.generated.resources.Res
@@ -96,6 +97,7 @@ fun FeedList(
         avatar = {
             val avatar = list.avatar ?: BlueskyClouds
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -150,6 +152,7 @@ fun StarterPack(
         avatar = {
             val avatar = BlueskyClouds
             PaneStickySharedElement(
+                boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -199,6 +202,7 @@ fun ExpandedStarterPack(
                     avatar = {},
                     label = {
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             sharedContentState = rememberSharedContentState(
                                 key = titleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -211,6 +215,7 @@ fun ExpandedStarterPack(
                             )
                         }
                         PaneStickySharedElement(
+                            boundsTransform = sharedElementBoundsTransform,
                             sharedContentState = rememberSharedContentState(
                                 key = subtitleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -250,6 +255,7 @@ fun ExpandedStarterPack(
                     if (starterPack.members.isNotEmpty()) starterPack.members.take(count)
                         .forEachIndexed { index, listMember ->
                             PaneStickySharedElement(
+                                boundsTransform = sharedElementBoundsTransform,
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()
@@ -272,7 +278,7 @@ fun ExpandedStarterPack(
                                             ImageArgs(
                                                 url = listMember.subject.avatar?.uri,
                                                 contentScale = ContentScale.Crop,
-                                                shape = RoundedPolygonShape.Circle,
+                                                shape = PolygonShape.Circle,
                                             )
                                         },
                                     )

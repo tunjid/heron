@@ -17,6 +17,7 @@
 package com.tunjid.heron.media.video
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,7 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -76,7 +77,7 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     autoplay: Boolean = false,
     contentScale: ContentScale = ContentScale.Crop,
     alignment: Alignment = Alignment.Center,
-    shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
+    shape: PolygonShape = PolygonShape.Rectangle,
 ): VideoPlayerState = registerVideo(
     videoUrl = videoUrl,
     videoId = videoId,

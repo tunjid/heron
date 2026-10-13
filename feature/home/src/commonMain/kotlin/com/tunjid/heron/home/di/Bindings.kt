@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.destinationPath
 import com.tunjid.heron.home.Action
@@ -56,12 +54,14 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.ui.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
+import com.tunjid.heron.ui.scaffold.scaffold.offsetTopAppBarBy
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarTransparencyFactor
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -149,18 +149,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
-    val bottomNavigationNestedScrollConnection =
-        paneScaffoldState.bottomNavigationNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection)
-            .nestedScroll(bottomNavigationNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -168,9 +160,9 @@ internal fun Route(
         topBar = {
             RootDestinationTopAppBar(
                 modifier = Modifier.offset {
-                    topAppBarNestedScrollConnection.offset.round()
+                    topAppBarOffset()
                 },
-                transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                 title = {
                     AnimatedVisibility(
                         visible = state.preferences.local.showTrendingTopics,
@@ -224,7 +216,7 @@ internal fun Route(
             PaneSnackbarHost(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
             )
         },
@@ -232,7 +224,7 @@ internal fun Route(
             PaneFab(
                 modifier = Modifier
                     .offset {
-                        fabOffset(bottomNavigationNestedScrollConnection.offset)
+                        fabOffset()
                     },
                 text = stringResource(
                     when {
@@ -271,7 +263,7 @@ internal fun Route(
                 expanded = isBottomNavOffsetNearOrigin,
                 modifier = Modifier
                     .offset {
-                        bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                        bottomNavOffset()
                     },
                 onNavItemReselected = {
                     stateHolder.accept(Action.RefreshCurrentTab)
@@ -296,7 +288,8 @@ internal fun Route(
         },
     )
 
-    topAppBarNestedScrollConnection.TabsExpansionEffect(
+    TabsExpansionEffect(
         isExpanded = state.tabLayout is TabLayout.Expanded,
+        onDisplaced = paneScaffoldState::offsetTopAppBarBy,
     )
 }

@@ -16,19 +16,13 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import androidx.collection.FloatFloatPair
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.CornerRounding
-import androidx.graphics.shapes.RoundedPolygon
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -59,7 +53,11 @@ import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.shapes.materialPill
+import com.tunjid.heron.ui.shapes.roundedPolygon
+import com.tunjid.heron.ui.shapes.roundedRectangle
+import com.tunjid.heron.ui.shapes.roundedStar
 import kotlin.time.Clock
 
 @Composable
@@ -210,54 +208,42 @@ fun EmbeddableRecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape
     is LabelerUri -> LabelerCollectionShape
     is ListUri -> ListCollectionShape
-    is PostUri -> RoundedPolygonShape.Circle
+    is PostUri -> PolygonShape.Circle
     is StarterPackUri -> StarterPackCollectionShape
     is StandardDocumentUri -> DocumentCollectionShape
     is StandardPublicationUri -> DocumentCollectionShape
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val FeedGeneratorCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    PolygonShape.roundedRectangle(percent = 0.6f)
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val ListCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Pill,
-    )
+    PolygonShape.materialPill()
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+// Matches MaterialShapes.Cookie9Sided.
 internal val StarterPackCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Cookie9Sided,
+    PolygonShape.roundedStar(
+        numPoints = 9,
+        innerRadiusRatio = 0.8f,
+        roundingFraction = 0.5f,
+        rotation = -90f,
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val DocumentCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    FeedGeneratorCollectionShape
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal val RockSkyCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = MaterialShapes.Square,
-    )
+    FeedGeneratorCollectionShape
 }
 
 internal val LabelerCollectionShape by lazy {
-    RoundedPolygonShape.Custom(
-        polygon = RoundedPolygon(
-            numVertices = 4,
-            perVertexRounding = floatArrayOf(1f, 1f, 0.2f, 0.2f)
-                .map(::CornerRounding),
-        ).transformed(Matrix().apply { rotateZ(degrees = 45f) }),
+    PolygonShape.roundedPolygon(
+        cornerSizePercentAtIndex = listOf(1f, 1f, 0.2f, 0.2f),
+        rotation = 45f,
     )
 }
 
@@ -269,8 +255,3 @@ private val NonPostRecordModifier = Modifier
 
 internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
-
-private fun RoundedPolygon.transformed(matrix: Matrix): RoundedPolygon = transformed { x, y ->
-    val transformedPoint = matrix.map(Offset(x, y))
-    FloatFloatPair(transformedPoint.x, transformedPoint.y)
-}

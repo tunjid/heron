@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -68,7 +69,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.util.lerp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
@@ -87,6 +92,7 @@ import com.tunjid.heron.ui.AppBarElevatedCard
 import com.tunjid.heron.ui.AppBarIconButton
 import com.tunjid.heron.ui.AppBarTextButton
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.displaceVerticallyBy
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.icons.regular.Cancel
@@ -95,6 +101,7 @@ import com.tunjid.heron.ui.icons.regular.CloudOff
 import com.tunjid.heron.ui.icons.regular.Error
 import com.tunjid.heron.ui.icons.regular.PriorityHigh
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.headerBlur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
@@ -103,9 +110,10 @@ import com.tunjid.heron.ui.scaffold.identity.IdentityAction
 import com.tunjid.heron.ui.scaffold.identity.IdentityState
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.components.ClickPassThroughToolbar
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
+import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.scaffold.generated.resources.Res
@@ -135,6 +143,9 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 orientation = Orientation.Horizontal,
                 minSize = appScaffoldState.minPaneWidth,
                 atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
+            )
+            .renderHeaderInTransitionOverlay(
+                paneScaffoldState = this,
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
@@ -281,14 +292,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                 minSize = appScaffoldState.minPaneWidth,
                 atStart = appScaffoldState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
-                renderInOverlay = {
-                    paneState.pane == ThreePane.Primary &&
-                        isTransitionActive &&
-                        isActive &&
-                        navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
-                },
+            .renderHeaderInTransitionOverlay(
+                paneScaffoldState = this,
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
@@ -323,6 +328,50 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         },
     )
 }
+
+fun Modifier.renderHeaderInTransitionOverlay(
+    paneScaffoldState: PaneScaffoldState,
+    zIndexInOverlay: Float = UiTokens.appBarSharedElementZIndex,
+): Modifier = with(paneScaffoldState) {
+    renderInSharedTransitionScopeOverlay(
+        zIndexInOverlay = zIndexInOverlay,
+        renderInOverlay = {
+            paneState.pane == ThreePane.Primary &&
+                isTransitionActive &&
+                isActive &&
+                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
+        },
+    )
+}
+
+fun PaneScaffoldState.topAppBarOffset(): IntOffset =
+    topAppBarNestedScrollConnection.offset.round()
+
+fun PaneScaffoldState.topAppBarTransparencyFactor(): Float =
+    topAppBarNestedScrollConnection.verticalOffsetProgress()
+
+fun PaneScaffoldState.offsetTopAppBarBy(
+    delta: Float,
+) = topAppBarNestedScrollConnection.displaceVerticallyBy(
+    delta = delta,
+)
+
+@Composable
+fun Modifier.topAppBarBlur(
+    paneScaffoldState: PaneScaffoldState,
+    topAppBarHeight: Dp,
+    isOffsetByScroll: Boolean = false,
+): Modifier = headerBlur(
+    state = paneScaffoldState.rememberHeaderBlurState(
+        height = {
+            when {
+                isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
+                else -> topAppBarHeight.toPx()
+            }
+        },
+        progress = paneScaffoldState::topAppBarTransparencyFactor,
+    ),
+)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -438,7 +487,7 @@ private fun PaneScaffoldState.SessionAvatar(
                         url = profileAvatar?.uri,
                         contentDescription = profileDescription,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )
@@ -678,7 +727,11 @@ private fun Modifier.rootAppBarBackground(
     drawRect(
         color = backgroundColor,
         alpha = when (val currentProgress = progress()) {
-            in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
+            in 0f..1f -> lerp(
+                start = HundredPercent,
+                stop = UiTokens.appBarMinScrimAlpha,
+                fraction = currentProgress,
+            )
             else -> 0F
         },
     )
@@ -692,5 +745,4 @@ private fun Modifier.appbarAnimatedBounds(): Modifier =
     )
 
 private val PopOverShape = RoundedCornerShape(16.dp)
-private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f

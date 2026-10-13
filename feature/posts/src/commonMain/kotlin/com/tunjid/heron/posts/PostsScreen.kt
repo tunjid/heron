@@ -63,7 +63,6 @@ import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -73,6 +72,10 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
@@ -184,16 +187,20 @@ internal fun PostsScreen(
         LookaheadScope {
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
+                    .topAppBarBlur(
+                        paneScaffoldState = paneScaffoldState,
+                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    )
                     .fillMaxSize()
                     .onDominantVideoChange(
                         topLeftInset = {
                             IntOffset(
                                 x = 0,
                                 y = gridState.layoutInfo.beforeContentPadding,
-                            ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                            ) + paneScaffoldState.topAppBarOffset()
                         },
                         bottomRightInset = {
-                            paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                            paneScaffoldState.bottomNavVisibleInset()
                         },
                         isEnabled = {
                             paneScaffoldState.paneState.pane == ThreePane.Primary &&
@@ -218,7 +225,7 @@ internal fun PostsScreen(
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                    top = UiTokens.statusAndToolbarHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(

@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -58,7 +59,7 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.automirrored.Article
 import com.tunjid.heron.ui.icons.regular.ContentCopy
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
@@ -104,7 +105,7 @@ internal fun SendDirectMessageCard(
                                 ImageArgs(
                                     url = member.avatar?.uri,
                                     contentScale = ContentScale.Crop,
-                                    shape = RoundedPolygonShape.Circle,
+                                    shape = PolygonShape.Circle,
                                 )
                             },
                             modifier = Modifier

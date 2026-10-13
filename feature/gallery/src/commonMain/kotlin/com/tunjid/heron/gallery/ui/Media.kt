@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -82,7 +83,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.gallery.generated.resources.Res
@@ -120,7 +121,7 @@ internal fun GalleryImage(
                 thumbnailUrl = item.image.thumb.uri,
                 contentDescription = item.image.alt,
                 contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = PolygonShape.Rectangle,
             )
         },
         sharedElement = { args, innerModifier ->
@@ -144,7 +145,7 @@ internal fun GalleryVideo(
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
         videoUrl = item.video.playlist.uri,
         thumbnail = item.video.thumbnail?.uri,
-        shape = RoundedPolygonShape.Rectangle,
+        shape = PolygonShape.Rectangle,
     )
     if (!paneTransitionScope.isPrimaryOrActive) VideoStill(
         modifier = modifier,

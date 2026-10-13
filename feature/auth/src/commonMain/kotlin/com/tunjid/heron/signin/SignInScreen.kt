@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
@@ -61,7 +63,7 @@ import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUp
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.LeadingIcon
@@ -91,12 +93,9 @@ internal fun SignInScreen(
         val keyboardController = LocalSoftwareKeyboardController.current
 
         val oauthFlowUri = rememberUpdatedState(state.oauthRequestUri)
-        val currentProfileHandle = rememberUpdatedState(state.profileHandle)
-
         val oauthFlowState = rememberOauthFlowState { result ->
             actions(
                 Action.OauthFlowResultAvailable(
-                    handle = currentProfileHandle.value,
                     result = result,
                 ),
             )
@@ -175,7 +174,17 @@ internal fun SignInScreen(
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
+            isSignUpAvailable = state.isOauthAvailable,
             onServerSelected = serverSelectionSheetState::onServer,
+            onSignUp = { server ->
+                actions(
+                    Action.BeginOauthFlow(
+                        request = OauthUriRequest.SignUp(
+                            server = server,
+                        ),
+                    ),
+                )
+            },
         )
 
         LaunchedEffect(Unit) {
@@ -226,7 +235,7 @@ private fun LoadingIcon(
                         url = sessionAvatar.uri,
                         contentDescription = avatarDescription,
                         contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )

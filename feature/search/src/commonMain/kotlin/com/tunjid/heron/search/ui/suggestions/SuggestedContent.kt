@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -76,7 +77,9 @@ import com.tunjid.heron.ui.icons.regular.LocalFireDepartment
 import com.tunjid.heron.ui.icons.regular.RssFeed
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.discover_feeds
 import heron.feature.search.generated.resources.hot
@@ -92,6 +95,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun SuggestedContent(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
+    isRootQuery: Boolean,
     showTrendingTopics: Boolean,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
@@ -108,10 +112,15 @@ internal fun SuggestedContent(
 ) {
     val now = remember { Clock.System.now() }
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneScaffoldState,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                isOffsetByScroll = isRootQuery,
+            ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight + 16.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
             horizontal = 8.dp,
         ),
@@ -407,7 +416,7 @@ private fun TrendAvatars(trend: Trend) {
                 args = ImageArgs(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 ),
             )
         }

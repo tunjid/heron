@@ -58,10 +58,11 @@ import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.mutator.invoke
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -204,10 +205,10 @@ internal fun PostSearchResults(
                 IntOffset(
                     x = 0,
                     y = gridState.layoutInfo.beforeContentPadding,
-                ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                ) + paneScaffoldState.topAppBarOffset()
             },
             bottomRightInset = {
-                paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                paneScaffoldState.bottomNavVisibleInset()
             },
             isEnabled = {
                 paneScaffoldState.paneState.pane == ThreePane.Primary &&

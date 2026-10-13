@@ -82,6 +82,8 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
@@ -269,11 +271,16 @@ internal fun NotificationsScreen(
     ) {
         LazyColumn(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    isOffsetByScroll = true,
+                )
                 .fillMaxSize()
                 .paneClip(),
             state = listState,
             contentPadding = bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                top = UiTokens.statusAndToolbarHeight,
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,

@@ -77,7 +77,9 @@ fun ServerSelection(
     status: Status,
     selectedServer: Server,
     availableServers: List<Server>,
+    isSignUpAvailable: Boolean,
     onServerSelected: (Server) -> Unit,
+    onSignUp: (Server) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -97,6 +99,8 @@ fun ServerSelection(
         NoAccountButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
+            isSignUpAvailable = isSignUpAvailable,
+            onSignUp = onSignUp,
         )
     }
 }

@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -89,7 +90,9 @@ import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -115,10 +118,14 @@ internal fun ConversationScreen(
         state = listState,
         reverseLayout = true,
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneScaffoldState,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+            )
             .fillMaxSize(),
     ) {
         items(
@@ -378,6 +385,7 @@ private fun MessageAvatar(
         modifier = modifier,
     ) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
+            boundsTransform = paneScaffoldState.sharedElementBoundsTransform,
             sharedContentState = paneScaffoldState.rememberSharedContentState(
                 key = item.avatarSharedElementKey(),
             ),
@@ -386,7 +394,7 @@ private fun MessageAvatar(
                     url = item.sender?.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 )
             },
             modifier = Modifier.matchParentSize(),

@@ -37,6 +37,8 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -49,12 +51,16 @@ internal fun ProfilesScreen(
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneScaffoldState,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+            )
             .padding(horizontal = 8.dp)
             .fillMaxSize()
             .paneClip(),
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight,
             horizontal = 4.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),

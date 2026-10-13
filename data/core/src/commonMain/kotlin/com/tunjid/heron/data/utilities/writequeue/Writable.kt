@@ -308,6 +308,9 @@ sealed interface Writable {
         override val queueId: String
             get() = "update-profile-${update.profileId}-$update"
 
+        override val shouldBeProcessedInBackground: Boolean
+            get() = update.avatarFile != null || update.bannerFile != null
+
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateProfile(update)
     }

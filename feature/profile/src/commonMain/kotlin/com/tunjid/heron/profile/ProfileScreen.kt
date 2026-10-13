@@ -42,6 +42,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
@@ -86,8 +87,6 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
-import com.tunjid.composables.collapsingheader.CollapsingHeaderState
-import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Labeler
@@ -162,6 +161,7 @@ import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
@@ -170,7 +170,8 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
-import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.pinnedHeaderBlur
+import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -187,8 +188,12 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.MultilineStyledText
@@ -241,9 +246,9 @@ internal fun ProfileScreen(
 
     val collapsedHeight = UiTokens.toolbarHeight + UiTokens.statusBarHeight
 
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = with(density) { collapsedHeight.toPx() },
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+        pinnedHeight = collapsedHeight,
+        initialExpandedHeight = 800.dp,
     )
     val headerState = remember(collapsingHeaderState) {
         HeaderState(collapsingHeaderState)
@@ -311,7 +316,7 @@ internal fun ProfileScreen(
                         ?.refresh()
                 },
             ),
-        state = headerState.headerState,
+        state = headerState.headerState.collapsingHeaderState,
         headerContent = {
             ProfileHeader(
                 paneScaffoldState = paneScaffoldState,
@@ -319,6 +324,10 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 modifier = Modifier
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    )
                     .fillMaxWidth(),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
@@ -413,6 +422,13 @@ internal fun ProfileScreen(
             ) {
                 HorizontalPager(
                     modifier = Modifier
+                        .pinnedHeaderBlur(
+                            state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        )
                         .paneClip(),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
@@ -904,7 +920,7 @@ private fun ProfileBanner(
                 url = profile.banner?.uri,
                 contentScale = ContentScale.Crop,
                 contentDescription = profile.displayName ?: profile.handle.id,
-                shape = RoundedPolygonShape.Rectangle,
+                shape = PolygonShape.Rectangle,
             )
         },
         sharedElement = { state, modifier ->
@@ -985,7 +1001,7 @@ private fun ProfileAvatar(
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
                     shape = if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
-                    else RoundedPolygonShape.Circle,
+                    else PolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->
@@ -1314,7 +1330,7 @@ private fun CommonFollowers(
                                 contentScale = ContentScale.Crop,
                                 contentDescription = profile.displayName
                                     ?: profile.handle.id,
-                                shape = RoundedPolygonShape.Circle,
+                                shape = PolygonShape.Circle,
                             )
                         },
                     )
@@ -1479,7 +1495,7 @@ private fun ProfileTimeline(
                     // No top inset: the grid is laid out beneath the collapsing header, so its own
                     // bounds already exclude it.
                     bottomRightInset = {
-                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        paneScaffoldState.bottomNavVisibleInset()
                     },
                     isEnabled = {
                         paneScaffoldState.paneState.pane == ThreePane.Primary &&
@@ -1723,7 +1739,7 @@ private fun Map<RecordUri?, Boolean>.status(
 
 @Stable
 private class HeaderState(
-    val headerState: CollapsingHeaderState,
+    val headerState: PinnedCollapsingHeaderState,
 ) {
     var width by mutableStateOf(160.dp * 3)
     private val profileBannerHeight by derivedStateOf {

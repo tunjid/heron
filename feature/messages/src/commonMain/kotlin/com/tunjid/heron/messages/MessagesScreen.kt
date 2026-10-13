@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
@@ -62,7 +63,9 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.BoldedText
 import com.tunjid.heron.ui.text.SmallOutlinedText
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -87,10 +90,15 @@ internal fun MessagesScreen(
     ) {
         LazyColumn(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    isOffsetByScroll = true,
+                )
                 .align(Alignment.TopCenter)
                 .fillMaxWidth(),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                top = UiTokens.statusAndToolbarHeight,
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -241,6 +249,7 @@ fun ConversationMembers(
         val membersSize = members.size
         members.forEachIndexed { index, profile ->
             UpdatedMovableStickySharedElementOf(
+                boundsTransform = sharedElementBoundsTransform,
                 sharedContentState = paneScaffoldState.rememberSharedContentState(
                     key = profile.avatarSharedElementKey(
                         prefix = conversationListSharedElementPrefix(conversationId),
@@ -252,7 +261,7 @@ fun ConversationMembers(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
                 modifier = Modifier

@@ -16,12 +16,12 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @Stable
 sealed class PlayerStatus {
@@ -56,7 +56,7 @@ interface VideoPlayerState {
 
     var contentScale: ContentScale
 
-    var shape: RoundedPolygonShape
+    var shape: PolygonShape
 
     // Business logic attributes
 

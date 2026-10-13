@@ -16,11 +16,9 @@
 
 package com.tunjid.heron.quotethread
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,8 +26,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,7 +61,6 @@ import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -78,7 +73,11 @@ import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.time.Clock
 
@@ -165,6 +164,10 @@ internal fun QuoteThreadScreen(
     ) {
         LazyColumn(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                )
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 8.dp)
                 .fillMaxHeight()
@@ -175,10 +178,10 @@ internal fun QuoteThreadScreen(
                         IntOffset(
                             x = 0,
                             y = listState.layoutInfo.beforeContentPadding,
-                        ) - paneScaffoldState.topAppBarNestedScrollConnection.roundedMaxDelta
+                        ) + paneScaffoldState.topAppBarOffset()
                     },
                     bottomRightInset = {
-                        paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                        paneScaffoldState.bottomNavVisibleInset()
                     },
                     isEnabled = {
                         paneScaffoldState.paneState.pane == ThreePane.Primary &&
@@ -192,7 +195,7 @@ internal fun QuoteThreadScreen(
             state = listState,
 //        verticalItemSpacing = displayState.verticalItemSpacing(presentation),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                top = UiTokens.statusAndToolbarHeight,
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
 //        horizontalAlignment = Align.spacedBy(8.dp),

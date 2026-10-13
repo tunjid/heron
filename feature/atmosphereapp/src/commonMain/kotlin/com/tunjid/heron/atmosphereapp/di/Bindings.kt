@@ -19,7 +19,6 @@ package com.tunjid.heron.atmosphereapp.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.atmosphereapp.Action
 import com.tunjid.heron.atmosphereapp.AtmosphereAppScreen
 import com.tunjid.heron.atmosphereapp.AtmosphereAppStateHolder
@@ -141,14 +140,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val topAppBarNestedScrollConnection =
-        paneScaffoldState.topAppBarNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(topAppBarNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,

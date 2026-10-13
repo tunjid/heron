@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -65,7 +66,7 @@ import com.tunjid.heron.ui.icons.regular.SwitchAccount
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
 import heron.feature.settings.generated.resources.add_or_reauthenticate_account
@@ -347,7 +348,7 @@ private fun PaneTransitionScope.SessionSummaries(
                         url = summary.profileAvatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = summary.profileHandle.id,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )
@@ -444,7 +445,7 @@ private fun AccountSwitchingTransitionLayer(
                         ImageArgs(
                             url = session.profileAvatar?.uri,
                             contentDescription = session.profileHandle.id,
-                            shape = RoundedPolygonShape.Circle,
+                            shape = PolygonShape.Circle,
                             contentScale = ContentScale.Crop,
                         )
                     },

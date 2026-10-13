@@ -252,9 +252,9 @@ internal fun SearchScreen(
         when (targetLayout) {
             ScreenLayout.Suggested -> SuggestedContent(
                 modifier = modifier
-                    .fillMaxSize()
-                    .padding(top = 16.dp),
+                    .fillMaxSize(),
                 paneScaffoldState = paneScaffoldState,
+                isRootQuery = state.query.isRoot,
                 showTrendingTopics = state.preferences.local.showTrendingTopics,
                 trends = state.trends,
                 suggestedProfiles = state.categoriesToSuggestedProfiles[
@@ -274,9 +274,9 @@ internal fun SearchScreen(
 
             ScreenLayout.AutoCompleteProfiles -> AutoCompleteProfileSearchResults(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 16.dp),
+                    .fillMaxSize(),
                 paneTransitionScope = paneScaffoldState,
+                isRootQuery = state.query.isRoot,
                 results = state.autoCompletedProfiles,
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,

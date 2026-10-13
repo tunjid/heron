@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -40,7 +41,7 @@ import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 
 @Composable
 fun ProfileSearchResults(
@@ -104,7 +105,7 @@ private fun ProfileResultItem(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
                 modifier = Modifier

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -38,7 +39,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ShimmerState
 import com.tunjid.heron.ui.modifiers.ShimmerState.Companion.rememberShimmerState
 import com.tunjid.heron.ui.modifiers.shimmer
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 
 @Composable
 internal fun LoadingPost(
@@ -95,7 +96,7 @@ private fun AttributionPlaceholder(
             Box(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
-                    .clip(RoundedPolygonShape.Circle)
+                    .clip(PolygonShape.Circle)
                     .shimmer(shimmerState),
             )
         },

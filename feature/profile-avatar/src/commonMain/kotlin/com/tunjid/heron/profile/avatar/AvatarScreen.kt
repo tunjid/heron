@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,7 +37,7 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlinx.coroutines.launch
 
@@ -93,7 +94,7 @@ internal fun AvatarScreen(
                     url = avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile?.displayName ?: profile?.handle?.id,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->

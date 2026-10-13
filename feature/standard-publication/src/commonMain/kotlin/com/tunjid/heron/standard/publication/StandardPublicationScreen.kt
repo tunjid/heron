@@ -18,6 +18,7 @@ package com.tunjid.heron.standard.publication
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,7 +46,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
-import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.tiling.TilingState
@@ -57,10 +57,14 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pinnedHeaderBlur
+import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
@@ -75,14 +79,9 @@ internal fun StandardPublicationScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-
-    val collapsedHeight = with(density) {
-        UiTokens.statusAndToolbarHeight.toPx()
-    }
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+        pinnedHeight = UiTokens.statusAndToolbarHeight,
+        initialExpandedHeight = 800.dp,
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -113,10 +112,14 @@ internal fun StandardPublicationScreen(
         CollapsingHeaderLayout(
             modifier = Modifier
                 .fillMaxSize(),
-            state = collapsingHeaderState,
+            state = collapsingHeaderState.collapsingHeaderState,
             headerContent = {
                 Column(
                     modifier = Modifier
+                        .renderHeaderInTransitionOverlay(
+                            paneScaffoldState = paneScaffoldState,
+                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                        )
                         .fillMaxWidth()
                         .offset {
                             IntOffset(
@@ -171,11 +174,23 @@ internal fun StandardPublicationScreen(
                 }
             },
             body = {
-                state.documentsTilingStateHolder?.let { holder ->
-                    Documents(
-                        holder = holder,
-                        paneScaffoldState = paneScaffoldState,
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pinnedHeaderBlur(
+                            state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        ),
+                ) {
+                    state.documentsTilingStateHolder?.let { holder ->
+                        Documents(
+                            holder = holder,
+                            paneScaffoldState = paneScaffoldState,
+                        )
+                    }
                 }
             },
         )

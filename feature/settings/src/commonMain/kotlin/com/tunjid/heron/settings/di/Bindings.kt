@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.Section
@@ -143,14 +142,10 @@ internal fun Route(
     )
     val state = stateHolder.produceStateWithLifecycle()
 
-    val bottomNavigationNestedScrollConnection =
-        paneScaffoldState.bottomNavigationNestedScrollConnection
-
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
             .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-            .nestedScroll(bottomNavigationNestedScrollConnection),
+            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -177,7 +172,7 @@ internal fun Route(
                 PaneNavigationBar(
                     expanded = isBottomNavOffsetNearOrigin,
                     modifier = Modifier.offset {
-                        bottomNavOffset(bottomNavigationNestedScrollConnection.offset)
+                        bottomNavOffset()
                     },
                 )
             }

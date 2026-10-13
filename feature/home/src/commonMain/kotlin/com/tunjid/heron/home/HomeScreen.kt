@@ -90,6 +90,7 @@ import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.displaceVerticallyBy
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.roundedMaxDelta
@@ -105,7 +106,11 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.settingsDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -126,7 +131,7 @@ internal fun HomeScreen(
         state.timelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
-    val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
+    val topClearance = UiTokens.statusAndToolbarHeight
 
     pagerState.RestoreLastViewedTabEffect(
         lastViewedTabUri = state.currentTabUri,
@@ -156,6 +161,11 @@ internal fun HomeScreen(
         )
         HorizontalPager(
             modifier = Modifier
+                .topAppBarBlur(
+                    paneScaffoldState = paneScaffoldState,
+                    topAppBarHeight = topClearance + UiTokens.tabsHeight,
+                    isOffsetByScroll = true,
+                )
                 .blur(
                     shape = ExpandableTabsState.Shape,
                     clip = { true },
@@ -194,6 +204,10 @@ internal fun HomeScreen(
         )
         HomeTabs(
             modifier = Modifier
+                .renderHeaderInTransitionOverlay(
+                    paneScaffoldState = paneScaffoldState,
+                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                )
                 .offset {
                     IntOffset(
                         x = 0,
@@ -266,8 +280,9 @@ internal fun HomeScreen(
             },
         )
 
-        tabsOffsetNestedScrollConnection.TabsExpansionEffect(
+        TabsExpansionEffect(
             isExpanded = state.tabLayout is TabLayout.Expanded,
+            onDisplaced = tabsOffsetNestedScrollConnection::displaceVerticallyBy,
         )
 
         tabsOffsetNestedScrollConnection.TabsCollapseEffect(
@@ -535,7 +550,7 @@ private fun HomeTimeline(
                             ) - tabsNestedScrollConnection.roundedMaxDelta
                         },
                         bottomRightInset = {
-                            paneScaffoldState.bottomNavigationNestedScrollConnection.roundedMaxDelta
+                            paneScaffoldState.bottomNavVisibleInset()
                         },
                         isEnabled = {
                             paneScaffoldState.paneState.pane == ThreePane.Primary &&
@@ -564,7 +579,7 @@ private fun HomeTimeline(
                 columns = StaggeredGridCells.Adaptive(displayState.cardSize(presentation)),
                 verticalItemSpacing = displayState.verticalItemSpacing(presentation),
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+                    top = UiTokens.statusAndToolbarHeight + UiTokens.tabsHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(

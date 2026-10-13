@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
-import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.AppScreenStateHolders
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Profile
@@ -37,12 +37,13 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.profile.AppLogoZIndex
 import com.tunjid.heron.timeline.ui.profile.nameOrHandleOrUnknown
 import com.tunjid.heron.timeline.utilities.displayName
+import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import heron.feature.atmosphereapp.generated.resources.Res
@@ -61,7 +62,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AtmosphereAppHeader(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
-    headerState: CollapsingHeaderState,
+    headerState: PinnedCollapsingHeaderState,
     pagerState: PagerState,
     avatarSharedElementKey: String,
     profile: Profile?,
@@ -158,7 +159,7 @@ fun AtmosphereAppHeader(
 fun OverlappingAvatars(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
-    headerState: CollapsingHeaderState,
+    headerState: PinnedCollapsingHeaderState,
     avatarSharedElementKey: String,
     app: AtmosphereApp?,
     profile: Profile?,
@@ -185,7 +186,7 @@ fun OverlappingAvatars(
                         url = profile?.avatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = profile?.displayName ?: profile?.handle?.id,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )
@@ -216,7 +217,7 @@ fun OverlappingAvatars(
                         url = app.logo.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = appDisplayName,
-                        shape = RoundedPolygonShape.Circle,
+                        shape = PolygonShape.Circle,
                     )
                 },
             )
@@ -244,14 +245,14 @@ private fun AtmosphereAppTabs(
     )
 }
 
-private val CollapsingHeaderState.horizontalOffset: Dp
+private val PinnedCollapsingHeaderState.horizontalOffset: Dp
     get() = lerp(
         start = -AvatarSize / 2,
         stop = 0.dp,
         fraction = progress,
     )
 
-private val CollapsingHeaderState.verticalOffset: Dp
+private val PinnedCollapsingHeaderState.verticalOffset: Dp
     get() = lerp(
         start = AvatarSize / 2,
         stop = 0.dp,

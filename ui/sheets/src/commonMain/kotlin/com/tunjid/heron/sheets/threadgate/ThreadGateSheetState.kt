@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -68,7 +69,7 @@ import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.InfoOutline
 import com.tunjid.heron.ui.icons.regular.KeyboardArrowDown
 import com.tunjid.heron.ui.icons.regular.KeyboardArrowUp
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -494,7 +495,7 @@ private fun FeedListCheckboxRow(
                     url = list.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = list.name,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = PolygonShape.Circle,
                 )
             },
         )

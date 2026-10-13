@@ -232,6 +232,10 @@ fun Writable.describe(): WritableDescription =
             icon = HeronIcons.Regular.ManageAccounts,
             title = Resource(Res.string.writable_description_updating_profile),
             summary = null,
+            photoCount = listOfNotNull(
+                update.avatarFile,
+                update.bannerFile,
+            ).size,
         )
         is Writable.NotificationUpdate -> WritableDescription(
             icon = HeronIcons.Regular.Notifications,

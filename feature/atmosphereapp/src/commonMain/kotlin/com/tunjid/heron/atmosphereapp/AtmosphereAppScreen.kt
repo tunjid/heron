@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -31,14 +32,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
-import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.heron.atmosphereapp.ui.AtmosphereAppHeader
 import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.types.RecordUri
@@ -56,10 +55,14 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.pinnedHeaderBlur
+import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import kotlin.math.roundToInt
 
@@ -71,13 +74,9 @@ internal fun AtmosphereAppScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-    val collapsedHeight = with(density) {
-        UiTokens.statusAndToolbarHeight.toPx() + UiTokens.tabsHeight.toPx()
-    }
-    val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
-        initialExpandedHeight = with(density) { 800.dp.toPx() },
+    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+        pinnedHeight = UiTokens.statusAndToolbarHeight + UiTokens.tabsHeight,
+        initialExpandedHeight = 800.dp,
     )
 
     val pagerState = rememberPagerState { state.stateHolders.size }
@@ -115,10 +114,14 @@ internal fun AtmosphereAppScreen(
         CollapsingHeaderLayout(
             modifier = Modifier
                 .fillMaxSize(),
-            state = collapsingHeaderState,
+            state = collapsingHeaderState.collapsingHeaderState,
             headerContent = {
                 AtmosphereAppHeader(
                     modifier = Modifier
+                        .renderHeaderInTransitionOverlay(
+                            paneScaffoldState = paneScaffoldState,
+                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                        )
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     paneScaffoldState = paneScaffoldState,
@@ -134,7 +137,14 @@ internal fun AtmosphereAppScreen(
                 val uriHandler = LocalUriHandler.current
                 HorizontalPager(
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .pinnedHeaderBlur(
+                            state = collapsingHeaderState,
+                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                                pinnedCollapsingHeaderState = collapsingHeaderState,
+                            ),
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        ),
                     state = pagerState,
                     key = { page -> state.stateHolders[page].key },
                     pageContent = { page ->

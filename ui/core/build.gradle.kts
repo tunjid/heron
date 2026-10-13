@@ -30,6 +30,15 @@ kotlin {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate {
+        common {
+            group("nonAndroid") {
+                withJvm()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+        }
+    }
     sourceSets {
         commonMain {
             dependencies {
@@ -51,10 +60,5 @@ kotlin {
                 implementation(libs.ktor.client.java)
             }
         }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
     }
 }

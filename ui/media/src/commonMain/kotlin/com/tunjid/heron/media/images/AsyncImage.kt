@@ -21,6 +21,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -48,7 +49,6 @@ import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.files.uiDisplayModel
 import com.tunjid.heron.media.LocalMediaConfig
 import com.tunjid.heron.media.MediaConfig
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.shapes.animate
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
@@ -106,7 +106,7 @@ data class ImageArgs(
     val contentDescription: String? = null,
     val contentScale: ContentScale,
     val alignment: Alignment = Alignment.Center,
-    val shape: RoundedPolygonShape,
+    val shape: PolygonShape,
 )
 
 @Stable
@@ -202,7 +202,7 @@ fun ImageArgs(
     contentDescription: String? = null,
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
-    shape: RoundedPolygonShape,
+    shape: PolygonShape,
 ) = ImageArgs(
     request = ImageRequest.Network(
         url = url,
@@ -219,7 +219,7 @@ fun ImageArgs(
     contentDescription: String? = null,
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
-    shape: RoundedPolygonShape,
+    shape: PolygonShape,
 ) = ImageArgs(
     request = ImageRequest.Local(
         file = item.uiDisplayModel,

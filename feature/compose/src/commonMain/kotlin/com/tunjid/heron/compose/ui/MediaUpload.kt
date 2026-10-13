@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,7 +59,7 @@ import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Add
 import com.tunjid.heron.ui.icons.regular.DoNotDisturbOn
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.shapes.roundedRectangle
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.alt_text_add
 import heron.feature.compose.generated.resources.remove_media
@@ -249,7 +250,7 @@ private fun MediaUpload(
     }
 }
 
-internal val MediaUploadItemShape = RoundedPolygonShape.RoundedRectangle(0.1f)
+internal val MediaUploadItemShape = PolygonShape.roundedRectangle(0.1f)
 private const val AltTextSymbol = "ALT"
 
 private const val MaxItemsInRow = 4

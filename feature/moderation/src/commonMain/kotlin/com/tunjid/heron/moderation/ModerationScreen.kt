@@ -43,7 +43,6 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.sheets.rememberMutedWordsSheetState
 import com.tunjid.heron.sheets.rememberPreferenceThreadGateSheetState
-import com.tunjid.heron.sheets.threadgate.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -59,6 +58,8 @@ import com.tunjid.heron.ui.scaffold.navigation.blocksDestination
 import com.tunjid.heron.ui.scaffold.navigation.mutesDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.moderation.generated.resources.Res
 import heron.feature.moderation.generated.resources.content_filters
@@ -91,9 +92,13 @@ internal fun ModerationScreen(
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
     LazyColumn(
         modifier = modifier
+            .topAppBarBlur(
+                paneScaffoldState = paneScaffoldState,
+                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+            )
             .fillMaxWidth(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            top = UiTokens.statusAndToolbarHeight,
             horizontal = 16.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
