@@ -68,6 +68,9 @@ internal val IdentityState.isStable
 internal val IdentityState.prefersCompactBottomNav: Boolean
     get() = preferences?.local?.useCompactNavigation ?: false
 
+internal val IdentityState.prefersBlurredHeaders: Boolean
+    get() = preferences?.local?.useBlurredHeaders ?: false
+
 internal val IdentityState.bottomNavConfig: BottomNavConfig
     get() = BottomNavConfig.fromOrdinal(
         ordinal = preferences?.local?.bottomNavConfigOrdinal ?: BottomNavConfig.Hide.ordinal,

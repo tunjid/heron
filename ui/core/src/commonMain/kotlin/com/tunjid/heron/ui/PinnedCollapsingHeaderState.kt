@@ -19,18 +19,10 @@ package com.tunjid.heron.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.heron.ui.modifiers.HeaderBlurState
-import com.tunjid.heron.ui.modifiers.headerBlur
 import kotlin.math.max
 import kotlin.math.min
 
@@ -112,34 +104,3 @@ fun rememberPinnedCollapsingHeaderState(
         )
     }
 }
-
-fun Modifier.pinnedHeaderBlur(
-    state: PinnedCollapsingHeaderState,
-    blurState: HeaderBlurState,
-    scrimColor: Color,
-    scrimAlpha: Float = 0.9f,
-    fade: Dp = 24.dp,
-): Modifier = this
-    .headerBlur(state = blurState)
-    // Drawn over the content, inside the blurred band.
-    .drawWithContent {
-        drawContent()
-        val overlap = state.bodyOverlap
-        if (overlap <= 0f) return@drawWithContent
-
-        val color = scrimColor.copy(alpha = scrimAlpha * state.bodyOverlapFraction)
-        val bandEnd = ((overlap - fade.toPx()) / overlap).coerceIn(0f, 1f)
-        drawRect(
-            brush = Brush.verticalGradient(
-                0f to color,
-                bandEnd to color,
-                1f to color.copy(alpha = 0f),
-                startY = 0f,
-                endY = overlap,
-            ),
-            size = Size(
-                width = size.width,
-                height = overlap,
-            ),
-        )
-    }

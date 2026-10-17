@@ -81,7 +81,6 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
-import com.tunjid.heron.ui.pinnedHeaderBlur
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -94,7 +93,9 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
@@ -195,7 +196,7 @@ internal fun PostsScreen(
                         .fillMaxSize()
                         .pinnedHeaderBlur(
                             state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                            blurState = paneScaffoldState.rememberPinnedHeaderBlurState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
                             scrimColor = MaterialTheme.colorScheme.surface,
@@ -301,8 +302,9 @@ private fun PostsTimeline(
                     ).value,
                 )
                 .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    ),
                 )
                 .fillMaxSize()
                 .onDominantVideoChange(

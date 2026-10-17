@@ -55,13 +55,13 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
-import com.tunjid.heron.ui.pinnedHeaderBlur
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import kotlin.math.roundToInt
@@ -140,7 +140,7 @@ internal fun AtmosphereAppScreen(
                         .fillMaxSize()
                         .pinnedHeaderBlur(
                             state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                            blurState = paneScaffoldState.rememberPinnedHeaderBlurState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
                             scrimColor = MaterialTheme.colorScheme.surface,

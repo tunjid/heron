@@ -69,7 +69,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -101,7 +100,6 @@ import com.tunjid.heron.ui.icons.regular.CloudOff
 import com.tunjid.heron.ui.icons.regular.Error
 import com.tunjid.heron.ui.icons.regular.PriorityHigh
 import com.tunjid.heron.ui.modifiers.blur
-import com.tunjid.heron.ui.modifiers.headerBlur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
@@ -354,23 +352,6 @@ fun PaneScaffoldState.offsetTopAppBarBy(
     delta: Float,
 ) = topAppBarNestedScrollConnection.displaceVerticallyBy(
     delta = delta,
-)
-
-@Composable
-fun Modifier.topAppBarBlur(
-    paneScaffoldState: PaneScaffoldState,
-    topAppBarHeight: Dp,
-    isOffsetByScroll: Boolean = false,
-): Modifier = headerBlur(
-    state = paneScaffoldState.rememberHeaderBlurState(
-        height = {
-            when {
-                isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
-                else -> topAppBarHeight.toPx()
-            }
-        },
-        progress = paneScaffoldState::topAppBarTransparencyFactor,
-    ),
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

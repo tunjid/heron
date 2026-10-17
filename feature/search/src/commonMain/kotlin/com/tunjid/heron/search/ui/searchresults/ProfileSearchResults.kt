@@ -50,6 +50,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
@@ -69,9 +70,10 @@ internal fun AutoCompleteProfileSearchResults(
     LazyColumn(
         modifier = modifier
             .topAppBarBlur(
-                paneScaffoldState = paneTransitionScope,
-                topAppBarHeight = UiTokens.statusAndToolbarHeight,
-                isOffsetByScroll = isRootQuery,
+                blurState = paneTransitionScope.rememberTopAppBarHeaderBlurState(
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    isOffsetByScroll = isRootQuery,
+                ),
             ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(

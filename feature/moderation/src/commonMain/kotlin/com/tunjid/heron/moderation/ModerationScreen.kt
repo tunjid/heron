@@ -58,6 +58,7 @@ import com.tunjid.heron.ui.scaffold.navigation.blocksDestination
 import com.tunjid.heron.ui.scaffold.navigation.mutesDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.CommonStrings
@@ -93,8 +94,9 @@ internal fun ModerationScreen(
     LazyColumn(
         modifier = modifier
             .topAppBarBlur(
-                paneScaffoldState = paneScaffoldState,
-                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                ),
             )
             .fillMaxWidth(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
