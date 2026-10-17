@@ -18,4 +18,6 @@
     <string name="reply">Reply</string>
     <string name="quotes">Quotes</string>
     <string name="bookmarks">Bookmarks</string>
+    <string name="top">Top</string>
+    <string name="latest">Latest</string>
 </resources>

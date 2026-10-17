@@ -19,11 +19,11 @@ package com.tunjid.heron.posts
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.repository.PostDataQuery
+import com.tunjid.heron.data.repository.PostQuotesQuery
 import com.tunjid.heron.data.repository.PostRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -38,6 +38,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
 import com.tunjid.mutator.coroutines.actionSuspendingStateMutator
+import com.tunjid.mutator.coroutines.isNoOp
 import com.tunjid.mutator.coroutines.launchMutationsIn
 import com.tunjid.mutator.coroutines.launchedCollect
 import com.tunjid.tiler.distinctBy
@@ -48,7 +49,6 @@ import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
 
 @Stable
 internal interface PostsStateHolder :
@@ -75,7 +75,6 @@ class ActualPostsViewModel(
     constructor(
         navActions: (NavigationMutation) -> Unit,
         postsRepository: PostRepository,
-        recordRepository: RecordRepository,
         userDataRepository: UserDataRepository,
         writeQueue: WriteQueue,
         @Assisted scope: CoroutineScope,
@@ -85,6 +84,11 @@ class ActualPostsViewModel(
             state = State(route.postsRequest).toSnapshotMutable(),
             started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
             producer = { state, actions ->
+                launchStateHolderCreationMutations(
+                    state = state,
+                    viewModelScope = scope,
+                    postsRepository = postsRepository,
+                )
                 launchLoadPreferencesMutations(
                     state = state,
                     userDataRepository = userDataRepository,
@@ -94,15 +98,12 @@ class ActualPostsViewModel(
                     keySelector = Action::key,
                 ) {
                     when (val action = type()) {
-                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
+                        is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
+                            state,
+                        )
                         is Action.Navigate -> action.flow.collect {
                             navActions(it.navigationMutation)
                         }
-                        is Action.Tile -> action.flow.launchPostsLoadMutations(
-                            state = state,
-                            request = route.postsRequest,
-                            postsRepository = postsRepository,
-                        )
                         is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
                             state = state,
                             writeQueue = writeQueue,
@@ -127,24 +128,22 @@ class ActualPostsViewModel(
     )
 }
 
-context(productionScope: CoroutineScope)
-private fun Flow<Action.Tile>.launchPostsLoadMutations(
+private fun launchStateHolderCreationMutations(
     state: State.Mutable,
-    request: PostsRequest,
+    viewModelScope: CoroutineScope,
     postsRepository: PostRepository,
-) = map { it.tilingAction }
-    .launchTilingMutations(
-        state = state,
-        updateQueryData = PostDataQuery::updateData,
-        refreshQuery = PostDataQuery::refresh,
-        cursorListLoader = { query, cursor ->
-            when (request) {
-                is PostsRequest.Quotes -> postsRepository.quotes(query, cursor)
-                PostsRequest.Saved -> postsRepository.saved(query, cursor)
-            }
-        },
-        onNewItems = { items -> items.distinctBy(TimelineItem::id) },
-    )
+) {
+    state.stateHolders = state.stateHolders.map { holder ->
+        val isNoOp = when (holder) {
+            is PostsScreenStateHolders.Bookmarks -> holder.mutator.isNoOp()
+            is PostsScreenStateHolders.QuotedPosts -> holder.mutator.isNoOp()
+        }
+        if (isNoOp) viewModelScope.postsScreenStateHolder(
+            seed = holder,
+            postsRepository = postsRepository,
+        ) else holder
+    }
+}
 
 context(productionScope: CoroutineScope)
 private fun launchLoadPreferencesMutations(
@@ -223,8 +222,55 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
     state.messages -= event.message
 }
 
-private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
-    copy(data = newData)
+private fun CoroutineScope.postsScreenStateHolder(
+    seed: PostsScreenStateHolders,
+    postsRepository: PostRepository,
+): PostsScreenStateHolders {
+    val mutator = actionSuspendingStateMutator(
+        state = seed.state,
+        producer = { state, actions ->
+            actions
+                .launchTilingMutations(
+                    state = state,
+                    updateQueryData = CursorQuery::updateData,
+                    refreshQuery = CursorQuery::refresh,
+                    cursorListLoader = { query, cursor ->
+                        when (seed.state.request) {
+                            is PostsRequest.Quotes -> postsRepository.quotes(
+                                query = query as PostQuotesQuery,
+                                cursor = cursor,
+                            )
+                            PostsRequest.Saved -> postsRepository.saved(
+                                query = query,
+                                cursor = cursor,
+                            )
+                        }
+                    },
+                    onNewItems = { items -> items.distinctBy(TimelineItem::id) },
+                )
+        },
+    )
+    return when (seed) {
+        is PostsScreenStateHolders.QuotedPosts -> PostsScreenStateHolders.QuotedPosts(
+            sort = seed.sort,
+            mutator = mutator,
+        )
+        is PostsScreenStateHolders.Bookmarks -> PostsScreenStateHolders.Bookmarks(
+            mutator = mutator,
+        )
+    }
+}
 
-private fun PostDataQuery.refresh(): PostDataQuery =
-    copy(data = data.reset())
+private fun CursorQuery.updateData(newData: CursorQuery.Data): CursorQuery =
+    when (this) {
+        is DataQuery -> copy(data = newData)
+        is PostQuotesQuery -> copy(data = newData)
+        else -> throw IllegalArgumentException("Unsupported query type")
+    }
+
+private fun CursorQuery.refresh(): CursorQuery =
+    when (this) {
+        is DataQuery -> copy(data = data.reset())
+        is PostQuotesQuery -> copy(data = data.reset())
+        else -> throw IllegalArgumentException("Unsupported query type")
+    }

@@ -25,6 +25,7 @@ import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetQuotesQueryParams
 import app.bsky.feed.GetQuotesResponse
+import app.bsky.feed.GetQuotesSort
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
 import app.bsky.feed.Like
@@ -144,6 +145,19 @@ data class PostDataQuery(
     override val data: CursorQuery.Data,
 ) : CursorQuery
 
+@Serializable
+data class PostQuotesQuery(
+    val sort: Sort,
+    val profileId: Id.Profile,
+    val postRecordKey: RecordKey,
+    override val data: CursorQuery.Data,
+) : CursorQuery {
+    enum class Sort {
+        Top,
+        Latest,
+    }
+}
+
 interface PostRepository {
 
     fun likedBy(
@@ -157,7 +171,7 @@ interface PostRepository {
     ): Flow<CursorList<ProfileWithViewerState>>
 
     fun quotes(
-        query: PostDataQuery,
+        query: PostQuotesQuery,
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>>
 
@@ -298,7 +312,7 @@ internal class OfflinePostRepository(
             .flowOn(ioDispatcher)
 
     override fun quotes(
-        query: PostDataQuery,
+        query: PostQuotesQuery,
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
@@ -308,15 +322,22 @@ internal class OfflinePostRepository(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    postDao.quotedPostUriAndEmbeddedRecordUris(
-                        quotedPostUri = postUri.uri,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
+                    when (query.sort) {
+                        PostQuotesQuery.Sort.Latest -> postDao.quotedPostLatestUriAndEmbeddedRecordUris(
+                            quotedPostUri = postUri.uri,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
+                        )
+                        PostQuotesQuery.Sort.Top -> postDao.quotedPostTopUriAndEmbeddedRecordUris(
+                            quotedPostUri = postUri.uri,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
+                        )
+                    }
                         .distinctUntilChanged()
-                        .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
+                        .flatMapLatest { quotedPostUriAndEmbeddedRecordUris ->
                             recordResolver.timelineItems(
-                                items = bookmarkedPostUriAndEmbeddedRecordUris,
+                                items = quotedPostUriAndEmbeddedRecordUris,
                                 signedInProfileId = signedInProfileId,
                                 postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
                                 associatedRecordUris = {
@@ -348,6 +369,10 @@ internal class OfflinePostRepository(
                             getQuotes(
                                 GetQuotesQueryParams(
                                     uri = postUri.uri.let(::AtUri),
+                                    sort = when (query.sort) {
+                                        PostQuotesQuery.Sort.Latest -> GetQuotesSort.Latest
+                                        PostQuotesQuery.Sort.Top -> GetQuotesSort.Top
+                                    },
                                     limit = query.data.limit,
                                     cursor = cursor.value,
                                 ),
