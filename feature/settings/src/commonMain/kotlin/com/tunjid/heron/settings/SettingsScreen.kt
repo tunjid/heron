@@ -161,6 +161,9 @@ private fun MainSection(
                 setRefreshHomeTimelineOnLaunch = {
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
                 },
+                setResetNavigationOnLaunch = {
+                    actions(Action.SetResetNavigationOnLaunch(it))
+                },
                 setAutoplayTimelineVideos = {
                     actions(Action.SetAutoPlayTimelineVideos(it))
                 },

@@ -38,6 +38,7 @@ import com.tunjid.treenav.strings.RouteParser
 import dev.zacsweers.metro.Inject
 import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -75,12 +76,26 @@ internal class PersistedNavigationStateHolder(
                 // Wait for a non empty saved state to be read
                 .first { it != InitialNavigation }
 
-            val signedInProfile = authRepository.signedInUser.first()
-            val isGuest = authRepository.isGuest.first()
+            // Read concurrently
+            val signedInProfileDeferred = async {
+                authRepository.signedInUser.first()
+            }
+            val isGuestDeferred = async {
+                authRepository.isGuest.first()
+            }
+            val resetNavigationOnLaunchDeferred = async {
+                userDataRepository.preferences.first()
+                    .local
+                    .resetNavigationOnLaunch
+            }
+            val signedInProfile = signedInProfileDeferred.await()
+            val isGuest = isGuestDeferred.await()
+            val resetNavigationOnLaunch = resetNavigationOnLaunchDeferred.await()
 
             val multiStackNav = when {
                 savedNavigation == EmptyNavigation -> NavigationState.SignedOut
                 signedInProfile == null && !isGuest -> NavigationState.SignedOut
+                resetNavigationOnLaunch -> NavigationState.SignedIn
                 isGuest -> routeParser.parseMultiStackNav(
                     navigation = savedNavigation,
                     isSignedIn = false,

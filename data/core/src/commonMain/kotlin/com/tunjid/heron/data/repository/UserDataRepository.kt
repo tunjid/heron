@@ -33,6 +33,10 @@ interface UserDataRepository {
         refreshOnLaunch: Boolean,
     ): Outcome
 
+    suspend fun setResetNavigationOnLaunch(
+        resetOnLaunch: Boolean,
+    ): Outcome
+
     suspend fun setCurrentThemeOrdinal(
         themeOrdinal: Int,
     ): Outcome
@@ -124,6 +128,12 @@ internal class OfflineUserDataRepository(
         refreshOnLaunch: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
+    }
+
+    override suspend fun setResetNavigationOnLaunch(
+        resetOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(resetNavigationOnLaunch = resetOnLaunch))
     }
 
     override suspend fun setCurrentThemeOrdinal(

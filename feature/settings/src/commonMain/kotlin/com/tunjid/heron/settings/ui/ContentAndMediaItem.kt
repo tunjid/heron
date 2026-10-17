@@ -37,6 +37,7 @@ import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
+import heron.feature.settings.generated.resources.reset_navigation_on_launch
 import heron.feature.settings.generated.resources.show_post_engagement_metrics
 import heron.feature.settings.generated.resources.show_trending_topics
 import heron.feature.settings.generated.resources.thread_preferences
@@ -47,6 +48,7 @@ fun ContentAndMediaItem(
     modifier: Modifier = Modifier,
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
+    setResetNavigationOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
     setAutoplayTimelineGifs: (Boolean) -> Unit,
     setShowPostEngagementMetrics: (Boolean) -> Unit,
@@ -95,6 +97,14 @@ fun ContentAndMediaItem(
                 .padding(vertical = 8.dp),
         )
 
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.reset_navigation_on_launch),
+            enabled = true,
+            checked = signedInProfilePreferences.local.resetNavigationOnLaunch,
+            onCheckedChange = setResetNavigationOnLaunch,
+        )
         SettingsToggleItem(
             modifier = Modifier
                 .fillMaxWidth(),
