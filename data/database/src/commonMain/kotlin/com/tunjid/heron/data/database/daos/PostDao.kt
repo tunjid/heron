@@ -34,6 +34,7 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
+import com.tunjid.heron.data.database.entities.PostThreadDetailsEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.partial
@@ -335,6 +336,11 @@ interface PostDao {
     @Upsert
     suspend fun upsertPostThreads(
         entities: List<PostThreadEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertPostThreadDetails(
+        entities: List<PostThreadDetailsEntity>,
     )
 
     @Transaction

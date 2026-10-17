@@ -19,10 +19,13 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.feed.ThreadViewPost
 import app.bsky.feed.ThreadViewPostParentUnion
 import app.bsky.feed.ThreadViewPostReplieUnion
-import com.tunjid.heron.data.core.types.PostId
+import app.bsky.unspecced.GetPostThreadV2ThreadItem
+import app.bsky.unspecced.GetPostThreadV2ThreadItemValueUnion
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
+import com.tunjid.heron.data.network.models.replyParentPostUri
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -70,6 +73,50 @@ internal fun MultipleEntitySaver.add(
                 reply = it.value,
             )
         }
+}
+
+internal fun MultipleEntitySaver.add(
+    viewingProfileId: ProfileId?,
+    threadItems: List<GetPostThreadV2ThreadItem>,
+) {
+    val threadItemPosts = threadItems.mapNotNull { item ->
+        when (val value = item.value) {
+            is GetPostThreadV2ThreadItemValueUnion.Post -> value.value
+            // TODO: Deal with deleted, blocked or removed posts
+            is GetPostThreadV2ThreadItemValueUnion.Blocked,
+            is GetPostThreadV2ThreadItemValueUnion.NoUnauthenticated,
+            is GetPostThreadV2ThreadItemValueUnion.NotFound,
+            is GetPostThreadV2ThreadItemValueUnion.Unknown,
+            -> null
+        }
+    }
+    val threadPostUris = threadItemPosts.mapTo(mutableSetOf()) { threadItemPost ->
+        PostUri(threadItemPost.post.uri.atUri)
+    }
+
+    threadItemPosts.forEach { threadItemPost ->
+        add(
+            viewingProfileId = viewingProfileId,
+            postView = threadItemPost.post,
+        )
+        postThreadDetailsEntityOrNull(
+            postUri = PostUri(threadItemPost.post.uri.atUri),
+            postIndex = threadItemPost.opThreadPostIndex,
+            postCount = threadItemPost.opThreadPostCount,
+        )?.let(::add)
+
+        val parentPostUri = threadItemPost.post.replyParentPostUri()
+            // Only link posts within the response; both ends of an edge must be saved.
+            ?.takeIf(threadPostUris::contains)
+            ?: return@forEach
+
+        add(
+            PostThreadEntity(
+                postUri = PostUri(threadItemPost.post.uri.atUri),
+                parentPostUri = parentPostUri,
+            ),
+        )
+    }
 }
 
 private fun MultipleEntitySaver.addThreadParent(

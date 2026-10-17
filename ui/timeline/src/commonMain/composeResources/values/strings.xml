@@ -155,6 +155,8 @@
     <string name="post_replies_all">Everybody can reply</string>
     <string name="post_replies_some">Some people can reply</string>
     <string name="post_replies_none">Replies Disabled</string>
+    <string name="post_thread_position">%1$d/%2$d</string>
+    <string name="post_thread_position_description">Post %1$d of %2$d in this thread</string>
 
 
     <string name="writable_duplicate_post_interaction">Your %1$s for this post is processing.</string>

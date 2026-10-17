@@ -45,6 +45,7 @@ import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
+import com.tunjid.heron.data.database.entities.PostThreadDetailsEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
@@ -173,6 +174,8 @@ internal class MultipleEntitySaver(
     private val postVideoEntities = LazyList<PostVideoEntity>()
 
     private val postThreadEntities = LazyList<PostThreadEntity>()
+
+    private val postThreadDetailsEntities = LazyList<PostThreadDetailsEntity>()
 
     private val postViewerStatisticsEntities = LazyList<PostViewerStatisticsEntity>()
 
@@ -319,6 +322,9 @@ internal class MultipleEntitySaver(
 
         if (postThreadEntities.isNotEmpty) {
             postDao.upsertPostThreads(postThreadEntities.list)
+        }
+        if (postThreadDetailsEntities.isNotEmpty) {
+            postDao.upsertPostThreadDetails(postThreadDetailsEntities.list)
         }
         if (postViewerStatisticsEntities.isNotEmpty) {
             postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
@@ -507,6 +513,8 @@ internal class MultipleEntitySaver(
     fun add(entity: PostPostEntity) = postPostEntities.add(entity)
 
     fun add(entity: PostThreadEntity) = postThreadEntities.add(entity)
+
+    fun add(entity: PostThreadDetailsEntity) = postThreadDetailsEntities.add(entity)
 
     fun add(entity: PostViewerStatisticsEntity) = postViewerStatisticsEntities.add(entity)
 

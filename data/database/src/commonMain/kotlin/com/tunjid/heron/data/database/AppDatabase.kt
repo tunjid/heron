@@ -56,6 +56,7 @@ import com.tunjid.heron.data.database.entities.PostDraftEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
+import com.tunjid.heron.data.database.entities.PostThreadDetailsEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
@@ -113,7 +114,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 52,
+    version = 53,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -129,6 +130,7 @@ import kotlinx.coroutines.IO
         PostEntity::class,
         PostAuthorsEntity::class,
         PostThreadEntity::class,
+        PostThreadDetailsEntity::class,
         PostViewerStatisticsEntity::class,
         ProfileTabsEntity::class,
         ProfileAtmosphereAppEntity::class,
@@ -273,6 +275,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 50, to = 51),
         // Add starterPackMembers view and index listMembers.listUri
         AutoMigration(from = 51, to = 52),
+        // Add postThreadDetails
+        AutoMigration(from = 52, to = 53),
     ],
     exportSchema = true,
 )

@@ -53,6 +53,7 @@ data class Post(
     val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable? = null,
     val viewerState: ProfileViewerState? = null,
     val embeddedRecords: List<com.tunjid.heron.data.core.models.Record.Embeddable> = emptyList(),
+    val threadDetails: ThreadDetails? = null,
 ) : UrlEncodableModel,
     Record,
     Record.Embeddable.Native {
@@ -74,6 +75,12 @@ data class Post(
         val replyRef: ReplyRef? = null,
         val via: String? = null,
     ) : UrlEncodableModel
+
+    @Serializable
+    data class ThreadDetails(
+        val postIndex: Long,
+        val postCount: Long,
+    )
 
     @Serializable
     data class ViewerStats(

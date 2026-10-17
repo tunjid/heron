@@ -206,6 +206,11 @@ data class PopulatedPostEntity(
         entityColumn = "postUri",
     )
     val associatedStandardRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+    @Relation(
+        parentColumn = "uri",
+        entityColumn = "postUri",
+    )
+    val threadDetails: PostThreadDetailsEntity? = null,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -267,6 +272,7 @@ fun PopulatedPostEntity.asExternalModel(
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labelEntities.asActiveExternalModels(),
     embeddedRecords = embeddedRecords,
+    threadDetails = threadDetails?.asExternalModel(),
 )
 
 fun PostViewerStatisticsEntity.asExternalModel() =
