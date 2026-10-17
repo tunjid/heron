@@ -86,6 +86,17 @@ sealed class Notification {
         ) : Reposted()
     }
 
+    data class LikedFeedGenerator(
+        override val uri: GenericUri,
+        override val cid: GenericId,
+        override val author: Profile,
+        override val reasonSubject: GenericUri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
+        val associatedFeedGenerator: FeedGenerator,
+    ) : Notification()
+
     data class Followed(
         override val uri: GenericUri,
         override val cid: GenericId,
@@ -161,6 +172,16 @@ sealed class Notification {
         val associatedDocument: StandardDocument,
     ) : Notification()
 
+    data class ContactMatch(
+        override val uri: GenericUri,
+        override val cid: GenericId,
+        override val author: Profile,
+        override val reasonSubject: GenericUri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
+    ) : Notification()
+
     data class Unknown(
         override val uri: GenericUri,
         override val cid: GenericId,
@@ -208,6 +229,7 @@ sealed class Notification {
         RepostViaRepost("repost-via-repost"),
         SubscribedPost("subscribed-post"),
         DocumentPublished("document-published"),
+        ContactMatch("contact-match"),
         ;
 
         companion object {
@@ -223,6 +245,8 @@ val Notification.associatedPostUri
         is Notification.Followed -> null
         is Notification.JoinedStarterPack -> null
         is Notification.Liked -> associatedPost.uri
+        is Notification.LikedFeedGenerator -> null
+        is Notification.ContactMatch -> null
         is Notification.Mentioned -> null
         is Notification.Quoted -> null
         is Notification.RepliedTo -> null

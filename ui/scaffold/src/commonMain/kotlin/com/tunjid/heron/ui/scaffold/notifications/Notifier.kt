@@ -29,9 +29,11 @@ import com.tunjid.heron.ui.scaffold.navigation.AppStack
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
+import heron.ui.core.generated.resources.notifications_contact_match
 import heron.ui.core.generated.resources.notifications_document_published
 import heron.ui.core.generated.resources.notifications_followed_you
 import heron.ui.core.generated.resources.notifications_joined_from_your_starter_pack
+import heron.ui.core.generated.resources.notifications_liked_your_feed
 import heron.ui.core.generated.resources.notifications_liked_your_post
 import heron.ui.core.generated.resources.notifications_liked_your_repost
 import heron.ui.core.generated.resources.notifications_mentioned_you
@@ -82,6 +84,8 @@ internal fun Notification.deepLinkPath(): String {
             else -> "/${link.substringAfter(Uri.Host.Https.prefix)}"
         }
         is Notification.Followed -> LinkTarget.UserDidMention(author.did).path
+        is Notification.ContactMatch -> LinkTarget.UserDidMention(author.did).path
+        is Notification.LikedFeedGenerator -> associatedFeedGenerator.uri.path
         is Notification.JoinedStarterPack -> reasonSubject?.asRecordUriOrNull()?.path
             ?: AppStack.Home.rootRoute.id
         is Notification.Unknown,
@@ -133,6 +137,14 @@ internal suspend fun Notification.title(): String = when (this) {
         CommonStrings.notifications_document_published,
         author.nameOrHandle,
     )
+    is Notification.LikedFeedGenerator -> getString(
+        CommonStrings.notifications_liked_your_feed,
+        author.nameOrHandle,
+    )
+    is Notification.ContactMatch -> getString(
+        CommonStrings.notifications_contact_match,
+        author.nameOrHandle,
+    )
     is Notification.Verified -> getString(CommonStrings.notifications_account_verified)
     is Notification.Unverified -> getString(CommonStrings.notifications_account_unverified)
     is Notification.Unknown -> getString(CommonStrings.notifications_unknown)
@@ -142,6 +154,8 @@ internal fun Notification.body(): String? = when (this) {
     is Notification.DocumentPublished -> associatedDocument.title
     is Notification.Followed -> null
     is Notification.JoinedStarterPack -> null
+    is Notification.LikedFeedGenerator -> associatedFeedGenerator.displayName
+    is Notification.ContactMatch -> null
     is Notification.PostAssociated -> associatedPost.record?.text
     is Notification.Unknown -> null
     is Notification.Verified -> null

@@ -21,6 +21,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Relation
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericId
@@ -97,12 +98,12 @@ data class PopulatedNotificationEntity(
 
 fun PopulatedNotificationEntity.asExternalModel(
     associatedPost: Post?,
+    associatedFeedGenerator: FeedGenerator?,
 ) = when (entity.reason) {
     Notification.Reason.Unknown -> unknown()
 
-    Notification.Reason.Like ->
-        if (associatedPost == null) unknown()
-        else Notification.Liked.Post(
+    Notification.Reason.Like -> when {
+        associatedPost != null -> Notification.Liked.Post(
             cid = entity.cid,
             uri = entity.uri,
             indexedAt = entity.indexedAt,
@@ -112,6 +113,18 @@ fun PopulatedNotificationEntity.asExternalModel(
             associatedPost = associatedPost,
             viewerState = viewerState?.asExternalModel(),
         )
+        associatedFeedGenerator != null -> Notification.LikedFeedGenerator(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.reasonSubject,
+            isRead = entity.isRead,
+            viewerState = viewerState?.asExternalModel(),
+            associatedFeedGenerator = associatedFeedGenerator,
+        )
+        else -> unknown()
+    }
 
     Notification.Reason.LikeViaRepost ->
         if (associatedPost == null) unknown()
@@ -228,6 +241,16 @@ fun PopulatedNotificationEntity.asExternalModel(
     Notification.Reason.DocumentPublished -> unknown()
 
     Notification.Reason.Verified -> Notification.Verified(
+        cid = entity.cid,
+        uri = entity.uri,
+        indexedAt = entity.indexedAt,
+        author = author.asExternalModel(),
+        reasonSubject = entity.reasonSubject,
+        isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
+    )
+
+    Notification.Reason.ContactMatch -> Notification.ContactMatch(
         cid = entity.cid,
         uri = entity.uri,
         indexedAt = entity.indexedAt,

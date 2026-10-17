@@ -18,9 +18,7 @@ package com.tunjid.heron.notifications
 
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
@@ -141,6 +139,10 @@ private fun AggregatedNotification.canAggregate(
     other: Notification,
 ): Boolean = when {
     notification::class != other::class -> false
+    // Unknown notifications may have different reasons, show each one
+    notification is Notification.Unknown -> false
+    notification is Notification.LikedFeedGenerator && other is Notification.LikedFeedGenerator ->
+        notification.associatedFeedGenerator.uri == other.associatedFeedGenerator.uri
     notification.associatedPostUri == null && other.associatedPostUri == null -> true
     else -> notification.associatedPostUri == other.associatedPostUri
 }
