@@ -108,6 +108,7 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
@@ -162,9 +163,10 @@ internal fun HomeScreen(
         HorizontalPager(
             modifier = Modifier
                 .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = topClearance + UiTokens.tabsHeight,
-                    isOffsetByScroll = true,
+                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                        topAppBarHeight = topClearance + UiTokens.tabsHeight,
+                        isOffsetByScroll = true,
+                    ),
                 )
                 .blur(
                     shape = ExpandableTabsState.Shape,

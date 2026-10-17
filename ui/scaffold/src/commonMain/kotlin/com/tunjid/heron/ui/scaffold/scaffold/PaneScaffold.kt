@@ -59,7 +59,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -74,10 +73,8 @@ import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.withDim
-import com.tunjid.heron.ui.modifiers.HeaderBlurState
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -85,6 +82,7 @@ import com.tunjid.heron.ui.scaffold.identity.bottomNavConfig
 import com.tunjid.heron.ui.scaffold.identity.isSignedIn
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
+import com.tunjid.heron.ui.scaffold.identity.prefersBlurredHeaders
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -157,7 +155,7 @@ class PaneScaffoldState(
             return false
         }
 
-    internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
+    internal val headerBlurStates = mutableStateListOf<PaneHeaderBlurState>()
 
     internal val snackbarHostState = SnackbarHostState()
 
@@ -186,6 +184,9 @@ class PaneScaffoldState(
 
     val prefersCompactBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersCompactBottomNav
+
+    val prefersBlurredHeaders
+        get() = appScaffoldState.staticStates.identityState.prefersBlurredHeaders
 
     val prefersAutoHidingBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
@@ -264,43 +265,6 @@ class PaneScaffoldState(
         }
     }
 }
-
-@Composable
-fun PaneScaffoldState.rememberHeaderBlurState(
-    height: Density.() -> Float,
-    progress: () -> Float,
-): HeaderBlurState {
-    val state = remember(this) {
-        HeaderBlurState(
-            radius = {
-                16.dp * headerBlurStrength.value
-            },
-            fade = 24.dp,
-            height = height,
-            progress = progress,
-        )
-    }
-    state.height = height
-    state.progress = progress
-
-    DisposableEffect(this, state) {
-        headerBlurStates.add(state)
-        onDispose { headerBlurStates.remove(state) }
-    }
-    return state
-}
-
-/**
- * Remembers a [HeaderBlurState] for the part of the body of a `CollapsingHeaderLayout` that has
- * scrolled behind the pinned header of [pinnedCollapsingHeaderState].
- */
-@Composable
-fun PaneScaffoldState.rememberHeaderBlurState(
-    pinnedCollapsingHeaderState: PinnedCollapsingHeaderState,
-): HeaderBlurState = rememberHeaderBlurState(
-    height = { pinnedCollapsingHeaderState.bodyOverlap },
-    progress = pinnedCollapsingHeaderState::bodyOverlapFraction,
-)
 
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(

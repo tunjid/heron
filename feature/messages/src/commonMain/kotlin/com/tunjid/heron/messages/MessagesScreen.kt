@@ -63,6 +63,7 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
@@ -91,9 +92,10 @@ internal fun MessagesScreen(
         LazyColumn(
             modifier = Modifier
                 .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
-                    isOffsetByScroll = true,
+                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                        isOffsetByScroll = true,
+                    ),
                 )
                 .align(Alignment.TopCenter)
                 .fillMaxWidth(),

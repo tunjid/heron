@@ -141,6 +141,10 @@ sealed class Action(val key: String) {
         val bottomNavConfigOrdinal: Int,
     ) : Action(key = "SetBottomNavConfigOrdinal")
 
+    data class SetBlurredHeaders(
+        val blurredHeaders: Boolean,
+    ) : Action(key = "SetBlurredHeaders")
+
     data class SetShowPostEngagementMetrics(
         val showPostEngagementMetrics: Boolean,
     ) : Action(key = "SetShowPostEngagementMetrics")

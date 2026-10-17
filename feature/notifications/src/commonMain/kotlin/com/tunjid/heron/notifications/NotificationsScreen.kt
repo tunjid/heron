@@ -86,6 +86,7 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -289,9 +290,10 @@ internal fun NotificationsScreen(
         LazyColumn(
             modifier = Modifier
                 .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
-                    isOffsetByScroll = true,
+                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                        isOffsetByScroll = true,
+                    ),
                 )
                 .fillMaxSize()
                 .paneClip(),

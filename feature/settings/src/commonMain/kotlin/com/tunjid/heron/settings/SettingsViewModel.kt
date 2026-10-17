@@ -150,6 +150,10 @@ class ActualSettingsViewModel(
                             userDataRepository = userDataRepository,
                         )
 
+                        is Action.SetBlurredHeaders -> action.flow.launchToggleBlurredHeaders(
+                            userDataRepository = userDataRepository,
+                        )
+
                         is Action.SetShowPostEngagementMetrics -> action.flow.launchToggleShowPostEngagementMetrics(
                             userDataRepository = userDataRepository,
                         )
@@ -371,6 +375,13 @@ private fun Flow<Action.SetBottomNavConfigOrdinal>.launchSetBottomNavConfigOrdin
     userDataRepository: UserDataRepository,
 ) = launchedCollect { (bottomNavConfigOrdinal) ->
     userDataRepository.setBottomNavConfigOrdinal(bottomNavConfigOrdinal)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetBlurredHeaders>.launchToggleBlurredHeaders(
+    userDataRepository: UserDataRepository,
+) = launchedCollect { (blurredHeaders) ->
+    userDataRepository.setBlurredHeaders(blurredHeaders)
 }
 
 context(productionScope: CoroutineScope)

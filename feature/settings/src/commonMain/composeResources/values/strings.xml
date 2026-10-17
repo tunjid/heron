@@ -55,6 +55,7 @@
     <string name="dark_theme_light">Light</string>
     <string name="dark_theme_dark">Dark</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
+    <string name="use_blurred_headers">Blur headers</string>
     <string name="bottom_navigation_on_scroll">Bottom navigation bar scroll behavior</string>
     <string name="bottom_navigation_partially_collapse">Collapse, showing all items</string>
     <string name="bottom_navigation_hide">Hide</string>

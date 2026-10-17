@@ -104,7 +104,6 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.RemoveCircle
 import com.tunjid.heron.ui.modifiers.gridColumnCount
-import com.tunjid.heron.ui.pinnedHeaderBlur
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -117,7 +116,8 @@ import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
@@ -253,7 +253,7 @@ internal fun ListScreen(
                         .fillMaxSize()
                         .pinnedHeaderBlur(
                             state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                            blurState = paneScaffoldState.rememberPinnedHeaderBlurState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
                             scrimColor = MaterialTheme.colorScheme.surface,

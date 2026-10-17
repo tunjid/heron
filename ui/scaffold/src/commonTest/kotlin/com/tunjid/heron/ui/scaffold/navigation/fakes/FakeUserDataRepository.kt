@@ -41,6 +41,9 @@ class FakeUserDataRepository : UserDataRepository {
     override suspend fun setBottomNavConfigOrdinal(bottomNavConfigOrdinal: Int): Outcome =
         Outcome.Success
 
+    override suspend fun setBlurredHeaders(blurredHeaders: Boolean): Outcome =
+        Outcome.Success
+
     override suspend fun setAutoPlayTimelineVideos(autoPlayTimelineVideos: Boolean): Outcome =
         Outcome.Success
 

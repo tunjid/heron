@@ -49,6 +49,10 @@ interface UserDataRepository {
         bottomNavConfigOrdinal: Int,
     ): Outcome
 
+    suspend fun setBlurredHeaders(
+        blurredHeaders: Boolean,
+    ): Outcome
+
     suspend fun setAutoPlayTimelineVideos(
         autoPlayTimelineVideos: Boolean,
     ): Outcome
@@ -144,6 +148,12 @@ internal class OfflineUserDataRepository(
         bottomNavConfigOrdinal: Int,
     ): Outcome = updatePreferences {
         copy(local = local.copy(bottomNavConfigOrdinal = bottomNavConfigOrdinal))
+    }
+
+    override suspend fun setBlurredHeaders(
+        blurredHeaders: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(useBlurredHeaders = blurredHeaders))
     }
 
     override suspend fun setAutoPlayTimelineVideos(

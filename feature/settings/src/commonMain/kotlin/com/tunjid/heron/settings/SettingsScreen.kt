@@ -110,6 +110,9 @@ internal fun SettingsScreen(
                             setBottomNavConfigOrdinal = {
                                 actions(Action.SetBottomNavConfigOrdinal(it))
                             },
+                            setBlurredHeaders = {
+                                actions(Action.SetBlurredHeaders(it))
+                            },
                         )
                     }
                 }

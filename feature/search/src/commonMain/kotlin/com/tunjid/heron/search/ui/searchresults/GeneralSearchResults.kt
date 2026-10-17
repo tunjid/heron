@@ -80,6 +80,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
@@ -221,12 +222,13 @@ internal fun GeneralSearchResults(
                 .zIndex(0f)
                 .nestedScroll(tabsOffsetNestedScrollConnection)
                 .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = when {
-                        state.query.isRoot -> topClearance + UiTokens.tabsHeight
-                        else -> topClearance
-                    },
-                    isOffsetByScroll = state.query.isRoot,
+                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                        topAppBarHeight = when {
+                            state.query.isRoot -> topClearance + UiTokens.tabsHeight
+                            else -> topClearance
+                        },
+                        isOffsetByScroll = state.query.isRoot,
+                    ),
                 )
                 .clip(
                     remember {

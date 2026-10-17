@@ -90,6 +90,7 @@ import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
@@ -123,8 +124,9 @@ internal fun ConversationScreen(
         ),
         modifier = modifier
             .topAppBarBlur(
-                paneScaffoldState = paneScaffoldState,
-                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                ),
             )
             .fillMaxSize(),
     ) {
