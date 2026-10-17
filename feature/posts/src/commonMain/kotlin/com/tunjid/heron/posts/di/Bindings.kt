@@ -38,6 +38,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
+import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
@@ -65,6 +66,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.posts.generated.resources.Res
 import heron.feature.posts.generated.resources.bookmarks
 import heron.feature.posts.generated.resources.quotes
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
 private const val SavedRoutePattern = "/saved"
@@ -79,8 +81,12 @@ private fun createRoute(
     ),
 )
 
-internal sealed class PostsRequest {
+@Serializable
+sealed class PostsRequest {
+    @Serializable
     data object Saved : PostsRequest()
+
+    @Serializable
     data class Quotes(
         val profileHandleOrId: ProfileHandleOrId,
         val postRecordKey: RecordKey,
@@ -212,7 +218,7 @@ internal fun Route(
                         ),
                     )
                 },
-                transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
+                transparencyFactor = ::fullAppbarTransparency,
                 onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
             )
         },
