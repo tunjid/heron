@@ -126,5 +126,6 @@ private fun NotificationPreferences.forReason(
     Notification.Reason.Verified -> verified
     Notification.Reason.Unverified -> unverified
     Notification.Reason.DocumentPublished -> null
+    Notification.Reason.ContactMatch -> null
     Notification.Reason.Unknown -> null
 }

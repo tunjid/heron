@@ -125,6 +125,13 @@
     <string name="notifications_quoted_you">%1$s quoted you</string>
     <string name="notifications_replied_to_you">%1$s replied to your post</string>
     <string name="notifications_unknown">You have a new notification</string>
+    <string name="notifications_unknown_notification">Unknown notification</string>
+    <string name="notifications_liked_your_feed_description">Liked your feed</string>
+    <string name="notifications_liked_your_feed">%1$s liked your feed</string>
+    <string name="notifications_multiple_liked_your_feed">%1$s and %2$d others liked your feed</string>
+    <string name="notifications_contact_match_description">A contact joined Bluesky</string>
+    <string name="notifications_contact_match">%1$s, one of your contacts, joined Bluesky</string>
+    <string name="notifications_multiple_contact_match">%1$s and %2$d of your other contacts joined Bluesky</string>
     <string name="notifications_create_post">Create Post</string>
 
    <string name="standard_publication_subscribe_to">Subscribe to publication</string>

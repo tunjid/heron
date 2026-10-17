@@ -43,13 +43,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.notifications.ui.ContactMatchRow
 import com.tunjid.heron.notifications.ui.DocumentPublishedRow
+import com.tunjid.heron.notifications.ui.FeedGeneratorLikeRow
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
@@ -59,6 +62,7 @@ import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
 import com.tunjid.heron.notifications.ui.SubscribedRow
+import com.tunjid.heron.notifications.ui.UnknownRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.sheets.postoptions.PostOption
@@ -204,6 +208,19 @@ internal fun NotificationsScreen(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
                         record = notification.associatedPost,
+                    ),
+                ),
+            )
+        }
+    }
+    val onFeedGeneratorClicked: (FeedGenerator) -> Unit = remember {
+        { feedGenerator ->
+            actions(
+                Action.Navigate.To(
+                    recordDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = NotificationFeedGeneratorSharedElementPrefix,
+                        record = feedGenerator,
                     ),
                 ),
             )
@@ -398,7 +415,35 @@ internal fun NotificationsScreen(
                                 onLinkTargetClicked = onLinkTargetClicked,
                             )
 
-                            is Notification.Unknown -> Unit
+                            is Notification.LikedFeedGenerator -> FeedGeneratorLikeRow(
+                                modifier = itemModifier,
+                                paneTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                                onFeedGeneratorClicked = onFeedGeneratorClicked,
+                            )
+
+                            is Notification.ContactMatch -> ContactMatchRow(
+                                modifier = itemModifier,
+                                paneTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
+
+                            is Notification.Unknown -> UnknownRow(
+                                modifier = itemModifier,
+                                paneTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
                             is Notification.Unverified -> ProfileVerificationRow(
                                 modifier = itemModifier,
                                 paneTransitionScope = paneScaffoldState,
@@ -474,3 +519,5 @@ internal fun NotificationsScreen(
             }
     }
 }
+
+private const val NotificationFeedGeneratorSharedElementPrefix = "notification-feed-generator"

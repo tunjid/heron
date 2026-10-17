@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.feed.GeneratorView
+import app.bsky.feed.GetFeedGeneratorsQueryParams
+import app.bsky.feed.GetFeedGeneratorsResponse
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetPostsResponse
 import app.bsky.feed.PostView
@@ -57,6 +60,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.primaryEmbeddedRecord
 import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.NotificationFilteredOutException
@@ -64,8 +68,10 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RestrictedProfileException
 import com.tunjid.heron.data.core.types.UnknownNotificationException
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -85,6 +91,7 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedFeedGeneratorUri
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
@@ -170,6 +177,7 @@ internal class OfflineNotificationsRepository(
     private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
+    private val feedGeneratorDao: FeedGeneratorDao,
     private val notificationsDao: NotificationsDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val recordResolver: RecordResolver,
@@ -240,7 +248,7 @@ internal class OfflineNotificationsRepository(
                 nextCursorFlow = networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        notificationsWithAssociatedPosts(
+                        notificationsWithAssociatedRecords(
                             queryParams = ListNotificationsQueryParams(
                                 limit = query.data.limit,
                                 cursor = cursor.value,
@@ -248,7 +256,7 @@ internal class OfflineNotificationsRepository(
                         )
                     },
                     nextCursor = {
-                        first.cursor
+                        response.cursor
                     },
                     onResponse = {
                         multipleEntitySaverProvider.saveInTransaction {
@@ -257,8 +265,9 @@ internal class OfflineNotificationsRepository(
                             }
                             add(
                                 viewingProfileId = signedInProfileId,
-                                listNotificationsNotification = first.notifications,
-                                associatedPosts = second,
+                                listNotificationsNotification = response.notifications,
+                                associatedPosts = posts,
+                                associatedFeedGenerators = feedGenerators,
                             )
                         }
                         if (query.data.page == 0) {
@@ -627,17 +636,28 @@ internal class OfflineNotificationsRepository(
     private fun asExternalModel(
         signedInProfileId: ProfileId,
         populatedNotificationEntities: List<PopulatedNotificationEntity>,
-    ) = postDao.posts(
-        viewingProfileId = signedInProfileId.id,
-        postUris = populatedNotificationEntities
-            .flatMapTo(mutableSetOf()) {
-                listOfNotNull(
-                    it.entity.associatedPostUri,
-                    it.postPostEntity?.embeddedPostUri,
-                )
-            },
-    ).distinctUntilChangedMap { posts ->
+    ) = combine(
+        postDao.posts(
+            viewingProfileId = signedInProfileId.id,
+            postUris = populatedNotificationEntities
+                .flatMapTo(mutableSetOf()) {
+                    listOfNotNull(
+                        it.entity.associatedPostUri,
+                        it.postPostEntity?.embeddedPostUri,
+                    )
+                },
+        ),
+        feedGeneratorDao.feedGenerators(
+            feedUris = populatedNotificationEntities
+                .mapNotNullTo(
+                    destination = mutableSetOf(),
+                    transform = PopulatedNotificationEntity::associatedFeedGeneratorUri,
+                ),
+        ),
+        ::Pair,
+    ).distinctUntilChangedMap { (posts, feedGenerators) ->
         val urisToPosts = posts.associateBy { it.entity.uri }
+        val urisToFeedGenerators = feedGenerators.associateBy { it.entity.uri }
         populatedNotificationEntities.map {
             it.asExternalModel(
                 associatedPost = it.entity.associatedPostUri
@@ -650,18 +670,27 @@ internal class OfflineNotificationsRepository(
                                 ?.asExternalModel(emptyList()),
                         ),
                     ),
+                associatedFeedGenerator = it.associatedFeedGeneratorUri()
+                    ?.let(urisToFeedGenerators::get)
+                    ?.asExternalModel(),
             )
         }
     }
 }
 
-private suspend fun BlueskyApi.notificationsWithAssociatedPosts(
+private class NotificationsWithAssociatedRecords(
+    val response: ListNotificationsResponse,
+    val posts: List<PostView>,
+    val feedGenerators: List<GeneratorView>,
+)
+
+private suspend fun BlueskyApi.notificationsWithAssociatedRecords(
     queryParams: ListNotificationsQueryParams,
-): AtpResponse<Pair<ListNotificationsResponse, List<PostView>>> =
+): AtpResponse<NotificationsWithAssociatedRecords> =
     listNotifications(queryParams)
         .map { response ->
-            val chunkedPostViews = coroutineScope {
-                response.notifications
+            coroutineScope {
+                val chunkedPostViews = response.notifications
                     .mapNotNullTo(
                         destination = mutableSetOf(),
                         transform = ListNotificationsNotification::associatedPostUri,
@@ -677,9 +706,27 @@ private suspend fun BlueskyApi.notificationsWithAssociatedPosts(
                                 .requireResponse()
                         }
                     }
-            }.awaitAll()
+                val chunkedFeedGeneratorViews = response.notifications
+                    .mapNotNullTo(
+                        destination = mutableSetOf(),
+                        transform = ListNotificationsNotification::associatedFeedGeneratorUri,
+                    )
+                    .chunked(MaxFeedGeneratorsFetchedPerQuery)
+                    .map { feedUris ->
+                        async {
+                            getFeedGenerators(GetFeedGeneratorsQueryParams(feeds = feedUris))
+                                .map(GetFeedGeneratorsResponse::feeds)
+                                // Successful response are required.
+                                .requireResponse()
+                        }
+                    }
 
-            response to chunkedPostViews.flatten()
+                NotificationsWithAssociatedRecords(
+                    response = response,
+                    posts = chunkedPostViews.awaitAll().flatten(),
+                    feedGenerators = chunkedFeedGeneratorViews.awaitAll().flatten(),
+                )
+            }
         }
 
 private fun Post.isReply(
@@ -706,6 +753,12 @@ private fun Post.isMention(
     }
 }
 
+private fun PopulatedNotificationEntity.associatedFeedGeneratorUri(): FeedGeneratorUri? =
+    when (entity.reason) {
+        Notification.Reason.Like -> entity.reasonSubject?.uri?.asRecordUriOrNull() as? FeedGeneratorUri
+        else -> null
+    }
+
 private fun PopulatedNotificationEntity.dedupeNotificationKey() =
     "${entity.authorId}-${entity.reason.name}-${entity.associatedPostUri?.uri}"
 
@@ -714,3 +767,4 @@ private fun SavedState.signedInProfileNotifications() =
         ?.notifications
 
 private const val MaxPostsFetchedPerQuery = 25
+private const val MaxFeedGeneratorsFetchedPerQuery = 25
