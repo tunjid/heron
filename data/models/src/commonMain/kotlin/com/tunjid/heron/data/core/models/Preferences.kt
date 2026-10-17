@@ -91,6 +91,8 @@ data class Preferences(
         val recentPostLanguages: List<PostLanguageSelection> = emptyList(),
         @ProtoNumber(14)
         val autoPlayTimelineGifs: Boolean = true,
+        @ProtoNumber(15)
+        val useBlurredHeaders: Boolean = true,
     )
 
     companion object {
