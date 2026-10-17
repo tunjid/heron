@@ -20,6 +20,7 @@ import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.externalAssociatedView
@@ -63,7 +64,8 @@ internal fun MultipleEntitySaver.add(
 
     postView.threadgate?.let(::add)
 
-    postView.quotedPostEntity()?.let { embeddedPostEntity ->
+    val quotedPostEntity = postView.quotedPostEntity()
+    quotedPostEntity?.let { embeddedPostEntity ->
         add(embeddedPostEntity)
         add(
             PostPostEntity(
@@ -97,11 +99,17 @@ internal fun MultipleEntitySaver.add(
                 viewingProfileId = viewingProfileId,
                 labeler = recordUnion.value,
             )
+        // Quoted posts keep their OP thread position.
+        is RecordViewRecordUnion.ViewRecord ->
+            if (quotedPostEntity != null) postThreadDetailsEntityOrNull(
+                postUri = quotedPostEntity.uri,
+                postIndex = recordUnion.value.opThreadPostIndex,
+                postCount = recordUnion.value.opThreadPostCount,
+            )?.let(::add)
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewNotFound,
-        is RecordViewRecordUnion.ViewRecord,
         null,
         -> Unit
     }

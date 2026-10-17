@@ -814,6 +814,7 @@ private val SignedOutPaths = listOf(
     "app.bsky.feed.getFeedGenerator",
     "app.bsky.feed.searchPostsV2",
     "app.bsky.unspecced.getPopularFeedGenerators",
+    "app.bsky.unspecced.getPostThreadV2",
     "app.bsky.unspecced.getTrends",
 )
 
