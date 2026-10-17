@@ -16,30 +16,41 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.ExternalEmbed
-import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.MultilineStyledText
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.post_thread_position
+import heron.ui.timeline.generated.resources.post_thread_position_description
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PostText(
@@ -57,8 +68,9 @@ fun PostText(
         ?.removeSuffix(maybeExternalLink.orEmpty())
         ?.trim()
         .orEmpty()
+    val threadDetails = post.threadDetails
 
-    if (text.isBlank()) Spacer(Modifier.height(0.dp))
+    if (text.isBlank() && threadDetails == null) Spacer(Modifier.height(0.dp))
     else PaneStickySharedElement(
         boundsTransform = sharedElementBoundsTransform,
         modifier = modifier
@@ -74,15 +86,105 @@ fun PostText(
             },
         ),
     ) {
-        MultilineStyledText(
+        val formattedText = rememberFormattedTextPost(
             text = text,
-            links = post.record?.links ?: emptyList(),
+            textLinks = post.record?.links ?: emptyList(),
             onLinkTargetClicked = { onLinkTargetClicked(post, it) },
+        )
+        val threadPositionLabel = threadDetails?.let {
+            stringResource(
+                Res.string.post_thread_position,
+                it.postIndex,
+                it.postCount,
+            )
+        }
+        MultilineStyledText(
+            text = remember(formattedText, threadPositionLabel) {
+                formattedText.withThreadPosition(
+                    label = threadPositionLabel,
+                )
+            },
             maxLines = maxLines,
+            inlineContent = threadDetails?.let {
+                rememberThreadPositionInlineContent(
+                    label = threadPositionLabel.orEmpty(),
+                    contentDescription = stringResource(
+                        Res.string.post_thread_position_description,
+                        it.postIndex,
+                        it.postCount,
+                    ),
+                )
+            } ?: emptyMap(),
         )
     }
+}
+
+private fun AnnotatedString.withThreadPosition(
+    label: String?,
+): AnnotatedString =
+    if (label == null) this
+    else buildAnnotatedString {
+        append(this@withThreadPosition)
+        if (isNotEmpty()) append(' ')
+        appendInlineContent(
+            id = ThreadPositionInlineContentId,
+            alternateText = label,
+        )
+    }
+
+@Composable
+private fun rememberThreadPositionInlineContent(
+    label: String,
+    contentDescription: String,
+): Map<String, InlineTextContent> {
+    val labelStyle = MaterialTheme.typography.labelSmall
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val placeholder = remember(label, labelStyle, density) {
+        val labelSize = textMeasurer.measure(
+            text = label,
+            style = labelStyle,
+            maxLines = 1,
+        ).size
+        with(density) {
+            Placeholder(
+                width = (labelSize.width + ThreadPositionHorizontalPadding.roundToPx() * 2).toSp(),
+                height = (labelSize.height + ThreadPositionVerticalPadding.roundToPx() * 2).toSp(),
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+            )
+        }
+    }
+    return mapOf(
+        ThreadPositionInlineContentId to InlineTextContent(
+            placeholder = placeholder,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = CircleShape,
+                    )
+                    .semantics {
+                        this.contentDescription = contentDescription
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = label,
+                    style = labelStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        },
+    )
 }
 
 private fun Post.rememberTextSharedElementKey(
     prefix: String,
 ): String = "$prefix-${cid.id}-text"
+
+private const val ThreadPositionInlineContentId = "threadPosition"
+private val ThreadPositionHorizontalPadding = 6.dp
+private val ThreadPositionVerticalPadding = 1.dp

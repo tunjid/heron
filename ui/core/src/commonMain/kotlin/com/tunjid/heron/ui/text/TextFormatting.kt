@@ -18,6 +18,7 @@ package com.tunjid.heron.ui.text
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -82,12 +83,28 @@ fun MultilineStyledText(
     onLinkTargetClicked: (LinkTarget) -> Unit,
     maxLines: Int = Int.MAX_VALUE,
 ) {
-    val formattedText = rememberFormattedTextPost(
-        text = text,
-        textLinks = links,
-        textLinkStyles = linkStyles,
-        onLinkTargetClicked = onLinkTargetClicked,
+    MultilineStyledText(
+        modifier = modifier,
+        text = rememberFormattedTextPost(
+            text = text,
+            textLinks = links,
+            textLinkStyles = linkStyles,
+            onLinkTargetClicked = onLinkTargetClicked,
+        ),
+        maxLines = maxLines,
     )
+}
+
+@Composable
+fun MultilineStyledText(
+    modifier: Modifier = Modifier,
+    text: CharSequence,
+    maxLines: Int = Int.MAX_VALUE,
+    inlineContent: Map<String, InlineTextContent> = emptyMap(),
+) {
+    val formattedText = remember(text) {
+        text as? AnnotatedString ?: AnnotatedString(text.toString())
+    }
     val style = MaterialTheme.typography.bodyLarge.copy(
         color = LocalContentColor.current,
         fontSize = 15.sp,
@@ -102,6 +119,7 @@ fun MultilineStyledText(
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             style = style,
+            inlineContent = inlineContent,
         )
         else Column(
             verticalArrangement = Arrangement.spacedBy(ParagraphSpacing),
@@ -113,6 +131,7 @@ fun MultilineStyledText(
                 Text(
                     text = paragraph,
                     style = style,
+                    inlineContent = inlineContent,
                 )
             }
         }
