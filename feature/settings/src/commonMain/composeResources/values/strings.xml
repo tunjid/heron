@@ -35,6 +35,7 @@
     <string name="add_or_reauthenticate_account">Add or reauthenticate account</string>
     <string name="content_and_media">Content and media</string>
     <string name="refresh_timelines_on_launch">Refresh timelines on launch</string>
+    <string name="reset_navigation_on_launch">Reset navigation on launch</string>
     <string name="moderation">Moderation</string>
     <string name="tasks">Tasks</string>
     <string name="publication_subscriptions">Publication subscriptions</string>

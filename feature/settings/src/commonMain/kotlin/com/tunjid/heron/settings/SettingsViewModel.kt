@@ -126,6 +126,10 @@ class ActualSettingsViewModel(
                             userDataRepository = userDataRepository,
                         )
 
+                        is Action.SetResetNavigationOnLaunch -> action.flow.launchResetNavigationOnLaunchMutations(
+                            userDataRepository = userDataRepository,
+                        )
+
                         is Action.SetAutoPlayTimelineVideos -> action.flow.launchTimelineVideoAutoPlayMutations(
                             userDataRepository = userDataRepository,
                         )
@@ -333,6 +337,13 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.launchHomeTimelineRefre
     userDataRepository: UserDataRepository,
 ) = launchedCollect { (refreshOnLaunch) ->
     userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetResetNavigationOnLaunch>.launchResetNavigationOnLaunchMutations(
+    userDataRepository: UserDataRepository,
+) = launchedCollect { (resetOnLaunch) ->
+    userDataRepository.setResetNavigationOnLaunch(resetOnLaunch)
 }
 
 context(productionScope: CoroutineScope)
