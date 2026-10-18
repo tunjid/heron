@@ -18,21 +18,18 @@ package com.tunjid.heron.timeline.ui.feed
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.media.images.AsyncImage
-import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.timeline.utilities.orDefault
+import com.tunjid.heron.timeline.utilities.rememberCollectionAvatarArgs
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
 import heron.ui.timeline.generated.resources.Res
@@ -65,7 +62,6 @@ fun FeedGenerator(
             format(feedGenerator.likeCount ?: 0L),
         ),
         avatar = {
-            val avatar = feedGenerator.avatar.orDefault
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
@@ -77,14 +73,11 @@ fun FeedGenerator(
                 AsyncImage(
                     modifier = Modifier
                         .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = FeedGeneratorCollectionShape,
-                        )
-                    },
+                    args = rememberCollectionAvatarArgs(
+                        avatar = feedGenerator.avatar,
+                        collectionUri = feedGenerator.uri,
+                        shape = FeedGeneratorCollectionShape,
+                    ),
                 )
             }
         },

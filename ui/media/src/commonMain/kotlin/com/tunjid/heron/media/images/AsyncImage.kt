@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
@@ -89,6 +91,17 @@ sealed class ImageRequest {
     internal data class Local(
         val file: Any,
     ) : ImageRequest()
+
+    data class Painted(
+        val painter: Painter,
+    ) : ImageRequest()
+}
+
+internal class PaintedImage(
+    override val painter: Painter,
+) : Image {
+    override val size: IntSize
+        get() = IntSize.Zero
 }
 
 sealed class DownloadStatus {
@@ -115,7 +128,19 @@ class ImageState internal constructor(
     internal val mediaConfig: () -> MediaConfig,
     private val imageLoader: () -> ImageLoader,
 ) {
-    internal var image by mutableStateOf<Image?>(null)
+    private var loadedImage by mutableStateOf<Image?>(null)
+
+    // Painted images need no loading, so they are available on the first frame.
+    internal val image: Image? by derivedStateOf {
+        when (val request = args().request) {
+            is ImageRequest.Painted -> PaintedImage(
+                painter = request.painter,
+            )
+            is ImageRequest.Local,
+            is ImageRequest.Network,
+            -> loadedImage
+        }
+    }
     private var layoutSize by mutableStateOf(IntSize.Zero)
 
     internal fun layoutImage(
@@ -158,12 +183,13 @@ class ImageState internal constructor(
                     request = request,
                     size = size,
                 )
-                    ?.let(::image::set)
+                    ?.let(::loadedImage::set)
             }
     }
 
     private fun requests(): Flow<ImageRequest> =
         snapshotFlow { args().request }
+            .filterNot { it is ImageRequest.Painted }
 
     private fun fetchSizes(): Flow<IntSize> =
         snapshotFlow { layoutSize }
@@ -305,7 +331,9 @@ fun AsyncImage(
 internal fun Image.AnimationEffect() {
     when (this) {
         is CoilImage -> image.AnimationEffect()
-        is StubImage -> Unit
+        is PaintedImage,
+        is StubImage,
+        -> Unit
     }
 }
 

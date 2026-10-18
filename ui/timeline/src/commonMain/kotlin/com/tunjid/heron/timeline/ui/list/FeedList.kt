@@ -48,13 +48,13 @@ import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
-import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.TimelineStrings
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.rememberCollectionAvatarArgs
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -95,7 +95,6 @@ fun FeedList(
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = list.uri,
         avatar = {
-            val avatar = list.avatar ?: BlueskyClouds
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
@@ -107,14 +106,11 @@ fun FeedList(
                 AsyncImage(
                     modifier = Modifier
                         .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = ListCollectionShape,
-                        )
-                    },
+                    args = rememberCollectionAvatarArgs(
+                        avatar = list.avatar,
+                        collectionUri = list.uri,
+                        shape = ListCollectionShape,
+                    ),
                 )
             }
         },
@@ -150,7 +146,6 @@ fun StarterPack(
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = starterPack.uri,
         avatar = {
-            val avatar = BlueskyClouds
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
                 modifier = Modifier
@@ -162,14 +157,11 @@ fun StarterPack(
                 AsyncImage(
                     modifier = Modifier
                         .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = StarterPackCollectionShape,
-                        )
-                    },
+                    args = rememberCollectionAvatarArgs(
+                        avatar = null,
+                        collectionUri = starterPack.uri,
+                        shape = StarterPackCollectionShape,
+                    ),
                 )
             }
         },
