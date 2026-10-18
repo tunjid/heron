@@ -21,7 +21,6 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.platform.Platform
 import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.data.platform.isIOS
 import com.tunjid.heron.media.images.ImageLoader
@@ -70,8 +69,6 @@ class AppScaffoldState internal constructor(
     density: Density,
     internal val staticStates: StaticStates,
     private val windowWidth: State<Dp>,
-    private val leftSystemUiInset: State<Dp>,
-    private val rightSystemUiInset: State<Dp>,
 ) {
     internal var density by mutableStateOf(density)
 
@@ -89,15 +86,16 @@ class AppScaffoldState internal constructor(
             isCompact = staticStates.identityState.prefersCompactBottomNav,
         )
 
-    internal val verticalSystemUiWidth: Dp
-        get() = maxOf(leftSystemUiInset.value, rightSystemUiInset.value)
+    private val systemVerticalBar: SystemVerticalBar?
+        get() = staticStates.uiState.systemVerticalBar
 
+    // The rail fills the system vertical bar when there is one (iPhone Duo), else the default
+    // icon-rail width.
     internal val navigationRailWidth: Dp
-        get() = verticalSystemUiWidth.takeIf { it > 0.dp }
-            ?: UiTokens.NavRailWidth
+        get() = systemVerticalBar?.width ?: UiTokens.NavRailWidth
 
     internal val bottomAlignsNavigationRail: Boolean
-        get() = Platform.current.isIOS && verticalSystemUiWidth > 0.dp
+        get() = systemVerticalBar != null
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
@@ -112,12 +110,10 @@ class AppScaffoldState internal constructor(
     )
 
     internal val navRailEdge: NavRailEdge
-        get() =
-            if (rightSystemUiInset.value > leftSystemUiInset.value) NavRailEdge.End
-            else NavRailEdge.Start
+        get() = systemVerticalBar?.edge ?: NavRailEdge.Start
 
     internal val prefersNavigationRail
-        get() = verticalSystemUiWidth > 0.dp ||
+        get() = systemVerticalBar != null ||
             windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     internal fun update(

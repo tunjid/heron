@@ -49,6 +49,9 @@ internal class AppUiStateHolder(
                     is UiAction.UpdateTransientBottomNav -> action.flow.launchToggleTransientBottomNavMutations(
                         state = state,
                     )
+                    is UiAction.UpdateSystemVerticalBar -> action.flow.launchSystemVerticalBarMutations(
+                        state = state,
+                    )
                 }
             }
         },
@@ -89,6 +92,13 @@ private fun Flow<UiAction.UpdateRouteImmersion>.launchRouteImmersionMutations(
         is UiAction.UpdateRouteImmersion.Immersive -> state.immersiveRouteIds += it.route.id
         is UiAction.UpdateRouteImmersion.Standard -> state.immersiveRouteIds -= it.route.id
     }
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<UiAction.UpdateSystemVerticalBar>.launchSystemVerticalBarMutations(
+    state: UiState.Mutable,
+) = launchedCollectLatest {
+    state.systemVerticalBar = it.systemVerticalBar
 }
 
 context(productionScope: CoroutineScope)

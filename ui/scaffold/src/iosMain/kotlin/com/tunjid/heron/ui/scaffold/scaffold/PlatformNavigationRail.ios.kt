@@ -21,6 +21,7 @@ package com.tunjid.heron.ui.scaffold.scaffold
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.visible
 import androidx.compose.foundation.layout.widthIn
@@ -32,6 +33,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
@@ -107,6 +110,9 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
                     .navigationRailPosition(
                         bottomAligned = bottomAlignsNavigationRail,
                     )
+                    .centerOnSystemVerticalBar(
+                        railBoxWidth = navigationRailWidth,
+                    )
                     // Prevent double rendering during shared element transitions, as UIKit
                     // overlays are unaffected by the shared element overlay.
                     .visible(
@@ -139,6 +145,22 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
             )
         }
     }
+}
+
+context(paneScaffoldState: PaneScaffoldState)
+private fun Modifier.centerOnSystemVerticalBar(
+    railBoxWidth: Dp,
+): Modifier = offset {
+    val centerFromEdge = paneScaffoldState.systemVerticalBarCenterFromEdge
+        ?: return@offset IntOffset.Zero
+    val towardsEdge = (railBoxWidth / 2 - centerFromEdge).roundToPx()
+    IntOffset(
+        x = when (paneScaffoldState.navRailEdge) {
+            NavRailEdge.Start -> -towardsEdge
+            NavRailEdge.End -> towardsEdge
+        },
+        y = 0,
+    )
 }
 
 private class GlassNavRailView(

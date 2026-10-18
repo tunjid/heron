@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.platformSystemBars
+import com.tunjid.heron.ui.scaffold.scaffold.NavRailEdge
 import kotlin.jvm.JvmInline
 import kotlin.math.max
 
@@ -58,6 +59,8 @@ fun NonSubComposingScaffold(
     snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     floatingActionButtonPosition: FabPosition = FabPosition.End,
+    navigationRailWidth: Dp = 0.dp,
+    navigationRailEdge: NavRailEdge = NavRailEdge.Start,
     containerColor: Color = MaterialTheme.colorScheme.background,
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit,
@@ -68,6 +71,8 @@ fun NonSubComposingScaffold(
     ) {
         ScaffoldLayout(
             fabPosition = floatingActionButtonPosition,
+            navigationRailWidth = navigationRailWidth,
+            navigationRailEdge = navigationRailEdge,
             topBar = topBar,
             bottomBar = bottomBar,
             content = content,
@@ -81,6 +86,8 @@ fun NonSubComposingScaffold(
 @Composable
 private inline fun ScaffoldLayout(
     fabPosition: FabPosition,
+    navigationRailWidth: Dp,
+    navigationRailEdge: NavRailEdge,
     crossinline topBar: @Composable () -> Unit,
     crossinline content: @Composable (PaddingValues) -> Unit,
     crossinline snackbar: @Composable () -> Unit,
@@ -142,8 +149,18 @@ private inline fun ScaffoldLayout(
         val startInsetsPlaceable = startInsetsMeasurable.measure(looseConstraints)
         val endInsetsPlaceable = endInsetsMeasurable.measure(looseConstraints)
 
-        val startInsetsWidth = startInsetsPlaceable.width
-        val endInsetsWidth = endInsetsPlaceable.width
+        // A navigation rail beside the scaffold already covers the inset on its edge
+        val navigationRailWidthPx = navigationRailWidth.roundToPx()
+        val isNavigationRailAtStart =
+            (navigationRailEdge == NavRailEdge.Start) == (layoutDirection == LayoutDirection.Ltr)
+        val startInsetsWidth = max(
+            0,
+            startInsetsPlaceable.width - if (isNavigationRailAtStart) navigationRailWidthPx else 0,
+        )
+        val endInsetsWidth = max(
+            0,
+            endInsetsPlaceable.width - if (isNavigationRailAtStart) 0 else navigationRailWidthPx,
+        )
 
         val leftInsetsWidth =
             if (layoutDirection == LayoutDirection.Ltr) {
