@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -124,8 +125,12 @@ internal fun Modifier.navigationRailPosition(
     bottomAligned: Boolean,
 ): Modifier = with(boxScope) {
     if (bottomAligned) align(Alignment.BottomCenter)
-        .padding(bottom = UiTokens.navigationBarHeight)
+        .padding(
+            top = NavRailVerticalPadding,
+            bottom = UiTokens.navigationBarHeight + NavRailVerticalPadding,
+        )
     else align(Alignment.Center)
+        .padding(vertical = NavRailVerticalPadding)
 }
 
 internal fun PaneScaffoldState.navRailPlacesAtStart(
@@ -142,3 +147,5 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
 }.value
 
 private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
+
+private val NavRailVerticalPadding get() = FabSpacing

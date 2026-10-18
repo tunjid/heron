@@ -25,11 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import com.tunjid.heron.ui.scaffold.scaffold.AppState
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.isImmersive
+import com.tunjid.heron.ui.scaffold.scaffold.NavRailEdge
 
 @Suppress("FunctionName")
 fun MainViewController(
     appState: AppState,
     immersionController: ImmersionController,
+    verticalBarController: VerticalBarController,
 ) = ComposeUIViewController {
     com.tunjid.heron.ui.scaffold.scaffold.App(
         appState = appState,
@@ -37,6 +39,24 @@ fun MainViewController(
     )
     val immersiveState = rememberUpdatedState(appState.isImmersive)
 
+    DisposableEffect(verticalBarController) {
+        verticalBarController.setListener(
+            object : VerticalBarListener {
+                override fun onVerticalBarChanged(
+                    edge: NavRailEdge?,
+                    width: Double,
+                    centerFromEdge: Double,
+                ) = appState.onSystemVerticalBarChanged(
+                    edge = edge,
+                    width = width,
+                    centerFromEdge = centerFromEdge,
+                )
+            },
+        )
+        onDispose {
+            verticalBarController.setListener(listener = null)
+        }
+    }
     DisposableEffect(immersionController) {
         onDispose {
             immersionController.setImmersive(isImmersive = false)

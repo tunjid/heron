@@ -173,6 +173,9 @@ class PaneScaffoldState(
     internal val bottomAlignsNavigationRail: Boolean
         get() = appScaffoldState.bottomAlignsNavigationRail
 
+    internal val systemVerticalBarCenterFromEdge: Dp?
+        get() = appScaffoldState.staticStates.uiState.systemVerticalBar?.centerFromEdge
+
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
         get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
@@ -405,6 +408,8 @@ fun PaneScaffoldState.PaneScaffold(
                     }
                 },
                 containerColor = containerColor,
+                navigationRailWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
+                navigationRailEdge = navRailEdge,
                 topBar = {
                     topBar()
                 },
