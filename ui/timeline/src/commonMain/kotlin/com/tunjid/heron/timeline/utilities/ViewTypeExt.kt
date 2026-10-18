@@ -61,10 +61,7 @@ typealias TimelineStrings = Res.string
 
 val TimelineItem.contentType: String
     get() = when (this) {
-        is TimelineItem.Pinned,
-        is TimelineItem.Repost,
-        is TimelineItem.Single,
-        -> post.embed.postContentType
+        is TimelineItem.Single -> post.embed.postContentType
 
         is TimelineItem.Threaded -> "threaded"
         is TimelineItem.Loading -> "loading"

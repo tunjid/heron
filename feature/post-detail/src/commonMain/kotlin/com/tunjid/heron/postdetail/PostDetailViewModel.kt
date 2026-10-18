@@ -208,8 +208,6 @@ private fun Flow<Action.Load>.launchPostThreadsMutations(
             state.items = timelineItems
             state.anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
                 when (item) {
-                    is TimelineItem.Pinned,
-                    is TimelineItem.Repost,
                     is TimelineItem.Single,
                     is TimelineItem.Threaded.Tree,
                     -> item.post.takeIf {

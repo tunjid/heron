@@ -182,9 +182,6 @@ private fun launchPostQuoteThreadsMutations(
                     is TimelineItem.Single -> item.post.takeIf {
                         it.uri.recordKey == route.postRecordKey
                     }
-                    is TimelineItem.Pinned,
-                    is TimelineItem.Repost,
-                    is TimelineItem.Single,
                     is TimelineItem.Threaded.Tree,
                     is TimelineItem.Threaded.Linear,
                     is TimelineItem.Placeholder,
