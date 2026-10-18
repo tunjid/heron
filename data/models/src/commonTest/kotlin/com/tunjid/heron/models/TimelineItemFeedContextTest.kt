@@ -18,13 +18,13 @@ package com.tunjid.heron.models
 
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.feedContext
-import com.tunjid.heron.data.core.models.reqId
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.fakes.samplePost
+import com.tunjid.heron.fakes.sampleProfile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Instant
 
 class TimelineItemFeedContextTest {
 
@@ -36,8 +36,7 @@ class TimelineItemFeedContextTest {
     )
 
     @Test
-    fun feedBearingItem_exposesContextThroughParentExtension() {
-        // Typed as the parent so resolution goes through the extension, not the member.
+    fun feedBearingItem_exposesContextThroughParent() {
         val item: TimelineItem = TimelineItem.Single(
             id = "1",
             post = samplePost(),
@@ -60,9 +59,54 @@ class TimelineItemFeedContextTest {
     }
 
     @Test
+    fun repostedReply_keepsReasonAndContextOnThread() {
+        val repostedAt = Instant.fromEpochSeconds(1_000)
+        val reposter = sampleProfile()
+        val post = samplePost()
+        val node = TimelineItem.Threaded.Node(
+            post = post,
+            threadGate = null,
+            appliedLabels = appliedLabels,
+            isMuted = false,
+        )
+        val item: TimelineItem = TimelineItem.Threaded.Linear(
+            id = "1",
+            signedInProfileId = null,
+            anchorPostIndex = 2,
+            nodes = listOf(
+                node,
+                node,
+                node,
+            ),
+            generation = null,
+            hasBreak = false,
+            reason = TimelineItem.Reason.Repost(
+                by = reposter,
+                at = repostedAt,
+            ),
+            feedContext = "ctx-abc",
+            reqId = FeedReqId("req-123"),
+        )
+
+        assertEquals(
+            expected = reposter,
+            actual = (item.reason as TimelineItem.Reason.Repost).by,
+        )
+        assertEquals(
+            expected = repostedAt,
+            actual = item.indexedAt,
+        )
+        assertEquals(
+            expected = "ctx-abc",
+            actual = item.feedContext,
+        )
+    }
+
+    @Test
     fun placeholderItem_hasNoContext() {
         val item: TimelineItem = TimelineItem.Loading()
 
+        assertNull(item.reason)
         assertNull(item.feedContext)
         assertNull(item.reqId)
     }

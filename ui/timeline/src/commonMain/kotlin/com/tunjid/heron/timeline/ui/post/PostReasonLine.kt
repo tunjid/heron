@@ -45,23 +45,20 @@ internal fun PostReasonLine(
     item: TimelineItem,
     onProfileClicked: (Post, Profile) -> Unit,
 ) {
-    when (item) {
-        is TimelineItem.Pinned -> PostPinnedReasonLine(
+    when (val reason = item.reason) {
+        TimelineItem.Reason.Pinned -> PostPinnedReasonLine(
             modifier = modifier,
         )
 
-        is TimelineItem.Repost -> PostRepostReasonLine(
+        is TimelineItem.Reason.Repost -> PostRepostReasonLine(
             modifier = modifier,
-            repostBy = item.by,
+            repostBy = reason.by,
             onProfileClicked = {
                 onProfileClicked(item.post, it)
             },
         )
 
-        is TimelineItem.Threaded,
-        is TimelineItem.Single,
-        is TimelineItem.Placeholder,
-        -> Unit
+        null -> Unit
     }
 }
 

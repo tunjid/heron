@@ -129,25 +129,27 @@ private fun StringBuilder.appendVibeSample(
     authorId: ProfileId,
 ) {
     when (item) {
-        is TimelineItem.Single,
-        is TimelineItem.Pinned,
-        -> appendVibePost(
-            prefix = "- ",
-            post = item.post,
-            authorId = authorId,
-            withHandle = false,
-        )
-
-        is TimelineItem.Repost -> appendVibePost(
-            prefix = "- reposted ",
-            post = item.post,
-            authorId = authorId,
-            withHandle = true,
-        )
+        is TimelineItem.Single -> when (item.reason) {
+            is TimelineItem.Reason.Repost -> appendVibePost(
+                prefix = "- reposted ",
+                post = item.post,
+                authorId = authorId,
+                withHandle = true,
+            )
+            TimelineItem.Reason.Pinned,
+            null,
+            -> appendVibePost(
+                prefix = "- ",
+                post = item.post,
+                authorId = authorId,
+                withHandle = false,
+            )
+        }
 
         is TimelineItem.Threaded.Linear -> appendVibeConversation(
             posts = item.nodes.map { it.post },
             authorId = authorId,
+            reposted = item.reason is TimelineItem.Reason.Repost,
         )
 
         is TimelineItem.Threaded.Tree -> appendVibeConversation(
@@ -162,9 +164,10 @@ private fun StringBuilder.appendVibeSample(
 private fun StringBuilder.appendVibeConversation(
     posts: List<Post>,
     authorId: ProfileId,
+    reposted: Boolean = false,
 ) {
     if (posts.none { it.hasReadableContent }) return
-    appendLine("- conversation:")
+    appendLine(if (reposted) "- reposted conversation:" else "- conversation:")
     posts.forEach { post ->
         appendVibePost(
             prefix = "    ",

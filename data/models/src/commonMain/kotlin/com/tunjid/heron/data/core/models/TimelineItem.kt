@@ -64,40 +64,26 @@ sealed class TimelineItem {
     abstract val appliedLabels: AppliedLabels
     abstract val signedInProfileId: ProfileId?
 
-    val indexedAt
-        get() = when (this) {
-            is Pinned,
-            is Threaded,
-            is Single,
-            is Placeholder,
-            -> post.indexedAt
+    abstract val reason: Reason?
+    abstract val feedContext: String?
+    abstract val reqId: FeedReqId?
 
-            is Repost -> at
+    val indexedAt
+        get() = when (val reason = reason) {
+            is Reason.Repost -> reason.at
+            Reason.Pinned,
+            null,
+            -> post.indexedAt
         }
 
-    data class Pinned(
-        override val id: String,
-        override val post: Post,
-        override val isMuted: Boolean,
-        override val threadGate: ThreadGate?,
-        override val appliedLabels: AppliedLabels,
-        override val signedInProfileId: ProfileId?,
-        val feedContext: String? = null,
-        val reqId: FeedReqId? = null,
-    ) : TimelineItem()
+    sealed interface Reason {
+        data class Repost(
+            val by: Profile,
+            val at: Instant,
+        ) : Reason
 
-    data class Repost(
-        override val id: String,
-        override val post: Post,
-        override val isMuted: Boolean,
-        override val threadGate: ThreadGate?,
-        override val appliedLabels: AppliedLabels,
-        override val signedInProfileId: ProfileId?,
-        val by: Profile,
-        val at: Instant,
-        val feedContext: String? = null,
-        val reqId: FeedReqId? = null,
-    ) : TimelineItem()
+        data object Pinned : Reason
+    }
 
     sealed class Threaded : TimelineItem() {
         data class Linear(
@@ -107,6 +93,9 @@ sealed class TimelineItem {
             val nodes: List<Node>,
             val generation: Long?,
             val hasBreak: Boolean,
+            override val reason: Reason? = null,
+            override val feedContext: String? = null,
+            override val reqId: FeedReqId? = null,
         ) : Threaded() {
             override val post: Post
                 get() = nodes[anchorPostIndex].post
@@ -124,6 +113,12 @@ sealed class TimelineItem {
             val replies: List<Node>,
             override val signedInProfileId: ProfileId?,
         ) : Threaded() {
+            override val reason: Reason?
+                get() = null
+            override val feedContext: String?
+                get() = null
+            override val reqId: FeedReqId?
+                get() = null
             override val post: Post
                 get() = anchor.post
             override val threadGate: ThreadGate?
@@ -174,8 +169,9 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        val feedContext: String? = null,
-        val reqId: FeedReqId? = null,
+        override val reason: Reason? = null,
+        override val feedContext: String? = null,
+        override val reqId: FeedReqId? = null,
     ) : TimelineItem()
 
     sealed class Placeholder : TimelineItem() {
@@ -186,6 +182,9 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate? = null
         override val appliedLabels: AppliedLabels = LoadingAppliedLabels
         override val signedInProfileId: ProfileId? = null
+        override val reason: Reason? = null
+        override val feedContext: String? = null
+        override val reqId: FeedReqId? = null
     }
 
     data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
@@ -239,23 +238,3 @@ sealed class TimelineItem {
         val EmptyThreadItems = listOf(Empty.Thread)
     }
 }
-
-val TimelineItem.feedContext: String?
-    get() = when (this) {
-        is TimelineItem.Pinned -> feedContext
-        is TimelineItem.Repost -> feedContext
-        is TimelineItem.Single -> feedContext
-        is TimelineItem.Threaded,
-        is TimelineItem.Placeholder,
-        -> null
-    }
-
-val TimelineItem.reqId: FeedReqId?
-    get() = when (this) {
-        is TimelineItem.Pinned -> reqId
-        is TimelineItem.Repost -> reqId
-        is TimelineItem.Single -> reqId
-        is TimelineItem.Threaded,
-        is TimelineItem.Placeholder,
-        -> null
-    }

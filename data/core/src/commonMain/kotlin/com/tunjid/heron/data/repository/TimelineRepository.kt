@@ -1231,7 +1231,17 @@ internal class OfflineTimelineRepository(
                             isMuted = isMuted || (replyRoot != null && isMuted(replyRoot))
                             if (hideMuted && isMuted) return@block
 
-                            val repostedBy = entity.reposter?.let(::profile)
+                            val reason = when {
+                                entity.isPinned -> TimelineItem.Reason.Pinned
+                                else -> entity.reposter?.let(::profile)?.let { repostedBy ->
+                                    TimelineItem.Reason.Repost(
+                                        by = repostedBy,
+                                        at = entity.indexedAt,
+                                    )
+                                }
+                            }
+                            val feedContext = entity.feedContext
+                            val reqId = entity.reqId?.let(::FeedReqId)
 
                             push(
                                 when {
@@ -1258,32 +1268,11 @@ internal class OfflineTimelineRepository(
                                                     depth = 0,
                                                 ),
                                             ),
+                                            reason = reason,
+                                            feedContext = feedContext,
+                                            reqId = reqId,
                                         )
                                     }
-
-                                    repostedBy != null -> TimelineItem.Repost(
-                                        id = entity.id,
-                                        isMuted = isMuted,
-                                        post = post,
-                                        by = repostedBy,
-                                        at = entity.indexedAt,
-                                        threadGate = threadGate(post.uri),
-                                        appliedLabels = appliedLabels,
-                                        signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
-                                    )
-
-                                    entity.isPinned -> TimelineItem.Pinned(
-                                        id = entity.id,
-                                        isMuted = isMuted,
-                                        post = post,
-                                        threadGate = threadGate(post.uri),
-                                        appliedLabels = appliedLabels,
-                                        signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
-                                    )
 
                                     else -> TimelineItem.Single(
                                         id = entity.id,
@@ -1292,8 +1281,9 @@ internal class OfflineTimelineRepository(
                                         threadGate = threadGate(post.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
+                                        reason = reason,
+                                        feedContext = feedContext,
+                                        reqId = reqId,
                                     )
                                 },
                             )
