@@ -94,15 +94,8 @@ internal fun rememberCollectionAvatarArgs(
 }
 
 /**
- * Frosted beach glass: an opaque, weathered piece of glass lit from the top left.
- *
- * Continuous tones come from a few large radial gradients: the body glows from light to deep,
- * faint mottles give it an uneven, cloudy finish, the edges catch the light where the glass is
- * thinner, and a soft highlight polishes it. A fine dither in light and deep frosts the surface.
- *
- * Everything is seeded from [seed] in normalized coordinates, so the glass scales with its
- * bounds like a cropped image. Gradients are only rebuilt when the size changes, and the frost
- * is drawn in one call per color.
+ * Beach glass: an opaque, weathered piece of glass lit from the top left matching
+ * the design system's matte glass.
  */
 @Immutable
 internal class BeachGlassPainter(
