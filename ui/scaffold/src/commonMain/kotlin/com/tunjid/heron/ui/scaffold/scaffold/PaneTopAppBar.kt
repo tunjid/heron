@@ -112,6 +112,7 @@ import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
 import com.tunjid.heron.ui.verticalOffsetProgress
+import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.scaffold.generated.resources.Res
@@ -337,7 +338,9 @@ fun Modifier.renderHeaderInTransitionOverlay(
             paneState.pane == ThreePane.Primary &&
                 isTransitionActive &&
                 isActive &&
-                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
+                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled &&
+                paneState.adaptations.contains(Adaptation.Pop) &&
+                hasHeaderBlurOcclusion
         },
     )
 }

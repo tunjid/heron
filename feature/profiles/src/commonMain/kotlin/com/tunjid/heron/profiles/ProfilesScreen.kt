@@ -36,9 +36,9 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
@@ -52,8 +52,8 @@ internal fun ProfilesScreen(
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = modifier
-            .topAppBarBlur(
-                blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+            .headerBlur(
+                state = paneScaffoldState.rememberTopAppBarHeaderState(
                     topAppBarHeight = UiTokens.statusAndToolbarHeight,
                 ),
             )

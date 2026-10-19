@@ -61,9 +61,10 @@ import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderBlur
-import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderScrim
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.links
@@ -121,6 +122,10 @@ internal fun StandardPublicationScreen(
                             zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                         )
                         .fillMaxWidth()
+                        .pinnedHeaderScrim(
+                            state = collapsingHeaderState,
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        )
                         .offset {
                             IntOffset(
                                 x = 0,
@@ -177,12 +182,10 @@ internal fun StandardPublicationScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pinnedHeaderBlur(
-                            state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberPinnedHeaderBlurState(
+                        .headerBlur(
+                            state = paneScaffoldState.rememberPinnedHeaderState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
-                            scrimColor = MaterialTheme.colorScheme.surface,
                         ),
                 ) {
                     state.documentsTilingStateHolder?.let { holder ->

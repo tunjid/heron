@@ -139,23 +139,25 @@ class PaneScaffoldState(
     internal val hasHeaderBlurOcclusion: Boolean
         get() {
             val density = appScaffoldState.density
-            for (stateIndex in headerBlurStates.indices) {
-                val state = headerBlurStates[stateIndex]
+            for (stateIndex in headerStates.indices) {
+                val state = headerStates[stateIndex]
                 val progress = state.progress()
                 if (progress.isNaN() || progress <= 0f) continue
 
                 val height = state.height(density)
                 if (height <= 0f) continue
 
+                val top = state.top(density)
+                val bottom = top + height
                 for (boundsIndex in sharedElementTransitionBounds.indices) {
                     val bounds = sharedElementTransitionBounds[boundsIndex]
-                    if (bounds.top < height && bounds.bottom > 0f) return true
+                    if (bounds.top < bottom && bounds.bottom > top) return true
                 }
             }
             return false
         }
 
-    internal val headerBlurStates = mutableStateListOf<PaneHeaderBlurState>()
+    internal val headerStates = mutableStateListOf<PaneHeaderState>()
 
     internal val snackbarHostState = SnackbarHostState()
 

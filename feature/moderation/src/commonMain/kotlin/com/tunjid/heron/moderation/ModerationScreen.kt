@@ -58,8 +58,8 @@ import com.tunjid.heron.ui.scaffold.navigation.blocksDestination
 import com.tunjid.heron.ui.scaffold.navigation.mutesDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.moderation.generated.resources.Res
@@ -93,8 +93,8 @@ internal fun ModerationScreen(
     val mutedWordsSheetState = paneScaffoldState.rememberMutedWordsSheetState()
     LazyColumn(
         modifier = modifier
-            .topAppBarBlur(
-                blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+            .headerBlur(
+                state = paneScaffoldState.rememberTopAppBarHeaderState(
                     topAppBarHeight = UiTokens.statusAndToolbarHeight,
                 ),
             )
