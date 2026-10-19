@@ -56,6 +56,9 @@ internal class ImagePainter(
             null,
             is StubImage,
             -> Unit
+            is PaintedImage -> with(image.painter) {
+                draw(size = size)
+            }
             is CoilImage -> {
                 scaleAndAlignTo(
                     srcSize = image.size,
@@ -74,6 +77,7 @@ internal class ImagePainter(
         get() = when (val image = currentImage()) {
             is CoilImage -> image.size.toSize()
             null,
+            is PaintedImage,
             is StubImage,
             -> Size.Unspecified
         }
