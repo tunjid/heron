@@ -54,10 +54,10 @@ import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.Circle
-import com.tunjid.heron.ui.shapes.materialPill
+import com.tunjid.heron.ui.shapes.PebbleVertex
+import com.tunjid.heron.ui.shapes.pebble
 import com.tunjid.heron.ui.shapes.roundedPolygon
 import com.tunjid.heron.ui.shapes.roundedRectangle
-import com.tunjid.heron.ui.shapes.roundedStar
 import kotlin.time.Clock
 
 @Composable
@@ -214,31 +214,106 @@ fun EmbeddableRecordUri.collectionShape() = when (this) {
     is StandardPublicationUri -> DocumentCollectionShape
 }
 
+// A stone that swells to one side, like one left in a cove by the tide.
 internal val FeedGeneratorCollectionShape by lazy {
-    PolygonShape.roundedRectangle(percent = 0.6f)
+    PolygonShape.pebble(
+        vertices = listOf(
+            PebbleVertex(
+                angle = 175f,
+                radius = 1.013f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = -98f,
+                radius = 1.043f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = -15f,
+                radius = 1.027f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 36f,
+                radius = 1.022f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 102f,
+                radius = 0.99f,
+                cornerRadius = 1f,
+            ),
+        ),
+    )
 }
 
+// A rounded stone with two soft, chiseled facets.
 internal val ListCollectionShape by lazy {
-    PolygonShape.materialPill()
+    PolygonShape.pebble(
+        vertices = listOf(
+            PebbleVertex(
+                angle = -165f,
+                radius = 0.966f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = -74f,
+                radius = 1.01f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 25f,
+                radius = 0.995f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 100f,
+                radius = 0.969f,
+                cornerRadius = 1f,
+            ),
+        ),
+    )
 }
 
-// Matches MaterialShapes.Cookie9Sided.
+// A nearly round stone, worn smooth by the tide.
 internal val StarterPackCollectionShape by lazy {
-    PolygonShape.roundedStar(
-        numPoints = 9,
-        innerRadiusRatio = 0.8f,
-        roundingFraction = 0.5f,
-        rotation = -90f,
+    PolygonShape.pebble(
+        vertices = listOf(
+            PebbleVertex(
+                angle = -14f,
+                radius = 1f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 62f,
+                radius = 0.97f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 140f,
+                radius = 1.02f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 212f,
+                radius = 0.98f,
+                cornerRadius = 1f,
+            ),
+            PebbleVertex(
+                angle = 290f,
+                radius = 1f,
+                cornerRadius = 1f,
+            ),
+        ),
     )
 }
 
 internal val DocumentCollectionShape by lazy {
-    FeedGeneratorCollectionShape
+    PolygonShape.roundedRectangle(percent = 0.6f)
 }
 
-internal val RockSkyCollectionShape by lazy {
-    FeedGeneratorCollectionShape
-}
+internal val RockSkyCollectionShape
+    get() = DocumentCollectionShape
 
 internal val LabelerCollectionShape by lazy {
     PolygonShape.roundedPolygon(
