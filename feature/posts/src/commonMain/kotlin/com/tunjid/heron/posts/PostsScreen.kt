@@ -92,12 +92,12 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderBlur
-import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderBlurState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderScrim
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderState
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
@@ -173,6 +173,10 @@ internal fun PostsScreen(
                             zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                         )
                         .fillMaxWidth()
+                        .pinnedHeaderScrim(
+                            state = collapsingHeaderState,
+                            scrimColor = MaterialTheme.colorScheme.surface,
+                        )
                         .offset {
                             IntOffset(
                                 x = 0,
@@ -194,12 +198,10 @@ internal fun PostsScreen(
                 HorizontalPager(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pinnedHeaderBlur(
-                            state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberPinnedHeaderBlurState(
+                        .headerBlur(
+                            state = paneScaffoldState.rememberPinnedHeaderState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
-                            scrimColor = MaterialTheme.colorScheme.surface,
                         ),
                     state = pagerState,
                     key = { page ->
@@ -301,8 +303,8 @@ private fun PostsTimeline(
                         displayState.horizontalPadding(presentation),
                     ).value,
                 )
-                .topAppBarBlur(
-                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                .headerBlur(
+                    state = paneScaffoldState.rememberTopAppBarHeaderState(
                         topAppBarHeight = UiTokens.statusAndToolbarHeight,
                     ),
                 )

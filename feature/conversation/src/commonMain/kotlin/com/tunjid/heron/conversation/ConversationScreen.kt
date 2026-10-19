@@ -90,8 +90,8 @@ import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
 import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.text.MultilineStyledText
@@ -123,8 +123,8 @@ internal fun ConversationScreen(
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         modifier = modifier
-            .topAppBarBlur(
-                blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+            .headerBlur(
+                state = paneScaffoldState.rememberTopAppBarHeaderState(
                     topAppBarHeight = UiTokens.statusAndToolbarHeight,
                 ),
             )

@@ -74,9 +74,9 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderBlurState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -165,8 +165,8 @@ internal fun QuoteThreadScreen(
     ) {
         LazyColumn(
             modifier = Modifier
-                .topAppBarBlur(
-                    blurState = paneScaffoldState.rememberTopAppBarHeaderBlurState(
+                .headerBlur(
+                    state = paneScaffoldState.rememberTopAppBarHeaderState(
                         topAppBarHeight = UiTokens.statusAndToolbarHeight,
                     ),
                 )
