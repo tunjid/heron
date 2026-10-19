@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import com.tunjid.heron.data.core.types.GenericUri
@@ -42,6 +43,7 @@ import com.tunjid.heron.ui.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.ui.scaffold.notifications.NotificationAction
 import com.tunjid.heron.ui.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.ui.scaffold.scaffold.AppState.Companion.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS
+import com.tunjid.heron.ui.scaffold.ui.UiAction
 import com.tunjid.heron.ui.scaffold.ui.UiStateHolder
 import com.tunjid.heron.ui.scaffold.ui.isImmersive
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -119,6 +121,22 @@ class AppState internal constructor(
 
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
+
+    fun onSystemVerticalBarChanged(
+        edge: NavRailEdge?,
+        width: Double,
+        centerFromEdge: Double,
+    ) = uiStateHolder.accept(
+        UiAction.UpdateSystemVerticalBar(
+            systemVerticalBar = edge?.let {
+                SystemVerticalBar(
+                    edge = it,
+                    width = width.dp,
+                    centerFromEdge = centerFromEdge.dp,
+                )
+            },
+        ),
+    )
 
     fun onPushTokenRegistered(
         token: String,

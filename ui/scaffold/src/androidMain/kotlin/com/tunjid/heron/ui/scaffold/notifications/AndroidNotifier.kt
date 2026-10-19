@@ -188,6 +188,8 @@ private val Notification.channelId: String
         is Notification.Quoted -> "channel-quoted"
         is Notification.DocumentPublished -> "channel-standard-publications"
         is Notification.JoinedStarterPack,
+        is Notification.LikedFeedGenerator,
+        is Notification.ContactMatch,
         is Notification.SubscribedPost,
         is Notification.Verified,
         is Notification.Unverified,
@@ -207,6 +209,8 @@ private suspend fun Notification.channelName(): String =
         is Notification.Quoted -> getString(Res.string.notification_channel_quotes)
         is Notification.DocumentPublished -> getString(Res.string.notification_channel_standard_publications)
         is Notification.JoinedStarterPack,
+        is Notification.LikedFeedGenerator,
+        is Notification.ContactMatch,
         is Notification.SubscribedPost,
         is Notification.Verified,
         is Notification.Unverified,

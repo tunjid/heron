@@ -19,9 +19,7 @@ package com.tunjid.heron.list.di
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -50,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -274,8 +273,6 @@ internal fun Route(
         },
         topBar = {
             PoppableDestinationTopAppBar(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface),
                 title = {
                     TimelineTitle(
                         paneTransitionScope = this,
@@ -341,6 +338,9 @@ internal fun Route(
                     },
                 )
             }
+        },
+        navigationRail = {
+            PaneNavigationRail()
         },
         content = {
             ListScreen(

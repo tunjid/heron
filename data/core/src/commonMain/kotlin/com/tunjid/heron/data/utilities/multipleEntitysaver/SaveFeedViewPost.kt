@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
+import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postView
@@ -83,6 +84,12 @@ internal fun MultipleEntitySaver.add(
             viewingProfileId = viewingProfileId,
             postView = feedView.post,
         )
+        postThreadDetailsEntityOrNull(
+            postUri = PostUri(feedView.post.uri.atUri),
+            postIndex = feedView.opThreadPostIndex,
+            postCount = feedView.opThreadPostCount,
+        )?.let(::add)
+
         feedView.reason?.profileEntity()?.let(::add)
 
         feedView.reply?.let {
@@ -114,6 +121,15 @@ internal fun MultipleEntitySaver.add(
             }
 
             it.grandparentAuthor?.profileEntity()?.let(::add)
+
+            // The thread root is only ever served as a feed item's root or parent, which carry
+            // no OP thread position. A post at index 2 replies directly to the root, so its
+            // parent is the root at index 1 of the same OP thread.
+            if (feedView.opThreadPostIndex == 2L) postThreadDetailsEntityOrNull(
+                postUri = parentPostUri,
+                postIndex = 1L,
+                postCount = feedView.opThreadPostCount,
+            )?.let(::add)
 
             add(
                 PostThreadEntity(

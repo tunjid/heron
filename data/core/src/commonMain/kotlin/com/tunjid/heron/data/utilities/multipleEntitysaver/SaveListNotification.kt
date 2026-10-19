@@ -16,16 +16,19 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import app.bsky.feed.GeneratorView
 import app.bsky.feed.Like
 import app.bsky.feed.PostView
 import app.bsky.feed.Repost
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsNotificationReason
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import sh.christian.ozone.api.AtUri
@@ -34,8 +37,12 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     listNotificationsNotification: List<ListNotificationsNotification>,
     associatedPosts: List<PostView>,
+    associatedFeedGenerators: List<GeneratorView>,
 ) {
     viewingProfileId ?: return
+    associatedFeedGenerators.forEach { generatorView ->
+        add(feedGeneratorView = generatorView)
+    }
     val postUris = mutableSetOf<PostUri>()
     associatedPosts.forEach { postView ->
         add(
@@ -70,8 +77,7 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsNotificationReason.LikeViaRepost -> Notification.Reason.LikeViaRepost
                     ListNotificationsNotificationReason.RepostViaRepost -> Notification.Reason.RepostViaRepost
                     ListNotificationsNotificationReason.SubscribedPost -> Notification.Reason.SubscribedPost
-                    // This feature isn't supported
-                    ListNotificationsNotificationReason.ContactMatch -> Notification.Reason.Unknown
+                    ListNotificationsNotificationReason.ContactMatch -> Notification.Reason.ContactMatch
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
                 associatedPostUri = notification.associatedPostUri()
@@ -87,8 +93,9 @@ internal fun MultipleEntitySaver.add(
 
 internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (reason) {
     is ListNotificationsNotificationReason.Unknown -> null
-    is ListNotificationsNotificationReason.Like -> reasonSubject
-    is ListNotificationsNotificationReason.Repost -> reasonSubject
+    // Likes and reposts may be of non post records, like feed generators
+    is ListNotificationsNotificationReason.Like -> reasonSubject?.takeIf(AtUri::isPostUri)
+    is ListNotificationsNotificationReason.Repost -> reasonSubject?.takeIf(AtUri::isPostUri)
     is ListNotificationsNotificationReason.Mention -> uri
     is ListNotificationsNotificationReason.Reply -> uri
     is ListNotificationsNotificationReason.Quote -> uri
@@ -101,3 +108,14 @@ internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (r
     ListNotificationsNotificationReason.SubscribedPost -> uri
     ListNotificationsNotificationReason.ContactMatch -> null
 }
+
+internal fun ListNotificationsNotification.associatedFeedGeneratorUri(): AtUri? = when (reason) {
+    ListNotificationsNotificationReason.Like -> reasonSubject?.takeIf(AtUri::isFeedGeneratorUri)
+    else -> null
+}
+
+private fun AtUri.isPostUri() =
+    atUri.asRecordUriOrNull() is PostUri
+
+private fun AtUri.isFeedGeneratorUri() =
+    atUri.asRecordUriOrNull() is FeedGeneratorUri

@@ -170,7 +170,6 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
-import com.tunjid.heron.ui.pinnedHeaderBlur
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
@@ -189,8 +188,10 @@ import com.tunjid.heron.ui.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.rememberHeaderBlurState
+import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderScrim
+import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
@@ -324,11 +325,15 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 modifier = Modifier
+                    .fillMaxWidth()
                     .renderHeaderInTransitionOverlay(
                         paneScaffoldState = paneScaffoldState,
                         zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                     )
-                    .fillMaxWidth(),
+                    .pinnedHeaderScrim(
+                        state = collapsingHeaderState,
+                        scrimColor = MaterialTheme.colorScheme.surface,
+                    ),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
@@ -422,12 +427,10 @@ internal fun ProfileScreen(
             ) {
                 HorizontalPager(
                     modifier = Modifier
-                        .pinnedHeaderBlur(
-                            state = collapsingHeaderState,
-                            blurState = paneScaffoldState.rememberHeaderBlurState(
+                        .headerBlur(
+                            state = paneScaffoldState.rememberPinnedHeaderState(
                                 pinnedCollapsingHeaderState = collapsingHeaderState,
                             ),
-                            scrimColor = MaterialTheme.colorScheme.surface,
                         )
                         .paneClip(),
                     state = pagerState,

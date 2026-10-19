@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
+import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.posts.di.Route as PostsRoute
 import com.tunjid.heron.ui.preview.RoutePreview
 import com.tunjid.mutator.coroutines.asNoOpActionSuspendingStateMutator
@@ -33,7 +34,9 @@ internal fun PostsPreview() {
         route = routeOf(path = "/saved"),
         routeStateHolder = remember(scope) {
             ActualPostsViewModel(
-                mutator = State.Immutable().asNoOpActionSuspendingStateMutator(),
+                mutator = State.Immutable(
+                    request = PostsRequest.Saved,
+                ).asNoOpActionSuspendingStateMutator(),
                 scope = scope,
             )
         },

@@ -1,0 +1,82 @@
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+package com.tunjid.heron.notifications.ui
+
+import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.icons.HeronIcons
+import com.tunjid.heron.ui.icons.regular.Notifications
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.notifications_unknown_notification
+import kotlin.time.Instant
+import org.jetbrains.compose.resources.stringResource
+
+/**
+ * A notification Heron does not know how to display. It is still shown so the
+ * notifications list matches the unread count reported by the appview.
+ */
+@Composable
+fun UnknownRow(
+    modifier: Modifier = Modifier,
+    paneTransitionScope: PaneTransitionScope,
+    now: Instant,
+    isRead: Boolean,
+    notification: Notification.Unknown,
+    onProfileClicked: (Notification, Profile) -> Unit,
+) {
+    NotificationAggregateScaffold(
+        paneTransitionScope = paneTransitionScope,
+        modifier = modifier
+            .rootShapedClickable {
+                onProfileClicked(notification, notification.author)
+            },
+        isRead = isRead,
+        notification = notification,
+        profiles = listOf(notification.author),
+        onProfileClicked = onProfileClicked,
+        icon = {
+            Icon(
+                painter = rememberVectorPainter(HeronIcons.Regular.Notifications),
+                tint = MaterialTheme.colorScheme.outline,
+                contentDescription = stringResource(CommonStrings.notifications_unknown_notification),
+            )
+        },
+        content = {
+            Row(horizontalArrangement = spacedBy(8.dp)) {
+                Text(
+                    modifier = Modifier.alignByBaseline(),
+                    text = stringResource(CommonStrings.notifications_unknown_notification),
+                )
+                TimeDelta(
+                    modifier = Modifier.alignByBaseline(),
+                    delta = now - notification.indexedAt,
+                )
+            }
+        },
+    )
+}

@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,8 +45,8 @@ import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.media.images.AsyncImage
-import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.ItemSelection
@@ -109,7 +108,6 @@ fun TimelineTitle(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val avatar = timeline.avatar
         PaneStickySharedElement(
             boundsTransform = sharedElementBoundsTransform,
             modifier = Modifier
@@ -122,14 +120,11 @@ fun TimelineTitle(
             AsyncImage(
                 modifier = Modifier
                     .fillParentAxisIfFixedOrWrap(),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = timeline.shape,
-                    )
-                },
+                args = rememberCollectionAvatarArgs(
+                    avatar = timeline.avatar,
+                    collectionUri = timeline.collectionUri,
+                    shape = timeline.shape,
+                ),
             )
         }
 
@@ -287,7 +282,7 @@ private val Timeline.Home.Status.icon: ImageVector
         Timeline.Home.Status.None -> HeronIcons.Regular.BookmarkAdd
     }
 
-private val Timeline.avatar: ImageUri
+private val Timeline.avatar: ImageUri?
     get() = when (this) {
         is Timeline.Home.Feed -> feedGenerator.avatar
         is Timeline.Home.List -> feedList.avatar
@@ -296,8 +291,20 @@ private val Timeline.avatar: ImageUri
         is Timeline.Search,
         is Timeline.BlackSkyTopic,
         is Timeline.Profile,
-        -> BlueskyClouds
-    } ?: BlueskyClouds
+        -> null
+    }
+
+private val Timeline.collectionUri: RecordUri?
+    get() = when (this) {
+        is Timeline.Home.Feed -> feedGenerator.uri
+        is Timeline.Home.List -> feedList.uri
+        is Timeline.StarterPack -> starterPack.uri
+        is Timeline.Home.Following,
+        is Timeline.Search,
+        is Timeline.BlackSkyTopic,
+        is Timeline.Profile,
+        -> null
+    }
 
 private fun Timeline.avatarSharedElementKey(
     sharedElementPrefix: String?,

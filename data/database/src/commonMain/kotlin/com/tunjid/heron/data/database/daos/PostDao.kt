@@ -34,6 +34,7 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
+import com.tunjid.heron.data.database.entities.PostThreadDetailsEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.partial
@@ -210,7 +211,25 @@ interface PostDao {
             OFFSET :offset
         """,
     )
-    fun quotedPostUriAndEmbeddedRecordUris(
+    fun quotedPostLatestUriAndEmbeddedRecordUris(
+        quotedPostUri: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PostEntity.UriWithEmbeddedRecordUri>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT uri, embeddedRecordUri FROM posts
+            INNER JOIN postPosts AS postPosts
+                ON posts.uri = postPosts.postUri
+	        WHERE postPosts.embeddedPostUri = :quotedPostUri
+            ORDER BY COALESCE(posts.likeCount, -1) DESC, posts.indexedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun quotedPostTopUriAndEmbeddedRecordUris(
         quotedPostUri: String,
         limit: Long,
         offset: Long,
@@ -335,6 +354,11 @@ interface PostDao {
     @Upsert
     suspend fun upsertPostThreads(
         entities: List<PostThreadEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertPostThreadDetails(
+        entities: List<PostThreadDetailsEntity>,
     )
 
     @Transaction

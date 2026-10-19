@@ -33,6 +33,10 @@ interface UserDataRepository {
         refreshOnLaunch: Boolean,
     ): Outcome
 
+    suspend fun setResetNavigationOnLaunch(
+        resetOnLaunch: Boolean,
+    ): Outcome
+
     suspend fun setCurrentThemeOrdinal(
         themeOrdinal: Int,
     ): Outcome
@@ -47,6 +51,10 @@ interface UserDataRepository {
 
     suspend fun setBottomNavConfigOrdinal(
         bottomNavConfigOrdinal: Int,
+    ): Outcome
+
+    suspend fun setBlurredHeaders(
+        blurredHeaders: Boolean,
     ): Outcome
 
     suspend fun setAutoPlayTimelineVideos(
@@ -122,6 +130,12 @@ internal class OfflineUserDataRepository(
         copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
     }
 
+    override suspend fun setResetNavigationOnLaunch(
+        resetOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(resetNavigationOnLaunch = resetOnLaunch))
+    }
+
     override suspend fun setCurrentThemeOrdinal(
         themeOrdinal: Int,
     ): Outcome = updatePreferences {
@@ -144,6 +158,12 @@ internal class OfflineUserDataRepository(
         bottomNavConfigOrdinal: Int,
     ): Outcome = updatePreferences {
         copy(local = local.copy(bottomNavConfigOrdinal = bottomNavConfigOrdinal))
+    }
+
+    override suspend fun setBlurredHeaders(
+        blurredHeaders: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(useBlurredHeaders = blurredHeaders))
     }
 
     override suspend fun setAutoPlayTimelineVideos(

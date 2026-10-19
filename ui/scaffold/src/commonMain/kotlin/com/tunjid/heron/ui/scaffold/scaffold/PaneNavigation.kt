@@ -25,7 +25,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,6 +80,19 @@ fun PaneScaffoldState.PaneNavigationBar(
                 )
             }
         },
+    )
+}
+
+@Composable
+fun PaneScaffoldState.PaneNavigationRailSpacer(
+    modifier: Modifier = Modifier,
+) {
+    val systemVerticalBar = appScaffoldState.staticStates.uiState.systemVerticalBar
+    Spacer(
+        modifier = modifier.width(
+            if (canShowNavigationRail && systemVerticalBar != null) systemVerticalBar.width
+            else 0.dp,
+        ),
     )
 }
 

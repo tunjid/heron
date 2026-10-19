@@ -63,6 +63,7 @@ import com.tunjid.heron.ui.scaffold.scaffold.AppLogo
 import com.tunjid.heron.ui.scaffold.scaffold.LogoPresentation
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRailSpacer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
@@ -234,6 +235,9 @@ internal fun Route(
                     stateHolder.accept(state.createSessionAction())
                 },
             )
+        },
+        navigationRail = {
+            PaneNavigationRailSpacer()
         },
         content = { paddingValues ->
             SignInScreen(

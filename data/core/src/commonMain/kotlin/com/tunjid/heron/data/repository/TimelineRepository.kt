@@ -35,6 +35,9 @@ import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.SearchPostsV2Sort
 import app.bsky.feed.SendInteractionsRequest
+import app.bsky.unspecced.GetPostThreadV2QueryParams
+import app.bsky.unspecced.GetPostThreadV2Sort
+import app.bsky.unspecced.GetPostThreadV2ThreadItemValueUnion
 import app.bsky.unspecced.GetTopicFeedQueryParams
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
@@ -628,6 +631,14 @@ internal class OfflineTimelineRepository(
                 )
             }
             .withRefresh {
+                val savedThreadV2 = refreshedPostThreadV2(
+                    postUri = postUri,
+                    order = order,
+                    signedInProfileId = signedInProfileId,
+                )
+                // getPostThreadV2 is unspecced and may break, or be unsupported by the app view.
+                if (savedThreadV2) return@withRefresh
+
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     getPostThread(
                         GetPostThreadQueryParams(
@@ -1220,7 +1231,17 @@ internal class OfflineTimelineRepository(
                             isMuted = isMuted || (replyRoot != null && isMuted(replyRoot))
                             if (hideMuted && isMuted) return@block
 
-                            val repostedBy = entity.reposter?.let(::profile)
+                            val reason = when {
+                                entity.isPinned -> TimelineItem.Reason.Pinned
+                                else -> entity.reposter?.let(::profile)?.let { repostedBy ->
+                                    TimelineItem.Reason.Repost(
+                                        by = repostedBy,
+                                        at = entity.indexedAt,
+                                    )
+                                }
+                            }
+                            val feedContext = entity.feedContext
+                            val reqId = entity.reqId?.let(::FeedReqId)
 
                             push(
                                 when {
@@ -1247,32 +1268,11 @@ internal class OfflineTimelineRepository(
                                                     depth = 0,
                                                 ),
                                             ),
+                                            reason = reason,
+                                            feedContext = feedContext,
+                                            reqId = reqId,
                                         )
                                     }
-
-                                    repostedBy != null -> TimelineItem.Repost(
-                                        id = entity.id,
-                                        isMuted = isMuted,
-                                        post = post,
-                                        by = repostedBy,
-                                        at = entity.indexedAt,
-                                        threadGate = threadGate(post.uri),
-                                        appliedLabels = appliedLabels,
-                                        signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
-                                    )
-
-                                    entity.isPinned -> TimelineItem.Pinned(
-                                        id = entity.id,
-                                        isMuted = isMuted,
-                                        post = post,
-                                        threadGate = threadGate(post.uri),
-                                        appliedLabels = appliedLabels,
-                                        signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
-                                    )
 
                                     else -> TimelineItem.Single(
                                         id = entity.id,
@@ -1281,8 +1281,9 @@ internal class OfflineTimelineRepository(
                                         threadGate = threadGate(post.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
-                                        feedContext = entity.feedContext,
-                                        reqId = entity.reqId?.let(::FeedReqId),
+                                        reason = reason,
+                                        feedContext = feedContext,
+                                        reqId = reqId,
                                     )
                                 },
                             )
@@ -1731,6 +1732,41 @@ internal class OfflineTimelineRepository(
         }
     }
 
+    private suspend fun refreshedPostThreadV2(
+        postUri: PostUri,
+        order: TimelineItem.Threaded.Order,
+        signedInProfileId: ProfileId?,
+    ): Boolean {
+        val threadItems = runCatchingUnlessCancelled {
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                getPostThreadV2Unspecced(
+                    GetPostThreadV2QueryParams(
+                        anchor = AtUri(postUri.uri),
+                        sort = order.postThreadV2Sort,
+                    ),
+                )
+            }
+                .getOrThrow()
+                .thread
+        }
+            .getOrNull()
+            // A response without the anchor as a post suggests the response shape changed.
+            ?.takeIf { items ->
+                items.any { item ->
+                    item.depth == 0L && item.value is GetPostThreadV2ThreadItemValueUnion.Post
+                }
+            }
+            ?: return false
+
+        multipleEntitySaverProvider.saveInTransaction {
+            add(
+                viewingProfileId = signedInProfileId,
+                threadItems = threadItems,
+            )
+        }
+        return true
+    }
+
     private fun RecordResolver.TimelineItemCreationContext.appendAncestorOrAnchorItem(
         thread: ThreadedPostEntity,
     ) = when (thread.generation) {
@@ -1787,6 +1823,13 @@ private fun SavedState.timelineInfo(): Pair<List<TimelinePreference>, Boolean> {
 
 private val TimelineItem.Threaded.Linear.nextGeneration
     get() = generation?.let { it + nodes.size }
+
+private val TimelineItem.Threaded.Order.postThreadV2Sort: GetPostThreadV2Sort
+    get() = when (this) {
+        TimelineItem.Threaded.Order.Oldest -> GetPostThreadV2Sort.Oldest
+        TimelineItem.Threaded.Order.Newest -> GetPostThreadV2Sort.Newest
+        TimelineItem.Threaded.Order.Top -> GetPostThreadV2Sort.Top
+    }
 
 private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Presentation =
     when (this?.preferredPresentation) {

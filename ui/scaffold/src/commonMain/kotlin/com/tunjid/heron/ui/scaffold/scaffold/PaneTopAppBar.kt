@@ -69,7 +69,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -101,7 +100,6 @@ import com.tunjid.heron.ui.icons.regular.CloudOff
 import com.tunjid.heron.ui.icons.regular.Error
 import com.tunjid.heron.ui.icons.regular.PriorityHigh
 import com.tunjid.heron.ui.modifiers.blur
-import com.tunjid.heron.ui.modifiers.headerBlur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.shapedCombinedClickable
@@ -114,6 +112,7 @@ import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.text.EmphasizedSingleLineOutlinedText
 import com.tunjid.heron.ui.text.message
 import com.tunjid.heron.ui.verticalOffsetProgress
+import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.scaffold.generated.resources.Res
@@ -339,7 +338,9 @@ fun Modifier.renderHeaderInTransitionOverlay(
             paneState.pane == ThreePane.Primary &&
                 isTransitionActive &&
                 isActive &&
-                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled
+                navigationEventStatus !is NavigationEventStatus.Completed.Cancelled &&
+                paneState.adaptations.contains(Adaptation.Pop) &&
+                hasHeaderBlurOcclusion
         },
     )
 }
@@ -354,23 +355,6 @@ fun PaneScaffoldState.offsetTopAppBarBy(
     delta: Float,
 ) = topAppBarNestedScrollConnection.displaceVerticallyBy(
     delta = delta,
-)
-
-@Composable
-fun Modifier.topAppBarBlur(
-    paneScaffoldState: PaneScaffoldState,
-    topAppBarHeight: Dp,
-    isOffsetByScroll: Boolean = false,
-): Modifier = headerBlur(
-    state = paneScaffoldState.rememberHeaderBlurState(
-        height = {
-            when {
-                isOffsetByScroll -> topAppBarHeight.toPx() + paneScaffoldState.topAppBarOffset().y
-                else -> topAppBarHeight.toPx()
-            }
-        },
-        progress = paneScaffoldState::topAppBarTransparencyFactor,
-    ),
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

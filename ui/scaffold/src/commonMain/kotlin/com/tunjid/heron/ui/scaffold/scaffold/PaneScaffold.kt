@@ -30,6 +30,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -59,7 +60,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -74,10 +74,8 @@ import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.PinnedCollapsingHeaderState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.withDim
-import com.tunjid.heron.ui.modifiers.HeaderBlurState
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -85,6 +83,7 @@ import com.tunjid.heron.ui.scaffold.identity.bottomNavConfig
 import com.tunjid.heron.ui.scaffold.identity.isSignedIn
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
+import com.tunjid.heron.ui.scaffold.identity.prefersBlurredHeaders
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -141,23 +140,25 @@ class PaneScaffoldState(
     internal val hasHeaderBlurOcclusion: Boolean
         get() {
             val density = appScaffoldState.density
-            for (stateIndex in headerBlurStates.indices) {
-                val state = headerBlurStates[stateIndex]
+            for (stateIndex in headerStates.indices) {
+                val state = headerStates[stateIndex]
                 val progress = state.progress()
                 if (progress.isNaN() || progress <= 0f) continue
 
                 val height = state.height(density)
                 if (height <= 0f) continue
 
+                val top = state.top(density)
+                val bottom = top + height
                 for (boundsIndex in sharedElementTransitionBounds.indices) {
                     val bounds = sharedElementTransitionBounds[boundsIndex]
-                    if (bounds.top < height && bounds.bottom > 0f) return true
+                    if (bounds.top < bottom && bounds.bottom > top) return true
                 }
             }
             return false
         }
 
-    internal val headerBlurStates = mutableStateListOf<HeaderBlurState>()
+    internal val headerStates = mutableStateListOf<PaneHeaderState>()
 
     internal val snackbarHostState = SnackbarHostState()
 
@@ -175,6 +176,9 @@ class PaneScaffoldState(
     internal val bottomAlignsNavigationRail: Boolean
         get() = appScaffoldState.bottomAlignsNavigationRail
 
+    internal val systemVerticalBarCenterFromEdge: Dp?
+        get() = appScaffoldState.staticStates.uiState.systemVerticalBar?.centerFromEdge
+
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
         get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
@@ -186,6 +190,9 @@ class PaneScaffoldState(
 
     val prefersCompactBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersCompactBottomNav
+
+    val prefersBlurredHeaders
+        get() = appScaffoldState.staticStates.identityState.prefersBlurredHeaders
 
     val prefersAutoHidingBottomNav
         get() = appScaffoldState.staticStates.identityState.prefersAutoHidingBottomNav
@@ -264,43 +271,6 @@ class PaneScaffoldState(
         }
     }
 }
-
-@Composable
-fun PaneScaffoldState.rememberHeaderBlurState(
-    height: Density.() -> Float,
-    progress: () -> Float,
-): HeaderBlurState {
-    val state = remember(this) {
-        HeaderBlurState(
-            radius = {
-                16.dp * headerBlurStrength.value
-            },
-            fade = 24.dp,
-            height = height,
-            progress = progress,
-        )
-    }
-    state.height = height
-    state.progress = progress
-
-    DisposableEffect(this, state) {
-        headerBlurStates.add(state)
-        onDispose { headerBlurStates.remove(state) }
-    }
-    return state
-}
-
-/**
- * Remembers a [HeaderBlurState] for the part of the body of a `CollapsingHeaderLayout` that has
- * scrolled behind the pinned header of [pinnedCollapsingHeaderState].
- */
-@Composable
-fun PaneScaffoldState.rememberHeaderBlurState(
-    pinnedCollapsingHeaderState: PinnedCollapsingHeaderState,
-): HeaderBlurState = rememberHeaderBlurState(
-    height = { pinnedCollapsingHeaderState.bodyOverlap },
-    progress = pinnedCollapsingHeaderState::bodyOverlapFraction,
-)
 
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
@@ -420,6 +390,7 @@ fun PaneScaffoldState.PaneScaffold(
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
+        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -582,9 +553,15 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
+    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    // The rail covers the window insets on its edge, so the content beside it doesn't pad for them
+    val railInsets = when (railEdge) {
+        NavRailEdge.Start -> PaddingValues.Absolute(left = railWidth)
+        NavRailEdge.End -> PaddingValues.Absolute(right = railWidth)
+    }
     Row(
         modifier = modifier,
         horizontalArrangement = railEdge,
@@ -600,6 +577,7 @@ private fun PaneNavigationRailScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .consumeWindowInsets(railInsets)
                     .zIndex(1f),
                 content = {
                     content()

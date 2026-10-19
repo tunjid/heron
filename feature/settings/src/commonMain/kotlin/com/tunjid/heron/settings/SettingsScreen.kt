@@ -110,6 +110,9 @@ internal fun SettingsScreen(
                             setBottomNavConfigOrdinal = {
                                 actions(Action.SetBottomNavConfigOrdinal(it))
                             },
+                            setBlurredHeaders = {
+                                actions(Action.SetBlurredHeaders(it))
+                            },
                         )
                     }
                 }
@@ -157,6 +160,9 @@ private fun MainSection(
                 signedInProfilePreferences = signedInProfilePreferences,
                 setRefreshHomeTimelineOnLaunch = {
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
+                },
+                setResetNavigationOnLaunch = {
+                    actions(Action.SetResetNavigationOnLaunch(it))
                 },
                 setAutoplayTimelineVideos = {
                     actions(Action.SetAutoPlayTimelineVideos(it))

@@ -46,6 +46,7 @@ import heron.feature.settings.generated.resources.theme_green
 import heron.feature.settings.generated.resources.theme_pied
 import heron.feature.settings.generated.resources.theme_reddish
 import heron.feature.settings.generated.resources.theme_tricolored
+import heron.feature.settings.generated.resources.use_blurred_headers
 import heron.feature.settings.generated.resources.use_compact_navigation
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -57,6 +58,7 @@ fun AppearanceSection(
     setDarkThemeConfigOrdinal: (Int) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
     setBottomNavConfigOrdinal: (Int) -> Unit,
+    setBlurredHeaders: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -120,6 +122,15 @@ fun AppearanceSection(
         enabled = true,
         checked = signedInProfilePreferences.local.useCompactNavigation,
         onCheckedChange = setCompactNavigation,
+    )
+
+    SettingsToggleItem(
+        modifier = Modifier
+            .fillMaxWidth(),
+        text = stringResource(Res.string.use_blurred_headers),
+        enabled = true,
+        checked = signedInProfilePreferences.local.useBlurredHeaders,
+        onCheckedChange = setBlurredHeaders,
     )
 }
 

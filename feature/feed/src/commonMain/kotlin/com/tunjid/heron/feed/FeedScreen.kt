@@ -81,8 +81,9 @@ import com.tunjid.heron.ui.scaffold.navigation.recordDestination
 import com.tunjid.heron.ui.scaffold.navigation.signInDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavVisibleInset
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.topAppBarOffset
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.mutator.compose.produceStateWithLifecycle
@@ -242,9 +243,10 @@ private fun FeedTimeline(
         LookaheadScope {
             LazyVerticalStaggeredGrid(
                 modifier = Modifier
-                    .topAppBarBlur(
-                        paneScaffoldState = paneScaffoldState,
-                        topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    .headerBlur(
+                        state = paneScaffoldState.rememberTopAppBarHeaderState(
+                            topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                        ),
                     )
                     .onDominantVideoChange(
                         topLeftInset = {

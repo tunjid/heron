@@ -76,6 +76,9 @@ internal class CoilImageLoader private constructor(
         request: ImageRequest,
         size: IntSize,
     ): Image? {
+        if (request is ImageRequest.Painted) return PaintedImage(
+            painter = request.painter,
+        )
         val coilImageLoader = SingletonImageLoader.get(platformContext)
         val coilRequest = CoilImageRequest.Builder(platformContext).apply {
             size(

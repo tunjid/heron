@@ -329,6 +329,14 @@ internal fun ReplyRefParentUnion.postViewerStatisticsEntity(
     -> null
 }
 
+internal fun PostView.replyParentPostUri(): PostUri? =
+    record.safeDecodeAs<BskyPost>()
+        ?.reply
+        ?.parent
+        ?.uri
+        ?.atUri
+        ?.let(::PostUri)
+
 internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     try {
         val bskyPost = decodeAs<BskyPost>()

@@ -80,8 +80,9 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -220,13 +221,14 @@ internal fun GeneralSearchResults(
             modifier = Modifier
                 .zIndex(0f)
                 .nestedScroll(tabsOffsetNestedScrollConnection)
-                .topAppBarBlur(
-                    paneScaffoldState = paneScaffoldState,
-                    topAppBarHeight = when {
-                        state.query.isRoot -> topClearance + UiTokens.tabsHeight
-                        else -> topClearance
-                    },
-                    isOffsetByScroll = state.query.isRoot,
+                .headerBlur(
+                    state = paneScaffoldState.rememberTopAppBarHeaderState(
+                        topAppBarHeight = when {
+                            state.query.isRoot -> topClearance + UiTokens.tabsHeight
+                            else -> topClearance
+                        },
+                        isOffsetByScroll = state.query.isRoot,
+                    ),
                 )
                 .clip(
                     remember {

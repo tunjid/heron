@@ -30,6 +30,9 @@ class FakeUserDataRepository : UserDataRepository {
     override suspend fun setRefreshedHomeTimelineOnLaunch(refreshOnLaunch: Boolean): Outcome =
         Outcome.Success
 
+    override suspend fun setResetNavigationOnLaunch(resetOnLaunch: Boolean): Outcome =
+        Outcome.Success
+
     override suspend fun setCurrentThemeOrdinal(themeOrdinal: Int): Outcome = Outcome.Success
 
     override suspend fun setDarkThemeConfigOrdinal(darkThemeConfigOrdinal: Int): Outcome =
@@ -39,6 +42,9 @@ class FakeUserDataRepository : UserDataRepository {
         Outcome.Success
 
     override suspend fun setBottomNavConfigOrdinal(bottomNavConfigOrdinal: Int): Outcome =
+        Outcome.Success
+
+    override suspend fun setBlurredHeaders(blurredHeaders: Boolean): Outcome =
         Outcome.Success
 
     override suspend fun setAutoPlayTimelineVideos(autoPlayTimelineVideos: Boolean): Outcome =

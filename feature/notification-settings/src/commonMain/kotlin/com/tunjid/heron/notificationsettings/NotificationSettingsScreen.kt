@@ -38,7 +38,8 @@ import com.tunjid.heron.notificationsettings.ui.SettingsToggleItem
 import com.tunjid.heron.notificationsettings.ui.toNotificationSettingItems
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import heron.feature.notification_settings.generated.resources.Res
 import heron.feature.notification_settings.generated.resources.everyone
@@ -66,9 +67,10 @@ internal fun NotificationSettingsScreen(
 
     LazyColumn(
         modifier = modifier
-            .topAppBarBlur(
-                paneScaffoldState = paneScaffoldState,
-                topAppBarHeight = UiTokens.statusAndToolbarHeight,
+            .headerBlur(
+                state = paneScaffoldState.rememberTopAppBarHeaderState(
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                ),
             )
             .fillMaxWidth(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(

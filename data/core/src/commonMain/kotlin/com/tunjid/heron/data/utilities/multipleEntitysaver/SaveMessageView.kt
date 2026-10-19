@@ -43,6 +43,7 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
+import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
 import com.tunjid.heron.data.network.models.toLinkOrNull
 
 internal fun MultipleEntitySaver.add(
@@ -183,6 +184,11 @@ private fun MultipleEntitySaver.add(
         viewingProfileId = viewingProfileId,
         postView = postView,
     )
+    postThreadDetailsEntityOrNull(
+        postUri = postView.uri.atUri.let(::PostUri),
+        postIndex = record.value.opThreadPostIndex,
+        postCount = record.value.opThreadPostCount,
+    )?.let(::add)
     add(
         entity = MessagePostEntity(
             messageId = messageId,

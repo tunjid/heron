@@ -117,6 +117,10 @@ sealed class Action(val key: String) {
         val refreshHomeTimelinesOnLaunch: Boolean,
     ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
+    data class SetResetNavigationOnLaunch(
+        val resetNavigationOnLaunch: Boolean,
+    ) : Action(key = "SetResetNavigationOnLaunch")
+
     data class SetAutoPlayTimelineVideos(
         val autoPlayTimelineVideos: Boolean,
     ) : Action(key = "SetAutoPlayTimelineVideos")
@@ -140,6 +144,10 @@ sealed class Action(val key: String) {
     data class SetBottomNavConfigOrdinal(
         val bottomNavConfigOrdinal: Int,
     ) : Action(key = "SetBottomNavConfigOrdinal")
+
+    data class SetBlurredHeaders(
+        val blurredHeaders: Boolean,
+    ) : Action(key = "SetBlurredHeaders")
 
     data class SetShowPostEngagementMetrics(
         val showPostEngagementMetrics: Boolean,

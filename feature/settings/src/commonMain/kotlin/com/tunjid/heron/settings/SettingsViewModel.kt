@@ -126,6 +126,10 @@ class ActualSettingsViewModel(
                             userDataRepository = userDataRepository,
                         )
 
+                        is Action.SetResetNavigationOnLaunch -> action.flow.launchResetNavigationOnLaunchMutations(
+                            userDataRepository = userDataRepository,
+                        )
+
                         is Action.SetAutoPlayTimelineVideos -> action.flow.launchTimelineVideoAutoPlayMutations(
                             userDataRepository = userDataRepository,
                         )
@@ -147,6 +151,10 @@ class ActualSettingsViewModel(
                         )
 
                         is Action.SetBottomNavConfigOrdinal -> action.flow.launchSetBottomNavConfigOrdinal(
+                            userDataRepository = userDataRepository,
+                        )
+
+                        is Action.SetBlurredHeaders -> action.flow.launchToggleBlurredHeaders(
                             userDataRepository = userDataRepository,
                         )
 
@@ -332,6 +340,13 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.launchHomeTimelineRefre
 }
 
 context(productionScope: CoroutineScope)
+private fun Flow<Action.SetResetNavigationOnLaunch>.launchResetNavigationOnLaunchMutations(
+    userDataRepository: UserDataRepository,
+) = launchedCollect { (resetOnLaunch) ->
+    userDataRepository.setResetNavigationOnLaunch(resetOnLaunch)
+}
+
+context(productionScope: CoroutineScope)
 private fun Flow<Action.SetAutoPlayTimelineVideos>.launchTimelineVideoAutoPlayMutations(
     userDataRepository: UserDataRepository,
 ) = launchedCollect { (autoPlayTimelineVideos) ->
@@ -371,6 +386,13 @@ private fun Flow<Action.SetBottomNavConfigOrdinal>.launchSetBottomNavConfigOrdin
     userDataRepository: UserDataRepository,
 ) = launchedCollect { (bottomNavConfigOrdinal) ->
     userDataRepository.setBottomNavConfigOrdinal(bottomNavConfigOrdinal)
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.SetBlurredHeaders>.launchToggleBlurredHeaders(
+    userDataRepository: UserDataRepository,
+) = launchedCollect { (blurredHeaders) ->
+    userDataRepository.setBlurredHeaders(blurredHeaders)
 }
 
 context(productionScope: CoroutineScope)

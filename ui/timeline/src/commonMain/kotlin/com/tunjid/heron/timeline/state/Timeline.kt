@@ -276,12 +276,16 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
     // in a timeline only shows up once.
     return filter { item ->
         when (item) {
-            is TimelineItem.Pinned -> true
             is TimelineItem.Threaded.Linear,
             -> threadRootIds.add(item.nodes.first().post.uri)
-            is TimelineItem.Repost,
             is TimelineItem.Single,
-            -> threadRootIds.add(item.post.uri)
+            -> when (item.reason) {
+                // Pinned items are exempt, they may legitimately repeat a post in the feed.
+                TimelineItem.Reason.Pinned -> true
+                is TimelineItem.Reason.Repost,
+                null,
+                -> threadRootIds.add(item.post.uri)
+            }
             is TimelineItem.Placeholder,
             // Threaded trees show up in post details, not regular timelines
             is TimelineItem.Threaded.Tree,

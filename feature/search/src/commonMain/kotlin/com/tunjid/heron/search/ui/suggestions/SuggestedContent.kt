@@ -77,7 +77,8 @@ import com.tunjid.heron.ui.icons.regular.LocalFireDepartment
 import com.tunjid.heron.ui.icons.regular.RssFeed
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.topAppBarBlur
+import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.statusAndToolbarHeight
 import heron.feature.search.generated.resources.Res
@@ -113,10 +114,11 @@ internal fun SuggestedContent(
     val now = remember { Clock.System.now() }
     LazyColumn(
         modifier = modifier
-            .topAppBarBlur(
-                paneScaffoldState = paneScaffoldState,
-                topAppBarHeight = UiTokens.statusAndToolbarHeight,
-                isOffsetByScroll = isRootQuery,
+            .headerBlur(
+                state = paneScaffoldState.rememberTopAppBarHeaderState(
+                    topAppBarHeight = UiTokens.statusAndToolbarHeight,
+                    isOffsetByScroll = isRootQuery,
+                ),
             ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
