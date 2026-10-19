@@ -39,6 +39,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.NestedNavigationEventHandler
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
@@ -267,6 +268,9 @@ object GrazeEditorBindings {
                         enabled = !state.isLoading,
                         onClick = addFilterSheetState::show,
                     )
+                },
+                navigationRail = {
+                    PaneNavigationRail()
                 },
                 content = { contentPadding ->
                     GrazeEditorScreen(

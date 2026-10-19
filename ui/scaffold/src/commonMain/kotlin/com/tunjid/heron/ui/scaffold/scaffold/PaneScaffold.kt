@@ -30,6 +30,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -389,6 +390,7 @@ fun PaneScaffoldState.PaneScaffold(
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
+        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -410,8 +412,6 @@ fun PaneScaffoldState.PaneScaffold(
                     }
                 },
                 containerColor = containerColor,
-                navigationRailWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
-                navigationRailEdge = navRailEdge,
                 topBar = {
                     topBar()
                 },
@@ -553,9 +553,15 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
+    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    // The rail covers the window insets on its edge, so the content beside it doesn't pad for them
+    val railInsets = when (railEdge) {
+        NavRailEdge.Start -> PaddingValues.Absolute(left = railWidth)
+        NavRailEdge.End -> PaddingValues.Absolute(right = railWidth)
+    }
     Row(
         modifier = modifier,
         horizontalArrangement = railEdge,
@@ -571,6 +577,7 @@ private fun PaneNavigationRailScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .consumeWindowInsets(railInsets)
                     .zIndex(1f),
                 content = {
                     content()

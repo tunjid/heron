@@ -48,6 +48,7 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOp
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -337,6 +338,9 @@ internal fun Route(
                     },
                 )
             }
+        },
+        navigationRail = {
+            PaneNavigationRail()
         },
         content = {
             ListScreen(
