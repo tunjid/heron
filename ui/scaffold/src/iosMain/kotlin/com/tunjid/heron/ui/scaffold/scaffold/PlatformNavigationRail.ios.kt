@@ -44,10 +44,12 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.navigation.NavItem
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
+import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
 import platform.UIKit.NSTextAlignmentCenter
@@ -65,9 +67,13 @@ import platform.UIKit.UITapGestureRecognizer
 import platform.UIKit.UIView
 import platform.UIKit.UIViewAnimationOptionAllowUserInteraction
 import platform.UIKit.UIViewAnimationOptionBeginFromCurrentState
+import platform.UIKit.UIViewAutoresizingFlexibleHeight
+import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import platform.UIKit.UIViewContentMode
 import platform.UIKit.UIVisualEffectView
 import platform.UIKit.systemRedColor
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 import platform.objc.sel_registerName
 
 @Composable
@@ -177,8 +183,17 @@ private class GlassNavRailView(
         cornerConfiguration = UICornerConfiguration.capsuleConfiguration()
     }
 
+    // A glass lens rather than a flat fill, matching the selection indicator of UITabBar.
+    private val selectionGlass = UIVisualEffectView(
+        effect = selectionGlassEffect(tint = null),
+    ).apply {
+        cornerConfiguration = UICornerConfiguration.capsuleConfiguration()
+        autoresizingMask = UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
+    }
+
     private val selectionPlatter = UIView().apply {
         userInteractionEnabled = false
+        addSubview(selectionGlass)
     }
 
     private var itemViews: List<GlassNavRailItemView> = emptyList()
@@ -211,7 +226,7 @@ private class GlassNavRailView(
         val platterColor = unselectedColor.copy(alpha = SelectionPlatterAlpha)
         if (platterColor != lastPlatterColor) {
             lastPlatterColor = platterColor
-            selectionPlatter.backgroundColor = platterColor.toUIColor()
+            selectionGlass.effect = selectionGlassEffect(tint = platterColor)
         }
 
         // Only rebuild the item views when their identity changes; badges and tints are synced
@@ -244,6 +259,19 @@ private class GlassNavRailView(
             layoutSelectionPlatter()
             return
         }
+        val from = selectionPlatter.frame
+        // Compose applies interop updates, and moves this rail between destinations when an item
+        // is selected, with Core Animation actions disabled. An animation started here would
+        // apply instantly, so start it on the next main queue turn instead.
+        dispatch_async(dispatch_get_main_queue()) {
+            animateSelectionPlatter(from = from)
+        }
+    }
+
+    private fun animateSelectionPlatter(
+        from: CValue<CGRect>,
+    ) {
+        selectionPlatter.setFrame(from)
         // Let Core Animation slide the platter, so it runs at the display's refresh rate
         // independently of Compose frames.
         animateWithDuration(
@@ -270,9 +298,7 @@ private class GlassNavRailView(
     private fun layoutSelectionPlatter() {
         selectionPlatter.hidden = selectedIndex < 0
         if (selectedIndex < 0) return
-        val frame = itemFrame(selectedIndex)
-        selectionPlatter.setFrame(frame)
-        selectionPlatter.layer.cornerRadius = frame.useContents { minOf(size.width, size.height) / 2 }
+        selectionPlatter.setFrame(itemFrame(selectedIndex))
     }
 
     // Each item is a square cell centered across the capsule, so the selection platter on the first
@@ -365,6 +391,14 @@ private class GlassNavRailItemView(
             badgeLabel.layer.cornerRadius = height / 2
         }
     }
+}
+
+private fun selectionGlassEffect(
+    tint: Color?,
+) = UIGlassEffect.effectWithStyle(
+    style = UIGlassEffectStyle.UIGlassEffectStyleClear,
+).apply {
+    tintColor = tint?.toUIColor()
 }
 
 private const val SelectionAnimationDurationSeconds = 0.45
