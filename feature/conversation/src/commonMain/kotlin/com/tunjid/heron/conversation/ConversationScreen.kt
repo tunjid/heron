@@ -126,6 +126,7 @@ internal fun ConversationScreen(
             top = UiTokens.statusAndToolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .headerBlur(
                 state = paneScaffoldState.rememberTopAppBarHeaderState(
@@ -367,18 +368,22 @@ internal fun MessageRow(
                 .width(if (showAvatar) 16.dp else 34.dp),
         )
 
-        AuthorAndTextMessage(
-            item = item,
-            side = side,
-            isNewerMessageByAuthor = isNewerMessageByAuthor,
-            isOlderMessageByAuthor = isOlderMessageByAuthor,
-            modifier = Modifier,
-            onMessageLongPressed = onMessageLongPressed,
-            reactionModifier = reactionModifier,
-            onLinkTargetClicked = onLinkTargetClicked,
-        )
+        Column(
+            horizontalAlignment = side,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            AuthorAndTextMessage(
+                item = item,
+                side = side,
+                isOlderMessageByAuthor = isOlderMessageByAuthor,
+                modifier = Modifier,
+                onMessageLongPressed = onMessageLongPressed,
+                reactionModifier = reactionModifier,
+                onLinkTargetClicked = onLinkTargetClicked,
+            )
 
-        record()
+            record()
+        }
     }
 }
 
@@ -417,7 +422,6 @@ internal fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
-    isNewerMessageByAuthor: Boolean,
     isOlderMessageByAuthor: Boolean,
     reactionModifier: Modifier = Modifier,
     onMessageLongPressed: (MessageItem) -> Unit,
@@ -444,13 +448,6 @@ internal fun AuthorAndTextMessage(
             reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
-        if (isNewerMessageByAuthor) {
-            // Between bubbles
-            Spacer(modifier = Modifier.height(4.dp))
-        } else {
-            // Last bubble before next author
-            Spacer(modifier = Modifier.height(8.dp))
-        }
     }
 }
 
@@ -557,10 +554,7 @@ private fun MessageRecord(
     EmbeddedRecord(
         modifier = Modifier
             .padding(
-                top = 16.dp,
                 bottom = 8.dp,
-                start = 16.dp,
-                end = 16.dp,
             )
             .widthIn(max = 200.dp),
         record = record,
