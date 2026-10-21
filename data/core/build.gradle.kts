@@ -85,7 +85,7 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.crypto.jdk)
-                implementation(libs.ktor.client.java)
+                implementation(libs.ktor.client.okhttp)
                 implementation(libs.ktor.server.core)
                 implementation(libs.ktor.server.cio)
                 implementation(libs.tink)

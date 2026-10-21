@@ -31,6 +31,7 @@ import coil3.memory.MemoryCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest as CoilImageRequest
 import coil3.size.Size as CoilSize
+import com.tunjid.heron.data.platform.platformHttpClient
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.cacheDir
@@ -177,7 +178,7 @@ internal class CoilImageLoader private constructor(
         internal fun create(
             context: PlatformContext,
         ): ImageLoader {
-            val httpClient = HttpClient()
+            val httpClient = platformHttpClient()
             SingletonImageLoader.setSafe {
                 coil3.ImageLoader.Builder(context)
                     .components {

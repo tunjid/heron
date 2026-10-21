@@ -45,6 +45,7 @@ litertlm = "0.17.1"
 metro = "1.4.4"
 navigationEventCompose = "1.1.0"
 navigation3Multiplatform = "1.1.1"
+okhttp = "5.5.0"
 okio = "3.18.2"
 ozone-atproto = "0.3.11"
 ozone-bluesky-lexicons = "2026.10.15"
@@ -165,7 +166,6 @@ ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-client-java = { group = "io.ktor", name = "ktor-client-java", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
 ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 ktor-client-resources = { group = "io.ktor", name = "ktor-client-resources", version.ref = "ktor" }
@@ -178,6 +178,7 @@ ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "
 metro-gradlePlugin = { group = "dev.zacsweers.metro", name = "gradle-plugin", version.ref = "metro" }
 navigation3-multiplatform-ui = { group = "org.jetbrains.androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3Multiplatform" }
 navigation-event-compose = { group = "org.jetbrains.androidx.navigationevent", name = "navigationevent-compose", version.ref = "navigationEventCompose" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 ozone-atproto-runtime = { group = "com.tunjid", name = "api-gen-runtime", version.ref = "ozone-atproto" }
 ozone-bluesky-lexicons = { group = "sh.christian.ozone", name = "lexicons", version.ref = "ozone-bluesky-lexicons" }
