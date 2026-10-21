@@ -208,19 +208,21 @@ fun Conversation(
                 .weight(1f),
             title = when (val group = conversation.group) {
                 null ->
-                    conversation.members
+                    participants
                         .firstOrNull()
                         .displayNameOrBlank
                 else -> group.name
             },
             description = when (conversation.group) {
                 null ->
-                    conversation.members
+                    participants
                         .firstOrNull()
                         ?.handle?.id
                 else -> null
             },
-            conversationSummary = conversation.summary(signedInProfileId = signedInProfileId),
+            conversationSummary = conversation.summary(
+                signedInProfileId = signedInProfileId,
+            ),
         )
         if (conversation.unreadCount > 0L) {
             Badge {
@@ -317,7 +319,9 @@ internal fun ConversationDetails(
 }
 
 @Composable
-private fun Conversation.summary(signedInProfileId: ProfileId?): String {
+private fun Conversation.summary(
+    signedInProfileId: ProfileId?,
+): String {
     val lastMessage = lastMessage
     val lastMessageReactedTo = lastMessageReactedTo?.takeIf { it.reactions.isNotEmpty() }
 
