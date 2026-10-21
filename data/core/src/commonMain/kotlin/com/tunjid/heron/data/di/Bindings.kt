@@ -63,6 +63,7 @@ import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.network.oauth.oauthRedirect
 import com.tunjid.heron.data.platform.MemoryMonitor
+import com.tunjid.heron.data.platform.platformHttpClient
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
@@ -326,7 +327,7 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideHttpClient(): HttpClient = HttpClient {
+    internal fun provideHttpClient(): HttpClient = platformHttpClient {
         expectSuccess = false
         install(ContentNegotiation) {
             json(BlueskyJson)

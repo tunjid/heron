@@ -24,11 +24,27 @@ kotlin {
         namespace = "com.tunjid.heron.data.platform"
     }
 
+    applyDefaultHierarchyTemplate()
     sourceSets {
+        val okhttpMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.okhttp)
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.okio)
+            }
+        }
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
+                api(libs.ktor.core)
             }
+        }
+        androidMain {
+            dependsOn(okhttpMain)
+        }
+        desktopMain {
+            dependsOn(okhttpMain)
         }
     }
 }

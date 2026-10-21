@@ -40,6 +40,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.tunjid.heron.data.platform.forbiddenCertificatesHostnameVerifier
 import dev.andrewbailey.diff.differenceOf
 import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
@@ -367,7 +368,9 @@ class ExoplayerController(
 private fun exoPlayer(
     context: Context,
 ): ExoPlayer {
-    val client = OkHttpClient()
+    val client = OkHttpClient.Builder()
+        .hostnameVerifier(forbiddenCertificatesHostnameVerifier())
+        .build()
     val cache = SimpleCache(
         /* cacheDir = */
         File(context.cacheDir, "homepagesimplecache"),

@@ -50,6 +50,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:files"))
+                implementation(project(":data:platform"))
                 implementation(project(":ui:core"))
 
                 implementation(libs.coil.compose)
@@ -63,7 +64,7 @@ kotlin {
         }
         androidMain {
             dependencies {
-                implementation(libs.ktor.client.android)
+                implementation(libs.ktor.client.okhttp)
                 implementation(libs.androidx.media3.datasource.okhttp)
                 implementation(libs.androidx.media3.exoplayer)
                 implementation(libs.androidx.media3.exoplayer.dash)
@@ -81,7 +82,7 @@ kotlin {
         }
         desktopMain {
             dependencies {
-                implementation(libs.ktor.client.java)
+                implementation(libs.ktor.client.okhttp)
                 implementation(libs.jna)
                 implementation(libs.jna.platform)
                 implementation(libs.gstreamer.java.core)
