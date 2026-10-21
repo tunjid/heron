@@ -147,8 +147,8 @@ val MessageItem.systemContent: Message.SystemContent?
 
 val MessageItem.id
     get() = when (this) {
-        is MessageItem.Pending -> sentAt.toString()
-        is MessageItem.Sent -> message.id.id
+        is MessageItem.Pending -> message.localId ?: sentAt.toString()
+        is MessageItem.Sent -> message.localId ?: message.id.id
     }
 
 val MessageItem.text

@@ -152,7 +152,12 @@ sealed interface Writable {
     ) : Writable {
 
         override val queueId: String
-            get() = "send-message-$request"
+            get() = when (request.localId) {
+                // Drop the trailing localId so the id matches the ones queued
+                // before Message.Create.localId existed.
+                null -> "send-message-$request".removeSuffix(NullLocalIdSuffix) + ")"
+                else -> "send-message-$request"
+            }
 
         override suspend fun WriteQueue.write(): Outcome =
             messageRepository.sendMessage(request)
@@ -359,3 +364,5 @@ data class FailedWrite(
         IO,
     }
 }
+
+private const val NullLocalIdSuffix = ", localId=null)"
