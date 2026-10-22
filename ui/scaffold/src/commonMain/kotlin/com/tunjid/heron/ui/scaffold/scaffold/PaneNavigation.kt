@@ -20,24 +20,38 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.navigation.AppStack
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.treenav.compose.Adaptation
 
 @Composable
@@ -102,12 +116,16 @@ fun PaneScaffoldState.PaneNavigationRail(
     enterTransition: EnterTransition = slideInHorizontally(initialOffsetX = { -it }),
     exitTransition: ExitTransition = slideOutHorizontally(targetOffsetX = { -it }),
     onNavItemReselected: () -> Boolean = { false },
+    onNavigationIconClicked: (() -> Unit)? = null,
+    actions: @Composable ColumnScope.() -> Unit = {},
+) = Box(
+    modifier = modifier,
 ) {
     AnimatedVisibility(
-        modifier = modifier
+        modifier = Modifier
             .sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey),
-                animatedVisibilityScope = this,
+                animatedVisibilityScope = this@PaneNavigationRail,
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
                 boundsTransform = NavigationRailBoundsTransform,
             ),
@@ -131,6 +149,57 @@ fun PaneScaffoldState.PaneNavigationRail(
             }
         },
     )
+    // Outside the rail's shared element, as the actions belong to this pane.
+    if (placesAppBarActionsInNavigationRail) Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(
+                top = animateDpAsState(systemVerticalBarContentTop).value + 8.dp,
+            )
+            .centerOnSystemVerticalBar(
+                railBoxWidth = navigationRailWidth,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        NavigationRailNavigationIcon(
+            onClicked = onNavigationIconClicked,
+        )
+        actions()
+    }
+}
+
+@Composable
+private fun PaneScaffoldState.NavigationRailNavigationIcon(
+    onClicked: (() -> Unit)?,
+) {
+    val isAtStackRoot = AppStack.entries.any {
+        it.rootRoute.id == paneState.currentDestination?.id
+    }
+    val isStable = appScaffoldState.staticStates.identityState.isStable
+    NavigationIconBox {
+        AppLogo(
+            modifier = Modifier
+                .padding(8.dp)
+                .clip(CircleShape)
+                .clickable(
+                    enabled = !isAtStackRoot || isStable,
+                    onClick = click@{
+                        if (onClicked != null) return@click onClicked()
+                        val action = if (isAtStackRoot) NavigationAction.Home.navigationMutation
+                        else NavigationAction.Pop.navigationMutation
+                        appScaffoldState.staticStates.onNavigationAction(
+                            action = action,
+                        )
+                    },
+                )
+                .size(UiTokens.avatarSize),
+            presentation = remember(isAtStackRoot) {
+                if (isAtStackRoot) LogoPresentation.Destination.Root()
+                else LogoPresentation.Destination.Poppable
+            },
+        )
+    }
 }
 
 fun PaneScaffoldState.bottomNavVisibleInset(): IntOffset =

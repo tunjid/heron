@@ -179,6 +179,9 @@ class PaneScaffoldState(
     internal val systemVerticalBarCenterFromEdge: Dp?
         get() = appScaffoldState.staticStates.uiState.systemVerticalBar?.centerFromEdge
 
+    internal val systemVerticalBarContentTop: Dp
+        get() = appScaffoldState.staticStates.uiState.systemVerticalBar?.contentTop ?: 0.dp
+
     internal val dismissBehavior: AppScaffoldState.DismissBehavior
         get() = appScaffoldState.staticStates.uiState.dismissBehavior
 
@@ -228,6 +231,11 @@ class PaneScaffoldState(
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
+
+    // Following the iPhone Duo guidance, the rail on its system vertical bar hosts the app bar
+    // actions of poppable destinations instead of their top app bar.
+    internal val placesAppBarActionsInNavigationRail: Boolean
+        get() = canShowNavigationRail && appScaffoldState.staticStates.uiState.systemVerticalBar != null
 
     internal val canShowFab
         get() = when (paneState.pane) {

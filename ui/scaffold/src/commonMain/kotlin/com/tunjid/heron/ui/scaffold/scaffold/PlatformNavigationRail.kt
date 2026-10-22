@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
@@ -131,6 +134,22 @@ internal fun Modifier.navigationRailPosition(
         )
     else align(Alignment.Center)
         .padding(vertical = NavRailVerticalPadding)
+}
+
+context(paneScaffoldState: PaneScaffoldState)
+internal fun Modifier.centerOnSystemVerticalBar(
+    railBoxWidth: Dp,
+): Modifier = offset {
+    val centerFromEdge = paneScaffoldState.systemVerticalBarCenterFromEdge
+        ?: return@offset IntOffset.Zero
+    val towardsEdge = (railBoxWidth / 2 - centerFromEdge).roundToPx()
+    IntOffset(
+        x = when (paneScaffoldState.navRailEdge) {
+            NavRailEdge.Start -> -towardsEdge
+            NavRailEdge.End -> towardsEdge
+        },
+        y = 0,
+    )
 }
 
 internal fun PaneScaffoldState.navRailPlacesAtStart(

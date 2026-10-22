@@ -178,7 +178,16 @@ internal fun Route(
             }
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                onNavigationIconClicked = {
+                    if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                        stateHolder.accept(
+                            if (state.section == Section.Main) Action.Navigate.Pop
+                            else Action.UpdateSection(Section.Main),
+                        )
+                    }
+                },
+            )
         },
         content = { paddingValues ->
             SettingsScreen(

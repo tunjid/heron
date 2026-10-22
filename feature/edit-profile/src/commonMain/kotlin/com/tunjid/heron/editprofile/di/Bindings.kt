@@ -197,7 +197,13 @@ internal fun Route(
             )
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                actions = {
+                    PaneActions(
+                        actions = stateHolder.accept,
+                    )
+                },
+            )
         },
         content = {
             EditProfileScreen(

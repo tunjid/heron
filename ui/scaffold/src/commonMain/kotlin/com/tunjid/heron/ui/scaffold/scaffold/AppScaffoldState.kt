@@ -112,9 +112,12 @@ class AppScaffoldState internal constructor(
     internal val navRailEdge: NavRailEdge
         get() = systemVerticalBar?.edge ?: NavRailEdge.Start
 
+    // A system vertical bar (iPhone Duo) alone decides whether there's room for the rail.
     internal val prefersNavigationRail
-        get() = systemVerticalBar != null ||
-            windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
+        get() = when (val systemVerticalBar = systemVerticalBar) {
+            null -> windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
+            else -> systemVerticalBar.width > 0.dp
+        }
 
     internal fun update(
         density: Density,

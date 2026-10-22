@@ -259,7 +259,14 @@ internal fun Route(
             }
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                actions = {
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
+                    )
+                },
+            )
         },
         content = { paddingValues ->
             ComposeScreen(

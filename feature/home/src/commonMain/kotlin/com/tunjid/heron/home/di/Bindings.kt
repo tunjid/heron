@@ -277,6 +277,17 @@ internal fun Route(
                     stateHolder.accept(Action.RefreshCurrentTab)
                     true
                 },
+                onNavigationIconClicked = {
+                    stateHolder.accept(
+                        Action.SetTabLayout(
+                            layout = if (state.tabLayout is TabLayout.Expanded) {
+                                TabLayout.Collapsed.All
+                            } else {
+                                TabLayout.Expanded
+                            },
+                        ),
+                    )
+                },
             )
         },
         content = {

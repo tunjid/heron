@@ -46,10 +46,12 @@ fun MainViewController(
                     edge: NavRailEdge?,
                     width: Double,
                     centerFromEdge: Double,
+                    contentTop: Double,
                 ) = appState.onSystemVerticalBarChanged(
                     edge = edge,
                     width = width,
                     centerFromEdge = centerFromEdge,
+                    contentTop = contentTop,
                 )
             },
         )

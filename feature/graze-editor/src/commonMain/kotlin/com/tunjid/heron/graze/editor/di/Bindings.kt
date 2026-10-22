@@ -179,6 +179,16 @@ object GrazeEditorBindings {
                 )
             }
 
+            val editFeedInfoSheetState =
+                rememberEditFeedInfoSheetState { name, description ->
+                    stateHolder.accept(
+                        Action.Metadata(
+                            displayName = name,
+                            description = description,
+                        ),
+                    )
+                }
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
@@ -188,15 +198,6 @@ object GrazeEditorBindings {
                     stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    val editFeedInfoSheetState =
-                        rememberEditFeedInfoSheetState { name, description ->
-                            stateHolder.accept(
-                                Action.Metadata(
-                                    displayName = name,
-                                    description = description,
-                                ),
-                            )
-                        }
                     PoppableDestinationTopAppBar(
                         title = {
                             Title(
@@ -270,7 +271,40 @@ object GrazeEditorBindings {
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail()
+                    PaneNavigationRail(
+                        onNavigationIconClicked = {
+                            stateHolder.accept(
+                                if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
+                                else Action.Navigate.Pop,
+                            )
+                        },
+                        actions = {
+                            PaneActions(
+                                grazeFeed = state.grazeFeed,
+                                enabled = !state.isLoading,
+                                onEditClicked = {
+                                    editFeedInfoSheetState.editFeed(state)
+                                },
+                                onPreviewClicked = {
+                                    stateHolder.accept(
+                                        Action.PreviewFeed.Generate(state.grazeFeed.filter),
+                                    )
+                                },
+                                onSaveClicked = {
+                                    stateHolder.accept(
+                                        Action.Update.Save(
+                                            feed = state.grazeFeed,
+                                        ),
+                                    )
+                                },
+                                onDeleteClicked = {
+                                    stateHolder.accept(
+                                        Action.Update.Delete(state.grazeFeed.recordKey),
+                                    )
+                                },
+                            )
+                        },
+                    )
                 },
                 content = { contentPadding ->
                     GrazeEditorScreen(
