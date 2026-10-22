@@ -46,6 +46,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
@@ -76,7 +78,6 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
@@ -114,6 +115,9 @@ internal fun ConversationScreen(
     val listState = rememberLazyListState()
 
     val emojiPickerSheetState = rememberEmojiPickerState()
+    val mergedMessages by remember {
+        derivedStateOf(state::mergedMessages)
+    }
 
     LazyColumn(
         state = listState,
@@ -122,6 +126,7 @@ internal fun ConversationScreen(
             top = UiTokens.statusAndToolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .headerBlur(
                 state = paneScaffoldState.rememberTopAppBarHeaderState(
@@ -131,10 +136,10 @@ internal fun ConversationScreen(
             .fillMaxSize(),
     ) {
         items(
-            count = state.tiledItems.size,
-            key = { state.tiledItems[it].id },
+            count = mergedMessages.size,
+            key = { mergedMessages[it].id },
         ) { index ->
-            val content = state.tiledItems[index]
+            val content = mergedMessages[index]
             val systemContent = content.systemContent
             if (systemContent != null) {
                 SystemMessageRow(
@@ -142,10 +147,10 @@ internal fun ConversationScreen(
                     systemContent = systemContent,
                 )
             } else {
-                val prevAuthor = state.tiledItems.getOrNull(index - 1)?.sender
-                val nextAuthor = state.tiledItems.getOrNull(index + 1)?.sender
-                val isFirstMessageByAuthor = prevAuthor != content.sender
-                val isLastMessageByAuthor = nextAuthor != content.sender
+                val newerAuthor = mergedMessages.getOrNull(index - 1)?.sender
+                val olderAuthor = mergedMessages.getOrNull(index + 1)?.sender
+                val isNewerMessageByAuthor = newerAuthor?.did == content.sender?.did
+                val isOlderMessageByAuthor = olderAuthor?.did == content.sender?.did
 
                 Message(
                     modifier = Modifier
@@ -155,8 +160,8 @@ internal fun ConversationScreen(
                         content.sender?.did == state.signedInProfile?.did -> Side.Sender
                         else -> Side.Receiver
                     },
-                    isFirstMessageByAuthor = isFirstMessageByAuthor,
-                    isLastMessageByAuthor = isLastMessageByAuthor,
+                    isNewerMessageByAuthor = isNewerMessageByAuthor,
+                    isOlderMessageByAuthor = isOlderMessageByAuthor,
                     paneScaffoldState = paneScaffoldState,
                     actions = actions,
                     onMessageLongPressed = { item ->
@@ -204,7 +209,7 @@ internal fun ConversationScreen(
     )
 
     listState.PivotedTilingEffect(
-        items = state.tiledItems,
+        items = mergedMessages,
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
@@ -217,7 +222,7 @@ internal fun ConversationScreen(
     )
 
     LaunchedEffect(listState) {
-        snapshotFlow { state.tiledItems.firstOrNull()?.id }
+        snapshotFlow { mergedMessages.firstOrNull()?.id }
             .drop(1)
             .collect {
                 // User has scrolled to see earlier chats
@@ -235,7 +240,7 @@ internal fun ConversationScreen(
         // is scrolled up in history stays unread until they scroll back down to it.
         snapshotFlow {
             if (listState.firstVisibleItemIndex !in 0..4) return@snapshotFlow null
-            (state.tiledItems.firstOrNull { it is MessageItem.Sent } as? MessageItem.Sent)
+            (mergedMessages.firstOrNull { it is MessageItem.Sent } as? MessageItem.Sent)
                 ?.message
                 ?.id
         }
@@ -256,8 +261,8 @@ private fun Message(
     modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
-    isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean,
+    isNewerMessageByAuthor: Boolean,
+    isOlderMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
     onMessageLongPressed: (MessageItem) -> Unit,
@@ -267,8 +272,8 @@ private fun Message(
         modifier = modifier,
         item = item,
         side = side,
-        isFirstMessageByAuthor = isFirstMessageByAuthor,
-        isLastMessageByAuthor = isLastMessageByAuthor,
+        isNewerMessageByAuthor = isNewerMessageByAuthor,
+        isOlderMessageByAuthor = isOlderMessageByAuthor,
         reactionModifier = Modifier.animateBounds(
             lookaheadScope = paneScaffoldState,
             boundsTransform = paneScaffoldState.childBoundsTransform,
@@ -321,8 +326,8 @@ private fun Message(
 internal fun MessageRow(
     item: MessageItem,
     side: Side,
-    isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean,
+    isNewerMessageByAuthor: Boolean,
+    isOlderMessageByAuthor: Boolean,
     modifier: Modifier = Modifier,
     reactionModifier: Modifier = Modifier,
     onAvatarClicked: () -> Unit = {},
@@ -335,18 +340,19 @@ internal fun MessageRow(
         Side.Sender -> MaterialTheme.colorScheme.primary
         Side.Receiver -> MaterialTheme.colorScheme.tertiary
     }
+    val showAvatar = !isOlderMessageByAuthor && item is MessageItem.Sent
 
     Row(
         modifier = modifier
             .padding(
-                top = if (isLastMessageByAuthor) 8.dp else 0.dp,
+                top = if (isOlderMessageByAuthor) 0.dp else 8.dp,
                 start = 16.dp,
                 end = 16.dp,
             )
             .fillMaxWidth(),
         horizontalArrangement = side,
     ) {
-        if (isLastMessageByAuthor) {
+        if (showAvatar) {
             Box(
                 modifier = Modifier.size(24.dp)
                     .border(1.5.dp, borderColor, CircleShape)
@@ -359,21 +365,25 @@ internal fun MessageRow(
         }
         Spacer(
             modifier = Modifier
-                .width(if (isLastMessageByAuthor) 16.dp else 34.dp),
+                .width(if (showAvatar) 16.dp else 34.dp),
         )
 
-        AuthorAndTextMessage(
-            item = item,
-            side = side,
-            isFirstMessageByAuthor = isFirstMessageByAuthor,
-            isLastMessageByAuthor = isLastMessageByAuthor,
-            modifier = Modifier,
-            onMessageLongPressed = onMessageLongPressed,
-            reactionModifier = reactionModifier,
-            onLinkTargetClicked = onLinkTargetClicked,
-        )
+        Column(
+            horizontalAlignment = side,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            AuthorAndTextMessage(
+                item = item,
+                side = side,
+                isOlderMessageByAuthor = isOlderMessageByAuthor,
+                modifier = Modifier,
+                onMessageLongPressed = onMessageLongPressed,
+                reactionModifier = reactionModifier,
+                onLinkTargetClicked = onLinkTargetClicked,
+            )
 
-        record()
+            record()
+        }
     }
 }
 
@@ -412,8 +422,7 @@ internal fun AuthorAndTextMessage(
     modifier: Modifier = Modifier,
     item: MessageItem,
     side: Side,
-    isFirstMessageByAuthor: Boolean,
-    isLastMessageByAuthor: Boolean,
+    isOlderMessageByAuthor: Boolean,
     reactionModifier: Modifier = Modifier,
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
@@ -422,7 +431,7 @@ internal fun AuthorAndTextMessage(
         modifier = modifier,
         horizontalAlignment = side,
     ) {
-        if (isLastMessageByAuthor) {
+        if (!isOlderMessageByAuthor && item is MessageItem.Sent) {
             AuthorNameTimestamp(item)
         }
         ChatItemBubble(
@@ -439,13 +448,6 @@ internal fun AuthorAndTextMessage(
             reactionModifier = reactionModifier,
             onLinkTargetClicked = onLinkTargetClicked,
         )
-        if (isFirstMessageByAuthor) {
-            // Last bubble before next author
-            Spacer(modifier = Modifier.height(8.dp))
-        } else {
-            // Between bubbles
-            Spacer(modifier = Modifier.height(4.dp))
-        }
     }
 }
 
@@ -552,10 +554,7 @@ private fun MessageRecord(
     EmbeddedRecord(
         modifier = Modifier
             .padding(
-                top = 16.dp,
                 bottom = 8.dp,
-                start = 16.dp,
-                end = 16.dp,
             )
             .widthIn(max = 200.dp),
         record = record,

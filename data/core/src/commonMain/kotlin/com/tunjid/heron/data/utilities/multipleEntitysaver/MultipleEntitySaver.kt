@@ -41,6 +41,7 @@ import com.tunjid.heron.data.database.entities.LabelerEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageLocalIdEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -211,6 +212,8 @@ internal class MultipleEntitySaver(
     private val messageEntities = LazyList<MessageEntity>()
 
     private val messageReactionEntities = LazyList<MessageReactionEntity>()
+
+    private val messageLocalIdEntities = LazyList<MessageLocalIdEntity>()
 
     private val messageFeedGeneratorEntities = LazyList<MessageFeedGeneratorEntity>()
 
@@ -408,6 +411,9 @@ internal class MultipleEntitySaver(
         if (messageReactionEntities.isNotEmpty) {
             messageDao.upsertMessageReactions(messageReactionEntities.list)
         }
+        if (messageLocalIdEntities.isNotEmpty) {
+            messageDao.upsertMessageLocalIds(messageLocalIdEntities.list)
+        }
         if (messageFeedGeneratorEntities.isNotEmpty) {
             messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
         }
@@ -551,6 +557,8 @@ internal class MultipleEntitySaver(
     fun add(entity: MessageEntity) = messageEntities.add(entity)
 
     fun add(entity: MessageReactionEntity) = messageReactionEntities.add(entity)
+
+    fun add(entity: MessageLocalIdEntity) = messageLocalIdEntities.add(entity)
 
     fun add(entity: MessageFeedGeneratorEntity) = messageFeedGeneratorEntities.add(entity)
 

@@ -49,6 +49,7 @@ import com.tunjid.heron.data.database.entities.LabelerEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageLocalIdEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
@@ -114,7 +115,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 53,
+    version = 54,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -152,6 +153,7 @@ import kotlinx.coroutines.IO
         ConversationEntity::class,
         ConversationMembersEntity::class,
         MessageEntity::class,
+        MessageLocalIdEntity::class,
         MessageFeedGeneratorEntity::class,
         MessageListEntity::class,
         MessagePostEntity::class,
@@ -277,6 +279,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 51, to = 52),
         // Add postThreadDetails
         AutoMigration(from = 52, to = 53),
+        // Add MessageLocalIdEntity to match pending messages to sent ones
+        AutoMigration(from = 53, to = 54),
     ],
     exportSchema = true,
 )

@@ -42,8 +42,8 @@ private fun PreviewMessageRow(
     MessageRow(
         item = item,
         side = side,
-        isFirstMessageByAuthor = true,
-        isLastMessageByAuthor = true,
+        isNewerMessageByAuthor = true,
+        isOlderMessageByAuthor = true,
         avatar = {
             Box(
                 modifier = Modifier

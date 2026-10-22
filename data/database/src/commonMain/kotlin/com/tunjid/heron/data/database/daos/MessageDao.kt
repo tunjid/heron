@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageLocalIdEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
@@ -164,6 +165,11 @@ interface MessageDao {
     @Upsert
     suspend fun upsertMessages(
         entities: List<MessageEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertMessageLocalIds(
+        entities: List<MessageLocalIdEntity>,
     )
 
     @Upsert
