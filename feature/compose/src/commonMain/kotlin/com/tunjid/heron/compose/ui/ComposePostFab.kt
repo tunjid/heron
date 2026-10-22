@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.compose.ui
 
-import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -82,12 +82,14 @@ fun PaneScaffoldState.ComposePostFabRow(
         modifier = modifier
             .fillMaxWidth(),
         verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
+        FlowRow(
             modifier = Modifier
-                .padding(horizontal = 32.dp),
-            horizontalArrangement = spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(horizontal = 32.dp)
+                .weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             ComposeThreadGate(
                 interactionSettingsPreference = state.interactionsPreference,
@@ -102,7 +104,6 @@ fun PaneScaffoldState.ComposePostFabRow(
                 },
             )
         }
-        Spacer(Modifier.weight(1f))
         val show = if (inPredictiveBack) !state.hasLongPost else true
         if (show) ComposePostFab(
             state = state,
