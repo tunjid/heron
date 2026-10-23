@@ -107,6 +107,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.signedInUserRefresher.SignedInUserRefresher
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
@@ -208,6 +209,7 @@ internal class OfflineFirstBlueskyRecordOperations(
     private val preferenceUpdater: PreferenceUpdater,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val signedInUserRefresher: SignedInUserRefresher,
     private val cursorQueryRefreshTracker: CursorQueryRefreshTracker,
 ) : BlueskyRecordOperations {
 
@@ -816,7 +818,10 @@ internal class OfflineFirstBlueskyRecordOperations(
                             ),
                         ),
                     )
-                }
+                }.fold(
+                    onSuccess = { signedInUserRefresher.refresh() },
+                    onFailure = Outcome::Failure,
+                )
             },
             onFailure = Outcome::Failure,
         )

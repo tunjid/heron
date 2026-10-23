@@ -109,6 +109,8 @@ import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.signedInUserRefresher.OfflineSignedInUserRefresher
+import com.tunjid.heron.data.utilities.signedInUserRefresher.SignedInUserRefresher
 import com.tunjid.heron.data.utilities.taskrunner.GeneralBackgroundTaskRunner
 import com.tunjid.heron.data.utilities.taskstore.SavedStateTaskStore
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
@@ -318,6 +320,12 @@ object DataBindings {
     internal fun provideRecordResolver(
         offlineRecordResolver: OfflineRecordResolver,
     ): RecordResolver = offlineRecordResolver
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideSignedInUserRefresher(
+        offlineSignedInUserRefresher: OfflineSignedInUserRefresher,
+    ): SignedInUserRefresher = offlineSignedInUserRefresher
 
     @SingleIn(AppScope::class)
     @Provides
