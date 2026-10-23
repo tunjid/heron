@@ -16,19 +16,11 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.GetPreferencesResponse
-import app.bsky.actor.GetProfileQueryParams
-import app.bsky.actor.SavedFeedType
-import app.bsky.feed.GetFeedGeneratorQueryParams
-import app.bsky.feed.GetFeedGeneratorResponse
-import app.bsky.graph.GetListQueryParams
-import app.bsky.graph.GetListResponse
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
-import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -44,22 +36,15 @@ import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.network.IdentityResolver
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.SessionManager
-import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
-import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
-import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.signedInUserRefresher.SignedInUserRefresher
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -71,9 +56,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlinx.coroutines.supervisorScope
-import sh.christian.ozone.api.AtUri
-import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
 
 interface AuthRepository {
@@ -101,8 +83,6 @@ interface AuthRepository {
 
     suspend fun signOut()
 
-    suspend fun updateSignedInUser(): Outcome
-
     suspend fun resolveServer(handle: ProfileHandle): Result<Server>
 }
 
@@ -114,13 +94,11 @@ internal class AuthTokenRepository(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
-    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val identityResolver: IdentityResolver,
-    private val preferenceUpdater: PreferenceUpdater,
-    private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
+    private val signedInUserRefresher: SignedInUserRefresher,
 ) : AuthRepository {
 
     init {
@@ -152,7 +130,7 @@ internal class AuthTokenRepository(
                 .distinctUntilChanged()
                 .filter(List<PopulatedProfileEntity>::isNotEmpty)
                 .map { it.first().asExternalModel() }
-                .withRefresh(::updateSignedInUser)
+                .withRefresh(signedInUserRefresher::refresh)
         }
             .shareIn(
                 scope = appMainScope + ioDispatcher,
@@ -203,9 +181,7 @@ internal class AuthTokenRepository(
             when (authToken) {
                 is SavedState.AuthTokens.Authenticated ->
                     savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                        if (authToken.authProfileId == signedInProfileId) updateSignedInUser(
-                            did = signedInProfileId.id.let(::Did),
-                        )
+                        if (authToken.authProfileId == signedInProfileId) signedInUserRefresher.refresh()
                         else expiredSessionOutcome()
                     }
                         ?: expiredSessionOutcome()
@@ -256,7 +232,7 @@ internal class AuthTokenRepository(
 
         savedStateDataSource.inCurrentProfileSession { newProfileId ->
             when (newProfileId) {
-                sessionSummary.profileId -> updateSignedInUser()
+                sessionSummary.profileId -> signedInUserRefresher.refresh()
                 else -> throw SessionSwitchException(sessionSummary.profileHandle)
             }
         } ?: expiredSessionOutcome()
@@ -273,140 +249,6 @@ internal class AuthTokenRepository(
         savedStateDataSource.setAuth(
             auth = null,
         )
-    }
-
-    override suspend fun updateSignedInUser(): Outcome =
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getSession()
-            }.fold(
-                onSuccess = { updateSignedInUser(it.did) },
-                onFailure = Outcome::Failure,
-            )
-        } ?: expiredSessionOutcome()
-
-    private suspend fun updateSignedInUser(
-        did: Did,
-    ): Outcome = supervisorScope {
-        val succeeded = listOf(
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getProfile(GetProfileQueryParams(actor = did))
-                }
-                    .getOrNull()
-                    ?.profileEntity()
-                    ?.let { profileEntity ->
-                        profileDao.upsertProfiles(listOf(profileEntity))
-                        savedStateDataSource.updateSignedInProfileData {
-                            copy(
-                                sessionSummary = SessionSummary(
-                                    lastSeen = Clock.System.now(),
-                                    profileId = profileEntity.did,
-                                    profileHandle = profileEntity.handle,
-                                    profileAvatar = profileEntity.avatar,
-                                ),
-                            )
-                        }
-                    } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForAppBskyActor()
-                }
-                    .getOrNull()
-                    ?.let { savePreferences(it) } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForAppBskyNotification()
-                }
-                    .getOrNull()
-                    ?.let { saveNotificationPreferences(it) } != null
-            },
-        ).awaitAll().all(true::equals)
-
-        if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
-    }
-
-    private suspend fun savePreferences(
-        preferencesResponse: GetPreferencesResponse,
-    ) = supervisorScope {
-        val preferences = preferenceUpdater.update(
-            networkPreferences = preferencesResponse.preferences,
-            preferences = savedStateDataSource.savedState
-                .map(SavedState::signedProfilePreferencesOrDefault)
-                .first(),
-        )
-
-        val saveTimelinePreferences = async {
-            savedStateDataSource.updateSignedInProfileData {
-                copy(preferences = preferences)
-            }
-        }
-        val types = preferences.timelinePreferences.groupBy(
-            keySelector = TimelinePreference::type,
-        )
-
-        val feeds = types[SavedFeedType.Feed.value]?.map {
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                    getFeedGenerator(
-                        GetFeedGeneratorQueryParams(
-                            feed = AtUri(it.value),
-                        ),
-                    )
-                }
-            }
-        } ?: emptyList()
-        val lists = types[SavedFeedType.List.value]?.map {
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                    getList(
-                        GetListQueryParams(
-                            cursor = null,
-                            limit = 1,
-                            list = AtUri(it.value),
-                        ),
-                    )
-                }
-            }
-        } ?: emptyList()
-
-        saveTimelinePreferences.await()
-
-        // Await the network results before opening the DB transaction so the
-        // writer connection is not held during I/O.
-        val resolvedFeeds = feeds.awaitAll()
-            .mapNotNull(Result<GetFeedGeneratorResponse>::getOrNull)
-        val resolvedLists = lists.awaitAll()
-            .mapNotNull(Result<GetListResponse>::getOrNull)
-
-        multipleEntitySaverProvider.saveInTransaction {
-            resolvedFeeds.forEach { add(it.view) }
-            resolvedLists.forEach { add(it.list) }
-        }
-    }
-
-    private suspend fun saveNotificationPreferences(
-        notificationPreferencesResponse: app.bsky.notification.GetPreferencesResponse,
-    ) {
-        val currentNotifications = savedStateDataSource.savedState
-            .map { it.signedInProfileData?.notifications }
-            .first() ?: SavedState.Notifications()
-
-        val updatedNotifications = notificationPreferenceUpdater.update(
-            notificationPreferences = notificationPreferencesResponse.preferences,
-            notifications = currentNotifications,
-        )
-
-        savedStateDataSource.updateSignedInUserNotifications {
-            copy(
-                preferences = updatedNotifications.preferences,
-                lastRefreshed = Clock.System.now(),
-            )
-        }
     }
 
     override suspend fun resolveServer(

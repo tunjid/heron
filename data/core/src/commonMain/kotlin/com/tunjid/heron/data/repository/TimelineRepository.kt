@@ -99,6 +99,7 @@ import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.signedInUserRefresher.SignedInUserRefresher
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -277,7 +278,7 @@ internal class OfflineTimelineRepository(
     private val preferenceUpdater: PreferenceUpdater,
     private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
-    private val authRepository: AuthRepository,
+    private val signedInUserRefresher: SignedInUserRefresher,
 ) : TimelineRepository {
 
     override val preferences: Flow<Preferences>
@@ -941,7 +942,7 @@ internal class OfflineTimelineRepository(
                         ),
                     )
                 }.fold(
-                    onSuccess = { authRepository.updateSignedInUser() },
+                    onSuccess = { signedInUserRefresher.refresh() },
                     onFailure = Outcome::Failure,
                 )
             },
