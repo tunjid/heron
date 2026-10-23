@@ -112,6 +112,11 @@ internal fun MultipleEntitySaver.add(
             verification = verification,
         )
     }
+    // A detailed view is authoritative for links; absent links means none.
+    add(
+        profileId = profileView.did.did.let(::ProfileId),
+        links = profileView.links.orEmpty(),
+    )
     if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
     )?.let(::add)

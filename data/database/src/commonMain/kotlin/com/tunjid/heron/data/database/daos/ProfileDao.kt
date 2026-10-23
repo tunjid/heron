@@ -28,11 +28,14 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
+import com.tunjid.heron.data.database.entities.profile.PopulatedProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.PopulatedProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -286,4 +289,44 @@ interface ProfileDao {
     fun verifications(
         profileIdOrHandle: String,
     ): Flow<List<PopulatedProfileVerificationEntity>>
+
+    @Upsert
+    suspend fun upsertLinks(
+        entities: List<ProfileLinkEntity>,
+    )
+
+    @Query(
+        """
+            DELETE FROM profileLinks
+            WHERE profileId IN (:profileIds)
+        """,
+    )
+    suspend fun deleteLinksForProfiles(
+        profileIds: Collection<ProfileId>,
+    )
+
+    @Query(
+        """
+            DELETE FROM profileLinks
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteLink(
+        uri: ProfileLinkUri,
+    )
+
+    @Transaction
+    @Query(
+        """
+            SELECT profileLinks.* FROM profileLinks
+            INNER JOIN profiles
+                ON profiles.did = profileLinks.profileId
+            WHERE profiles.did = :profileIdOrHandle
+            OR profiles.handle = :profileIdOrHandle
+            ORDER BY profileLinks.sortOrder ASC
+        """,
+    )
+    fun links(
+        profileIdOrHandle: String,
+    ): Flow<List<PopulatedProfileLinkEntity>>
 }

@@ -89,6 +89,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -115,7 +116,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 54,
+    version = 55,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -138,6 +139,7 @@ import kotlinx.coroutines.IO
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
         ProfileVerificationEntity::class,
+        ProfileLinkEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
@@ -281,6 +283,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 52, to = 53),
         // Add MessageLocalIdEntity to match pending messages to sent ones
         AutoMigration(from = 53, to = 54),
+        // Add ProfileLinkEntity for profile links
+        AutoMigration(from = 54, to = 55),
     ],
     exportSchema = true,
 )

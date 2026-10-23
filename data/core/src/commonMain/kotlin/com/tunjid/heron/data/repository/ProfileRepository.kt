@@ -54,6 +54,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileVerification
 import com.tunjid.heron.data.core.models.ProfileViewerState
@@ -72,6 +73,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.PopulatedProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.PopulatedProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
@@ -161,6 +163,10 @@ interface ProfileRepository {
     fun verifications(
         profileId: Id.Profile,
     ): Flow<List<ProfileVerification>>
+
+    fun links(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileLink>>
 
     fun followers(
         query: ProfilesQuery,
@@ -373,6 +379,23 @@ internal class OfflineProfileRepository(
             profileDao.verifications(profileIdOrHandle = profileId.id)
                 .distinctUntilChangedMap { entities ->
                     entities.map(PopulatedProfileVerificationEntity::asExternalModel)
+                }
+                .withRefresh {
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
+                        profileId = profileId,
+                    )
+                }
+        }
+            .flowOn(ioDispatcher)
+
+    override fun links(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileLink>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileDao.links(profileIdOrHandle = profileId.id)
+                .distinctUntilChangedMap { entities ->
+                    entities.map(PopulatedProfileLinkEntity::asExternalModel)
                 }
                 .withRefresh {
                     profileLookup.refreshProfile(
