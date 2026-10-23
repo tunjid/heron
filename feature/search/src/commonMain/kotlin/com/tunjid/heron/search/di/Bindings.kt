@@ -373,6 +373,13 @@ internal fun Route(
                     keyboard?.show()
                     true
                 },
+                actions = {
+                    PaneActions(
+                        state = state,
+                        focusManager = focusManager,
+                        actions = stateHolder.accept,
+                    )
+                },
             )
         },
         content = {

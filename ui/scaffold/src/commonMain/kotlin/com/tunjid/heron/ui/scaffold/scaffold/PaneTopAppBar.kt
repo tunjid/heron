@@ -160,7 +160,8 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            NavigationIconBox {
+            if (placesAppBarActionsInNavigationRail) Spacer(Modifier.width(8.dp))
+            else NavigationIconBox {
                 AppLogo(
                     modifier = Modifier
                         .padding(4.dp)
@@ -198,7 +199,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             AnimatedVisibility(
                 visible = identityState.isStable,
             ) {
-                if (actions != null) Row(
+                if (actions != null && !placesAppBarActionsInNavigationRail) Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -303,7 +304,8 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            NavigationIconBox {
+            if (placesAppBarActionsInNavigationRail) Spacer(Modifier.width(8.dp))
+            else NavigationIconBox {
                 AppLogo(
                     modifier = Modifier
                         .padding(8.dp)
@@ -322,7 +324,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             }
         },
         actions = {
-            actions()
+            if (!placesAppBarActionsInNavigationRail) actions()
             Spacer(Modifier.width(8.dp))
         },
     )
@@ -566,7 +568,7 @@ private fun PaneScaffoldState.FailedWriteIcon(
 }
 
 @Composable
-private fun PaneScaffoldState.NavigationIconBox(
+internal fun PaneScaffoldState.NavigationIconBox(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {

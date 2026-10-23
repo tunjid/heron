@@ -126,6 +126,7 @@ class AppState internal constructor(
         edge: NavRailEdge?,
         width: Double,
         centerFromEdge: Double,
+        contentTop: Double,
     ) = uiStateHolder.accept(
         UiAction.UpdateSystemVerticalBar(
             systemVerticalBar = edge?.let {
@@ -133,6 +134,7 @@ class AppState internal constructor(
                     edge = it,
                     width = width.dp,
                     centerFromEdge = centerFromEdge.dp,
+                    contentTop = contentTop.dp,
                 )
             },
         ),

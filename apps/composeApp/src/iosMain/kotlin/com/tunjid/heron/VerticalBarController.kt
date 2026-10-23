@@ -27,5 +27,6 @@ interface VerticalBarListener {
         edge: NavRailEdge?,
         width: Double,
         centerFromEdge: Double,
+        contentTop: Double,
     )
 }

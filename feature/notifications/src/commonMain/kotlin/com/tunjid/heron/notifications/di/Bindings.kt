@@ -217,6 +217,12 @@ internal fun Route(
                     stateHolder.accept(Action.Tile(TilingState.Action.Refresh))
                     true
                 },
+                actions = {
+                    PaneActions(
+                        state = state,
+                        actions = stateHolder.accept,
+                    )
+                },
             )
         },
         content = {

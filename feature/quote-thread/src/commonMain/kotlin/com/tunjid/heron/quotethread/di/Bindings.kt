@@ -239,7 +239,13 @@ internal fun Route(
             )
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                actions = {
+                    PaneActions(
+                        state = state,
+                    )
+                },
+            )
         },
         content = {
             QuoteThreadScreen(

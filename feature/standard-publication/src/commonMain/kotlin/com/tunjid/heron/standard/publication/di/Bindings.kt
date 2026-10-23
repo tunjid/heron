@@ -32,6 +32,7 @@ import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -210,6 +211,16 @@ object StandardPublicationBindings {
                         },
                         transparencyFactor = paneScaffoldState::topAppBarTransparencyFactor,
                         onBackPressed = { stateHolder.accept(Action.Navigate.Pop) },
+                    )
+                },
+                navigationRail = {
+                    PaneNavigationRail(
+                        actions = {
+                            PaneActions(
+                                state = state,
+                                actions = stateHolder.accept,
+                            )
+                        },
                     )
                 },
                 content = {

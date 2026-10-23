@@ -24,4 +24,5 @@ internal data class SystemVerticalBar(
     val edge: NavRailEdge,
     val width: Dp,
     val centerFromEdge: Dp,
+    val contentTop: Dp,
 )
