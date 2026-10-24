@@ -88,12 +88,14 @@ import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.ui.lerp
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -117,6 +119,7 @@ import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
 import com.tunjid.heron.profile.ui.ProfileApps
 import com.tunjid.heron.profile.ui.ProfileLabels
+import com.tunjid.heron.profile.ui.ProfileLinks
 import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.sheets.postoptions.PostOption
@@ -341,6 +344,8 @@ internal fun ProfileScreen(
                 preferences = state.preferences,
                 isRefreshing = isRefreshing,
                 supportedApps = state.supportedApps,
+                links = state.links,
+                appliedLabels = state.appliedLabels,
                 isSignedInProfile = state.isSignedInProfile,
                 canRunInference = state.canRunInference,
                 signedInProfileId = state.signedInProfileId,
@@ -696,6 +701,8 @@ private fun ProfileHeader(
     signedInProfileId: ProfileId?,
     viewerState: ProfileViewerState?,
     supportedApps: List<AtmosphereApp>,
+    links: List<ProfileLink>,
+    appliedLabels: AppliedLabels,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     profileScreenStateHolders: List<ProfileScreenStateHolders>,
     avatarSharedElementKey: String,
@@ -755,7 +762,7 @@ private fun ProfileHeader(
                 },
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .drawBehind {
                         drawRect(
@@ -795,6 +802,12 @@ private fun ProfileHeader(
                 ProfileBio(
                     description = profile.description ?: "",
                     onLinkTargetClicked = onLinkTargetClicked,
+                )
+                ProfileLinks(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    links = links,
+                    appliedLabels = appliedLabels,
                 )
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
                     CommonFollowers(
