@@ -261,6 +261,17 @@ sealed interface AppliedLabels {
             is AppliedLabelsImpl -> copy(labels = labels)
         }
 
+        fun AppliedLabels.shouldHideProfileLink(): Boolean = labels.any { label ->
+            if (label.value == Label.Hidden || label.value == Label.Warn) return@any true
+            when (visibility(label.value)) {
+                Label.Visibility.Hide -> true
+                Label.Visibility.Warn ->
+                    label.value in Label.AdultLabels ||
+                        definition(label)?.blurs.let { it == Label.BlurTarget.Content || it == Label.BlurTarget.Media }
+                else -> false
+            }
+        }
+
         fun AppliedLabels.warned(): Filtered {
             val visibleDefinitions = mutableListOf<Label.Definition>()
             val visibleSummaries = mutableListOf<LabelerSummary>()

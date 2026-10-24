@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
@@ -46,15 +45,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileLinks
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.editprofile.EditableLink
 import com.tunjid.heron.editprofile.ui.ProfileLinkSheetState.Companion.rememberProfileLinkSheetState
-import com.tunjid.heron.media.images.AsyncImage
-import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.profile.ProfileLinkIcon
 import com.tunjid.heron.ui.JiggleBox
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState
@@ -62,10 +59,8 @@ import com.tunjid.heron.ui.draganddrop.DragAndDropSelectorState.Companion.select
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Add
-import com.tunjid.heron.ui.icons.regular.Public
 import com.tunjid.heron.ui.icons.regular.Remove
 import com.tunjid.heron.ui.modifiers.chipBackground
-import com.tunjid.heron.ui.shapes.Circle
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.link_add
 import heron.feature.edit_profile.generated.resources.link_limit_reached
@@ -212,7 +207,12 @@ private fun LinkChip(
             selected = false,
             onClick = onClick,
             leadingIcon = {
-                LinkIcon(link = link)
+                ProfileLinkIcon(
+                    modifier = Modifier
+                        .size(LinkIconSize),
+                    url = link.url,
+                    favicon = link.icon,
+                )
             },
             label = {
                 Text(
@@ -232,31 +232,6 @@ private fun LinkChip(
             },
         )
     }
-}
-
-@Composable
-private fun LinkIcon(
-    link: EditableLink,
-) {
-    val icon = link.icon
-    if (icon == null) Icon(
-        modifier = Modifier
-            .size(LinkIconSize),
-        imageVector = HeronIcons.Regular.Public,
-        contentDescription = null,
-    )
-    else AsyncImage(
-        modifier = Modifier
-            .size(LinkIconSize),
-        args = remember(icon) {
-            ImageArgs(
-                url = icon.uri,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                shape = PolygonShape.Circle,
-            )
-        },
-    )
 }
 
 private val EditableLink.id: String
