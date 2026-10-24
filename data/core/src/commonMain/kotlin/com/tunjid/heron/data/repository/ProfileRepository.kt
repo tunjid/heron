@@ -94,6 +94,7 @@ import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.profileLinks.ProfileLinkWriter
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
@@ -225,6 +226,7 @@ internal class OfflineProfileRepository(
     private val savedStateDataSource: SavedStateDataSource,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val tidGenerator: TidGenerator,
+    private val profileLinkWriter: ProfileLinkWriter,
 ) : ProfileRepository {
 
     override fun profile(
@@ -762,6 +764,15 @@ internal class OfflineProfileRepository(
                     .mapCatchingUnlessCancelled {
                         val existingProfile = it.value.decodeAs<BskyProfile>()
 
+                        // The profile can only point at link records that already exist
+                        val linkWrites = update.links?.let { links ->
+                            profileLinkWriter.write(
+                                profileId = update.profileId,
+                                links = links,
+                                existingRefs = existingProfile.links.orEmpty(),
+                            )
+                        }
+
                         val request = PutRecordRequest(
                             repo = update.profileId.id.let(::Did),
                             collection = Nsid(Collections.Profile),
@@ -772,6 +783,10 @@ internal class OfflineProfileRepository(
                                 pronouns = update.pronouns.takeIf(String::isNotBlank),
                                 avatar = avatarBlob ?: existingProfile.avatar,
                                 banner = bannerBlob ?: existingProfile.banner,
+                                links = when (linkWrites) {
+                                    null -> existingProfile.links
+                                    else -> linkWrites.refs.ifEmpty { null }
+                                },
                             )
                                 .asJsonContent(BskyProfile.serializer()),
                         )
@@ -779,6 +794,11 @@ internal class OfflineProfileRepository(
                         networkService.runCatchingWithMonitoredNetworkRetry {
                             putRecord(request)
                         }.getOrThrow()
+
+                        if (linkWrites != null) profileLinkWriter.deleteRemoved(
+                            profileId = update.profileId,
+                            writes = linkWrites,
+                        )
 
                         profileLookup.refreshProfile(
                             signedInProfileId = signedInProfileId,
