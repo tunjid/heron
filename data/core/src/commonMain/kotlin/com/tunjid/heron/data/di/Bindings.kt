@@ -105,6 +105,8 @@ import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceU
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
+import com.tunjid.heron.data.utilities.profileLinks.AtProtoProfileLinkWriter
+import com.tunjid.heron.data.utilities.profileLinks.ProfileLinkWriter
 import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
@@ -314,6 +316,12 @@ object DataBindings {
     internal fun provideProfileLookup(
         offlineProfileLookup: OfflineProfileLookup,
     ): ProfileLookup = offlineProfileLookup
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideProfileLinkWriter(
+        atProtoProfileLinkWriter: AtProtoProfileLinkWriter,
+    ): ProfileLinkWriter = atProtoProfileLinkWriter
 
     @SingleIn(AppScope::class)
     @Provides

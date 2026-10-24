@@ -204,7 +204,26 @@ data class Profile(
         val tabs: List<ProfileTab>? = null,
         @ProtoNumber(9)
         val pronouns: String = "",
-    )
+        /**
+         * The profile's links, in display order. Null no-ops; while
+         * an empty list clears links.
+         */
+        @ProtoNumber(10)
+        val links: List<Link>? = null,
+    ) {
+        @Serializable
+        data class Link(
+            /**
+             * The saved link record, or null for a link that hasn't been saved yet.
+             */
+            @ProtoNumber(1)
+            val uri: ProfileLinkUri? = null,
+            @ProtoNumber(2)
+            val url: GenericUri,
+            @ProtoNumber(3)
+            val title: String? = null,
+        )
+    }
 
     @Serializable
     data class ChatInfo(
