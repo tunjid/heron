@@ -36,6 +36,8 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileLinkId
+import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.RecordUri
@@ -84,6 +86,10 @@ internal class UriConverters {
     @TypeConverter
     fun profileVerificationUriFromString(value: String?): ProfileVerificationUri? =
         value?.let(::ProfileVerificationUri)
+
+    @TypeConverter
+    fun profileLinkUriFromString(value: String?): ProfileLinkUri? =
+        value?.let(::ProfileLinkUri)
 
     @TypeConverter
     fun feedGeneratorUriFromString(value: String?): FeedGeneratorUri? =
@@ -202,6 +208,10 @@ internal class IdConverters {
     @TypeConverter
     fun standardDocumentIdFromString(value: String?): StandardDocumentId? =
         value?.let(::StandardDocumentId)
+
+    @TypeConverter
+    fun profileLinkIdFromString(value: String?): ProfileLinkId? =
+        value?.let(::ProfileLinkId)
 
     @TypeConverter
     fun toIdString(id: Id?): String? =

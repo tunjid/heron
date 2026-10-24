@@ -77,6 +77,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -186,6 +187,8 @@ internal class MultipleEntitySaver(
 
     private val profileVerificationEntities = LazyList<ProfileVerificationEntity>()
 
+    private val profileLinkEntities = LazyList<ProfileLinkEntity>()
+
     private val profileTabEntities = LazyList<ProfileTabsEntity>()
 
     private val profileAtmosphereAppEntities = LazyList<ProfileAtmosphereAppEntity>()
@@ -281,6 +284,17 @@ internal class MultipleEntitySaver(
             )
             profileDao.deleteVerificationsForProfiles(subjectIds)
             profileDao.upsertVerifications(profileVerificationEntities.list)
+        }
+
+        if (profileLinkEntities.isNotEmpty) {
+            val profileIds = profileLinkEntities.list.mapTo(
+                mutableSetOf(),
+                ProfileLinkEntity::profileId,
+            )
+            profileDao.deleteLinksForProfiles(profileIds)
+            profileDao.upsertLinks(
+                profileLinkEntities.list.filterNot { it.cid.isStubbedId() },
+            )
         }
 
         if (postEntities.isNotEmpty) {
@@ -531,6 +545,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileViewerStateEntity) = profileViewerEntities.add(entity)
 
     fun add(entity: ProfileVerificationEntity) = profileVerificationEntities.add(entity)
+
+    fun add(entity: ProfileLinkEntity) = profileLinkEntities.add(entity)
 
     fun add(entity: LabelEntity) = labelEntities.add(entity)
 

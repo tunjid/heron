@@ -372,4 +372,21 @@ class UriTest {
         val input = "$authority/${ProfileVerificationUri.NAMESPACE}/$rkey"
         assertNull(input.asEmbeddableRecordUriOrNull())
     }
+
+    // ----- ProfileLinkUri -----
+
+    @Test
+    fun asRecordUriOrNull_parsesProfileLinkUri() {
+        val input = "at://$authority/${ProfileLinkUri.NAMESPACE}/$rkey"
+        val parsed = input.asRecordUriOrNull()
+        assertIs<ProfileLinkUri>(parsed)
+        assertEquals(input, parsed.uri)
+        assertEquals(ProfileLinkUri.NAMESPACE, parsed.requireCollection())
+    }
+
+    @Test
+    fun asEmbeddableRecordUriOrNull_profileLinkReturnsNull() {
+        val input = "$authority/${ProfileLinkUri.NAMESPACE}/$rkey"
+        assertNull(input.asEmbeddableRecordUriOrNull())
+    }
 }

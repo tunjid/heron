@@ -19,10 +19,12 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -235,6 +237,15 @@ data class ProfileVerification(
     val subject: Profile,
     val isValid: Boolean,
     val createdAt: Instant,
+)
+
+@Serializable
+data class ProfileLink(
+    val uri: ProfileLinkUri,
+    val url: GenericUri,
+    val title: String?,
+    val icon: ImageUri?,
+    val labels: List<Label>,
 )
 
 val Profile.contentDescription get() = displayName ?: handle.id
