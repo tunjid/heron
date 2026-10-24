@@ -69,6 +69,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.editprofile.ui.EditButton
 import com.tunjid.heron.editprofile.ui.EditProfileTabs
+import com.tunjid.heron.editprofile.ui.LinkEditor
 import com.tunjid.heron.editprofile.ui.TabEditor
 import com.tunjid.heron.editprofile.ui.rememberEditProfileTabs
 import com.tunjid.heron.media.images.AsyncImage
@@ -209,6 +210,14 @@ internal fun EditProfileScreen(
                                             .screenHorizontalPadding(),
                                         state = state,
                                         actions = actions,
+                                    )
+                                    EditProfileScreenTabs.Links -> LinkEditor(
+                                        modifier = Modifier
+                                            .screenHorizontalPadding(),
+                                        links = state.links,
+                                        onLinksChanged = {
+                                            actions(Action.UpdateLinks(it))
+                                        },
                                     )
                                     EditProfileScreenTabs.Editor -> TabEditor(
                                         modifier = Modifier

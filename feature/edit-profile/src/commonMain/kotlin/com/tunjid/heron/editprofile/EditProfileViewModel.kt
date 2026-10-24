@@ -106,6 +106,11 @@ class ActualEditProfileViewModel(
                     route = route,
                     profileRepository = profileRepository,
                 )
+                launchProfileLinkMutations(
+                    state = state,
+                    route = route,
+                    profileRepository = profileRepository,
+                )
                 launchScreenTabMutations(
                     state = state,
                     viewModelScope = scope,
@@ -125,6 +130,7 @@ class ActualEditProfileViewModel(
                         is Action.FieldChanged -> action.flow.launchFormEditMutations(state)
                         is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(state)
                         is Action.UpdateTabsToSave -> action.flow.launchPinnedTabMutations(state)
+                        is Action.UpdateLinks -> action.flow.launchUpdateLinksMutations(state)
                         is Action.ToggleFeed -> action.flow.launchToggleFeedMutations(state)
                         is Action.SaveProfile -> action.flow.launchSaveProfileMutations(
                             state = state,
@@ -183,6 +189,18 @@ private fun launchProfileTabMutations(
         val missingTabs = ProfileTab.Static.minus(tabsSet)
         state.currentProfileTabs = tabsSet
         state.editableTabs = tabs + missingTabs
+    }
+
+context(productionScope: CoroutineScope)
+private fun launchProfileLinkMutations(
+    state: State.Mutable,
+    route: Route,
+    profileRepository: ProfileRepository,
+) = profileRepository.links(route.profileHandleOrId)
+    .distinctUntilChanged()
+    .launchedCollect { links ->
+        // Keep local edits over refreshes of the saved links
+        if (!state.linksEdited) state.links = links.map(::EditableLink)
     }
 
 context(productionScope: CoroutineScope)
@@ -261,6 +279,7 @@ private fun Flow<Action.SaveProfile>.launchSaveProfileMutations(
                 fileManager.toUnrestrictedPhotoFile(it)
             },
             tabs = action.selectedProfileTabs,
+            links = action.links,
         ),
     )
 
@@ -286,6 +305,14 @@ private fun Flow<Action.UpdateTabsToSave>.launchPinnedTabMutations(
     state: State.Mutable,
 ) = launchedCollect { action ->
     state.tabsToSave = action.tabs
+}
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.UpdateLinks>.launchUpdateLinksMutations(
+    state: State.Mutable,
+) = launchedCollect { action ->
+    state.links = action.links
+    state.linksEdited = true
 }
 
 context(productionScope: CoroutineScope)
