@@ -30,7 +30,6 @@ import com.tunjid.heron.ui.scaffold.di.NavigationScope
 import com.tunjid.heron.ui.scaffold.scaffold.NavigationContentTransformer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -133,8 +132,7 @@ internal fun Route(
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+            .fillMaxSize(),
         containerColor = Color.Transparent,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
