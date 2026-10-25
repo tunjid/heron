@@ -110,6 +110,7 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
                 .iosNavSharedElement(
                     sharedContentState = sharedContentState,
                     boundsTransform = NavigationRailBoundsTransform,
+                    ownsChrome = canShowNavigationRail,
                 )
                 .widthIn(max = navigationRailWidth)
                 .fillMaxSize(),

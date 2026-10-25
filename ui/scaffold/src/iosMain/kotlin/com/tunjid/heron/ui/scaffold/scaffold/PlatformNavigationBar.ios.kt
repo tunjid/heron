@@ -131,6 +131,7 @@ internal actual fun PaneScaffoldState.PlatformNavigationBar(
                 )
                 .iosNavSharedElement(
                     sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+                    ownsChrome = canShowNavigationBar,
                 )
                 .fillMaxWidth()
                 .height(height)
