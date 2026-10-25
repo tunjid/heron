@@ -31,7 +31,7 @@ import com.tunjid.treenav.compose.NavigationEventStatus
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 
-fun Modifier.predictiveBackPlacement(
+internal fun Modifier.predictiveBackPlacement(
     paneScaffoldState: PaneScaffoldState,
 ): Modifier = with(paneScaffoldState) {
     val shouldDrawBackground = paneState.pane == ThreePane.Primary &&

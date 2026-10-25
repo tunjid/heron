@@ -53,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -404,21 +405,28 @@ fun PaneScaffoldState.PaneScaffold(
         },
         content = {
             NonSubComposingScaffold(
-                modifier = when {
-                    appScaffoldState.paneAnchorState.hasInteractions -> Modifier
-                    else -> when (dismissBehavior) {
-                        AppScaffoldState.DismissBehavior.None,
-                        AppScaffoldState.DismissBehavior.Gesture.DragToPop,
-                        -> Modifier.animateBounds(
-                            lookaheadScope = this,
-                            boundsTransform = childBoundsTransform,
-                        )
+                // Placed here, not on the rail scaffold, so predictive back leaves the rail in place.
+                modifier = Modifier
+                    .predictiveBackPlacement(
+                        paneScaffoldState = this@PaneScaffold,
+                    )
+                    .then(
+                        when {
+                            appScaffoldState.paneAnchorState.hasInteractions -> Modifier
+                            else -> when (dismissBehavior) {
+                                AppScaffoldState.DismissBehavior.None,
+                                AppScaffoldState.DismissBehavior.Gesture.DragToPop,
+                                -> Modifier.animateBounds(
+                                    lookaheadScope = this,
+                                    boundsTransform = childBoundsTransform,
+                                )
 
-                        AppScaffoldState.DismissBehavior.Gesture.SlideToPop,
-                        AppScaffoldState.DismissBehavior.Gesture.ScaleToPop,
-                        -> Modifier
-                    }
-                },
+                                AppScaffoldState.DismissBehavior.Gesture.SlideToPop,
+                                AppScaffoldState.DismissBehavior.Gesture.ScaleToPop,
+                                -> Modifier
+                            }
+                        },
+                    ),
                 containerColor = containerColor,
                 topBar = {
                     topBar()
@@ -587,6 +595,8 @@ private fun PaneNavigationRailScaffold(
                     .fillMaxSize()
                     .consumeWindowInsets(railInsets)
                     .zIndex(1f),
+                // Centers the scaffold as predictive back shrinks it.
+                contentAlignment = Alignment.Center,
                 content = {
                     content()
                 },

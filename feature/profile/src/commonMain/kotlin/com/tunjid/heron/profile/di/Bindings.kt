@@ -48,7 +48,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fabOffset
 import com.tunjid.heron.ui.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -175,8 +174,7 @@ internal fun Route(
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+            .fillMaxSize(),
         topBar = {
             PoppableDestinationTopAppBar(
                 transparencyFactor = ::fullAppbarTransparency,
