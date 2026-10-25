@@ -22,7 +22,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.visible
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -38,6 +37,7 @@ import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.navigation.NavItem
 import kotlinx.cinterop.BetaInteropApi
@@ -96,8 +96,21 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
         val railWidth = minOf(GlassRailWidth, navigationRailWidth)
         val railHeight = GlassRailItemExtent * navItems.size + GlassRailVerticalPadding * 2
 
+        val sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey)
         Box(
             modifier = modifier
+                // Do not animate the rail entering on exiting when multiple panes can show
+                // bc it jitters.
+                .ifTrue(!appScaffoldState.isLargeScreen) {
+                    paneChromeEnterExit(
+                        enterTransition = navRailEnterTransition(),
+                        exitTransition = navRailExitTransition(),
+                    )
+                }
+                .iosNavSharedElement(
+                    sharedContentState = sharedContentState,
+                    boundsTransform = NavigationRailBoundsTransform,
+                )
                 .widthIn(max = navigationRailWidth)
                 .fillMaxSize(),
         ) {
@@ -115,11 +128,6 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
                     )
                     .centerOnSystemVerticalBar(
                         railBoxWidth = navigationRailWidth,
-                    )
-                    // Prevent double rendering during shared element transitions, as UIKit
-                    // overlays are unaffected by the shared element overlay.
-                    .visible(
-                        visible = isActive || !isTransitionActive,
                     )
                     .constrainedSizePlacement(
                         orientation = Orientation.Horizontal,
