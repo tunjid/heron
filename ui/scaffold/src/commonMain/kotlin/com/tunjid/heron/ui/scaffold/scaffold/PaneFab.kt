@@ -76,7 +76,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.CountDown
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState.BottomNavConfig
 import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
@@ -121,12 +120,6 @@ fun PaneScaffoldState.PaneFab(
     )
     AnimatedVisibility(
         modifier = Modifier
-            // Use the enter and exit transition on navigation
-            // level changes if in predictive back.
-            // This prevents the fab from suddenly appearing over content
-            .ifTrue(inPredictiveBack) {
-                animateEnterExit(enterTransition, exitTransition)
-            }
             .onSizeChanged {
                 if (!appScaffoldState.paneAnchorState.hasInteractions) {
                     fabWidth = with(density) { it.width.toDp() }
@@ -163,6 +156,17 @@ fun PaneScaffoldState.PaneFab(
                     .animateBounds(
                         lookaheadScope = this@PaneFab,
                         boundsTransform = skippableBoundsTransform,
+                    )
+                    .then(
+                        with(this@PaneFab) {
+                            // Use the enter and exit transition on navigation
+                            // level changes if in predictive back.
+                            // This prevents the fab from suddenly appearing over content
+                            Modifier.animateEnterExit(
+                                enter = enterTransition,
+                                exit = exitTransition,
+                            )
+                        },
                     )
                     .then(modifier),
                 sharedContentState = sharedContentState,
@@ -439,10 +443,14 @@ private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
     ) = measurable.maxIntrinsicHeight(width)
 }
 
+private fun fabTransitionOffset(
+    fabHeight: Int,
+) = (fabHeight * 3.2).roundToInt()
+
 private val DefaultEnterTransition: EnterTransition =
-    slideInVertically(initialOffsetY = { it })
+    slideInVertically(initialOffsetY = ::fabTransitionOffset)
 
 private val DefaultExitTransition: ExitTransition =
-    slideOutVertically(targetOffsetY = { it * 2 })
+    slideOutVertically(targetOffsetY = ::fabTransitionOffset)
 
 internal val DefaultFabSize = 56.dp
