@@ -86,6 +86,10 @@ internal fun PaneScaffoldState.CommonNavigationBar(
             )
             .animateBounds(
                 lookaheadScope = this@CommonNavigationBar,
+            )
+            .paneChromeEnterExit(
+                enterTransition = NavBarEnterTransition,
+                exitTransition = NavBarExitTransition,
             ),
     ) {
         Surface(
@@ -266,8 +270,6 @@ private fun Modifier.commonBottomNavPadding(
         else 0.dp,
     )
 }
-
-internal data object NavigationBarSharedElementKey
 
 sealed class BottomNavStatus {
     internal data object Expanded : BottomNavStatus()

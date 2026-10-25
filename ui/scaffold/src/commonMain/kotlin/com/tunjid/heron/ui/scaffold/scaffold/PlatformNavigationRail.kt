@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
 import org.jetbrains.compose.resources.stringResource
@@ -61,8 +62,23 @@ internal fun PaneScaffoldState.CommonNavigationRail(
     modifier: Modifier,
     onNavItemReselected: () -> Boolean,
 ) = with(appScaffoldState.staticStates) {
+    val sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey)
     Box(
         modifier = modifier
+            // Do not animate the rail entering on exiting when multiple panes can show
+            // bc it jitters.
+            .ifTrue(!appScaffoldState.isLargeScreen) {
+                paneChromeEnterExit(
+                    enterTransition = navRailEnterTransition(),
+                    exitTransition = navRailExitTransition(),
+                )
+            }
+            .sharedElement(
+                sharedContentState = sharedContentState,
+                animatedVisibilityScope = this@CommonNavigationRail,
+                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+                boundsTransform = NavigationRailBoundsTransform,
+            )
             .padding(horizontal = 8.dp)
             .widthIn(max = navigationRailWidth)
             .fillMaxSize(),
@@ -166,5 +182,4 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
 }.value
 
 private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
-
 private val NavRailVerticalPadding get() = FabSpacing

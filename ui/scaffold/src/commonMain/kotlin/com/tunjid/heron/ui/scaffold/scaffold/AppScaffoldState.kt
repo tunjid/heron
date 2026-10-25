@@ -115,9 +115,12 @@ class AppScaffoldState internal constructor(
     // A system vertical bar (iPhone Duo) alone decides whether there's room for the rail.
     internal val prefersNavigationRail
         get() = when (val systemVerticalBar = systemVerticalBar) {
-            null -> windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
+            null -> isLargeScreen
             else -> systemVerticalBar.width > 0.dp
         }
+
+    internal val isLargeScreen
+        get() = windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     internal fun update(
         density: Density,

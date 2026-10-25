@@ -157,16 +157,9 @@ fun PaneScaffoldState.PaneFab(
                         lookaheadScope = this@PaneFab,
                         boundsTransform = skippableBoundsTransform,
                     )
-                    .then(
-                        with(this@PaneFab) {
-                            // Use the enter and exit transition on navigation
-                            // level changes if in predictive back.
-                            // This prevents the fab from suddenly appearing over content
-                            Modifier.animateEnterExit(
-                                enter = enterTransition,
-                                exit = exitTransition,
-                            )
-                        },
+                    .paneChromeEnterExit(
+                        enterTransition = enterTransition,
+                        exitTransition = exitTransition,
                     )
                     .then(modifier),
                 sharedContentState = sharedContentState,
