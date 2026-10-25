@@ -51,11 +51,12 @@ context(paneScaffoldState: PaneScaffoldState)
 internal fun Modifier.iosNavSharedElement(
     sharedContentState: SharedTransitionScope.SharedContentState,
     boundsTransform: BoundsTransform = SharedTransitionDefaults.BoundsTransform,
+    ownsChrome: Boolean,
 ) = with(paneScaffoldState) {
     // Prevent double rendering of shared elements as compose graphic layer and
     // shared element overlay semantics do not affect UI kit overlays.
     visible(
-        visible = isActive || !sharedContentState.isMatchFound,
+        visible = ownsChrome && (isActive || !sharedContentState.isMatchFound),
     )
         .sharedElement(
             sharedContentState = sharedContentState,

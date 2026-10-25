@@ -119,13 +119,19 @@ fun PaneScaffoldState.PaneNavigationRail(
 ) = Box(
     modifier = modifier,
 ) {
+    val isHandedBetweenPanes = paneState.adaptations.any {
+        it is Adaptation.Swap<*> || it is Adaptation.Same
+    }
     AnimatedVisibility(
         visible = canShowNavigationRail,
-        enter = if (
-            canShowNavigationRail &&
-            paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
-        ) enterTransition else EnterTransition.None,
-        exit = exitTransition,
+        enter = when {
+            canShowNavigationRail && !isHandedBetweenPanes -> enterTransition
+            else -> EnterTransition.None
+        },
+        exit = when {
+            isHandedBetweenPanes -> ExitTransition.None
+            else -> exitTransition
+        },
         content = {
             with(this@PaneNavigationRail) {
                 if (canUseMovableNavigationRail) appScaffoldState.staticStates.movableNavigationRail(

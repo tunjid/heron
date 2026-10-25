@@ -1,6 +1,7 @@
 package com.tunjid.heron.ui.scaffold.ui
 
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.ui.scaffold.scaffold.BottomNavStatus
@@ -97,8 +98,20 @@ private fun Flow<UiAction.UpdateRouteImmersion>.launchRouteImmersionMutations(
 context(productionScope: CoroutineScope)
 private fun Flow<UiAction.UpdateSystemVerticalBar>.launchSystemVerticalBarMutations(
     state: UiState.Mutable,
-) = launchedCollectLatest {
-    state.systemVerticalBar = it.systemVerticalBar
+) = launchedCollectLatest { action ->
+    val previous = state.systemVerticalBar
+    val next = action.systemVerticalBar
+    // Keep the last width so the rail doesn't flash
+    // to a bottom bar on either side of immersion.
+    state.systemVerticalBar = when {
+        next != null &&
+            previous != null &&
+            next.edge == previous.edge &&
+            next.width == 0.dp -> next.copy(
+            width = previous.width,
+        )
+        else -> next
+    }
 }
 
 context(productionScope: CoroutineScope)
