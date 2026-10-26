@@ -38,6 +38,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -49,6 +52,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -166,6 +170,43 @@ internal fun Modifier.centerOnSystemVerticalBar(
         },
         y = 0,
     )
+}
+
+/**
+ * TODO: This is a workaround to being aware of system vertical bar insets.
+ *
+ * Centers the content horizontally on the system vertical bar wherever it is placed, by
+ * measuring how far its placement is from the bar's center in the window. Unlike
+ * [centerOnSystemVerticalBar], it does not require the parent to sit flush against the bar's
+ * edge of the window.
+ */
+context(paneScaffoldState: PaneScaffoldState)
+internal fun Modifier.centerOnSystemVerticalBarInWindow(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(
+        width = placeable.width,
+        height = placeable.height,
+    ) {
+        val centerFromEdge = paneScaffoldState.systemVerticalBarCenterFromEdge
+        val placedCoordinates = coordinates
+        if (centerFromEdge == null || placedCoordinates == null) {
+            placeable.place(
+                x = 0,
+                y = 0,
+            )
+            return@layout
+        }
+        val windowWidth = placedCoordinates.findRootCoordinates().size.width
+        val left = placedCoordinates.positionInRoot().x
+        val barCenter = when (paneScaffoldState.navRailEdge) {
+            NavRailEdge.Start -> centerFromEdge.toPx()
+            NavRailEdge.End -> windowWidth - centerFromEdge.toPx()
+        }
+        placeable.place(
+            x = (barCenter - (left + placeable.width / 2f)).roundToInt(),
+            y = 0,
+        )
+    }
 }
 
 internal fun PaneScaffoldState.navRailPlacesAtStart(
