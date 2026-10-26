@@ -27,9 +27,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -95,16 +96,48 @@ fun PaneScaffoldState.PaneNavigationBar(
     )
 }
 
+/**
+ * TODO: This is a workaround to being aware of system vertical bar insets.
+ *
+ * Takes the place of the navigation rail for panes that host their own vertical chrome.
+ *
+ * When it sits on the same side as a system vertical bar, it is as wide as the bar and centers
+ * [content] on it, below the bar's status content, wherever the container itself is placed.
+ * Otherwise it is a plain [Box].
+ *
+ * @param side the layout relative side of the pane this container sits on, either
+ * [Alignment.Start] or [Alignment.End]. Defaults to the navigation rail's side.
+ */
 @Composable
 fun PaneScaffoldState.PaneNavigationRailSpacer(
     modifier: Modifier = Modifier,
+    side: Alignment.Horizontal = navigationRailSide(),
+    content: @Composable BoxScope.() -> Unit = {},
 ) {
     val systemVerticalBar = appScaffoldState.staticStates.uiState.systemVerticalBar
-    Spacer(
-        modifier = modifier.width(
-            if (canShowNavigationRail && systemVerticalBar != null) systemVerticalBar.width
-            else 0.dp,
-        ),
+    val sitsOnBar = when (side) {
+        Alignment.Start,
+        Alignment.End,
+        -> side == navigationRailSide()
+        else -> false
+    }
+    if (canShowNavigationRail && systemVerticalBar != null && sitsOnBar) Box(
+        modifier = modifier
+            .width(systemVerticalBar.width),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(
+                    top = animateDpAsState(systemVerticalBarContentTop).value + 8.dp,
+                )
+                .centerOnSystemVerticalBarInWindow(),
+            content = content,
+        )
+    }
+    else Box(
+        modifier = modifier,
+        content = content,
     )
 }
 
@@ -165,6 +198,11 @@ fun PaneScaffoldState.PaneNavigationRail(
         actions()
     }
 }
+
+@Composable
+private fun PaneScaffoldState.navigationRailSide(): Alignment.Horizontal =
+    if (navRailPlacesAtStart(layoutDirection = LocalLayoutDirection.current)) Alignment.Start
+    else Alignment.End
 
 @Composable
 private fun PaneScaffoldState.NavigationRailNavigationIcon(

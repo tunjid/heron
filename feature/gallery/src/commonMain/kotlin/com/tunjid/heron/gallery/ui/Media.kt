@@ -82,6 +82,7 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRailSpacer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.text.CommonStrings
@@ -398,9 +399,11 @@ internal fun MediaInteractions(
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
     commentsState: CommentsState,
+) = paneScaffoldState.PaneNavigationRailSpacer(
+    modifier = modifier,
+    side = Alignment.End,
 ) {
     Column(
-        modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
