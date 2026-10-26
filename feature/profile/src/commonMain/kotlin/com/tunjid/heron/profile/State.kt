@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.runtime.Stable
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AtmosphereApp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -25,6 +26,7 @@ import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
@@ -65,7 +67,14 @@ import com.tunjid.snapshottable.Snapshottable
 import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
+import kotlin.collections.List
+import kotlin.collections.Map
 import kotlin.collections.any
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.filterNot
+import kotlin.collections.listOfNotNull
+import kotlin.collections.mapOf
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -87,6 +96,10 @@ interface State {
         val subscribedLabelers: Labelers = emptyList(),
         @Transient
         val supportedApps: List<AtmosphereApp> = emptyList(),
+        @Transient
+        val links: List<ProfileLink> = emptyList(),
+        @Transient
+        val appliedLabels: AppliedLabels = AppliedLabels.Empty,
         @Transient
         val preferences: Preferences = Preferences.EmptyPreferences,
         @Transient

@@ -63,6 +63,7 @@ fun RecordUri.requireCollection(): String =
         is RepostUri -> RepostUri.NAMESPACE
         is BlockUri -> BlockUri.NAMESPACE
         is ProfileVerificationUri -> ProfileVerificationUri.NAMESPACE
+        is ProfileLinkUri -> ProfileLinkUri.NAMESPACE
         is StandardPublicationUri -> StandardPublicationUri.NAMESPACE
         is StandardDocumentUri -> StandardDocumentUri.NAMESPACE
         is StandardSubscriptionUri -> StandardSubscriptionUri.NAMESPACE
@@ -234,6 +235,19 @@ value class ProfileVerificationUri(
 
     companion object {
         const val NAMESPACE = "app.bsky.graph.verification"
+    }
+}
+
+@Serializable
+@JvmInline
+value class ProfileLinkUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.actor.link"
     }
 }
 
@@ -431,6 +445,7 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         ListMemberUri.NAMESPACE -> ListMemberUri(normalized)
         BlockUri.NAMESPACE -> BlockUri(normalized)
         ProfileVerificationUri.NAMESPACE -> ProfileVerificationUri(normalized)
+        ProfileLinkUri.NAMESPACE -> ProfileLinkUri(normalized)
         StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
         StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
         StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(normalized)

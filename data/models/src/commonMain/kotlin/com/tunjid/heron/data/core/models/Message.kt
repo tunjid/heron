@@ -36,6 +36,8 @@ data class Message(
     val metadata: Metadata?,
     // Non-null when this is a group system message rather than a user authored message.
     val system: SystemContent? = null,
+    // The Create.localId of the request that sent this message, if it was sent from this device.
+    val localId: String? = null,
 ) {
     @Serializable
     data class Metadata(
@@ -115,6 +117,10 @@ data class Message(
         val text: String,
         val links: List<Link>,
         val recordReference: Record.Reference?,
+        // A client generated id used to match a pending message to the Message it creates,
+        // since the server assigns the MessageId. Appended last as Create is persisted
+        // positionally in queued writes.
+        val localId: String? = null,
     )
 
     @Serializable

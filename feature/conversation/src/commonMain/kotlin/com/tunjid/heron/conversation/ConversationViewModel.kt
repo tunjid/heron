@@ -39,7 +39,6 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
-import com.tunjid.heron.tiling.updateItems
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
@@ -56,16 +55,17 @@ import com.tunjid.mutator.coroutines.launchedCollectLatest
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.buildTiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.plus
-import com.tunjid.tiler.tiledListOf
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -249,14 +249,26 @@ context(productionScope: CoroutineScope)
 private fun launchPendingMessageFlushMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
-) = writeQueue.queueChanges.launchedCollect { writes ->
+) = combine(
+    writeQueue.queueChanges,
+    writeQueue.failedWrites,
+    ::Pair,
+).launchedCollect { (writes, failedWrites) ->
     val queuedIds = writes.mapTo(mutableSetOf(), Writable::queueId)
-    val updatedPendingMessages = state.pendingItems.filter { item ->
-        queuedIds.contains(Writable.Send(item.message).queueId)
-    }
-    state.pendingItems = updatedPendingMessages
-    state.tilingData.updateItems {
-        items.mergePendingMessages(currentQuery, updatedPendingMessages)
+    val failedIds = failedWrites.mapTo(mutableSetOf()) { it.writable.queueId }
+    val sentLocalIds = state.tilingData.items.sentLocalIds()
+    state.pendingItems = state.pendingItems.filter { item ->
+        val queueId = Writable.Send(item.message).queueId
+        when {
+            queuedIds.contains(queueId) -> true
+            failedIds.contains(queueId) -> false
+            // The write has been dequeued, but the message it saved may not have reached
+            // the tiled list yet. Keep the pending item until it has.
+            else ->
+                item.message.localId
+                    ?.let { it !in sentLocalIds }
+                    ?: false
+        }
     }
 }
 
@@ -358,42 +370,37 @@ private fun Flow<Action.SharedRecord>.launchRecordSharingMutations(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 context(productionScope: CoroutineScope)
 private fun Flow<Action.SendMessage>.launchSendMessageMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
 ) = launchedCollect { action ->
+    val message = when (action.message.localId) {
+        null -> action.message.copy(localId = Uuid.random().toString())
+        else -> action.message
+    }
     val pendingItem = MessageItem.Pending(
         sender = state.signedInProfile ?: stubProfile(
             did = ProfileId(""),
             handle = ProfileHandle(id = ""),
         ),
-        message = action.message,
+        message = message,
         sentAt = Clock.System.now(),
     )
 
-    state.sharedRecord = when (action.message.recordReference) {
+    state.sharedRecord = when (message.recordReference) {
         null -> state.sharedRecord
         else -> SharedRecord.Consumed
     }
     state.inputText = TextFieldValue()
     state.pendingItems += pendingItem
-    state.tilingData.updateItems {
-        // Add the pending item to the chat
-        val currentItems = items
-        val tileCount = currentItems.tileCount
-        val lastQuery = when {
-            tileCount > 0 -> currentItems.queryAtTile(tileCount - 1)
-            else -> state.tilingData.currentQuery
-        }
-        currentItems + tiledListOf(lastQuery to pendingItem)
-    }
 
-    if (action.message.recordReference != null) navActions(ConsumeSharedUriQueryParam)
+    if (message.recordReference != null) navActions(ConsumeSharedUriQueryParam)
 
     // Write the message
-    val writable = Writable.Send(action.message)
+    val writable = Writable.Send(message)
     val status = writeQueue.enqueue(writable)
     val memo = writable.writeStatusMessage(status)
     if (memo != null) state.messages += memo
@@ -412,46 +419,45 @@ private fun Flow<Action.Tile>.launchMessagingTilingMutations(
             MessageItem::Sent,
         ),
         onNewItems = { items -> items.distinctBy(MessageItem::id) },
-        onWriteItems = { deduped ->
-            // Receiver is State.Mutable; runs on the production dispatcher.
-            // pendingItems and tilingData.currentQuery are read here race-free with the
-            // launchSendMessageMutations / launchPendingMessageFlushMutations writers.
-            // Database refreshes can happen at any time. Add pending items.
-            if (pendingItems.isEmpty()) deduped
-            else deduped.mergePendingMessages(
-                currentQuery = tilingData.currentQuery,
-                pendingItems = pendingItems,
-            )
-        },
     )
 
-private fun TiledList<MessageQuery, MessageItem>.mergePendingMessages(
-    currentQuery: MessageQuery,
-    pendingItems: List<MessageItem.Pending>,
-): TiledList<MessageQuery, MessageItem> = when {
-    isEmpty() -> buildTiledList {
-        addAll(
-            query = currentQuery,
-            items = pendingItems,
-        )
-    }
+internal val State.mergedMessages: TiledList<MessageQuery, MessageItem>
+    get() {
+        val items = tilingData.items
+        // Pending items whose sent message is already in the tiled list are superseded by it.
+        val sentLocalIds = items.sentLocalIds()
+        val unsentPendingItems = pendingItems.filter { item ->
+            item.message.localId !in sentLocalIds
+        }
+        return when {
+            items.isEmpty() -> buildTiledList {
+                addAll(
+                    query = tilingData.currentQuery,
+                    items = unsentPendingItems.sortedByDescending(MessageItem::sentAt),
+                )
+            }
 
-    else -> buildTiledList {
-        (0..<tileCount).forEach { tileIndex ->
-            val tile = tileAt(tileIndex)
-            val lastTileIndex = tileCount - 1
-            val tileSublist = subList(tile.start, tile.end)
-            if (tileIndex == lastTileIndex) addAll(
-                query = queryAtTile(tileIndex),
-                // Add pending items to the last chunk and sort
-                items = (tileSublist + pendingItems).sortedBy(MessageItem::sentAt),
-            )
-            else addAll(
-                query = queryAtTile(tileIndex),
-                items = tileSublist,
-            )
+            else -> buildTiledList {
+                (0..<items.tileCount).forEach { tileIndex ->
+                    val tile = items.tileAt(tileIndex)
+                    val tileSublist = items.subList(tile.start, tile.end)
+                    if (tileIndex == 0) addAll(
+                        query = items.queryAtTile(tileIndex),
+                        // Add pending items to the newest chunk and sort
+                        items = (tileSublist + unsentPendingItems).sortedByDescending(MessageItem::sentAt),
+                    )
+                    else addAll(
+                        query = items.queryAtTile(tileIndex),
+                        items = tileSublist,
+                    )
+                }
+            }
         }
     }
-}
+
+private fun TiledList<MessageQuery, MessageItem>.sentLocalIds(): Set<String> =
+    mapNotNullTo(mutableSetOf()) { item ->
+        (item as? MessageItem.Sent)?.message?.localId
+    }
 
 private val ConsumeSharedUriQueryParam = removeQueryParamsFromCurrentRoute(setOf("sharedUri"))

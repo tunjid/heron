@@ -62,6 +62,7 @@ import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.MessageDao
+import com.tunjid.heron.data.database.entities.MessageLocalIdEntity
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -578,6 +579,14 @@ internal class OfflineMessageRepository(
                     conversationId = message.conversationId,
                     messageView = sentMessage,
                 )
+                message.localId?.let { localId ->
+                    add(
+                        entity = MessageLocalIdEntity(
+                            messageId = MessageId(sentMessage.id),
+                            localId = localId,
+                        ),
+                    )
+                }
             }
         }
     } ?: expiredSessionOutcome()

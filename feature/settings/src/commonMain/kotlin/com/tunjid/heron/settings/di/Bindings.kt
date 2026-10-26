@@ -40,7 +40,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.ui.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.ui.scaffold.scaffold.bottomNavOffset
-import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -144,8 +143,7 @@ internal fun Route(
 
     paneScaffoldState.PaneScaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+            .fillMaxSize(),
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))
@@ -178,7 +176,16 @@ internal fun Route(
             }
         },
         navigationRail = {
-            PaneNavigationRail()
+            PaneNavigationRail(
+                onNavigationIconClicked = {
+                    if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                        stateHolder.accept(
+                            if (state.section == Section.Main) Action.Navigate.Pop
+                            else Action.UpdateSection(Section.Main),
+                        )
+                    }
+                },
+            )
         },
         content = { paddingValues ->
             SettingsScreen(

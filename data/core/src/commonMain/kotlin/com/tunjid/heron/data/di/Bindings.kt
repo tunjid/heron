@@ -63,6 +63,7 @@ import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.network.oauth.oauthRedirect
 import com.tunjid.heron.data.platform.MemoryMonitor
+import com.tunjid.heron.data.platform.platformHttpClient
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
@@ -104,10 +105,14 @@ import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceU
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
+import com.tunjid.heron.data.utilities.profileLinks.AtProtoProfileLinkWriter
+import com.tunjid.heron.data.utilities.profileLinks.ProfileLinkWriter
 import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.signedInUserRefresher.OfflineSignedInUserRefresher
+import com.tunjid.heron.data.utilities.signedInUserRefresher.SignedInUserRefresher
 import com.tunjid.heron.data.utilities.taskrunner.GeneralBackgroundTaskRunner
 import com.tunjid.heron.data.utilities.taskstore.SavedStateTaskStore
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
@@ -314,9 +319,21 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun provideProfileLinkWriter(
+        atProtoProfileLinkWriter: AtProtoProfileLinkWriter,
+    ): ProfileLinkWriter = atProtoProfileLinkWriter
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideRecordResolver(
         offlineRecordResolver: OfflineRecordResolver,
     ): RecordResolver = offlineRecordResolver
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideSignedInUserRefresher(
+        offlineSignedInUserRefresher: OfflineSignedInUserRefresher,
+    ): SignedInUserRefresher = offlineSignedInUserRefresher
 
     @SingleIn(AppScope::class)
     @Provides
@@ -326,7 +343,7 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideHttpClient(): HttpClient = HttpClient {
+    internal fun provideHttpClient(): HttpClient = platformHttpClient {
         expectSuccess = false
         install(ContentNegotiation) {
             json(BlueskyJson)

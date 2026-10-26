@@ -65,7 +65,8 @@ final class VerticalBarHostingController: UIViewController, VerticalBarControlle
         listener.onVerticalBarChanged(
             edge: report.isOnLeft.map { $0 ? NavRailEdge.start : NavRailEdge.end },
             width: report.width,
-            centerFromEdge: report.centerFromEdge
+            centerFromEdge: report.centerFromEdge,
+            contentTop: report.contentTop
         )
     }
 
@@ -88,7 +89,8 @@ final class VerticalBarHostingController: UIViewController, VerticalBarControlle
         return VerticalBarReport(
             isOnLeft: isOnLeft,
             width: Double(isOnLeft ? view.safeAreaInsets.left : view.safeAreaInsets.right),
-            centerFromEdge: Double(isOnLeft ? region.midX - view.bounds.minX : view.bounds.maxX - region.midX)
+            centerFromEdge: Double(isOnLeft ? region.midX - view.bounds.minX : view.bounds.maxX - region.midX),
+            contentTop: Double(region.minY - view.bounds.minY)
         )
     }
 }
@@ -97,8 +99,9 @@ private struct VerticalBarReport: Equatable {
     let isOnLeft: Bool?
     let width: Double
     let centerFromEdge: Double
+    let contentTop: Double
 
-    static let absent = VerticalBarReport(isOnLeft: nil, width: 0, centerFromEdge: 0)
+    static let absent = VerticalBarReport(isOnLeft: nil, width: 0, centerFromEdge: 0, contentTop: 0)
 }
 
 /// The thickness of the glass navigation rail, matching the bottom tab bar's capsule.

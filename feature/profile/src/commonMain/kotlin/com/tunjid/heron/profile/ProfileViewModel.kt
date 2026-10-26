@@ -18,6 +18,7 @@ package com.tunjid.heron.profile
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -137,6 +138,11 @@ class ActualProfileViewModel(
                     profileId = route.profileHandleOrId,
                     profileRepository = profileRepository,
                 )
+                launchProfileLinkMutations(
+                    state = state,
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
                 launchFeedGeneratorUrisToStatusMutations(
                     state = state,
                     timelineRepository = timelineRepository,
@@ -235,6 +241,7 @@ private fun launchLoadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ) = userDataRepository.preferences.launchedCollect {
     state.preferences = it
+    state.updateAppliedLabels()
 }
 
 context(productionScope: CoroutineScope)
@@ -251,6 +258,16 @@ private fun launchSubscribedLabelerMutations(
     recordRepository: RecordRepository,
 ) = recordRepository.subscribedLabelers.launchedCollect { labelers ->
     state.subscribedLabelers = labelers
+    state.updateAppliedLabels()
+}
+
+private fun State.Mutable.updateAppliedLabels() {
+    appliedLabels = AppliedLabels(
+        adultContentEnabled = preferences.allowAdultContent,
+        labels = emptyList(),
+        labelers = subscribedLabelers,
+        contentLabelPreferences = preferences.contentLabelPreferences,
+    )
 }
 
 context(productionScope: CoroutineScope)
@@ -369,6 +386,16 @@ private fun launchProfileRelationshipMutations(
 ) = profileRepository.profileRelationships(setOf(profileId)).launchedCollect {
     state.viewerState = it.firstOrNull()
 }
+
+context(productionScope: CoroutineScope)
+private fun launchProfileLinkMutations(
+    state: State.Mutable,
+    profileId: Id.Profile,
+    profileRepository: ProfileRepository,
+) = profileRepository.links(profileId)
+    .launchedCollect {
+        state.links = it
+    }
 
 context(productionScope: CoroutineScope)
 private fun launchSupportedAppMutations(

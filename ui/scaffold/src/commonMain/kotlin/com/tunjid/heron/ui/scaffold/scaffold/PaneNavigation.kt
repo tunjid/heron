@@ -17,27 +17,40 @@
 package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.roundedMaxDelta
+import com.tunjid.heron.ui.scaffold.identity.isStable
+import com.tunjid.heron.ui.scaffold.navigation.AppStack
+import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.treenav.compose.Adaptation
 
 @Composable
@@ -83,16 +96,48 @@ fun PaneScaffoldState.PaneNavigationBar(
     )
 }
 
+/**
+ * TODO: This is a workaround to being aware of system vertical bar insets.
+ *
+ * Takes the place of the navigation rail for panes that host their own vertical chrome.
+ *
+ * When it sits on the same side as a system vertical bar, it is as wide as the bar and centers
+ * [content] on it, below the bar's status content, wherever the container itself is placed.
+ * Otherwise it is a plain [Box].
+ *
+ * @param side the layout relative side of the pane this container sits on, either
+ * [Alignment.Start] or [Alignment.End]. Defaults to the navigation rail's side.
+ */
 @Composable
 fun PaneScaffoldState.PaneNavigationRailSpacer(
     modifier: Modifier = Modifier,
+    side: Alignment.Horizontal = navigationRailSide(),
+    content: @Composable BoxScope.() -> Unit = {},
 ) {
     val systemVerticalBar = appScaffoldState.staticStates.uiState.systemVerticalBar
-    Spacer(
-        modifier = modifier.width(
-            if (canShowNavigationRail && systemVerticalBar != null) systemVerticalBar.width
-            else 0.dp,
-        ),
+    val sitsOnBar = when (side) {
+        Alignment.Start,
+        Alignment.End,
+        -> side == navigationRailSide()
+        else -> false
+    }
+    if (canShowNavigationRail && systemVerticalBar != null && sitsOnBar) Box(
+        modifier = modifier
+            .width(systemVerticalBar.width),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(
+                    top = animateDpAsState(systemVerticalBarContentTop).value + 8.dp,
+                )
+                .centerOnSystemVerticalBarInWindow(),
+            content = content,
+        )
+    }
+    else Box(
+        modifier = modifier,
+        content = content,
     )
 }
 
@@ -102,21 +147,24 @@ fun PaneScaffoldState.PaneNavigationRail(
     enterTransition: EnterTransition = slideInHorizontally(initialOffsetX = { -it }),
     exitTransition: ExitTransition = slideOutHorizontally(targetOffsetX = { -it }),
     onNavItemReselected: () -> Boolean = { false },
+    onNavigationIconClicked: (() -> Unit)? = null,
+    actions: @Composable ColumnScope.() -> Unit = {},
+) = Box(
+    modifier = modifier,
 ) {
+    val isHandedBetweenPanes = paneState.adaptations.any {
+        it is Adaptation.Swap<*> || it is Adaptation.Same
+    }
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
-                sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey),
-                animatedVisibilityScope = this,
-                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-                boundsTransform = NavigationRailBoundsTransform,
-            ),
         visible = canShowNavigationRail,
-        enter = if (
-            canShowNavigationRail &&
-            paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
-        ) enterTransition else EnterTransition.None,
-        exit = exitTransition,
+        enter = when {
+            canShowNavigationRail && !isHandedBetweenPanes -> enterTransition
+            else -> EnterTransition.None
+        },
+        exit = when {
+            isHandedBetweenPanes -> ExitTransition.None
+            else -> exitTransition
+        },
         content = {
             with(this@PaneNavigationRail) {
                 if (canUseMovableNavigationRail) appScaffoldState.staticStates.movableNavigationRail(
@@ -131,6 +179,62 @@ fun PaneScaffoldState.PaneNavigationRail(
             }
         },
     )
+    // Outside the rail's shared element, as the actions belong to this pane.
+    if (placesAppBarActionsInNavigationRail) Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(
+                top = animateDpAsState(systemVerticalBarContentTop).value + 8.dp,
+            )
+            .centerOnSystemVerticalBar(
+                railBoxWidth = navigationRailWidth,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        NavigationRailNavigationIcon(
+            onClicked = onNavigationIconClicked,
+        )
+        actions()
+    }
+}
+
+@Composable
+private fun PaneScaffoldState.navigationRailSide(): Alignment.Horizontal =
+    if (navRailPlacesAtStart(layoutDirection = LocalLayoutDirection.current)) Alignment.Start
+    else Alignment.End
+
+@Composable
+private fun PaneScaffoldState.NavigationRailNavigationIcon(
+    onClicked: (() -> Unit)?,
+) {
+    val isAtStackRoot = AppStack.entries.any {
+        it.rootRoute.id == paneState.currentDestination?.id
+    }
+    val isStable = appScaffoldState.staticStates.identityState.isStable
+    NavigationIconBox {
+        AppLogo(
+            modifier = Modifier
+                .padding(8.dp)
+                .clip(CircleShape)
+                .clickable(
+                    enabled = !isAtStackRoot || isStable,
+                    onClick = click@{
+                        if (onClicked != null) return@click onClicked()
+                        val action = if (isAtStackRoot) NavigationAction.Home.navigationMutation
+                        else NavigationAction.Pop.navigationMutation
+                        appScaffoldState.staticStates.onNavigationAction(
+                            action = action,
+                        )
+                    },
+                )
+                .size(UiTokens.avatarSize),
+            presentation = remember(isAtStackRoot) {
+                if (isAtStackRoot) LogoPresentation.Destination.Root()
+                else LogoPresentation.Destination.Poppable
+            },
+        )
+    }
 }
 
 fun PaneScaffoldState.bottomNavVisibleInset(): IntOffset =
@@ -151,8 +255,4 @@ internal fun Badge(
     }
 }
 
-private data object NavigationRailSharedElementKey
-
 private const val MaxBadgeCount = 100L
-
-private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }

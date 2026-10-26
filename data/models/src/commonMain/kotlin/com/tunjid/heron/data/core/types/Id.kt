@@ -149,6 +149,14 @@ value class StandardDocumentId(
 
 @Serializable
 @JvmInline
+value class ProfileLinkId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class StandardSubscriptionId(
     override val id: String,
 ) : Id {

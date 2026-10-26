@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,14 +38,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.scaffold.components.FabSpacing
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -58,8 +66,23 @@ internal fun PaneScaffoldState.CommonNavigationRail(
     modifier: Modifier,
     onNavItemReselected: () -> Boolean,
 ) = with(appScaffoldState.staticStates) {
+    val sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey)
     Box(
         modifier = modifier
+            // Do not animate the rail entering on exiting when multiple panes can show
+            // bc it jitters.
+            .ifTrue(!appScaffoldState.isLargeScreen) {
+                paneChromeEnterExit(
+                    enterTransition = navRailEnterTransition(),
+                    exitTransition = navRailExitTransition(),
+                )
+            }
+            .sharedElement(
+                sharedContentState = sharedContentState,
+                animatedVisibilityScope = this@CommonNavigationRail,
+                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+                boundsTransform = NavigationRailBoundsTransform,
+            )
             .padding(horizontal = 8.dp)
             .widthIn(max = navigationRailWidth)
             .fillMaxSize(),
@@ -133,6 +156,59 @@ internal fun Modifier.navigationRailPosition(
         .padding(vertical = NavRailVerticalPadding)
 }
 
+context(paneScaffoldState: PaneScaffoldState)
+internal fun Modifier.centerOnSystemVerticalBar(
+    railBoxWidth: Dp,
+): Modifier = offset {
+    val centerFromEdge = paneScaffoldState.systemVerticalBarCenterFromEdge
+        ?: return@offset IntOffset.Zero
+    val towardsEdge = (railBoxWidth / 2 - centerFromEdge).roundToPx()
+    IntOffset(
+        x = when (paneScaffoldState.navRailEdge) {
+            NavRailEdge.Start -> -towardsEdge
+            NavRailEdge.End -> towardsEdge
+        },
+        y = 0,
+    )
+}
+
+/**
+ * TODO: This is a workaround to being aware of system vertical bar insets.
+ *
+ * Centers the content horizontally on the system vertical bar wherever it is placed, by
+ * measuring how far its placement is from the bar's center in the window. Unlike
+ * [centerOnSystemVerticalBar], it does not require the parent to sit flush against the bar's
+ * edge of the window.
+ */
+context(paneScaffoldState: PaneScaffoldState)
+internal fun Modifier.centerOnSystemVerticalBarInWindow(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(
+        width = placeable.width,
+        height = placeable.height,
+    ) {
+        val centerFromEdge = paneScaffoldState.systemVerticalBarCenterFromEdge
+        val placedCoordinates = coordinates
+        if (centerFromEdge == null || placedCoordinates == null) {
+            placeable.place(
+                x = 0,
+                y = 0,
+            )
+            return@layout
+        }
+        val windowWidth = placedCoordinates.findRootCoordinates().size.width
+        val left = placedCoordinates.positionInRoot().x
+        val barCenter = when (paneScaffoldState.navRailEdge) {
+            NavRailEdge.Start -> centerFromEdge.toPx()
+            NavRailEdge.End -> windowWidth - centerFromEdge.toPx()
+        }
+        placeable.place(
+            x = (barCenter - (left + placeable.width / 2f)).roundToInt(),
+            y = 0,
+        )
+    }
+}
+
 internal fun PaneScaffoldState.navRailPlacesAtStart(
     layoutDirection: LayoutDirection,
 ): Boolean = (navRailEdge == NavRailEdge.Start) == (layoutDirection == LayoutDirection.Ltr)
@@ -147,5 +223,4 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
 }.value
 
 private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
-
 private val NavRailVerticalPadding get() = FabSpacing

@@ -113,6 +113,11 @@ data class PopulatedMessageEntity(
         entityColumn = "messageId",
     )
     val post: MessagePostEntity?,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "messageId",
+    )
+    val localId: MessageLocalIdEntity?,
 )
 
 fun PopulatedMessageEntity.asExternalModel(
@@ -134,6 +139,7 @@ fun PopulatedMessageEntity.asExternalModel(
     },
     metadata = entity.metadata(),
     system = entity.systemContent(),
+    localId = localId?.localId,
 )
 
 internal fun MessageEntity.metadata() =

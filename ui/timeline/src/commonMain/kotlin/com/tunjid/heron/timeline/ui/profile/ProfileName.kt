@@ -47,8 +47,11 @@ fun ProfileName(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BoldedText(
-            text = remember(profile.displayName) {
-                profile.displayNameOrBlank
+            text = remember(
+                profile.displayName,
+                profile.handle.id,
+            ) {
+                profile.displayNameOrHandleSubdomainOrBlank
             },
             ellipsize = ellipsize,
         )
@@ -84,6 +87,9 @@ fun ProfileHandle(
 
 val Profile?.displayNameOrBlank: String
     get() = this?.displayName ?: ""
+
+val Profile?.displayNameOrHandleSubdomainOrBlank: String
+    get() = this?.displayName ?: this?.handle?.id?.split(".")?.firstOrNull() ?: ""
 
 val Profile?.nameOrHandleOrUnknown: String
     get() = this?.displayName ?: this?.handle?.id ?: "-"

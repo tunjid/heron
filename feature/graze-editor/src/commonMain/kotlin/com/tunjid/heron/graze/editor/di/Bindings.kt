@@ -42,7 +42,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.PaneFab
 import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.ui.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.ui.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.retainRouteStateHolder
 import com.tunjid.heron.ui.stateproduction.RouteStateHolderInitializer
@@ -179,24 +178,24 @@ object GrazeEditorBindings {
                 )
             }
 
+            val editFeedInfoSheetState =
+                rememberEditFeedInfoSheetState { name, description ->
+                    stateHolder.accept(
+                        Action.Metadata(
+                            displayName = name,
+                            description = description,
+                        ),
+                    )
+                }
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    .fillMaxSize(),
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
                     stateHolder.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    val editFeedInfoSheetState =
-                        rememberEditFeedInfoSheetState { name, description ->
-                            stateHolder.accept(
-                                Action.Metadata(
-                                    displayName = name,
-                                    description = description,
-                                ),
-                            )
-                        }
                     PoppableDestinationTopAppBar(
                         title = {
                             Title(
@@ -270,7 +269,40 @@ object GrazeEditorBindings {
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail()
+                    PaneNavigationRail(
+                        onNavigationIconClicked = {
+                            stateHolder.accept(
+                                if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
+                                else Action.Navigate.Pop,
+                            )
+                        },
+                        actions = {
+                            PaneActions(
+                                grazeFeed = state.grazeFeed,
+                                enabled = !state.isLoading,
+                                onEditClicked = {
+                                    editFeedInfoSheetState.editFeed(state)
+                                },
+                                onPreviewClicked = {
+                                    stateHolder.accept(
+                                        Action.PreviewFeed.Generate(state.grazeFeed.filter),
+                                    )
+                                },
+                                onSaveClicked = {
+                                    stateHolder.accept(
+                                        Action.Update.Save(
+                                            feed = state.grazeFeed,
+                                        ),
+                                    )
+                                },
+                                onDeleteClicked = {
+                                    stateHolder.accept(
+                                        Action.Update.Delete(state.grazeFeed.recordKey),
+                                    )
+                                },
+                            )
+                        },
+                    )
                 },
                 content = { contentPadding ->
                     GrazeEditorScreen(

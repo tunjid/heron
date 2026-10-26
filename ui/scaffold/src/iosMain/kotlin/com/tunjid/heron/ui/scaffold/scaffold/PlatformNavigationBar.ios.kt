@@ -18,14 +18,12 @@
 
 package com.tunjid.heron.ui.scaffold.scaffold
 
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.visible
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -127,8 +125,13 @@ internal actual fun PaneScaffoldState.PlatformNavigationBar(
 
         Box(
             modifier = modifier
-                .iosBottomNavSharedElement(
+                .paneChromeEnterExit(
+                    enterTransition = NavBarEnterTransition,
+                    exitTransition = NavBarExitTransition,
+                )
+                .iosNavSharedElement(
                     sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+                    ownsChrome = canShowNavigationBar,
                 )
                 .fillMaxWidth()
                 .height(height)
@@ -168,22 +171,6 @@ internal actual fun PaneScaffoldState.PlatformNavigationBar(
             )
         }
     }
-}
-
-context(paneScaffoldState: PaneScaffoldState)
-private fun Modifier.iosBottomNavSharedElement(
-    sharedContentState: SharedTransitionScope.SharedContentState,
-) = with(paneScaffoldState) {
-    sharedElement(
-        sharedContentState = sharedContentState,
-        animatedVisibilityScope = this,
-        zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
-    )
-        // Prevent double rendering of shared elements as compose graphic layer and
-        // shared element overlay semantics do not affect UI kit overlays.
-        .visible(
-            visible = isActive || !isTransitionActive,
-        )
 }
 
 private class GlassTabBarView(

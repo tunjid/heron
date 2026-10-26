@@ -41,6 +41,7 @@ import com.tunjid.heron.data.database.entities.LabelerEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
+import com.tunjid.heron.data.database.entities.MessageLocalIdEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -76,6 +77,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -185,6 +187,8 @@ internal class MultipleEntitySaver(
 
     private val profileVerificationEntities = LazyList<ProfileVerificationEntity>()
 
+    private val profileLinkEntities = LazyList<ProfileLinkEntity>()
+
     private val profileTabEntities = LazyList<ProfileTabsEntity>()
 
     private val profileAtmosphereAppEntities = LazyList<ProfileAtmosphereAppEntity>()
@@ -211,6 +215,8 @@ internal class MultipleEntitySaver(
     private val messageEntities = LazyList<MessageEntity>()
 
     private val messageReactionEntities = LazyList<MessageReactionEntity>()
+
+    private val messageLocalIdEntities = LazyList<MessageLocalIdEntity>()
 
     private val messageFeedGeneratorEntities = LazyList<MessageFeedGeneratorEntity>()
 
@@ -278,6 +284,17 @@ internal class MultipleEntitySaver(
             )
             profileDao.deleteVerificationsForProfiles(subjectIds)
             profileDao.upsertVerifications(profileVerificationEntities.list)
+        }
+
+        if (profileLinkEntities.isNotEmpty) {
+            val profileIds = profileLinkEntities.list.mapTo(
+                mutableSetOf(),
+                ProfileLinkEntity::profileId,
+            )
+            profileDao.deleteLinksForProfiles(profileIds)
+            profileDao.upsertLinks(
+                profileLinkEntities.list.filterNot { it.cid.isStubbedId() },
+            )
         }
 
         if (postEntities.isNotEmpty) {
@@ -408,6 +425,9 @@ internal class MultipleEntitySaver(
         if (messageReactionEntities.isNotEmpty) {
             messageDao.upsertMessageReactions(messageReactionEntities.list)
         }
+        if (messageLocalIdEntities.isNotEmpty) {
+            messageDao.upsertMessageLocalIds(messageLocalIdEntities.list)
+        }
         if (messageFeedGeneratorEntities.isNotEmpty) {
             messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
         }
@@ -526,6 +546,8 @@ internal class MultipleEntitySaver(
 
     fun add(entity: ProfileVerificationEntity) = profileVerificationEntities.add(entity)
 
+    fun add(entity: ProfileLinkEntity) = profileLinkEntities.add(entity)
+
     fun add(entity: LabelEntity) = labelEntities.add(entity)
 
     fun remove(entity: LabelEntity) = labelEntitiesToDelete.add(entity)
@@ -551,6 +573,8 @@ internal class MultipleEntitySaver(
     fun add(entity: MessageEntity) = messageEntities.add(entity)
 
     fun add(entity: MessageReactionEntity) = messageReactionEntities.add(entity)
+
+    fun add(entity: MessageLocalIdEntity) = messageLocalIdEntities.add(entity)
 
     fun add(entity: MessageFeedGeneratorEntity) = messageFeedGeneratorEntities.add(entity)
 

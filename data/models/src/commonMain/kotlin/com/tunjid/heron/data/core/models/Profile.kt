@@ -19,10 +19,12 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -202,7 +204,26 @@ data class Profile(
         val tabs: List<ProfileTab>? = null,
         @ProtoNumber(9)
         val pronouns: String = "",
-    )
+        /**
+         * The profile's links, in display order. Null no-ops; while
+         * an empty list clears links.
+         */
+        @ProtoNumber(10)
+        val links: List<Link>? = null,
+    ) {
+        @Serializable
+        data class Link(
+            /**
+             * The saved link record, or null for a link that hasn't been saved yet.
+             */
+            @ProtoNumber(1)
+            val uri: ProfileLinkUri? = null,
+            @ProtoNumber(2)
+            val url: GenericUri,
+            @ProtoNumber(3)
+            val title: String? = null,
+        )
+    }
 
     @Serializable
     data class ChatInfo(
@@ -235,6 +256,15 @@ data class ProfileVerification(
     val subject: Profile,
     val isValid: Boolean,
     val createdAt: Instant,
+)
+
+@Serializable
+data class ProfileLink(
+    val uri: ProfileLinkUri,
+    val url: GenericUri,
+    val title: String?,
+    val icon: ImageUri?,
+    val labels: List<Label>,
 )
 
 val Profile.contentDescription get() = displayName ?: handle.id

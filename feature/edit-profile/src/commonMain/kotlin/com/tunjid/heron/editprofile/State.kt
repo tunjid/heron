@@ -23,11 +23,15 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.editprofile.di.profileHandleOrId
 import com.tunjid.heron.timeline.state.RecordStateHolder
@@ -47,6 +51,7 @@ import heron.feature.edit_profile.generated.resources.description
 import heron.feature.edit_profile.generated.resources.display_name
 import heron.feature.edit_profile.generated.resources.pronouns
 import heron.feature.edit_profile.generated.resources.tab_bio
+import heron.feature.edit_profile.generated.resources.tab_links
 import heron.feature.edit_profile.generated.resources.tab_profile_feeds
 import heron.feature.edit_profile.generated.resources.tab_profile_tabs
 import kotlin.uuid.ExperimentalUuidApi
@@ -69,6 +74,7 @@ interface State {
         @Transient
         val tabs: List<EditProfileScreenTabs> = listOf(
             EditProfileScreenTabs.Bio,
+            EditProfileScreenTabs.Links,
             EditProfileScreenTabs.Editor,
         ),
         @Transient
@@ -79,6 +85,10 @@ interface State {
         val editableTabs: List<ProfileTab> = emptyList(),
         @Transient
         val tabsToSave: List<ProfileTab> = emptyList(),
+        @Transient
+        val links: List<EditableLink> = emptyList(),
+        @Transient
+        val linksEdited: Boolean = false,
         @Transient
         val submitting: Boolean = false,
         @Transient
@@ -167,6 +177,32 @@ internal fun State.saveProfileAction() = Action.SaveProfile(
     avatar = updatedAvatar,
     banner = updatedBanner,
     selectedProfileTabs = tabsToSave.takeUnless(List<ProfileTab>::isEmpty),
+    links = if (linksEdited) links.map(EditableLink::asUpdateLink) else null,
+)
+
+/**
+ * A profile link being edited. [uri] is null for a link that hasn't been saved yet.
+ */
+data class EditableLink(
+    val uri: ProfileLinkUri?,
+    val url: GenericUri,
+    val title: String?,
+    val icon: ImageUri?,
+) {
+    constructor(
+        link: ProfileLink,
+    ) : this(
+        uri = link.uri,
+        url = link.url,
+        title = link.title,
+        icon = link.icon,
+    )
+}
+
+private fun EditableLink.asUpdateLink() = Profile.Update.Link(
+    uri = uri,
+    url = url,
+    title = title,
 )
 
 @Stable
@@ -175,6 +211,10 @@ sealed class EditProfileScreenTabs(
 ) {
     data object Bio : EditProfileScreenTabs(
         stringResource = Res.string.tab_bio,
+    )
+
+    data object Links : EditProfileScreenTabs(
+        stringResource = Res.string.tab_links,
     )
 
     data object Editor : EditProfileScreenTabs(
@@ -207,11 +247,16 @@ sealed class Action(val key: String) {
         val avatar: RestrictedFile.Media.Photo?,
         val banner: RestrictedFile.Media.Photo?,
         val selectedProfileTabs: List<ProfileTab>?,
+        val links: List<Profile.Update.Link>?,
     ) : Action(key = "SaveProfile")
 
     data class ToggleFeed(
         val feedGenerator: FeedGenerator,
     ) : Action(key = "ToggleFeed")
+
+    data class UpdateLinks(
+        val links: List<EditableLink>,
+    ) : Action(key = "UpdateLinks")
 
     data class UpdateTabsToSave(
         val tabs: List<ProfileTab>,

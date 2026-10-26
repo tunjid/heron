@@ -54,6 +54,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileVerification
 import com.tunjid.heron.data.core.models.ProfileViewerState
@@ -72,6 +73,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.PopulatedProfileLinkEntity
 import com.tunjid.heron.data.database.entities.profile.PopulatedProfileVerificationEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileAtmosphereAppEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileTabsEntity
@@ -92,6 +94,7 @@ import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.profileLinks.ProfileLinkWriter
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
@@ -162,6 +165,10 @@ interface ProfileRepository {
         profileId: Id.Profile,
     ): Flow<List<ProfileVerification>>
 
+    fun links(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileLink>>
+
     fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -219,6 +226,7 @@ internal class OfflineProfileRepository(
     private val savedStateDataSource: SavedStateDataSource,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val tidGenerator: TidGenerator,
+    private val profileLinkWriter: ProfileLinkWriter,
 ) : ProfileRepository {
 
     override fun profile(
@@ -373,6 +381,23 @@ internal class OfflineProfileRepository(
             profileDao.verifications(profileIdOrHandle = profileId.id)
                 .distinctUntilChangedMap { entities ->
                     entities.map(PopulatedProfileVerificationEntity::asExternalModel)
+                }
+                .withRefresh {
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
+                        profileId = profileId,
+                    )
+                }
+        }
+            .flowOn(ioDispatcher)
+
+    override fun links(
+        profileId: Id.Profile,
+    ): Flow<List<ProfileLink>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileDao.links(profileIdOrHandle = profileId.id)
+                .distinctUntilChangedMap { entities ->
+                    entities.map(PopulatedProfileLinkEntity::asExternalModel)
                 }
                 .withRefresh {
                     profileLookup.refreshProfile(
@@ -739,6 +764,15 @@ internal class OfflineProfileRepository(
                     .mapCatchingUnlessCancelled {
                         val existingProfile = it.value.decodeAs<BskyProfile>()
 
+                        // The profile can only point at link records that already exist
+                        val linkWrites = update.links?.let { links ->
+                            profileLinkWriter.write(
+                                profileId = update.profileId,
+                                links = links,
+                                existingRefs = existingProfile.links.orEmpty(),
+                            )
+                        }
+
                         val request = PutRecordRequest(
                             repo = update.profileId.id.let(::Did),
                             collection = Nsid(Collections.Profile),
@@ -749,6 +783,10 @@ internal class OfflineProfileRepository(
                                 pronouns = update.pronouns.takeIf(String::isNotBlank),
                                 avatar = avatarBlob ?: existingProfile.avatar,
                                 banner = bannerBlob ?: existingProfile.banner,
+                                links = when (linkWrites) {
+                                    null -> existingProfile.links
+                                    else -> linkWrites.refs.ifEmpty { null }
+                                },
                             )
                                 .asJsonContent(BskyProfile.serializer()),
                         )
@@ -756,6 +794,11 @@ internal class OfflineProfileRepository(
                         networkService.runCatchingWithMonitoredNetworkRetry {
                             putRecord(request)
                         }.getOrThrow()
+
+                        if (linkWrites != null) profileLinkWriter.deleteRemoved(
+                            profileId = update.profileId,
+                            writes = linkWrites,
+                        )
 
                         profileLookup.refreshProfile(
                             signedInProfileId = signedInProfileId,

@@ -16,8 +16,14 @@
 
 package com.tunjid.heron.ui.scaffold.scaffold
 
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.SharedTransitionDefaults
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.visible
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.tunjid.heron.ui.UiTokens
 import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
 
@@ -39,6 +45,25 @@ internal fun ImageVector.heronIconAssetName(): String {
             }
         }
     }
+}
+
+context(paneScaffoldState: PaneScaffoldState)
+internal fun Modifier.iosNavSharedElement(
+    sharedContentState: SharedTransitionScope.SharedContentState,
+    boundsTransform: BoundsTransform = SharedTransitionDefaults.BoundsTransform,
+    ownsChrome: Boolean,
+) = with(paneScaffoldState) {
+    // Prevent double rendering of shared elements as compose graphic layer and
+    // shared element overlay semantics do not affect UI kit overlays.
+    visible(
+        visible = ownsChrome && (isActive || !sharedContentState.isMatchFound),
+    )
+        .sharedElement(
+            sharedContentState = sharedContentState,
+            animatedVisibilityScope = this,
+            zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+            boundsTransform = boundsTransform,
+        )
 }
 
 internal fun Color.toUIColor(): UIColor = UIColor(

@@ -37,8 +37,6 @@ class FakeAuthRepository : AuthRepository {
 
     override suspend fun signOut() = Unit
 
-    override suspend fun updateSignedInUser(): Outcome = Outcome.Success
-
     override suspend fun resolveServer(handle: ProfileHandle): Result<Server> =
         Result.failure(NotImplementedError())
 }
