@@ -65,9 +65,7 @@ internal fun PaneScaffoldState.CommonNavigationRail(
     val sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey)
     Box(
         modifier = modifier
-            // Do not animate the rail entering on exiting when multiple panes can show
-            // bc it jitters.
-            .ifTrue(!appScaffoldState.isLargeScreen) {
+            .ifTrue(canAnimateNavRail) {
                 paneChromeEnterExit(
                     enterTransition = navRailEnterTransition(),
                     exitTransition = navRailExitTransition(),
