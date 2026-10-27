@@ -20,9 +20,9 @@ package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -112,8 +112,8 @@ internal actual fun PaneScaffoldState.PlatformNavigationRail(
                     boundsTransform = NavigationRailBoundsTransform,
                     ownsChrome = canShowNavigationRail,
                 )
-                .widthIn(max = navigationRailWidth)
-                .fillMaxSize(),
+                .fillMaxHeight()
+                .width(navigationRailWidth),
         ) {
             if (navItems.isNotEmpty()) UIKitView(
                 factory = {

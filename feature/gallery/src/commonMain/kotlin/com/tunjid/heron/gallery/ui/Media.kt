@@ -82,7 +82,6 @@ import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
 import com.tunjid.heron.ui.scaffold.navigation.profileDestination
-import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRailSpacer
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.text.CommonStrings
@@ -399,53 +398,49 @@ internal fun MediaInteractions(
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
     commentsState: CommentsState,
-) = paneScaffoldState.PaneNavigationRailSpacer(
+) = Column(
     modifier = modifier,
-    side = Alignment.End,
+    verticalArrangement = Arrangement.SpaceBetween,
+    horizontalAlignment = Alignment.CenterHorizontally,
 ) {
-    Column(
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        MediaActions(
-            modifier = Modifier
-                .weight(1f)
-                .padding(bottom = 8.dp),
-            media = media,
-            imageDownloadState = imageDownloadState,
-            videoPlayerController = videoPlayerController,
-            onCloseClicked = {
-                actions(Action.Navigate.Pop)
-            },
-        )
-        MediaPostInteractions(
-            post = item.post,
-            iconSize = OverlayIconSize,
-            sharedElementPrefix = UnmatchedPrefix,
-            showEngagementMetrics = showEngagementMetrics,
-            paneTransitionScope = paneScaffoldState,
-            onInteraction = { interaction ->
-                when (interaction) {
-                    is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
-                        interaction,
+    MediaActions(
+        modifier = Modifier
+            .weight(1f)
+            .padding(bottom = 8.dp),
+        media = media,
+        imageDownloadState = imageDownloadState,
+        videoPlayerController = videoPlayerController,
+        onCloseClicked = {
+            actions(Action.Navigate.Pop)
+        },
+    )
+    MediaPostInteractions(
+        post = item.post,
+        iconSize = OverlayIconSize,
+        sharedElementPrefix = UnmatchedPrefix,
+        showEngagementMetrics = showEngagementMetrics,
+        paneTransitionScope = paneScaffoldState,
+        onInteraction = { interaction ->
+            when (interaction) {
+                is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
+                    interaction,
+                )
+                is PostAction.OfMetadata -> Unit
+                is PostAction.OfMore -> postOptionsSheetState.showOptions(
+                    interaction.post,
+                )
+                is PostAction.OfReply -> {
+                    commentsState.expand()
+                    actions(
+                        Action.LoadComments(
+                            post = item.post,
+                            order = null,
+                        ),
                     )
-                    is PostAction.OfMetadata -> Unit
-                    is PostAction.OfMore -> postOptionsSheetState.showOptions(
-                        interaction.post,
-                    )
-                    is PostAction.OfReply -> {
-                        commentsState.expand()
-                        actions(
-                            Action.LoadComments(
-                                post = item.post,
-                                order = null,
-                            ),
-                        )
-                    }
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
 @Composable

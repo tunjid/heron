@@ -98,8 +98,10 @@ import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.ui.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
+import com.tunjid.heron.ui.scaffold.scaffold.PaneNavigationRailContent
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.RouteImmersionEffect
+import com.tunjid.heron.ui.scaffold.scaffold.hasNavigationRail
 import com.tunjid.heron.ui.text.links
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -447,7 +449,8 @@ private fun HorizontalItems(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 36.dp)
-                .windowInsetsPadding(WindowInsets.platformNavigationBars),
+                .windowInsetsPadding(WindowInsets.platformNavigationBars)
+                .windowInsetsPadding(paneScaffoldState.navigationRailInsets),
             enter = IndicatorEnterAnimation,
             exit = IndicatorExitAnimation,
             visible = !isDraggingToPop(),
@@ -463,9 +466,25 @@ private fun HorizontalItems(
             media = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { media ->
+            // Shows up only if there's a navigation rail
+            paneScaffoldState.PaneNavigationRailContent {
+                MediaInteractions(
+                    media = media,
+                    imageDownloadState = imageDownloadState,
+                    videoPlayerController = videoPlayerController,
+                    actions = actions,
+                    item = item,
+                    paneScaffoldState = paneScaffoldState,
+                    showEngagementMetrics = showEngagementMetrics,
+                    postInteractionSheetState = postInteractionSheetState,
+                    postOptionsSheetState = postOptionsSheetState,
+                    commentsState = commentsState,
+                )
+            }
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
+                    .windowInsetsPadding(paneScaffoldState.navigationRailInsets)
                     .padding(
                         horizontal = 8.dp,
                         vertical = 16.dp,
@@ -489,7 +508,7 @@ private fun HorizontalItems(
                         paneScaffoldState = paneScaffoldState,
                         actions = actions,
                     )
-                    MediaInteractions(
+                    if (!paneScaffoldState.hasNavigationRail) MediaInteractions(
                         modifier = Modifier
                             .fillMaxHeight()
                             .windowInsetsPadding(WindowInsets.platformStatusBars),
