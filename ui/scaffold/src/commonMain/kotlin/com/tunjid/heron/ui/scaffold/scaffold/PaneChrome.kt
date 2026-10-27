@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
  * transition will be undone by its lookahead position.
  */
 context(paneScaffoldState: PaneScaffoldState)
-fun Modifier.paneChromeEnterExit(
+internal fun Modifier.paneChromeEnterExit(
     enterTransition: EnterTransition,
     exitTransition: ExitTransition,
 ) = this then with(paneScaffoldState) {

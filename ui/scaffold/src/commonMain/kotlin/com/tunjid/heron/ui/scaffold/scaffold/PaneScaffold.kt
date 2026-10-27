@@ -29,11 +29,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
@@ -53,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -134,6 +135,10 @@ class PaneScaffoldState(
         )
     }
 
+    override val navigationRailInsets: WindowInsets = NavigationRailInsets(
+        paneScaffoldState = this,
+    )
+
     internal val sharedElementTransitionBounds = mutableStateListOf<Rect>()
 
     internal val headerBlurStrength = Animatable(1f)
@@ -165,7 +170,7 @@ class PaneScaffoldState(
 
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
-    val prefersNavigationRail: Boolean
+    internal val prefersNavigationRail: Boolean
         get() = appScaffoldState.prefersNavigationRail
 
     internal val navRailEdge: NavRailEdge
@@ -281,6 +286,9 @@ class PaneScaffoldState(
     }
 }
 
+val PaneScaffoldState.hasNavigationRail: Boolean
+    get() = canShowNavigationRail
+
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
     route: Route,
@@ -394,12 +402,12 @@ fun PaneScaffoldState.PaneScaffold(
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
+    navigationRailOverlapsContent: Boolean = false,
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
-        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -407,6 +415,12 @@ fun PaneScaffoldState.PaneScaffold(
             NonSubComposingScaffold(
                 // Placed here, not on the rail scaffold, so predictive back leaves the rail in place.
                 modifier = Modifier
+                    .ifTrue(
+                        predicate = !navigationRailOverlapsContent,
+                        block = {
+                            windowInsetsPadding(navigationRailInsets)
+                        },
+                    )
                     .predictiveBackPlacement(
                         paneScaffoldState = this@PaneScaffold,
                     )
@@ -569,21 +583,20 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
-    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    // The rail covers the window insets on its edge, so the content beside it doesn't pad for them
-    val railInsets = when (railEdge) {
-        NavRailEdge.Start -> PaddingValues.Absolute(left = railWidth)
-        NavRailEdge.End -> PaddingValues.Absolute(right = railWidth)
-    }
-    Row(
+    Box(
         modifier = modifier,
-        horizontalArrangement = railEdge,
         content = {
             Box(
                 modifier = Modifier
+                    .align(
+                        when (railEdge) {
+                            NavRailEdge.Start -> AbsoluteAlignment.CenterLeft
+                            NavRailEdge.End -> AbsoluteAlignment.CenterRight
+                        },
+                    )
                     .fillMaxHeight()
                     .zIndex(2f),
                 content = {
@@ -593,7 +606,6 @@ private fun PaneNavigationRailScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .consumeWindowInsets(railInsets)
                     .zIndex(1f),
                 // Centers the scaffold as predictive back shrinks it.
                 contentAlignment = Alignment.Center,

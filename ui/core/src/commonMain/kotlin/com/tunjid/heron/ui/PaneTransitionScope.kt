@@ -18,6 +18,7 @@ package com.tunjid.heron.ui
 
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
@@ -43,6 +44,11 @@ interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePan
      * of where elements transition from and to.
      */
     val sharedElementBoundsTransform: BoundsTransform
+
+    /**
+     * [WindowInsets] for the navigation rail is present in the pane.
+     */
+    val navigationRailInsets: WindowInsets
 }
 
 val PaneTransitionScope.isPrimaryOrActive
