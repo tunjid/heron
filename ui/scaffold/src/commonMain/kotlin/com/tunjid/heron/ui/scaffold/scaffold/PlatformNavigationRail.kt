@@ -183,7 +183,7 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
 
 private val NavRailPillWidth = 72.dp
 
-private val NavRailHorizontalPadding = 0.dp
+private val NavRailHorizontalPadding = 8.dp
 
 internal val CommonNavRailWidth = NavRailPillWidth + (NavRailHorizontalPadding * 2)
 
