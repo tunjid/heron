@@ -449,6 +449,7 @@ private fun PaneScaffoldState.SessionAvatar(
             modifier = Modifier
                 .align(Alignment.Center)
                 .matchParentSize(),
+            clipInOverlayDuringTransition = paneOverlayClip,
             sharedContentState = rememberSharedContentState(
                 key = when {
                     isSignedInProfile -> UiTokens.SignedInUserAvatarSharedElementKey
@@ -481,6 +482,7 @@ private fun PaneScaffoldState.SessionAvatar(
             if (isLive && isSignedInProfile) PaneStickySharedElement(
                 modifier = Modifier
                     .align(Alignment.BottomCenter),
+                clipInOverlayDuringTransition = paneOverlayClip,
                 sharedContentState = rememberSharedContentState(
                     key = UiTokens.SignedInUserAvatarSharedElementKey
                         .withProfileAvatarLiveSharedElementPrefix(),
