@@ -340,7 +340,7 @@ fun Modifier.renderHeaderInTransitionOverlay(
                 isActive &&
                 // This is largely so profile headers and
                 // others don't just pop in
-                headerOccludesSharedElement
+                (topAppBarOffset().y < 0 || headerOccludesSharedElement)
         },
     )
         .clipToPaneInOverlay(
