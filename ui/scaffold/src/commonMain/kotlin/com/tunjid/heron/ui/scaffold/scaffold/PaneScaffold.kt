@@ -151,27 +151,6 @@ class PaneScaffoldState(
 
     internal val headerBlurStrength = Animatable(1f)
 
-    internal val hasHeaderBlurOcclusion: Boolean
-        get() {
-            val density = appScaffoldState.density
-            for (stateIndex in headerStates.indices) {
-                val state = headerStates[stateIndex]
-                val progress = state.progress()
-                if (progress.isNaN() || progress <= 0f) continue
-
-                val height = state.height(density)
-                if (height <= 0f) continue
-
-                val top = state.top(density)
-                val bottom = top + height
-                for (boundsIndex in sharedElementTransitionBounds.indices) {
-                    val bounds = sharedElementTransitionBounds[boundsIndex]
-                    if (bounds.top < bottom && bounds.bottom > top) return true
-                }
-            }
-            return false
-        }
-
     internal val headerStates = mutableStateListOf<PaneHeaderState>()
 
     internal val snackbarHostState = SnackbarHostState()
@@ -297,6 +276,37 @@ class PaneScaffoldState(
 val PaneScaffoldState.hasNavigationRail: Boolean
     get() = canShowNavigationRail
 
+internal val PaneScaffoldState.headerOccludesSharedElement: Boolean
+    get() = headerOccludesSharedElement(
+        countsHeader = { progress -> !progress.isNaN() },
+    )
+
+private val PaneScaffoldState.blurredHeaderOccludesSharedElement: Boolean
+    get() = headerOccludesSharedElement(
+        countsHeader = { progress -> !progress.isNaN() && progress > 0f },
+    )
+
+private inline fun PaneScaffoldState.headerOccludesSharedElement(
+    countsHeader: (progress: Float) -> Boolean,
+): Boolean {
+    val density = appScaffoldState.density
+    for (stateIndex in headerStates.indices) {
+        val state = headerStates[stateIndex]
+        if (!countsHeader(state.progress())) continue
+
+        val height = state.height(density)
+        if (height <= 0f) continue
+
+        val top = state.top(density)
+        val bottom = top + height
+        for (boundsIndex in sharedElementTransitionBounds.indices) {
+            val bounds = sharedElementTransitionBounds[boundsIndex]
+            if (bounds.top < bottom && bounds.bottom > top) return true
+        }
+    }
+    return false
+}
+
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
     route: Route,
@@ -345,7 +355,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             }
     }
     LaunchedEffect(paneScaffoldState) {
-        snapshotFlow { paneScaffoldState.hasHeaderBlurOcclusion }
+        snapshotFlow { paneScaffoldState.blurredHeaderOccludesSharedElement }
             .filter { it }
             .collectLatest {
                 paneScaffoldState.headerBlurStrength.snapTo(0f)
