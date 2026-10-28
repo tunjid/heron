@@ -62,7 +62,7 @@ private data class PaneCoordinatesElement(
         )
 
     override fun update(
-        node: PaneCoordinatesNode
+        node: PaneCoordinatesNode,
     ) = node.update(
         paneOverlayClipState = paneOverlayClipState,
     )
