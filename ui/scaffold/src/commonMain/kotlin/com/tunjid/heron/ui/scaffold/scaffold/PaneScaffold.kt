@@ -18,6 +18,7 @@ package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -135,8 +136,15 @@ class PaneScaffoldState(
         )
     }
 
+    override val paneOverlayClip: SharedTransitionScope.OverlayClip
+        get() = paneOverlayClipState
+
     override val navigationRailInsets: WindowInsets = NavigationRailInsets(
         paneScaffoldState = this,
+    )
+
+    internal val paneOverlayClipState = PaneOverlayClipState(
+        isClipped = ::showsBackPreview,
     )
 
     internal val sharedElementTransitionBounds = mutableStateListOf<Rect>()

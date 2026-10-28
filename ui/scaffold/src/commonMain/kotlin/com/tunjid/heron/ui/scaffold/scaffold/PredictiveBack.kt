@@ -34,18 +34,24 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 internal fun Modifier.predictiveBackPlacement(
     paneScaffoldState: PaneScaffoldState,
 ): Modifier = with(paneScaffoldState) {
-    val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
-        inPredictiveBack &&
-        isActive &&
-        appScaffoldState.staticStates.uiState.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop
+    val showsBackPreview = showsBackPreview
 
-    ifTrue(shouldDrawBackground) {
+    ifTrue(showsBackPreview) {
         backPreview(backPreviewState)
     }
         .animatedRoundedCornerClip(
-            cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp,
+            cornerRadius = if (showsBackPreview) PaneCornerRadius else 0.dp,
+        )
+        .trackPaneOverlayClipBounds(
+            paneOverlayClipState = paneOverlayClipState,
         )
 }
+
+internal val PaneScaffoldState.showsBackPreview: Boolean
+    get() = paneState.pane == ThreePane.Primary &&
+        inPredictiveBack &&
+        isActive &&
+        appScaffoldState.staticStates.uiState.dismissBehavior != AppScaffoldState.DismissBehavior.Gesture.DragToPop
 
 interface NavigationContentTransformer {
     fun contentTransform(

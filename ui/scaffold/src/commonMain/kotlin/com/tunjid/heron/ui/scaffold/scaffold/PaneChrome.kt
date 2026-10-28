@@ -26,6 +26,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.Adaptation
 
 /**
@@ -94,6 +95,8 @@ internal fun PaneScaffoldState.navRailExitTransition(): ExitTransition =
     slideOutHorizontally(targetOffsetX = ::navRailTransitionOffset)
 
 internal val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }
+
+internal val PaneCornerRadius = 16.dp
 
 /**
  * The offset that slides the rail off its edge. [NavRailEdge] is absolute, as are horizontal
