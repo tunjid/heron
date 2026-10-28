@@ -39,6 +39,7 @@ internal fun PaneTransitionScope.RockSkyAvatar(
     val resolved = image?.uri ?: "https://rocksky.app/favicon.ico"
     PaneStickySharedElement(
         boundsTransform = sharedElementBoundsTransform,
+        clipInOverlayDuringTransition = paneOverlayClip,
         modifier = Modifier
             .size(44.dp),
         sharedContentState = rememberSharedContentState(

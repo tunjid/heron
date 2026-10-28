@@ -97,6 +97,7 @@ fun FeedList(
         avatar = {
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
+                clipInOverlayDuringTransition = paneOverlayClip,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -148,6 +149,7 @@ fun StarterPack(
         avatar = {
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
+                clipInOverlayDuringTransition = paneOverlayClip,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(
@@ -195,6 +197,7 @@ fun ExpandedStarterPack(
                     label = {
                         PaneStickySharedElement(
                             boundsTransform = sharedElementBoundsTransform,
+                            clipInOverlayDuringTransition = paneOverlayClip,
                             sharedContentState = rememberSharedContentState(
                                 key = titleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -208,6 +211,7 @@ fun ExpandedStarterPack(
                         }
                         PaneStickySharedElement(
                             boundsTransform = sharedElementBoundsTransform,
+                            clipInOverlayDuringTransition = paneOverlayClip,
                             sharedContentState = rememberSharedContentState(
                                 key = subtitleSharedElementKey(
                                     prefix = sharedElementPrefix,
@@ -248,6 +252,7 @@ fun ExpandedStarterPack(
                         .forEachIndexed { index, listMember ->
                             PaneStickySharedElement(
                                 boundsTransform = sharedElementBoundsTransform,
+                                clipInOverlayDuringTransition = paneOverlayClip,
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()

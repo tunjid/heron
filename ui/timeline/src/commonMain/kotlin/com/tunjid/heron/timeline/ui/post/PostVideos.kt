@@ -149,6 +149,7 @@ internal fun VideoPlayerController.PostVideo(
         )
         else paneTransitionScope.UpdatedMovableStickySharedElementOf(
             boundsTransform = paneTransitionScope.sharedElementBoundsTransform,
+            clipInOverlayDuringTransition = paneTransitionScope.paneOverlayClip,
             modifier = videoModifier,
             sharedContentState = with(paneTransitionScope) {
                 rememberSharedContentState(

@@ -183,6 +183,7 @@ private inline fun PostInteractionsButtons(
         key(button) {
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
+                clipInOverlayDuringTransition = paneOverlayClip,
                 modifier = Modifier,
                 sharedContentState = rememberSharedContentState(
                     key = remember(sharedElementPrefix, post.cid, button) {
