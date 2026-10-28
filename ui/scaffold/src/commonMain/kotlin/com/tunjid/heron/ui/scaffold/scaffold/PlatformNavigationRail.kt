@@ -96,6 +96,9 @@ internal fun PaneScaffoldState.CommonNavigationRail(
                         layoutDirection = LocalLayoutDirection.current,
                     ),
                 )
+                // Keeps the pill off the window edge. After the size constraint so it insets
+                // the pill instead of shifting it.
+                .padding(horizontal = NavRailHorizontalPadding)
                 .background(
                     color = color,
                     shape = NavRailShape,
@@ -178,5 +181,11 @@ private fun AppScaffoldState.shouldElevateNavRail(): Boolean = remember(this) {
     }
 }.value
 
-private val NavRailShape = RoundedCornerShape(UiTokens.NavRailWidth)
+private val NavRailPillWidth = 72.dp
+
+private val NavRailHorizontalPadding = 0.dp
+
+internal val CommonNavRailWidth = NavRailPillWidth + (NavRailHorizontalPadding * 2)
+
+private val NavRailShape = RoundedCornerShape(NavRailPillWidth)
 private val NavRailVerticalPadding get() = FabSpacing

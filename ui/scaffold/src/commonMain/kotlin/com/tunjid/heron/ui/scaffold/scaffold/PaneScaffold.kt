@@ -423,6 +423,11 @@ fun PaneScaffoldState.PaneScaffold(
     navigationRailOverlapsContent: Boolean = false,
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
+    val navigationRailPaddingModifier = Modifier
+        .ifTrue(!navigationRailOverlapsContent) {
+            windowInsetsPadding(navigationRailInsets)
+        }
+
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
@@ -433,12 +438,6 @@ fun PaneScaffoldState.PaneScaffold(
             NonSubComposingScaffold(
                 // Placed here, not on the rail scaffold, so predictive back leaves the rail in place.
                 modifier = Modifier
-                    .ifTrue(
-                        predicate = !navigationRailOverlapsContent,
-                        block = {
-                            windowInsetsPadding(navigationRailInsets)
-                        },
-                    )
                     .predictiveBackPlacement(
                         paneScaffoldState = this@PaneScaffold,
                     )
@@ -461,16 +460,36 @@ fun PaneScaffoldState.PaneScaffold(
                     ),
                 containerColor = containerColor,
                 topBar = {
-                    topBar()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            topBar()
+                        },
+                    )
                 },
                 floatingActionButton = {
-                    floatingActionButton()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            floatingActionButton()
+                        },
+                    )
                 },
                 bottomBar = {
-                    navigationBar()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            navigationBar()
+                        },
+                    )
                 },
                 snackbarHost = {
-                    snackBarHost()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            snackBarHost()
+                        },
+                    )
                 },
                 content = { paddingValues ->
                     val isStable = appScaffoldState.staticStates.identityState.isStable
@@ -494,6 +513,7 @@ fun PaneScaffoldState.PaneScaffold(
                                 radius = { 32.dp },
                                 progress = blurState::value,
                             )
+                            .then(navigationRailPaddingModifier)
                             .constrainedSizePlacement(
                                 orientation = Orientation.Horizontal,
                                 minSize = appScaffoldState.minPaneWidth,

@@ -95,6 +95,7 @@ import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.fillMaxRestrictedWidth
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.galleryDestination
@@ -196,7 +197,9 @@ fun Comments(
     ) {
         val now = remember { Clock.System.now() }
         val presentation = Timeline.Presentation.Text.WithEmbed
-        val displayState = rememberTimelineDisplayState()
+        val displayState = rememberTimelineDisplayState(
+            extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+        )
 
         val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
             sharedElementPrefix = commentSharedElementPrefix,

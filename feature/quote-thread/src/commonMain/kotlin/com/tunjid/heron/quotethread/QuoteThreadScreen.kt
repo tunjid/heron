@@ -61,6 +61,7 @@ import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
@@ -89,7 +90,9 @@ internal fun QuoteThreadScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val listState = rememberLazyListState(cacheWindow = displayState.cacheWindow)
     val items by rememberUpdatedState(state.items)
 

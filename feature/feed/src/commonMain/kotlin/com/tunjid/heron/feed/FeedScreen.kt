@@ -70,6 +70,7 @@ import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -135,7 +136,9 @@ private fun FeedTimeline(
     val density = LocalDensity.current
     val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
