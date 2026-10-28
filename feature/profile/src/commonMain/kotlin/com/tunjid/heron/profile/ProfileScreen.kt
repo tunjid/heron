@@ -169,6 +169,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -1436,7 +1437,9 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )

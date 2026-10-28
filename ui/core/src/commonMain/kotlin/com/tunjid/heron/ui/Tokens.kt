@@ -27,7 +27,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -56,8 +56,6 @@ object UiTokens {
     val SecondaryPaneMinWidthBreakpoint = 600.dp
 
     val TertiaryPaneMinWidthBreakpoint = 1200.dp
-
-    val NavRailWidth = 72.dp
 
     val LikeRed: Color = Color(0xFFE0245E)
 
@@ -132,6 +130,18 @@ private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottom
 
 val UiTokens.statusAndToolbarHeight
     @Composable get() = toolbarHeight + statusBarHeight
+
+fun WindowInsets.horizontalSpace(
+    density: Density,
+    layoutDirection: LayoutDirection,
+): Int = getLeft(
+    density = density,
+    layoutDirection = layoutDirection,
+) + getRight(
+    density = density,
+    layoutDirection = layoutDirection,
+)
+
 val WindowInsets.Companion.platformStatusBars
     @Composable get() = WindowInsets.stableStatusBars.union(WindowInsets.platformExtraStatusBars)
 

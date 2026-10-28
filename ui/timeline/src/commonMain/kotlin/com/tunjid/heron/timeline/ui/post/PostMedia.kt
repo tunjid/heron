@@ -53,7 +53,6 @@ import com.tunjid.heron.timeline.utilities.MediaOverlayText
 import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
-import com.tunjid.heron.ui.localOverlayClip
 import com.tunjid.heron.ui.modifiers.TrackingOverlayClip
 import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -224,7 +223,7 @@ internal fun PostImage(
     paneTransitionScope.UpdatedMovableStickySharedElementOf(
         boundsTransform = paneTransitionScope.sharedElementBoundsTransform,
         modifier = modifier,
-        clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.localOverlayClip,
+        clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.paneOverlayClip,
         sharedContentState = with(paneTransitionScope) {
             rememberSharedContentState(
                 key = image.sharedElementKey(

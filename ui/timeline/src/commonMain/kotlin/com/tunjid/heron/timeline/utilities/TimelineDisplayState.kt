@@ -22,9 +22,11 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.ui.UiTokens
@@ -37,21 +39,30 @@ import com.tunjid.heron.ui.UiTokens
 @Stable
 class TimelineDisplayState internal constructor(
     private val density: () -> Density,
+    private val layoutDirection: () -> LayoutDirection,
     private val windowWidthPx: () -> Int,
+    private val extraSpacing: (Density, LayoutDirection) -> Int,
 ) {
     val cacheWindow: LazyLayoutCacheWindow = TimelineLazyLayoutCacheWindow
 
     @Stable
     fun cardSize(
         presentation: Timeline.Presentation,
-    ): Dp = when (val widthDp = with(density()) { windowWidthPx().toDp() }) {
-        in 0.dp..UiTokens.SecondaryPaneMinWidthBreakpoint -> presentation.cardSize
-        else -> maxOf(
-            a = presentation.cardSize,
-            b = widthDp
-                .minus(UiTokens.NavRailWidth)
-                .div(presentation.maxColumns),
-        )
+    ): Dp = with(density()) {
+        when (val widthDp = windowWidthPx().toDp()) {
+            in 0.dp..UiTokens.SecondaryPaneMinWidthBreakpoint -> presentation.cardSize
+            else -> maxOf(
+                a = presentation.cardSize,
+                b = widthDp
+                    .minus(
+                        extraSpacing(
+                            this,
+                            layoutDirection(),
+                        ).toDp(),
+                    )
+                    .div(presentation.maxColumns),
+            )
+        }
     }
 
     @Stable
@@ -70,14 +81,29 @@ class TimelineDisplayState internal constructor(
     ): Dp = presentation.lazyGridVerticalItemSpacing
 }
 
+/**
+ * @param extraSpacing horizontal space in pixels taken out of the window before sizing cards,
+ * like the navigation rail's insets.
+ */
 @Composable
-fun rememberTimelineDisplayState(): TimelineDisplayState {
+fun rememberTimelineDisplayState(
+    extraSpacing: (Density, LayoutDirection) -> Int = { _, _ -> 0 },
+): TimelineDisplayState {
     val density = rememberUpdatedState(LocalDensity.current)
+    val layoutDirection = rememberUpdatedState(LocalLayoutDirection.current)
     val windowWidthPx = rememberUpdatedState(LocalWindowInfo.current.containerSize.width)
+    val updatedExtraSpacing = rememberUpdatedState(extraSpacing)
     return remember {
         TimelineDisplayState(
             density = density::value,
+            layoutDirection = layoutDirection::value,
             windowWidthPx = windowWidthPx::value,
+            extraSpacing = { currentDensity, currentLayoutDirection ->
+                updatedExtraSpacing.value(
+                    currentDensity,
+                    currentLayoutDirection,
+                )
+            },
         )
     }
 }

@@ -82,9 +82,7 @@ class AppScaffoldState internal constructor(
     }
 
     internal val minPaneWidth: Dp
-        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight(
-            isCompact = staticStates.identityState.prefersCompactBottomNav,
-        )
+        get() = (windowWidth.value * 0.5f) - navigationRailWidth
 
     private val systemVerticalBar: SystemVerticalBar?
         get() = staticStates.uiState.systemVerticalBar
@@ -92,7 +90,7 @@ class AppScaffoldState internal constructor(
     // The rail fills the system vertical bar when there is one (iPhone Duo), else the default
     // icon-rail width.
     internal val navigationRailWidth: Dp
-        get() = systemVerticalBar?.width ?: UiTokens.NavRailWidth
+        get() = systemVerticalBar?.width ?: CommonNavRailWidth
 
     internal val bottomAlignsNavigationRail: Boolean
         get() = systemVerticalBar != null

@@ -179,7 +179,7 @@ internal class PaneAnchorState(
 
     companion object {
 
-        internal val MinPaneWidth = 1.dp
+        internal val MinPaneWidth = Dp.Hairline
 
         @Composable
         internal fun DraggableThumb(

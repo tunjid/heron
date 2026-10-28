@@ -19,14 +19,7 @@ package com.tunjid.heron.ui
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import com.tunjid.treenav.compose.PaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -46,6 +39,12 @@ interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePan
     val sharedElementBoundsTransform: BoundsTransform
 
     /**
+     * [SharedTransitionScope.OverlayClip] for shared elements in the pane that clips them to
+     * the bounds of the pane when it is transformed.
+     */
+    val paneOverlayClip: SharedTransitionScope.OverlayClip
+
+    /**
      * [WindowInsets] for the navigation rail is present in the pane.
      */
     val navigationRailInsets: WindowInsets
@@ -53,23 +52,3 @@ interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePan
 
 val PaneTransitionScope.isPrimaryOrActive
     get() = paneState.pane == ThreePane.Primary || isActive
-
-// This should only be callable from this scope
-@Suppress("UnusedReceiverParameter")
-inline val PaneTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
-    @ReadOnlyComposable @Composable get() = LocalSharedElementOverlayClip.current
-
-val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip {
-    override fun getClipPath(
-        sharedContentState: SharedTransitionScope.SharedContentState,
-        bounds: Rect,
-        layoutDirection: LayoutDirection,
-        density: Density,
-    ): Path? {
-        return sharedContentState.parentSharedContentState?.clipPathInOverlay
-    }
-}
-
-val LocalSharedElementOverlayClip = staticCompositionLocalOf {
-    DefaultSharedElementOverlayClip
-}
