@@ -329,15 +329,7 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .renderHeaderInTransitionOverlay(
-                        paneScaffoldState = paneScaffoldState,
-                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                    )
-                    .pinnedHeaderScrim(
-                        state = collapsingHeaderState,
-                        scrimColor = MaterialTheme.colorScheme.surface,
-                    ),
+                    .fillMaxWidth(),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
@@ -735,6 +727,14 @@ private fun ProfileHeader(
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier
+                .renderHeaderInTransitionOverlay(
+                    paneScaffoldState = paneScaffoldState,
+                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                )
+                .pinnedHeaderScrim(
+                    state = headerState.headerState,
+                    scrimColor = MaterialTheme.colorScheme.surface,
+                )
                 .offset {
                     headerState.bioOffset()
                 }
