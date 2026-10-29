@@ -337,10 +337,7 @@ fun Modifier.renderHeaderInTransitionOverlay(
         renderInOverlay = {
             paneState.pane == ThreePane.Primary &&
                 isTransitionActive &&
-                isActive &&
-                // This is largely so profile headers and
-                // others don't just pop in
-                (topAppBarOffset().y < 0 || headerOccludesSharedElement)
+                isActive
         },
     )
         .clipToPaneInOverlay(
