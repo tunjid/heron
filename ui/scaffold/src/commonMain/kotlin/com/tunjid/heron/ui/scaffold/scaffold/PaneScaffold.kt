@@ -380,8 +380,9 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             .navigationEventDispatcher
 
     LifecycleStartEffect(
-        key1 = scope,
-        key2 = navigationEventDispatcher,
+        key1 = paneScaffoldState,
+        key2 = scope,
+        key3 = navigationEventDispatcher,
     ) {
         val job = scope.launch {
             navigationEventDispatcher.transitionState
