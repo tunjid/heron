@@ -19,11 +19,9 @@ package com.tunjid.heron.ui.shapes
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.shape.CornerRounding
 import androidx.compose.foundation.shape.MorphPolygonShape
 import androidx.compose.foundation.shape.PolygonShape
-import androidx.compose.foundation.shape.PolygonShapeGeometry
-import androidx.compose.foundation.shape.PolygonShapeGeometry.Companion.CornerRounding
-import androidx.compose.foundation.shape.scaledToFit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.annotation.RememberInComposition
@@ -43,6 +41,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.sin
 
 /*
@@ -50,8 +49,8 @@ import kotlin.math.sin
  * need to be absorbed here.
  *
  * Shapes returned from these helpers should be held in top level or lazy vals, never created
- * in composition. PolygonShape equality is going to become referential as of
- * this [CL](https://android-review.googlesource.com/c/platform/frameworks/support/+/4310336)
+ * in composition. PolygonShape equality is referential, and [animate] restarts whenever it sees a
+ * shape instance other than the previous one.
  */
 
 val PolygonShape.Companion.Circle: PolygonShape
@@ -76,24 +75,26 @@ fun PolygonShape.Companion.roundedRectangle(
     bottomStartPercent: Float,
     topStartPercent: Float,
     topEndPercent: Float,
-): PolygonShape = PolygonShape(
-    geometry = PolygonShapeGeometry(
-        // A 2x2 square centered on the origin, ordered bottom end, bottom start, top start, top end.
-        vertices = listOf(
-            Offset(x = 1f, y = 1f),
-            Offset(x = -1f, y = 1f),
-            Offset(x = -1f, y = -1f),
-            Offset(x = 1f, y = -1f),
-        ),
-        perVertexRounding = listOf(
-            CornerRounding(radius = bottomEndPercent),
-            CornerRounding(radius = bottomStartPercent),
-            CornerRounding(radius = topStartPercent),
-            CornerRounding(radius = topEndPercent),
-        ),
-        center = Offset.Zero,
-    ),
-).stretched()
+): PolygonShape {
+    val perVertexRounding = listOf(
+        bottomEndPercent,
+        bottomStartPercent,
+        topStartPercent,
+        topEndPercent,
+    ).map { radius ->
+        roundingFraction(
+            radius = radius,
+            reference = 2f,
+        )
+    }
+    return PolygonShape {
+        polygon(
+            vertices = UnitSquareVertices,
+            perVertexRounding = perVertexRounding,
+            center = Offset.Zero,
+        )
+    }.stretched()
+}
 
 /**
  * A regular polygon stretched to fill its layout bounds, with a vertex for each item in
@@ -105,22 +106,23 @@ fun PolygonShape.Companion.roundedRectangle(
 fun PolygonShape.Companion.roundedPolygon(
     cornerSizePercentAtIndex: List<Float>,
     rotation: Float = 0f,
-): PolygonShape = PolygonShape(
-    geometry = PolygonShapeGeometry(
-        vertices = cornerSizePercentAtIndex.indices.map { index ->
-            val angle = (rotation / 360f + index.toFloat() / cornerSizePercentAtIndex.size) *
-                2 * PI.toFloat()
-            Offset(
-                x = cos(angle),
-                y = sin(angle),
-            )
-        },
-        perVertexRounding = cornerSizePercentAtIndex.map { radius ->
-            CornerRounding(radius = radius)
-        },
-        center = Offset.Zero,
-    ),
-).stretched()
+): PolygonShape {
+    // A regular polygon's fraction resolves against its radius, which is 1 here.
+    val perVertexRounding = cornerSizePercentAtIndex.map { radius ->
+        roundingFraction(
+            radius = radius,
+            reference = 1f,
+        )
+    }
+    return PolygonShape {
+        polygon(
+            numVertices = perVertexRounding.size,
+            perVertexRounding = perVertexRounding,
+            radius = 1f,
+            center = Offset.Zero,
+        )
+    }.stretched(rotation = rotation)
+}
 
 class PebbleVertex(
     val angle: Float,
@@ -136,24 +138,34 @@ fun PolygonShape.Companion.pebble(
     vertices: List<PebbleVertex>,
     smoothing: Float = 1f,
     widthRatio: Float = 1f,
-): PolygonShape = PolygonShape(
-    geometry = PolygonShapeGeometry(
-        vertices = vertices.map { vertex ->
-            val angle = vertex.angle / 180f * PI.toFloat()
-            Offset(
-                x = cos(angle) * vertex.radius * widthRatio,
-                y = sin(angle) * vertex.radius,
-            )
-        },
-        perVertexRounding = vertices.map { vertex ->
-            CornerRounding(
-                radius = vertex.cornerRadius,
-                smoothing = smoothing,
-            )
-        },
-        center = Offset.Zero,
-    ),
-).stretched()
+): PolygonShape {
+    val offsets = vertices.map { vertex ->
+        val angle = vertex.angle / 180f * PI.toFloat()
+        Offset(
+            x = cos(angle) * vertex.radius * widthRatio,
+            y = sin(angle) * vertex.radius,
+        )
+    }
+    // A vertex list's fraction resolves against the smaller dimension of its bounds.
+    val reference = min(
+        offsets.maxOf(Offset::x) - offsets.minOf(Offset::x),
+        offsets.maxOf(Offset::y) - offsets.minOf(Offset::y),
+    )
+    val perVertexRounding = vertices.map { vertex ->
+        roundingFraction(
+            radius = vertex.cornerRadius,
+            reference = reference,
+            smoothing = smoothing,
+        )
+    }
+    return PolygonShape {
+        polygon(
+            vertices = offsets,
+            perVertexRounding = perVertexRounding,
+            center = Offset.Zero,
+        )
+    }.stretched()
+}
 
 @Composable
 fun PolygonShape.animate(
@@ -195,9 +207,11 @@ fun PolygonShape.animate(
         currentShape,
     ) {
         EmptySizeSafeShape(
+            // Copies give this morph its own outline caches. The shared instances are resolved at
+            // every size they are used at, and would otherwise invalidate the Morph each frame.
             delegate = MorphPolygonShape(
-                start = previousShape,
-                end = currentShape,
+                start = previousShape.copy(),
+                end = currentShape.copy(),
                 progress = progress::floatValue,
             ),
         )
@@ -225,11 +239,40 @@ private class EmptySizeSafeShape(
 }
 
 /**
- * Stretches this shape's resolved geometry to fill its layout bounds, scaling independently on
- * each axis.
+ * Rotates this shape clockwise by [rotation] degrees, then stretches its resolved geometry to fill
+ * its layout bounds, scaling independently on each axis.
+ *
+ * [PolygonShape.transform] replaces any previous transform, and mutates the shape in place, so
+ * transform bust be applied once, and only to a newly created shape.
  */
-private fun PolygonShape.stretched(): PolygonShape =
-    scaledToFit(contentScale = ContentScale.FillBounds)
+private fun PolygonShape.stretched(
+    rotation: Float = 0f,
+): PolygonShape = apply {
+    transform {
+        if (rotation != 0f) rotate(degrees = rotation)
+        scaleToFit(contentScale = ContentScale.FillBounds)
+    }
+}
+
+/**
+ * A [CornerRounding.fraction] of [radius] relative to [reference], clamped to the range it allows.
+ */
+private fun roundingFraction(
+    radius: Float,
+    reference: Float,
+    smoothing: Float = 0f,
+): CornerRounding = CornerRounding.fraction(
+    fraction = (radius / reference).coerceIn(0f, 1f),
+    smoothing = smoothing,
+)
+
+// A 2x2 square centered on the origin, ordered bottom end, bottom start, top start, top end.
+private val UnitSquareVertices = listOf(
+    Offset(x = 1f, y = 1f),
+    Offset(x = -1f, y = 1f),
+    Offset(x = -1f, y = -1f),
+    Offset(x = 1f, y = -1f),
+)
 
 private val StretchedCircle = PolygonShape.circle().stretched()
 
