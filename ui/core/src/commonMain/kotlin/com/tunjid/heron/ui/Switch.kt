@@ -27,7 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -72,8 +75,15 @@ fun Switch(
                     width = SwitchWidth,
                     height = MatteTrackThickness,
                 )
-                .matteTrack(
+                .switchTrack(
                     colors = colors,
+                    floor = {
+                        lerp(
+                            start = colors.socket,
+                            stop = colors.track,
+                            fraction = progress.coerceIn(0f, 1f),
+                        )
+                    },
                 ),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -90,9 +100,29 @@ fun Switch(
                     .size(MatteThumbSize)
                     .matteThumb(
                         colors = colors,
+                        color = {
+                            lerp(
+                                start = colors.mutedThumb,
+                                stop = colors.thumb,
+                                fraction = progress.coerceIn(0f, 1f),
+                            )
+                        },
                     ),
             )
         }
+    }
+}
+
+private fun Modifier.switchTrack(
+    colors: MatteColors,
+    floor: () -> Color,
+) = drawWithCache {
+    val groove = matteChamfer(
+        colors = colors,
+        chamferSize = size,
+    )
+    onDrawBehind {
+        groove(floor())
     }
 }
 

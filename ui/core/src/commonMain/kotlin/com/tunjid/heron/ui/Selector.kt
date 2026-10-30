@@ -31,6 +31,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -62,8 +65,11 @@ class SelectorState<T>(
         initialValue = selectedIndex.coerceAtLeast(0).toFloat(),
     )
 
-    private var itemCenters = IntArray(0)
-    private var trackTop = 0
+    internal var itemCenters by mutableStateOf(IntArray(0))
+        private set
+
+    internal var trackTop by mutableStateOf(0)
+        private set
 
     internal fun itemNearestTrackOffset(
         y: Float,
@@ -135,9 +141,13 @@ fun <T> Selector(
                 }
             }
             // The indicator is always the last child: the column the thumb travels
-            // in, which is not drawn but can be tapped, then the thumb.
+            // in, which holds a socket for each item and can be tapped, then the thumb.
             Box(
                 modifier = Modifier
+                    .matteSockets(
+                        state = state,
+                        colors = colors,
+                    )
                     .pointerInput(state) {
                         detectTapGestures { offset ->
                             state.itemNearestTrackOffset(
@@ -269,5 +279,34 @@ private fun IntArray.centerAt(
     )
 }
 
+private fun Modifier.matteSockets(
+    state: SelectorState<*>,
+    colors: MatteColors,
+) = drawWithCache {
+    val socketSize = (MatteThumbSize + (SocketClearance * 2)).toPx()
+    val socket = matteChamfer(
+        colors = colors,
+        chamferSize = Size(
+            width = socketSize,
+            height = socketSize,
+        ),
+    )
+    val socketLeft = (size.width - socketSize) / 2
+    val socketTops = state.itemCenters.map { center ->
+        center - state.trackTop - (socketSize / 2)
+    }
+    onDrawBehind {
+        socketTops.forEach { socketTop ->
+            translate(
+                left = socketLeft,
+                top = socketTop,
+            ) {
+                socket(colors.socket)
+            }
+        }
+    }
+}
+
+private val SocketClearance = 2.dp
 private val IndicatorPadding = 8.dp
 private const val IndicatorChildCount = 2

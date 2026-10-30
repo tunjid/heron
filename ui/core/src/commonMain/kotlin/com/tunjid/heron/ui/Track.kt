@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -34,8 +35,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.DropShadowPainter
 import androidx.compose.ui.graphics.shadow.InnerShadowPainter
@@ -47,9 +51,11 @@ import androidx.compose.ui.unit.dp
 internal class MatteColors(
     val track: Color,
     val thumb: Color,
+    val mutedThumb: Color,
     val shade: Color,
     val highlight: Color,
     val thumbLift: Color,
+    val socket: Color,
 )
 
 @Composable
@@ -67,6 +73,9 @@ internal fun rememberMatteColors(): MatteColors {
             thumb = colorScheme.primary.copy(
                 alpha = MatteThumbAlpha,
             ),
+            mutedThumb = colorScheme.outline.copy(
+                alpha = if (isLight) 0.45f else 0.55f,
+            ),
             shade = if (isLight) MatteLightThemeShade else MatteDarkThemeShade,
             // A bright highlight on a dark surface reads as a glow, so it is a whisper there.
             highlight = Color.White.copy(
@@ -75,6 +84,12 @@ internal fun rememberMatteColors(): MatteColors {
             thumbLift = Color.White.copy(
                 alpha = if (isLight) 0.28f else 0.16f,
             ),
+            // A socket's floor is pressed a touch darker than the surface it sits in.
+            socket = Color.Black
+                .copy(
+                    alpha = if (isLight) 0.03f else 0.15f,
+                )
+                .compositeOver(colorScheme.surface),
         )
     }
 }
@@ -119,8 +134,60 @@ internal fun Modifier.matteTrack(
     }
 }
 
+/**
+ * A chamfer etched into the surface: a wall sloping away from the light at the top start, around
+ * a flat floor. Returns a function that draws it at the origin with the floor color given.
+ */
+internal fun CacheDrawScope.matteChamfer(
+    colors: MatteColors,
+    chamferSize: Size,
+): DrawScope.(floor: Color) -> Unit {
+    val bevel = MatteChamferBevel.toPx()
+    val floorSize = Size(
+        width = chamferSize.width - (bevel * 2),
+        height = chamferSize.height - (bevel * 2),
+    )
+    val wall = Brush.linearGradient(
+        0f to colors.shade,
+        0.75f to colors.highlight,
+        start = Offset.Zero,
+        end = Offset(
+            x = chamferSize.width,
+            y = chamferSize.height,
+        ),
+    )
+    val floorShade = InnerShadowPainter(
+        shape = CircleShape,
+        shadow = Shadow(
+            radius = 1.dp,
+            color = colors.shade,
+        ),
+    )
+    return { floor ->
+        drawRoundRect(
+            brush = wall,
+            size = chamferSize,
+            cornerRadius = CornerRadius(chamferSize.minDimension / 2),
+        )
+        translate(
+            left = bevel,
+            top = bevel,
+        ) {
+            drawRoundRect(
+                color = floor,
+                size = floorSize,
+                cornerRadius = CornerRadius(floorSize.minDimension / 2),
+            )
+            with(floorShade) {
+                draw(size = floorSize)
+            }
+        }
+    }
+}
+
 internal fun Modifier.matteThumb(
     colors: MatteColors,
+    color: () -> Color = colors::thumb,
 ) = drawWithCache {
     val outline = Path().apply {
         addRoundRect(
@@ -191,7 +258,7 @@ internal fun Modifier.matteThumb(
         }
         drawPath(
             path = outline,
-            color = colors.thumb,
+            color = color(),
         )
         drawPath(
             path = outline,
@@ -218,16 +285,10 @@ internal fun Modifier.matteThumb(
 
 internal val MatteThumbSize = 24.dp
 
-/**
- * The gap between the thumb and the edges of its track.
- */
 internal val MatteTrackInset = 4.dp
 
 internal val MatteTrackThickness = MatteThumbSize + (MatteTrackInset * 2)
 
-/**
- * A spring with a little overshoot, for the thumb settling into place.
- */
 internal val MatteThumbAnimationSpec = spring<Float>(
     dampingRatio = 0.6f,
     stiffness = Spring.StiffnessMediumLow,
@@ -235,12 +296,11 @@ internal val MatteThumbAnimationSpec = spring<Float>(
 
 internal const val MatteDisabledAlpha = 0.38f
 
+private val MatteChamferBevel = 3.dp
+
 private const val MatteTrackAlpha = 0.8f
 private const val MatteThumbAlpha = 0.7f
 
-/**
- * How far the track is pressed in, and the thumb raised out.
- */
 private val MatteDepth = 2.5.dp
 
 private val MatteRimWidth = 1.dp
