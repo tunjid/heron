@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -305,6 +307,13 @@ internal val MatteTrackThickness = MatteThumbSize + (MatteTrackInset * 2)
 internal val MatteThumbAnimationSpec = spring<Float>(
     dampingRatio = 0.6f,
     stiffness = Spring.StiffnessMediumLow,
+)
+
+internal val MatteSocketClearance = 2.dp
+
+internal val MatteLightAnimationSpec = tween<Float>(
+    durationMillis = 380,
+    easing = FastOutSlowInEasing,
 )
 
 internal const val MatteDisabledAlpha = 0.38f

@@ -51,7 +51,7 @@ fun Checkbox(
 ) {
     val light by animateFloatAsState(
         targetValue = if (checked) 1f else 0f,
-        animationSpec = CheckboxLightAnimationSpec,
+        animationSpec = MatteLightAnimationSpec,
     )
     val mark by animateFloatAsState(
         targetValue = if (checked) 1f else 0f,
@@ -177,11 +177,6 @@ private val CheckboxSize = 28.dp
 private val CheckboxCornerRadius = 9.dp
 
 private const val CheckGridSize = 28f
-
-private val CheckboxLightAnimationSpec = tween<Float>(
-    durationMillis = 380,
-    easing = FastOutSlowInEasing,
-)
 
 private val CheckboxMarkAnimationSpec = tween<Float>(
     durationMillis = 220,
