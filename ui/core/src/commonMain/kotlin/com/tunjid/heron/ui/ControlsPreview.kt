@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 import kotlinx.coroutines.delay
 
-@Preview(widthDp = 360, heightDp = 920)
+@Preview(widthDp = 360, heightDp = 1200)
 @Composable
 private fun MatteControlsLightPreview() {
     MaterialTheme(
@@ -53,7 +53,7 @@ private fun MatteControlsLightPreview() {
     }
 }
 
-@Preview(widthDp = 360, heightDp = 920)
+@Preview(widthDp = 360, heightDp = 1200)
 @Composable
 private fun MatteControlsDarkPreview() {
     MaterialTheme(
@@ -124,6 +124,35 @@ private fun MatteControls() {
                     enabled = false,
                 )
                 Switch(
+                    checked = false,
+                    onCheckedChange = null,
+                    enabled = false,
+                )
+            }
+
+            PreviewHeading(
+                text = "Checkboxes",
+            )
+            PreviewCheckboxes.forEachIndexed { index, label ->
+                var checked by remember { mutableStateOf(index % 2 == 0) }
+                PreviewRow(
+                    label = label,
+                ) {
+                    Checkbox(
+                        checked = checked,
+                        onCheckedChange = { checked = it },
+                    )
+                }
+            }
+            PreviewRow(
+                label = "Disabled",
+            ) {
+                Checkbox(
+                    checked = true,
+                    onCheckedChange = null,
+                    enabled = false,
+                )
+                Checkbox(
                     checked = false,
                     onCheckedChange = null,
                     enabled = false,
@@ -213,6 +242,12 @@ private val PreviewSwitches = listOf(
     "Autoplay GIFs",
     "Autoplay videos",
     "Show link previews",
+)
+
+private val PreviewCheckboxes = listOf(
+    "Mentioned users",
+    "Users you follow",
+    "Your followers",
 )
 
 private const val PreviewPlaybackSeed = 7

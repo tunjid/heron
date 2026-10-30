@@ -19,6 +19,7 @@ package com.tunjid.heron.ui
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -56,6 +57,8 @@ internal class MatteColors(
     val highlight: Color,
     val thumbLift: Color,
     val socket: Color,
+    val etch: Color,
+    val etchHighlight: Color,
 )
 
 @Composable
@@ -90,6 +93,13 @@ internal fun rememberMatteColors(): MatteColors {
                     alpha = if (isLight) 0.03f else 0.15f,
                 )
                 .compositeOver(colorScheme.surface),
+            etch = colorScheme.onPrimaryContainer.copy(
+                alpha = 0.75f,
+            ),
+            // The lower edge of an etched mark catches the light.
+            etchHighlight = Color.White.copy(
+                alpha = if (isLight) 0.9f else 0.12f,
+            ),
         )
     }
 }
@@ -141,8 +151,11 @@ internal fun Modifier.matteTrack(
 internal fun CacheDrawScope.matteChamfer(
     colors: MatteColors,
     chamferSize: Size,
+    cornerRadius: Float = chamferSize.minDimension / 2,
 ): DrawScope.(floor: Color) -> Unit {
     val bevel = MatteChamferBevel.toPx()
+    // The floor's corners are concentric with the wall's.
+    val floorCornerRadius = (cornerRadius - bevel).coerceAtLeast(0f)
     val floorSize = Size(
         width = chamferSize.width - (bevel * 2),
         height = chamferSize.height - (bevel * 2),
@@ -157,7 +170,7 @@ internal fun CacheDrawScope.matteChamfer(
         ),
     )
     val floorShade = InnerShadowPainter(
-        shape = CircleShape,
+        shape = RoundedCornerShape(floorCornerRadius),
         shadow = Shadow(
             radius = 1.dp,
             color = colors.shade,
@@ -167,7 +180,7 @@ internal fun CacheDrawScope.matteChamfer(
         drawRoundRect(
             brush = wall,
             size = chamferSize,
-            cornerRadius = CornerRadius(chamferSize.minDimension / 2),
+            cornerRadius = CornerRadius(cornerRadius),
         )
         translate(
             left = bevel,
@@ -176,7 +189,7 @@ internal fun CacheDrawScope.matteChamfer(
             drawRoundRect(
                 color = floor,
                 size = floorSize,
-                cornerRadius = CornerRadius(floorSize.minDimension / 2),
+                cornerRadius = CornerRadius(floorCornerRadius),
             )
             with(floorShade) {
                 draw(size = floorSize)
