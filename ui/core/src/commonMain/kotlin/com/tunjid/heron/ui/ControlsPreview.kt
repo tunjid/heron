@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 import kotlinx.coroutines.delay
 
-@Preview(widthDp = 360, heightDp = 920)
+@Preview(widthDp = 360, heightDp = 1360)
 @Composable
 private fun MatteControlsLightPreview() {
     MaterialTheme(
@@ -53,7 +54,7 @@ private fun MatteControlsLightPreview() {
     }
 }
 
-@Preview(widthDp = 360, heightDp = 920)
+@Preview(widthDp = 360, heightDp = 1360)
 @Composable
 private fun MatteControlsDarkPreview() {
     MaterialTheme(
@@ -126,6 +127,75 @@ private fun MatteControls() {
                 Switch(
                     checked = false,
                     onCheckedChange = null,
+                    enabled = false,
+                )
+            }
+
+            PreviewHeading(
+                text = "Checkboxes",
+            )
+            PreviewCheckboxes.forEachIndexed { index, label ->
+                var checked by remember { mutableStateOf(index % 2 == 0) }
+                PreviewRow(
+                    label = label,
+                ) {
+                    Checkbox(
+                        checked = checked,
+                        onCheckedChange = { checked = it },
+                    )
+                }
+            }
+            PreviewRow(
+                label = "Disabled",
+            ) {
+                Checkbox(
+                    checked = true,
+                    onCheckedChange = null,
+                    enabled = false,
+                )
+                Checkbox(
+                    checked = false,
+                    onCheckedChange = null,
+                    enabled = false,
+                )
+            }
+
+            PreviewHeading(
+                text = "Radio buttons",
+            )
+            var selectedRadio by remember { mutableStateOf(PreviewRadios.first()) }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectableGroup(),
+            ) {
+                PreviewRadios.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = option == selectedRadio,
+                            onClick = { selectedRadio = option },
+                        )
+                        Text(
+                            text = option,
+                        )
+                    }
+                }
+            }
+            PreviewRow(
+                label = "Disabled",
+            ) {
+                RadioButton(
+                    selected = true,
+                    onClick = null,
+                    enabled = false,
+                )
+                RadioButton(
+                    selected = false,
+                    onClick = null,
                     enabled = false,
                 )
             }
@@ -213,6 +283,18 @@ private val PreviewSwitches = listOf(
     "Autoplay GIFs",
     "Autoplay videos",
     "Show link previews",
+)
+
+private val PreviewRadios = listOf(
+    "Hide",
+    "Warn",
+    "Show",
+)
+
+private val PreviewCheckboxes = listOf(
+    "Mentioned users",
+    "Users you follow",
+    "Your followers",
 )
 
 private const val PreviewPlaybackSeed = 7

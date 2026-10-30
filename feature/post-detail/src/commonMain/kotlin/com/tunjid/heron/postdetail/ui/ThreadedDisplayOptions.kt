@@ -9,7 +9,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.ui.AppBarIconButton
+import com.tunjid.heron.ui.RadioButton
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.automirrored.Sort
 import com.tunjid.heron.ui.text.CommonStrings

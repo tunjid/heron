@@ -20,6 +20,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.horizontalDrag
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +58,7 @@ fun Slider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onValueChangeFinished: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     val currentValue by rememberUpdatedState(value.coerceIn(0f, 1f))
     val currentOnValueChange by rememberUpdatedState(onValueChange)
@@ -93,7 +96,10 @@ fun Slider(
                 }
             }
             .ifTrue(enabled) {
-                pointerInput(layoutDirection) {
+                pointerInput(
+                    layoutDirection,
+                    interactionSource,
+                ) {
                     val inset = MatteTrackInset.toPx()
                     val thumbSize = MatteThumbSize.toPx()
                     fun valueAt(
@@ -107,13 +113,23 @@ fun Slider(
                     }
                     awaitEachGesture {
                         val down = awaitFirstDown()
+                        val dragStart = DragInteraction.Start()
+                        interactionSource?.tryEmit(dragStart)
                         currentOnValueChange(valueAt(down.position.x))
                         isDragging = true
-                        horizontalDrag(down.id) { change ->
-                            change.consume()
-                            currentOnValueChange(valueAt(change.position.x))
+                        var isDragCompleted = false
+                        try {
+                            isDragCompleted = horizontalDrag(down.id) { change ->
+                                change.consume()
+                                currentOnValueChange(valueAt(change.position.x))
+                            }
+                        } finally {
+                            isDragging = false
+                            interactionSource?.tryEmit(
+                                if (isDragCompleted) DragInteraction.Stop(dragStart)
+                                else DragInteraction.Cancel(dragStart),
+                            )
                         }
-                        isDragging = false
                         currentOnValueChangeFinished?.invoke()
                     }
                 }

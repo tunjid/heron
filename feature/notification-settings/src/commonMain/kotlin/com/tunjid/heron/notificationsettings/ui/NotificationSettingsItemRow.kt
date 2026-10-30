@@ -37,13 +37,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -64,8 +63,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.ui.Selector
+import com.tunjid.heron.ui.Switch
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.ExpandLess
+import com.tunjid.heron.ui.rememberSelectorState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.notification_settings.generated.resources.Res
 import heron.feature.notification_settings.generated.resources.everyone
@@ -78,33 +80,46 @@ import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * A choice of one of [items], each labelled with [itemText].
+ */
 @Composable
-internal fun NotificationSettingsRadioButton(
-    text: String,
-    selected: Boolean,
-    onSelect: () -> Unit,
+internal fun <T> NotificationSettingsSelector(
+    selectedItem: T,
+    items: List<T>,
+    itemText: @Composable (T) -> String,
+    onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Selector(
         modifier = modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = selected,
-                onValueChange = { if (!selected) onSelect() },
-                role = Role.RadioButton,
+            .fillMaxWidth(),
+        state = rememberSelectorState(
+            selectedItem = selectedItem,
+            items = items,
+        ),
+        onItemSelected = { item ->
+            if (item != selectedItem) onItemSelected(item)
+        },
+    ) { item ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = item == selectedItem,
+                    onClick = {
+                        if (item != selectedItem) onItemSelected(item)
+                    },
+                    role = Role.RadioButton,
+                )
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = itemText(item),
+                style = MaterialTheme.typography.bodyLarge,
             )
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = null,
-            modifier = Modifier.padding(end = 8.dp),
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        }
     }
 }
 

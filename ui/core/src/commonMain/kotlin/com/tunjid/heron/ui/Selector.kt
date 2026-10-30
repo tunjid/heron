@@ -283,7 +283,7 @@ private fun Modifier.matteSockets(
     state: SelectorState<*>,
     colors: MatteColors,
 ) = drawWithCache {
-    val socketSize = (MatteThumbSize + (SocketClearance * 2)).toPx()
+    val socketSize = (MatteThumbSize + (MatteSocketClearance * 2)).toPx()
     val socket = matteChamfer(
         colors = colors,
         chamferSize = Size(
@@ -307,6 +307,5 @@ private fun Modifier.matteSockets(
     }
 }
 
-private val SocketClearance = 2.dp
 private val IndicatorPadding = 8.dp
 private const val IndicatorChildCount = 2

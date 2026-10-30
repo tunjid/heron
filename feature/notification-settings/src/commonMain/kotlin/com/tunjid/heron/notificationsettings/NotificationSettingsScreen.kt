@@ -32,7 +32,7 @@ import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.notificationsettings.ui.CombinedNotificationStatusText
 import com.tunjid.heron.notificationsettings.ui.ExpandableSettingsItemRow
 import com.tunjid.heron.notificationsettings.ui.NotificationSettingItem
-import com.tunjid.heron.notificationsettings.ui.NotificationSettingsRadioButton
+import com.tunjid.heron.notificationsettings.ui.NotificationSettingsSelector
 import com.tunjid.heron.notificationsettings.ui.NotificationStatusText
 import com.tunjid.heron.notificationsettings.ui.SettingsToggleItem
 import com.tunjid.heron.notificationsettings.ui.toNotificationSettingItems
@@ -184,29 +184,23 @@ private fun FilterableNotificationSetting(
                 modifier = Modifier.padding(bottom = 8.dp),
             )
 
-            NotificationSettingsRadioButton(
-                text = stringResource(Res.string.everyone),
-                selected = item.preference.include == NotificationPreferences.Include.All,
-                onSelect = {
-                    val update = NotificationPreferences.Update(
-                        reason = item.reason,
-                        list = item.preference.list,
-                        push = item.preference.push,
-                        include = NotificationPreferences.Include.All,
+            NotificationSettingsSelector(
+                selectedItem = item.preference.include,
+                items = NotificationIncludeOptions,
+                itemText = { include ->
+                    stringResource(
+                        when (include) {
+                            NotificationPreferences.Include.Follows -> Res.string.people_i_follow
+                            else -> Res.string.everyone
+                        },
                     )
-                    onUpdate(update)
                 },
-            )
-
-            NotificationSettingsRadioButton(
-                text = stringResource(Res.string.people_i_follow),
-                selected = item.preference.include == NotificationPreferences.Include.Follows,
-                onSelect = {
+                onItemSelected = { include ->
                     val update = NotificationPreferences.Update(
                         reason = item.reason,
                         list = item.preference.list,
                         push = item.preference.push,
-                        include = NotificationPreferences.Include.Follows,
+                        include = include,
                     )
                     onUpdate(update)
                 },
@@ -306,3 +300,8 @@ private fun CombinedNotificationSetting(
         },
     )
 }
+
+private val NotificationIncludeOptions = listOf(
+    NotificationPreferences.Include.All,
+    NotificationPreferences.Include.Follows,
+)

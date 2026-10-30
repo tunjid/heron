@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -56,6 +59,8 @@ internal class MatteColors(
     val highlight: Color,
     val thumbLift: Color,
     val socket: Color,
+    val etch: Color,
+    val etchHighlight: Color,
 )
 
 @Composable
@@ -90,6 +95,13 @@ internal fun rememberMatteColors(): MatteColors {
                     alpha = if (isLight) 0.03f else 0.15f,
                 )
                 .compositeOver(colorScheme.surface),
+            etch = colorScheme.onPrimaryContainer.copy(
+                alpha = 0.75f,
+            ),
+            // The lower edge of an etched mark catches the light.
+            etchHighlight = Color.White.copy(
+                alpha = if (isLight) 0.9f else 0.12f,
+            ),
         )
     }
 }
@@ -141,11 +153,16 @@ internal fun Modifier.matteTrack(
 internal fun CacheDrawScope.matteChamfer(
     colors: MatteColors,
     chamferSize: Size,
+    cornerRadius: Float = chamferSize.minDimension / 2,
 ): DrawScope.(floor: Color) -> Unit {
     val bevel = MatteChamferBevel.toPx()
+    // The floor's corners are concentric with the wall's.
+    val floorCornerRadius = (cornerRadius - bevel).coerceAtLeast(0f)
+    // Too small a chamfer has no room for a floor, as when it is measured at zero
+    // size while laid out or animated in.
     val floorSize = Size(
-        width = chamferSize.width - (bevel * 2),
-        height = chamferSize.height - (bevel * 2),
+        width = (chamferSize.width - (bevel * 2)).coerceAtLeast(0f),
+        height = (chamferSize.height - (bevel * 2)).coerceAtLeast(0f),
     )
     val wall = Brush.linearGradient(
         0f to colors.shade,
@@ -157,7 +174,7 @@ internal fun CacheDrawScope.matteChamfer(
         ),
     )
     val floorShade = InnerShadowPainter(
-        shape = CircleShape,
+        shape = RoundedCornerShape(floorCornerRadius),
         shadow = Shadow(
             radius = 1.dp,
             color = colors.shade,
@@ -167,16 +184,16 @@ internal fun CacheDrawScope.matteChamfer(
         drawRoundRect(
             brush = wall,
             size = chamferSize,
-            cornerRadius = CornerRadius(chamferSize.minDimension / 2),
+            cornerRadius = CornerRadius(cornerRadius),
         )
-        translate(
+        if (!floorSize.isEmpty()) translate(
             left = bevel,
             top = bevel,
         ) {
             drawRoundRect(
                 color = floor,
                 size = floorSize,
-                cornerRadius = CornerRadius(floorSize.minDimension / 2),
+                cornerRadius = CornerRadius(floorCornerRadius),
             )
             with(floorShade) {
                 draw(size = floorSize)
@@ -292,6 +309,13 @@ internal val MatteTrackThickness = MatteThumbSize + (MatteTrackInset * 2)
 internal val MatteThumbAnimationSpec = spring<Float>(
     dampingRatio = 0.6f,
     stiffness = Spring.StiffnessMediumLow,
+)
+
+internal val MatteSocketClearance = 2.dp
+
+internal val MatteLightAnimationSpec = tween<Float>(
+    durationMillis = 380,
+    easing = FastOutSlowInEasing,
 )
 
 internal const val MatteDisabledAlpha = 0.38f
