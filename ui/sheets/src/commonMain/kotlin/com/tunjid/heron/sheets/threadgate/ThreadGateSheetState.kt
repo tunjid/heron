@@ -25,17 +25,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,8 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,6 +66,8 @@ import com.tunjid.heron.data.core.models.allowsMentioned
 import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.ui.Checkbox
+import com.tunjid.heron.ui.RadioButton
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.InfoOutline
 import com.tunjid.heron.ui.icons.regular.KeyboardArrowDown
@@ -220,7 +223,9 @@ private fun ThreadGateBottomSheet(
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 SelectionCard(
@@ -393,36 +398,24 @@ private fun SelectionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val backgroundColor = if (selected)
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-    else
-        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
-
-    val borderColor = if (selected)
-        MaterialTheme.colorScheme.primary
-    else
-        Color.Transparent
-
     Row(
         modifier = modifier
-            .height(50.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(8.dp))
-            .border(
-                width = if (selected) 2.dp else 0.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp),
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton,
             )
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+            // Inset like the checkbox rows below, so the sockets line up.
+            .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
             selected = selected,
             onClick = null, // Handled by parent row
-            modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,

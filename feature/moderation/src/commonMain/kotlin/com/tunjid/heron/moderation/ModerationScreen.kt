@@ -30,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,6 +45,7 @@ import com.tunjid.heron.sheets.rememberPreferenceThreadGateSheetState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.Switch
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.automirrored.VolumeOff

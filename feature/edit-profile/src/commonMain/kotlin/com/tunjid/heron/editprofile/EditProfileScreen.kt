@@ -39,7 +39,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -87,6 +86,7 @@ import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.record.RecordList
+import com.tunjid.heron.ui.Checkbox
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.platformNavigationBars
