@@ -61,16 +61,19 @@ fun Checkbox(
 
     Box(
         modifier = modifier
-            .minimumInteractiveComponentSize()
             .then(
-                if (onCheckedChange != null) Modifier.toggleable(
-                    value = checked,
-                    onValueChange = onCheckedChange,
-                    enabled = enabled,
-                    role = Role.Checkbox,
-                    interactionSource = interactionSource,
-                    indication = null,
-                )
+                // When a parent row handles toggling, the checkbox is only an indicator,
+                // and doesn't need a touch target of its own.
+                if (onCheckedChange != null) Modifier
+                    .minimumInteractiveComponentSize()
+                    .toggleable(
+                        value = checked,
+                        onValueChange = onCheckedChange,
+                        enabled = enabled,
+                        role = Role.Checkbox,
+                        interactionSource = interactionSource,
+                        indication = null,
+                    )
                 else Modifier,
             )
             .graphicsLayer {

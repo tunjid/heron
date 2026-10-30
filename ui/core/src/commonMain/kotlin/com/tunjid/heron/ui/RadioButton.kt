@@ -47,16 +47,19 @@ fun RadioButton(
 
     Box(
         modifier = modifier
-            .minimumInteractiveComponentSize()
             .then(
-                if (onClick != null) Modifier.selectable(
-                    selected = selected,
-                    onClick = onClick,
-                    enabled = enabled,
-                    role = Role.RadioButton,
-                    interactionSource = interactionSource,
-                    indication = null,
-                )
+                // When a parent row handles selection, the button is only an indicator,
+                // and doesn't need a touch target of its own.
+                if (onClick != null) Modifier
+                    .minimumInteractiveComponentSize()
+                    .selectable(
+                        selected = selected,
+                        onClick = onClick,
+                        enabled = enabled,
+                        role = Role.RadioButton,
+                        interactionSource = interactionSource,
+                        indication = null,
+                    )
                 else Modifier,
             )
             .graphicsLayer {

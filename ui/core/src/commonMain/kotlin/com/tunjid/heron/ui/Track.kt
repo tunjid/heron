@@ -158,9 +158,11 @@ internal fun CacheDrawScope.matteChamfer(
     val bevel = MatteChamferBevel.toPx()
     // The floor's corners are concentric with the wall's.
     val floorCornerRadius = (cornerRadius - bevel).coerceAtLeast(0f)
+    // Too small a chamfer has no room for a floor, as when it is measured at zero
+    // size while laid out or animated in.
     val floorSize = Size(
-        width = chamferSize.width - (bevel * 2),
-        height = chamferSize.height - (bevel * 2),
+        width = (chamferSize.width - (bevel * 2)).coerceAtLeast(0f),
+        height = (chamferSize.height - (bevel * 2)).coerceAtLeast(0f),
     )
     val wall = Brush.linearGradient(
         0f to colors.shade,
@@ -184,7 +186,7 @@ internal fun CacheDrawScope.matteChamfer(
             size = chamferSize,
             cornerRadius = CornerRadius(cornerRadius),
         )
-        translate(
+        if (!floorSize.isEmpty()) translate(
             left = bevel,
             top = bevel,
         ) {
