@@ -29,7 +29,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.ml.model.InferenceModel
 import com.tunjid.heron.inference.ui.ModelCard
+import com.tunjid.heron.ui.Switch
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.CloudOff

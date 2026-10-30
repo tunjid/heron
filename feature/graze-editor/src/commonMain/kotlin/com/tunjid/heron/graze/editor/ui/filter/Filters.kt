@@ -40,7 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -53,6 +52,7 @@ import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.isValid
 import com.tunjid.heron.sheets.SelectTextSheetState
 import com.tunjid.heron.sheets.SelectTextSheetState.Companion.rememberSelectTextState
+import com.tunjid.heron.ui.Slider
 import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Cancel
@@ -306,9 +306,10 @@ fun ThresholdSlider(
             style = MaterialTheme.typography.labelMedium,
         )
         Slider(
-            value = threshold.toFloat(),
-            onValueChange = { onThresholdChanged(it.toDouble()) },
-            valueRange = 0.1f..1f,
+            value = (threshold.toFloat() - MinThreshold) / (1f - MinThreshold),
+            onValueChange = { fraction ->
+                onThresholdChanged((MinThreshold + (fraction * (1f - MinThreshold))).toDouble())
+            },
         )
     }
 }
@@ -416,3 +417,5 @@ val Filter.Comparator.stringRes: StringResource
         Filter.Comparator.Set.In -> Res.string.comparator_in
         Filter.Comparator.Set.NotIn -> Res.string.comparator_not_in
     }
+
+private const val MinThreshold = 0.1f
