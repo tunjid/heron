@@ -31,6 +31,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -89,6 +90,7 @@ import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersBlurredHeaders
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.components.ScaffoldDefaults
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -460,6 +462,12 @@ fun PaneScaffoldState.PaneScaffold(
                         },
                     ),
                 containerColor = containerColor,
+                // The rail sits on the window edge over the system insets there, and the slots below
+                // already pad for it, so the scaffold only pads for insets the rail doesn't cover.
+                contentWindowInsets = ScaffoldDefaults.contentWindowInsets.run {
+                    if (navigationRailOverlapsContent) this
+                    else exclude(navigationRailInsets)
+                },
                 topBar = {
                     Box(
                         modifier = navigationRailPaddingModifier,
