@@ -310,6 +310,7 @@ fun ThresholdSlider(
             onValueChange = { fraction ->
                 onThresholdChanged((MinThreshold + (fraction * (1f - MinThreshold))).toDouble())
             },
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }

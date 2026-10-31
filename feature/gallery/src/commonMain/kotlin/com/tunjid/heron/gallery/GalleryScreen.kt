@@ -17,6 +17,9 @@
 package com.tunjid.heron.gallery
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -42,10 +45,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -62,6 +67,9 @@ import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+import com.tunjid.heron.data.platform.isIOS
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.gallery.ui.Comments
 import com.tunjid.heron.gallery.ui.CommentsState
@@ -92,6 +100,8 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.ui.Indicator
+import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.platformNavigationBars
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -348,6 +358,10 @@ private fun HorizontalItems(
 ) {
     val videoPlayerController = playerControlsUiState.videoPlayerController
     val imageDownloadState = remember(::ImageDownloadState)
+    val alphaState = animateFloatAsState(
+        targetValue = if (playerControlsUiState.playerControlsVisible) 1f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+    )
 
     Box(
         modifier = modifier
@@ -367,7 +381,14 @@ private fun HorizontalItems(
         HorizontalPager(
             modifier = Modifier
                 .zIndex(MediaZIndex)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .ifTrue(!Platform.current.isIOS) {
+                    blur(
+                        shape = RectangleShape,
+                        radius = ::MediaBlurRadius,
+                        progress = alphaState::value,
+                    )
+                },
             beyondViewportPageCount = PagerPrefetchCount,
             state = pagerState,
             key = { page -> item.media[page].key },
@@ -460,58 +481,17 @@ private fun HorizontalItems(
             )
         }
 
-        MediaOverlayBox(
-            modifier = Modifier
-                .fillMaxSize(),
-            media = item.media.getOrNull(pagerState.currentPage),
-            isVisible = playerControlsUiState.playerControlsVisible,
-        ) { media ->
-            // Shows up only if there's a navigation rail
-            paneScaffoldState.PaneNavigationRailContent {
-                MediaInteractions(
-                    media = media,
-                    imageDownloadState = imageDownloadState,
-                    videoPlayerController = videoPlayerController,
-                    actions = actions,
-                    item = item,
-                    paneScaffoldState = paneScaffoldState,
-                    showEngagementMetrics = showEngagementMetrics,
-                    postInteractionSheetState = postInteractionSheetState,
-                    postOptionsSheetState = postOptionsSheetState,
-                    commentsState = commentsState,
-                )
-            }
-            Column(
+        item.media.getOrNull(pagerState.currentPage)?.let {
+            MediaOverlayBox(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .windowInsetsPadding(paneScaffoldState.navigationRailInsets)
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 16.dp,
-                    )
-                    .windowInsetsPadding(insets = WindowInsets.platformNavigationBars),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    MediaCreatorAndDescription(
-                        modifier = Modifier
-                            .weight(1f),
-                        signedInProfileId = signedInProfileId,
-                        item = item,
-                        media = media,
-                        paneScaffoldState = paneScaffoldState,
-                        actions = actions,
-                    )
-                    if (!paneScaffoldState.hasNavigationRail) MediaInteractions(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .windowInsetsPadding(WindowInsets.platformStatusBars),
+                    .fillMaxSize(),
+                media = it,
+                isVisible = playerControlsUiState::playerControlsVisible,
+                alpha = alphaState::value,
+            ) { media ->
+                // Shows up only if there's a navigation rail
+                paneScaffoldState.PaneNavigationRailContent {
+                    MediaInteractions(
                         media = media,
                         imageDownloadState = imageDownloadState,
                         videoPlayerController = videoPlayerController,
@@ -524,20 +504,64 @@ private fun HorizontalItems(
                         commentsState = commentsState,
                     )
                 }
-                (item.media.firstOrNull() as? GalleryItem.Media.Video)
-                    ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
-                    ?.let { videoPlayerState ->
-                        PlaybackStatus(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            videoPlayerState = videoPlayerState,
-                            controlsState = playerControlsUiState,
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .windowInsetsPadding(paneScaffoldState.navigationRailInsets)
+                        .padding(
+                            horizontal = 8.dp,
+                            vertical = 16.dp,
                         )
-                        LaunchedEffect(Unit) {
-                            snapshotFlow { videoPlayerState.status }
-                                .collectLatest(playerControlsUiState::update)
-                        }
+                        .windowInsetsPadding(insets = WindowInsets.platformNavigationBars),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        MediaCreatorAndDescription(
+                            modifier = Modifier
+                                .weight(1f),
+                            signedInProfileId = signedInProfileId,
+                            item = item,
+                            media = media,
+                            paneScaffoldState = paneScaffoldState,
+                            actions = actions,
+                        )
+                        if (!paneScaffoldState.hasNavigationRail) MediaInteractions(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .windowInsetsPadding(WindowInsets.platformStatusBars),
+                            media = media,
+                            imageDownloadState = imageDownloadState,
+                            videoPlayerController = videoPlayerController,
+                            actions = actions,
+                            item = item,
+                            paneScaffoldState = paneScaffoldState,
+                            showEngagementMetrics = showEngagementMetrics,
+                            postInteractionSheetState = postInteractionSheetState,
+                            postOptionsSheetState = postOptionsSheetState,
+                            commentsState = commentsState,
+                        )
                     }
+                    (item.media.firstOrNull() as? GalleryItem.Media.Video)
+                        ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
+                        ?.let { videoPlayerState ->
+                            PlaybackStatus(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                videoPlayerState = videoPlayerState,
+                                controlsState = playerControlsUiState,
+                            )
+                            LaunchedEffect(Unit) {
+                                snapshotFlow { videoPlayerState.status }
+                                    .collectLatest(playerControlsUiState::update)
+                            }
+                        }
+                }
             }
         }
 
@@ -603,5 +627,6 @@ private fun ScrollableState.isConstrainedBy(
 private val IndicatorEnterAnimation = fadeIn()
 private val IndicatorExitAnimation = fadeOut()
 
+private val MediaBlurRadius = 40.dp
 private const val MediaZIndex = 0f
 private const val PagerPrefetchCount = 1

@@ -207,6 +207,7 @@ private fun MatteControls() {
             Slider(
                 value = value,
                 onValueChange = { value = it },
+                color = MaterialTheme.colorScheme.primary,
             )
 
             PreviewHeading(
@@ -230,11 +231,13 @@ private fun MatteControls() {
             Slider(
                 value = playback,
                 onValueChange = { playback = it },
+                color = MaterialTheme.colorScheme.primary,
             )
             Slider(
                 value = 0.6f,
                 onValueChange = {},
                 enabled = false,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
