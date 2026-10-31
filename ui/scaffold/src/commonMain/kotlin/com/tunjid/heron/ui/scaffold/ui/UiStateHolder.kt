@@ -101,11 +101,13 @@ private fun Flow<UiAction.UpdateSystemVerticalBar>.launchSystemVerticalBarMutati
 ) = launchedCollectLatest { action ->
     val previous = state.systemVerticalBar
     val next = action.systemVerticalBar
-    // Keep the last width so the rail doesn't flash
-    // to a bottom bar on either side of immersion.
+    // Immersion hides the bar, dropping its width to zero. Keep the last width so the
+    // rail doesn't resize on either side of immersion. Outside of immersion, a zero
+    // width is a bar that reserves no inset, like the left app's in Split View.
     state.systemVerticalBar = when {
         next != null &&
             previous != null &&
+            state.isImmersive &&
             next.edge == previous.edge &&
             next.width == 0.dp -> next.copy(
             width = previous.width,

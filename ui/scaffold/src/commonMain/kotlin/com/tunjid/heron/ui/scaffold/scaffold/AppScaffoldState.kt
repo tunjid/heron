@@ -87,10 +87,12 @@ class AppScaffoldState internal constructor(
     private val systemVerticalBar: SystemVerticalBar?
         get() = staticStates.uiState.systemVerticalBar
 
-    // The rail fills the system vertical bar when there is one (iPhone Duo), else the default
-    // icon-rail width.
+    // The rail fills the system vertical bar when it reserves an inset (iPhone Duo), else the
+    // default icon-rail width.
     internal val navigationRailWidth: Dp
-        get() = systemVerticalBar?.width ?: CommonNavRailWidth
+        get() = systemVerticalBar?.width
+            ?.takeIf { it > 0.dp }
+            ?: CommonNavRailWidth
 
     internal val bottomAlignsNavigationRail: Boolean
         get() = systemVerticalBar != null
@@ -110,12 +112,10 @@ class AppScaffoldState internal constructor(
     internal val navRailEdge: NavRailEdge
         get() = systemVerticalBar?.edge ?: NavRailEdge.Start
 
-    // A system vertical bar (iPhone Duo) alone decides whether there's room for the rail.
+    // A system vertical bar (iPhone Duo) always hosts the rail.
     internal val prefersNavigationRail
-        get() = when (val systemVerticalBar = systemVerticalBar) {
-            null -> windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
-            else -> systemVerticalBar.width > 0.dp
-        }
+        get() = systemVerticalBar != null ||
+            windowWidth.value >= UiTokens.SecondaryPaneMinWidthBreakpoint
 
     internal fun update(
         density: Density,
