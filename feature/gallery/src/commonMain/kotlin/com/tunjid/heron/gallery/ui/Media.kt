@@ -297,23 +297,19 @@ internal fun MediaCreatorAndDescription(
 @Composable
 internal fun MediaOverlayBox(
     modifier: Modifier = Modifier,
-    media: GalleryItem.Media?,
-    isVisible: Boolean,
+    media: GalleryItem.Media,
+    isVisible: () -> Boolean,
+    alpha: () -> Float,
     content: @Composable BoxScope.(item: GalleryItem.Media) -> Unit,
 ) {
     ScrimmedContent {
-        val visible by rememberUpdatedState(media != null && isVisible)
-        val alphaState = animateFloatAsState(
-            targetValue = if (visible) 1f else 0f,
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        )
         val zIndex by remember {
             derivedStateOf {
                 when {
                     // When animating in, raise the z index of the overlay
-                    isVisible -> VisibleOverlayZIndex
+                    isVisible() -> VisibleOverlayZIndex
                     // Only when fully transparent is the zIndex dropped below the actual media
-                    alphaState.value == 0f -> InVisibleOverlayZIndex
+                    alpha() == 0f -> InVisibleOverlayZIndex
                     // Animating out, keep on top
                     else -> VisibleOverlayZIndex
                 }
@@ -326,10 +322,12 @@ internal fun MediaOverlayBox(
             modifier = modifier
                 .zIndex(zIndex)
                 .fillMaxSize()
-                .graphicsLayer { alpha = alphaState.value }
+                .graphicsLayer {
+                    this.alpha = alpha()
+                }
                 .background(color = Color.Black.copy(alpha = 0.8f)),
             content = {
-                if (media != null) content(media)
+                content(media)
             },
         )
     }
