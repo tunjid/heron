@@ -79,7 +79,7 @@ internal fun ImageDownloadState.DownloadButton(
                 DownloadStatus.Complete -> Icon(
                     imageVector = HeronIcons.Regular.DownloadDone,
                     contentDescription = stringResource(Res.string.download_complete),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = OverlayIconTint,
                     modifier = contentModifier,
                 )
                 DownloadStatus.Failed -> IconButton(
@@ -110,7 +110,7 @@ internal fun ImageDownloadState.DownloadButton(
                     Icon(
                         imageVector = HeronIcons.Regular.Download,
                         contentDescription = stringResource(Res.string.download),
-                        tint = MaterialTheme.colorScheme.outline,
+                        tint = OverlayIconTint,
                         modifier = contentModifier,
                     )
                 }

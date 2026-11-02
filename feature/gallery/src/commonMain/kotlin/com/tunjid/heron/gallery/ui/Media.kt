@@ -17,9 +17,6 @@
 package com.tunjid.heron.gallery.ui
 
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -191,7 +188,7 @@ internal fun MediaActions(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
@@ -202,7 +199,7 @@ internal fun MediaActions(
                     onClick = onCloseClicked,
                 ),
             imageVector = HeronIcons.Regular.Close,
-            tint = MaterialTheme.colorScheme.outline,
+            tint = OverlayIconTint,
             contentDescription = stringResource(CommonStrings.close),
         )
         when (media) {
@@ -415,6 +412,7 @@ internal fun MediaInteractions(
     MediaPostInteractions(
         post = item.post,
         iconSize = OverlayIconSize,
+        uncheckedTint = OverlayIconTint,
         sharedElementPrefix = UnmatchedPrefix,
         showEngagementMetrics = showEngagementMetrics,
         paneTransitionScope = paneScaffoldState,
@@ -467,7 +465,7 @@ private fun VideoPlayerController.MuteButton(
             if (isMuted) Res.string.mute_video
             else Res.string.unmute_video,
         ),
-        tint = MaterialTheme.colorScheme.outline,
+        tint = OverlayIconTint,
         modifier = modifier
             .size(OverlayIconSize)
             .shapedClickable(CircleShape) {
@@ -477,6 +475,8 @@ private fun VideoPlayerController.MuteButton(
 }
 
 internal val OverlayIconSize = 36.dp
+
+internal val OverlayIconTint = Color.LightGray
 
 private const val UnmatchedPrefix = "UnmatchedPrefix"
 private const val VisibleOverlayZIndex = 1f

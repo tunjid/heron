@@ -115,6 +115,7 @@ fun PostInteractions(
             sharedElementPrefix = sharedElementPrefix,
             showEngagementMetrics = showEngagementMetrics,
             iconSize = animateDpAsState(presentation.actionIconSize).value,
+            uncheckedTint = MaterialTheme.colorScheme.outline,
             orientation = Orientation.Horizontal,
             paneTransitionScope = paneTransitionScope,
             feedContext = feedContext,
@@ -134,6 +135,7 @@ fun PostInteractions(
 fun MediaPostInteractions(
     post: Post,
     iconSize: Dp,
+    uncheckedTint: Color,
     sharedElementPrefix: String,
     showEngagementMetrics: Boolean,
     paneTransitionScope: PaneTransitionScope,
@@ -153,6 +155,7 @@ fun MediaPostInteractions(
             sharedElementPrefix = sharedElementPrefix,
             showEngagementMetrics = showEngagementMetrics,
             iconSize = iconSize,
+            uncheckedTint = uncheckedTint,
             orientation = Orientation.Vertical,
             paneTransitionScope = paneTransitionScope,
             feedContext = feedContext,
@@ -169,6 +172,7 @@ private inline fun PostInteractionsButtons(
     sharedElementPrefix: String,
     showEngagementMetrics: Boolean,
     iconSize: Dp,
+    uncheckedTint: Color,
     orientation: Orientation,
     paneTransitionScope: PaneTransitionScope,
     feedContext: String?,
@@ -288,12 +292,13 @@ private inline fun PostInteractionsButtons(
                             )
                         }
                     },
+                    uncheckedTint = uncheckedTint,
                     checkedTint = when (button) {
-                        PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Comment -> uncheckedTint
                         PostInteractionButton.Like -> LikeRed
                         PostInteractionButton.Repost -> RepostGreen
                         PostInteractionButton.Bookmark -> BookmarkBlue
-                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.MoreOptions -> uncheckedTint
                     },
                     isChecked = isChecked,
                     button = button,
@@ -315,6 +320,7 @@ private fun PostInteraction(
     enabled: Boolean,
     onClick: () -> Unit,
     checkedTint: Color,
+    uncheckedTint: Color,
 ) {
     val latchedCheckedState = rememberLatchedState(isChecked)
     val status = when {
@@ -351,6 +357,7 @@ private fun PostInteraction(
                 iconSize = iconSize,
                 contentDescription = contentDescription,
                 value = value,
+                uncheckedTint = uncheckedTint.withDim(!enabled),
                 checkedTint = checkedTint.withDim(!enabled),
                 status = status,
                 button = button,
@@ -366,6 +373,7 @@ private fun PostInteraction(
                 iconSize = iconSize,
                 contentDescription = contentDescription,
                 value = value,
+                uncheckedTint = uncheckedTint.withDim(!enabled),
                 checkedTint = checkedTint.withDim(!enabled),
                 status = status,
                 button = button,
@@ -380,6 +388,7 @@ private fun PostInteractionElements(
     contentDescription: String,
     value: Long,
     checkedTint: Color,
+    uncheckedTint: Color,
     status: PostInteractionButton.Status,
     button: PostInteractionButton,
 ) {
@@ -412,7 +421,7 @@ private fun PostInteractionElements(
                 button.icon(isChecked = checked),
             ),
             contentDescription = contentDescription,
-            tint = if (checked) checkedTint else MaterialTheme.colorScheme.outline,
+            tint = if (checked) checkedTint else uncheckedTint,
         )
     }
     if (button.displaysText) AnimatedContent(
@@ -422,7 +431,7 @@ private fun PostInteractionElements(
             else TextUncheckedTransform
         },
     ) { checked ->
-        val textColor = if (checked) checkedTint else MaterialTheme.colorScheme.outline
+        val textColor = if (checked) checkedTint else uncheckedTint
         BasicText(
             modifier = Modifier
                 .padding(vertical = 1.dp),
