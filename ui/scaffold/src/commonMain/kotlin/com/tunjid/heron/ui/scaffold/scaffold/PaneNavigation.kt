@@ -30,23 +30,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.platformNavigationBars
+import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.roundedMaxDelta
 import com.tunjid.heron.ui.scaffold.identity.isStable
 import com.tunjid.heron.ui.scaffold.navigation.AppStack
@@ -97,48 +109,59 @@ fun PaneScaffoldState.PaneNavigationBar(
 }
 
 /**
- * TODO: This is a workaround to being aware of system vertical bar insets.
+ * Hosts a pane's own UI in the navigation rail's strip, for panes whose rail overlaps their
+ * content and that show this in place of the rail.
  *
- * Takes the place of the navigation rail for panes that host their own vertical chrome.
- *
- * When it sits on the same side as a system vertical bar, it is as wide as the bar and centers
- * [content] on it, below the bar's status content, wherever the container itself is placed.
- * Otherwise it is a plain [Box].
- *
- * @param side the layout relative side of the pane this container sits on, either
- * [Alignment.Start] or [Alignment.End]. Defaults to the navigation rail's side.
+ * It fills its parent, which should span the pane, and places a strip as wide as
+ * [PaneScaffoldState.navigationRailInsets] on the rail's edge. [content] is laid out from the top
+ * of the strip the way the rail lays out its actions. It draws nothing when the pane has no
+ * navigation rail.
  */
 @Composable
-fun PaneScaffoldState.PaneNavigationRailSpacer(
+fun PaneScaffoldState.PaneNavigationRailContent(
     modifier: Modifier = Modifier,
-    side: Alignment.Horizontal = navigationRailSide(),
-    content: @Composable BoxScope.() -> Unit = {},
+    content: @Composable BoxScope.() -> Unit,
 ) {
-    val systemVerticalBar = appScaffoldState.staticStates.uiState.systemVerticalBar
-    val sitsOnBar = when (side) {
-        Alignment.Start,
-        Alignment.End,
-        -> side == navigationRailSide()
-        else -> false
-    }
-    if (canShowNavigationRail && systemVerticalBar != null && sitsOnBar) Box(
+    if (!hasNavigationRail) return
+    val hasSystemVerticalBar = appScaffoldState.staticStates.uiState.systemVerticalBar != null
+    val systemVerticalBarContentTop by animateDpAsState(systemVerticalBarContentTop)
+    Box(
         modifier = modifier
-            .width(systemVerticalBar.width),
+            .fillMaxSize(),
     ) {
         Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(
-                    top = animateDpAsState(systemVerticalBarContentTop).value + 8.dp,
+                .align(
+                    when (navRailEdge) {
+                        NavRailEdge.Start -> AbsoluteAlignment.TopLeft
+                        NavRailEdge.End -> AbsoluteAlignment.TopRight
+                    },
                 )
-                .centerOnSystemVerticalBarInWindow(),
+                .fillMaxHeight()
+                .width(navigationRailWidth)
+                .then(
+                    // The bar's status content takes the place of the status bar.
+                    if (hasSystemVerticalBar) Modifier.padding(
+                        top = systemVerticalBarContentTop,
+                    )
+                    else Modifier.windowInsetsPadding(
+                        WindowInsets.platformStatusBars.only(WindowInsetsSides.Top),
+                    ),
+                )
+                .windowInsetsPadding(
+                    WindowInsets.platformNavigationBars.only(WindowInsetsSides.Bottom),
+                )
+                .padding(
+                    top = 8.dp,
+                    bottom = NavigationRailRegionBottomPadding,
+                )
+                .centerOnSystemVerticalBar(
+                    railBoxWidth = navigationRailWidth,
+                ),
+            contentAlignment = Alignment.TopCenter,
             content = content,
         )
     }
-    else Box(
-        modifier = modifier,
-        content = content,
-    )
 }
 
 @Composable
@@ -200,11 +223,6 @@ fun PaneScaffoldState.PaneNavigationRail(
 }
 
 @Composable
-private fun PaneScaffoldState.navigationRailSide(): Alignment.Horizontal =
-    if (navRailPlacesAtStart(layoutDirection = LocalLayoutDirection.current)) Alignment.Start
-    else Alignment.End
-
-@Composable
 private fun PaneScaffoldState.NavigationRailNavigationIcon(
     onClicked: (() -> Unit)?,
 ) {
@@ -245,6 +263,46 @@ fun PaneScaffoldState.bottomNavOffset(): IntOffset {
     else IntOffset.Zero
 }
 
+@Stable
+internal class NavigationRailInsets(
+    private val paneScaffoldState: PaneScaffoldState,
+) : WindowInsets {
+
+    override fun getLeft(
+        density: Density,
+        layoutDirection: LayoutDirection,
+    ): Int = widthOn(
+        density = density,
+        edge = NavRailEdge.Start,
+    )
+
+    override fun getTop(
+        density: Density,
+    ): Int = 0
+
+    override fun getRight(
+        density: Density,
+        layoutDirection: LayoutDirection,
+    ): Int = widthOn(
+        density = density,
+        edge = NavRailEdge.End,
+    )
+
+    override fun getBottom(
+        density: Density,
+    ): Int = 0
+
+    private fun widthOn(
+        density: Density,
+        edge: NavRailEdge,
+    ): Int = with(paneScaffoldState) {
+        if (!canShowNavigationRail || navRailEdge != edge) 0
+        else with(density) { navigationRailWidth.roundToPx() }
+    }
+
+    override fun toString(): String = "NavigationRailInsets"
+}
+
 @Composable
 internal fun Badge(
     count: Long,
@@ -256,3 +314,5 @@ internal fun Badge(
 }
 
 private const val MaxBadgeCount = 100L
+
+private val NavigationRailRegionBottomPadding = 16.dp

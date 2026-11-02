@@ -169,6 +169,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
@@ -328,15 +329,7 @@ internal fun ProfileScreen(
                 headerState = headerState,
                 pagerState = pagerState,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .renderHeaderInTransitionOverlay(
-                        paneScaffoldState = paneScaffoldState,
-                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                    )
-                    .pinnedHeaderScrim(
-                        state = collapsingHeaderState,
-                        scrimColor = MaterialTheme.colorScheme.surface,
-                    ),
+                    .fillMaxWidth(),
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
@@ -734,6 +727,14 @@ private fun ProfileHeader(
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier
+                .renderHeaderInTransitionOverlay(
+                    paneScaffoldState = paneScaffoldState,
+                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                )
+                .pinnedHeaderScrim(
+                    state = headerState.headerState,
+                    scrimColor = MaterialTheme.colorScheme.surface,
+                )
                 .offset {
                     headerState.bioOffset()
                 }
@@ -1436,7 +1437,9 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )

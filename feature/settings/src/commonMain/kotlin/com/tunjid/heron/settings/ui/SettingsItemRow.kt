@@ -34,12 +34,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,10 +56,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.Selector
+import com.tunjid.heron.ui.Switch
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.ExpandLess
-import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.rememberLatchedState
+import com.tunjid.heron.ui.rememberSelectorState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
@@ -255,22 +256,32 @@ fun <T> SettingsRadioButtons(
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        items.forEach { item ->
+        val onItemSelected: (T) -> Unit = { item ->
+            latchedCheckedState.latch(item)
+            onItemClicked(item)
+        }
+        Selector(
+            modifier = Modifier
+                .fillMaxWidth(),
+            state = rememberSelectorState(
+                selectedItem = latchedCheckedState.value,
+                items = items,
+            ),
+            onItemSelected = onItemSelected,
+        ) { item ->
             Row(
-                modifier = Modifier
-                    .shapedClickable {
-                        latchedCheckedState.latch(item)
-                        onItemClicked(item)
-                    }
+                modifier = SettingsItemClipModifier
+                    .selectable(
+                        selected = item == latchedCheckedState.value,
+                        onClick = {
+                            onItemSelected(item)
+                        },
+                        role = Role.RadioButton,
+                    )
                     .settingsItemPaddingAndMinHeight()
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(
-                    selected = item == latchedCheckedState.value,
-                    onClick = null,
-                )
                 Text(
                     text = stringResource(itemStringResource(item)),
                 )

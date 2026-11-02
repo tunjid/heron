@@ -58,6 +58,7 @@ fun RecordLayout(
             label = {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     sharedContentState = rememberSharedContentState(
                         key = titleSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -71,6 +72,7 @@ fun RecordLayout(
                 }
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     sharedContentState = rememberSharedContentState(
                         key = subtitleSharedElementKey(
                             prefix = sharedElementPrefix,

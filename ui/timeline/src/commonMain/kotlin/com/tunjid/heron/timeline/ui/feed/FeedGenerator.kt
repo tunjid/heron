@@ -64,6 +64,7 @@ fun FeedGenerator(
         avatar = {
             PaneStickySharedElement(
                 boundsTransform = sharedElementBoundsTransform,
+                clipInOverlayDuringTransition = paneOverlayClip,
                 modifier = Modifier
                     .size(44.dp),
                 sharedContentState = rememberSharedContentState(

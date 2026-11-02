@@ -23,15 +23,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,13 +43,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.Slider
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.Forward5
 import com.tunjid.heron.ui.icons.regular.PauseCircle
@@ -94,7 +91,7 @@ private fun PlaybackControls(
                         )
                     },
                 imageVector = state.icon,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = Color.White,
                 contentDescription = stringResource(state.stringRes),
             )
         }
@@ -111,22 +108,19 @@ fun PlaybackStatus(
         modifier = modifier,
     ) {
         var adjustedPosition by remember { mutableFloatStateOf(Float.NaN) }
-        val sliderState = remember(videoPlayerState.totalDuration) {
-            SliderState(
-                value = when {
-                    adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
-                    else -> adjustedPosition
-                },
-                trackRange = 0f..videoPlayerState.totalDuration.toFloat(),
-            )
+        val totalDuration = videoPlayerState.totalDuration.toFloat()
+        val position = when {
+            adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
+            else -> adjustedPosition
         }
         Slider(
             modifier = Modifier
                 .fillMaxWidth(),
-            state = sliderState,
-            onValueChange = { newValue: Float ->
+            // Before the duration is known, there is no meaningful position to show.
+            value = if (totalDuration > 0f) position / totalDuration else 0f,
+            onValueChange = { fraction: Float ->
                 controlsState.onInteracted()
-                adjustedPosition = newValue
+                adjustedPosition = fraction * totalDuration
             },
             interactionSource = controlsState.controlsInteractionSource,
             onValueChangeFinished = {
@@ -136,21 +130,6 @@ fun PlaybackStatus(
                 )
                 adjustedPosition = Float.NaN
                 controlsState.onInteracted()
-            },
-            thumb = {
-                SliderDefaults.Thumb(
-                    interactionSource = remember { MutableInteractionSource() },
-                    colors = SliderDefaults.colors(),
-                    enabled = true,
-                    thumbSize = DpSize(20.dp, 20.dp),
-                )
-            },
-            track = { sliderState ->
-                SliderDefaults.Track(
-                    modifier = Modifier.height(4.dp),
-                    sliderState = sliderState,
-                    thumbTrackGapSize = 0.dp,
-                )
             },
         )
         Row(
@@ -176,20 +155,6 @@ fun PlaybackStatus(
                 },
             )
         }
-        LaunchedEffect(
-            sliderState,
-            videoPlayerState,
-        ) {
-            snapshotFlow {
-                when {
-                    adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
-                    else -> adjustedPosition
-                }
-            }
-                .collect {
-                    sliderState.value = it
-                }
-        }
     }
 }
 
@@ -198,8 +163,10 @@ class PlayerControlsUiState(
     val videoPlayerController: VideoPlayerController,
 ) {
     var playerControlsVisible by mutableStateOf(false)
+        internal set
     val controlsInteractionSource = MutableInteractionSource()
     var interactionCount by mutableLongStateOf(0)
+        private set
 
     internal val playerControlStates = mutableStateListOf(
         PlayerControlState(HeronIcons.Regular.Replay5, 30.dp),

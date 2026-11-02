@@ -25,15 +25,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -112,7 +115,7 @@ internal fun SuggestedContent(
     onUpdateTimelineClicked: (Timeline.Update) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
-    LazyColumn(
+    LazyVerticalGrid(
         modifier = modifier
             .headerBlur(
                 state = paneScaffoldState.rememberTopAppBarHeaderState(
@@ -120,6 +123,7 @@ internal fun SuggestedContent(
                     isOffsetByScroll = isRootQuery,
                 ),
             ),
+        columns = GridCells.Adaptive(340.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusAndToolbarHeight + 16.dp,
@@ -127,7 +131,13 @@ internal fun SuggestedContent(
             horizontal = 8.dp,
         ),
     ) {
-        if (showTrendingTopics) item {
+        if (showTrendingTopics) item(
+            key = Res.string.trending_title.key.hashCode(),
+            contentType = TitleContentType,
+            span = {
+                GridItemSpan(maxLineSpan)
+            },
+        ) {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -142,7 +152,7 @@ internal fun SuggestedContent(
             itemContent = { index, trend ->
                 Trend(
                     modifier = Modifier
-                        .fillParentMaxWidth()
+                        .fillMaxWidth()
                         .shapedClickable { onTrendClicked(trend) }
                         .suggestedContentPadding()
                         .animateItem(),
@@ -153,7 +163,13 @@ internal fun SuggestedContent(
                 )
             },
         )
-        if (suggestedProfiles.isNotEmpty()) item {
+        if (suggestedProfiles.isNotEmpty()) item(
+            key = Res.string.suggested_accounts.key.hashCode(),
+            contentType = TitleContentType,
+            span = {
+                GridItemSpan(maxLineSpan)
+            },
+        ) {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -193,7 +209,13 @@ internal fun SuggestedContent(
                 )
             },
         )
-        if (suggestedStarterPacks.isNotEmpty()) item {
+        if (suggestedStarterPacks.isNotEmpty()) item(
+            key = Res.string.starter_packs.key.hashCode(),
+            contentType = TitleContentType,
+            span = {
+                GridItemSpan(maxLineSpan)
+            },
+        ) {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -208,7 +230,7 @@ internal fun SuggestedContent(
             itemContent = { starterPack ->
                 ExpandedStarterPack(
                     modifier = Modifier
-                        .fillParentMaxWidth()
+                        .fillMaxWidth()
                         .suggestedContentPadding()
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
@@ -229,7 +251,13 @@ internal fun SuggestedContent(
                 )
             },
         )
-        if (feedGenerators.isNotEmpty()) item {
+        if (feedGenerators.isNotEmpty()) item(
+            key = Res.string.discover_feeds.key.hashCode(),
+            contentType = TitleContentType,
+            span = {
+                GridItemSpan(maxLineSpan)
+            },
+        ) {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -244,7 +272,7 @@ internal fun SuggestedContent(
             itemContent = { feedGenerator ->
                 Box(
                     modifier = Modifier
-                        .fillParentMaxWidth()
+                        .fillMaxWidth()
                         .padding(vertical = 4.dp),
                 ) {
                     FeedGenerator(
@@ -445,6 +473,7 @@ private val SuggestedContentPadding =
         vertical = 8.dp,
     )
 
+private val TitleContentType = "title-content-type"
 private val TrendAgePadding = PaddingValues(4.dp)
 
 private const val SuggestedProfilesSharedElementPrefix = "suggested-profile"

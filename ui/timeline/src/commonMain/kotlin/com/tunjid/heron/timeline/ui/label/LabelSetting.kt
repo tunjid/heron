@@ -19,22 +19,24 @@ package com.tunjid.heron.timeline.ui.label
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.ui.RadioButton
 import com.tunjid.heron.ui.rememberLatchedState
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -69,62 +71,44 @@ fun LabelSetting(
         }
 
         Row(
-            modifier = Modifier,
-            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+            modifier = Modifier
+                .selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            val overrideColors = ButtonDefaults.filledTonalButtonColors()
-            visibilities.forEachIndexed { index, visibility ->
-                ToggleButton(
-                    enabled = enabled,
-                    checked = latchedVisibilityState.value == visibility,
-                    onCheckedChange = { isChecked ->
-                        latchedVisibilityState.latch(visibility)
-                        if (isChecked) onVisibilityChanged(visibility)
-                        // Do nothing, cannot uncheck a label setting
-                        else Unit
-                    },
+            visibilities.forEach { visibility ->
+                val selected = latchedVisibilityState.value == visibility
+                Row(
                     modifier = Modifier
                         .weight(1f)
-                        .semantics {
-                            role = Role.RadioButton
-                        },
-                    colors = ToggleButtonDefaults.colors(
-                        checkedContainerColor = overrideColors.containerColor,
-                        checkedContentColor = overrideColors.contentColor,
-                    ),
-                    shapes = when (index) {
-                        0 -> LeadingButtonShape
-                        Label.Visibility.all.lastIndex -> TrailingButtonShape
-                        else -> MiddleButtonShape
-                    },
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .selectable(
+                            selected = selected,
+                            enabled = enabled,
+                            role = Role.RadioButton,
+                            onClick = {
+                                // A label setting cannot be unselected.
+                                if (selected) return@selectable
+                                latchedVisibilityState.latch(visibility)
+                                onVisibilityChanged(visibility)
+                            },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(visibilityStringResource(visibility)))
+                    RadioButton(
+                        selected = selected,
+                        onClick = null,
+                        enabled = enabled,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(visibilityStringResource(visibility)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                    )
                 }
             }
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val LeadingButtonShape = RoundedCornerShape(
-    topStart = 8.dp,
-    topEnd = 0.dp,
-    bottomStart = 8.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val MiddleButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val TrailingButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 8.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 8.dp,
-).let { ToggleButtonShapes(it, it, it) }

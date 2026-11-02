@@ -18,6 +18,7 @@ package com.tunjid.heron.ui.scaffold.scaffold
 
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -29,11 +30,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
@@ -53,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +90,7 @@ import com.tunjid.heron.ui.scaffold.identity.prefersAutoHidingBottomNav
 import com.tunjid.heron.ui.scaffold.identity.prefersBlurredHeaders
 import com.tunjid.heron.ui.scaffold.identity.prefersCompactBottomNav
 import com.tunjid.heron.ui.scaffold.scaffold.components.NonSubComposingScaffold
+import com.tunjid.heron.ui.scaffold.scaffold.components.ScaffoldDefaults
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
 import com.tunjid.heron.ui.stateproduction.SheetStateHolder
 import com.tunjid.heron.ui.stateproduction.StateHolderInitializer
@@ -134,30 +138,20 @@ class PaneScaffoldState(
         )
     }
 
+    override val paneOverlayClip: SharedTransitionScope.OverlayClip
+        get() = paneOverlayClipState
+
+    override val navigationRailInsets: WindowInsets = NavigationRailInsets(
+        paneScaffoldState = this,
+    )
+
+    internal val paneOverlayClipState = PaneOverlayClipState(
+        isClipped = ::showsBackPreview,
+    )
+
     internal val sharedElementTransitionBounds = mutableStateListOf<Rect>()
 
     internal val headerBlurStrength = Animatable(1f)
-
-    internal val hasHeaderBlurOcclusion: Boolean
-        get() {
-            val density = appScaffoldState.density
-            for (stateIndex in headerStates.indices) {
-                val state = headerStates[stateIndex]
-                val progress = state.progress()
-                if (progress.isNaN() || progress <= 0f) continue
-
-                val height = state.height(density)
-                if (height <= 0f) continue
-
-                val top = state.top(density)
-                val bottom = top + height
-                for (boundsIndex in sharedElementTransitionBounds.indices) {
-                    val bounds = sharedElementTransitionBounds[boundsIndex]
-                    if (bounds.top < bottom && bounds.bottom > top) return true
-                }
-            }
-            return false
-        }
 
     internal val headerStates = mutableStateListOf<PaneHeaderState>()
 
@@ -165,7 +159,7 @@ class PaneScaffoldState(
 
     internal val snackbarMessages = mutableStateListOf<Memo>()
 
-    val prefersNavigationRail: Boolean
+    internal val prefersNavigationRail: Boolean
         get() = appScaffoldState.prefersNavigationRail
 
     internal val navRailEdge: NavRailEdge
@@ -281,6 +275,40 @@ class PaneScaffoldState(
     }
 }
 
+val PaneScaffoldState.hasNavigationRail: Boolean
+    get() = canShowNavigationRail
+
+internal val PaneScaffoldState.headerOccludesSharedElement: Boolean
+    get() = headerOccludesSharedElement(
+        countsHeader = { progress -> !progress.isNaN() },
+    )
+
+private val PaneScaffoldState.blurredHeaderOccludesSharedElement: Boolean
+    get() = headerOccludesSharedElement(
+        countsHeader = { progress -> !progress.isNaN() && progress > 0f },
+    )
+
+private inline fun PaneScaffoldState.headerOccludesSharedElement(
+    countsHeader: (progress: Float) -> Boolean,
+): Boolean {
+    val density = appScaffoldState.density
+    for (stateIndex in headerStates.indices) {
+        val state = headerStates[stateIndex]
+        if (!countsHeader(state.progress())) continue
+
+        val height = state.height(density)
+        if (height <= 0f) continue
+
+        val top = state.top(density)
+        val bottom = top + height
+        for (boundsIndex in sharedElementTransitionBounds.indices) {
+            val bounds = sharedElementTransitionBounds[boundsIndex]
+            if (bounds.top < bottom && bounds.bottom > top) return true
+        }
+    }
+    return false
+}
+
 @Composable
 inline fun <reified T : RouteStateHolder> PaneScaffoldState.retainRouteStateHolder(
     route: Route,
@@ -329,7 +357,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             }
     }
     LaunchedEffect(paneScaffoldState) {
-        snapshotFlow { paneScaffoldState.hasHeaderBlurOcclusion }
+        snapshotFlow { paneScaffoldState.blurredHeaderOccludesSharedElement }
             .filter { it }
             .collectLatest {
                 paneScaffoldState.headerBlurStrength.snapTo(0f)
@@ -354,8 +382,9 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(
             .navigationEventDispatcher
 
     LifecycleStartEffect(
-        key1 = scope,
-        key2 = navigationEventDispatcher,
+        key1 = paneScaffoldState,
+        key2 = scope,
+        key3 = navigationEventDispatcher,
     ) {
         val job = scope.launch {
             navigationEventDispatcher.transitionState
@@ -394,12 +423,17 @@ fun PaneScaffoldState.PaneScaffold(
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
+    navigationRailOverlapsContent: Boolean = false,
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
+    val navigationRailPaddingModifier = Modifier
+        .ifTrue(!navigationRailOverlapsContent) {
+            windowInsetsPadding(navigationRailInsets)
+        }
+
     PaneNavigationRailScaffold(
         modifier = modifier,
         railEdge = navRailEdge,
-        railWidth = if (canShowNavigationRail) navigationRailWidth else 0.dp,
         navigationRail = {
             navigationRail()
         },
@@ -428,17 +462,43 @@ fun PaneScaffoldState.PaneScaffold(
                         },
                     ),
                 containerColor = containerColor,
+                // The rail sits on the window edge over the system insets there, and the slots below
+                // already pad for it, so the scaffold only pads for insets the rail doesn't cover.
+                contentWindowInsets = ScaffoldDefaults.contentWindowInsets.run {
+                    if (navigationRailOverlapsContent) this
+                    else exclude(navigationRailInsets)
+                },
                 topBar = {
-                    topBar()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            topBar()
+                        },
+                    )
                 },
                 floatingActionButton = {
-                    floatingActionButton()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            floatingActionButton()
+                        },
+                    )
                 },
                 bottomBar = {
-                    navigationBar()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            navigationBar()
+                        },
+                    )
                 },
                 snackbarHost = {
-                    snackBarHost()
+                    Box(
+                        modifier = navigationRailPaddingModifier,
+                        content = {
+                            snackBarHost()
+                        },
+                    )
                 },
                 content = { paddingValues ->
                     val isStable = appScaffoldState.staticStates.identityState.isStable
@@ -462,6 +522,7 @@ fun PaneScaffoldState.PaneScaffold(
                                 radius = { 32.dp },
                                 progress = blurState::value,
                             )
+                            .then(navigationRailPaddingModifier)
                             .constrainedSizePlacement(
                                 orientation = Orientation.Horizontal,
                                 minSize = appScaffoldState.minPaneWidth,
@@ -569,21 +630,20 @@ private fun PaneScaffoldState.SnackbarConsumptionEffect() {
 private fun PaneNavigationRailScaffold(
     modifier: Modifier = Modifier,
     railEdge: NavRailEdge,
-    railWidth: Dp,
     navigationRail: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    // The rail covers the window insets on its edge, so the content beside it doesn't pad for them
-    val railInsets = when (railEdge) {
-        NavRailEdge.Start -> PaddingValues.Absolute(left = railWidth)
-        NavRailEdge.End -> PaddingValues.Absolute(right = railWidth)
-    }
-    Row(
+    Box(
         modifier = modifier,
-        horizontalArrangement = railEdge,
         content = {
             Box(
                 modifier = Modifier
+                    .align(
+                        when (railEdge) {
+                            NavRailEdge.Start -> AbsoluteAlignment.CenterLeft
+                            NavRailEdge.End -> AbsoluteAlignment.CenterRight
+                        },
+                    )
                     .fillMaxHeight()
                     .zIndex(2f),
                 content = {
@@ -593,7 +653,6 @@ private fun PaneNavigationRailScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .consumeWindowInsets(railInsets)
                     .zIndex(1f),
                 // Centers the scaffold as predictive back shrinks it.
                 contentAlignment = Alignment.Center,

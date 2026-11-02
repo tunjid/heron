@@ -101,6 +101,7 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.RemoveCircle
 import com.tunjid.heron.ui.modifiers.gridColumnCount
@@ -457,7 +458,9 @@ private fun ListTimeline(
     val density = LocalDensity.current
     val videoPlayerController = LocalVideoPlayerController.current
     val presentation = timelineState.timeline.presentation
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
     )

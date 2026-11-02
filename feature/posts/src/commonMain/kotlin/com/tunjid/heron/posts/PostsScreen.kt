@@ -80,6 +80,7 @@ import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -235,7 +236,9 @@ private fun PostsTimeline(
     val now by remember { mutableStateOf(Clock.System.now()) }
     val videoPlayerController = LocalVideoPlayerController.current
     val presentation = remember { Timeline.Presentation.Text.WithEmbed }
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(
         sharedElementPrefix = SharedElementPrefix,
     )

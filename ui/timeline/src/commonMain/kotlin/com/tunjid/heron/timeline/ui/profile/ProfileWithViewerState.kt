@@ -86,6 +86,7 @@ fun ProfileWithViewerState(
             avatar = {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .ifTrue(viewerState.isBlocked) {

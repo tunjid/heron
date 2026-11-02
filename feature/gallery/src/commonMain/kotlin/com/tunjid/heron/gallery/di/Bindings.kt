@@ -134,6 +134,7 @@ internal fun Route(
         modifier = Modifier
             .fillMaxSize(),
         containerColor = Color.Transparent,
+        navigationRailOverlapsContent = true,
         snackBarMessages = state.messages,
         onSnackBarMessageConsumed = {
             stateHolder.accept(Action.SnackbarDismissed(it))

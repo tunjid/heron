@@ -110,6 +110,7 @@ fun TimelineTitle(
     ) {
         PaneStickySharedElement(
             boundsTransform = sharedElementBoundsTransform,
+            clipInOverlayDuringTransition = paneOverlayClip,
             modifier = Modifier
                 .size(44.dp),
             sharedContentState = rememberSharedContentState(
@@ -139,6 +140,7 @@ fun TimelineTitle(
             ) {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
                         key = timeline.titleSharedElementKey(sharedElementPrefix),
@@ -158,6 +160,7 @@ fun TimelineTitle(
                     ?.let { creator ->
                         PaneStickySharedElement(
                             boundsTransform = sharedElementBoundsTransform,
+                            clipInOverlayDuringTransition = paneOverlayClip,
                             modifier = Modifier,
                             sharedContentState = rememberSharedContentState(
                                 key = timeline.subtitleSharedElementKey(sharedElementPrefix),

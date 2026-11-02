@@ -19,13 +19,13 @@ package com.tunjid.heron.graze.editor.ui.filter
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.sheets.SelectTextSheetState.Companion.rememberSelectTextState
+import com.tunjid.heron.ui.Switch
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
 import heron.feature.graze_editor.generated.resources.case_insensitive

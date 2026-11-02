@@ -62,6 +62,7 @@ fun PostHeadline(
             ) {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     sharedContentState = rememberSharedContentState(
                         key = author.rememberTextSharedElementKey(
                             prefix = sharedElementPrefix,
@@ -88,6 +89,7 @@ fun PostHeadline(
             Row(horizontalArrangement = spacedBy(4.dp)) {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     modifier = Modifier,
                     sharedContentState = rememberSharedContentState(
                         key = author.rememberTextSharedElementKey(

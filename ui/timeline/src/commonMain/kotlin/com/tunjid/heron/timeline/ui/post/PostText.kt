@@ -73,6 +73,7 @@ fun PostText(
     if (text.isBlank() && threadDetails == null) Spacer(Modifier.height(0.dp))
     else PaneStickySharedElement(
         boundsTransform = sharedElementBoundsTransform,
+        clipInOverlayDuringTransition = paneOverlayClip,
         modifier = modifier
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

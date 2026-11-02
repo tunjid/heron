@@ -54,6 +54,7 @@ fun Publication(
             publication.icon?.let { icon ->
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     modifier = Modifier.size(44.dp),
                     sharedContentState = rememberSharedContentState(
                         key = publication.avatarSharedElementKey(

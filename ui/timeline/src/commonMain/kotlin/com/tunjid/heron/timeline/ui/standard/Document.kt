@@ -111,6 +111,7 @@ fun Document(
                             publication.icon?.let { icon ->
                                 PaneStickySharedElement(
                                     boundsTransform = sharedElementBoundsTransform,
+                                    clipInOverlayDuringTransition = paneOverlayClip,
                                     modifier = Modifier
                                         .size(20.dp),
                                     sharedContentState = rememberSharedContentState(

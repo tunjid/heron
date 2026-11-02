@@ -58,6 +58,7 @@ import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.conversationDestination
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
@@ -93,7 +94,9 @@ internal fun PostSearchResults(
 ) {
     val timelineState = timelineStateHolder.produceStateWithLifecycle()
     val now = remember { Clock.System.now() }
-    val displayState = rememberTimelineDisplayState()
+    val displayState = rememberTimelineDisplayState(
+        extraSpacing = paneScaffoldState.navigationRailInsets::horizontalSpace,
+    )
     val videoPlayerController = LocalVideoPlayerController.current
     val sharedElementPrefix = timelineState.timeline.sharedElementPrefix
     val postInteractionSheetState = paneScaffoldState.rememberPostInteractionsSheetState(

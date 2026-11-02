@@ -98,6 +98,7 @@ internal fun QuotedPost(
             ) {
                 PaneStickySharedElement(
                     boundsTransform = sharedElementBoundsTransform,
+                    clipInOverlayDuringTransition = paneOverlayClip,
                     modifier = Modifier
                         .size(24.dp)
                         .align(Alignment.CenterVertically),
