@@ -161,8 +161,8 @@ class ExpandableTabsState(
                 snapshotFlow { state.draggableState.settledValue }
                     .collectLatest { isExpanded ->
                         updatedOnTabLayoutChanged.value(
-                            if (isExpanded) TabLayout.Expanded
-                            else TabLayout.Collapsed.All,
+                            if (isExpanded) TabLayout.Overlaid
+                            else TabLayout.Standard.Expanded,
                         )
                     }
             }
@@ -202,7 +202,7 @@ val ExpandableTabsState.shouldRenderAppBarButtonsInOverlay
     get() = transition.isSeeking
 
 private val TabLayout.isExpanded
-    get() = this is TabLayout.Expanded
+    get() = this is TabLayout.Overlaid
 
 private fun Float.anchors() = DraggableAnchors {
     false at FullyCollapsed

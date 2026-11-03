@@ -55,7 +55,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -72,8 +71,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -114,6 +111,7 @@ import com.tunjid.heron.ui.icons.regular.Settings
 import com.tunjid.heron.ui.modifiers.chipBackground
 import com.tunjid.heron.ui.modifiers.roundedBorder
 import com.tunjid.heron.ui.shapes.Circle
+import com.tunjid.heron.ui.tabBackground
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
@@ -130,7 +128,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HomeTabs(
     modifier: Modifier = Modifier,
@@ -165,10 +162,10 @@ internal fun HomeTabs(
                     )
                 }
         },
-        isCollapsed = tabLayout is TabLayout.Collapsed.Selected && !expandableTabsState.isPartiallyOrFullyExpanded,
+        isCollapsed = tabLayout is TabLayout.Standard.Collapsed && !expandableTabsState.isPartiallyOrFullyExpanded,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = {
-            onLayoutChanged(TabLayout.Collapsed.All)
+            onLayoutChanged(TabLayout.Standard.Expanded)
             onCollapsedTabSelected(it)
         },
         onTabReselected = onCollapsedTabReselected,
@@ -215,7 +212,7 @@ internal fun HomeTabs(
                     sharedTransitionScope = this@with,
                     animatedContentScope = this@AnimatedContent,
                     onCreateFeedClicked = onCreateFeedClicked,
-                    onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
+                    onDismissed = { onLayoutChanged(TabLayout.Standard.Expanded) },
                     onTimelinePreferencesSaved = onTimelinePreferencesSaved,
                 )
                 else CollapsedTabs(
@@ -306,8 +303,8 @@ internal fun HomeTabs(
                 ),
                 onClick = {
                     onLayoutChanged(
-                        if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Collapsed.All
-                        else TabLayout.Expanded,
+                        if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Standard.Expanded
+                        else TabLayout.Overlaid,
                     )
                 },
             )
@@ -484,18 +481,10 @@ private fun CollapsedTabs(
     )
     Row(
         modifier = modifier
-            .drawBehind {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        0f to backgroundColor.copy(alpha = UiTokens.appBarMinScrimAlpha),
-                        1f to Color.Transparent,
-                    ),
-                )
-                drawRect(
-                    color = backgroundColor,
-                    size = size.copy(width = size.width * backgroundProgress.value),
-                )
-            }
+            .tabBackground(
+                color = backgroundColor,
+                progress = backgroundProgress::value,
+            )
             // 8 dp would align perfectly with the scrolling content.
             // Inset it by 8 dp.
             .padding(horizontal = 16.dp),
@@ -690,7 +679,6 @@ private fun DropTargetBox(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SectionTitle(
     modifier: Modifier = Modifier,
     title: String,

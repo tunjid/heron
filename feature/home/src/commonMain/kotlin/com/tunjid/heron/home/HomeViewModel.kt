@@ -249,9 +249,9 @@ private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
             if (memo != null) state.messages += memo
             writeQueue.awaitDequeue(writable)
             state.tabLayout = when (state.tabLayout) {
-                TabLayout.Collapsed.All -> state.tabLayout
-                TabLayout.Collapsed.Selected -> state.tabLayout
-                TabLayout.Expanded -> TabLayout.Collapsed.Selected
+                TabLayout.Standard.Expanded -> state.tabLayout
+                TabLayout.Standard.Collapsed -> state.tabLayout
+                TabLayout.Overlaid -> TabLayout.Standard.Collapsed
             }
         }
     }

@@ -35,7 +35,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Composable
-fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
+internal fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
     pagerState: PagerState,
     firstVisibleItemIndex: () -> Int,
     firstVisibleItemScrollOffset: () -> Int,
@@ -69,10 +69,11 @@ fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
 }
 
 /**
- * The rounded difference between [maxOffset] and the current [offset]. For a bar that rests at
- * `offset == minOffset` and hides by accumulating toward [maxOffset] (e.g. an auto-hiding bottom
- * navigation bar), this is its still-on-screen extent: the full bar at rest, [IntOffset.Zero] once
- * hidden.
+ * The rounded difference between [AccumulatedOffsetNestedScrollConnection.maxOffset] and the
+ * current [AccumulatedOffsetNestedScrollConnection.offset].
+ * For a bar that rests at `offset == minOffset` and hides by accumulating toward
+ * [AccumulatedOffsetNestedScrollConnection.maxOffset], (e.g. an auto-hiding bottom navigation bar),
+ * this is its still-on-screen extent: the full bar at rest, [IntOffset.Zero] once hidden.
  */
 val AccumulatedOffsetNestedScrollConnection.roundedMaxDelta: IntOffset
     get() = (maxOffset - offset).round()
