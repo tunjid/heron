@@ -17,9 +17,6 @@
 package com.tunjid.heron.home
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardPublication
@@ -44,7 +41,7 @@ interface State {
     @SnapshotSpec
     data class Immutable(
         val currentTabUri: Uri? = null,
-        val tabLayout: TabLayout = TabLayout.Collapsed.All,
+        val tabLayout: TabLayout = TabLayout.Standard.Expanded,
         @Transient
         val trends: List<Trend> = emptyList(),
         @Transient
@@ -70,10 +67,10 @@ interface State {
 
 @Serializable
 sealed class TabLayout {
-    data object Expanded : TabLayout()
-    sealed class Collapsed : TabLayout() {
-        data object All : Collapsed()
-        data object Selected : Collapsed()
+    data object Overlaid : TabLayout()
+    sealed class Standard : TabLayout() {
+        data object Expanded : Standard()
+        data object Collapsed : Standard()
     }
 }
 

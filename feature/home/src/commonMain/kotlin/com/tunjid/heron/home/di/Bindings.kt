@@ -200,10 +200,10 @@ internal fun Route(
                 onLogoClicked = {
                     stateHolder.accept(
                         Action.SetTabLayout(
-                            layout = if (state.tabLayout is TabLayout.Expanded) {
-                                TabLayout.Collapsed.All
+                            layout = if (state.tabLayout is TabLayout.Overlaid) {
+                                TabLayout.Standard.Expanded
                             } else {
-                                TabLayout.Expanded
+                                TabLayout.Overlaid
                             },
                         ),
                     )
@@ -227,13 +227,13 @@ internal fun Route(
                 text = stringResource(
                     when {
                         isSignedOut -> CommonStrings.sign_in
-                        state.tabLayout is TabLayout.Expanded -> Res.string.save
+                        state.tabLayout is TabLayout.Overlaid -> Res.string.save
                         else -> Res.string.create_post
                     },
                 ),
                 icon = when {
                     isSignedOut -> HeronIcons.AutoMirrored.Login
-                    state.tabLayout is TabLayout.Expanded -> HeronIcons.Regular.Save
+                    state.tabLayout is TabLayout.Overlaid -> HeronIcons.Regular.Save
                     else -> HeronIcons.Regular.Edit
                 },
                 expanded = isBottomNavOffsetNearOrigin,
@@ -244,7 +244,7 @@ internal fun Route(
                                 signInDestination(),
                             )
 
-                            state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
+                            state.tabLayout is TabLayout.Overlaid -> Action.UpdateTimeline.RequestUpdate
                             else -> Action.Navigate.To(
                                 composePostDestination(
                                     type = Post.Create.Timeline,
@@ -278,10 +278,10 @@ internal fun Route(
                 onNavigationIconClicked = {
                     stateHolder.accept(
                         Action.SetTabLayout(
-                            layout = if (state.tabLayout is TabLayout.Expanded) {
-                                TabLayout.Collapsed.All
+                            layout = if (state.tabLayout is TabLayout.Overlaid) {
+                                TabLayout.Standard.Expanded
                             } else {
-                                TabLayout.Expanded
+                                TabLayout.Overlaid
                             },
                         ),
                     )
@@ -298,7 +298,7 @@ internal fun Route(
     )
 
     TabsExpansionEffect(
-        isExpanded = state.tabLayout is TabLayout.Expanded,
+        isExpanded = state.tabLayout is TabLayout.Overlaid,
         onDisplaced = paneScaffoldState::offsetTopAppBarBy,
     )
 }

@@ -44,6 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -178,6 +181,22 @@ fun TabsState.Tab(
         label = {
             Text(tab.title)
         },
+    )
+}
+
+fun Modifier.tabBackground(
+    color: Color,
+    progress: () -> Float,
+) = drawBehind {
+    drawRect(
+        brush = Brush.verticalGradient(
+            0f to color.copy(alpha = UiTokens.appBarMinScrimAlpha),
+            1f to color.copy(alpha = 0f),
+        ),
+    )
+    drawRect(
+        color = color,
+        size = size.copy(width = size.width * progress()),
     )
 }
 

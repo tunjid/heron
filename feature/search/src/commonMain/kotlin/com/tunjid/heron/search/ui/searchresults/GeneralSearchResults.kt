@@ -23,36 +23,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
-import androidx.compose.ui.zIndex
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -74,25 +63,26 @@ import com.tunjid.heron.search.presentationOptions
 import com.tunjid.heron.search.supportsNonPostSearch
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
+import com.tunjid.heron.ui.QuickReturnTabbedLayout
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.TabsCollapseHintEffect
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
+import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.scaffold.scaffold.rememberTopAppBarHeaderState
 import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
-import com.tunjid.heron.ui.statusAndToolbarHeight
+import com.tunjid.heron.ui.tabBackground
 import com.tunjid.heron.ui.tabIndex
-import com.tunjid.heron.ui.verticalOffsetProgress
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.feeds
 import heron.feature.search.generated.resources.latest
 import heron.feature.search.generated.resources.people
 import heron.feature.search.generated.resources.starter_packs
 import heron.feature.search.generated.resources.top
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -121,62 +111,39 @@ internal fun GeneralSearchResults(
     onDeletePostClicked: (RecordUri) -> Unit,
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
-    Box(
-        modifier = modifier,
+    val scope = rememberCoroutineScope()
+    var tabsCollapsed by rememberSaveable {
+        mutableStateOf(false)
+    }
+    val availablePresentations = state.presentationOptions(pagerState.currentPage)
+    val resolvedPresentation = remember(
+        state.preferredPresentation,
+        availablePresentations,
     ) {
-        val scope = rememberCoroutineScope()
-        val topClearance = UiTokens.statusAndToolbarHeight
-        var tabsCollapsed by rememberSaveable {
-            mutableStateOf(false)
-        }
-        val tabsBackgroundColor = MaterialTheme.colorScheme.surface
-        val tabsBackgroundProgress = animateFloatAsState(if (tabsCollapsed) 0f else 1f)
-        val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-            maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
-        )
-        val availablePresentations = state.presentationOptions(pagerState.currentPage)
-        val resolvedPresentation = remember(
-            state.preferredPresentation,
-            availablePresentations,
-        ) {
-            if (state.preferredPresentation in availablePresentations) state.preferredPresentation
-            else Timeline.Presentation.Text.WithEmbed
-        }
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .fillMaxWidth()
-                .zIndex(1f)
-                .renderHeaderInTransitionOverlay(
-                    paneScaffoldState = paneScaffoldState,
-                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                )
-                .offset {
-                    IntOffset(
-                        x = 0,
-                        y = topClearance.roundToPx(),
-                    ) + tabsOffsetNestedScrollConnection.offset.round()
-                }
-                .drawBehind {
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            0f to tabsBackgroundColor.copy(alpha = UiTokens.appBarMinScrimAlpha),
-                            1f to tabsBackgroundColor.copy(alpha = 0f),
-                        ),
-                    )
-                    drawRect(
-                        color = tabsBackgroundColor,
-                        size = size.copy(width = size.width * tabsBackgroundProgress.value),
-                    )
-                },
-        ) {
+        if (state.preferredPresentation in availablePresentations) state.preferredPresentation
+        else Timeline.Presentation.Text.WithEmbed
+    }
+    QuickReturnTabbedLayout(
+        modifier = modifier,
+        header = {
+            val tabsBackgroundColor = MaterialTheme.colorScheme.surface
+            val tabsBackgroundProgress = animateFloatAsState(if (tabsCollapsed) 0f else 1f)
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth()
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    )
+                    .tabBackground(
+                        color = tabsBackgroundColor,
+                        progress = tabsBackgroundProgress::value,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                // This Box is needed to occupy space the tabs may grow into
                 Box(
                     modifier = Modifier
                         .weight(1f),
@@ -216,136 +183,123 @@ internal fun GeneralSearchResults(
                     onPresentationSelected = onPresentationSelected,
                 )
             }
-        }
-        HorizontalPager(
-            modifier = Modifier
-                .zIndex(0f)
-                .nestedScroll(tabsOffsetNestedScrollConnection)
-                .headerBlur(
-                    state = paneScaffoldState.rememberTopAppBarHeaderState(
-                        topAppBarHeight = when {
-                            state.query.isRoot -> topClearance + UiTokens.tabsHeight
-                            else -> topClearance
-                        },
-                        isOffsetByScroll = state.query.isRoot,
-                    ),
-                )
-                .clip(
-                    remember {
-                        RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                        )
-                    },
-                ),
-            state = pagerState,
-            beyondViewportPageCount = 1,
-            key = { page ->
-                state.searchStateHolders[page].key
-            },
-            pageContent = { page ->
-                when (val searchResultStateHolder = state.searchStateHolders[page]) {
-                    is SearchScreenStateHolders.Posts -> {
-                        val gridState = rememberLazyStaggeredGridState()
-                        PostSearchResults(
-                            timelineStateHolder = searchResultStateHolder,
-                            gridState = gridState,
-                            modifier = modifier,
-                            presentation = resolvedPresentation,
-                            autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                            isActivePage = { pagerState.currentPage == page },
-                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            paneScaffoldState = paneScaffoldState,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
-                            onPostSearchResultClicked = onPostSearchResultClicked,
-                            onReplyToPost = onReplyToPost,
-                            onPostRecordClicked = onPostRecordClicked,
-                            onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
-                            onMediaClicked = onMediaClicked,
-                            onNavigate = onNavigate,
-                            onMuteAccountClicked = onMuteAccountClicked,
-                            onBlockAccountClicked = onBlockAccountClicked,
-                            onDeletePostClicked = onDeletePostClicked,
-                        )
-                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
-                            pagerState = pagerState,
-                            firstVisibleItemIndex = gridState::firstVisibleItemIndex,
-                            firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
-                            scrollBy = gridState::animateScrollBy,
-                        )
-                    }
-
-                    is SearchScreenStateHolders.Profiles -> {
-                        val listState = rememberLazyListState()
-                        ProfileSearchResults(
-                            stateHolder = searchResultStateHolder,
-                            listState = listState,
-                            modifier = modifier,
-                            paneScaffoldState = paneScaffoldState,
-                            onProfileClicked = onProfileClicked,
-                            onViewerStateClicked = {
-                                onViewerStateClicked(it.profileWithViewerState)
+        },
+        body = {
+            HorizontalPager(
+                modifier = Modifier
+                    .headerBlur(
+                        state = paneScaffoldState.rememberTopAppBarHeaderState(
+                            topAppBarHeight = when {
+                                state.query.isRoot -> topClearance + UiTokens.tabsHeight
+                                else -> topClearance
                             },
-                        )
-                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
-                            pagerState = pagerState,
-                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
-                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
-                            scrollBy = listState::animateScrollBy,
-                        )
-                    }
+                            isOffsetByScroll = state.query.isRoot,
+                        ),
+                    )
+                    .paneClip(),
+                state = pagerState,
+                beyondViewportPageCount = 1,
+                key = { page ->
+                    state.searchStateHolders[page].key
+                },
+                pageContent = { page ->
+                    when (val searchResultStateHolder = state.searchStateHolders[page]) {
+                        is SearchScreenStateHolders.Posts -> {
+                            val gridState = rememberLazyStaggeredGridState()
+                            PostSearchResults(
+                                timelineStateHolder = searchResultStateHolder,
+                                gridState = gridState,
+                                modifier = modifier,
+                                presentation = resolvedPresentation,
+                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                                isActivePage = { pagerState.currentPage == page },
+                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                                paneScaffoldState = paneScaffoldState,
+                                onLinkTargetClicked = onLinkTargetClicked,
+                                onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
+                                onPostSearchResultClicked = onPostSearchResultClicked,
+                                onReplyToPost = onReplyToPost,
+                                onPostRecordClicked = onPostRecordClicked,
+                                onPublicationSubscriptionToggled = onPublicationSubscriptionToggled,
+                                onMediaClicked = onMediaClicked,
+                                onNavigate = onNavigate,
+                                onMuteAccountClicked = onMuteAccountClicked,
+                                onBlockAccountClicked = onBlockAccountClicked,
+                                onDeletePostClicked = onDeletePostClicked,
+                            )
+                            PagerTopGapCloseEffect(
+                                pagerState = pagerState,
+                                firstVisibleItemIndex = gridState::firstVisibleItemIndex,
+                                firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
+                                scrollBy = gridState::animateScrollBy,
+                            )
+                        }
 
-                    is SearchScreenStateHolders.Feeds -> {
-                        val listState = rememberLazyListState()
-                        FeedSearchResults(
-                            stateHolder = searchResultStateHolder,
-                            listState = listState,
-                            modifier = modifier,
-                            paneScaffoldState = paneScaffoldState,
-                            timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
-                            onFeedGeneratorClicked = onFeedGeneratorClicked,
-                            onTimelineUpdateClicked = onTimelineUpdateClicked,
-                        )
-                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
-                            pagerState = pagerState,
-                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
-                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
-                            scrollBy = listState::animateScrollBy,
-                        )
-                    }
+                        is SearchScreenStateHolders.Profiles -> {
+                            val listState = rememberLazyListState()
+                            ProfileSearchResults(
+                                stateHolder = searchResultStateHolder,
+                                listState = listState,
+                                modifier = modifier,
+                                paneScaffoldState = paneScaffoldState,
+                                onProfileClicked = onProfileClicked,
+                                onViewerStateClicked = {
+                                    onViewerStateClicked(it.profileWithViewerState)
+                                },
+                            )
+                            PagerTopGapCloseEffect(
+                                pagerState = pagerState,
+                                firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                                firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                                scrollBy = listState::animateScrollBy,
+                            )
+                        }
 
-                    is SearchScreenStateHolders.StarterPacks -> {
-                        val listState = rememberLazyListState()
-                        StarterPackSearchResults(
-                            stateHolder = searchResultStateHolder,
-                            listState = listState,
-                            modifier = modifier,
-                            paneScaffoldState = paneScaffoldState,
-                            onStarterPackClicked = onStarterPackClicked,
-                            onListMemberClicked = onListMemberClicked,
-                        )
-                        tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
-                            pagerState = pagerState,
-                            firstVisibleItemIndex = listState::firstVisibleItemIndex,
-                            firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
-                            scrollBy = listState::animateScrollBy,
-                        )
-                    }
-                }
-            },
-        )
+                        is SearchScreenStateHolders.Feeds -> {
+                            val listState = rememberLazyListState()
+                            FeedSearchResults(
+                                stateHolder = searchResultStateHolder,
+                                listState = listState,
+                                modifier = modifier,
+                                paneScaffoldState = paneScaffoldState,
+                                timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
+                                onFeedGeneratorClicked = onFeedGeneratorClicked,
+                                onTimelineUpdateClicked = onTimelineUpdateClicked,
+                            )
+                            PagerTopGapCloseEffect(
+                                pagerState = pagerState,
+                                firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                                firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                                scrollBy = listState::animateScrollBy,
+                            )
+                        }
 
-        LaunchedEffect(tabsOffsetNestedScrollConnection) {
-            snapshotFlow {
-                tabsOffsetNestedScrollConnection.verticalOffsetProgress() > 0.5f
+                        is SearchScreenStateHolders.StarterPacks -> {
+                            val listState = rememberLazyListState()
+                            StarterPackSearchResults(
+                                stateHolder = searchResultStateHolder,
+                                listState = listState,
+                                modifier = modifier,
+                                paneScaffoldState = paneScaffoldState,
+                                onStarterPackClicked = onStarterPackClicked,
+                                onListMemberClicked = onListMemberClicked,
+                            )
+                            PagerTopGapCloseEffect(
+                                pagerState = pagerState,
+                                firstVisibleItemIndex = listState::firstVisibleItemIndex,
+                                firstVisibleItemScrollOffset = listState::firstVisibleItemScrollOffset,
+                                scrollBy = listState::animateScrollBy,
+                            )
+                        }
+                    }
+                },
+            )
+
+            TabsCollapseHintEffect { shouldCollapse ->
+                tabsCollapsed = shouldCollapse
             }
-                .distinctUntilChanged()
-                .collect { isCollapsed ->
-                    tabsCollapsed = isCollapsed
-                }
-        }
-    }
+        },
+    )
 }
 
 @Composable

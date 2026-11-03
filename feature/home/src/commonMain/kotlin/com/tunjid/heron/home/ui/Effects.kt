@@ -24,15 +24,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalDensity
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.verticalOffsetProgress
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
 @Composable
@@ -43,33 +38,13 @@ fun PagerState.RestoreLastViewedTabEffect(
     val updatedTimelines = rememberUpdatedState(lastViewedTabUri to timelines)
     LaunchedEffect(Unit) {
         val (lastTabUri, initialTimelines) = snapshotFlow { updatedTimelines.value }
-            .filter { (_, timelines) -> timelines.isNotEmpty() }
-            .first()
+            .first { (_, timelines) -> timelines.isNotEmpty() }
 
         val page = initialTimelines.indexOfFirst { it.uri == lastTabUri }
         if (page < 0) return@LaunchedEffect
         if (!initialTimelines[page].isPinned) return@LaunchedEffect
 
         scrollToPage(page)
-    }
-}
-
-@Composable
-internal fun AccumulatedOffsetNestedScrollConnection.TabsCollapseEffect(
-    layout: TabLayout,
-    onCollapsed: (TabLayout.Collapsed) -> Unit,
-) {
-    LaunchedEffect(layout) {
-        if (layout is TabLayout.Collapsed) snapshotFlow {
-            verticalOffsetProgress() < 0.5f
-        }
-            .distinctUntilChanged()
-            .collect { showAllTabs ->
-                onCollapsed(
-                    if (showAllTabs) TabLayout.Collapsed.All
-                    else TabLayout.Collapsed.Selected,
-                )
-            }
     }
 }
 
