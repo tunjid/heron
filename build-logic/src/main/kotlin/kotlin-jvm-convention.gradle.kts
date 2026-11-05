@@ -14,22 +14,10 @@
  *    limitations under the License.
  */
 
+import ext.configureKotlinJvm
+
 plugins {
-    id("com.android.kotlin.multiplatform.library")
-    kotlin("multiplatform")
-    id("com.google.devtools.ksp")
+    id("spotless-convention")
 }
 
-kotlin {
-    configureKotlinMultiplatform(this)
-    android {
-        compileSdk {
-            version = release(37) {
-                minorApiLevel = 1
-            }
-        }
-        minSdk = 31
-
-        androidResources.enable = true
-    }
-}
+configureKotlinJvm()
