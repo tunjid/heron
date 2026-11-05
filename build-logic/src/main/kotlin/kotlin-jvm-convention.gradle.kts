@@ -16,4 +16,8 @@
 
 import ext.configureKotlinJvm
 
+plugins {
+    id("spotless-convention")
+}
+
 configureKotlinJvm()

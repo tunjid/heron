@@ -18,6 +18,7 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     kotlin("multiplatform")
     id("com.google.devtools.ksp")
+    id("spotless-convention")
 }
 
 kotlin {
