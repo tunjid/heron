@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.standard.publication
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,13 +31,11 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
@@ -57,6 +54,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.pathDestination
@@ -80,124 +78,117 @@ internal fun StandardPublicationScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+    val pinnedCollapsingHeaderState = rememberPinnedCollapsingHeaderState(
         pinnedHeight = UiTokens.statusAndToolbarHeight,
         initialExpandedHeight = 800.dp,
     )
 
     val pullToRefreshState = rememberPullToRefreshState()
 
-    PullToRefreshBox(
+    CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
-            .paneClip(),
-        isRefreshing = state.isRefreshing,
-        state = pullToRefreshState,
-        onRefresh = {
-            state.documentsTilingStateHolder
-                ?.accept(TilingState.Action.Refresh)
-        },
-        indicator = {
+            .paneClip()
+            .pullToRefresh(
+                isRefreshing = state.isRefreshing,
+                state = pullToRefreshState,
+                onRefresh = {
+                    state.documentsTilingStateHolder
+                        ?.accept(TilingState.Action.Refresh)
+                },
+            ),
+        state = pinnedCollapsingHeaderState.collapsingHeaderState,
+        headerContent = {
+            Column(
+                modifier = Modifier
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    )
+                    .fillMaxWidth()
+                    .pinnedHeaderScrim(
+                        state = pinnedCollapsingHeaderState,
+                        scrimColor = MaterialTheme.colorScheme.surface,
+                    )
+                    .offset {
+                        IntOffset(
+                            x = 0,
+                            y = -pinnedCollapsingHeaderState.translation.roundToInt(),
+                        )
+                    }
+                    .padding(
+                        horizontal = 16.dp,
+                    )
+                    .graphicsLayer {
+                        alpha = 1 - pinnedCollapsingHeaderState.progress
+                    },
+            ) {
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(UiTokens.statusAndToolbarHeight),
+                )
+                state.publication?.description
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { description ->
+                        val textLinks = remember(description) {
+                            AnnotatedString(description).links()
+                        }
+                        val annotatedText = rememberFormattedTextPost(
+                            text = description,
+                            textLinks = textLinks,
+                            onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
+                                actions(
+                                    Action.Navigate.To(
+                                        pathDestination(
+                                            path = navigable.path,
+                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                        ),
+                                    ),
+                                )
+                            },
+                        )
+                        Text(
+                            modifier = Modifier
+                                .padding(
+                                    vertical = 8.dp,
+                                ),
+                            text = annotatedText,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                        )
+                    }
+            }
             DismissableRefreshIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
-                        IntOffset(x = 0, y = collapsingHeaderState.expandedHeight.roundToInt())
-                    },
+                    .pullToRefreshIndicatorOffset(
+                        state = pinnedCollapsingHeaderState,
+                    ),
                 state = pullToRefreshState,
                 isRefreshing = state.isRefreshing,
                 onDismissRequest = {},
             )
         },
-    ) {
-        CollapsingHeaderLayout(
-            modifier = Modifier
-                .fillMaxSize(),
-            state = collapsingHeaderState.collapsingHeaderState,
-            headerContent = {
-                Column(
-                    modifier = Modifier
-                        .renderHeaderInTransitionOverlay(
-                            paneScaffoldState = paneScaffoldState,
-                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                        )
-                        .fillMaxWidth()
-                        .pinnedHeaderScrim(
-                            state = collapsingHeaderState,
-                            scrimColor = MaterialTheme.colorScheme.surface,
-                        )
-                        .offset {
-                            IntOffset(
-                                x = 0,
-                                y = -collapsingHeaderState.translation.roundToInt(),
-                            )
-                        }
-                        .padding(
-                            horizontal = 16.dp,
-                        )
-                        .graphicsLayer {
-                            alpha = 1 - collapsingHeaderState.progress
-                        },
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .background(Color.Yellow)
-                            .fillMaxWidth()
-                            .height(UiTokens.statusAndToolbarHeight),
-                    )
-                    state.publication?.description
-                        ?.takeIf(String::isNotBlank)
-                        ?.let { description ->
-                            val textLinks = remember(description) {
-                                AnnotatedString(description).links()
-                            }
-                            val annotatedText = rememberFormattedTextPost(
-                                text = description,
-                                textLinks = textLinks,
-                                onLinkTargetClicked = navigableLinkTargetHandler { navigable ->
-                                    actions(
-                                        Action.Navigate.To(
-                                            pathDestination(
-                                                path = navigable.path,
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                            ),
-                                        ),
-                                    )
-                                },
-                            )
-                            Text(
-                                modifier = Modifier
-                                    .padding(
-                                        vertical = 8.dp,
-                                    ),
-                                text = annotatedText,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                ),
-                            )
-                        }
-                }
-            },
-            body = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .headerBlur(
-                            state = paneScaffoldState.rememberPinnedHeaderState(
-                                pinnedCollapsingHeaderState = collapsingHeaderState,
-                            ),
+        body = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .headerBlur(
+                        state = paneScaffoldState.rememberPinnedHeaderState(
+                            pinnedCollapsingHeaderState = pinnedCollapsingHeaderState,
                         ),
-                ) {
-                    state.documentsTilingStateHolder?.let { holder ->
-                        Documents(
-                            holder = holder,
-                            paneScaffoldState = paneScaffoldState,
-                        )
-                    }
+                    ),
+            ) {
+                state.documentsTilingStateHolder?.let { holder ->
+                    Documents(
+                        holder = holder,
+                        paneScaffoldState = paneScaffoldState,
+                    )
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
 @Composable
