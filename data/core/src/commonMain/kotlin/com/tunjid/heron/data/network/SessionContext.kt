@@ -1,5 +1,6 @@
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.currentCoroutineContext
@@ -9,16 +10,17 @@ internal sealed class SessionContext : CoroutineContext.Element {
     override val key: CoroutineContext.Key<*>
         get() = SessionContext
 
-    abstract val tokens: SavedState.AuthTokens?
+    abstract val profileId: ProfileId?
     abstract val profileData: SavedState.ProfileData
 
     data class Current(
-        override val tokens: SavedState.AuthTokens?,
+        // Null for guests or when signed out
+        override val profileId: ProfileId?,
         override val profileData: SavedState.ProfileData,
     ) : SessionContext()
 
     data class Previous(
-        override val tokens: SavedState.AuthTokens.Authenticated,
+        override val profileId: ProfileId,
         override val profileData: SavedState.ProfileData,
     ) : SessionContext()
 
