@@ -256,12 +256,16 @@ class OAuthApi(
      * You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request with DPoP, otherwise it will use
      * the one used for [requestToken]. If no key pair was used for the initial token request by this [OAuthApi] instance,
      * a new one will be generated for you.
+     *
+     * Pass the [authorizationServer] that issued the tokens when it may differ from the client's default URL, like
+     * when refreshing a session other than the active one.
      */
     suspend fun refreshToken(
         clientId: String,
         nonce: String?,
         refreshToken: String,
         keyPair: DpopKeyPair? = null,
+        authorizationServer: Url? = null,
     ): OAuthToken {
         val requestParameters = ParametersBuilder().apply {
             append("grant_type", "refresh_token")
@@ -273,6 +277,7 @@ class OAuthApi(
             requestParameters = requestParameters,
             nonce = nonce,
             keyPair = keyPair,
+            authorizationServer = authorizationServer,
         )
     }
 
@@ -280,8 +285,9 @@ class OAuthApi(
         requestParameters: Parameters,
         nonce: String?,
         keyPair: DpopKeyPair?,
+        authorizationServer: Url? = null,
     ): OAuthToken {
-        val oauthServer = resolveOAuthAuthorizationServer()
+        val oauthServer = resolveOAuthAuthorizationServer(authorizationServer)
         val tokenRequestUrl = Url(oauthServer.tokenEndpoint)
 
         val dpopKeyPair = resolveDpopKeyPair(providedKeyPair = keyPair)
@@ -313,7 +319,12 @@ class OAuthApi(
             },
             onNewNonce = { newNonce ->
                 // If the response indicates we need to use a new DPoP nonce, we can retry with the new nonce.
-                requestOrRefreshToken(requestParameters, newNonce, dpopKeyPair)
+                requestOrRefreshToken(
+                    requestParameters = requestParameters,
+                    nonce = newNonce,
+                    keyPair = dpopKeyPair,
+                    authorizationServer = authorizationServer,
+                )
             },
             onFailure = { description ->
                 throw AtpException(
@@ -338,8 +349,9 @@ class OAuthApi(
         clientId: String,
         nonce: String?,
         keyPair: DpopKeyPair?,
+        authorizationServer: Url? = null,
     ) {
-        val oauthServer = resolveOAuthAuthorizationServer()
+        val oauthServer = resolveOAuthAuthorizationServer(authorizationServer)
         val revokeUrl = oauthServer.revocationEndpoint?.let(::Url) ?: return
 
         val dpopKeyPair = resolveDpopKeyPair(providedKeyPair = keyPair)
@@ -371,7 +383,7 @@ class OAuthApi(
         return callResponse.mapResponse<JsonObject, Unit>(
             onSuccess = { _ -> },
             onNewNonce = { newNonce ->
-                revokeToken(accessToken, clientId, newNonce, dpopKeyPair)
+                revokeToken(accessToken, clientId, newNonce, dpopKeyPair, authorizationServer)
             },
             onFailure = {
                 throw AtpException(StatusCode.fromCode(status.value))
@@ -456,8 +468,20 @@ class OAuthApi(
         },
     ).authorizationServers
 
-    private suspend fun resolveOAuthAuthorizationServer(): OAuthAuthorizationServer {
-        return client.get("/.well-known/oauth-authorization-server").decodeResponse(
+    private suspend fun resolveOAuthAuthorizationServer(
+        authorizationServer: Url? = null,
+    ): OAuthAuthorizationServer {
+        val metadataPath = "/.well-known/oauth-authorization-server"
+        val response = when (authorizationServer) {
+            null -> client.get(metadataPath)
+            else -> client.get(
+                buildUrl {
+                    takeFrom(authorizationServer)
+                    encodedPath = metadataPath
+                },
+            )
+        }
+        return response.decodeResponse(
             onSuccess = { it },
             onNewNonce = { error("Should not happen") },
             onFailure = {

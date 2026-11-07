@@ -18,27 +18,20 @@ package com.tunjid.heron.data.network
 
 import com.atproto.identity.ResolveHandleQueryParams
 import com.atproto.server.CreateSessionRequest
-import com.atproto.server.RefreshSessionResponse
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
-import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.InvalidTokenException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
 import com.tunjid.heron.data.network.oauth.DpopKeyPair
 import com.tunjid.heron.data.network.oauth.OAuthApi
 import com.tunjid.heron.data.network.oauth.OAuthScope
-import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.DeferredMutex
-import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -56,7 +49,7 @@ import io.ktor.client.plugins.timeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
-import io.ktor.client.request.post
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
@@ -65,6 +58,7 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
+import io.ktor.util.AttributeKey
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -80,7 +74,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
 import sh.christian.ozone.api.response.AtpErrorDescription
-import sh.christian.ozone.api.response.AtpException
 import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 
 internal interface SessionManager {
@@ -104,6 +97,8 @@ internal class PersistedSessionManager(
     private val savedStateDataSource: SavedStateDataSource,
     private val identityResolver: IdentityResolver,
     private val oauthRedirect: OauthRedirect,
+    private val authSessions: AuthSessions,
+    private val nonces: DPoPNonces,
 ) : SessionManager {
 
     private val sessionRequestUrl = MutableStateFlow<Url?>(null)
@@ -192,8 +187,12 @@ internal class PersistedSessionManager(
                     didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
                         jsonContent = result.didDoc,
                     )
-                        .withResolvedPds(did = result.did),
+                        .withResolvedPds(
+                            did = result.did,
+                            identityResolver = identityResolver,
+                        ),
                     authEndpoint = request.server.endpoint,
+                    expiresAt = result.accessJwt.jwtExpiresAt(),
                 )
             }
             is SessionRequest.Oauth -> {
@@ -241,6 +240,10 @@ internal class PersistedSessionManager(
                         "Missing DPoP key pair for pending authorization request. Please restart the sign-in flow.",
                     ),
                 )
+                nonces.update(
+                    url = Url(pendingRequest.endpoint),
+                    nonce = oAuthToken.nonce,
+                )
 
                 // Access tokens are opaque per the atproto OAuth spec, so the PDS is discovered
                 // from the account's DID document instead of being parsed out of the token.
@@ -286,18 +289,19 @@ internal class PersistedSessionManager(
     }
 
     override suspend fun endSession() {
-        when (val authTokens = savedStateDataSource.savedState.value.auth) {
+        when (val authTokens = authSessions.current()) {
             is SavedState.AuthTokens.Authenticated.Bearer -> api.deleteSession()
-            is SavedState.AuthTokens.Authenticated.DPoP -> oAuthApi.revokeToken(
-                accessToken = authTokens.auth,
-                clientId = oauthRedirect.clientId,
-                nonce = authTokens.nonce,
-                keyPair = authTokens.toKeyPair(),
-            )
-            is SavedState.AuthTokens.Guest,
-            is SavedState.AuthTokens.Pending,
-            null,
-            -> Unit
+            is SavedState.AuthTokens.Authenticated.DPoP -> {
+                val issuer = Url(authTokens.issuerEndpoint)
+                oAuthApi.revokeToken(
+                    accessToken = authTokens.auth,
+                    clientId = oauthRedirect.clientId,
+                    nonce = nonces[issuer],
+                    keyPair = authTokens.toKeyPair(),
+                    authorizationServer = issuer,
+                )
+            }
+            null -> Unit
         }
     }
 
@@ -317,35 +321,25 @@ internal class PersistedSessionManager(
                     headers.appendAll(AtProtoLabelerHeader, labelProfileIds)
                 }
         }
+        // Routing runs first: DPoP proofs sign the final URL.
         install(
-            atProtoAuth(
-                readAuth = {
-                    when (val sessionContext = currentSessionContext()) {
-                        is SessionContext.Previous -> sessionContext.tokens
-                        else -> savedStateDataSource.signedInAuth.first()
-                    }
-                },
-                saveAuth = { tokens ->
-                    when (val sessionContext = currentSessionContext()) {
-                        is SessionContext.Previous -> {
-                            val profileId = sessionContext.tokens.authProfileId
-                            if (tokens != null) savedStateDataSource.updateAuth(
-                                profileId = profileId,
-                                auth = tokens,
-                            )
-                            else savedStateDataSource.removeAuth(profileId)
-                        }
-                        else -> savedStateDataSource.setAuth(tokens)
-                    }
-                },
-                authenticate = ::authenticate,
-                refresh = ::refresh,
+            atProtoRouting(
+                readAuth = authSessions::current,
                 resolvePds = identityResolver::resolvePds,
                 resolveFeedServiceDid = { feedUri ->
                     identityResolver.resolveFeedServiceDid(
                         feedUri = FeedGeneratorUri(feedUri),
                     )
                 },
+            ),
+        )
+        install(
+            atProtoAuth(
+                readAuth = authSessions::current,
+                requestRefresh = authSessions::requestRefresh,
+                onRefreshRetrySuccess = authSessions::onRefreshRetrySuccess,
+                authenticate = ::authenticate,
+                nonces = nonces,
             ),
         )
         install(Logging) {
@@ -372,11 +366,12 @@ internal class PersistedSessionManager(
                 url.protocol = pdsUrl.protocol
                 url.host = pdsUrl.host
 
+                val requestUrl = url.build()
                 val dpopHeader = oAuthApi.createDpopHeaderValue(
                     keyPair = tokens.toKeyPair(),
                     method = method.value,
-                    endpoint = url.toString(),
-                    nonce = tokens.nonce,
+                    endpoint = requestUrl.toString(),
+                    nonce = nonces[requestUrl],
                     accessToken = tokens.auth,
                 )
 
@@ -387,106 +382,18 @@ internal class PersistedSessionManager(
             }
         }
     }
-
-    private suspend fun refresh(
-        tokens: SavedState.AuthTokens.Authenticated,
-    ): SavedState.AuthTokens.Authenticated = when (tokens) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> authHttpClient.post(
-            urlString = RefreshTokenEndpoint,
-            block = { bearerAuth(tokens.refresh) },
-        )
-            .takeIf { it.status.isSuccess() }
-            ?.body<RefreshSessionResponse>()
-            ?.let { refreshed ->
-                SavedState.AuthTokens.Authenticated.Bearer(
-                    authProfileId = ProfileId(refreshed.did.did),
-                    auth = refreshed.accessJwt,
-                    refresh = refreshed.refreshJwt,
-                    didDoc = SavedState.AuthTokens.DidDoc.fromJsonContentOrEmpty(
-                        jsonContent = refreshed.didDoc,
-                    )
-                        .withResolvedPds(did = refreshed.did),
-                    authEndpoint = tokens.authEndpoint,
-                )
-            }
-            ?: throw InvalidTokenException()
-
-        is SavedState.AuthTokens.Authenticated.DPoP -> {
-            oAuthApi.refreshToken(
-                clientId = tokens.clientId,
-                nonce = tokens.nonce,
-                refreshToken = tokens.refresh,
-                keyPair = tokens.toKeyPair(),
-            ).toAppToken(
-                authEndpoint = tokens.issuerEndpoint,
-                pdsUrl = tokens.pdsUrl,
-                clientId = tokens.clientId,
-            )
-        }
-    }
-
-    private suspend fun SavedState.AuthTokens.DidDoc.withResolvedPds(
-        did: Did,
-    ): SavedState.AuthTokens.DidDoc {
-        if (service.isNotEmpty()) return this
-        val pdsUrl = identityResolver.resolvePds(did) ?: return this
-        return copy(
-            service = listOf(
-                SavedState.AuthTokens.DidDoc.Service(
-                    id = AtProtoPdsServiceId,
-                    type = AtProtoPdsServiceType,
-                    serviceEndpoint = pdsUrl.toString(),
-                ),
-            ),
-        )
-    }
 }
 
 /**
- * Invalidates session cookies that have expired or are otherwise invalid
+ * Routes requests to the server that should serve them: the signed in user's PDS, a proxied
+ * service, another user's PDS, or a public app view. Requests that must not carry the signed
+ * in user's credentials are marked with [SkipAuth] for [atProtoAuth].
  */
-private fun atProtoAuth(
+private fun atProtoRouting(
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
-    saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
-    authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
-    refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
     resolvePds: suspend (Did) -> Url?,
     resolveFeedServiceDid: suspend (feedUri: String) -> Did?,
-) = createClientPlugin("AtProtoAuthPlugin") {
-    val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
-    val nonceDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated.DPoP?>()
-
-    val maybeUpdateAndSaveDPoPNonce: suspend SavedState.AuthTokens.Authenticated?.(String?) -> Unit =
-        update@{ newNonce ->
-            this ?: return@update
-            newNonce ?: return@update
-            nonceDeferredMutex.withSingleAccess(newNonce) {
-                maybeUpdateDPoPNonce(newNonce)
-            }?.also { saveAuth(it) }
-        }
-
-    val proceedAndRetryIfDPoPNonceError: suspend Send.Sender.(
-        existingTokens: SavedState.AuthTokens.Authenticated?,
-        context: HttpRequestBuilder,
-    ) -> HttpClientCall = call@{ tokens, context ->
-        var call = proceed(context)
-        if (call.response.status.isSuccess()) return@call call
-
-        call = call.save()
-        val error = call.atProtoError()
-
-        if (error == UseDPoPNonce) {
-            val updatedTokens = call.newDPoPNonce
-                ?.let(tokens::maybeUpdateDPoPNonce)
-                ?: return@call call
-
-            context.clearAuth()
-            context.authenticate(updatedTokens)
-            return@call proceed(context).save()
-        }
-        return@call call
-    }
-
+) = createClientPlugin("AtProtoRoutingPlugin") {
     on(Send) intercept@{ context ->
         // Blacksky serves topic feeds from its app view host directly and publicly. Route there and
         // skip the PDS host-rewrite and auth entirely.
@@ -495,10 +402,13 @@ private fun atProtoAuth(
             context.url.protocol = topicFeedUrl.protocol
             context.url.host = topicFeedUrl.host
             context.url.port = topicFeedUrl.port
+            context.attributes.put(SkipAuth, Unit)
             return@intercept proceed(context)
         }
 
         val authTokens = readAuth.invoke()
+        // Reused by atProtoAuth, so the request is routed and signed with the same tokens.
+        authTokens?.let { context.attributes.put(RoutedAuth, it) }
 
         // Computed once: the feed-interaction branch resolves a DID and must not run twice.
         val proxyHeaderValue = context.proxyHeaderValue(resolveFeedServiceDid)
@@ -530,8 +440,6 @@ private fun atProtoAuth(
             requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
 
-        var resolvedOtherProfilePds = false
-
         if (context.url.encodedPath.contains(ComAtProtoPathSegment)) {
             context.extractSubjectDid()?.let { subjectDid ->
                 val isSignedInUser = authTokens != null && authTokens.authProfileId.id == subjectDid.did
@@ -540,84 +448,92 @@ private fun atProtoAuth(
                         context.url.protocol = resolvedPdsUrl.protocol
                         context.url.host = resolvedPdsUrl.host
                         context.url.port = resolvedPdsUrl.port
-                        resolvedOtherProfilePds = true
+                        // Another user's PDS serves their records publicly.
+                        context.attributes.put(SkipAuth, Unit)
                     }
                 }
             }
         }
 
-        val shouldAuthenticate = !resolvedOtherProfilePds &&
-            !context.headers.contains(Authorization)
+        proceed(context)
+    }
+}
 
-        if (shouldAuthenticate && authTokens != null) {
-            context.authenticate(authTokens)
+/**
+ * Signs requests with the latest tokens from [readAuth], retrying when required.
+ * A session may be ended based on what [requestRefresh] returns.
+ */
+private fun atProtoAuth(
+    readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
+    requestRefresh: suspend (
+        used: SavedState.AuthTokens.Authenticated,
+        reason: RefreshReason,
+    ) -> RefreshResult,
+    onRefreshRetrySuccess: suspend (SavedState.AuthTokens.Authenticated) -> Unit,
+    authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
+    nonces: DPoPNonces,
+) = createClientPlugin("AtProtoAuthPlugin") {
+    val proceedWithNonceRetry: suspend Send.Sender.(
+        tokens: SavedState.AuthTokens.Authenticated,
+        context: HttpRequestBuilder,
+    ) -> HttpClientCall = call@{ tokens, context ->
+        val call = proceed(context).also {
+            it.recordDPoPNonce(nonces)
+        }
+        if (call.response.status.isSuccess()) return@call call
+
+        val savedCall = call.save()
+        if (!savedCall.needsNewDPoPNonce()) return@call savedCall
+
+        context.clearAuth()
+        context.authenticate(tokens)
+        proceed(context)
+            .also { it.recordDPoPNonce(nonces) }
+            .let { if (it.response.status.isSuccess()) it else it.save() }
+    }
+
+    on(Send) intercept@{ context ->
+        val skipAuth = context.attributes.contains(SkipAuth) ||
+            context.headers.contains(Authorization)
+        if (skipAuth) return@intercept proceed(context)
+
+        val tokens = context.attributes.getOrNull(RoutedAuth)
+            ?: readAuth.invoke()
+            ?: return@intercept proceed(context)
+
+        context.authenticate(tokens)
+        val call = proceedWithNonceRetry(tokens, context)
+        if (call.response.status.isSuccess()) return@intercept call
+
+        // A proxied service's errors pass through the PDS, and can't be told apart from the
+        // PDS rejecting the token. Refreshing may still help, but they mustn't end the session.
+        val proxied = context.headers.contains(AtProtoProxyHeader)
+        val reason = when {
+            call.rejectsToken() -> when {
+                proxied -> RefreshReason.Unauthorized
+                else -> RefreshReason.Rejected
+            }
+            call.response.status == HttpStatusCode.Unauthorized -> RefreshReason.Unauthorized
+            else -> return@intercept call
         }
 
-        var result: HttpClientCall = proceedAndRetryIfDPoPNonceError(
-            authTokens,
-            context,
-        )
-        if (result.response.status.isSuccess()) {
-            authTokens.maybeUpdateAndSaveDPoPNonce(result.newDPoPNonce)
-            return@intercept result
-        }
-
-        val updatedTokensResult = runCatchingUnlessCancelled {
-            when (result.atProtoError()) {
-                InvalidTokenError,
-                ExpiredTokenError,
-                -> authTokens?.let { existingToken ->
-                    tokenRefreshDeferredMutex.withSingleAccess(
-                        key = existingToken.singleAccessKey,
-                        block = { refresh(existingToken) },
-                    )
-                }
-                else -> when (result.response.status) {
-                    HttpStatusCode.Unauthorized ->
-                        if (authTokens != null) throw InvalidTokenException()
-                        else null
-                    else -> null
+        when (val refresh = requestRefresh(tokens, reason)) {
+            is RefreshResult.Fresh -> {
+                context.clearAuth()
+                context.authenticate(refresh.tokens)
+                proceedWithNonceRetry(
+                    refresh.tokens,
+                    context,
+                ).also { retried ->
+                    if (retried.response.status.isSuccess()) onRefreshRetrySuccess(refresh.tokens)
                 }
             }
+            // Fail this request. The session is kept unless the refresh ended it.
+            RefreshResult.SessionEnded,
+            RefreshResult.Declined,
+            is RefreshResult.Unavailable,
+            -> call
         }
-
-        updatedTokensResult.fold(
-            onSuccess = { updatedTokens ->
-                if (updatedTokens != null) {
-                    context.clearAuth()
-                    context.authenticate(updatedTokens)
-                    result = proceedAndRetryIfDPoPNonceError(updatedTokens, context).also { call ->
-                        when {
-                            call.response.status.isSuccess() -> {
-                                saveAuth(updatedTokens)
-                                updatedTokens.maybeUpdateAndSaveDPoPNonce(call.newDPoPNonce)
-                            }
-                            else -> {
-                                val error = call.atProtoError()
-                                if (call.response.status == HttpStatusCode.Unauthorized ||
-                                    error == InvalidTokenError ||
-                                    error == ExpiredTokenError
-                                ) {
-                                    saveAuth(null)
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            onFailure = {
-                // Delete existing token and force a log out
-                when (it) {
-                    is InvalidTokenException,
-                    is AtpException,
-                    is AtProtoException,
-                    -> saveAuth(null)
-                    else -> throw it
-                }
-            },
-        )
-
-        result
     }
 }
 
@@ -625,13 +541,22 @@ private suspend fun HttpClientCall.atProtoError() =
     runCatching<AtpErrorDescription?> {
         response.body<AtpErrorDescription>()
     }.getOrNull()?.error
+private suspend fun HttpClientCall.rejectsToken(): Boolean =
+    atProtoError() in RejectedTokenErrors ||
+        RejectedTokenErrors.any { error ->
+            response.headers[HttpHeaders.WWWAuthenticate]?.contains("error=\"$error\"") == true
+        }
 
-private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
-    newNonce: String,
-): SavedState.AuthTokens.Authenticated.DPoP? {
-    return if (this is SavedState.AuthTokens.Authenticated.DPoP) copy(nonce = newNonce)
-    else null
-}
+private suspend fun HttpClientCall.needsNewDPoPNonce(): Boolean =
+    response.headers[HttpHeaders.WWWAuthenticate]?.contains(UseDPoPNonce) == true ||
+        atProtoError() == UseDPoPNonce
+
+private fun HttpClientCall.recordDPoPNonce(
+    nonces: DPoPNonces,
+) = nonces.update(
+    url = request.url,
+    nonce = response.headers[DPoPNonceHeaderKey],
+)
 
 private suspend fun HttpRequestBuilder.proxyHeaderValue(
     resolveFeedServiceDid: suspend (feedUri: String) -> Did?,
@@ -685,32 +610,6 @@ private fun HttpRequestBuilder.extractFeedUriFromBody(): String? {
     return (jsonObject[FeedParam] as? JsonPrimitive)?.content
 }
 
-private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
-    DpopKeyPair.fromKeyPair(
-        publicKey = keyPair.publicKey,
-        publicKeyFormat = DpopKeyPair.PublicKeyFormat.DER,
-        privateKey = keyPair.privateKey,
-        privateKeyFormat = DpopKeyPair.PrivateKeyFormat.DER,
-    )
-
-private suspend fun OAuthToken.toAppToken(
-    authEndpoint: String,
-    pdsUrl: String,
-    clientId: String,
-) = SavedState.AuthTokens.Authenticated.DPoP(
-    authProfileId = subject.did.let(::ProfileId),
-    auth = accessToken,
-    refresh = refreshToken,
-    pdsUrl = pdsUrl,
-    keyPair = SavedState.AuthTokens.Authenticated.DPoP.DERKeyPair(
-        publicKey = keyPair.publicKey(DpopKeyPair.PublicKeyFormat.DER),
-        privateKey = keyPair.privateKey(DpopKeyPair.PrivateKeyFormat.DER),
-    ),
-    clientId = clientId,
-    nonce = nonce,
-    issuerEndpoint = authEndpoint,
-)
-
 private val SavedState.AuthTokens?.defaultUrl
     get() = when (this) {
         is SavedState.AuthTokens.Authenticated.Bearer -> authEndpoint
@@ -718,12 +617,6 @@ private val SavedState.AuthTokens?.defaultUrl
         is SavedState.AuthTokens.Guest -> server.endpoint
         is SavedState.AuthTokens.Pending.DPoP -> endpoint
         null -> Server.BlueSky.endpoint
-    }
-
-private val SavedState.AuthTokens.Authenticated.singleAccessKey
-    get() = when (this) {
-        is SavedState.AuthTokens.Authenticated.Bearer -> "$auth-$refresh"
-        is SavedState.AuthTokens.Authenticated.DPoP -> "$auth-$refresh"
     }
 
 /**
@@ -752,9 +645,6 @@ internal val BlueskyJson: Json = Json(
         ignoreUnknownKeys = true
     },
 )
-
-private val HttpClientCall.newDPoPNonce
-    get() = response.headers[DPoPNonceHeaderKey]
 
 private val HeronOauthScopes = listOf(
     OAuthScope.AtProto,
@@ -820,13 +710,24 @@ private val SignedOutPaths = listOf(
 
 private val PendingTokenTimeout = 2.seconds
 
+// Marks requests that must not carry the signed in user's credentials.
+private val SkipAuth = AttributeKey<Unit>("AtProtoSkipAuth")
+
+// The signed in user's tokens a request was routed with.
+private val RoutedAuth = AttributeKey<SavedState.AuthTokens.Authenticated>("AtProtoRoutedAuth")
+
+// Errors with which a server rejects an access token as expired or revoked, or its DPoP proof.
+private val RejectedTokenErrors = setOf(
+    ExpiredTokenError,
+    InvalidTokenError,
+    InvalidTokenXrpcError,
+    InvalidDPoPProofError,
+)
+
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
 private const val BlueskyAtProtoProxyHeaderValue = "did:web:api.bsky.app#bsky_appview"
-
-private const val AtProtoPdsServiceId = "#atproto_pds"
-private const val AtProtoPdsServiceType = "AtprotoPersonalDataServer"
 
 private const val UploadBlobPath = "com.atproto.repo.uploadBlob"
 private const val SendInteractionsPath = "app.bsky.feed.sendInteractions"
@@ -835,11 +736,12 @@ private const val FeedGeneratorProxyFragment = "#bsky_fg"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val BlackSkyAppViewUrl = "https://api.blacksky.community"
 private const val GetTopicFeedPath = "app.bsky.unspecced.getTopicFeed"
-private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"
 private const val OauthCreateAccountPrompt = "create"
 private const val ExpiredTokenError = "ExpiredToken"
 private const val InvalidTokenError = "invalid_token"
+private const val InvalidTokenXrpcError = "InvalidToken"
+private const val InvalidDPoPProofError = "invalid_dpop_proof"
 private const val UseDPoPNonce = "use_dpop_nonce"
 private const val DPoPNonceHeaderKey = "DPoP-Nonce"
 private const val DPoP = "DPoP"
