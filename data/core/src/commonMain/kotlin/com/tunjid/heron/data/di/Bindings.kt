@@ -45,8 +45,10 @@ import com.tunjid.heron.data.ml.engine.platformInferenceCapability
 import com.tunjid.heron.data.ml.language.LanguageDetector
 import com.tunjid.heron.data.ml.model.InferenceModelManager
 import com.tunjid.heron.data.network.AtProtoIdentityResolver
+import com.tunjid.heron.data.network.AuthSessions
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
+import com.tunjid.heron.data.network.DPoPNonces
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeFeedCreationService
 import com.tunjid.heron.data.network.IdentityResolver
@@ -54,9 +56,12 @@ import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.NetworkTokenRefresher
+import com.tunjid.heron.data.network.PersistedAuthSessions
 import com.tunjid.heron.data.network.PersistedSessionManager
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
+import com.tunjid.heron.data.network.TokenRefresher
 import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.isNetworkConnectionError
 import com.tunjid.heron.data.network.oauth.OauthRedirect
@@ -285,16 +290,36 @@ object DataBindings {
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun provideDPoPNonces(): DPoPNonces = DPoPNonces()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideTokenRefresher(
+        networkTokenRefresher: NetworkTokenRefresher,
+    ): TokenRefresher = networkTokenRefresher
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideAuthSessions(
+        persistedAuthSessions: PersistedAuthSessions,
+    ): AuthSessions = persistedAuthSessions
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideSessionManager(
         httpClient: HttpClient,
         savedStateDataSource: SavedStateDataSource,
         identityResolver: IdentityResolver,
         oauthRedirect: OauthRedirect,
+        authSessions: AuthSessions,
+        nonces: DPoPNonces,
     ): SessionManager = PersistedSessionManager(
         httpClient = httpClient,
         savedStateDataSource = savedStateDataSource,
         identityResolver = identityResolver,
         oauthRedirect = oauthRedirect,
+        authSessions = authSessions,
+        nonces = nonces,
     )
 
     @SingleIn(AppScope::class)

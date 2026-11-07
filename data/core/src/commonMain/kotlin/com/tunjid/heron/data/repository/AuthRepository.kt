@@ -33,6 +33,7 @@ import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.network.AuthSessions
 import com.tunjid.heron.data.network.IdentityResolver
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.SessionManager
@@ -98,6 +99,7 @@ internal class AuthTokenRepository(
     private val identityResolver: IdentityResolver,
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
+    private val authSessions: AuthSessions,
     private val signedInUserRefresher: SignedInUserRefresher,
 ) : AuthRepository {
 
@@ -158,7 +160,7 @@ internal class AuthTokenRepository(
     ): Result<GenericUri> = runCatchingUnlessCancelled {
         when (val pendingToken = sessionManager.initiateOauthSession(request)) {
             is SavedState.AuthTokens.Pending.DPoP -> {
-                savedStateDataSource.setAuth(pendingToken)
+                authSessions.setActive(pendingToken)
                 // Suspend till auth token has been saved and is readable
                 savedStateDataSource.savedState.first { it.auth == pendingToken }
                 pendingToken.authorizeRequestUrl
@@ -173,7 +175,7 @@ internal class AuthTokenRepository(
         sessionManager.createSession(request)
     }
         .mapCatchingUnlessCancelled { authToken ->
-            savedStateDataSource.setAuth(authToken)
+            authSessions.setActive(authToken)
             // Suspend till auth token has been saved and is readable
             savedStateDataSource.savedState.first { it.auth != null }
 
@@ -202,25 +204,15 @@ internal class AuthTokenRepository(
                 return@inCurrentProfileSession
             }
 
-            val freshAuth = savedStateDataSource.inPastSession(sessionSummary.profileId) {
+            // Validates the past session, refreshing its tokens if needed.
+            savedStateDataSource.inPastSession(sessionSummary.profileId) {
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     getSession()
                 }.getOrNull()
-
-                val authenticatedToken = savedStateDataSource.savedState
-                    .value
-                    .profileData(sessionSummary.profileId)
-                    ?.auth
-
-                authenticatedToken as? SavedState.AuthTokens.Authenticated
             }
-                ?: return@inCurrentProfileSession
 
             // Switching should cause the current session to expire
-            savedStateDataSource.switchSession(
-                profileId = sessionSummary.profileId,
-                freshAuth = freshAuth,
-            )
+            if (!authSessions.switchTo(sessionSummary.profileId)) return@inCurrentProfileSession
 
             logcat(LogPriority.WARN) {
                 """
@@ -246,7 +238,7 @@ internal class AuthTokenRepository(
             // Clear any pending writes
             copy(writes = writes.copy(pendingWrites = emptyList()))
         }
-        savedStateDataSource.setAuth(
+        authSessions.setActive(
             auth = null,
         )
     }

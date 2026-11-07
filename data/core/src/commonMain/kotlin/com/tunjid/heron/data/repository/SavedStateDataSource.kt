@@ -35,6 +35,7 @@ import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.path
+import com.tunjid.heron.data.network.AuthSessions
 import com.tunjid.heron.data.network.SessionContext
 import com.tunjid.heron.data.tasks.FailedTask
 import com.tunjid.heron.data.tasks.Task
@@ -151,6 +152,8 @@ abstract class SavedState {
                 val refresh: String,
                 val didDoc: DidDoc = DidDoc(),
                 val authEndpoint: String,
+                // Appended last: fields are numbered by position when persisted.
+                val expiresAt: Instant? = null,
             ) : Authenticated()
 
             @Serializable
@@ -160,9 +163,13 @@ abstract class SavedState {
                 val refresh: String,
                 val pdsUrl: String,
                 val clientId: String,
+                // No longer read. DPoP nonces are tracked in memory per server by DPoPNonces,
+                // but the field stays so persisted field numbers don't shift.
                 val nonce: String,
                 val keyPair: DERKeyPair,
                 val issuerEndpoint: String,
+                // Appended last: fields are numbered by position when persisted.
+                val expiresAt: Instant? = null,
             ) : Authenticated() {
                 @Serializable
                 class DERKeyPair(
@@ -279,8 +286,12 @@ fun SavedState.isSignedIn(): Boolean =
 internal fun SavedState.signedInProfilePreferences() =
     signedInProfileData?.preferences
 
+internal suspend fun SavedStateDataSource.loadedSavedState(): SavedState =
+    savedState.first { it != InitialSavedState }
+
 internal val SavedStateDataSource.signedInAuth
     get() = savedState
+        .filter { it != InitialSavedState }
         .map { it.auth.ifSignedIn() }
         .distinctUntilChanged()
 
@@ -329,19 +340,18 @@ internal sealed class SavedStateDataSource {
         navigation: SavedState.Navigation,
     )
 
+    context(_: AuthSessions)
     internal abstract suspend fun setAuth(
         auth: SavedState.AuthTokens?,
     )
 
+    context(_: AuthSessions)
     internal abstract suspend fun updateAuth(
         profileId: ProfileId,
-        auth: SavedState.AuthTokens,
+        auth: SavedState.AuthTokens.Authenticated?,
     )
 
-    internal abstract suspend fun removeAuth(
-        profileId: ProfileId,
-    )
-
+    context(_: AuthSessions)
     internal abstract suspend fun switchSession(
         profileId: ProfileId,
         freshAuth: SavedState.AuthTokens.Authenticated,
@@ -395,6 +405,7 @@ internal class DataStoreSavedStateDataSource(
         copy(navigation = navigation)
     }
 
+    context(_: AuthSessions)
     override suspend fun setAuth(
         auth: SavedState.AuthTokens?,
     ) = updateState {
@@ -429,27 +440,22 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
+    context(_: AuthSessions)
     override suspend fun updateAuth(
         profileId: ProfileId,
-        auth: SavedState.AuthTokens,
+        auth: SavedState.AuthTokens.Authenticated?,
     ) = updateState {
         val currentProfileData = profileData[profileId] ?: return@updateState this
-        val updatedProfileData = currentProfileData.copy(auth = auth)
         copy(
-            profileData = profileData + (profileId to updatedProfileData),
+            activeProfileId = when {
+                auth == null && activeProfileId == profileId -> null
+                else -> activeProfileId
+            },
+            profileData = profileData + (profileId to currentProfileData.copy(auth = auth)),
         )
     }
 
-    override suspend fun removeAuth(
-        profileId: ProfileId,
-    ) = updateState {
-        val currentProfileData = profileData[profileId] ?: return@updateState this
-        val updatedProfileData = currentProfileData.copy(auth = null)
-        copy(
-            profileData = profileData + (profileId to updatedProfileData),
-        )
-    }
-
+    context(_: AuthSessions)
     override suspend fun switchSession(
         profileId: ProfileId,
         freshAuth: SavedState.AuthTokens.Authenticated,
@@ -527,7 +533,7 @@ internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     val currentProfileId = state.signedInProfileId
     val profileData = currentProfileId?.let { state.profileData(it) }
     val context = SessionContext.Current(
-        tokens = profileData?.auth,
+        profileId = currentProfileId,
         profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
     )
     return withContext(context) {
@@ -556,7 +562,7 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
 
     withContext(
         SessionContext.Current(
-            tokens = profileData.auth,
+            profileId = profileId,
             profileData = profileData,
         ),
     ) {
@@ -580,7 +586,7 @@ internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
         block(profileId)
             .flowOn(
                 contextWithExistingDispatcher() + SessionContext.Current(
-                    tokens = profileData.auth,
+                    profileId = profileId,
                     profileData = profileData,
                 ),
             )
@@ -597,7 +603,7 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
         block(profileId)
             .flowOn(
                 contextWithExistingDispatcher() + SessionContext.Current(
-                    tokens = profileData?.auth,
+                    profileId = profileId,
                     profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
                 ),
             )
@@ -614,9 +620,10 @@ internal suspend inline fun <T> SavedStateDataSource.inPastSession(
     val state = savedState.first { it != InitialSavedState }
 
     val profileData = state.profileData(profileId) ?: return null
-    val auth = profileData.auth as? SavedState.AuthTokens.Authenticated ?: return null
+    // Only past sessions that are still signed in can make requests.
+    if (profileData.auth !is SavedState.AuthTokens.Authenticated) return null
     val context = SessionContext.Previous(
-        tokens = auth,
+        profileId = profileId,
         profileData = profileData,
     )
     return withContext(context) {
