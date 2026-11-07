@@ -40,7 +40,6 @@ import kotlin.io.encoding.Base64
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
-import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.long
@@ -52,9 +51,9 @@ import sh.christian.ozone.api.response.StatusCode
 internal interface TokenRefresher {
 
     /**
-     * Returns new tokens for [tokens]. Throws an [IOException] or [AtpException] if the
-     * refresh failed for a reason that may pass, like being offline or a server outage, and
-     * [SessionEndedException] for anything else.
+     * Returns new tokens for [tokens]. Throws [SessionEndedException] if the refresh token
+     * is invalid. Other failures, like being offline, a server outage or an unexpected
+     * response, are rethrown.
      */
     suspend fun refresh(
         tokens: SavedState.AuthTokens.Authenticated,
@@ -95,9 +94,9 @@ internal class NetworkTokenRefresher(
     } catch (exception: CancellationException) {
         throw exception
     } catch (exception: Exception) {
-        // Keeping a session that can't be refreshed leaves the user signed in to an app that
-        // can't make calls, so only failures that may pass keep it.
-        throw if (exception.isTransient()) exception else SessionEndedException(exception)
+        // Ending a session discards a refresh token that may still work, like when a captive
+        // portal or a proxy answered instead of the server, so only the server's verdict ends it.
+        throw if (exception.endsSession()) SessionEndedException(exception) else exception
     }
 
     private suspend fun refreshBearer(
@@ -157,17 +156,15 @@ private suspend fun HttpResponse.atpException() = AtpException(
     error = runCatching { body<AtpErrorDescription>() }.getOrNull(),
 )
 
-/**
- * Whether a refresh failure may pass on its own: the server couldn't be reached, timed out,
- * was unavailable or rate limited the refresh.
- */
-private fun Exception.isTransient(): Boolean = when (this) {
-    is IOException -> true
-    is AtpException ->
-        statusCode.code >= HttpStatusCode.InternalServerError.value ||
-            statusCode.code == HttpStatusCode.TooManyRequests.value
-    else -> false
-}
+private fun Exception.endsSession(): Boolean =
+    this is AtpException &&
+        statusCode.code in RefreshTokenRejectedStatusCodes &&
+        RefreshTokenRejectedErrors.any { rejectedError ->
+            rejectedError.equals(
+                other = error?.error,
+                ignoreCase = true,
+            )
+        }
 
 internal suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
     DpopKeyPair.fromKeyPair(
@@ -223,6 +220,18 @@ internal fun String.jwtExpiresAt(): Instant? = runCatching {
 }
     .getOrNull()
     ?.let(Instant::fromEpochSeconds)
+
+private val RefreshTokenRejectedStatusCodes = setOf(
+    HttpStatusCode.BadRequest.value,
+    HttpStatusCode.Unauthorized.value,
+)
+
+// OAuth's verdict on a spent, revoked or expired refresh token, and the PDS's for a session.
+private val RefreshTokenRejectedErrors = setOf(
+    "invalid_grant",
+    "ExpiredToken",
+    "InvalidToken",
+)
 
 private const val RefreshSessionPath = "/xrpc/com.atproto.server.refreshSession"
 private const val AtProtoPdsServiceId = "#atproto_pds"

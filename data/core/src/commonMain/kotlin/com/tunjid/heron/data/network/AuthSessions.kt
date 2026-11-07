@@ -48,10 +48,14 @@ internal interface AuthSessions {
      */
     suspend fun current(): SavedState.AuthTokens.Authenticated?
 
-    suspend fun refreshed(
+    suspend fun requestRefresh(
         used: SavedState.AuthTokens.Authenticated,
         reason: RefreshReason,
-    ): Refresh
+    ): RefreshResult
+
+    suspend fun onRefreshRetrySuccess(
+        tokens: SavedState.AuthTokens.Authenticated,
+    )
 
     suspend fun setActive(
         auth: SavedState.AuthTokens?,
@@ -70,19 +74,19 @@ internal enum class RefreshReason {
     Unauthorized,
 }
 
-internal sealed interface Refresh {
+internal sealed interface RefreshResult {
 
     data class Fresh(
         val tokens: SavedState.AuthTokens.Authenticated,
-    ) : Refresh
+    ) : RefreshResult
 
-    data object SessionEnded : Refresh
+    data object SessionEnded : RefreshResult
 
     data class Unavailable(
         val cause: Throwable,
-    ) : Refresh
+    ) : RefreshResult
 
-    data object Declined : Refresh
+    data object Declined : RefreshResult
 }
 
 @Inject
@@ -107,11 +111,11 @@ internal class PersistedAuthSessions(
 
     // Tokens written in this process, by profile, where null means signed out.
     private val written = mutableMapOf<ProfileId, SavedState.AuthTokens.Authenticated?>()
-    private val obtainedAt = mutableMapOf<String, Instant>()
-    private val refreshes = mutableMapOf<String, Deferred<Refresh>>()
+    private val obtained = mutableMapOf<ProfileId, Obtained>()
+    private val refreshes = mutableMapOf<String, Deferred<RefreshResult>>()
 
-    // Consecutive rejections of tokens soon after they were obtained, by profile.
-    private val rejections = mutableMapOf<ProfileId, Int>()
+    // Refreshes that couldn't complete, by profile, to pace refreshing ahead of expiry.
+    private val backoffs = mutableMapOf<ProfileId, Backoff>()
 
     override suspend fun current(): SavedState.AuthTokens.Authenticated? {
         val profileId = currentSessionContext()?.profileId
@@ -126,46 +130,61 @@ internal class PersistedAuthSessions(
         if (expiresAt - Clock.System.now() > RefreshAheadBuffer) return tokens
 
         return when (
-            val refresh = refreshed(
+            val refresh = requestRefresh(
                 used = tokens,
                 reason = RefreshReason.Expiring,
             )
         ) {
-            is Refresh.Fresh -> refresh.tokens
-            Refresh.SessionEnded -> null
+            is RefreshResult.Fresh -> refresh.tokens
+            RefreshResult.SessionEnded -> null
             // The access token may still be valid for a little while.
-            is Refresh.Unavailable,
-            Refresh.Declined,
+            is RefreshResult.Unavailable,
+            RefreshResult.Declined,
             -> tokens
         }
     }
 
     // Refreshing must run to completion even if the caller is cancelled.
-    override suspend fun refreshed(
+    override suspend fun requestRefresh(
         used: SavedState.AuthTokens.Authenticated,
         reason: RefreshReason,
-    ): Refresh {
+    ): RefreshResult {
         val pending = mutex.withLock {
             loadIfNeeded()
-            val latest = tokensFor(used.authProfileId) ?: return Refresh.SessionEnded
+            val latest = tokensFor(used.authProfileId) ?: return RefreshResult.SessionEnded
             // Another request already refreshed. Its refresh token has been spent.
-            if (latest.accessToken != used.accessToken) return Refresh.Fresh(latest)
+            if (latest.accessToken != used.accessToken) return RefreshResult.Fresh(latest)
 
             refreshes[used.accessToken] ?: run {
-                if (reason == RefreshReason.Unauthorized && used.wasObtainedRecently()) {
-                    return Refresh.Declined
+                // The access token is still usable, so there's no need to retry refreshing
+                // before it expires while the server can't be reached.
+                if (reason == RefreshReason.Expiring && used.isBackingOff()) {
+                    return RefreshResult.Declined
                 }
-                if (reason == RefreshReason.Rejected && endsAfterRejecting(used)) {
+                if (reason == RefreshReason.Unauthorized && used.wasObtainedRecently()) {
+                    return RefreshResult.Declined
+                }
+                val rejections = when (reason) {
+                    RefreshReason.Rejected -> used.rejectionsAfterThis()
+                    RefreshReason.Expiring,
+                    RefreshReason.Unauthorized,
+                    -> 0
+                }
+                if (rejections >= MaxConsecutiveRejections) {
+                    logcat(LogPriority.WARN) {
+                        "Auth session for ${used.authProfileId.id} ended, its tokens were rejected $rejections times in a row"
+                    }
                     write(
                         profileId = used.authProfileId,
                         tokens = null,
                     )
-                    return Refresh.SessionEnded
+                    return RefreshResult.SessionEnded
                 }
                 scope.async {
                     refresh(
                         used = used,
                         reason = reason,
+                        rejections = rejections,
                     )
                 }.also { refreshes[used.accessToken] = it }
             }
@@ -173,15 +192,24 @@ internal class PersistedAuthSessions(
         return pending.await()
     }
 
+    override suspend fun onRefreshRetrySuccess(
+        tokens: SavedState.AuthTokens.Authenticated,
+    ) = mutex.withLock {
+        val profileId = tokens.authProfileId
+        val current = obtained[profileId] ?: return@withLock
+        if (current.accessToken != tokens.accessToken) return@withLock
+        obtained[profileId] = current.copy(rejections = 0)
+    }
+
     override suspend fun setActive(
         auth: SavedState.AuthTokens?,
     ) = mutex.withLock {
         loadIfNeeded()
         when (auth) {
-            is SavedState.AuthTokens.Authenticated -> {
-                record(auth)
-                rejections.remove(auth.authProfileId)
-            }
+            is SavedState.AuthTokens.Authenticated -> record(
+                tokens = auth,
+                rejections = 0,
+            )
             null -> active?.authenticatedProfileId?.let { written[it] = null }
             is SavedState.AuthTokens.Guest,
             is SavedState.AuthTokens.Pending,
@@ -210,48 +238,57 @@ internal class PersistedAuthSessions(
     private suspend fun refresh(
         used: SavedState.AuthTokens.Authenticated,
         reason: RefreshReason,
-    ): Refresh {
+        rejections: Int,
+    ): RefreshResult {
         val profileId = used.authProfileId
         logcat(LogPriority.INFO) {
             "Refreshing auth for ${profileId.id}, reason: $reason"
         }
 
         val outcome = try {
-            Refresh.Fresh(tokenRefresher.refresh(used))
+            RefreshResult.Fresh(tokenRefresher.refresh(used))
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: SessionEndedException) {
             logcat(LogPriority.WARN) {
                 "Auth session for ${profileId.id} ended, refresh failed: ${exception.cause?.message}"
             }
-            Refresh.SessionEnded
+            RefreshResult.SessionEnded
         } catch (exception: Throwable) {
             // Throwable, not Exception, so the refresh is always cleared from those in flight.
             logcat(LogPriority.WARN) {
                 "Auth refresh for ${profileId.id} unavailable: ${exception.message}"
             }
-            Refresh.Unavailable(exception)
+            RefreshResult.Unavailable(exception)
         }
 
         return mutex.withLock {
             refreshes.remove(used.accessToken)
+            when (outcome) {
+                is RefreshResult.Unavailable -> backoffs[profileId] = Backoff.after(
+                    accessToken = used.accessToken,
+                    previous = backoffs[profileId],
+                )
+                else -> backoffs.remove(profileId)
+            }
             val latest = tokensFor(profileId)
             // The session was replaced while refreshing, like by signing out or back in.
             if (latest?.accessToken != used.accessToken) {
-                return@withLock latest?.let(Refresh::Fresh) ?: Refresh.SessionEnded
+                return@withLock latest?.let(RefreshResult::Fresh) ?: RefreshResult.SessionEnded
             }
 
             when (outcome) {
-                is Refresh.Fresh -> write(
+                is RefreshResult.Fresh -> write(
                     profileId = profileId,
                     tokens = outcome.tokens,
+                    rejections = rejections,
                 )
-                Refresh.SessionEnded -> write(
+                RefreshResult.SessionEnded -> write(
                     profileId = profileId,
                     tokens = null,
                 )
-                is Refresh.Unavailable,
-                Refresh.Declined,
+                is RefreshResult.Unavailable,
+                RefreshResult.Declined,
                 -> Unit
             }
             outcome
@@ -275,8 +312,13 @@ internal class PersistedAuthSessions(
     private suspend fun write(
         profileId: ProfileId,
         tokens: SavedState.AuthTokens.Authenticated?,
+        rejections: Int = 0,
     ) {
-        if (tokens != null) record(tokens) else written[profileId] = null
+        if (tokens != null) record(
+            tokens = tokens,
+            rejections = rejections,
+        )
+        else written[profileId] = null
         if (active?.authProfileId == profileId) active = tokens
         savedStateDataSource.updateAuth(
             profileId = profileId,
@@ -286,44 +328,70 @@ internal class PersistedAuthSessions(
 
     private fun record(
         tokens: SavedState.AuthTokens.Authenticated,
+        rejections: Int,
     ) {
         written[tokens.authProfileId] = tokens
-        obtainedAt[tokens.accessToken] = Clock.System.now()
+        obtained[tokens.authProfileId] = Obtained(
+            accessToken = tokens.accessToken,
+            at = Clock.System.now(),
+            rejections = rejections,
+        )
     }
-
-    /**
-     * Counts a rejection of [used], returning true if the session should end instead of being
-     * refreshed: its tokens keep being rejected soon after being obtained, so refreshing again
-     * won't help.
-     */
-    private fun endsAfterRejecting(
-        used: SavedState.AuthTokens.Authenticated,
-    ): Boolean {
-        val profileId = used.authProfileId
-        val count = when {
-            used.wasObtainedWithin(RejectedSoonAfterBuffer) -> rejections.getOrElse(profileId) { 0 } + 1
-            else -> 0
-        }
-        if (count < MaxConsecutiveRejections) {
-            rejections[profileId] = count
-            return false
-        }
-        rejections.remove(profileId)
-        logcat(LogPriority.WARN) {
-            "Auth session for ${profileId.id} ended, its tokens were rejected $count times in a row"
-        }
-        return true
-    }
+    private fun SavedState.AuthTokens.Authenticated.rejectionsAfterThis(): Int =
+        obtainedWithin(RejectedSoonAfterBuffer)
+            ?.let { it.rejections + 1 }
+            ?: 0
 
     private fun SavedState.AuthTokens.Authenticated.wasObtainedRecently(): Boolean =
-        wasObtainedWithin(RecentlyObtainedBuffer)
+        obtainedWithin(RecentlyObtainedBuffer) != null
 
-    private fun SavedState.AuthTokens.Authenticated.wasObtainedWithin(
+    private fun SavedState.AuthTokens.Authenticated.obtainedWithin(
         duration: Duration,
-    ): Boolean =
-        obtainedAt[accessToken]
-            ?.let { Clock.System.now() - it < duration }
+    ): Obtained? =
+        obtained[authProfileId]
+            ?.takeIf { it.accessToken == accessToken && Clock.System.now() - it.at < duration }
+
+    private fun SavedState.AuthTokens.Authenticated.isBackingOff(): Boolean =
+        backoffs[authProfileId]
+            ?.let { it.accessToken == accessToken && Clock.System.now() < it.until }
             ?: false
+}
+
+private data class Obtained(
+    val accessToken: String,
+    val at: Instant,
+    val rejections: Int,
+)
+
+/**
+ * Refreshing tokens with [accessToken] failed [failures] times in a row, so refreshing them
+ * ahead of expiry shouldn't be tried again until [until].
+ */
+private class Backoff(
+    val accessToken: String,
+    val failures: Int,
+    val until: Instant,
+) {
+    companion object {
+        fun after(
+            accessToken: String,
+            previous: Backoff?,
+        ): Backoff {
+            val failures = previous
+                ?.takeIf { it.accessToken == accessToken }
+                ?.failures
+                ?.plus(1)
+                ?: 1
+            return Backoff(
+                accessToken = accessToken,
+                failures = failures,
+                until = Clock.System.now() + minOf(
+                    InitialRefreshBackoff * (1 shl (failures - 1).coerceAtMost(MaxBackoffDoublings)),
+                    MaxRefreshBackoff,
+                ),
+            )
+        }
+    }
 }
 
 private val SavedState.AuthTokens.authenticatedProfileId: ProfileId?
@@ -344,4 +412,7 @@ private val SavedState.AuthTokens.Authenticated.accessTokenExpiresAt: Instant?
 private val RefreshAheadBuffer = 60.seconds
 private val RecentlyObtainedBuffer = 30.seconds
 private val RejectedSoonAfterBuffer = 5.minutes
+private val InitialRefreshBackoff = 5.seconds
+private val MaxRefreshBackoff = 45.seconds
+private const val MaxBackoffDoublings = 5
 private const val MaxConsecutiveRejections = 3

@@ -336,7 +336,8 @@ internal class PersistedSessionManager(
         install(
             atProtoAuth(
                 readAuth = authSessions::current,
-                refreshed = authSessions::refreshed,
+                requestRefresh = authSessions::requestRefresh,
+                onRefreshRetrySuccess = authSessions::onRefreshRetrySuccess,
                 authenticate = ::authenticate,
                 nonces = nonces,
             ),
@@ -406,6 +407,8 @@ private fun atProtoRouting(
         }
 
         val authTokens = readAuth.invoke()
+        // Reused by atProtoAuth, so the request is routed and signed with the same tokens.
+        authTokens?.let { context.attributes.put(RoutedAuth, it) }
 
         // Computed once: the feed-interaction branch resolves a DID and must not run twice.
         val proxyHeaderValue = context.proxyHeaderValue(resolveFeedServiceDid)
@@ -458,14 +461,15 @@ private fun atProtoRouting(
 
 /**
  * Signs requests with the latest tokens from [readAuth], retrying when required.
- * A session may be ended based on what [refreshed] returns.
+ * A session may be ended based on what [requestRefresh] returns.
  */
 private fun atProtoAuth(
     readAuth: suspend () -> SavedState.AuthTokens.Authenticated?,
-    refreshed: suspend (
+    requestRefresh: suspend (
         used: SavedState.AuthTokens.Authenticated,
         reason: RefreshReason,
-    ) -> Refresh,
+    ) -> RefreshResult,
+    onRefreshRetrySuccess: suspend (SavedState.AuthTokens.Authenticated) -> Unit,
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     nonces: DPoPNonces,
 ) = createClientPlugin("AtProtoAuthPlugin") {
@@ -473,7 +477,9 @@ private fun atProtoAuth(
         tokens: SavedState.AuthTokens.Authenticated,
         context: HttpRequestBuilder,
     ) -> HttpClientCall = call@{ tokens, context ->
-        val call = proceed(context).also { it.recordDPoPNonce(nonces) }
+        val call = proceed(context).also {
+            it.recordDPoPNonce(nonces)
+        }
         if (call.response.status.isSuccess()) return@call call
 
         val savedCall = call.save()
@@ -491,28 +497,41 @@ private fun atProtoAuth(
             context.headers.contains(Authorization)
         if (skipAuth) return@intercept proceed(context)
 
-        val tokens = readAuth.invoke() ?: return@intercept proceed(context)
+        val tokens = context.attributes.getOrNull(RoutedAuth)
+            ?: readAuth.invoke()
+            ?: return@intercept proceed(context)
 
         context.authenticate(tokens)
         val call = proceedWithNonceRetry(tokens, context)
         if (call.response.status.isSuccess()) return@intercept call
 
+        // A proxied service's errors pass through the PDS, and can't be told apart from the
+        // PDS rejecting the token. Refreshing may still help, but they mustn't end the session.
+        val proxied = context.headers.contains(AtProtoProxyHeader)
         val reason = when {
-            call.rejectsToken() -> RefreshReason.Rejected
+            call.rejectsToken() -> when {
+                proxied -> RefreshReason.Unauthorized
+                else -> RefreshReason.Rejected
+            }
             call.response.status == HttpStatusCode.Unauthorized -> RefreshReason.Unauthorized
             else -> return@intercept call
         }
 
-        when (val refresh = refreshed(tokens, reason)) {
-            is Refresh.Fresh -> {
+        when (val refresh = requestRefresh(tokens, reason)) {
+            is RefreshResult.Fresh -> {
                 context.clearAuth()
                 context.authenticate(refresh.tokens)
-                proceedWithNonceRetry(refresh.tokens, context)
+                proceedWithNonceRetry(
+                    refresh.tokens,
+                    context,
+                ).also { retried ->
+                    if (retried.response.status.isSuccess()) onRefreshRetrySuccess(refresh.tokens)
+                }
             }
             // Fail this request. The session is kept unless the refresh ended it.
-            Refresh.SessionEnded,
-            Refresh.Declined,
-            is Refresh.Unavailable,
+            RefreshResult.SessionEnded,
+            RefreshResult.Declined,
+            is RefreshResult.Unavailable,
             -> call
         }
     }
@@ -693,6 +712,9 @@ private val PendingTokenTimeout = 2.seconds
 
 // Marks requests that must not carry the signed in user's credentials.
 private val SkipAuth = AttributeKey<Unit>("AtProtoSkipAuth")
+
+// The signed in user's tokens a request was routed with.
+private val RoutedAuth = AttributeKey<SavedState.AuthTokens.Authenticated>("AtProtoRoutedAuth")
 
 // Errors with which a server rejects an access token as expired or revoked, or its DPoP proof.
 private val RejectedTokenErrors = setOf(

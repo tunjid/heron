@@ -335,7 +335,7 @@ class SessionManagerTokenRaceTest {
     }
 
     @Test
-    fun refreshFailuresThatMayPass_keepTheSession() = runBlocking {
+    fun refreshFailuresWithoutAVerdict_keepTheSession() = runBlocking {
         val failures = listOf<TokenFailure>(
             { throw IOException("Offline") },
             {
@@ -348,6 +348,28 @@ class SessionManagerTokenRaceTest {
                 respond(
                     content = "",
                     status = HttpStatusCode.TooManyRequests,
+                )
+            },
+            {
+                respond(
+                    content = """{"error":"invalid_client","message":"Client metadata unavailable"}""",
+                    status = HttpStatusCode.Forbidden,
+                    headers = JsonHeaders,
+                )
+            },
+            {
+                respond(
+                    content = """{"error":"invalid_dpop_proof","message":"DPoP proof iat is in the future"}""",
+                    status = HttpStatusCode.BadRequest,
+                    headers = JsonHeaders,
+                )
+            },
+            // Like a captive portal answering instead of the server.
+            {
+                respond(
+                    content = "<html>Not a token</html>",
+                    status = HttpStatusCode.OK,
+                    headers = JsonHeaders,
                 )
             },
         )
@@ -376,26 +398,26 @@ class SessionManagerTokenRaceTest {
     }
 
     @Test
-    fun refreshFailuresThatWontPass_endTheSession() = runBlocking {
+    fun refreshTokenVerdicts_endTheSession() = runBlocking {
         val failures = listOf<TokenFailure>(
             {
                 respond(
-                    content = """{"error":"invalid_client","message":"Client metadata unavailable"}""",
-                    status = HttpStatusCode.Forbidden,
-                    headers = JsonHeaders,
-                )
-            },
-            {
-                respond(
-                    content = """{"error":"invalid_dpop_proof","message":"DPoP proof iat is in the future"}""",
+                    content = """{"error":"invalid_grant","error_description":"Refresh token expired"}""",
                     status = HttpStatusCode.BadRequest,
                     headers = JsonHeaders,
                 )
             },
             {
                 respond(
-                    content = "<html>Not a token</html>",
-                    status = HttpStatusCode.OK,
+                    content = """{"error":"ExpiredToken","message":"Token has been revoked"}""",
+                    status = HttpStatusCode.BadRequest,
+                    headers = JsonHeaders,
+                )
+            },
+            {
+                respond(
+                    content = """{"error":"InvalidToken","message":"Token could not be verified"}""",
+                    status = HttpStatusCode.Unauthorized,
                     headers = JsonHeaders,
                 )
             },
@@ -437,6 +459,81 @@ class SessionManagerTokenRaceTest {
             actual = server.refreshCount,
         )
         assertNull(dataSource.signedInAuth.first())
+    }
+
+    @Test
+    fun tokensRejectedAfterRefreshingHelped_keepTheSession() = runBlocking<Unit> {
+        val server = FakeOAuthServer()
+        val dataSource = savedStateDataSource()
+        val app = app(
+            server = server,
+            dataSource = dataSource,
+        )
+        app.sessions.setActive(server.signIn())
+
+        // Each rejection comes soon after the last refresh, but each refresh fixed it.
+        repeat(4) {
+            server.expireAccessToken()
+            assertTrue(app.client.get(XrpcUrl).status.isSuccess())
+        }
+
+        assertEquals(
+            expected = 4,
+            actual = server.refreshCount,
+        )
+        assertNotNull(dataSource.signedInAuth.first())
+    }
+
+    @Test
+    fun tokensRejectedByAProxiedService_keepTheSession() = runBlocking {
+        val server = FakeOAuthServer()
+        val dataSource = savedStateDataSource()
+        val app = app(
+            server = server,
+            dataSource = dataSource,
+        )
+        app.sessions.setActive(server.signIn())
+
+        // Like a proxied app view rejecting the service auth token the PDS minted for it.
+        repeat(4) {
+            assertFalse(app.client.get(ProxiedRejectionUrl).status.isSuccess())
+        }
+
+        assertEquals(
+            expected = 0,
+            actual = server.refreshCount,
+        )
+        assertNotNull(dataSource.signedInAuth.first())
+        assertTrue(app.client.get(XrpcUrl).status.isSuccess())
+    }
+
+    @Test
+    fun failedRefreshesAheadOfExpiry_backOff() = runBlocking<Unit> {
+        val server = FakeOAuthServer()
+        val dataSource = savedStateDataSource()
+        val app = app(
+            server = server,
+            dataSource = dataSource,
+        )
+        app.sessions.setActive(server.signIn(expiresIn = 30.seconds))
+
+        server.failTokenRequests {
+            respond(
+                content = "",
+                status = HttpStatusCode.ServiceUnavailable,
+            )
+        }
+        // The access token still works, so requests succeed without hitting the token
+        // endpoint again until the backoff passes.
+        repeat(3) {
+            assertTrue(app.client.get(XrpcUrl).status.isSuccess())
+        }
+
+        assertEquals(
+            expected = 1,
+            actual = server.failedTokenRequestCount,
+        )
+        assertNotNull(dataSource.signedInAuth.first())
     }
 
     @Test
@@ -582,6 +679,8 @@ private class FakeOAuthServer {
         private set
     var rejectedRefreshCount = 0
         private set
+    var failedTokenRequestCount = 0
+        private set
     var rejectedAccessTokenCount = 0
         private set
     var authNonceChallengeCount = 0
@@ -685,7 +784,10 @@ private class FakeOAuthServer {
             """.trimIndent(),
         )
         check(path.endsWith("/oauth/token")) { "Unexpected path $path" }
-        tokenFailure?.let { failure -> return failure.invoke(this) }
+        tokenFailure?.let { failure ->
+            mutex.withLock { failedTokenRequestCount++ }
+            return failure.invoke(this)
+        }
 
         val refreshToken = (request.body as OutgoingContent.ByteArrayContent)
             .bytes()
@@ -765,6 +867,12 @@ private class FakeOAuthServer {
                 HttpHeaders.WWWAuthenticate to listOf("""DPoP error="invalid_dpop_proof""""),
                 DPoPNonceHeader to listOf(pdsNonce),
             ),
+        )
+
+        if (request.url.encodedPath.endsWith(ProxiedRejectionPath)) return json(
+            nonce = pdsNonce,
+            body = """{"error":"InvalidToken","message":"Bad service auth token"}""",
+            status = HttpStatusCode.Unauthorized,
         )
 
         if (request.url.encodedPath.endsWith(UnauthorizedFeedPath)) return json(
@@ -851,3 +959,7 @@ private const val DPoPNonceHeader = "DPoP-Nonce"
 private const val UnauthorizedFeedPath = "app.bsky.feed.getFeed"
 private const val XrpcUrl = "$PdsUrl/xrpc/app.bsky.actor.getPreferences"
 private const val UnauthorizedFeedUrl = "$PdsUrl/xrpc/$UnauthorizedFeedPath"
+
+// Proxied to Heron's app view.
+private const val ProxiedRejectionPath = "social.heron.gif.searchGifs"
+private const val ProxiedRejectionUrl = "$PdsUrl/xrpc/$ProxiedRejectionPath"
