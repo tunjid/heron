@@ -57,7 +57,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.ui.PaneTransitionScope
@@ -77,8 +79,10 @@ fun NotificationAggregateScaffold(
     notification: Notification,
     profiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
-    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit = { _, _, _ -> },
+    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit = { _, _, _, _ -> },
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = { _, _ -> },
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit = { _, _ -> },
+    onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit = { _, _, _ -> },
     icon: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -177,6 +181,8 @@ fun NotificationAggregateScaffold(
                         paneTransitionScope = paneTransitionScope,
                         onLinkTargetClicked = onLinkTargetClicked,
                         onPostMediaClicked = onPostMediaClicked,
+                        onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                        onQuotedProfileClicked = onQuotedProfileClicked,
                     )
                 }
             }
