@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.RepostGreen
@@ -58,7 +60,9 @@ fun RepostRow(
     aggregatedProfiles: List<Profile>,
     onProfileClicked: (Notification, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
-    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit,
+    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit,
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit,
+    onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
 ) {
     NotificationAggregateScaffold(
@@ -72,6 +76,8 @@ fun RepostRow(
         profiles = aggregatedProfiles,
         onProfileClicked = onProfileClicked,
         onPostMediaClicked = onPostMediaClicked,
+        onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+        onQuotedProfileClicked = onQuotedProfileClicked,
         onLinkTargetClicked = onLinkTargetClicked,
         icon = {
             Icon(

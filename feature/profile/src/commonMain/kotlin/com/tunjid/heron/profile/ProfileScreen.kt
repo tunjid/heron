@@ -942,7 +942,6 @@ private fun ProfileBanner(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileAvatar(
     modifier: Modifier = Modifier,
