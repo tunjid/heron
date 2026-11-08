@@ -19,7 +19,6 @@ package com.tunjid.heron.home
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -40,17 +39,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.round
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.AccumulatedOffsetNestedScrollConnection
-import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -62,7 +57,6 @@ import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
-import com.tunjid.heron.home.ui.TabsCollapseEffect
 import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.sheets.postoptions.PostOption
@@ -89,6 +83,8 @@ import com.tunjid.heron.timeline.utilities.onDominantVideoChange
 import com.tunjid.heron.timeline.utilities.rememberTimelineDisplayState
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
+import com.tunjid.heron.ui.QuickReturnTabbedLayout
+import com.tunjid.heron.ui.TabsCollapseHintEffect
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.displaceVerticallyBy
 import com.tunjid.heron.ui.horizontalSpace
@@ -133,7 +129,6 @@ internal fun HomeScreen(
         state.timelineStateHolders.count { it is HomeScreenStateHolders.Pinned }
     }
     val scope = rememberCoroutineScope()
-    val topClearance = UiTokens.statusAndToolbarHeight
 
     pagerState.RestoreLastViewedTabEffect(
         lastViewedTabUri = state.currentTabUri,
@@ -154,158 +149,155 @@ internal fun HomeScreen(
         onBackCompleted = expandableTabsState::collapse,
     )
 
-    Box(
+    QuickReturnTabbedLayout(
         modifier = modifier,
-    ) {
-        val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-            maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
-        )
-        HorizontalPager(
-            modifier = Modifier
-                .headerBlur(
-                    state = paneScaffoldState.rememberTopAppBarHeaderState(
-                        topAppBarHeight = topClearance + UiTokens.tabsHeight,
-                        isOffsetByScroll = true,
-                    ),
-                )
-                .blur(
-                    shape = ExpandableTabsState.Shape,
-                    clip = { true },
-                    radius = ExpandableTabsState::BackgroundBlurRadius,
-                    progress = expandableTabsState::expansionProgress,
-                )
-                .nestedScroll(tabsOffsetNestedScrollConnection)
-                .paneClip(),
-            state = pagerState,
-            key = { page ->
-                state.timelineStateHolders[page]
-                    .state
-                    .timeline
-                    .sourceId
-            },
-            pageContent = { page ->
-                val gridState = rememberLazyStaggeredGridState()
-                val timelineStateHolder = state.timelineStateHolders[page]
-                HomeTimeline(
-                    gridState = gridState,
-                    paneScaffoldState = paneScaffoldState,
-                    autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                    timelineStateHolder = timelineStateHolder,
-                    tabsNestedScrollConnection = tabsOffsetNestedScrollConnection,
-                    isActivePage = { pagerState.currentPage == page },
-                    actions = actions,
-                )
-                tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
-                    pagerState = pagerState,
-                    firstVisibleItemIndex = gridState::firstVisibleItemIndex,
-                    firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
-                    scrollBy = gridState::animateScrollBy,
-                )
-            },
-        )
-        HomeTabs(
-            modifier = Modifier
-                .renderHeaderInTransitionOverlay(
-                    paneScaffoldState = paneScaffoldState,
-                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                )
-                .offset {
-                    IntOffset(
-                        x = 0,
-                        y = topClearance.roundToPx(),
-                    ) + tabsOffsetNestedScrollConnection.offset.round()
-                },
-            paneTransitionScope = paneScaffoldState,
-            expandableTabsState = expandableTabsState,
-            selectedTabIndex = pagerState::tabIndex,
-            saveRequestId = state.timelinePreferenceSaveRequestId,
-            currentTabUri = state.currentTabUri,
-            isSignedIn = state.signedInProfile != null,
-            tabLayout = state.tabLayout,
-            timelines = state.timelines,
-            sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
-            onCollapsedTabSelected = { page ->
-                scope.launch {
-                    pagerState.animateScrollToPage(page)
-                }
-            },
-            onCollapsedTabReselected = { page ->
-                state.timelineStateHolders
-                    .getOrNull(page)
-                    ?.accept
-                    ?.invoke(
-                        TimelineState.Action.Tile(
-                            tilingAction = TilingState.Action.Refresh,
+        body = {
+            HorizontalPager(
+                modifier = Modifier
+                    .headerBlur(
+                        state = paneScaffoldState.rememberTopAppBarHeaderState(
+                            topAppBarHeight = topClearance + UiTokens.tabsHeight,
+                            isOffsetByScroll = true,
                         ),
                     )
-            },
-            onExpandedTabSelected = { page ->
-                when (val holder = state.timelineStateHolders.getOrNull(page)) {
-                    is HomeScreenStateHolders.Pinned -> holder.state.timeline.uri?.path?.let {
-                        actions(Action.Navigate.To(pathDestination(it)))
-                    }
-
-                    is HomeScreenStateHolders.Saved -> holder.state.timeline.uri?.path?.let {
-                        actions(Action.Navigate.To(pathDestination(it)))
-                    }
-
-                    null -> Unit
-                }
-            },
-            onLayoutChanged = onLayoutChanged,
-            onTimelinePresentationUpdated = click@{ index, presentation ->
-                val timelineStateHolder = state.timelineStateHolders.getOrNull(index)
-                    ?: return@click
-                timelineStateHolder.accept(
-                    TimelineState.Action.UpdatePreferredPresentation(
-                        timeline = timelineStateHolder.state.timeline,
-                        presentation = presentation,
-                    ),
-                )
-            },
-            onTimelinePreferencesSaved = { timelines ->
-                actions(
-                    Action.UpdateTimeline.Update(timelines),
-                )
-            },
-            onSettingsIconClick = {
-                actions(
-                    Action.Navigate.To(settingsDestination()),
-                )
-            },
-            onBookmarkIconClick = {
-                actions(Action.Navigate.To(bookmarksDestination()))
-            },
-            onCreateFeedClicked = {
-                actions(Action.Navigate.To(grazeEditorDestination()))
-            },
-        )
-
-        TabsExpansionEffect(
-            isExpanded = state.tabLayout is TabLayout.Expanded,
-            onDisplaced = tabsOffsetNestedScrollConnection::displaceVerticallyBy,
-        )
-
-        tabsOffsetNestedScrollConnection.TabsCollapseEffect(
-            state.tabLayout,
-            onCollapsed = { actions(Action.SetTabLayout(it)) },
-        )
-
-        LaunchedEffect(Unit) {
-            snapshotFlow { pagerState.currentPage }
-                .collect { page ->
-                    val holder = state.timelineStateHolders
-                        .getOrNull(page) ?: return@collect
-                    val currentTabUri = holder
+                    .blur(
+                        shape = ExpandableTabsState.Shape,
+                        clip = { true },
+                        radius = ExpandableTabsState::BackgroundBlurRadius,
+                        progress = expandableTabsState::expansionProgress,
+                    )
+                    .paneClip(),
+                state = pagerState,
+                key = { page ->
+                    state.timelineStateHolders[page]
                         .state
                         .timeline
-                        .uri
-                        ?: return@collect
-                    actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
+                        .sourceId
+                },
+                pageContent = { page ->
+                    val gridState = rememberLazyStaggeredGridState()
+                    val timelineStateHolder = state.timelineStateHolders[page]
+                    HomeTimeline(
+                        gridState = gridState,
+                        paneScaffoldState = paneScaffoldState,
+                        autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                        showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                        timelineStateHolder = timelineStateHolder,
+                        tabsNestedScrollConnection = tabNestedScrollConnection,
+                        isActivePage = { pagerState.currentPage == page },
+                        actions = actions,
+                    )
+                    PagerTopGapCloseEffect(
+                        pagerState = pagerState,
+                        firstVisibleItemIndex = gridState::firstVisibleItemIndex,
+                        firstVisibleItemScrollOffset = gridState::firstVisibleItemScrollOffset,
+                        scrollBy = gridState::animateScrollBy,
+                    )
+                },
+            )
+
+            if (state.tabLayout is TabLayout.Standard) {
+                TabsCollapseHintEffect { shouldCollapse ->
+                    actions(
+                        Action.SetTabLayout(
+                            if (shouldCollapse) TabLayout.Standard.Collapsed
+                            else TabLayout.Standard.Expanded,
+                        ),
+                    )
                 }
-        }
+            }
+        },
+        header = {
+            HomeTabs(
+                modifier = Modifier
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    ),
+                paneTransitionScope = paneScaffoldState,
+                expandableTabsState = expandableTabsState,
+                selectedTabIndex = pagerState::tabIndex,
+                saveRequestId = state.timelinePreferenceSaveRequestId,
+                currentTabUri = state.currentTabUri,
+                isSignedIn = state.signedInProfile != null,
+                tabLayout = state.tabLayout,
+                timelines = state.timelines,
+                sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
+                onCollapsedTabSelected = { page ->
+                    scope.launch {
+                        pagerState.animateScrollToPage(page)
+                    }
+                },
+                onCollapsedTabReselected = { page ->
+                    state.timelineStateHolders
+                        .getOrNull(page)
+                        ?.accept
+                        ?.invoke(
+                            TimelineState.Action.Tile(
+                                tilingAction = TilingState.Action.Refresh,
+                            ),
+                        )
+                },
+                onExpandedTabSelected = { page ->
+                    when (val holder = state.timelineStateHolders.getOrNull(page)) {
+                        is HomeScreenStateHolders.Pinned -> holder.state.timeline.uri?.path?.let {
+                            actions(Action.Navigate.To(pathDestination(it)))
+                        }
+
+                        is HomeScreenStateHolders.Saved -> holder.state.timeline.uri?.path?.let {
+                            actions(Action.Navigate.To(pathDestination(it)))
+                        }
+
+                        null -> Unit
+                    }
+                },
+                onLayoutChanged = onLayoutChanged,
+                onTimelinePresentationUpdated = click@{ index, presentation ->
+                    val timelineStateHolder = state.timelineStateHolders.getOrNull(index)
+                        ?: return@click
+                    timelineStateHolder.accept(
+                        TimelineState.Action.UpdatePreferredPresentation(
+                            timeline = timelineStateHolder.state.timeline,
+                            presentation = presentation,
+                        ),
+                    )
+                },
+                onTimelinePreferencesSaved = { timelines ->
+                    actions(
+                        Action.UpdateTimeline.Update(timelines),
+                    )
+                },
+                onSettingsIconClick = {
+                    actions(
+                        Action.Navigate.To(settingsDestination()),
+                    )
+                },
+                onBookmarkIconClick = {
+                    actions(Action.Navigate.To(bookmarksDestination()))
+                },
+                onCreateFeedClicked = {
+                    actions(Action.Navigate.To(grazeEditorDestination()))
+                },
+            )
+            TabsExpansionEffect(
+                isExpanded = state.tabLayout is TabLayout.Overlaid,
+                onDisplaced = tabNestedScrollConnection::displaceVerticallyBy,
+            )
+        },
+    )
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { pagerState.currentPage }
+            .collect { page ->
+                val holder = state.timelineStateHolders
+                    .getOrNull(page) ?: return@collect
+                val currentTabUri = holder
+                    .state
+                    .timeline
+                    .uri
+                    ?: return@collect
+                actions(Action.SetCurrentTab(currentTabUri = currentTabUri))
+            }
     }
 }
 

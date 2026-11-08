@@ -37,7 +37,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
@@ -64,8 +66,10 @@ internal fun NotificationPostScaffold(
     notification: Notification.PostAssociated,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
-    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit,
+    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit,
+    onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit,
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     Column(
@@ -121,6 +125,8 @@ internal fun NotificationPostScaffold(
                     paneTransitionScope = paneTransitionScope,
                     onLinkTargetClicked = onLinkTargetClicked,
                     onPostMediaClicked = onPostMediaClicked,
+                    onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                    onQuotedProfileClicked = onQuotedProfileClicked,
                 )
 
                 PostInteractions(

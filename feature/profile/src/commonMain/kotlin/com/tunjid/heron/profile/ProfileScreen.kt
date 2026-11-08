@@ -420,223 +420,219 @@ internal fun ProfileScreen(
             )
         },
         body = {
-            Box(
-                modifier = Modifier,
-            ) {
-                HorizontalPager(
-                    modifier = Modifier
-                        .headerBlur(
-                            state = paneScaffoldState.rememberPinnedHeaderState(
-                                pinnedCollapsingHeaderState = collapsingHeaderState,
-                            ),
-                        )
-                        .paneClip(),
-                    state = pagerState,
-                    key = { page -> state.stateHolders[page].key },
-                    pageContent = { page ->
-                        when (val stateHolder = state.stateHolders[page]) {
-                            is ProfileScreenStateHolders.Records.Feeds -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { feedGenerator ->
-                                    FeedGenerator(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = feedGenerator.uri.path,
-                                                            models = listOf(feedGenerator),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        feedGenerator = feedGenerator,
-                                        status = state.timelineRecordUrisToPinnedStatus.status(
-                                            feedGenerator.uri,
-                                        ),
-                                        onFeedGeneratorStatusUpdated = { update ->
-                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                                            else actions(Action.UpdatePreferences(update))
-                                        },
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.StarterPacks -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { starterPack ->
-                                    StarterPack(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = starterPack.uri.path,
-                                                            models = listOf(starterPack),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        starterPack = starterPack,
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.Lists -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.cid.id },
-                                itemContent = { list ->
-                                    FeedList(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = list.uri.path,
-                                                            models = listOf(list),
-                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                        list = list,
-                                        status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
-                                        onListStatusUpdated = { update ->
-                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                                            else actions(Action.UpdatePreferences(update))
-                                        },
-                                    )
-                                },
-                            )
-
-                            is ProfileScreenStateHolders.Records.Documents -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { document ->
-                                    val uriHandler = LocalUriHandler.current
-                                    Document(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .clip(RecordShape)
-                                            .animateItem()
-                                            .clickable {
-                                                runCatching {
-                                                    document.link
-                                                        ?.takeIfIs(Uri.Host.Https)
-                                                        ?.let(uriHandler::openUri)
-                                                }
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = document.uri.uri,
-                                        document = document,
-                                        onPublicationClicked = {
+            HorizontalPager(
+                modifier = Modifier
+                    .headerBlur(
+                        state = paneScaffoldState.rememberPinnedHeaderState(
+                            pinnedCollapsingHeaderState = collapsingHeaderState,
+                        ),
+                    )
+                    .paneClip(),
+                state = pagerState,
+                key = { page -> state.stateHolders[page].key },
+                pageContent = { page ->
+                    when (val stateHolder = state.stateHolders[page]) {
+                        is ProfileScreenStateHolders.Records.Feeds -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.cid.id },
+                            itemContent = { feedGenerator ->
+                                FeedGenerator(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .clip(RecordShape)
+                                        .animateItem()
+                                        .clickable {
                                             actions(
                                                 Action.Navigate.To(
-                                                    standardPublicationDestination(
-                                                        publication = it,
-                                                        sharedElementPrefix = document.uri.uri,
+                                                    pathDestination(
+                                                        path = feedGenerator.uri.path,
+                                                        models = listOf(feedGenerator),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     ),
                                                 ),
                                             )
-                                        },
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                            is ProfileScreenStateHolders.Records.Publications -> RecordList(
-                                collectionStateHolder = stateHolder,
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                itemKey = { it.uri.uri },
-                                itemContent = { publication ->
-                                    Publication(
-                                        modifier = Modifier
-                                            .fillParentMaxWidth()
-                                            .animateItem()
-                                            .shapedClickable {
-                                                actions(
-                                                    Action.Navigate.To(
-                                                        pathDestination(
-                                                            path = publication.uri.path,
-                                                            models = listOf(publication),
-                                                            sharedElementPrefix = publication.uri.uri,
-                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                        ),
-                                                    ),
-                                                )
-                                            }
-                                            .recordPadding(),
-                                        paneTransitionScope = paneScaffoldState,
-                                        sharedElementPrefix = publication.uri.uri,
-                                        publication = publication,
-                                        onSubscriptionToggled = { publication, subscription ->
-                                            actions(
-                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                                else Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = publication.uri,
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
+                                        }
+                                        .recordPadding(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                    feedGenerator = feedGenerator,
+                                    status = state.timelineRecordUrisToPinnedStatus.status(
+                                        feedGenerator.uri,
+                                    ),
+                                    onFeedGeneratorStatusUpdated = { update ->
+                                        if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+                                        else actions(Action.UpdatePreferences(update))
+                                    },
+                                )
+                            },
+                        )
 
-                            is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
-                                bottomPadding = collapsedHeight,
-                                paneScaffoldState = paneScaffoldState,
-                                timelineStateHolder = stateHolder,
-                                actions = actions,
-                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
-                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                            )
-                            is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
-                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
-                                stateHolder = stateHolder,
-                            )
-                        }
-                    },
-                )
-            }
+                        is ProfileScreenStateHolders.Records.StarterPacks -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.cid.id },
+                            itemContent = { starterPack ->
+                                StarterPack(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .clip(RecordShape)
+                                        .animateItem()
+                                        .clickable {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = starterPack.uri.path,
+                                                        models = listOf(starterPack),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    ),
+                                                ),
+                                            )
+                                        }
+                                        .recordPadding(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                    starterPack = starterPack,
+                                )
+                            },
+                        )
+
+                        is ProfileScreenStateHolders.Records.Lists -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.cid.id },
+                            itemContent = { list ->
+                                FeedList(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .clip(RecordShape)
+                                        .animateItem()
+                                        .clickable {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = list.uri.path,
+                                                        models = listOf(list),
+                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    ),
+                                                ),
+                                            )
+                                        }
+                                        .recordPadding(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                    list = list,
+                                    status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
+                                    onListStatusUpdated = { update ->
+                                        if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+                                        else actions(Action.UpdatePreferences(update))
+                                    },
+                                )
+                            },
+                        )
+
+                        is ProfileScreenStateHolders.Records.Documents -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.uri.uri },
+                            itemContent = { document ->
+                                val uriHandler = LocalUriHandler.current
+                                Document(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .clip(RecordShape)
+                                        .animateItem()
+                                        .clickable {
+                                            runCatching {
+                                                document.link
+                                                    ?.takeIfIs(Uri.Host.Https)
+                                                    ?.let(uriHandler::openUri)
+                                            }
+                                        }
+                                        .recordPadding(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = document.uri.uri,
+                                    document = document,
+                                    onPublicationClicked = {
+                                        actions(
+                                            Action.Navigate.To(
+                                                standardPublicationDestination(
+                                                    publication = it,
+                                                    sharedElementPrefix = document.uri.uri,
+                                                ),
+                                            ),
+                                        )
+                                    },
+                                    onSubscriptionToggled = { publication, subscription ->
+                                        actions(
+                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                subscriptionUri = subscription.uri,
+                                            )
+                                            else Action.TogglePublicationSubscription.Subscribe(
+                                                publicationUri = publication.uri,
+                                            ),
+                                        )
+                                    },
+                                )
+                            },
+                        )
+                        is ProfileScreenStateHolders.Records.Publications -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.uri.uri },
+                            itemContent = { publication ->
+                                Publication(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .animateItem()
+                                        .shapedClickable {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    pathDestination(
+                                                        path = publication.uri.path,
+                                                        models = listOf(publication),
+                                                        sharedElementPrefix = publication.uri.uri,
+                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                    ),
+                                                ),
+                                            )
+                                        }
+                                        .recordPadding(),
+                                    paneTransitionScope = paneScaffoldState,
+                                    sharedElementPrefix = publication.uri.uri,
+                                    publication = publication,
+                                    onSubscriptionToggled = { publication, subscription ->
+                                        actions(
+                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                subscriptionUri = subscription.uri,
+                                            )
+                                            else Action.TogglePublicationSubscription.Subscribe(
+                                                publicationUri = publication.uri,
+                                            ),
+                                        )
+                                    },
+                                )
+                            },
+                        )
+
+                        is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
+                            bottomPadding = collapsedHeight,
+                            paneScaffoldState = paneScaffoldState,
+                            timelineStateHolder = stateHolder,
+                            actions = actions,
+                            autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                        )
+                        is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            stateHolder = stateHolder,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -946,7 +942,6 @@ private fun ProfileBanner(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileAvatar(
     modifier: Modifier = Modifier,

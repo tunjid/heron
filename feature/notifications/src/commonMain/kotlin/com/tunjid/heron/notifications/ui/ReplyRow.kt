@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.PaneTransitionScope
 import kotlin.time.Instant
@@ -37,7 +39,9 @@ fun ReplyRow(
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
-    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit,
+    onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit,
+    onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit,
+    onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit,
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     NotificationPostScaffold(
@@ -51,6 +55,8 @@ fun ReplyRow(
         onProfileClicked = onProfileClicked,
         onPostClicked = onPostClicked,
         onPostMediaClicked = onPostMediaClicked,
+        onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+        onQuotedProfileClicked = onQuotedProfileClicked,
         onPostInteraction = onPostInteraction,
     )
 }

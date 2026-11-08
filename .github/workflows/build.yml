@@ -21,7 +21,7 @@ jobs:
       - run: ./gradlew spotlessCheck
 
   data-tests:
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Skip on PRs

@@ -237,6 +237,9 @@ private class ProgressiveBlurNode(
             y = bandTop,
         )
         band.renderEffect = effect
+        // Runtime shader effects are unbounded on some Android versions;
+        // without a clip they paint clamped band edges over the rest of the content.
+        band.clip = true
         drawLayer(band)
     }
 

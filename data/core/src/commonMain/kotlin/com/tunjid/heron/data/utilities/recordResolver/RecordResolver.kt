@@ -389,8 +389,7 @@ internal class OfflineRecordResolver(
     override suspend fun resolve(
         uri: RecordUri,
     ): Result<Record> = runCatchingUnlessCancelled {
-        currentSessionContext()?.tokens
-            ?.authProfileId
+        currentSessionContext()?.profileId
     }.mapToResult { viewingProfileId ->
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {

@@ -16,15 +16,21 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * A state derived from [CollapsingHeaderState] that collapses the header to near zero,
@@ -104,3 +110,22 @@ fun rememberPinnedCollapsingHeaderState(
         )
     }
 }
+
+/**
+ * Centers a pull to refresh indicator horizontally and places it at the visible bottom edge of
+ * the header described by [state], following the header as it collapses to its pinned height.
+ *
+ * Meant for indicators emitted in a [com.tunjid.composables.collapsingheader.CollapsingHeaderLayout]
+ * header slot, so they draw in the header's layer above the body.
+ */
+fun Modifier.pullToRefreshIndicatorOffset(
+    state: PinnedCollapsingHeaderState,
+): Modifier = this
+    .fillMaxWidth()
+    .wrapContentWidth()
+    .offset {
+        IntOffset(
+            x = 0,
+            y = (state.expandedHeight - state.translation).roundToInt(),
+        )
+    }

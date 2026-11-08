@@ -34,14 +34,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LookaheadScope
@@ -82,6 +81,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.composePostDestination
@@ -122,7 +122,7 @@ internal fun PostsScreen(
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState { state.stateHolders.size }
-    val collapsingHeaderState = rememberPinnedCollapsingHeaderState(
+    val pinnedCollapsingHeaderState = rememberPinnedCollapsingHeaderState(
         pinnedHeight = UiTokens.statusAndToolbarHeight + when (state.request) {
             is PostsRequest.Quotes -> UiTokens.tabsHeight
             PostsRequest.Saved -> 0.dp
@@ -134,22 +134,51 @@ internal fun PostsScreen(
     val isRefreshing = state.stateHolders.getOrNull(pagerState.currentPage)
         ?.isRefreshing == true
 
-    PullToRefreshBox(
+    CollapsingHeaderLayout(
         modifier = modifier
             .fillMaxSize()
-            .paneClip(),
-        isRefreshing = isRefreshing,
-        state = pullToRefreshState,
-        onRefresh = {
-            state.stateHolders[pagerState.currentPage].refresh()
-        },
-        indicator = {
+            .paneClip()
+            .pullToRefresh(
+                isRefreshing = isRefreshing,
+                state = pullToRefreshState,
+                onRefresh = {
+                    state.stateHolders[pagerState.currentPage].refresh()
+                },
+            ),
+        state = pinnedCollapsingHeaderState.collapsingHeaderState,
+        headerContent = {
+            Column(
+                modifier = Modifier
+                    .renderHeaderInTransitionOverlay(
+                        paneScaffoldState = paneScaffoldState,
+                        zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
+                    )
+                    .fillMaxWidth()
+                    .pinnedHeaderScrim(
+                        state = pinnedCollapsingHeaderState,
+                        scrimColor = MaterialTheme.colorScheme.surface,
+                    )
+                    .offset {
+                        IntOffset(
+                            x = 0,
+                            y = -pinnedCollapsingHeaderState.translation.roundToInt(),
+                        )
+                    },
+            ) {
+                Spacer(
+                    modifier = Modifier
+                        .height(UiTokens.statusAndToolbarHeight),
+                )
+                PostsTabs(
+                    pagerState = pagerState,
+                    stateHolders = state.stateHolders,
+                )
+            }
             DismissableRefreshIndicator(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
-                        IntOffset(x = 0, y = collapsingHeaderState.expandedHeight.roundToInt())
-                    },
+                    .pullToRefreshIndicatorOffset(
+                        state = pinnedCollapsingHeaderState,
+                    ),
                 state = pullToRefreshState,
                 isRefreshing = isRefreshing,
                 onDismissRequest = {
@@ -161,65 +190,30 @@ internal fun PostsScreen(
                 },
             )
         },
-    ) {
-        CollapsingHeaderLayout(
-            modifier = Modifier
-                .fillMaxSize(),
-            state = collapsingHeaderState.collapsingHeaderState,
-            headerContent = {
-                Column(
-                    modifier = Modifier
-                        .renderHeaderInTransitionOverlay(
-                            paneScaffoldState = paneScaffoldState,
-                            zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                        )
-                        .fillMaxWidth()
-                        .pinnedHeaderScrim(
-                            state = collapsingHeaderState,
-                            scrimColor = MaterialTheme.colorScheme.surface,
-                        )
-                        .offset {
-                            IntOffset(
-                                x = 0,
-                                y = -collapsingHeaderState.translation.roundToInt(),
-                            )
-                        },
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .height(UiTokens.statusAndToolbarHeight),
-                    )
-                    PostsTabs(
-                        pagerState = pagerState,
-                        stateHolders = state.stateHolders,
-                    )
-                }
-            },
-            body = {
-                HorizontalPager(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .headerBlur(
-                            state = paneScaffoldState.rememberPinnedHeaderState(
-                                pinnedCollapsingHeaderState = collapsingHeaderState,
-                            ),
+        body = {
+            HorizontalPager(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .headerBlur(
+                        state = paneScaffoldState.rememberPinnedHeaderState(
+                            pinnedCollapsingHeaderState = pinnedCollapsingHeaderState,
                         ),
-                    state = pagerState,
-                    key = { page ->
-                        state.stateHolders[page].key
-                    },
-                    pageContent = { page ->
-                        PostsTimeline(
-                            paneScaffoldState = paneScaffoldState,
-                            preferences = state.preferences,
-                            stateHolder = state.stateHolders[page],
-                            actions = actions,
-                        )
-                    },
-                )
-            },
-        )
-    }
+                    ),
+                state = pagerState,
+                key = { page ->
+                    state.stateHolders[page].key
+                },
+                pageContent = { page ->
+                    PostsTimeline(
+                        paneScaffoldState = paneScaffoldState,
+                        preferences = state.preferences,
+                        stateHolder = state.stateHolders[page],
+                        actions = actions,
+                    )
+                },
+            )
+        },
+    )
 }
 
 @Composable

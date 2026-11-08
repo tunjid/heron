@@ -20,6 +20,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import com.tunjid.heron.data.core.models.Constants
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Runs a bounded cache cleanup exactly once, when the database is first opened, before any DAO
@@ -37,27 +43,147 @@ internal object DatabaseCleanupCallback : RoomDatabase.Callback() {
     }
 
     private fun SQLiteConnection.cleanUp() {
+        val deadline = TimeSource.Monotonic.markNow() + CleanupBudget
+
+        // Timeline items protect the posts they reference, so stale timelines must go first
+        // for the post cull below to find anything to delete.
+        deleteStaleTimelines(
+            staleBefore = Clock.System.now() - StaleTimelineAge,
+            deadline = deadline,
+        )
+
         val postCount = prepare("SELECT COUNT(*) FROM posts").use { statement ->
             statement.step()
             statement.getLong(0)
         }
 
         if (postCount > MaxPosts) {
-            val deleteCount = minOf(postCount - TargetPosts, MaxDeletesPerOpen)
-            execSQL(deletePostsSql(limit = deleteCount))
-            // Reclaim media and profiles orphaned by the cascade above.
-            execSQL(DeleteOrphanedImagesSql)
-            execSQL(DeleteOrphanedVideosSql)
-            execSQL(DeleteOrphanedExternalEmbedsSql)
-            execSQL(DeleteOrphanedProfilesSql)
+            val deletedCount = deletePosts(
+                limit = postCount - TargetPosts,
+                deadline = deadline,
+            )
+            if (deletedCount > 0) {
+                // Reclaim media and profiles orphaned by the cascade above.
+                execSQL(DeleteOrphanedImagesSql)
+                execSQL(DeleteOrphanedVideosSql)
+                execSQL(DeleteOrphanedExternalEmbedsSql)
+                execSQL(DeleteOrphanedProfilesSql)
+            }
         }
 
         execSQL(DeleteOldNotificationsSql)
     }
+
+    /**
+     * Deletes timelines not refreshed since [staleBefore], oldest first, until [deadline].
+     *
+     * Each timeline is removed whole, along with its preferences row, so it reopens exactly as if
+     * it had never been visited: a fresh load instead of resuming from a stale anchor and cursor.
+     * Timelines with a preferred presentation are kept, as it is stored on the same row.
+     */
+    private fun SQLiteConnection.deleteStaleTimelines(
+        staleBefore: Instant,
+        deadline: TimeMark,
+    ) {
+        val staleTimelines = prepare(StaleTimelinesSql).use { statement ->
+            statement.bindLong(
+                index = 1,
+                value = staleBefore.toEpochMilliseconds(),
+            )
+            buildList {
+                while (statement.step()) {
+                    add(
+                        StaleTimeline(
+                            id = statement.getText(index = 0),
+                            sourceId = statement.getText(index = 1),
+                            viewingProfileId =
+                            if (statement.isNull(index = 2)) null
+                            else statement.getText(index = 2),
+                        ),
+                    )
+                }
+            }
+        }
+
+        prepare(DeleteTimelineItemsSql).use { deleteItems ->
+            prepare(DeleteTimelinePreferencesSql).use { deletePreferences ->
+                for (timeline in staleTimelines) {
+                    if (deadline.hasPassedNow()) break
+
+                    deleteItems.bindText(
+                        index = 1,
+                        value = timeline.sourceId,
+                    )
+                    when (val viewingProfileId = timeline.viewingProfileId) {
+                        null -> deleteItems.bindNull(index = 2)
+                        else -> deleteItems.bindText(
+                            index = 2,
+                            value = viewingProfileId,
+                        )
+                    }
+                    deleteItems.step()
+                    deleteItems.reset()
+
+                    deletePreferences.bindText(
+                        index = 1,
+                        value = timeline.id,
+                    )
+                    deletePreferences.step()
+                    deletePreferences.reset()
+                }
+            }
+        }
+    }
+
+    /**
+     * Deletes up to [limit] unprotected posts in batches of [PostDeleteBatchSize] until
+     * [deadline], returning how many were deleted.
+     */
+    private fun SQLiteConnection.deletePosts(
+        limit: Long,
+        deadline: TimeMark,
+    ): Long {
+        var deletedCount = 0L
+        // Protected posts never become deletable mid-cleanup, so each batch resumes after the
+        // last one instead of rescanning them.
+        var lastRowId = Long.MIN_VALUE
+        prepare(DeletablePostRowIdsSql).use { statement ->
+            while (deletedCount < limit && !deadline.hasPassedNow()) {
+                statement.bindLong(
+                    index = 1,
+                    value = lastRowId,
+                )
+                statement.bindLong(
+                    index = 2,
+                    value = minOf(PostDeleteBatchSize, limit - deletedCount),
+                )
+                val rowIds = buildList {
+                    while (statement.step()) add(statement.getLong(index = 0))
+                }
+                statement.reset()
+
+                if (rowIds.isEmpty()) break
+
+                execSQL("DELETE FROM posts WHERE rowid IN (${rowIds.joinToString()})")
+                deletedCount += rowIds.size
+                lastRowId = rowIds.last()
+            }
+        }
+        return deletedCount
+    }
 }
 
+private class StaleTimeline(
+    val id: String,
+    val sourceId: String,
+    val viewingProfileId: String?,
+)
+
 /**
- * Deletes the least important posts (engagement score then age, oldest first), capped at [limit].
+ * Selects the rowids of the oldest unprotected posts after a given rowid, capped at a limit.
+ *
+ * Posts are written insert-or-ignore then updated in place, so rowid order is the order posts
+ * were first cached in. Walking it lets SQLite stop at the limit instead of sorting every post.
  *
  * A post is protected (never deleted) if it is the unknown-post sentinel, or referenced by a
  * timeline item (as post/root/parent), a bookmark, pinned/bookmarked viewer statistics, a
@@ -66,35 +192,43 @@ internal object DatabaseCleanupCallback : RoomDatabase.Callback() {
  * re-fetches on open, and protecting it here would pin those posts permanently (the `postThreads`
  * edges only cascade-delete when their posts do, so protecting both endpoints never releases them).
  */
-private fun deletePostsSql(limit: Long) = """
-    DELETE FROM posts
-    WHERE uri IN (
-        SELECT p.uri FROM posts p
-        LEFT JOIN timelineItems t1 ON p.uri = t1.postUri
-        LEFT JOIN timelineItems t2 ON p.uri = t2.rootPostUri
-        LEFT JOIN timelineItems t3 ON p.uri = t3.parentPostUri
-        LEFT JOIN bookmarks b ON p.uri = b.bookmarkedUri
-        LEFT JOIN postViewerStatistics pvs ON p.uri = pvs.postUri
-            AND (pvs.pinned = 1 OR pvs.bookmarked = 1)
-        LEFT JOIN notifications n ON p.uri = n.associatedPostUri
-        LEFT JOIN messagePosts mp ON p.uri = mp.postUri
-        LEFT JOIN postPosts pp ON p.uri = pp.embeddedPostUri
-        WHERE p.uri != '${Constants.unknownPostUri.uri}'
-          AND t1.postUri IS NULL
-          AND t2.rootPostUri IS NULL
-          AND t3.parentPostUri IS NULL
-          AND b.bookmarkedUri IS NULL
-          AND pvs.postUri IS NULL
-          AND n.associatedPostUri IS NULL
-          AND mp.postUri IS NULL
-          AND pp.embeddedPostUri IS NULL
-        ORDER BY
-            (COALESCE(p.likeCount, 0) + COALESCE(p.repostCount, 0) * 2
-             + COALESCE(p.replyCount, 0) + COALESCE(p.quoteCount, 0) * 2) ASC,
-            p.indexedAt ASC
-        LIMIT $limit
-    )
+private val DeletablePostRowIdsSql = """
+    SELECT p.rowid FROM posts p
+    LEFT JOIN timelineItems t1 ON p.uri = t1.postUri
+    LEFT JOIN timelineItems t2 ON p.uri = t2.rootPostUri
+    LEFT JOIN timelineItems t3 ON p.uri = t3.parentPostUri
+    LEFT JOIN bookmarks b ON p.uri = b.bookmarkedUri
+    LEFT JOIN postViewerStatistics pvs ON p.uri = pvs.postUri
+        AND (pvs.pinned = 1 OR pvs.bookmarked = 1)
+    LEFT JOIN notifications n ON p.uri = n.associatedPostUri
+    LEFT JOIN messagePosts mp ON p.uri = mp.postUri
+    LEFT JOIN postPosts pp ON p.uri = pp.embeddedPostUri
+    WHERE p.rowid > ?
+      AND p.uri != '${Constants.unknownPostUri.uri}'
+      AND t1.postUri IS NULL
+      AND t2.rootPostUri IS NULL
+      AND t3.parentPostUri IS NULL
+      AND b.bookmarkedUri IS NULL
+      AND pvs.postUri IS NULL
+      AND n.associatedPostUri IS NULL
+      AND mp.postUri IS NULL
+      AND pp.embeddedPostUri IS NULL
+    ORDER BY p.rowid ASC
+    LIMIT ?
 """.trimIndent()
+
+private const val StaleTimelinesSql = """
+    SELECT id, sourceId, viewingProfileId FROM timelinePreferences
+    WHERE lastFetchedAt < ?
+      AND preferredPresentation IS NULL
+    ORDER BY lastFetchedAt ASC
+"""
+
+private const val DeleteTimelineItemsSql =
+    "DELETE FROM timelineItems WHERE sourceId = ? AND viewingProfileId IS ?"
+
+private const val DeleteTimelinePreferencesSql =
+    "DELETE FROM timelinePreferences WHERE id = ?"
 
 private const val DeleteOrphanedImagesSql =
     "DELETE FROM images WHERE fullSize NOT IN (SELECT imageUri FROM postImages)"
@@ -143,10 +277,8 @@ private val DeleteOldNotificationsSql = """
 
 private const val MaxPosts = 10_000L
 private const val TargetPosts = 7_500L
-
-/**
- * Upper bound on posts deleted per open. Keeps the synchronous first-open cull short; a larger
- * backlog is worked down over subsequent launches.
- */
-private const val MaxDeletesPerOpen = 3_000L
+private const val PostDeleteBatchSize = 500L
 private const val MaxNotificationsPerOwner = 500
+
+private val CleanupBudget = 250.milliseconds
+private val StaleTimelineAge = 14.days

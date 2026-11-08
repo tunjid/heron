@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.notifications.ui.ContactMatchRow
@@ -73,6 +74,7 @@ import com.tunjid.heron.sheets.rememberPostOptionsSheetState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -227,15 +229,49 @@ internal fun NotificationsScreen(
             )
         }
     }
-    val onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int) -> Unit = remember {
-        { notification, media, index ->
+    val onPostMediaClicked: (Notification.PostAssociated, Embed.Media, Int, Post?) -> Unit = remember {
+        { notification, media, index, quote ->
             actions(
                 Action.Navigate.To(
                     galleryDestination(
-                        post = notification.associatedPost,
+                        post = quote ?: notification.associatedPost,
                         media = media,
                         startIndex = index,
-                        sharedElementPrefix = notification.sharedElementPrefix(),
+                        sharedElementPrefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
+                            quotingPostUri = notification.associatedPost.uri.takeIf { quote != null },
+                        ),
+                    ),
+                ),
+            )
+        }
+    }
+    val onEmbeddedRecordClicked: (Notification.PostAssociated, Record) -> Unit = remember {
+        { notification, record ->
+            actions(
+                Action.Navigate.To(
+                    recordDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        sharedElementPrefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
+                            quotingPostUri = notification.associatedPost.uri,
+                        ),
+                        record = record,
+                    ),
+                ),
+            )
+        }
+    }
+    val onQuotedProfileClicked: (Notification.PostAssociated, Post, Profile) -> Unit = remember {
+        { notification, quotedPost, profile ->
+            actions(
+                Action.Navigate.To(
+                    profileDestination(
+                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        profile = profile,
+                        avatarSharedElementKey = quotedPost.avatarSharedElementKey(
+                            prefix = notification.sharedElementPrefix().withQuotingPostUriPrefix(
+                                quotingPostUri = notification.associatedPost.uri,
+                            ),
+                        ),
                     ),
                 ),
             )
@@ -359,6 +395,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onLinkTargetClicked = onLinkTargetClicked,
                             )
 
@@ -373,6 +411,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -387,6 +427,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -401,6 +443,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onPostInteraction = onPostInteraction,
                             )
 
@@ -414,6 +458,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onLinkTargetClicked = onLinkTargetClicked,
                             )
 
@@ -475,6 +521,8 @@ internal fun NotificationsScreen(
                                 onProfileClicked = onAggregatedProfileClicked,
                                 onPostClicked = onPostClicked,
                                 onPostMediaClicked = onPostMediaClicked,
+                                onEmbeddedRecordClicked = onEmbeddedRecordClicked,
+                                onQuotedProfileClicked = onQuotedProfileClicked,
                                 onLinkTargetClicked = onLinkTargetClicked,
                             )
                             is Notification.DocumentPublished -> DocumentPublishedRow(
