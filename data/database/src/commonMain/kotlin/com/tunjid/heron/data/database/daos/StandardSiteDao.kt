@@ -25,12 +25,15 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -191,6 +194,11 @@ interface StandardSiteDao {
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
                 standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                standardRecommendations.uri as recommendation_uri,
+                standardRecommendations.cid as recommendation_cid,
+                standardRecommendations.documentUri as recommendation_documentUri,
+                standardRecommendations.viewingProfileId as recommendation_viewingProfileId,
+                standardRecommendations.sortedAt as recommendation_sortedAt,
                 profiles.did as publisher_did,
                 profiles.handle as publisher_handle,
                 profiles.displayName as publisher_displayName,
@@ -199,6 +207,9 @@ interface StandardSiteDao {
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN standardRecommendations
+                ON standardDocuments.uri = standardRecommendations.documentUri
+                AND standardRecommendations.viewingProfileId IS :viewingProfileId
             LEFT JOIN standardPublications
                 ON standardPublications.uri = standardDocuments.publicationUri
             LEFT JOIN profiles
@@ -226,6 +237,11 @@ interface StandardSiteDao {
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
                 standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                standardRecommendations.uri as recommendation_uri,
+                standardRecommendations.cid as recommendation_cid,
+                standardRecommendations.documentUri as recommendation_documentUri,
+                standardRecommendations.viewingProfileId as recommendation_viewingProfileId,
+                standardRecommendations.sortedAt as recommendation_sortedAt,
                 profiles.did as publisher_did,
                 profiles.handle as publisher_handle,
                 profiles.displayName as publisher_displayName,
@@ -234,6 +250,9 @@ interface StandardSiteDao {
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN standardRecommendations
+                ON standardDocuments.uri = standardRecommendations.documentUri
+                AND standardRecommendations.viewingProfileId IS :viewingProfileId
             LEFT JOIN standardPublications
                 ON standardPublications.uri = standardDocuments.publicationUri
             LEFT JOIN profiles
@@ -261,6 +280,11 @@ interface StandardSiteDao {
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
                 standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                standardRecommendations.uri as recommendation_uri,
+                standardRecommendations.cid as recommendation_cid,
+                standardRecommendations.documentUri as recommendation_documentUri,
+                standardRecommendations.viewingProfileId as recommendation_viewingProfileId,
+                standardRecommendations.sortedAt as recommendation_sortedAt,
                 profiles.did as publisher_did,
                 profiles.handle as publisher_handle,
                 profiles.displayName as publisher_displayName,
@@ -269,6 +293,9 @@ interface StandardSiteDao {
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId IS :viewingProfileId
+            LEFT JOIN standardRecommendations
+                ON standardDocuments.uri = standardRecommendations.documentUri
+                AND standardRecommendations.viewingProfileId IS :viewingProfileId
             LEFT JOIN standardPublications
                 ON standardPublications.uri = standardDocuments.publicationUri
             LEFT JOIN profiles
@@ -279,6 +306,47 @@ interface StandardSiteDao {
     fun documents(
         viewingProfileId: String?,
         uris: Collection<StandardDocumentUri>,
+    ): Flow<List<PopulatedStandardDocumentEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardDocuments.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                standardRecommendations.uri as recommendation_uri,
+                standardRecommendations.cid as recommendation_cid,
+                standardRecommendations.documentUri as recommendation_documentUri,
+                standardRecommendations.viewingProfileId as recommendation_viewingProfileId,
+                standardRecommendations.sortedAt as recommendation_sortedAt,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
+            FROM standardDocuments
+            INNER JOIN standardRecommendations
+                ON standardDocuments.uri = standardRecommendations.documentUri
+                AND standardRecommendations.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardSubscriptions
+                ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
+            ORDER BY standardRecommendations.sortedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun recommendedDocuments(
+        viewingProfileId: String,
+        limit: Long,
+        offset: Long,
     ): Flow<List<PopulatedStandardDocumentEntity>>
 
     @Upsert
@@ -320,6 +388,38 @@ interface StandardSiteDao {
     )
     suspend fun deleteDocumentsForPublication(
         publicationUri: String,
+    )
+
+    // --- Recommendations ---
+
+    @Upsert
+    suspend fun upsertRecommendations(
+        entities: List<StandardRecommendationEntity>,
+    )
+
+    @Delete(entity = StandardRecommendationEntity::class)
+    suspend fun deleteRecommendations(
+        entities: List<StandardRecommendationEntity.Deletion>,
+    )
+
+    @Query(
+        """
+            DELETE FROM standardRecommendations
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteRecommendation(
+        uri: StandardRecommendationUri,
+    )
+
+    @Query(
+        """
+            DELETE FROM standardRecommendations
+            WHERE viewingProfileId = :viewingProfileId
+        """,
+    )
+    suspend fun deleteRecommendationsForViewer(
+        viewingProfileId: String,
     )
 
     // --- Subscriptions ---

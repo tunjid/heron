@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "site.standard.heron.getDocument",
+  "id": "social.heron.standard.getDocument",
   "defs": {
     "main": {
       "type": "query",
@@ -24,7 +24,7 @@
           "properties": {
             "document": {
               "type": "ref",
-              "ref": "site.standard.heron.defs#documentView"
+              "ref": "social.heron.standard.defs#documentView"
             }
           }
         }

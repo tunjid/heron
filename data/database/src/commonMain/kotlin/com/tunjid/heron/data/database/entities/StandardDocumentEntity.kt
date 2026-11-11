@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -77,6 +78,8 @@ data class StandardDocumentEntity(
     val tags: String?,
     val publicationUri: StandardPublicationUri?,
     val markdownContent: String?,
+    @ColumnInfo(defaultValue = "0")
+    val recommendationCount: Long,
 )
 
 data class PopulatedStandardDocumentEntity(
@@ -84,6 +87,8 @@ data class PopulatedStandardDocumentEntity(
     val entity: StandardDocumentEntity,
     @Embedded(prefix = "subscription_")
     val subscription: StandardSubscriptionEntity?,
+    @Embedded(prefix = "recommendation_")
+    val recommendation: StandardRecommendationEntity?,
     @Embedded(prefix = "publisher_")
     val publisher: ProfileEntity?,
     @Relation(
@@ -120,6 +125,8 @@ fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
             subscription = subscription?.asExternalModel(),
         )
     },
+    recommendationCount = entity.recommendationCount,
+    recommendation = recommendation?.asExternalModel(),
 )
 
 private fun String.deserializeTags(): List<String> =

@@ -67,6 +67,9 @@ fun RecordUri.requireCollection(): String =
         is StandardPublicationUri -> StandardPublicationUri.NAMESPACE
         is StandardDocumentUri -> StandardDocumentUri.NAMESPACE
         is StandardSubscriptionUri -> StandardSubscriptionUri.NAMESPACE
+        is StandardRecommendationUri -> StandardRecommendationUri.NAMESPACE
+        is EventUri -> EventUri.NAMESPACE
+        is RsvpUri -> RsvpUri.NAMESPACE
         is AlbumUri -> AlbumUri.NAMESPACE
         is TrackUri -> TrackUri.NAMESPACE
         is ArtistUri -> ArtistUri.NAMESPACE
@@ -346,6 +349,45 @@ value class StandardSubscriptionUri(
 
 @Serializable
 @JvmInline
+value class StandardRecommendationUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "site.standard.graph.recommend"
+    }
+}
+
+@Serializable
+@JvmInline
+value class EventUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "community.lexicon.calendar.event"
+    }
+}
+
+@Serializable
+@JvmInline
+value class RsvpUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "community.lexicon.calendar.rsvp"
+    }
+}
+
+@Serializable
+@JvmInline
 value class UnknownRecordUri(
     override val uri: String,
 ) : Uri,
@@ -449,6 +491,9 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
         StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
         StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(normalized)
+        StandardRecommendationUri.NAMESPACE -> StandardRecommendationUri(normalized)
+        EventUri.NAMESPACE -> EventUri(normalized)
+        RsvpUri.NAMESPACE -> RsvpUri(normalized)
         AlbumUri.NAMESPACE -> AlbumUri(normalized)
         ArtistUri.NAMESPACE -> ArtistUri(normalized)
         TrackUri.NAMESPACE -> TrackUri(normalized)

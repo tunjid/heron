@@ -252,6 +252,8 @@ private fun standardDocument(
     bskyPostRef = null,
     tags = emptyList(),
     publication = publication,
+    recommendationCount = 0,
+    recommendation = null,
 )
 
 private fun ExternalViewExternalSourceTheme.asBasicTheme(): StandardPublication.BasicTheme? =

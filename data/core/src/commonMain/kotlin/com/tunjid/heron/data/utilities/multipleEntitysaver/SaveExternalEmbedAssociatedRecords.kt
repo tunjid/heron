@@ -182,6 +182,7 @@ private fun stubStandardDocumentEntity(
     tags = null,
     publicationUri = publicationUri,
     markdownContent = null,
+    recommendationCount = 0,
 )
 
 private fun ExternalViewExternalSourceTheme.toBasicTheme() = StandardPublicationEntity.BasicTheme(

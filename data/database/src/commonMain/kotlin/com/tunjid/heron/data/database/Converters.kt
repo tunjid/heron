@@ -20,6 +20,7 @@ import androidx.room.TypeConverter
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.DraftId
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -41,10 +42,12 @@ import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -130,6 +133,18 @@ internal class UriConverters {
     @TypeConverter
     fun standardSubscriptionUriFromString(value: String?): StandardSubscriptionUri? =
         value?.let(::StandardSubscriptionUri)
+
+    @TypeConverter
+    fun standardRecommendationUriFromString(value: String?): StandardRecommendationUri? =
+        value?.let(::StandardRecommendationUri)
+
+    @TypeConverter
+    fun eventUriFromString(value: String?): EventUri? =
+        value?.let(::EventUri)
+
+    @TypeConverter
+    fun rsvpUriFromString(value: String?): RsvpUri? =
+        value?.let(::RsvpUri)
 
     @TypeConverter
     fun recordUriFromString(value: String?): RecordUri? =

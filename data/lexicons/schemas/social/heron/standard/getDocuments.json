@@ -1,17 +1,22 @@
 {
   "lexicon": 1,
-  "id": "site.standard.heron.getPublications",
+  "id": "social.heron.standard.getDocuments",
   "defs": {
     "main": {
       "type": "query",
-      "description": "List publications. Optionally filter by author.",
+      "description": "List documents with full hydration. Optionally filter by publication or author.",
       "parameters": {
         "type": "params",
         "properties": {
+          "publication": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT URI of a publication to filter by."
+          },
           "author": {
             "type": "string",
             "format": "did",
-            "description": "DID of the publication author to filter by."
+            "description": "DID of the document author to filter by."
           },
           "limit": {
             "type": "integer",
@@ -28,16 +33,16 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["publications"],
+          "required": ["documents"],
           "properties": {
             "cursor": {
               "type": "string"
             },
-            "publications": {
+            "documents": {
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "site.standard.heron.defs#publicationView"
+                "ref": "social.heron.standard.defs#documentView"
               }
             }
           }

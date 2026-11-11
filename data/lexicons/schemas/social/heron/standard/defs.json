@@ -1,28 +1,7 @@
 {
   "lexicon": 1,
-  "id": "site.standard.heron.defs",
+  "id": "social.heron.standard.defs",
   "defs": {
-    "profileView": {
-      "type": "object",
-      "required": ["did", "handle"],
-      "properties": {
-        "did": {
-          "type": "string",
-          "format": "did"
-        },
-        "handle": {
-          "type": "string",
-          "format": "handle"
-        },
-        "displayName": {
-          "type": "string"
-        },
-        "avatar": {
-          "type": "string",
-          "format": "uri"
-        }
-      }
-    },
     "publicationView": {
       "type": "object",
       "required": ["uri", "cid", "author", "record", "sortedAt"],
@@ -37,7 +16,7 @@
         },
         "author": {
           "type": "ref",
-          "ref": "#profileView"
+          "ref": "social.heron.actor.defs#profileView"
         },
         "record": {
           "type": "unknown",
@@ -86,7 +65,7 @@
     },
     "documentView": {
       "type": "object",
-      "required": ["uri", "cid", "author", "record"],
+      "required": ["uri", "cid", "author", "record", "recommendationCount"],
       "properties": {
         "uri": {
           "type": "string",
@@ -98,7 +77,7 @@
         },
         "author": {
           "type": "ref",
-          "ref": "#profileView"
+          "ref": "social.heron.actor.defs#profileView"
         },
         "record": {
           "type": "unknown",
@@ -112,6 +91,40 @@
         "publication": {
           "type": "ref",
           "ref": "#publicationView"
+        },
+        "recommendationCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many people recommend this document. Each person counts once, however many site.standard.graph.recommend records they wrote for it."
+        },
+        "viewerRecommendation": {
+          "type": "ref",
+          "ref": "#recommendationView",
+          "description": "The authenticated viewer's site.standard.graph.recommend record for this document. Absent if not recommended or unauthenticated."
+        }
+      }
+    },
+    "recommendationView": {
+      "type": "object",
+      "required": ["uri", "cid", "documentUri", "sortedAt"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "documentUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT URI of the recommended document."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp for the recommendation (its createdAt, else the record TID)."
         }
       }
     }

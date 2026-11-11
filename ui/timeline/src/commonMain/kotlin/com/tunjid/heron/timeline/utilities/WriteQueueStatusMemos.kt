@@ -50,9 +50,11 @@ import heron.ui.timeline.generated.resources.writable_profile_status_update
 import heron.ui.timeline.generated.resources.writable_profile_update
 import heron.ui.timeline.generated.resources.writable_reaction
 import heron.ui.timeline.generated.resources.writable_reaction_removal
+import heron.ui.timeline.generated.resources.writable_recommend_standard_document
 import heron.ui.timeline.generated.resources.writable_record_deletion
 import heron.ui.timeline.generated.resources.writable_repost
 import heron.ui.timeline.generated.resources.writable_repost_removal
+import heron.ui.timeline.generated.resources.writable_rsvp_event
 import heron.ui.timeline.generated.resources.writable_subscribe_standard_publication
 import heron.ui.timeline.generated.resources.writable_thread_gate_update
 import heron.ui.timeline.generated.resources.writable_timeline_update
@@ -211,6 +213,14 @@ fun Writable.writeStatusMessage(
             is Writable.StandardSite.Subscribe -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_subscribe_standard_publication),
+            )
+            is Writable.StandardSite.Recommend -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_recommend_standard_document),
+            )
+            is Writable.RsvpUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_rsvp_event),
             )
             is Writable.StandardSite.UpdatePostReference -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),

@@ -25,12 +25,15 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardRecommendation
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationId
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
@@ -54,6 +57,7 @@ import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.CursorQueryRefreshTracker
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.authorDocumentsIdentity
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.publicationDocumentsIdentity
+import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.recommendedDocumentsIdentity
 import com.tunjid.heron.data.utilities.cursorQueryRefreshTracker.subscribedPublicationsIdentity
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -81,13 +85,16 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import site.standard.Document
+import site.standard.graph.Recommend
 import site.standard.graph.Subscription
-import site.standard.heron.GetDocumentsQueryParams
-import site.standard.heron.GetDocumentsResponse
-import site.standard.heron.GetPublicationsQueryParams
-import site.standard.heron.GetPublicationsResponse
-import site.standard.heron.GetSubscribedPublicationsQueryParams
-import site.standard.heron.GetSubscribedPublicationsResponse
+import social.heron.standard.GetDocumentsQueryParams
+import social.heron.standard.GetDocumentsResponse
+import social.heron.standard.GetPublicationsQueryParams
+import social.heron.standard.GetPublicationsResponse
+import social.heron.standard.GetRecommendedDocumentsQueryParams
+import social.heron.standard.GetRecommendedDocumentsResponse
+import social.heron.standard.GetSubscribedPublicationsQueryParams
+import social.heron.standard.GetSubscribedPublicationsResponse
 
 @Serializable
 data class StandardPublicationDocumentsQuery(
@@ -121,8 +128,17 @@ interface StandardSiteRecordOperations {
         cursor: Cursor,
     ): Flow<CursorList<StandardPublication>>
 
+    fun recommendedDocuments(
+        query: CursorQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>>
+
     suspend fun createSubscription(
         create: StandardSubscription.Create,
+    ): Outcome
+
+    suspend fun createRecommendation(
+        create: StandardRecommendation.Create,
     ): Outcome
 
     suspend fun updateDocumentPostRef(
@@ -376,6 +392,59 @@ internal class OfflineFirstStandardSiteRecordOperations(
             .filterNotNull()
             .flowOn(ioDispatcher)
 
+    override fun recommendedDocuments(
+        query: CursorQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                standardSiteDao.recommendedDocuments(
+                    viewingProfileId = signedInProfileId.id,
+                    limit = query.data.limit,
+                    offset = query.data.offset,
+                )
+                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
+                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getRecommendedDocuments(
+                            params = GetRecommendedDocumentsQueryParams(
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetRecommendedDocumentsResponse::cursor,
+                    onResponse = {
+                        val shouldRefresh = cursorQueryRefreshTracker
+                            .isFirstPageForDifferentAnchor(
+                                query = query,
+                                identity = query::recommendedDocumentsIdentity,
+                            )
+                        multipleEntitySaverProvider.saveInTransaction {
+                            if (shouldRefresh) {
+                                standardSiteDao.deleteRecommendationsForViewer(
+                                    signedInProfileId.id,
+                                )
+                            }
+                            documents.forEach {
+                                add(
+                                    documentView = it,
+                                    viewingProfileId = signedInProfileId,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+            .filterNotNull()
+            .flowOn(ioDispatcher)
+
     override suspend fun createSubscription(
         create: StandardSubscription.Create,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
@@ -402,6 +471,39 @@ internal class OfflineFirstStandardSiteRecordOperations(
                     subscription = subscription,
                     viewingProfileId = signedInProfileId,
                     sortedAt = create.sortedAt,
+                )
+            }
+        }
+            .toOutcome()
+    } ?: expiredSessionOutcome()
+
+    override suspend fun createRecommendation(
+        create: StandardRecommendation.Create,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val recommendation = Recommend(
+            document = AtUri(create.documentUri.uri),
+            createdAt = create.sortedAt,
+        )
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = Did(signedInProfileId.id),
+                    collection = Nsid(StandardRecommendationUri.NAMESPACE),
+                    rkey = RKey(create.recordKey.value),
+                    record = recommendation
+                        .asJsonContent(Recommend.serializer()),
+                ),
+            )
+        }.mapCatchingUnlessCancelled { response ->
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    recommendationUri = response.uri.atUri.let(::StandardRecommendationUri),
+                    recommendationCid = response.cid.cid.let(::StandardRecommendationId),
+                    recommendation = recommendation,
+                    sortedAt = create.sortedAt,
+                    viewingProfileId = signedInProfileId,
                 )
             }
         }

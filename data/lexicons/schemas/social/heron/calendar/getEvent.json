@@ -1,10 +1,10 @@
 {
   "lexicon": 1,
-  "id": "site.standard.heron.getPublication",
+  "id": "social.heron.calendar.getEvent",
   "defs": {
     "main": {
       "type": "query",
-      "description": "Get a single publication with full hydration.",
+      "description": "Get a single calendar event with its RSVP counts and the viewer's RSVP.",
       "parameters": {
         "type": "params",
         "required": ["uri"],
@@ -12,7 +12,7 @@
           "uri": {
             "type": "string",
             "format": "at-uri",
-            "description": "AT URI of the publication."
+            "description": "AT URI of the community.lexicon.calendar.event record."
           }
         }
       },
@@ -20,11 +20,11 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["publication"],
+          "required": ["event"],
           "properties": {
-            "publication": {
+            "event": {
               "type": "ref",
-              "ref": "site.standard.heron.defs#publicationView"
+              "ref": "social.heron.calendar.defs#eventView"
             }
           }
         }
@@ -32,7 +32,7 @@
       "errors": [
         {
           "name": "NotFound",
-          "description": "The publication does not exist."
+          "description": "The event does not exist."
         }
       ]
     }

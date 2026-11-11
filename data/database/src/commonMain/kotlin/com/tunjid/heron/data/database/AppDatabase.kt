@@ -26,6 +26,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.callbacks.DatabaseCleanupCallback
 import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -42,6 +43,7 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
+import com.tunjid.heron.data.database.entities.EventEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
@@ -64,8 +66,10 @@ import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
 import com.tunjid.heron.data.database.entities.RockskyArtistEntity
 import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
 import com.tunjid.heron.data.database.entities.RockskyTrackEntity
+import com.tunjid.heron.data.database.entities.RsvpEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.StarterPackMemberView
@@ -116,7 +120,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 55,
+    version = 56,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -167,6 +171,9 @@ import kotlinx.coroutines.IO
         StandardPublicationEntity::class,
         StandardDocumentEntity::class,
         StandardSubscriptionEntity::class,
+        StandardRecommendationEntity::class,
+        EventEntity::class,
+        RsvpEntity::class,
         RockskyTrackEntity::class,
         RockskyScrobbleEntity::class,
         RockskyAlbumEntity::class,
@@ -285,6 +292,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 53, to = 54),
         // Add ProfileLinkEntity for profile links
         AutoMigration(from = 54, to = 55),
+        // Add standard recommendations, events and RSVPs
+        AutoMigration(from = 55, to = 56),
     ],
     exportSchema = true,
 )
@@ -309,6 +318,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
     abstract fun rockskyDao(): RockskyDao
+    abstract fun eventDao(): EventDao
 }
 
 // The Room compiler generates the `actual` implementations.
