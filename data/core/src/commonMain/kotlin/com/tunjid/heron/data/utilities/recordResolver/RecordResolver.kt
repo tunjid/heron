@@ -155,6 +155,8 @@ import io.ktor.client.HttpClient
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -343,9 +345,8 @@ internal class OfflineRecordResolver(
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
         val queuedUris = mutableSetOf<RecordUri>()
-        val externalRecordsChannel = Channel<PopulatedPostEntity>(
-            capacity = RefreshBufferSize,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        val externalRecordsChannel = Channel<List<PopulatedPostEntity>>(
+            capacity = Channel.UNLIMITED,
         )
         val queuedPostUris = mutableSetOf<PostUri>()
 
@@ -375,6 +376,7 @@ internal class OfflineRecordResolver(
                     },
             ),
         ) { populatedRecordLists ->
+            val unresolvedPosts = mutableListOf<PopulatedPostEntity>()
             val associatedRecords = buildMap {
                 populatedRecordLists.forEach { populatedRecords ->
                     populatedRecords.forEach { recordEntity ->
@@ -386,11 +388,12 @@ internal class OfflineRecordResolver(
                             recordEntity.unresolvedExternalRecordLinks().isNotEmpty() &&
                             queuedPostUris.add(recordEntity.entity.uri)
                         ) {
-                            externalRecordsChannel.trySend(recordEntity)
+                            unresolvedPosts.add(recordEntity)
                         }
                     }
                 }
             }
+            if (unresolvedPosts.isNotEmpty()) externalRecordsChannel.trySend(unresolvedPosts)
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
                     // Top level posts have their embedded Records populated
@@ -416,7 +419,7 @@ internal class OfflineRecordResolver(
                 coroutineScope {
                     launch {
                         externalRecordsChannel.consumeEach {
-                            resolveExternalRecords(it)
+                            resolveHeronIndexedExternalRecords(it)
                         }
                     }
                     refreshChannel.consumeEach {
@@ -953,22 +956,30 @@ internal class OfflineRecordResolver(
                 ).distinctUntilChanged()
             }
 
-    private suspend fun resolveExternalRecords(
-        post: PopulatedPostEntity,
+    private suspend fun resolveHeronIndexedExternalRecords(
+        posts: List<PopulatedPostEntity>,
     ) {
-        val resolvedLinks = post.unresolvedExternalRecordLinks().mapNotNull { (externalEmbed, recordUri) ->
-            val resolvedRecordUri = profileLookup.withDidAuthority(recordUri)
-            if (!Did.Regex.matches(resolvedRecordUri.profileId().id)) null
-            else externalEmbed to resolvedRecordUri
+        val resolvedLinks = coroutineScope {
+            posts.flatMap { post ->
+                post.unresolvedExternalRecordLinks().map { (externalEmbed, recordUri) ->
+                    async {
+                        val resolvedRecordUri = profileLookup.withDidAuthority(recordUri)
+                        if (!Did.Regex.matches(resolvedRecordUri.profileId().id)) null
+                        else Triple(post.entity.uri, externalEmbed, resolvedRecordUri)
+                    }
+                }
+            }
+                .awaitAll()
+                .filterNotNull()
         }
         if (resolvedLinks.isEmpty()) return
 
         multipleEntitySaverProvider.saveInTransaction {
-            resolvedLinks.forEach { (externalEmbed, recordUri) ->
+            resolvedLinks.forEach { (postUri, externalEmbed, recordUri) ->
                 maybeAddHeronIndexedExternalRecord(
                     recordUri = recordUri,
                     externalEmbed = externalEmbed,
-                    postUri = post.entity.uri,
+                    postUri = postUri,
                 )
             }
         }
