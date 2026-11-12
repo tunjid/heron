@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Gif
 import com.tunjid.heron.data.core.models.Record
@@ -50,10 +51,11 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.formatDate
+import com.tunjid.heron.timeline.utilities.formatTime
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.Rectangle
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -61,7 +63,6 @@ import kotlin.uuid.Uuid
  * non-interactive preview — e.g. in the composer before a post exists. The post identity needed by
  * [PostExternal] for shared-element keys is stubbed internally; it never matches a real post.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun ExternalEmbedPreview(
     embed: ExternalEmbed,
@@ -106,7 +107,8 @@ internal fun PostExternal(
             verticalArrangement = spacedBy(8.dp),
         ) {
             val showContentPreview = externalRecord == null ||
-                externalRecord is StandardDocument
+                externalRecord is StandardDocument ||
+                externalRecord is Event
 
             if (showContentPreview) ContentPreview(
                 feature = feature,
@@ -119,7 +121,9 @@ internal fun PostExternal(
             val publication = when (externalRecord) {
                 is StandardDocument -> externalRecord.publication
                 is StandardPublication -> externalRecord
-                null -> null
+                is Event,
+                null,
+                -> null
             }.takeIf {
                 presentation == Timeline.Presentation.Text.WithEmbed
             }
@@ -139,6 +143,39 @@ internal fun PostExternal(
                     },
                 )
             }
+            if (externalRecord is Event && presentation == Timeline.Presentation.Text.WithEmbed) {
+                HorizontalDivider()
+                EventSummary(
+                    modifier = Modifier
+                        .padding(all = 12.dp),
+                    event = externalRecord,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EventSummary(
+    event: Event,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = spacedBy(4.dp),
+    ) {
+        Text(
+            text = event.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        event.startsAt?.let { startsAt ->
+            Text(
+                text = "${startsAt.formatDate()} ${startsAt.formatTime()}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
         }
     }
 }

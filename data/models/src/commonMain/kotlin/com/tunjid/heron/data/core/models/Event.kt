@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
@@ -41,12 +42,14 @@ data class Event(
     val interestedCount: Long,
     val notGoingCount: Long,
     val rsvp: Rsvp?,
-) : Record {
+) : Record.Embeddable.External {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri = uri
 
     enum class Mode(
         val id: String,

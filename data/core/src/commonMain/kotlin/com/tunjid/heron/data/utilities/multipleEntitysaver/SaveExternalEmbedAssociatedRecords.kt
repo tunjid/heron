@@ -22,6 +22,7 @@ import app.bsky.embed.ExternalViewExternal
 import app.bsky.embed.ExternalViewExternalSource
 import app.bsky.embed.ExternalViewExternalSourceTheme
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
@@ -119,6 +120,28 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
             ),
         )
     }
+}
+
+internal fun MultipleEntitySaver.addAtmoRsvpEvent(
+    eventUri: EventUri,
+    externalView: ExternalViewExternal,
+    postUri: PostUri,
+) {
+    add(
+        stubEventEntity(
+            eventUri = eventUri,
+            name = externalView.title,
+            description = externalView.description,
+        ),
+    )
+    add(
+        associatedRecord(
+            postUri = postUri,
+            externalEmbedUri = GenericUri(externalView.uri.uri),
+            recordUri = eventUri,
+            recordCid = null,
+        ),
+    )
 }
 
 private fun MultipleEntitySaver.addAssociatedProfile(

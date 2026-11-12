@@ -23,6 +23,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -73,7 +74,10 @@ data class PopulatedEventEntity(
     val author: ProfileEntity,
     @Embedded(prefix = "rsvp_")
     val rsvp: RsvpEntity?,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: EmbeddableRecordUri
+        get() = entity.uri
+}
 
 fun PopulatedEventEntity.asExternalModel() = Event(
     uri = entity.uri,

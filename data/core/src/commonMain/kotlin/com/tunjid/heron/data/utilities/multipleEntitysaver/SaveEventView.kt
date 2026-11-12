@@ -105,6 +105,7 @@ internal fun MultipleEntitySaver.add(
     add(
         stubEventEntity(
             eventUri = eventUri,
+            name = "",
         ),
     )
     add(
@@ -119,16 +120,18 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
-private fun stubEventEntity(
+internal fun stubEventEntity(
     eventUri: EventUri,
+    name: String,
+    description: String? = null,
 ): EventEntity {
     val createdAt = eventUri.recordKey.tidInstant ?: Instant.DISTANT_PAST
     return EventEntity(
         uri = eventUri,
         cid = null,
         authorId = eventUri.profileId(),
-        name = "",
-        description = null,
+        name = name,
+        description = description,
         createdAt = createdAt,
         startsAt = null,
         endsAt = null,

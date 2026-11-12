@@ -85,6 +85,34 @@ interface EventDao {
                 AND rsvps.viewingProfileId IS :viewingProfileId
             INNER JOIN profiles
                 ON events.authorId = profiles.did
+            WHERE events.uri IN (:uris)
+        """,
+    )
+    fun events(
+        viewingProfileId: String?,
+        uris: Collection<EventUri>,
+    ): Flow<List<PopulatedEventEntity>>
+
+    @Query(
+        """
+            SELECT
+                events.*,
+                profiles.did as author_did,
+                profiles.handle as author_handle,
+                profiles.displayName as author_displayName,
+                profiles.avatar as author_avatar,
+                rsvps.uri as rsvp_uri,
+                rsvps.cid as rsvp_cid,
+                rsvps.eventUri as rsvp_eventUri,
+                rsvps.viewingProfileId as rsvp_viewingProfileId,
+                rsvps.status as rsvp_status,
+                rsvps.sortedAt as rsvp_sortedAt
+            FROM events
+            LEFT JOIN rsvps
+                ON events.uri = rsvps.eventUri
+                AND rsvps.viewingProfileId IS :viewingProfileId
+            INNER JOIN profiles
+                ON events.authorId = profiles.did
             WHERE events.authorId = :authorId
             ORDER BY events.sortedAt DESC
             LIMIT :limit

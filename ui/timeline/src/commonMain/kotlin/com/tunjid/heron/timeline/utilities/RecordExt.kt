@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
@@ -190,9 +191,10 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
             is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
-            // Standard site records are shared via their canonical AT URI for now.
+            // Standard site records and events are shared via their canonical AT URI for now.
             is StandardDocumentUri -> uri
             is StandardPublicationUri -> uri
+            is EventUri -> uri
         },
     )
 
@@ -212,6 +214,7 @@ fun EmbeddableRecordUri.collectionShape() = when (this) {
     is StarterPackUri -> StarterPackCollectionShape
     is StandardDocumentUri -> DocumentCollectionShape
     is StandardPublicationUri -> DocumentCollectionShape
+    is EventUri -> DocumentCollectionShape
 }
 
 // A stone that swells to one side, like one left in a cove by the tide.

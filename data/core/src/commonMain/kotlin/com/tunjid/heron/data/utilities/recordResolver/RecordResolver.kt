@@ -33,6 +33,7 @@ import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.FeedPreference
@@ -107,6 +108,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
+import com.tunjid.heron.data.database.entities.PopulatedEventEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
@@ -317,6 +319,7 @@ internal class OfflineRecordResolver(
         val labelerUris = LazyList<LabelerUri>()
         val documentUris = LazyList<StandardDocumentUri>()
         val publicationUris = LazyList<StandardPublicationUri>()
+        val eventUris = LazyList<EventUri>()
 
         uris.forEach { uri ->
             when (uri) {
@@ -327,6 +330,7 @@ internal class OfflineRecordResolver(
                 is LabelerUri -> labelerUris.add(uri)
                 is StandardDocumentUri -> documentUris.add(uri)
                 is StandardPublicationUri -> publicationUris.add(uri)
+                is EventUri -> eventUris.add(uri)
             }
         }
 
@@ -355,6 +359,10 @@ internal class OfflineRecordResolver(
                 publicationUris.list
                     .toDistinctUntilChangedFlowOrEmpty {
                         standardSiteDao.publications(viewingProfileId?.id, it)
+                    },
+                eventUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        eventDao.events(viewingProfileId?.id, it)
                     },
             ),
         ) { populatedRecordLists ->
@@ -965,6 +973,7 @@ private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when 
     is PopulatedStandardDocumentEntity -> asExternalModel()
     is PopulatedStandardPublicationEntity -> asExternalModel()
     is PopulatedStarterPackEntity -> asExternalModel()
+    is PopulatedEventEntity -> asExternalModel()
     is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
 }
 
@@ -979,11 +988,13 @@ private fun PopulatedRecordEntity.needsRefreshing() =
         -> false
         is PopulatedStandardPublicationEntity,
         -> this.entity.cid == null && entity.url == Collections.PLACEHOLDER_URL
+        is PopulatedEventEntity,
+        -> this.entity.cid == null
     }
 
 /**
  * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
- * records (feed generator/list/starter pack/labeler), (3) standard-site records.
+ * records (feed generator/list/starter pack/labeler), (3) standard-site records, (4) events.
  */
 private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) {
     is Post -> 0
@@ -996,6 +1007,8 @@ private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) 
     -> 2
     is StandardPublication,
     -> 3
+    is Event,
+    -> 4
 }
 
 private const val RefreshBufferSize = 64

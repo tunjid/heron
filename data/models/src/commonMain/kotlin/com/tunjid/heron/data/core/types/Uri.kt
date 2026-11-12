@@ -365,7 +365,8 @@ value class StandardRecommendationUri(
 value class EventUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -517,6 +518,7 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? {
             LabelerUri.NAMESPACE -> LabelerUri(normalized)
             StandardPublicationUri.NAMESPACE -> StandardPublicationUri(normalized)
             StandardDocumentUri.NAMESPACE -> StandardDocumentUri(normalized)
+            EventUri.NAMESPACE -> EventUri(normalized)
             else -> null
         }
     }
