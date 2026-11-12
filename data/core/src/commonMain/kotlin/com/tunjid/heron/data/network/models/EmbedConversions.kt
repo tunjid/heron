@@ -137,7 +137,7 @@ internal fun CardyExtractResponse.asLinkPreview(
 /**
  * Resolves [ExternalViewExternal.associatedRefs] into the typed `site.standard.*` document /
  * publication strong refs they point at. Shared by the offline saver
- * ([com.tunjid.heron.data.utilities.multipleEntitysaver.addExternalAssociatedRecords]) and the
+ * ([com.tunjid.heron.data.utilities.multipleEntitysaver.addBlueskyIndexedExternalAssociatedRecords]) and the
  * in-memory link preview mapper.
  */
 internal fun ExternalViewExternal.associatedStandardRefs(): ExternalStandardRefs? {

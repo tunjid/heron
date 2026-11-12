@@ -23,17 +23,22 @@ import app.bsky.embed.ExternalViewExternalSource
 import app.bsky.embed.ExternalViewExternalSourceTheme
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.EventUri
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedProfilesEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalAssociatedRecordEntity
 import com.tunjid.heron.data.network.models.associatedStandardRefs
@@ -53,7 +58,7 @@ import kotlin.time.Instant
  * they never clobber a fully-resolved record. The strong-ref cid is preserved on the
  * [PostExternalAssociatedRecordEntity] linkage instead.
  */
-internal fun MultipleEntitySaver.addExternalAssociatedRecords(
+internal fun MultipleEntitySaver.addBlueskyIndexedExternalAssociatedRecords(
     externalView: ExternalViewExternal,
     postUri: PostUri,
 ) {
@@ -122,23 +127,34 @@ internal fun MultipleEntitySaver.addExternalAssociatedRecords(
     }
 }
 
-internal fun MultipleEntitySaver.addAtmoRsvpEvent(
-    eventUri: EventUri,
-    externalView: ExternalViewExternal,
+internal fun MultipleEntitySaver.maybeAddHeronIndexedExternalRecord(
+    recordUri: EmbeddableRecordUri,
+    externalEmbed: ExternalEmbedEntity,
     postUri: PostUri,
 ) {
-    add(
-        stubEventEntity(
-            eventUri = eventUri,
-            name = externalView.title,
-            description = externalView.description,
-        ),
-    )
+    when (recordUri) {
+        is EventUri -> add(
+            stubEventEntity(
+                eventUri = recordUri,
+                name = externalEmbed.title,
+                description = externalEmbed.description,
+            ),
+        )
+        is FeedGeneratorUri,
+        is LabelerUri,
+        is ListUri,
+        is PostUri,
+        is StandardDocumentUri,
+        is StandardPublicationUri,
+        is StarterPackUri,
+        -> return
+    }
+    add(stubProfileEntity(profileId = recordUri.profileId()))
     add(
         associatedRecord(
             postUri = postUri,
-            externalEmbedUri = GenericUri(externalView.uri.uri),
-            recordUri = eventUri,
+            externalEmbedUri = externalEmbed.uri,
+            recordUri = recordUri,
             recordCid = null,
         ),
     )

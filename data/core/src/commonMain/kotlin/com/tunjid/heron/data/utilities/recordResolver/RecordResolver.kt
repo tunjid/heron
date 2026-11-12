@@ -129,6 +129,7 @@ import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.unresolvedExternalRecordLinks
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.expiredSessionResult
@@ -140,6 +141,8 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.maybeAddHeronIndexedExternalRecord
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.tidInstant
@@ -251,6 +254,7 @@ internal class OfflineRecordResolver(
     private val standardSiteDao: StandardSiteDao,
     private val starterPackDao: StarterPackDao,
     private val eventDao: EventDao,
+    private val profileLookup: ProfileLookup,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
     private val httpClient: HttpClient,
@@ -339,6 +343,11 @@ internal class OfflineRecordResolver(
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
         val queuedUris = mutableSetOf<RecordUri>()
+        val externalRecordsChannel = Channel<PopulatedPostEntity>(
+            capacity = RefreshBufferSize,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+        val queuedPostUris = mutableSetOf<PostUri>()
 
         return combine(
             listOf(
@@ -373,6 +382,12 @@ internal class OfflineRecordResolver(
                         if (recordEntity.needsRefreshing() && queuedUris.add(recordEntity.recordUri)) {
                             refreshChannel.trySend(recordEntity.recordUri)
                         }
+                        if (recordEntity is PopulatedPostEntity &&
+                            recordEntity.unresolvedExternalRecordLinks().isNotEmpty() &&
+                            queuedPostUris.add(recordEntity.entity.uri)
+                        ) {
+                            externalRecordsChannel.trySend(recordEntity)
+                        }
                     }
                 }
             }
@@ -385,7 +400,7 @@ internal class OfflineRecordResolver(
                                 .record
                                 ?.embeddedRecordUri
                                 ?.let(::add)
-                            recordEntity.associatedStandardRecords
+                            recordEntity.associatedExternalRecords
                                 .forEach { add(it.recordUri) }
                         }
                             .mapNotNull { uri ->
@@ -398,12 +413,20 @@ internal class OfflineRecordResolver(
             }
         }
             .withRefresh {
-                refreshChannel.consumeEach {
-                    resolve(it)
+                coroutineScope {
+                    launch {
+                        externalRecordsChannel.consumeEach {
+                            resolveExternalRecords(it)
+                        }
+                    }
+                    refreshChannel.consumeEach {
+                        resolve(it)
+                    }
                 }
             }
             .onCompletion {
                 refreshChannel.close()
+                externalRecordsChannel.close()
             }
     }
 
@@ -929,6 +952,27 @@ internal class OfflineRecordResolver(
                     },
                 ).distinctUntilChanged()
             }
+
+    private suspend fun resolveExternalRecords(
+        post: PopulatedPostEntity,
+    ) {
+        val resolvedLinks = post.unresolvedExternalRecordLinks().mapNotNull { (externalEmbed, recordUri) ->
+            val resolvedRecordUri = profileLookup.withDidAuthority(recordUri)
+            if (!Did.Regex.matches(resolvedRecordUri.profileId().id)) null
+            else externalEmbed to resolvedRecordUri
+        }
+        if (resolvedLinks.isEmpty()) return
+
+        multipleEntitySaverProvider.saveInTransaction {
+            resolvedLinks.forEach { (externalEmbed, recordUri) ->
+                maybeAddHeronIndexedExternalRecord(
+                    recordUri = recordUri,
+                    externalEmbed = externalEmbed,
+                    postUri = post.entity.uri,
+                )
+            }
+        }
+    }
 
     private suspend fun fetchRecordAndSaveCreator(
         recordUri: RecordUri,

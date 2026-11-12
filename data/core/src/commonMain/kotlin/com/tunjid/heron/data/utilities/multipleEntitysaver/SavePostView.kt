@@ -22,9 +22,10 @@ import app.bsky.feed.PostViewEmbedUnion
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postThreadDetailsEntityOrNull
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
-import com.tunjid.heron.data.network.models.atmoRsvpEventUri
+import com.tunjid.heron.data.network.models.asExternalEmbedEntity
 import com.tunjid.heron.data.network.models.embedEntities
 import com.tunjid.heron.data.network.models.externalAssociatedView
+import com.tunjid.heron.data.network.models.externalRecordUris
 import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
@@ -52,14 +53,14 @@ internal fun MultipleEntitySaver.add(
         )
     }
     postView.externalAssociatedView()?.let { externalView ->
-        addExternalAssociatedRecords(
+        addBlueskyIndexedExternalAssociatedRecords(
             externalView = externalView,
             postUri = postEntity.uri,
         )
-        postView.atmoRsvpEventUri()?.let { eventUri ->
-            addAtmoRsvpEvent(
-                eventUri = eventUri,
-                externalView = externalView,
+        postView.externalRecordUris().forEach { recordUri ->
+            maybeAddHeronIndexedExternalRecord(
+                recordUri = recordUri,
+                externalEmbed = externalView.asExternalEmbedEntity(),
                 postUri = postEntity.uri,
             )
         }

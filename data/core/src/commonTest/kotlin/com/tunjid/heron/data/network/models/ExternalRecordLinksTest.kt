@@ -21,39 +21,40 @@ import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-class AtmoRsvpTest {
+class ExternalRecordLinksTest {
 
     @Test
     fun handleUrl_byAuthor_mapsToDidEventUri() {
         assertEquals(
-            AuthorEventUri,
-            postView(link = "https://atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z").atmoRsvpEventUri(),
+            listOf(AuthorEventUri),
+            postView(link = "https://atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z").externalRecordUris(),
         )
     }
 
     @Test
     fun handleUrl_matchesAuthorHandleIgnoringCase() {
         assertEquals(
-            AuthorEventUri,
-            postView(link = "https://atmo.rsvp/p/BjoernSta.de/e/3myx2khkx424z").atmoRsvpEventUri(),
+            listOf(AuthorEventUri),
+            postView(link = "https://atmo.rsvp/p/BjoernSta.de/e/3myx2khkx424z").externalRecordUris(),
         )
     }
 
     @Test
     fun didUrl_byAuthor_mapsToDidEventUri() {
         assertEquals(
-            AuthorEventUri,
-            postView(link = "https://atmo.rsvp/p/did:plc:author/e/3myx2khkx424z").atmoRsvpEventUri(),
+            listOf(AuthorEventUri),
+            postView(link = "https://atmo.rsvp/p/did:plc:author/e/3myx2khkx424z").externalRecordUris(),
         )
     }
 
     @Test
     fun trailingSlashQueryAndFragment_areIgnored() {
         assertEquals(
-            AuthorEventUri,
-            postView(link = "https://www.atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z/?ref=bsky#top").atmoRsvpEventUri(),
+            listOf(AuthorEventUri),
+            postView(link = "https://www.atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z/?ref=bsky#top").externalRecordUris(),
         )
     }
 
@@ -63,7 +64,7 @@ class AtmoRsvpTest {
         val start = "Going to ".encodeToByteArray().size
         val end = start + "@organiser.bsky.social".encodeToByteArray().size
         assertEquals(
-            OrganiserEventUri,
+            listOf(OrganiserEventUri),
             postView(
                 link = "https://atmo.rsvp/p/organiser.bsky.social/e/3myx2khkx424z",
                 text = text,
@@ -73,7 +74,7 @@ class AtmoRsvpTest {
                         "features": [{ "${'$'}type": "app.bsky.richtext.facet#mention", "did": "did:plc:organiser" }]
                     }]
                 """,
-            ).atmoRsvpEventUri(),
+            ).externalRecordUris(),
         )
     }
 
@@ -83,7 +84,7 @@ class AtmoRsvpTest {
         val start = "🎉🎉 ".encodeToByteArray().size
         val end = text.encodeToByteArray().size
         assertEquals(
-            OrganiserEventUri,
+            listOf(OrganiserEventUri),
             postView(
                 link = "https://atmo.rsvp/p/organiser.bsky.social/e/3myx2khkx424z",
                 text = text,
@@ -93,25 +94,45 @@ class AtmoRsvpTest {
                         "features": [{ "${'$'}type": "app.bsky.richtext.facet#mention", "did": "did:plc:organiser" }]
                     }]
                 """,
-            ).atmoRsvpEventUri(),
+            ).externalRecordUris(),
         )
     }
 
     @Test
     fun handleUrl_byQuotedAuthor_mapsToQuotedAuthorDid() {
         assertEquals(
-            OrganiserEventUri,
+            listOf(OrganiserEventUri),
             postView(
                 link = "https://atmo.rsvp/p/organiser.bsky.social/e/3myx2khkx424z",
                 quotedAuthor = true,
-            ).atmoRsvpEventUri(),
+            ).externalRecordUris(),
         )
     }
 
     @Test
     fun otherActor_isNotResolved() {
-        assertNull(
-            postView(link = "https://atmo.rsvp/p/someone.else/e/3myx2khkx424z").atmoRsvpEventUri(),
+        assertEquals(
+            emptyList(),
+            postView(link = "https://atmo.rsvp/p/someone.else/e/3myx2khkx424z").externalRecordUris(),
+        )
+    }
+
+    @Test
+    fun recordUri_keepsTheUrlsAuthorityForReadTimeResolution() {
+        assertEquals(
+            EventUri("at://someone.else/community.lexicon.calendar.event/3myx2khkx424z"),
+            "https://atmo.rsvp/p/someone.else/e/3myx2khkx424z?ref=bsky".externalRecordUriOrNull(),
+        )
+    }
+
+    @Test
+    fun sameRecord_matchesAcrossHandleAndDidAuthorities() {
+        val handleUri = EventUri("at://organiser.bsky.social/community.lexicon.calendar.event/3myx2khkx424z")
+        assertTrue(OrganiserEventUri.isSameRecordAs(handleUri))
+        assertFalse(
+            OrganiserEventUri.isSameRecordAs(
+                EventUri("at://organiser.bsky.social/community.lexicon.calendar.event/3other"),
+            ),
         )
     }
 
@@ -124,7 +145,7 @@ class AtmoRsvpTest {
             "https://atmo.rsvp/p/bjoernsta.de/e/3myx2khkx424z/rsvps",
             "https://example.com/p/bjoernsta.de/e/3myx2khkx424z",
         ).forEach { link ->
-            assertNull(postView(link = link).atmoRsvpEventUri(), link)
+            assertEquals(emptyList(), postView(link = link).externalRecordUris(), link)
         }
     }
 }
