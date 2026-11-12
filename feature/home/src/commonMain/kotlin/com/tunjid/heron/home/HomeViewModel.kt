@@ -29,11 +29,11 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
@@ -122,7 +122,7 @@ class ActualHomeViewModel(
                                 state.sourceIdsToHasUpdates += (event.sourceId to event.hasUpdates)
                             }
                         }
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -258,12 +258,12 @@ private fun Flow<Action.UpdateTimeline>.launchSaveTimelinePreferencesMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { it.publication.toSubscriptionWritable() },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

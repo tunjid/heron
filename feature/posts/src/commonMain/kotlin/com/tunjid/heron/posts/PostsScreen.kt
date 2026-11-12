@@ -454,8 +454,8 @@ private fun PostsTimeline(
                                         postOptionsSheetState.showOptions(action.post)
                                     }
 
-                                    is PostAction.OfPublicationSubscription ->
-                                        actions(Action.TogglePublicationSubscription(action.publication))
+                                    is PostAction.RecordInteraction ->
+                                        actions(Action.RecordInteraction(action))
 
                                     else -> Unit
                                 }

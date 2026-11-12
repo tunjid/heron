@@ -20,7 +20,6 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -32,6 +31,7 @@ import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -158,9 +158,9 @@ sealed class PostsScreenStateHolders : PostsTimelineMutator {
 
 sealed class Action(val key: String) {
 
-    data class TogglePublicationSubscription(
-        val publication: StandardPublication,
-    ) : Action(key = "TogglePublicationSubscription")
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,

@@ -19,13 +19,13 @@ package com.tunjid.heron.home
 import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
@@ -97,9 +97,9 @@ sealed class Action(val key: String) {
         val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
 
-    data class TogglePublicationSubscription(
-        val publication: StandardPublication,
-    ) : Action(key = "TogglePublicationSubscription")
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class SnackbarDismissed(
         val message: Memo,

@@ -22,7 +22,6 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.SearchFilter
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
@@ -33,6 +32,7 @@ import com.tunjid.heron.data.repository.ProfileSearchQuery
 import com.tunjid.heron.data.repository.records.SearchQuery
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -354,9 +354,9 @@ sealed class Action(val key: String) {
         val presentation: Timeline.Presentation,
     ) : Action(key = "UpdatePresentation")
 
-    data class TogglePublicationSubscription(
-        val publication: StandardPublication,
-    ) : Action(key = "TogglePublicationSubscription")
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class SnackbarDismissed(
         val message: Memo,

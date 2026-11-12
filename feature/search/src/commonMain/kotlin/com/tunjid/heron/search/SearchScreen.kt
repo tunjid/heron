@@ -296,8 +296,8 @@ internal fun SearchScreen(
                 onPostSearchResultClicked = onPostSearchResultClicked,
                 onReplyToPost = onReplyToPost,
                 onPostRecordClicked = onPostRecordClicked,
-                onPublicationSubscriptionToggled = {
-                    actions(Action.TogglePublicationSubscription(it))
+                onRecordInteraction = {
+                    actions(Action.RecordInteraction(it))
                 },
                 onMediaClicked = onMediaClicked,
                 onNavigate = navigateTo,

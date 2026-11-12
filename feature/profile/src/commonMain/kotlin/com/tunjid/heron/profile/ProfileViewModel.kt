@@ -54,6 +54,7 @@ import com.tunjid.heron.profile.ProfileScreenStateHolders.Records.Documents
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.timeline.state.recordStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -216,6 +217,10 @@ class ActualProfileViewModel(
                             state.currentPage = event.page
                         }
                         is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                            state = state,
+                            writeQueue = writeQueue,
+                        )
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -506,6 +511,18 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 ) = launchedCollect { event ->
     state.messages -= event.message
 }
+
+context(productionScope: CoroutineScope)
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
+    state: State.Mutable,
+    writeQueue: WriteQueue,
+) = launchAndCollectEnqueueMutations(
+    writeQueue = writeQueue,
+    toWritable = { it.interaction.toWritable() },
+    postEnqueue = { _, memo ->
+        if (memo != null) state.messages += memo
+    },
+)
 
 context(productionScope: CoroutineScope)
 private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(

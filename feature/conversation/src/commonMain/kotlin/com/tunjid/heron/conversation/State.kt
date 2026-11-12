@@ -25,12 +25,12 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.models
 import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
@@ -197,9 +197,9 @@ sealed class Action(val key: String) {
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
 
-    data class TogglePublicationSubscription(
-        val publication: StandardPublication,
-    ) : Action(key = "TogglePublicationSubscription")
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class SnackbarDismissed(
         val message: Memo,

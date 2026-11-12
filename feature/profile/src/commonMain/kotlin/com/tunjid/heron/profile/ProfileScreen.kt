@@ -1669,17 +1669,8 @@ private fun ProfileTimeline(
                                         postOptionsSheetState.showOptions(action.post)
                                     }
 
-                                    is PostAction.OfPublicationSubscription ->
-                                        actions(
-                                            when (val subscription = action.publication.subscription) {
-                                                null -> Action.TogglePublicationSubscription.Subscribe(
-                                                    publicationUri = action.publication.uri,
-                                                )
-                                                else -> Action.TogglePublicationSubscription.Unsubscribe(
-                                                    subscriptionUri = subscription.uri,
-                                                )
-                                            },
-                                        )
+                                    is PostAction.RecordInteraction ->
+                                        actions(Action.RecordInteraction(action))
 
                                     else -> Unit
                                 }

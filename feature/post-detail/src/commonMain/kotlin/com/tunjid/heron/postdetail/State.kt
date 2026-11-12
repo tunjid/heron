@@ -21,13 +21,13 @@ import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Cursors
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.models.nativeEmbeddedRecord
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.model
 import com.tunjid.heron.ui.scaffold.navigation.sharedElementPrefix
@@ -148,9 +148,9 @@ sealed class Action(val key: String) {
         val recordUri: RecordUri,
     ) : Action(key = "DeleteRecord")
 
-    data class TogglePublicationSubscription(
-        val publication: StandardPublication,
-    ) : Action(key = "TogglePublicationSubscription")
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     data class UpdateCurrentLanguageTag(
         val languageTag: String,

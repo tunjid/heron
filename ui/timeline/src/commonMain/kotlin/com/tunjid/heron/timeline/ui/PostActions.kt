@@ -26,6 +26,8 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.FeedReqId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.toSubscriptionWritable
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 sealed interface PostAction {
@@ -55,10 +57,6 @@ sealed interface PostAction {
     data class OfRecord(
         val record: Record,
         val owningPostUri: PostUri,
-    ) : PostAction
-
-    data class OfPublicationSubscription(
-        val publication: StandardPublication,
     ) : PostAction
 
     data class OfMedia(
@@ -91,6 +89,16 @@ sealed interface PostAction {
         val feedContext: String?,
         val reqId: FeedReqId?,
     ) : Options
+
+    sealed interface RecordInteraction : PostAction
+
+    data class OfPublicationSubscription(
+        val publication: StandardPublication,
+    ) : RecordInteraction
+}
+
+fun PostAction.RecordInteraction.toWritable(): Writable = when (this) {
+    is PostAction.OfPublicationSubscription -> publication.toSubscriptionWritable()
 }
 
 @Stable

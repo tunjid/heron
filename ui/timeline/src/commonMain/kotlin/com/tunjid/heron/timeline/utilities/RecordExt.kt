@@ -125,11 +125,7 @@ fun EmbeddedRecord(
                         ),
                     )
                 },
-                onSubscriptionToggled = { publication ->
-                    postActions.onPostAction(
-                        PostAction.OfPublicationSubscription(publication = publication),
-                    )
-                },
+                onRecordInteraction = postActions::onPostAction,
             )
             is FeedGenerator -> FeedGenerator(
                 modifier = NonPostRecordModifier,

@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
@@ -81,7 +82,7 @@ fun ExternalEmbedPreview(
             isBlurred = false,
             paneTransitionScope = paneTransitionScope,
             onClick = {},
-            onSubscriptionToggled = {},
+            onRecordInteraction = {},
         )
     }
 }
@@ -96,7 +97,7 @@ internal fun PostExternal(
     isBlurred: Boolean,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
-    onSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
 ) = with(paneTransitionScope) {
     val gif = remember(feature) { feature.asEmbeddedGifOrNull() }
     FeatureContainer(
@@ -139,7 +140,11 @@ internal fun PostExternal(
                     ),
                     publication = publication,
                     onSubscriptionToggled = { toggledPublication, _ ->
-                        onSubscriptionToggled(toggledPublication)
+                        onRecordInteraction(
+                            PostAction.OfPublicationSubscription(
+                                publication = toggledPublication,
+                            ),
+                        )
                     },
                 )
             }
