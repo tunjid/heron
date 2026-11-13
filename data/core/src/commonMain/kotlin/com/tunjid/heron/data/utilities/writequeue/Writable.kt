@@ -409,6 +409,7 @@ fun Event.toRsvpWritable(
                     eventCid = eventCid,
                     status = status,
                     recordKey = existingRsvp?.uri?.recordKey ?: RecordKey.generate(),
+                    previousStatus = existingRsvp?.status,
                 ),
             )
         }

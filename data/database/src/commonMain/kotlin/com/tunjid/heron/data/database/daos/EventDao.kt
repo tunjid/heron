@@ -189,7 +189,65 @@ interface EventDao {
         authorId: String,
     )
 
+    @Query(
+        """
+    UPDATE events
+    SET goingCount = MAX(
+            0,
+            goingCount
+                + (CASE WHEN :newStatus = :goingStatus THEN 1 ELSE 0 END)
+                - (CASE WHEN :previousStatus = :goingStatus THEN 1 ELSE 0 END)
+        ),
+        interestedCount = MAX(
+            0,
+            interestedCount
+                + (CASE WHEN :newStatus = :interestedStatus THEN 1 ELSE 0 END)
+                - (CASE WHEN :previousStatus = :interestedStatus THEN 1 ELSE 0 END)
+        ),
+        notGoingCount = MAX(
+            0,
+            notGoingCount
+                + (CASE WHEN :newStatus = :notGoingStatus THEN 1 ELSE 0 END)
+                - (CASE WHEN :previousStatus = :notGoingStatus THEN 1 ELSE 0 END)
+        )
+    WHERE uri = :eventUri
+    """,
+    )
+    suspend fun adjustRsvpCounts(
+        eventUri: String,
+        previousStatus: String?,
+        newStatus: String,
+        goingStatus: String,
+        interestedStatus: String,
+        notGoingStatus: String,
+    )
+
     // --- RSVPs ---
+
+    @Query(
+        """
+    UPDATE events
+    SET goingCount = MAX(
+            0,
+            goingCount - (SELECT COUNT(*) FROM rsvps WHERE uri = :rsvpUri AND status = :goingStatus)
+        ),
+        interestedCount = MAX(
+            0,
+            interestedCount - (SELECT COUNT(*) FROM rsvps WHERE uri = :rsvpUri AND status = :interestedStatus)
+        ),
+        notGoingCount = MAX(
+            0,
+            notGoingCount - (SELECT COUNT(*) FROM rsvps WHERE uri = :rsvpUri AND status = :notGoingStatus)
+        )
+    WHERE uri IN (SELECT eventUri FROM rsvps WHERE uri = :rsvpUri)
+    """,
+    )
+    suspend fun decrementRsvpCounts(
+        rsvpUri: RsvpUri,
+        goingStatus: String,
+        interestedStatus: String,
+        notGoingStatus: String,
+    )
 
     @Upsert
     suspend fun upsertRsvps(

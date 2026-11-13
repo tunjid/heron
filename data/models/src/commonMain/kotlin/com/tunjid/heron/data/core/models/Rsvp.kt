@@ -66,5 +66,6 @@ data class Rsvp(
         val status: Status,
         val recordKey: RecordKey = RecordKey.generate(),
         val sortedAt: Instant = Clock.System.now(),
+        val previousStatus: Status? = null,
     )
 }

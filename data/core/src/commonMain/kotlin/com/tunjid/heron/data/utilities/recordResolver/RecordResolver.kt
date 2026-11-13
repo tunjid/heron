@@ -99,6 +99,7 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -261,6 +262,7 @@ internal class OfflineRecordResolver(
     private val networkService: NetworkService,
     private val httpClient: HttpClient,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val transactionWriter: TransactionWriter,
 ) : RecordResolver {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -840,7 +842,15 @@ internal class OfflineRecordResolver(
             is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
             is StandardRecommendationUri -> standardSiteDao.deleteRecommendation(uri)
             is EventUri -> eventDao.deleteEvent(uri)
-            is RsvpUri -> eventDao.deleteRsvp(uri)
+            is RsvpUri -> transactionWriter.inTransaction {
+                eventDao.decrementRsvpCounts(
+                    rsvpUri = uri,
+                    goingStatus = Rsvp.Status.Going.id,
+                    interestedStatus = Rsvp.Status.Interested.id,
+                    notGoingStatus = Rsvp.Status.NotGoing.id,
+                )
+                eventDao.deleteRsvp(uri)
+            }
             is AlbumUri -> Unit // TODO
             is ArtistUri -> Unit // TODO
             is ScrobbleUri -> Unit // TODO

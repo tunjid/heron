@@ -55,7 +55,6 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import community.lexicon.calendar.Rsvp as LexiconRsvp
 import dev.zacsweers.metro.Inject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -276,6 +275,15 @@ internal class OfflineFirstEventRecordOperations(
                     rsvp = rsvp,
                     sortedAt = put.sortedAt,
                     viewingProfileId = signedInProfileId,
+                )
+
+                eventDao.adjustRsvpCounts(
+                    eventUri = put.eventUri.uri,
+                    previousStatus = put.previousStatus?.id,
+                    newStatus = put.status.id,
+                    goingStatus = Rsvp.Status.Going.id,
+                    interestedStatus = Rsvp.Status.Interested.id,
+                    notGoingStatus = Rsvp.Status.NotGoing.id,
                 )
             }
         }
