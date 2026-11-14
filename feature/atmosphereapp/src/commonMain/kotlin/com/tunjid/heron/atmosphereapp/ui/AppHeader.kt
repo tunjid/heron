@@ -54,7 +54,6 @@ import heron.feature.atmosphereapp.generated.resources.tab_documents
 import heron.feature.atmosphereapp.generated.resources.tab_publications
 import heron.feature.atmosphereapp.generated.resources.tab_scrobbles
 import heron.feature.atmosphereapp.generated.resources.tab_tracks
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -70,13 +69,7 @@ fun AtmosphereAppHeader(
     stateHolders: List<AppScreenStateHolders>,
 ) {
     Column(
-        modifier = modifier
-            .offset {
-                IntOffset(
-                    x = 0,
-                    y = -headerState.translation.roundToInt(),
-                )
-            },
+        modifier = modifier,
     ) {
         Spacer(
             modifier = Modifier

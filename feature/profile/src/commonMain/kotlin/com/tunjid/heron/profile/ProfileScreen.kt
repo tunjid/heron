@@ -46,7 +46,6 @@ import androidx.compose.foundation.shape.PolygonShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -174,6 +173,7 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.atmosphereAppDestination
@@ -196,7 +196,6 @@ import com.tunjid.heron.ui.scaffold.scaffold.headerBlur
 import com.tunjid.heron.ui.scaffold.scaffold.paneClip
 import com.tunjid.heron.ui.scaffold.scaffold.pinnedHeaderScrim
 import com.tunjid.heron.ui.scaffold.scaffold.rememberPinnedHeaderState
-import com.tunjid.heron.ui.scaffold.scaffold.renderHeaderInTransitionOverlay
 import com.tunjid.heron.ui.shapes.Circle
 import com.tunjid.heron.ui.shapes.Rectangle
 import com.tunjid.heron.ui.tabIndex
@@ -730,17 +729,13 @@ private fun ProfileHeader(
         val surfaceColor = MaterialTheme.colorScheme.surface
         Box(
             modifier = Modifier
-                .renderHeaderInTransitionOverlay(
-                    paneScaffoldState = paneScaffoldState,
-                    zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
-                )
                 .pinnedHeaderScrim(
                     state = headerState.headerState,
                     scrimColor = MaterialTheme.colorScheme.surface,
                 )
-                .offset {
-                    headerState.bioOffset()
-                }
+                .pinnedHeaderOffset(
+                    state = headerState.headerState,
+                )
                 .padding(top = headerState.bioTopPadding),
         ) {
             PaneStickySharedElement(
@@ -761,9 +756,9 @@ private fun ProfileHeader(
         Column(
             modifier = Modifier
                 .padding(top = headerState.bioTopPadding)
-                .offset {
-                    headerState.bioOffset()
-                },
+                .pinnedHeaderOffset(
+                    state = headerState.headerState,
+                ),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1771,11 +1766,6 @@ private class HeaderState(
     val avatarPadding get() = 4.dp * max(0f, 1f - progress)
     val avatarAlignmentLerp get() = progress
     val tabsHorizontalPadding get() = sizeToken + (CollapsedProfilePhotoSize * progress)
-
-    fun bioOffset() = IntOffset(
-        x = 0,
-        y = -headerState.translation.roundToInt(),
-    )
 
     fun avatarOffset(
         density: Density,

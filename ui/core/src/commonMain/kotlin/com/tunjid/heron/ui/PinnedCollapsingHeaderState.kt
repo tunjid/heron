@@ -111,6 +111,15 @@ fun rememberPinnedCollapsingHeaderState(
     }
 }
 
+fun Modifier.pinnedHeaderOffset(
+    state: PinnedCollapsingHeaderState,
+) = offset {
+    IntOffset(
+        x = 0,
+        y = -state.translation.roundToInt(),
+    )
+}
+
 /**
  * Centers a pull to refresh indicator horizontally and places it at the visible bottom edge of
  * the header described by [state], following the header as it collapses to its pinned height.
