@@ -186,7 +186,7 @@ sealed class ProfileScreenStateHolders {
             is LabelerSettings -> "LabelerSettings"
         }
 
-    val tab
+    val tab: ProfileTab?
         get() = when (this) {
             is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
             is Records.Lists -> ProfileTab.Bluesky.Lists.All
