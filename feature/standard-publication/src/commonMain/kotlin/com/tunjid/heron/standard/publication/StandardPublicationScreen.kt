@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -40,7 +39,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.heron.data.core.models.link
@@ -55,6 +53,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.modifiers.gridColumnCount
 import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -70,7 +69,6 @@ import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.mutator.compose.produceStateWithLifecycle
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import kotlin.math.roundToInt
 
 @Composable
 internal fun StandardPublicationScreen(
@@ -102,21 +100,18 @@ internal fun StandardPublicationScreen(
         headerContent = {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .renderHeaderInTransitionOverlay(
                         paneScaffoldState = paneScaffoldState,
                         zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                     )
-                    .fillMaxWidth()
                     .pinnedHeaderScrim(
                         state = pinnedCollapsingHeaderState,
                         scrimColor = MaterialTheme.colorScheme.surface,
                     )
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = -pinnedCollapsingHeaderState.translation.roundToInt(),
-                        )
-                    }
+                    .pinnedHeaderOffset(
+                        state = pinnedCollapsingHeaderState,
+                    )
                     .padding(
                         horizontal = 16.dp,
                     )

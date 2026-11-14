@@ -53,6 +53,7 @@ import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.shapedClickable
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -101,14 +102,17 @@ internal fun AtmosphereAppScreen(
         headerContent = {
             AtmosphereAppHeader(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .renderHeaderInTransitionOverlay(
                         paneScaffoldState = paneScaffoldState,
                         zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                     )
-                    .fillMaxWidth()
                     .pinnedHeaderScrim(
                         state = pinnedCollapsingHeaderState,
                         scrimColor = MaterialTheme.colorScheme.surface,
+                    )
+                    .pinnedHeaderOffset(
+                        state = pinnedCollapsingHeaderState,
                     )
                     .padding(horizontal = 16.dp),
                 paneScaffoldState = paneScaffoldState,

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -81,6 +80,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -109,7 +109,6 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.posts.generated.resources.Res
 import heron.feature.posts.generated.resources.latest
 import heron.feature.posts.generated.resources.top
-import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -149,21 +148,18 @@ internal fun PostsScreen(
         headerContent = {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .renderHeaderInTransitionOverlay(
                         paneScaffoldState = paneScaffoldState,
                         zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                     )
-                    .fillMaxWidth()
                     .pinnedHeaderScrim(
                         state = pinnedCollapsingHeaderState,
                         scrimColor = MaterialTheme.colorScheme.surface,
                     )
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = -pinnedCollapsingHeaderState.translation.roundToInt(),
-                        )
-                    },
+                    .pinnedHeaderOffset(
+                        state = pinnedCollapsingHeaderState,
+                    ),
             ) {
                 Spacer(
                     modifier = Modifier

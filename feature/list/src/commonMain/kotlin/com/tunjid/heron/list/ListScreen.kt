@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -55,7 +54,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -105,6 +103,7 @@ import com.tunjid.heron.ui.horizontalSpace
 import com.tunjid.heron.ui.icons.HeronIcons
 import com.tunjid.heron.ui.icons.regular.RemoveCircle
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.pinnedHeaderOffset
 import com.tunjid.heron.ui.pullToRefreshIndicatorOffset
 import com.tunjid.heron.ui.rememberPinnedCollapsingHeaderState
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
@@ -135,7 +134,6 @@ import heron.feature.list.generated.resources.remove_list_member
 import heron.feature.list.generated.resources.remove_list_member_confirmation
 import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.yes
-import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -174,21 +172,18 @@ internal fun ListScreen(
         headerContent = {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .renderHeaderInTransitionOverlay(
                         paneScaffoldState = paneScaffoldState,
                         zIndexInOverlay = UiTokens.lowerThanAppBarSharedElementZIndex(),
                     )
-                    .fillMaxWidth()
                     .pinnedHeaderScrim(
                         state = pinnedCollapsingHeaderState,
                         scrimColor = MaterialTheme.colorScheme.surface,
                     )
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = -pinnedCollapsingHeaderState.translation.roundToInt(),
-                        )
-                    },
+                    .pinnedHeaderOffset(
+                        state = pinnedCollapsingHeaderState,
+                    ),
             ) {
                 Spacer(
                     modifier = Modifier
