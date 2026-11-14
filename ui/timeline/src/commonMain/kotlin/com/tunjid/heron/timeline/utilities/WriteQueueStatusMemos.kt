@@ -92,11 +92,14 @@ inline fun <T, S> Flow<T>.enqueueMutations(
 context(scope: CoroutineScope)
 inline fun <T> Flow<T>.launchAndCollectEnqueueMutations(
     writeQueue: WriteQueue,
-    crossinline toWritable: (T) -> Writable,
+    crossinline toWritable: (T) -> Writable?,
     crossinline postEnqueue: suspend (T, Memo?) -> Unit = { _, _ -> },
 ) {
     launchedCollect { action ->
-        val writable = toWritable(action)
+        val writable = toWritable(action) ?: return@launchedCollect postEnqueue(
+            action,
+            Memo.Resource(Res.string.writable_failed),
+        )
         val status = writeQueue.enqueue(writable)
         val memo = writable.writeStatusMessage(status)
         postEnqueue(action, memo)

@@ -49,11 +49,10 @@ import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.formatDate
-import com.tunjid.heron.timeline.utilities.formatTime
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.Rectangle
@@ -107,9 +106,11 @@ internal fun PostExternal(
         Column(
             verticalArrangement = spacedBy(8.dp),
         ) {
+            val showEvent = externalRecord is Event &&
+                presentation == Timeline.Presentation.Text.WithEmbed
             val showContentPreview = externalRecord == null ||
                 externalRecord is StandardDocument ||
-                externalRecord is Event
+                (externalRecord is Event && !showEvent)
 
             if (showContentPreview) ContentPreview(
                 feature = feature,
@@ -148,39 +149,27 @@ internal fun PostExternal(
                     },
                 )
             }
-            if (externalRecord is Event && presentation == Timeline.Presentation.Text.WithEmbed) {
-                HorizontalDivider()
-                EventSummary(
+            if (showEvent) {
+                Event(
                     modifier = Modifier
                         .padding(all = 12.dp),
+                    paneTransitionScope = paneTransitionScope,
+                    sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                        quotingPostUri = postUri,
+                    ),
                     event = externalRecord,
+                    image = feature.thumb,
+                    isBlurred = isBlurred,
+                    onRsvpClicked = { event, status ->
+                        onRecordInteraction(
+                            PostAction.OfRsvp(
+                                event = event,
+                                status = status,
+                            ),
+                        )
+                    },
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun EventSummary(
-    event: Event,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = spacedBy(4.dp),
-    ) {
-        Text(
-            text = event.name,
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        event.startsAt?.let { startsAt ->
-            Text(
-                text = "${startsAt.formatDate()} ${startsAt.formatTime()}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
         }
     }
 }

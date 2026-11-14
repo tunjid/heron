@@ -141,6 +141,14 @@
     <string name="view_labeler">View Labeler</string>
     <string name="open_starter_pack">Open pack</string>
     <string name="standard_site_published_in">Published in %1$s</string>
+    <string name="event_rsvp_going">Going</string>
+    <string name="event_rsvp_interested">Interested</string>
+    <string name="event_rsvp_not_going">Not going</string>
+    <string name="event_rsvp_remove">Remove RSVP</string>
+    <string name="event_mode_in_person">In person</string>
+    <string name="event_mode_virtual">Online</string>
+    <string name="event_mode_hybrid">Hybrid</string>
+    <string name="event_rsvp_counts">%1$s going · %2$s interested</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>
     <string name="thread_gate_anyone">Anyone</string>
     <string name="thread_gate_nobody">Nobody</string>

@@ -381,7 +381,7 @@ fun StandardPublication.toSubscriptionWritable(): Writable =
         else -> Writable.RecordDeletion(recordUri = existingSubscription.uri)
     }
 
-fun StandardDocument.toRecommendationWritable(): Writable =
+fun StandardDocument.recommendationWritable(): Writable =
     when (val existingRecommendation = recommendation) {
         null -> Writable.StandardSite.Recommend(
             create = StandardRecommendation.Create(documentUri = uri),
@@ -389,19 +389,15 @@ fun StandardDocument.toRecommendationWritable(): Writable =
         else -> Writable.RecordDeletion(recordUri = existingRecommendation.uri)
     }
 
-/**
- * Returns a [Writable] that sets the signed in user's response to this event to [status],
- * or withdraws it if [status] is null. Returns null if there is nothing to write.
- */
-fun Event.toRsvpWritable(
+fun Event.rsvpWritable(
     status: Rsvp.Status?,
 ): Writable? {
     val existingRsvp = rsvp
-    return when {
-        status == null -> existingRsvp?.let {
+    return when (status) {
+        null -> existingRsvp?.let {
             Writable.RecordDeletion(recordUri = it.uri)
         }
-        status == existingRsvp?.status -> null
+        existingRsvp?.status -> null
         else -> cid?.let { eventCid ->
             Writable.RsvpUpdate(
                 put = Rsvp.Put(

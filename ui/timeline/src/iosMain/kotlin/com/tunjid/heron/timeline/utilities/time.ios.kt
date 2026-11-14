@@ -21,6 +21,8 @@ import kotlin.time.Instant
 import kotlinx.datetime.toNSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterShortStyle
+import platform.Foundation.NSLocale
+import platform.Foundation.currentLocale
 
 @Composable
 actual fun Instant.formatDate(): String {
@@ -35,3 +37,27 @@ actual fun Instant.formatTime(): String {
         .apply { timeStyle = NSDateFormatterShortStyle }
         .stringFromDate(toNSDate())
 }
+
+@Composable
+actual fun Instant.formatWeekdayDate(): String =
+    formatLocalized(template = WeekdayDateTemplate)
+
+@Composable
+actual fun Instant.formatHour(): String {
+    val usesDayPeriod = NSDateFormatter
+        .dateFormatFromTemplate(
+            tmplate = "j",
+            options = 0u,
+            locale = NSLocale.currentLocale,
+        )
+        ?.contains('a') == true
+    return formatLocalized(
+        template = if (usesDayPeriod && isOnTheHour) "j" else "jmm",
+    )
+}
+
+private fun Instant.formatLocalized(
+    template: String,
+): String = NSDateFormatter()
+    .apply { setLocalizedDateFormatFromTemplate(template) }
+    .stringFromDate(toNSDate())
