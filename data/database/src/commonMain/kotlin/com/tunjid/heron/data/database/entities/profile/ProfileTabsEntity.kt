@@ -23,8 +23,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.StandardDocumentUri
-import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -68,8 +66,6 @@ private fun String.asProfileTabOrNull(): ProfileTab? = when (this) {
     FeedGeneratorUri.NAMESPACE -> ProfileTab.Bluesky.FeedGenerators.All
     ListUri.NAMESPACE -> ProfileTab.Bluesky.Lists.All
     StarterPackUri.NAMESPACE -> ProfileTab.Bluesky.StarterPacks
-    StandardPublicationUri.NAMESPACE -> ProfileTab.StandardSite.Publications
-    StandardDocumentUri.NAMESPACE -> ProfileTab.StandardSite.Documents
     else -> when (val uri = asRecordUriOrNull()) {
         is FeedGeneratorUri -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(uri)
         else -> null
@@ -93,8 +89,6 @@ fun List<ProfileTab>.profileTabsEntity(
                 is ProfileTab.Bluesky.FeedGenerators.FeedGenerator -> profileTab.uri.uri
                 ProfileTab.Bluesky.Lists.All -> ListUri.NAMESPACE
                 ProfileTab.Bluesky.StarterPacks -> StarterPackUri.NAMESPACE
-                ProfileTab.StandardSite.Documents -> StandardDocumentUri.NAMESPACE
-                ProfileTab.StandardSite.Publications -> StandardPublicationUri.NAMESPACE
             }
         },
     ),
@@ -113,7 +107,6 @@ private val Default: List<ProfileTab> = listOf(
     ProfileTab.Bluesky.Posts.Media,
     ProfileTab.Bluesky.Posts.Videos,
     ProfileTab.Bluesky.FeedGenerators.All,
-    ProfileTab.StandardSite.Documents,
     ProfileTab.Bluesky.StarterPacks,
     ProfileTab.Bluesky.Lists.All,
 )

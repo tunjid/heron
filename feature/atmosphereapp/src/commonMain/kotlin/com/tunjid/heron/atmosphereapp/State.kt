@@ -67,6 +67,7 @@ interface State {
         val profile: Profile?,
         val avatarSharedElementKey: String,
         val currentPage: Int = 0,
+        val isSignedInProfile: Boolean = false,
         @Transient
         val stateHolders: List<AppScreenStateHolders> = emptyList(),
         @Transient

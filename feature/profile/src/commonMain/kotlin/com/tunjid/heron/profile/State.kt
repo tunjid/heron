@@ -30,8 +30,6 @@ import com.tunjid.heron.data.core.models.ProfileLink
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -149,16 +147,6 @@ sealed class ProfileScreenStateHolders {
         class StarterPacks(
             mutator: RecordStateHolder<StarterPack>,
         ) : Records<StarterPack>(mutator)
-
-        @Stable
-        class Documents(
-            mutator: RecordStateHolder<StandardDocument>,
-        ) : Records<StandardDocument>(mutator)
-
-        @Stable
-        class Publications(
-            mutator: RecordStateHolder<StandardPublication>,
-        ) : Records<StandardPublication>(mutator)
     }
 
     @Stable
@@ -194,8 +182,6 @@ sealed class ProfileScreenStateHolders {
             is Records.Feeds -> "Feeds"
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
-            is Records.Documents -> "Documents"
-            is Records.Publications -> "Publications"
             is Timeline -> state.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
         }
@@ -205,8 +191,6 @@ sealed class ProfileScreenStateHolders {
             is Records.Feeds -> ProfileTab.Bluesky.FeedGenerators.All
             is Records.Lists -> ProfileTab.Bluesky.Lists.All
             is Records.StarterPacks -> ProfileTab.Bluesky.StarterPacks
-            is Records.Documents -> ProfileTab.StandardSite.Documents
-            is Records.Publications -> ProfileTab.StandardSite.Publications
             is Timeline -> when (val timeline = state.timeline) {
                 is com.tunjid.heron.data.core.models.Timeline.Home.Feed -> ProfileTab.Bluesky.FeedGenerators.FeedGenerator(
                     timeline.feedGenerator.uri,
