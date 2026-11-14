@@ -44,6 +44,7 @@ import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.record.RecordList
 import com.tunjid.heron.timeline.ui.rocksky.RockskyAlbum
 import com.tunjid.heron.timeline.ui.rocksky.RockskyArtist
@@ -146,6 +147,39 @@ internal fun AtmosphereAppScreen(
                 key = { page -> state.stateHolders[page].key },
                 pageContent = { page ->
                     when (val stateHolder = state.stateHolders[page]) {
+                        is AppScreenStateHolders.Events -> RecordList(
+                            collectionStateHolder = stateHolder,
+                            prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                            itemKey = { it.uri.uri },
+                            itemContent = { event ->
+                                Event(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem()
+                                        .shapedClickable {
+                                            uriHandler.openAtmoRsvpLink(
+                                                recordUri = event.uri,
+                                            )
+                                        }
+                                        .padding(8.dp),
+                                    paneTransitionScope = paneScaffoldState,
+                                    // The same event may show in more than one tab
+                                    sharedElementPrefix = "${stateHolder.key}-${event.uri.uri}",
+                                    event = event,
+                                    isBlurred = false,
+                                    onRsvpClicked = { event, status ->
+                                        actions(
+                                            Action.RecordInteraction(
+                                                interaction = PostAction.OfRsvp(
+                                                    event = event,
+                                                    status = status,
+                                                ),
+                                            ),
+                                        )
+                                    },
+                                )
+                            },
+                        )
                         is AppScreenStateHolders.StandardSite.Documents -> RecordList(
                             collectionStateHolder = stateHolder,
                             prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
@@ -348,6 +382,16 @@ private fun UriHandler.openRockskyLink(
     runCatching {
         openUri(
             "https://rocksky.app/${recordUri.profileId().id}/$collection/${recordUri.recordKey.value}",
+        )
+    }
+}
+
+private fun UriHandler.openAtmoRsvpLink(
+    recordUri: RecordUri,
+) {
+    runCatching {
+        openUri(
+            "https://atmo.rsvp/p/${recordUri.profileId().id}/e/${recordUri.recordKey.value}",
         )
     }
 }

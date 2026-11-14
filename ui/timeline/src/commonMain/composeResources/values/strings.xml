@@ -290,6 +290,7 @@
     <string name="empty_records_scrobbles_description">Scrobbled tracks will show up here as this user listens.</string>
 
     <string name="app_name_rocksky">Rocksky</string>
+    <string name="app_name_events">Events</string>
     <string name="app_name_standard_site">Longform content</string>
     <string name="app_name_unknown">Unknown app</string>
 

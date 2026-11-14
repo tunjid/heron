@@ -66,6 +66,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.recordUriOrNull
@@ -301,6 +302,10 @@ internal class OfflineProfileRepository(
                         SupportedAtmosphereApps.map { app ->
                             async {
                                 val nsids = AtmosphereAppNsids[app.id].orEmpty()
+                                    // RSVPs are only browsable by the signed in user
+                                    .filter { nsid ->
+                                        nsid != RsvpUri.NAMESPACE || profileDid == signedInProfileId.id
+                                    }
                                 val hasAny = nsids.any { nsid ->
                                     networkService.runCatchingWithMonitoredNetworkRetry {
                                         listRecords(
