@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileTab
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -216,10 +215,6 @@ class ActualProfileViewModel(
                         is Action.PageChanged -> action.flow.collect { event ->
                             state.currentPage = event.page
                         }
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
-                            state = state,
-                            writeQueue = writeQueue,
-                        )
                         is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
@@ -519,27 +514,6 @@ private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
     toWritable = { it.interaction.toWritable() },
-    postEnqueue = { _, memo ->
-        if (memo != null) state.messages += memo
-    },
-)
-
-context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
-    state: State.Mutable,
-    writeQueue: WriteQueue,
-) = launchAndCollectEnqueueMutations(
-    writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

@@ -19,19 +19,18 @@ package com.tunjid.heron.standard.publication
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
-import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.standard.publication.di.PublicationRequest
 import com.tunjid.heron.standard.publication.di.publicationRequest
 import com.tunjid.heron.tiling.launchTilingMutations
 import com.tunjid.heron.tiling.reset
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.ui.stateproduction.RouteStateHolder
@@ -99,7 +98,7 @@ class ActualStandardPublicationViewModel(
                         is Action.Navigate -> action.flow.collect {
                             navActions(it.navigationMutation)
                         }
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -144,21 +143,12 @@ private suspend fun launchPublicationMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

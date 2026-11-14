@@ -25,7 +25,6 @@ import com.tunjid.heron.data.core.models.RockskyScrobble
 import com.tunjid.heron.data.core.models.RockskyTrack
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -35,10 +34,10 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.TrackUri
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.timeline.state.recordStateHolder
+import com.tunjid.heron.timeline.ui.toWritable
 import com.tunjid.heron.timeline.utilities.launchAndCollectEnqueueMutations
 import com.tunjid.heron.ui.scaffold.navigation.NavigationMutation
 import com.tunjid.mutator.coroutines.ActionSuspendingStateMutator
@@ -111,7 +110,7 @@ class ActualAtmosphereAppViewModel(
                         is Action.SnackbarDismissed -> action.flow.launchSnackbarDismissalMutations(
                             state = state,
                         )
-                        is Action.TogglePublicationSubscription -> action.flow.launchTogglePublicationSubscriptionMutations(
+                        is Action.RecordInteraction -> action.flow.launchRecordInteractionMutations(
                             state = state,
                             writeQueue = writeQueue,
                         )
@@ -170,21 +169,12 @@ private fun Flow<Action.SnackbarDismissed>.launchSnackbarDismissalMutations(
 }
 
 context(productionScope: CoroutineScope)
-private fun Flow<Action.TogglePublicationSubscription>.launchTogglePublicationSubscriptionMutations(
+private fun Flow<Action.RecordInteraction>.launchRecordInteractionMutations(
     state: State.Mutable,
     writeQueue: WriteQueue,
 ) = launchAndCollectEnqueueMutations(
     writeQueue = writeQueue,
-    toWritable = { action ->
-        when (action) {
-            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
-                create = StandardSubscription.Create(publicationUri = action.publicationUri),
-            )
-            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
-                recordUri = action.subscriptionUri,
-            )
-        }
-    },
+    toWritable = { it.interaction.toWritable() },
     postEnqueue = { _, memo ->
         if (memo != null) state.messages += memo
     },

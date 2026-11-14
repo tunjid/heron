@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.State
+import com.tunjid.heron.timeline.ui.PostAction
 
 @Composable
 internal fun PaneActions(
@@ -33,13 +34,12 @@ internal fun PaneActions(
             modifier = Modifier
                 .padding(horizontal = 8.dp),
             publication = it,
-            onSubscriptionToggled = { publication, subscription ->
+            onSubscriptionToggled = { publication, _ ->
                 actions(
-                    if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                        subscriptionUri = subscription.uri,
-                    )
-                    else Action.TogglePublicationSubscription.Subscribe(
-                        publicationUri = publication.uri,
+                    Action.RecordInteraction(
+                        interaction = PostAction.OfPublicationSubscription(
+                            publication = publication,
+                        ),
                     ),
                 )
             },

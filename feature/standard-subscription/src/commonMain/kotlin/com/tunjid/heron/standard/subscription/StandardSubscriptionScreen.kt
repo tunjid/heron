@@ -39,6 +39,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.EmptyContent
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.icons.HeronIcons
@@ -147,13 +148,12 @@ internal fun StandardSubscriptionScreen(
                         paneTransitionScope = paneScaffoldState,
                         sharedElementPrefix = SharedElementPrefix,
                         publication = publication,
-                        onSubscriptionToggled = { publication, subscription ->
+                        onSubscriptionToggled = { publication, _ ->
                             actions(
-                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                    subscriptionUri = subscription.uri,
-                                )
-                                else Action.TogglePublicationSubscription.Subscribe(
-                                    publicationUri = publication.uri,
+                                Action.RecordInteraction(
+                                    interaction = PostAction.OfPublicationSubscription(
+                                        publication = publication,
+                                    ),
                                 ),
                             )
                         },

@@ -42,8 +42,6 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StandardPublicationUri
-import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
@@ -322,16 +320,6 @@ sealed class Action(val key: String) {
     data class RecordInteraction(
         val interaction: PostAction.RecordInteraction,
     ) : Action(key = "RecordInteraction")
-
-    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
-
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
-    }
 
     data class DeleteRecord(
         val recordUri: RecordUri,
