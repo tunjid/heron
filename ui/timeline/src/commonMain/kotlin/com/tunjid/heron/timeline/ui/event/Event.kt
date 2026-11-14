@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -107,7 +109,10 @@ fun Event(
         verticalArrangement = spacedBy(8.dp),
     ) {
         EventInfo(
-            image = image,
+            image = event.thumbnail ?: image,
+            imageAspectRatio = event.thumbnailAspectRatio
+                ?.takeIf { event.thumbnail != null }
+                ?: 1f,
             isBlurred = isBlurred,
             event = event,
             sharedElementPrefix = sharedElementPrefix,
@@ -137,6 +142,7 @@ fun Event(
 @Composable
 private fun PaneTransitionScope.EventInfo(
     image: ImageUri?,
+    imageAspectRatio: Float,
     isBlurred: Boolean,
     event: Event,
     sharedElementPrefix: String,
@@ -150,7 +156,8 @@ private fun PaneTransitionScope.EventInfo(
             boundsTransform = sharedElementBoundsTransform,
             clipInOverlayDuringTransition = paneOverlayClip,
             modifier = Modifier
-                .size(88.dp)
+                .height(88.dp)
+                .aspectRatio(imageAspectRatio)
                 .then(
                     if (isBlurred) Modifier.sensitiveContentBlur(EventImageShape)
                     else Modifier,

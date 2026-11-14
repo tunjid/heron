@@ -46,6 +46,31 @@
           "type": "ref",
           "ref": "#rsvpView",
           "description": "The authenticated viewer's latest community.lexicon.calendar.rsvp for this event. Absent if none or unauthenticated."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Fetchable URL of the event's thumbnail image: the record's first media entry with role 'thumbnail', else its first image. Absent if the event has no usable image."
+        },
+        "thumbnailAspectRatio": {
+          "type": "ref",
+          "ref": "#aspectRatio",
+          "description": "The thumbnail's aspect ratio, as the record declared it. Absent if undeclared or invalid."
+        }
+      }
+    },
+    "aspectRatio": {
+      "type": "object",
+      "description": "Width and height of an image, as a ratio.",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

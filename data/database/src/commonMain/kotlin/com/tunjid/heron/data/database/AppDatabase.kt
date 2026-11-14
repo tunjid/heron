@@ -120,7 +120,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 56,
+    version = 57,
     entities = [
         BookmarkEntity::class,
         PostDraftEntity::class,
@@ -294,6 +294,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 54, to = 55),
         // Add standard recommendations, events and RSVPs
         AutoMigration(from = 55, to = 56),
+        // Add event thumbnails
+        AutoMigration(from = 56, to = 57),
     ],
     exportSchema = true,
 )

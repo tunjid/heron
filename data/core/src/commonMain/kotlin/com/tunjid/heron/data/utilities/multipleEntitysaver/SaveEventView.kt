@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RsvpId
 import com.tunjid.heron.data.core.types.RsvpUri
@@ -70,6 +71,9 @@ internal fun MultipleEntitySaver.add(
             goingCount = eventView.goingCount,
             interestedCount = eventView.interestedCount,
             notGoingCount = eventView.notGoingCount,
+            thumbnail = eventView.thumbnailUrl?.uri?.let(::ImageUri),
+            thumbnailWidth = eventView.thumbnailAspectRatio?.width,
+            thumbnailHeight = eventView.thumbnailAspectRatio?.height,
         ),
     )
 
@@ -143,6 +147,9 @@ internal fun stubEventEntity(
         goingCount = 0,
         interestedCount = 0,
         notGoingCount = 0,
+        thumbnail = null,
+        thumbnailWidth = null,
+        thumbnailHeight = null,
     )
 }
 
