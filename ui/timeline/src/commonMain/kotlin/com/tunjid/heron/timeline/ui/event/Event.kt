@@ -16,15 +16,12 @@
 
 package com.tunjid.heron.timeline.ui.event
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.PolygonShape
@@ -56,6 +53,8 @@ import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.media.images.ImageRequest
+import com.tunjid.heron.timeline.utilities.BokehPainter
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.formatHour
 import com.tunjid.heron.timeline.utilities.formatWeekdayDate
@@ -162,10 +161,20 @@ private fun PaneTransitionScope.EventInfo(
                     .fillParentAxisIfFixedOrWrap(),
                 args = remember(
                     event.thumbnail,
+                    event.uri,
                     event.name,
                 ) {
                     ImageArgs(
-                        url = event.thumbnail?.uri,
+                        request = when (val thumbnail = event.thumbnail) {
+                            null -> ImageRequest.Painted(
+                                painter = BokehPainter(
+                                    seed = event.uri.uri.hashCode(),
+                                ),
+                            )
+                            else -> ImageRequest.Network(
+                                url = thumbnail.uri,
+                            )
+                        },
                         contentDescription = event.name,
                         contentScale = ContentScale.Crop,
                         shape = EventImageShape,
@@ -250,18 +259,8 @@ private fun RsvpRow(
             modifier = Modifier
                 .fillMaxWidth(),
             userScrollEnabled = false,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = spacedBy(8.dp),
         ) {
-            // A fixed first item anchors the scroll position, so chips inserted
-            // ahead of the visible ones animate in instead of shifting the row.
-            item(
-                key = RsvpRowAnchorKey,
-            ) {
-                Spacer(
-                    modifier = Modifier
-                        .width(0.dp),
-                )
-            }
             items(
                 items = visibleStatuses,
                 key = Rsvp.Status::id,
@@ -445,8 +444,6 @@ private val UnansweredRsvpStatuses = listOf(
     Rsvp.Status.Going,
     Rsvp.Status.Interested,
 )
-
-private const val RsvpRowAnchorKey = "anchor"
 
 private val RsvpChipShape = RoundedCornerShape(16.dp)
 
