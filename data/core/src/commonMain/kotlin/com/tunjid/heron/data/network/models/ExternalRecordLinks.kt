@@ -38,6 +38,8 @@ internal fun String.externalRecordUriOrNull(): EmbeddableRecordUri? {
         .substringBefore('#')
     return when {
         path.startsWith(AtmoRsvpProfilePrefix) -> path.atmoRsvpEventUriOrNull()
+        path.startsWith(SmokeSignalPrefix) -> path.smokeSignalEventUriOrNull()
+        path.startsWith(BlackskyEventPrefix) -> path.blackskyEventUriOrNull()
         else -> null
     }
 }
@@ -73,13 +75,43 @@ internal fun EmbeddableRecordUri.isSameRecordAs(
 ) = requireCollection() == other.requireCollection() && recordKey == other.recordKey
 
 private fun String.atmoRsvpEventUriOrNull(): EventUri? {
-    val segments = removePrefix(AtmoRsvpProfilePrefix).split('/')
-    if (segments.size !in 3..4 || segments[1] != "e") return null
-    if (segments.size == 4 && segments[3].isNotEmpty()) return null
+    val segments = removePrefix(AtmoRsvpProfilePrefix).pathSegments()
+    if (segments.size != 3 || segments[1] != "e") return null
+    return eventUriOrNull(
+        actor = segments[0],
+        recordKey = segments[2],
+    )
+}
 
-    val actor = segments[0].takeIf(String::isNotEmpty) ?: return null
-    val recordKey = segments[2].takeIf(String::isNotEmpty) ?: return null
+private fun String.smokeSignalEventUriOrNull(): EventUri? {
+    val segments = removePrefix(SmokeSignalPrefix).pathSegments()
+    if (segments.size != 2) return null
+    return eventUriOrNull(
+        actor = segments[0],
+        recordKey = segments[1],
+    )
+}
 
+private fun String.blackskyEventUriOrNull(): EventUri? {
+    val segments = removePrefix(BlackskyEventPrefix).pathSegments()
+    if (segments.size != 2) return null
+    return eventUriOrNull(
+        actor = segments[0],
+        recordKey = segments[1],
+    )
+}
+
+private fun String.pathSegments(): List<String> =
+    removeSuffix("/").split('/')
+
+private fun eventUriOrNull(
+    actor: String,
+    recordKey: String,
+): EventUri? {
+    // Actors are either DIDs or handles, which always contain a dot. This rules out
+    // app routes that share the url shape of an event link.
+    if (!actor.startsWith("did:") && '.' !in actor) return null
+    if (recordKey.isEmpty()) return null
     return EventUri("${Uri.Host.AtProto.prefix}$actor/${EventUri.NAMESPACE}/$recordKey")
 }
 
@@ -128,3 +160,5 @@ private fun String.matchesProfile(
 ) = this == did || equals(handle, ignoreCase = true)
 
 private const val AtmoRsvpProfilePrefix = "atmo.rsvp/p/"
+private const val SmokeSignalPrefix = "smokesignal.events/"
+private const val BlackskyEventPrefix = "blacksky.community/event/"
