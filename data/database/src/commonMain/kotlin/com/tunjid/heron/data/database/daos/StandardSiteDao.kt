@@ -392,6 +392,31 @@ interface StandardSiteDao {
 
     // --- Recommendations ---
 
+    @Query(
+        """
+            UPDATE standardDocuments
+            SET recommendationCount = recommendationCount + 1
+            WHERE uri = :documentUri
+        """,
+    )
+    suspend fun incrementRecommendationCount(
+        documentUri: StandardDocumentUri,
+    )
+
+    @Query(
+        """
+            UPDATE standardDocuments
+            SET recommendationCount = MAX(0, recommendationCount - 1)
+            WHERE uri IN (
+                SELECT documentUri FROM standardRecommendations
+                WHERE uri = :recommendationUri
+            )
+        """,
+    )
+    suspend fun decrementRecommendationCount(
+        recommendationUri: StandardRecommendationUri,
+    )
+
     @Upsert
     suspend fun upsertRecommendations(
         entities: List<StandardRecommendationEntity>,

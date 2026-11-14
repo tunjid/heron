@@ -840,7 +840,12 @@ internal class OfflineRecordResolver(
             is StandardPublicationUri -> standardSiteDao.deletePublication(uri)
             is StandardDocumentUri -> standardSiteDao.deleteDocument(uri)
             is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
-            is StandardRecommendationUri -> standardSiteDao.deleteRecommendation(uri)
+            is StandardRecommendationUri -> transactionWriter.inTransaction {
+                standardSiteDao.decrementRecommendationCount(
+                    recommendationUri = uri,
+                )
+                standardSiteDao.deleteRecommendation(uri)
+            }
             is EventUri -> eventDao.deleteEvent(uri)
             is RsvpUri -> transactionWriter.inTransaction {
                 eventDao.decrementRsvpCounts(

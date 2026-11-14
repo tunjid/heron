@@ -498,6 +498,9 @@ internal class OfflineFirstStandardSiteRecordOperations(
             )
         }.mapCatchingUnlessCancelled { response ->
             multipleEntitySaverProvider.saveInTransaction {
+                standardSiteDao.incrementRecommendationCount(
+                    documentUri = create.documentUri,
+                )
                 add(
                     recommendationUri = response.uri.atUri.let(::StandardRecommendationUri),
                     recommendationCid = response.cid.cid.let(::StandardRecommendationId),
