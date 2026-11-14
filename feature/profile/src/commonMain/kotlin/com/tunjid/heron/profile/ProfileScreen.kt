@@ -566,13 +566,12 @@ internal fun ProfileScreen(
                                             ),
                                         )
                                     },
-                                    onSubscriptionToggled = { publication, subscription ->
+                                    onSubscriptionToggled = { publication, _ ->
                                         actions(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
+                                            Action.RecordInteraction(
+                                                interaction = PostAction.OfPublicationSubscription(
+                                                    publication = publication,
+                                                ),
                                             ),
                                         )
                                     },
@@ -604,13 +603,12 @@ internal fun ProfileScreen(
                                     paneTransitionScope = paneScaffoldState,
                                     sharedElementPrefix = publication.uri.uri,
                                     publication = publication,
-                                    onSubscriptionToggled = { publication, subscription ->
+                                    onSubscriptionToggled = { publication, _ ->
                                         actions(
-                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
-                                                subscriptionUri = subscription.uri,
-                                            )
-                                            else Action.TogglePublicationSubscription.Subscribe(
-                                                publicationUri = publication.uri,
+                                            Action.RecordInteraction(
+                                                interaction = PostAction.OfPublicationSubscription(
+                                                    publication = publication,
+                                                ),
                                             ),
                                         )
                                     },

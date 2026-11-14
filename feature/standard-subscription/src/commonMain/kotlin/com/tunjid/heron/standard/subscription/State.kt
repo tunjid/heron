@@ -20,9 +20,8 @@ import androidx.compose.runtime.Stable
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.types.StandardPublicationUri
-import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.snapshottable.SnapshotSpec
@@ -69,15 +68,9 @@ sealed class Action(val key: String) {
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
-    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
-        data class Subscribe(
-            val publicationUri: StandardPublicationUri,
-        ) : TogglePublicationSubscription()
-
-        data class Unsubscribe(
-            val subscriptionUri: StandardSubscriptionUri,
-        ) : TogglePublicationSubscription()
-    }
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     sealed class Navigate :
         Action(key = "Navigate"),
