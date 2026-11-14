@@ -30,7 +30,7 @@ import kotlin.time.Instant
     tableName = "rsvps",
     primaryKeys = [
         "eventUri",
-        "viewingProfileId",
+        "authorId",
     ],
     foreignKeys = [
         ForeignKey(
@@ -43,7 +43,7 @@ import kotlin.time.Instant
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["viewingProfileId"],
+            childColumns = ["authorId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
@@ -51,7 +51,7 @@ import kotlin.time.Instant
     indices = [
         Index(value = ["uri"]),
         Index(value = ["eventUri"]),
-        Index(value = ["viewingProfileId"]),
+        Index(value = ["authorId"]),
         Index(value = ["sortedAt"]),
     ],
 )
@@ -59,13 +59,13 @@ data class RsvpEntity(
     val uri: RsvpUri,
     val cid: RsvpId?,
     val eventUri: EventUri,
-    val viewingProfileId: ProfileId,
+    val authorId: ProfileId,
     val status: String,
     val sortedAt: Instant,
 ) {
     data class Deletion(
         val eventUri: EventUri,
-        val viewingProfileId: ProfileId,
+        val authorId: ProfileId,
     )
 }
 

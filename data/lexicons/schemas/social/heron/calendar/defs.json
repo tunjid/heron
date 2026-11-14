@@ -56,6 +56,30 @@
           "type": "ref",
           "ref": "#aspectRatio",
           "description": "The thumbnail's aspect ratio, as the record declared it. Absent if undeclared or invalid."
+        },
+        "bskyPostRef": {
+          "type": "ref",
+          "ref": "#bskyPostRef",
+          "description": "The Bluesky post the event was shared as, from the record's bskyPostRef. Its replies are the event's comments. Absent if the record has none or it isn't a valid strong ref to an app.bsky.feed.post."
+        }
+      }
+    },
+    "bskyPostRef": {
+      "type": "object",
+      "description": "A strong ref to the Bluesky post an event was shared as.",
+      "required": ["uri", "cid", "showComments"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "showComments": {
+          "type": "boolean",
+          "description": "Whether the organizer wants the post's replies shown as the event's comments. False if the record left it unset."
         }
       }
     },
@@ -76,7 +100,7 @@
     },
     "rsvpView": {
       "type": "object",
-      "required": ["uri", "cid", "eventUri", "status", "sortedAt"],
+      "required": ["uri", "cid", "author", "eventUri", "status", "sortedAt"],
       "properties": {
         "uri": {
           "type": "string",
@@ -85,6 +109,11 @@
         "cid": {
           "type": "string",
           "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "social.heron.actor.defs#profileView",
+          "description": "The person who RSVPed."
         },
         "eventUri": {
           "type": "string",

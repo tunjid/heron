@@ -21,6 +21,8 @@ import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -45,6 +47,7 @@ data class Event(
     val thumbnail: ImageUri?,
     val thumbnailAspectRatio: Float?,
     val rsvp: Rsvp?,
+    val bskyPostRef: BskyPostRef?,
 ) : Record.Embeddable.External {
     override val reference: Record.Reference =
         Record.Reference(
@@ -53,6 +56,13 @@ data class Event(
         )
 
     override val embeddableRecordUri: EmbeddableRecordUri = uri
+
+    @Serializable
+    data class BskyPostRef(
+        val uri: PostUri,
+        val cid: PostId,
+        val showComments: Boolean,
+    )
 
     enum class Mode(
         val id: String,

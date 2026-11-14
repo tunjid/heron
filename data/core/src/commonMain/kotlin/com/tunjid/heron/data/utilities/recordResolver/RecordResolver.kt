@@ -772,7 +772,7 @@ internal class OfflineRecordResolver(
                             rsvpCid = cid,
                             rsvp = rsvp,
                             sortedAt = sortedAt,
-                            viewingProfileId = viewingProfileId,
+                            authorId = viewingProfileId,
                         )
                     }
                     Rsvp(

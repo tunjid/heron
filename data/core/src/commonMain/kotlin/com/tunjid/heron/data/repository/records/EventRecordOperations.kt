@@ -274,7 +274,7 @@ internal class OfflineFirstEventRecordOperations(
                     rsvpCid = response.cid.cid.let(::RsvpId),
                     rsvp = rsvp,
                     sortedAt = put.sortedAt,
-                    viewingProfileId = signedInProfileId,
+                    authorId = signedInProfileId,
                 )
 
                 eventDao.adjustRsvpCounts(

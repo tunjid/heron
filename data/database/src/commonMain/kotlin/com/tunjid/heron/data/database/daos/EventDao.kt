@@ -48,13 +48,13 @@ interface EventDao {
                 rsvps.uri as rsvp_uri,
                 rsvps.cid as rsvp_cid,
                 rsvps.eventUri as rsvp_eventUri,
-                rsvps.viewingProfileId as rsvp_viewingProfileId,
+                rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
                 rsvps.sortedAt as rsvp_sortedAt
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
-                AND rsvps.viewingProfileId IS :viewingProfileId
+                AND rsvps.authorId IS :viewingProfileId
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.uri = :uri
@@ -76,13 +76,13 @@ interface EventDao {
                 rsvps.uri as rsvp_uri,
                 rsvps.cid as rsvp_cid,
                 rsvps.eventUri as rsvp_eventUri,
-                rsvps.viewingProfileId as rsvp_viewingProfileId,
+                rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
                 rsvps.sortedAt as rsvp_sortedAt
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
-                AND rsvps.viewingProfileId IS :viewingProfileId
+                AND rsvps.authorId IS :viewingProfileId
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.uri IN (:uris)
@@ -104,13 +104,13 @@ interface EventDao {
                 rsvps.uri as rsvp_uri,
                 rsvps.cid as rsvp_cid,
                 rsvps.eventUri as rsvp_eventUri,
-                rsvps.viewingProfileId as rsvp_viewingProfileId,
+                rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
                 rsvps.sortedAt as rsvp_sortedAt
             FROM events
             LEFT JOIN rsvps
                 ON events.uri = rsvps.eventUri
-                AND rsvps.viewingProfileId IS :viewingProfileId
+                AND rsvps.authorId IS :viewingProfileId
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE events.authorId = :authorId
@@ -137,13 +137,13 @@ interface EventDao {
                 rsvps.uri as rsvp_uri,
                 rsvps.cid as rsvp_cid,
                 rsvps.eventUri as rsvp_eventUri,
-                rsvps.viewingProfileId as rsvp_viewingProfileId,
+                rsvps.authorId as rsvp_authorId,
                 rsvps.status as rsvp_status,
                 rsvps.sortedAt as rsvp_sortedAt
             FROM events
             INNER JOIN rsvps
                 ON events.uri = rsvps.eventUri
-                AND rsvps.viewingProfileId = :viewingProfileId
+                AND rsvps.authorId = :viewingProfileId
             INNER JOIN profiles
                 ON events.authorId = profiles.did
             WHERE :status IS NULL OR rsvps.status = :status
@@ -272,7 +272,7 @@ interface EventDao {
     @Query(
         """
             DELETE FROM rsvps
-            WHERE viewingProfileId = :viewingProfileId
+            WHERE authorId = :viewingProfileId
             AND (:status IS NULL OR status = :status)
         """,
     )

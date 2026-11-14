@@ -22,6 +22,8 @@ import com.tunjid.heron.data.core.types.EventId
 import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.PostId
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RsvpId
 import com.tunjid.heron.data.core.types.RsvpUri
@@ -74,17 +76,21 @@ internal fun MultipleEntitySaver.add(
             thumbnail = eventView.thumbnailUrl?.uri?.let(::ImageUri),
             thumbnailWidth = eventView.thumbnailAspectRatio?.width,
             thumbnailHeight = eventView.thumbnailAspectRatio?.height,
+            bskyPostUri = eventView.bskyPostRef?.uri?.atUri?.let(::PostUri),
+            bskyPostCid = eventView.bskyPostRef?.cid?.cid?.let(::PostId),
+            bskyPostShowComments = eventView.bskyPostRef?.showComments,
         ),
     )
 
     viewingProfileId?.let { profileId ->
         eventView.viewerRsvp?.let {
+            add(it.author)
             add(
                 RsvpEntity(
                     uri = it.uri.atUri.let(::RsvpUri),
                     cid = it.cid.cid.let(::RsvpId),
                     eventUri = eventUri,
-                    viewingProfileId = profileId,
+                    authorId = it.author.did.did.let(::ProfileId),
                     status = it.status,
                     sortedAt = it.sortedAt,
                 ),
@@ -92,7 +98,7 @@ internal fun MultipleEntitySaver.add(
         } ?: remove(
             RsvpEntity.Deletion(
                 eventUri = eventUri,
-                viewingProfileId = profileId,
+                authorId = profileId,
             ),
         )
     }
@@ -103,7 +109,7 @@ internal fun MultipleEntitySaver.add(
     rsvpCid: RsvpId?,
     rsvp: LexiconRsvp,
     sortedAt: Instant,
-    viewingProfileId: ProfileId,
+    authorId: ProfileId,
 ) {
     val eventUri = EventUri(rsvp.subject.uri.atUri)
     add(
@@ -117,7 +123,7 @@ internal fun MultipleEntitySaver.add(
             uri = rsvpUri,
             cid = rsvpCid,
             eventUri = eventUri,
-            viewingProfileId = viewingProfileId,
+            authorId = authorId,
             status = rsvp.status,
             sortedAt = sortedAt,
         ),
@@ -150,6 +156,9 @@ internal fun stubEventEntity(
         thumbnail = null,
         thumbnailWidth = null,
         thumbnailHeight = null,
+        bskyPostUri = null,
+        bskyPostCid = null,
+        bskyPostShowComments = null,
     )
 }
 
