@@ -308,7 +308,7 @@ internal val StarterPackCollectionShape by lazy {
 }
 
 internal val DocumentCollectionShape by lazy {
-    PolygonShape.roundedRectangle(percent = 0.6f)
+    PolygonShape.roundedRectangle(percent = 0.4f)
 }
 
 internal val RockSkyCollectionShape

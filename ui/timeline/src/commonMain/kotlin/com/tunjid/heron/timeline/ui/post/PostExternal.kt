@@ -51,6 +51,7 @@ import com.tunjid.heron.media.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
+import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
@@ -106,11 +107,8 @@ internal fun PostExternal(
         Column(
             verticalArrangement = spacedBy(8.dp),
         ) {
-            val showEvent = externalRecord is Event &&
-                presentation == Timeline.Presentation.Text.WithEmbed
-            val showContentPreview = externalRecord == null ||
-                externalRecord is StandardDocument ||
-                (externalRecord is Event && !showEvent)
+            val isTextPresentation = presentation is Timeline.Presentation.Text
+            val showContentPreview = externalRecord == null || !isTextPresentation
 
             if (showContentPreview) ContentPreview(
                 feature = feature,
@@ -120,55 +118,63 @@ internal fun PostExternal(
                 gif = gif,
                 presentation = presentation,
             )
-            val publication = when (externalRecord) {
-                is StandardDocument -> externalRecord.publication
-                is StandardPublication -> externalRecord
-                is Event,
-                null,
-                -> null
-            }.takeIf {
-                presentation == Timeline.Presentation.Text.WithEmbed
-            }
-
-            if (publication != null) {
-                if (showContentPreview) HorizontalDivider()
-                Publication(
-                    modifier = Modifier
-                        .padding(all = 12.dp),
-                    paneTransitionScope = paneTransitionScope,
-                    sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                        quotingPostUri = postUri,
-                    ),
-                    publication = publication,
-                    onSubscriptionToggled = { toggledPublication, _ ->
-                        onRecordInteraction(
-                            PostAction.OfPublicationSubscription(
-                                publication = toggledPublication,
-                            ),
-                        )
-                    },
-                )
-            }
-            if (showEvent) {
-                Event(
-                    modifier = Modifier
-                        .padding(all = 12.dp),
-                    paneTransitionScope = paneTransitionScope,
-                    sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                        quotingPostUri = postUri,
-                    ),
-                    event = externalRecord,
-                    image = feature.thumb,
-                    isBlurred = isBlurred,
-                    onRsvpClicked = { event, status ->
-                        onRecordInteraction(
-                            PostAction.OfRsvp(
-                                event = event,
-                                status = status,
-                            ),
-                        )
-                    },
-                )
+            if (isTextPresentation) externalRecord?.onEachRecord { count, index, record ->
+                if (count > 1 && index > 0) HorizontalDivider()
+                when (record) {
+                    is Event -> Event(
+                        modifier = Modifier
+                            .padding(all = 12.dp),
+                        paneTransitionScope = paneTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = postUri,
+                        ),
+                        event = record,
+                        isBlurred = isBlurred,
+                        onRsvpClicked = { event, status ->
+                            onRecordInteraction(
+                                PostAction.OfRsvp(
+                                    event = event,
+                                    status = status,
+                                ),
+                            )
+                        },
+                    )
+                    is StandardDocument -> Document(
+                        modifier = Modifier
+                            .padding(all = 12.dp),
+                        paneTransitionScope = paneTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = postUri,
+                        ),
+                        document = record,
+                        // The publication below already shows itself and offers subscribing.
+                        onPublicationClicked = null,
+                        onSubscriptionToggled = null,
+                        onRecommendationToggled = { document ->
+                            onRecordInteraction(
+                                PostAction.OfDocumentRecommendation(
+                                    document = document,
+                                ),
+                            )
+                        },
+                    )
+                    is StandardPublication -> Publication(
+                        modifier = Modifier
+                            .padding(all = 12.dp),
+                        paneTransitionScope = paneTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = postUri,
+                        ),
+                        publication = record,
+                        onSubscriptionToggled = { toggledPublication, _ ->
+                            onRecordInteraction(
+                                PostAction.OfPublicationSubscription(
+                                    publication = toggledPublication,
+                                ),
+                            )
+                        },
+                    )
+                }
             }
         }
     }
@@ -281,6 +287,23 @@ fun PostFeatureTextContent(
             )
         }
         Spacer(Modifier.height(4.dp))
+    }
+}
+
+private inline fun Record.Embeddable.External.onEachRecord(
+    block: (size: Int, index: Int, record: Record.Embeddable.External) -> Unit,
+) = when (this) {
+    is Event -> {
+        block(1, 0, this)
+    }
+    is StandardDocument -> {
+        block(2, 0, this)
+        publication?.let {
+            block(2, 1, it)
+        }
+    }
+    is StandardPublication -> {
+        block(1, 0, this)
     }
 }
 

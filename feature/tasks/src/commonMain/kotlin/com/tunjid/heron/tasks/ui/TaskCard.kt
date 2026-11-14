@@ -198,6 +198,7 @@ private fun TaskEmbeddedRecord(
                 document = record,
                 onPublicationClicked = null,
                 onSubscriptionToggled = null,
+                onRecommendationToggled = null,
             )
         }
         is StandardPublication -> OutlinedCard {

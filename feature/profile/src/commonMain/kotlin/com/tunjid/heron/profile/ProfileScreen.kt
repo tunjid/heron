@@ -575,6 +575,15 @@ internal fun ProfileScreen(
                                             ),
                                         )
                                     },
+                                    onRecommendationToggled = {
+                                        actions(
+                                            Action.RecordInteraction(
+                                                interaction = PostAction.OfDocumentRecommendation(
+                                                    document = it,
+                                                ),
+                                            ),
+                                        )
+                                    },
                                 )
                             },
                         )

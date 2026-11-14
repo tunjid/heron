@@ -28,11 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RecordLayout(
@@ -111,7 +112,9 @@ fun RecordTitle(
         text = title,
         overflow = TextOverflow.Ellipsis,
         maxLines = maxLines,
-        style = LocalTextStyle.current.copy(fontWeight = Bold),
+        style = LocalTextStyle.current.copy(
+            fontWeight = FontWeight.Medium,
+        ),
     )
 }
 
