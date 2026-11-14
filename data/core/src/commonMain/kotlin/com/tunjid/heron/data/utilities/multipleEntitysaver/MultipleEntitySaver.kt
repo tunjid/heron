@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import com.tunjid.heron.data.core.models.Constants.isUnknown
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -34,6 +35,7 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
+import com.tunjid.heron.data.database.entities.EventEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
@@ -53,8 +55,10 @@ import com.tunjid.heron.data.database.entities.RockskyAlbumEntity
 import com.tunjid.heron.data.database.entities.RockskyArtistEntity
 import com.tunjid.heron.data.database.entities.RockskyScrobbleEntity
 import com.tunjid.heron.data.database.entities.RockskyTrackEntity
+import com.tunjid.heron.data.database.entities.RsvpEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
@@ -106,6 +110,7 @@ class MultipleEntitySaverProvider(
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
     private val rockskyDao: RockskyDao,
+    private val eventDao: EventDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -125,6 +130,7 @@ class MultipleEntitySaverProvider(
             threadGateDao = threadGateDao,
             standardSiteDao = standardSiteDao,
             rockskyDao = rockskyDao,
+            eventDao = eventDao,
         ).apply {
             block()
             flushPendingOperations()
@@ -149,6 +155,7 @@ internal class MultipleEntitySaver(
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
     private val rockskyDao: RockskyDao,
+    private val eventDao: EventDao,
 ) {
     private val timelineItemEntities = LazyList<TimelineItemEntity>()
 
@@ -234,6 +241,12 @@ internal class MultipleEntitySaver(
     private val standardDocumentEntities = LazyList<StandardDocumentEntity>()
     private val standardSubscriptionEntities = LazyList<StandardSubscriptionEntity>()
     private val standardSubscriptionDeletions = LazyList<StandardSubscriptionEntity.Deletion>()
+    private val standardRecommendationEntities = LazyList<StandardRecommendationEntity>()
+    private val standardRecommendationDeletions = LazyList<StandardRecommendationEntity.Deletion>()
+
+    private val eventEntities = LazyList<EventEntity>()
+    private val rsvpEntities = LazyList<RsvpEntity>()
+    private val rsvpDeletions = LazyList<RsvpEntity.Deletion>()
 
     private val rockskyAlbumEntities = LazyList<RockskyAlbumEntity>()
     private val rockskyArtistEntities = LazyList<RockskyArtistEntity>()
@@ -465,11 +478,31 @@ internal class MultipleEntitySaver(
             standardSiteDao.insertOrIgnoreDocuments(stubDocumentEntities)
             standardSiteDao.upsertDocuments(fullDocumentEntities)
         }
+        if (standardRecommendationEntities.isNotEmpty) {
+            standardSiteDao.upsertRecommendations(standardRecommendationEntities.list)
+        }
+        if (standardRecommendationDeletions.isNotEmpty) {
+            standardSiteDao.deleteRecommendations(standardRecommendationDeletions.list)
+        }
         if (standardSubscriptionEntities.isNotEmpty) {
             standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
         }
         if (standardSubscriptionDeletions.isNotEmpty) {
             standardSiteDao.deleteSubscriptions(standardSubscriptionDeletions.list)
+        }
+
+        if (eventEntities.isNotEmpty) {
+            val (fullEventEntities, stubEventEntities) = eventEntities.list.partition {
+                it.cid != null
+            }
+            eventDao.insertOrIgnoreEvents(stubEventEntities)
+            eventDao.upsertEvents(fullEventEntities)
+        }
+        if (rsvpEntities.isNotEmpty) {
+            eventDao.upsertRsvps(rsvpEntities.list)
+        }
+        if (rsvpDeletions.isNotEmpty) {
+            eventDao.deleteRsvps(rsvpDeletions.list)
         }
 
         if (rockskyArtistEntities.isNotEmpty) {
@@ -597,6 +630,16 @@ internal class MultipleEntitySaver(
     fun add(entity: StandardSubscriptionEntity) = standardSubscriptionEntities.add(entity)
 
     fun remove(entity: StandardSubscriptionEntity.Deletion) = standardSubscriptionDeletions.add(entity)
+
+    fun add(entity: StandardRecommendationEntity) = standardRecommendationEntities.add(entity)
+
+    fun remove(entity: StandardRecommendationEntity.Deletion) = standardRecommendationDeletions.add(entity)
+
+    fun add(entity: EventEntity) = eventEntities.add(entity)
+
+    fun add(entity: RsvpEntity) = rsvpEntities.add(entity)
+
+    fun remove(entity: RsvpEntity.Deletion) = rsvpDeletions.add(entity)
 
     fun add(entity: RockskyAlbumEntity) = rockskyAlbumEntities.add(entity)
     fun add(entity: RockskyTrackEntity) = rockskyTrackEntities.add(entity)

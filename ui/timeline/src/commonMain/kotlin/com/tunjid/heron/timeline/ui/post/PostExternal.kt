@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Gif
 import com.tunjid.heron.data.core.models.Record
@@ -47,13 +48,14 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.domain
 import com.tunjid.heron.media.images.AsyncImage
 import com.tunjid.heron.media.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.event.Event
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.Rectangle
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -61,7 +63,6 @@ import kotlin.uuid.Uuid
  * non-interactive preview — e.g. in the composer before a post exists. The post identity needed by
  * [PostExternal] for shared-element keys is stubbed internally; it never matches a real post.
  */
-@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun ExternalEmbedPreview(
     embed: ExternalEmbed,
@@ -80,7 +81,7 @@ fun ExternalEmbedPreview(
             isBlurred = false,
             paneTransitionScope = paneTransitionScope,
             onClick = {},
-            onSubscriptionToggled = {},
+            onRecordInteraction = {},
         )
     }
 }
@@ -95,7 +96,7 @@ internal fun PostExternal(
     isBlurred: Boolean,
     paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
-    onSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
 ) = with(paneTransitionScope) {
     val gif = remember(feature) { feature.asEmbeddedGifOrNull() }
     FeatureContainer(
@@ -105,8 +106,11 @@ internal fun PostExternal(
         Column(
             verticalArrangement = spacedBy(8.dp),
         ) {
+            val showEvent = externalRecord is Event &&
+                presentation == Timeline.Presentation.Text.WithEmbed
             val showContentPreview = externalRecord == null ||
-                externalRecord is StandardDocument
+                externalRecord is StandardDocument ||
+                (externalRecord is Event && !showEvent)
 
             if (showContentPreview) ContentPreview(
                 feature = feature,
@@ -119,7 +123,9 @@ internal fun PostExternal(
             val publication = when (externalRecord) {
                 is StandardDocument -> externalRecord.publication
                 is StandardPublication -> externalRecord
-                null -> null
+                is Event,
+                null,
+                -> null
             }.takeIf {
                 presentation == Timeline.Presentation.Text.WithEmbed
             }
@@ -135,7 +141,32 @@ internal fun PostExternal(
                     ),
                     publication = publication,
                     onSubscriptionToggled = { toggledPublication, _ ->
-                        onSubscriptionToggled(toggledPublication)
+                        onRecordInteraction(
+                            PostAction.OfPublicationSubscription(
+                                publication = toggledPublication,
+                            ),
+                        )
+                    },
+                )
+            }
+            if (showEvent) {
+                Event(
+                    modifier = Modifier
+                        .padding(all = 12.dp),
+                    paneTransitionScope = paneTransitionScope,
+                    sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                        quotingPostUri = postUri,
+                    ),
+                    event = externalRecord,
+                    image = feature.thumb,
+                    isBlurred = isBlurred,
+                    onRsvpClicked = { event, status ->
+                        onRecordInteraction(
+                            PostAction.OfRsvp(
+                                event = event,
+                                status = status,
+                            ),
+                        )
                     },
                 )
             }

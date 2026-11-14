@@ -1,0 +1,23 @@
+{
+    "lexicon": 1,
+    "id": "community.lexicon.location.hthree",
+    "defs": {
+        "main": {
+            "type": "object",
+            "description": "A physical location in the form of a H3 encoded location.",
+            "required": [
+                "value"
+            ],
+            "properties": {
+                "value": {
+                    "type": "string",
+                    "description": "The h3 encoded location."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the location."
+                }
+            }
+        }
+    }
+}

@@ -33,6 +33,7 @@ import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.Event
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.FeedPreference
@@ -48,8 +49,10 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Record.Reference
 import com.tunjid.heron.data.core.models.Repost
+import com.tunjid.heron.data.core.models.Rsvp
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardRecommendation
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -60,6 +63,7 @@ import com.tunjid.heron.data.core.types.AlbumUri
 import com.tunjid.heron.data.core.types.ArtistUri
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -76,10 +80,14 @@ import com.tunjid.heron.data.core.types.ProfileLinkUri
 import com.tunjid.heron.data.core.types.ProfileVerificationUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.RsvpId
+import com.tunjid.heron.data.core.types.RsvpUri
 import com.tunjid.heron.data.core.types.ScrobbleUri
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationId
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -91,6 +99,8 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.database.TransactionWriter
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -99,6 +109,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
+import com.tunjid.heron.data.database.entities.PopulatedEventEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
@@ -119,6 +130,7 @@ import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.models.unresolvedExternalRecordLinks
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.expiredSessionResult
@@ -130,17 +142,22 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.maybeAddHeronIndexedExternalRecord
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.tidInstant
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
+import community.lexicon.calendar.Rsvp as LexiconRsvp
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -149,6 +166,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -163,9 +181,11 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import site.standard.Document
+import site.standard.graph.Recommend
 import site.standard.graph.Subscription
-import site.standard.heron.GetDocumentQueryParams
-import site.standard.heron.GetPublicationQueryParams
+import social.heron.calendar.GetEventQueryParams
+import social.heron.standard.GetDocumentQueryParams
+import social.heron.standard.GetPublicationQueryParams
 
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
@@ -236,10 +256,13 @@ internal class OfflineRecordResolver(
     private val threadGateDao: ThreadGateDao,
     private val standardSiteDao: StandardSiteDao,
     private val starterPackDao: StarterPackDao,
+    private val eventDao: EventDao,
+    private val profileLookup: ProfileLookup,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
     private val httpClient: HttpClient,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val transactionWriter: TransactionWriter,
 ) : RecordResolver {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -304,6 +327,7 @@ internal class OfflineRecordResolver(
         val labelerUris = LazyList<LabelerUri>()
         val documentUris = LazyList<StandardDocumentUri>()
         val publicationUris = LazyList<StandardPublicationUri>()
+        val eventUris = LazyList<EventUri>()
 
         uris.forEach { uri ->
             when (uri) {
@@ -314,6 +338,7 @@ internal class OfflineRecordResolver(
                 is LabelerUri -> labelerUris.add(uri)
                 is StandardDocumentUri -> documentUris.add(uri)
                 is StandardPublicationUri -> publicationUris.add(uri)
+                is EventUri -> eventUris.add(uri)
             }
         }
 
@@ -322,6 +347,10 @@ internal class OfflineRecordResolver(
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
         val queuedUris = mutableSetOf<RecordUri>()
+        val externalRecordsChannel = Channel<List<PopulatedPostEntity>>(
+            capacity = Channel.UNLIMITED,
+        )
+        val queuedPostUris = mutableSetOf<PostUri>()
 
         return combine(
             listOf(
@@ -343,8 +372,13 @@ internal class OfflineRecordResolver(
                     .toDistinctUntilChangedFlowOrEmpty {
                         standardSiteDao.publications(viewingProfileId?.id, it)
                     },
+                eventUris.list
+                    .toDistinctUntilChangedFlowOrEmpty {
+                        eventDao.events(viewingProfileId?.id, it)
+                    },
             ),
         ) { populatedRecordLists ->
+            val unresolvedPosts = mutableListOf<PopulatedPostEntity>()
             val associatedRecords = buildMap {
                 populatedRecordLists.forEach { populatedRecords ->
                     populatedRecords.forEach { recordEntity ->
@@ -352,9 +386,16 @@ internal class OfflineRecordResolver(
                         if (recordEntity.needsRefreshing() && queuedUris.add(recordEntity.recordUri)) {
                             refreshChannel.trySend(recordEntity.recordUri)
                         }
+                        if (recordEntity is PopulatedPostEntity &&
+                            recordEntity.unresolvedExternalRecordLinks().isNotEmpty() &&
+                            queuedPostUris.add(recordEntity.entity.uri)
+                        ) {
+                            unresolvedPosts.add(recordEntity)
+                        }
                     }
                 }
             }
+            if (unresolvedPosts.isNotEmpty()) externalRecordsChannel.trySend(unresolvedPosts)
             associatedRecords.values.map { recordEntity ->
                 when (recordEntity) {
                     // Top level posts have their embedded Records populated
@@ -364,7 +405,7 @@ internal class OfflineRecordResolver(
                                 .record
                                 ?.embeddedRecordUri
                                 ?.let(::add)
-                            recordEntity.associatedStandardRecords
+                            recordEntity.associatedExternalRecords
                                 .forEach { add(it.recordUri) }
                         }
                             .mapNotNull { uri ->
@@ -377,12 +418,20 @@ internal class OfflineRecordResolver(
             }
         }
             .withRefresh {
-                refreshChannel.consumeEach {
-                    resolve(it)
+                coroutineScope {
+                    launch {
+                        externalRecordsChannel.consumeEach {
+                            resolveHeronIndexedExternalRecords(it)
+                        }
+                    }
+                    refreshChannel.consumeEach {
+                        resolve(it)
+                    }
                 }
             }
             .onCompletion {
                 refreshChannel.close()
+                externalRecordsChannel.close()
             }
     }
 
@@ -614,6 +663,15 @@ internal class OfflineRecordResolver(
                             )
                         },
                         tags = document.tags ?: emptyList(),
+                        recommendationCount = documentView.recommendationCount,
+                        recommendation = documentView.viewerRecommendation?.let { recommendationView ->
+                            StandardRecommendation(
+                                uri = recommendationView.uri.atUri.let(::StandardRecommendationUri),
+                                cid = recommendationView.cid.cid.let(::StandardRecommendationId),
+                                documentUri = uri,
+                                sortedAt = recommendationView.sortedAt,
+                            )
+                        },
                         publication = documentView.publication
                             ?.uri
                             ?.atUri
@@ -655,6 +713,77 @@ internal class OfflineRecordResolver(
             } else {
                 expiredSessionResult()
             }
+            is StandardRecommendationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled { response ->
+                    val recommendation = response.value.decodeAs<Recommend>()
+                    val cid = response.cid?.cid?.let(::StandardRecommendationId)
+                    val sortedAt = recommendation.createdAt
+                    if (viewingProfileId == uri.profileId()) multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            recommendationUri = uri,
+                            recommendationCid = cid,
+                            recommendation = recommendation,
+                            sortedAt = sortedAt,
+                            viewingProfileId = viewingProfileId,
+                        )
+                    }
+                    StandardRecommendation(
+                        uri = uri,
+                        cid = cid,
+                        documentUri = StandardDocumentUri(recommendation.document.atUri),
+                        sortedAt = sortedAt,
+                    )
+                }
+
+            is EventUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getEvent(
+                    GetEventQueryParams(
+                        uri = uri.uri.let(::AtUri),
+                    ),
+                )
+            }
+                .mapCatchingUnlessCancelled { response ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            eventView = response.event,
+                            viewingProfileId = viewingProfileId,
+                        )
+                    }
+
+                    eventDao.event(
+                        viewingProfileId = viewingProfileId?.id,
+                        uri = uri,
+                    )
+                        .filterNotNull()
+                        .first()
+                        .asExternalModel()
+                }
+
+            is RsvpUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled { response ->
+                    val rsvp = response.value.decodeAs<LexiconRsvp>()
+                    val cid = response.cid?.cid?.let(::RsvpId)
+                    val sortedAt = rsvp.createdAt
+                        ?: uri.recordKey.tidInstant
+                        ?: Instant.DISTANT_PAST
+                    if (viewingProfileId == uri.profileId()) multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            rsvpUri = uri,
+                            rsvpCid = cid,
+                            rsvp = rsvp,
+                            sortedAt = sortedAt,
+                            viewingProfileId = viewingProfileId,
+                        )
+                    }
+                    Rsvp(
+                        uri = uri,
+                        cid = cid,
+                        eventUri = EventUri(rsvp.subject.uri.atUri),
+                        status = Rsvp.Status.fromId(rsvp.status),
+                        sortedAt = sortedAt,
+                    )
+                }
+
             is AlbumUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is ArtistUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
             is ScrobbleUri -> Result.failure(UnresolvableRecordException(uri)) // TODO
@@ -711,6 +840,17 @@ internal class OfflineRecordResolver(
             is StandardPublicationUri -> standardSiteDao.deletePublication(uri)
             is StandardDocumentUri -> standardSiteDao.deleteDocument(uri)
             is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
+            is StandardRecommendationUri -> standardSiteDao.deleteRecommendation(uri)
+            is EventUri -> eventDao.deleteEvent(uri)
+            is RsvpUri -> transactionWriter.inTransaction {
+                eventDao.decrementRsvpCounts(
+                    rsvpUri = uri,
+                    goingStatus = Rsvp.Status.Going.id,
+                    interestedStatus = Rsvp.Status.Interested.id,
+                    notGoingStatus = Rsvp.Status.NotGoing.id,
+                )
+                eventDao.deleteRsvp(uri)
+            }
             is AlbumUri -> Unit // TODO
             is ArtistUri -> Unit // TODO
             is ScrobbleUri -> Unit // TODO
@@ -826,6 +966,35 @@ internal class OfflineRecordResolver(
                 ).distinctUntilChanged()
             }
 
+    private suspend fun resolveHeronIndexedExternalRecords(
+        posts: List<PopulatedPostEntity>,
+    ) {
+        val resolvedLinks = coroutineScope {
+            posts.flatMap { post ->
+                post.unresolvedExternalRecordLinks().map { (externalEmbed, recordUri) ->
+                    async {
+                        val resolvedRecordUri = profileLookup.withDidAuthority(recordUri)
+                        if (!Did.Regex.matches(resolvedRecordUri.profileId().id)) null
+                        else Triple(post.entity.uri, externalEmbed, resolvedRecordUri)
+                    }
+                }
+            }
+                .awaitAll()
+                .filterNotNull()
+        }
+        if (resolvedLinks.isEmpty()) return
+
+        multipleEntitySaverProvider.saveInTransaction {
+            resolvedLinks.forEach { (postUri, externalEmbed, recordUri) ->
+                maybeAddHeronIndexedExternalRecord(
+                    recordUri = recordUri,
+                    externalEmbed = externalEmbed,
+                    postUri = postUri,
+                )
+            }
+        }
+    }
+
     private suspend fun fetchRecordAndSaveCreator(
         recordUri: RecordUri,
         viewingProfileId: ProfileId?,
@@ -869,6 +1038,7 @@ private fun PopulatedRecordEntity.toEmbeddableModel(): Record.Embeddable = when 
     is PopulatedStandardDocumentEntity -> asExternalModel()
     is PopulatedStandardPublicationEntity -> asExternalModel()
     is PopulatedStarterPackEntity -> asExternalModel()
+    is PopulatedEventEntity -> asExternalModel()
     is PopulatedPostEntity -> asExternalModel(embeddedRecords = emptyList())
 }
 
@@ -883,11 +1053,13 @@ private fun PopulatedRecordEntity.needsRefreshing() =
         -> false
         is PopulatedStandardPublicationEntity,
         -> this.entity.cid == null && entity.url == Collections.PLACEHOLDER_URL
+        is PopulatedEventEntity,
+        -> this.entity.cid == null
     }
 
 /**
  * Stable ordering for a [Post]'s embedded records: (1) quoted post, (2) other bluesky embedded
- * records (feed generator/list/starter pack/labeler), (3) standard-site records.
+ * records (feed generator/list/starter pack/labeler), (3) standard-site records, (4) events.
  */
 private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) {
     is Post -> 0
@@ -900,6 +1072,8 @@ private fun embeddedRecordOrder(record: Record.Embeddable): Int = when (record) 
     -> 2
     is StandardPublication,
     -> 3
+    is Event,
+    -> 4
 }
 
 private const val RefreshBufferSize = 64

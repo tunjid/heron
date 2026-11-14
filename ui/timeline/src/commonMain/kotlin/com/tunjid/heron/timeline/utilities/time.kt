@@ -18,9 +18,22 @@ package com.tunjid.heron.timeline.utilities
 
 import androidx.compose.runtime.Composable
 import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 expect fun Instant.formatDate(): String
 
 @Composable
 expect fun Instant.formatTime(): String
+
+@Composable
+expect fun Instant.formatWeekdayDate(): String
+
+@Composable
+expect fun Instant.formatHour(): String
+
+internal val Instant.isOnTheHour: Boolean
+    get() = toLocalDateTime(TimeZone.currentSystemDefault()).minute == 0
+
+internal const val WeekdayDateTemplate = "EEEMMMd"

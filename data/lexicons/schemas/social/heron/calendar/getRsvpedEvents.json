@@ -1,13 +1,22 @@
 {
   "lexicon": 1,
-  "id": "site.standard.heron.getSubscribedPublications",
+  "id": "social.heron.calendar.getRsvpedEvents",
   "defs": {
     "main": {
       "type": "query",
-      "description": "List publications the authenticated viewer is subscribed to. Requires authentication.",
+      "description": "List events the authenticated viewer has RSVPed to, most recent RSVP first. Requires authentication.",
       "parameters": {
         "type": "params",
         "properties": {
+          "status": {
+            "type": "string",
+            "knownValues": [
+              "community.lexicon.calendar.rsvp#going",
+              "community.lexicon.calendar.rsvp#interested",
+              "community.lexicon.calendar.rsvp#notgoing"
+            ],
+            "description": "Only events the viewer responded to with this status. Bare tokens (going) are accepted."
+          },
           "limit": {
             "type": "integer",
             "minimum": 1,
@@ -23,16 +32,16 @@
         "encoding": "application/json",
         "schema": {
           "type": "object",
-          "required": ["publications"],
+          "required": ["events"],
           "properties": {
             "cursor": {
               "type": "string"
             },
-            "publications": {
+            "events": {
               "type": "array",
               "items": {
                 "type": "ref",
-                "ref": "site.standard.heron.defs#publicationView"
+                "ref": "social.heron.calendar.defs#eventView"
               }
             }
           }

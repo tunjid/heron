@@ -451,6 +451,7 @@ private fun Writable.writeTimeout() =
         is Writable.RecordDeletion,
         is Writable.FeedList,
         is Writable.StandardSite,
+        is Writable.RsvpUpdate,
         is Writable.StatusUpdate,
         is Writable.PostDraft,
         -> BasicWriteTimeout

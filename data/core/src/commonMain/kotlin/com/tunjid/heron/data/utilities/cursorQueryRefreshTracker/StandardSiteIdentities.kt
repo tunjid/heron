@@ -29,3 +29,7 @@ internal fun StandardPublicationDocumentsQuery.publicationDocumentsIdentity(): S
 @Suppress("UnusedReceiverParameter")
 internal fun CursorQuery.subscribedPublicationsIdentity(): String =
     "standard.subscribedPublications"
+
+@Suppress("UnusedReceiverParameter")
+internal fun CursorQuery.recommendedDocumentsIdentity(): String =
+    "standard.recommendedDocuments"

@@ -182,6 +182,7 @@ internal fun PostView.externalEmbeddedRecordUris() = when (val embed = embed) {
     .mapNotNull {
         it.atUri.asEmbeddableRecordUriOrNull()
     }
+    .plus(externalRecordUris())
 
 private fun post(
     postEntity: PostEntity,

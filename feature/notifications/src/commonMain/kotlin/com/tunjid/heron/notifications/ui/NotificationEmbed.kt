@@ -96,7 +96,7 @@ fun NotificationEmbed(
                 profile,
             )
         },
-        onPublicationSubscriptionToggled = { },
+        onRecordInteraction = {},
         presentation = when (post.nativeEmbeddedRecord) {
             is Post -> Timeline.Presentation.Text.WithEmbed
             else -> Timeline.Presentation.Media.Condensed

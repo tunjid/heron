@@ -28,6 +28,8 @@ import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardRecommendationId
+import com.tunjid.heron.data.core.types.StandardRecommendationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.profileId
@@ -35,6 +37,7 @@ import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardRecommendationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.safeDecodeAs
@@ -43,22 +46,24 @@ import kotlin.time.Instant
 import sh.christian.ozone.api.model.Blob
 import site.standard.Document
 import site.standard.Publication
+import site.standard.graph.Recommend
 import site.standard.graph.Subscription
-import site.standard.heron.DocumentView
-import site.standard.heron.ProfileView
-import site.standard.heron.PublicationView
 import site.standard.theme.BasicAccentForegroundUnion
 import site.standard.theme.BasicAccentUnion
 import site.standard.theme.BasicBackgroundUnion
 import site.standard.theme.BasicForegroundUnion
 import site.standard.theme.ColorRgb
 import site.standard.theme.ColorRgba
+import social.heron.actor.ProfileView
+import social.heron.standard.DocumentView
+import social.heron.standard.PublicationView
 
 internal fun MultipleEntitySaver.add(
     documentView: DocumentView,
     viewingProfileId: ProfileId?,
 ) {
     val document = documentView.record.safeDecodeAs<Document>() ?: return
+    val documentUri = documentView.uri.atUri.let(::StandardDocumentUri)
 
     add(documentView.author)
     documentView.publication?.let {
@@ -69,7 +74,7 @@ internal fun MultipleEntitySaver.add(
     }
     add(
         StandardDocumentEntity(
-            uri = documentView.uri.atUri.let(::StandardDocumentUri),
+            uri = documentUri,
             cid = documentView.cid.cid.let(::StandardDocumentId),
             authorId = documentView.author.did.did.let(::ProfileId),
             title = document.title,
@@ -88,8 +93,28 @@ internal fun MultipleEntitySaver.add(
             // To be added in later as support for different standard doc
             // types are added.
             markdownContent = null,
+            recommendationCount = documentView.recommendationCount,
         ),
     )
+
+    viewingProfileId?.let { profileId ->
+        documentView.viewerRecommendation?.let {
+            add(
+                StandardRecommendationEntity(
+                    uri = it.uri.atUri.let(::StandardRecommendationUri),
+                    cid = it.cid.cid.let(::StandardRecommendationId),
+                    documentUri = documentUri,
+                    viewingProfileId = profileId,
+                    sortedAt = it.sortedAt,
+                ),
+            )
+        } ?: remove(
+            StandardRecommendationEntity.Deletion(
+                documentUri = documentUri,
+                viewingProfileId = profileId,
+            ),
+        )
+    }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -146,7 +171,7 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
-private fun MultipleEntitySaver.add(
+internal fun MultipleEntitySaver.add(
     author: ProfileView,
 ) {
     add(
@@ -201,6 +226,30 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
+internal fun MultipleEntitySaver.add(
+    recommendationUri: StandardRecommendationUri,
+    recommendationCid: StandardRecommendationId?,
+    recommendation: Recommend,
+    sortedAt: Instant,
+    viewingProfileId: ProfileId,
+) {
+    val documentUri = StandardDocumentUri(recommendation.document.atUri)
+    add(
+        stubDocumentEntity(
+            documentUri = documentUri,
+        ),
+    )
+    add(
+        StandardRecommendationEntity(
+            uri = recommendationUri,
+            cid = recommendationCid,
+            documentUri = documentUri,
+            viewingProfileId = viewingProfileId,
+            sortedAt = sortedAt,
+        ),
+    )
+}
+
 private fun Blob?.imageUri(
     profileId: ProfileId,
     pdsUrl: String?,
@@ -229,6 +278,29 @@ private fun stubPublicationEntity(
         icon = null,
         preferences = null,
         basicTheme = null,
+    )
+
+private fun stubDocumentEntity(
+    documentUri: StandardDocumentUri,
+): StandardDocumentEntity =
+    StandardDocumentEntity(
+        uri = documentUri,
+        cid = null,
+        authorId = documentUri.profileId(),
+        title = "",
+        description = null,
+        textContent = null,
+        path = null,
+        site = Collections.PLACEHOLDER_URL,
+        publishedAt = documentUri.recordKey.tidInstant ?: Instant.DISTANT_PAST,
+        updatedAt = null,
+        coverImage = null,
+        bskyPostRefUri = null,
+        bskyPostRefCid = null,
+        tags = null,
+        publicationUri = null,
+        markdownContent = null,
+        recommendationCount = 0,
     )
 
 private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
@@ -293,4 +365,6 @@ internal fun Document.asExternalModel(
     },
     tags = tags ?: emptyList(),
     publication = publication,
+    recommendationCount = 0,
+    recommendation = null,
 )

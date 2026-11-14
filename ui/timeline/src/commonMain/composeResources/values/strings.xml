@@ -141,6 +141,14 @@
     <string name="view_labeler">View Labeler</string>
     <string name="open_starter_pack">Open pack</string>
     <string name="standard_site_published_in">Published in %1$s</string>
+    <string name="event_rsvp_going">Going</string>
+    <string name="event_rsvp_interested">Interested</string>
+    <string name="event_rsvp_not_going">Not going</string>
+    <string name="event_rsvp_remove">Remove RSVP</string>
+    <string name="event_mode_in_person">In person</string>
+    <string name="event_mode_virtual">Online</string>
+    <string name="event_mode_hybrid">Hybrid</string>
+    <string name="event_rsvp_counts">%1$s going · %2$s interested</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>
     <string name="thread_gate_anyone">Anyone</string>
     <string name="thread_gate_nobody">Nobody</string>
@@ -189,6 +197,8 @@
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_add_list_member">list member addition</string>
     <string name="writable_subscribe_standard_publication">publication subscription</string>
+    <string name="writable_recommend_standard_document">document recommendation</string>
+    <string name="writable_rsvp_event">event RSVP</string>
     <string name="writable_link_document">document link</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="writable_profile_status_update">profile status update</string>
@@ -218,6 +228,8 @@
     <string name="writable_description_following_starter_pack">Following a starter pack</string>
     <string name="writable_description_adding_to_list">Adding to a list</string>
     <string name="writable_description_subscribing_publication">Subscribing to a publication</string>
+    <string name="writable_description_recommending_document">Recommending a document</string>
+    <string name="writable_description_responding_to_event">Responding to an event</string>
     <string name="writable_description_linking_document">Linking document to post</string>
     <string name="writable_description_unlinking_document">Unlinking document from post</string>
     <string name="writable_description_blocking_profile">Blocking a profile</string>

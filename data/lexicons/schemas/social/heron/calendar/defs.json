@@ -1,0 +1,86 @@
+{
+  "lexicon": 1,
+  "id": "social.heron.calendar.defs",
+  "defs": {
+    "eventView": {
+      "type": "object",
+      "required": ["uri", "cid", "author", "record", "sortedAt", "goingCount", "interestedCount", "notGoingCount"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "social.heron.actor.defs#profileView"
+        },
+        "record": {
+          "type": "unknown",
+          "description": "The full community.lexicon.calendar.event record."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp: the record's createdAt, else its TID."
+        },
+        "goingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#going."
+        },
+        "interestedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#interested."
+        },
+        "notGoingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "People whose latest RSVP is community.lexicon.calendar.rsvp#notgoing."
+        },
+        "viewerRsvp": {
+          "type": "ref",
+          "ref": "#rsvpView",
+          "description": "The authenticated viewer's latest community.lexicon.calendar.rsvp for this event. Absent if none or unauthenticated."
+        }
+      }
+    },
+    "rsvpView": {
+      "type": "object",
+      "required": ["uri", "cid", "eventUri", "status", "sortedAt"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "eventUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT URI of the event this RSVP responds to."
+        },
+        "status": {
+          "type": "string",
+          "knownValues": [
+            "community.lexicon.calendar.rsvp#going",
+            "community.lexicon.calendar.rsvp#interested",
+            "community.lexicon.calendar.rsvp#notgoing"
+          ],
+          "description": "Always fully qualified, even if the record wrote a bare token."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp for the RSVP (derived from the record TID)."
+        }
+      }
+    }
+  }
+}

@@ -53,6 +53,7 @@ import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.RecordStateHolder
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.ui.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -317,6 +318,10 @@ sealed class Action(val key: String) {
     data class PageChanged(
         val page: Int,
     ) : Action(key = "PageChanged")
+
+    data class RecordInteraction(
+        val interaction: PostAction.RecordInteraction,
+    ) : Action(key = "RecordInteraction")
 
     sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
         data class Subscribe(

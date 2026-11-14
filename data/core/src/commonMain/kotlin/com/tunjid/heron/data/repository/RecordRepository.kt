@@ -19,6 +19,7 @@ package com.tunjid.heron.data.repository
 import com.tunjid.heron.data.core.models.LinkPreview
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.EventUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -32,6 +33,7 @@ import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.core.utilities.asFailureOutcome
+import com.tunjid.heron.data.database.daos.EventDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -41,6 +43,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.repository.records.BlueskyRecordOperations
+import com.tunjid.heron.data.repository.records.EventRecordOperations
 import com.tunjid.heron.data.repository.records.RockskyRecordOperations
 import com.tunjid.heron.data.repository.records.StandardSiteRecordOperations
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
@@ -62,6 +65,7 @@ import kotlinx.coroutines.withContext
 
 interface RecordRepository :
     BlueskyRecordOperations,
+    EventRecordOperations,
     RockskyRecordOperations,
     StandardSiteRecordOperations {
 
@@ -85,6 +89,7 @@ interface RecordRepository :
 @Inject
 internal class OfflineFirstRecordRepository(
     blueskyRecordOperations: BlueskyRecordOperations,
+    eventRecordOperations: EventRecordOperations,
     rockSkyRecordOperations: RockskyRecordOperations,
     standardSiteRecordOperations: StandardSiteRecordOperations,
     @param:IODispatcher
@@ -95,11 +100,13 @@ internal class OfflineFirstRecordRepository(
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val standardSiteDao: StandardSiteDao,
+    private val eventDao: EventDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
     private val profileLookup: ProfileLookup,
 ) : RecordRepository,
     BlueskyRecordOperations by blueskyRecordOperations,
+    EventRecordOperations by eventRecordOperations,
     RockskyRecordOperations by rockSkyRecordOperations,
     StandardSiteRecordOperations by standardSiteRecordOperations {
 
@@ -158,6 +165,16 @@ internal class OfflineFirstRecordRepository(
                     savedStateDataSource
                         .singleSessionFlow { profileId ->
                             standardSiteDao.publications(
+                                viewingProfileId = profileId?.id,
+                                uris = listOf(resolvedUri),
+                            )
+                                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
+                        }
+
+                is EventUri ->
+                    savedStateDataSource
+                        .singleSessionFlow { profileId ->
+                            eventDao.events(
                                 viewingProfileId = profileId?.id,
                                 uris = listOf(resolvedUri),
                             )

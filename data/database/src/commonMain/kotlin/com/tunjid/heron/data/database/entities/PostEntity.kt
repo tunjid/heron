@@ -205,7 +205,7 @@ data class PopulatedPostEntity(
         parentColumn = "uri",
         entityColumn = "postUri",
     )
-    val associatedStandardRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
+    val associatedExternalRecords: List<PostExternalAssociatedRecordEntity> = emptyList(),
     @Relation(
         parentColumn = "uri",
         entityColumn = "postUri",

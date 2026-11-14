@@ -669,10 +669,15 @@ private val ChatProxyPaths = listOf(
 )
 
 private val HeronProxyPaths = listOf(
-    "site.standard.heron.getDocument",
-    "site.standard.heron.getDocuments",
-    "site.standard.heron.getPublications",
-    "site.standard.heron.getSubscribedPublications",
+    "social.heron.standard.getDocument",
+    "social.heron.standard.getDocuments",
+    "social.heron.standard.getPublication",
+    "social.heron.standard.getPublications",
+    "social.heron.standard.getSubscribedPublications",
+    "social.heron.standard.getRecommendedDocuments",
+    "social.heron.calendar.getEvent",
+    "social.heron.calendar.getEvents",
+    "social.heron.calendar.getRsvpedEvents",
     "dev.tunji.heron.getModelUrl",
     "social.heron.graze.createFeed",
     "social.heron.graze.editFeed",

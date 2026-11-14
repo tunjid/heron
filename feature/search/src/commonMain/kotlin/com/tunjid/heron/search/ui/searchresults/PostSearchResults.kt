@@ -31,7 +31,6 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ProfileId
@@ -85,7 +84,7 @@ internal fun PostSearchResults(
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onPublicationSubscriptionToggled: (StandardPublication) -> Unit,
+    onRecordInteraction: (PostAction.RecordInteraction) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
@@ -157,7 +156,7 @@ internal fun PostSearchResults(
         onPostSearchResultClicked,
         onPostSearchResultProfileClicked,
         onPostRecordClicked,
-        onPublicationSubscriptionToggled,
+        onRecordInteraction,
         onMediaClicked,
         onReplyToPost,
     ) {
@@ -181,9 +180,7 @@ internal fun PostSearchResults(
                     sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
                 )
 
-                is PostAction.OfPublicationSubscription -> onPublicationSubscriptionToggled(
-                    action.publication,
-                )
+                is PostAction.RecordInteraction -> onRecordInteraction(action)
 
                 is PostAction.OfMedia -> onMediaClicked(
                     action.media,
